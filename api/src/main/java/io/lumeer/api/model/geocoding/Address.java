@@ -32,6 +32,8 @@ public class Address implements Serializable {
    private final String postalCode;
    private final String state;
    private final String street;
+   private final String cityDistrict;
+   private final String suburb;
 
    public Address(
          final String city,
@@ -40,7 +42,9 @@ public class Address implements Serializable {
          final String houseNumber,
          final String postalCode,
          final String state,
-         final String street) {
+         final String street,
+         final String cityDistrict,
+         final String suburb) {
       this.city = city;
       this.country = country;
       this.county = county;
@@ -48,6 +52,8 @@ public class Address implements Serializable {
       this.postalCode = postalCode;
       this.state = state;
       this.street = street;
+      this.cityDistrict = cityDistrict;
+      this.suburb = suburb;
    }
 
    public String getCity() {
@@ -78,6 +84,14 @@ public class Address implements Serializable {
       return street;
    }
 
+   public String getCityDistrict() {
+      return cityDistrict;
+   }
+
+   public String getSuburb() {
+      return suburb;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -93,12 +107,14 @@ public class Address implements Serializable {
             Objects.equals(houseNumber, address.houseNumber) &&
             Objects.equals(postalCode, address.postalCode) &&
             Objects.equals(state, address.state) &&
-            Objects.equals(street, address.street);
+            Objects.equals(street, address.street) &&
+            Objects.equals(cityDistrict, address.cityDistrict) &&
+            Objects.equals(suburb, address.suburb);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(city, country, county, houseNumber, postalCode, state, street);
+      return Objects.hash(city, country, county, houseNumber, postalCode, state, street, cityDistrict, suburb);
    }
 
    @Override
@@ -111,6 +127,8 @@ public class Address implements Serializable {
             ", postalCode='" + postalCode + '\'' +
             ", state='" + state + '\'' +
             ", street='" + street + '\'' +
+            ", cityDistrict='" + cityDistrict + '\'' +
+            ", suburb='" + suburb + '\'' +
             '}';
    }
 }

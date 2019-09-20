@@ -40,6 +40,8 @@ public class OpenSearchAddress {
    private final String state;
    private final String suburb;
    private final String town;
+   private final String pedestrian;
+   private final String village;
 
    @JsonCreator
    public OpenSearchAddress(
@@ -55,7 +57,9 @@ public class OpenSearchAddress {
          @JsonProperty("road") final String road,
          @JsonProperty("state") final String state,
          @JsonProperty("suburb") final String suburb,
-         @JsonProperty("town") final String town) {
+         @JsonProperty("town") final String town,
+         @JsonProperty("pedestrian") final String pedestrian,
+         @JsonProperty("village") final String village) {
       this.city = city;
       this.cityDistrict = cityDistrict;
       this.continent = continent;
@@ -69,6 +73,8 @@ public class OpenSearchAddress {
       this.state = state;
       this.suburb = suburb;
       this.town = town;
+      this.pedestrian = pedestrian;
+      this.village = village;
    }
 
    public String getCity() {
@@ -123,8 +129,38 @@ public class OpenSearchAddress {
       return town;
    }
 
+   public String getPedestrian() {
+      return pedestrian;
+   }
+
+   public String getVillage() {
+      return village;
+   }
+
    public Address toAddress() {
-      String city = this.city != null ? this.city : this.town;
-      return new Address(city, country, county, houseNumber, postcode, state, road);
+      String city = this.city != null ? this.city : (this.town != null ? this.town : this.village);
+      String road = this.road != null ? this.road : this.pedestrian;
+      return new Address(city, country, county, houseNumber, postcode, state, road, cityDistrict, suburb);
+   }
+
+   @Override
+   public String toString() {
+      return "OpenSearchAddress{" +
+            "city='" + city + '\'' +
+            ", cityDistrict='" + cityDistrict + '\'' +
+            ", continent='" + continent + '\'' +
+            ", country='" + country + '\'' +
+            ", countryCode='" + countryCode + '\'' +
+            ", county='" + county + '\'' +
+            ", houseNumber='" + houseNumber + '\'' +
+            ", neighbourhood='" + neighbourhood + '\'' +
+            ", postcode='" + postcode + '\'' +
+            ", road='" + road + '\'' +
+            ", state='" + state + '\'' +
+            ", suburb='" + suburb + '\'' +
+            ", town='" + town + '\'' +
+            ", pedestrian='" + pedestrian + '\'' +
+            ", village='" + village + '\'' +
+            '}';
    }
 }

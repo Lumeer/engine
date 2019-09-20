@@ -41,7 +41,7 @@ import javax.ws.rs.core.Response;
 public class MapQuestClient implements OpenSearchClient {
 
    private static final String GEOCODING_URL = "https://www.mapquestapi.com/geocoding/v1/";
-   private static final String OPEN_SEARCH_URL = "http://open.mapquestapi.com/nominatim/v1/";
+   private static final String OPEN_SEARCH_URL = "https://open.mapquestapi.com/nominatim/v1/";
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
