@@ -113,6 +113,7 @@ public class CollectionFacade extends AbstractFacade {
       collection.setAttributes(storedCollection.getAttributes());
       collection.setDocumentsCount(storedCollection.getDocumentsCount());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
+      collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
    }
 
    public void deleteCollection(String collectionId) {
