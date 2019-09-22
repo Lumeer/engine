@@ -151,7 +151,11 @@ public class UserFacade extends AbstractFacade {
    }
 
    private Set<Role> getInvitationRoles(final InvitationType invitationType) {
-      final Set<Role> roles = new HashSet<>();
+      return getInvitationRoles(invitationType, new HashSet<>());
+   }
+
+   private Set<Role> getInvitationRoles(final InvitationType invitationType, Set<Role> minimalSet) {
+      final Set<Role> roles = new HashSet<>(minimalSet);
 
       // do not wonder - there isn't the return statement on purpose so that we collect the roles on the way
       switch (invitationType) {
@@ -208,7 +212,7 @@ public class UserFacade extends AbstractFacade {
    private void addUsersToProject(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       workspaceKeeper.setOrganization(organizationId);
       var newPermissions = users.stream()
-                                .map(user -> Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType)))
+                                .map(user -> Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, Set.of(Role.READ))))
                                 .collect(Collectors.toSet());
       projectFacade.addUserPermissions(projectId, newPermissions);
    }
