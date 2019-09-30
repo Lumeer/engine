@@ -7,110 +7,1779 @@
     "documentCount": 17
   },
   "collections": [
-    { "_id" : "5cf6eb98857aba008f0655d8", "code" : "c98270317b51cbb3", "name" : "Employees", "icon" : "fas fa-user-friends", "color" : "#cc0000", "description" : "", "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "share", "write", "read", "manage" ] } ], "groups" : [ ] }, "docCount" : 12, "defaultAttributeId" : "a1", "lastAttributeNum" : 6, "attributes" : [ { "id" : "a1", "name" : "Name", "constraint" : null, "function" : null, "usageCount" : 12 }, { "id" : "a2", "name" : "Email", "constraint" : { "type" : "User", "config" : null }, "function" : null, "usageCount" : 12 }, { "id" : "a3", "name" : "Job Title", "constraint" : null, "function" : null, "usageCount" : 12 }, { "id" : "a4", "name" : "Location", "constraint" : null, "function" : null, "usageCount" : 12 }, { "id" : "a5", "name" : "Group", "constraint" : null, "function" : null, "usageCount" : 12 }, { "id" : "a6", "name" : "Hourly Rate", "constraint" : null, "function" : null, "usageCount" : 12 } ], "rules" : {  }, "dataDescription" : "employees", "lastTimeUsed" : "2019-06-04T22:27:31.320Z", "version" : 86 },
-    { "_id" : "5cf6f078857aba008f0655e8", "code" : "04e2a9728af75840", "name" : "Projects", "icon" : "fas fa-recycle", "color" : "#6aa84f", "description" : "", "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "manage", "read", "share", "write" ] } ], "groups" : [ ] }, "docCount" : 5, "defaultAttributeId" : "a1", "lastAttributeNum" : 3, "attributes" : [ { "id" : "a1", "name" : "Project", "constraint" : null, "function" : null, "usageCount" : 5 }, { "id" : "a2", "name" : "Begin", "constraint" : { "type" : "DateTime", "config" : { "format" : "DD.MM.YYYY", "minValue" : null, "maxValue" : null } }, "function" : null, "usageCount" : 5 }, { "id" : "a3", "name" : "End", "constraint" : { "type" : "DateTime", "config" : { "format" : "DD.MM.YYYY", "minValue" : null, "maxValue" : null } }, "function" : null, "usageCount" : 5 } ], "rules" : {  }, "dataDescription" : "projects", "lastTimeUsed" : "2019-06-04T22:49:30.049Z", "version" : 39 }
+    {
+      "code": "c98270317b51cbb3",
+      "name": "Employees",
+      "icon": "fas fa-user-friends",
+      "color": "#cc0000",
+      "version": 0,
+      "description": "",
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "attributes": [
+        {
+          "id": "a1",
+          "name": "Name",
+          "constraint": null,
+          "function": null,
+          "usageCount": 12
+        },
+        {
+          "id": "a2",
+          "name": "Email",
+          "constraint": {
+            "type": "User",
+            "config": null
+          },
+          "function": null,
+          "usageCount": 12
+        },
+        {
+          "id": "a3",
+          "name": "Job Title",
+          "constraint": null,
+          "function": null,
+          "usageCount": 12
+        },
+        {
+          "id": "a4",
+          "name": "Location",
+          "constraint": null,
+          "function": null,
+          "usageCount": 12
+        },
+        {
+          "id": "a5",
+          "name": "Group",
+          "constraint": null,
+          "function": null,
+          "usageCount": 12
+        },
+        {
+          "id": "a6",
+          "name": "Hourly Rate",
+          "constraint": null,
+          "function": null,
+          "usageCount": 12
+        }
+      ],
+      "documentsCount": 0,
+      "lastTimeUsed": null,
+      "defaultAttributeId": null,
+      "favorite": false,
+      "rules": {},
+      "dataDescription": "",
+      "_id": "5d9213e98f90902526af849a"
+    },
+    {
+      "code": "04e2a9728af75840",
+      "name": "Projects",
+      "icon": "fas fa-recycle",
+      "color": "#6aa84f",
+      "version": 0,
+      "description": "",
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "attributes": [
+        {
+          "id": "a1",
+          "name": "Project",
+          "constraint": null,
+          "function": null,
+          "usageCount": 5
+        },
+        {
+          "id": "a2",
+          "name": "Begin",
+          "constraint": {
+            "type": "DateTime",
+            "config": {
+              "minValue": null,
+              "maxValue": null,
+              "format": "DD.MM.YYYY"
+            }
+          },
+          "function": null,
+          "usageCount": 5
+        },
+        {
+          "id": "a3",
+          "name": "End",
+          "constraint": {
+            "type": "DateTime",
+            "config": {
+              "minValue": null,
+              "maxValue": null,
+              "format": "DD.MM.YYYY"
+            }
+          },
+          "function": null,
+          "usageCount": 5
+        }
+      ],
+      "documentsCount": 0,
+      "lastTimeUsed": null,
+      "defaultAttributeId": null,
+      "favorite": false,
+      "rules": {},
+      "dataDescription": "",
+      "_id": "5d9213e98f90902526af849b"
+    }
   ],
   "views": [
-    { "_id" : "5cf6f437857aba009210afa2", "code" : "addabbfbce3141f6", "name" : "Work Tracker", "icon" : null, "color" : null, "description" : null, "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "share", "write", "read", "clone", "manage" ] } ], "groups" : [ ] }, "query" : { "stems" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "linkTypeIds" : [ "5cf6f208857aba009210af9a" ], "documentIds" : [ ], "filters" : [ ], "linkFilters" : [ ] } ], "fulltexts" : [ ], "page" : null, "pageSize" : null }, "perspective" : "table", "config" : { "table" : { "parts" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "columns" : [ { "type" : "compound", "attributeIds" : [ "a1" ], "children" : [ ] }, { "type" : "hidden", "attributeIds" : [ "a2", "a3", "a4", "a5", "a6" ] } ] }, { "linkTypeId" : "5cf6f208857aba009210af9a", "columns" : [ { "type" : "compound", "attributeIds" : [ "a1" ], "children" : [ ] }, { "type" : "compound", "attributeIds" : [ "a2" ], "children" : [ ] } ] }, { "collectionId" : "5cf6f078857aba008f0655e8", "columns" : [ { "type" : "compound", "attributeIds" : [ "a1" ], "children" : [ ] }, { "type" : "compound", "attributeIds" : [ "a2" ], "children" : [ ] }, { "type" : "compound", "attributeIds" : [ "a3" ], "children" : [ ] } ] } ], "rows" : [ { "documentId" : "5cf6ec20857aba008f0655db", "linkedRows" : [ ] }, { "documentId" : "5cf6ec2c857aba008f0655dc", "linkedRows" : [ { "documentId" : "5cf6f0f0857aba008f0655ec", "linkInstanceId" : "5cf6f239857aba009210af9d", "linkedRows" : [ ] }, { "documentId" : "5cf6f109857aba008f0655ee", "linkInstanceId" : "5cf6f360857aba008f0655f1", "linkedRows" : [ ] }, { "documentId" : "5cf6f0fb857aba008f0655ed", "linkInstanceId" : "5cf6f37d857aba008f0655f2", "linkedRows" : [ ] }, { "documentId" : "5cf6f114857aba008f0655ef", "linkInstanceId" : "5cf6f390857aba008f0655f3", "linkedRows" : [ ] } ], "expanded" : true }, { "documentId" : "5cf6ec32857aba008f0655dd", "linkedRows" : [ { "documentId" : "5cf6f109857aba008f0655ee", "linkInstanceId" : "5cf6f2ab857aba009210afa0", "linkedRows" : [ ] }, { "documentId" : "5cf6f114857aba008f0655ef", "linkInstanceId" : "5cf6f3a1857aba008f0655f4", "linkedRows" : [ ] }, { "documentId" : "5cf6f0f0857aba008f0655ec", "linkInstanceId" : "5cf6f3b9857aba008f0655f7", "linkedRows" : [ ] } ], "expanded" : true }, { "documentId" : "5cf6ec39857aba008f0655de", "linkedRows" : [ { "documentId" : "5cf6f0f0857aba008f0655ec", "linkInstanceId" : "5cf6f3cd857aba008f0655fa", "linkedRows" : [ ] }, { "documentId" : "5cf6f0fb857aba008f0655ed", "linkInstanceId" : "5cf6f3e4857aba008f0655fd", "linkedRows" : [ ] } ], "expanded" : true }, { "documentId" : "5cf6ec42857aba008f0655df", "linkedRows" : [ ] }, { "documentId" : "5cf6ec4b857aba008f0655e0", "linkedRows" : [ ] }, { "documentId" : "5cf6ec56857aba008f0655e1", "linkedRows" : [ ] }, { "documentId" : "5cf6ec5f857aba008f0655e2", "linkedRows" : [ ] }, { "documentId" : "5cf6ec6f857aba008f0655e4", "linkedRows" : [ ] }, { "documentId" : "5cf6ec7c857aba008f0655e5", "linkedRows" : [ ] }, { "documentId" : "5cf6ec66857aba008f0655e3", "linkedRows" : [ ] }, { "documentId" : "5cf6ec85857aba008f0655e6", "linkedRows" : [ ] } ] } }, "authorId" : "5c1136e9857aba00900e7a1f", "version" : 5 },
-    { "_id" : "5cf770f2857aba008f065603", "code" : "46b75636c728862c", "name" : "Costs per employee", "icon" : null, "color" : null, "description" : null, "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "share", "write", "read", "manage", "clone" ] } ], "groups" : [ ] }, "query" : { "stems" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "linkTypeIds" : [ "5cf6f208857aba009210af9a" ], "documentIds" : [ ], "filters" : [ ], "linkFilters" : [ ] } ], "fulltexts" : [ ], "page" : null, "pageSize" : null }, "perspective" : "chart", "config" : { "chart" : { "type" : "bar", "axes" : { "x" : { "resourceId" : "5cf6eb98857aba008f0655d8", "attributeId" : "a1", "resourceType" : "collection", "resourceIndex" : 0 }, "y1" : { "resourceId" : "5cf6f208857aba009210af9a", "attributeId" : "a3", "resourceType" : "linkType", "resourceIndex" : 1 } }, "aggregations" : { "y1" : "sum", "y2" : "sum" }, "sort" : { "type" : "asc" }, "names" : {  } } }, "authorId" : "5c1136e9857aba00900e7a1f" },
-    { "_id" : "5cf7712b857aba008f065605", "code" : "90ff0fc3728e048b", "name" : "Costs per project", "icon" : null, "color" : null, "description" : null, "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "manage", "clone", "read", "share", "write" ] } ], "groups" : [ ] }, "query" : { "stems" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "linkTypeIds" : [ "5cf6f208857aba009210af9a" ], "documentIds" : [ ], "filters" : [ ], "linkFilters" : [ ] } ], "fulltexts" : [ ], "page" : null, "pageSize" : null }, "perspective" : "chart", "config" : { "chart" : { "type" : "bar", "axes" : { "x" : { "resourceId" : "5cf6f078857aba008f0655e8", "attributeId" : "a1", "resourceType" : "collection", "resourceIndex" : 2 }, "y1" : { "resourceId" : "5cf6f208857aba009210af9a", "attributeId" : "a3", "resourceType" : "linkType", "resourceIndex" : 1 } }, "aggregations" : { "y1" : "sum", "y2" : "sum" }, "sort" : { "type" : "asc" }, "names" : {  } } }, "authorId" : "5c1136e9857aba00900e7a1f", "version" : 2 },
-    { "_id" : "5cf77c30857aba009210afb9", "code" : "881b6560708b5287", "name" : "Monthly hours on projects", "icon" : null, "color" : null, "description" : null, "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "manage", "clone", "read", "share", "write" ] } ], "groups" : [ ] }, "query" : { "stems" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "linkTypeIds" : [ "5cf6f208857aba009210af9a" ], "documentIds" : [ ], "filters" : [ ], "linkFilters" : [ ] } ], "fulltexts" : [ ], "page" : null, "pageSize" : null }, "perspective" : "pivot", "config" : { "pivot" : { "rowAttributes" : [ { "resourceType" : "collection", "resourceId" : "5cf6eb98857aba008f0655d8", "resourceIndex" : 0, "attributeId" : "a1", "showSums" : true } ], "columnAttributes" : [ { "resourceType" : "collection", "resourceId" : "5cf6f078857aba008f0655e8", "resourceIndex" : 2, "attributeId" : "a1", "showSums" : true }, { "resourceType" : "linkType", "resourceId" : "5cf6f208857aba009210af9a", "resourceIndex" : 1, "attributeId" : "a4", "showSums" : false } ], "valueAttributes" : [ { "resourceType" : "linkType", "resourceId" : "5cf6f208857aba009210af9a", "resourceIndex" : 1, "attributeId" : "a2", "aggregation" : "sum" } ] } }, "authorId" : "5c1136e9857aba00900e7a1f" },
-    { "_id" : "5cf77c3e857aba009210afbb", "code" : "3e671b553e57396a", "name" : "Monthly costs on projects", "icon" : null, "color" : null, "description" : null, "permissions" : { "users" : [ { "id" : "5c1136e9857aba00900e7a1f", "roles" : [ "manage", "clone", "read", "share", "write" ] } ], "groups" : [ ] }, "query" : { "stems" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "linkTypeIds" : [ "5cf6f208857aba009210af9a" ], "documentIds" : [ ], "filters" : [ ], "linkFilters" : [ ] } ], "fulltexts" : [ ], "page" : null, "pageSize" : null }, "perspective" : "pivot", "config" : { "pivot" : { "rowAttributes" : [ { "resourceType" : "collection", "resourceId" : "5cf6eb98857aba008f0655d8", "resourceIndex" : 0, "attributeId" : "a1", "showSums" : true } ], "columnAttributes" : [ { "resourceType" : "collection", "resourceId" : "5cf6f078857aba008f0655e8", "resourceIndex" : 2, "attributeId" : "a1", "showSums" : true }, { "resourceType" : "linkType", "resourceId" : "5cf6f208857aba009210af9a", "resourceIndex" : 1, "attributeId" : "a4", "showSums" : false } ], "valueAttributes" : [ { "resourceType" : "linkType", "resourceId" : "5cf6f208857aba009210af9a", "resourceIndex" : 1, "attributeId" : "a3", "aggregation" : "sum" } ] } }, "authorId" : "5c1136e9857aba00900e7a1f" },
-    { "_id" : "5cfbd371857aba008fa4bd3e", "code" : "55182757160e82df", "name" : "Monthly costs in chart", "icon" : null, "color" : null, "description" : null, "permissions" : { "users" : [ { "id" : "5ae78884857aba00623b9569", "roles" : [ "read", "share", "write", "manage", "clone" ] } ], "groups" : [ ] }, "query" : { "stems" : [ { "collectionId" : "5cf6eb98857aba008f0655d8", "linkTypeIds" : [ "5cf6f208857aba009210af9a" ], "documentIds" : [ ], "filters" : [ ], "linkFilters" : [ ] } ], "fulltexts" : [ ], "page" : null, "pageSize" : null }, "perspective" : "chart", "config" : { "chart" : { "type" : "bar", "axes" : { "x" : { "resourceId" : "5cf6f208857aba009210af9a", "attributeId" : "a4", "resourceType" : "linkType", "resourceIndex" : 1 }, "y1" : { "resourceId" : "5cf6f208857aba009210af9a", "attributeId" : "a3", "resourceType" : "linkType", "resourceIndex" : 1 } }, "aggregations" : { "y1" : "sum", "y2" : "sum" }, "sort" : { "type" : "asc" }, "names" : { "y1" : { "resourceId" : "5cf6f078857aba008f0655e8", "attributeId" : "a1", "resourceType" : "collection", "resourceIndex" : 2 } } } }, "authorId" : "5ae78884857aba00623b9569" }
+    {
+      "code": "addabbfbce3141f6",
+      "name": "Work Tracker",
+      "icon": null,
+      "color": null,
+      "version": 0,
+      "description": null,
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5c1136e9857aba00900e7a1f",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          },
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "query": {
+        "stems": [
+          {
+            "collectionId": "5d9213e98f90902526af849a",
+            "linkTypeIds": [
+              "5d9213e98f90902526af849c"
+            ],
+            "documentIds": [],
+            "filters": [],
+            "linkFilters": []
+          }
+        ],
+        "fulltexts": [],
+        "page": null,
+        "pageSize": null
+      },
+      "perspective": "table",
+      "config": {
+        "table": {
+          "parts": [
+            {
+              "columns": [
+                {
+                  "attributeIds": [
+                    "a1"
+                  ],
+                  "children": [],
+                  "type": "compound"
+                },
+                {
+                  "attributeIds": [
+                    "a2",
+                    "a3",
+                    "a4",
+                    "a5",
+                    "a6"
+                  ],
+                  "type": "hidden"
+                }
+              ],
+              "collectionId": "5d9213e98f90902526af849a"
+            },
+            {
+              "linkTypeId": "5d9213e98f90902526af849c",
+              "columns": [
+                {
+                  "attributeIds": [
+                    "a1"
+                  ],
+                  "children": [],
+                  "type": "compound"
+                },
+                {
+                  "attributeIds": [
+                    "a2"
+                  ],
+                  "children": [],
+                  "type": "compound"
+                }
+              ]
+            },
+            {
+              "columns": [
+                {
+                  "attributeIds": [
+                    "a1"
+                  ],
+                  "children": [],
+                  "type": "compound"
+                },
+                {
+                  "attributeIds": [
+                    "a2"
+                  ],
+                  "children": [],
+                  "type": "compound"
+                },
+                {
+                  "attributeIds": [
+                    "a3"
+                  ],
+                  "children": [],
+                  "type": "compound"
+                }
+              ],
+              "collectionId": "5d9213e98f90902526af849b"
+            }
+          ],
+          "rows": [
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84a2"
+            },
+            {
+              "expanded": true,
+              "linkedRows": [
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af849e",
+                  "linkInstanceId": "5d9213ea8f90902526af84ae"
+                },
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af84a0",
+                  "linkInstanceId": "5d9213ea8f90902526af84b0"
+                },
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af849f",
+                  "linkInstanceId": "5d9213ea8f90902526af84b1"
+                },
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af84a1",
+                  "linkInstanceId": "5d9213ea8f90902526af84b2"
+                }
+              ],
+              "documentId": "5d9213ea8f90902526af84a3"
+            },
+            {
+              "expanded": true,
+              "linkedRows": [
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af84a0",
+                  "linkInstanceId": "5d9213ea8f90902526af84af"
+                },
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af84a1",
+                  "linkInstanceId": "5d9213ea8f90902526af84b3"
+                },
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af849e",
+                  "linkInstanceId": "5d9213ea8f90902526af84b4"
+                }
+              ],
+              "documentId": "5d9213ea8f90902526af84a4"
+            },
+            {
+              "expanded": true,
+              "linkedRows": [
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af849e",
+                  "linkInstanceId": "5d9213ea8f90902526af84b5"
+                },
+                {
+                  "linkedRows": [],
+                  "documentId": "5d9213e98f90902526af849f",
+                  "linkInstanceId": "5d9213ea8f90902526af84b6"
+                }
+              ],
+              "documentId": "5d9213ea8f90902526af84a5"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84a6"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84a7"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84a8"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84a9"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84ab"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84ac"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84aa"
+            },
+            {
+              "linkedRows": [],
+              "documentId": "5d9213ea8f90902526af84ad"
+            }
+          ]
+        }
+      },
+      "authorId": "5d4daf2513dedf5073e5a498",
+      "authorRights": null,
+      "lastTimeUsed": null,
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84c4"
+    },
+    {
+      "code": "46b75636c728862c",
+      "name": "Costs per employee",
+      "icon": null,
+      "color": null,
+      "version": 0,
+      "description": null,
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5c1136e9857aba00900e7a1f",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          },
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "query": {
+        "stems": [
+          {
+            "collectionId": "5d9213e98f90902526af849a",
+            "linkTypeIds": [
+              "5d9213e98f90902526af849c"
+            ],
+            "documentIds": [],
+            "filters": [],
+            "linkFilters": []
+          }
+        ],
+        "fulltexts": [],
+        "page": null,
+        "pageSize": null
+      },
+      "perspective": "chart",
+      "config": {
+        "chart": {
+          "names": {},
+          "axes": {
+            "x": {
+              "attributeId": "a1",
+              "resourceId": "5d9213e98f90902526af849a",
+              "resourceIndex": 0,
+              "resourceType": "collection"
+            },
+            "y1": {
+              "attributeId": "a3",
+              "resourceId": "5d9213e98f90902526af849c",
+              "resourceIndex": 1,
+              "resourceType": "linkType"
+            }
+          },
+          "sort": {
+            "type": "asc"
+          },
+          "type": "bar",
+          "aggregations": {
+            "y1": "sum",
+            "y2": "sum"
+          }
+        }
+      },
+      "authorId": "5d4daf2513dedf5073e5a498",
+      "authorRights": null,
+      "lastTimeUsed": null,
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84c5"
+    },
+    {
+      "code": "90ff0fc3728e048b",
+      "name": "Costs per project",
+      "icon": null,
+      "color": null,
+      "version": 0,
+      "description": null,
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5c1136e9857aba00900e7a1f",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          },
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "query": {
+        "stems": [
+          {
+            "collectionId": "5d9213e98f90902526af849a",
+            "linkTypeIds": [
+              "5d9213e98f90902526af849c"
+            ],
+            "documentIds": [],
+            "filters": [],
+            "linkFilters": []
+          }
+        ],
+        "fulltexts": [],
+        "page": null,
+        "pageSize": null
+      },
+      "perspective": "chart",
+      "config": {
+        "chart": {
+          "names": {},
+          "axes": {
+            "x": {
+              "attributeId": "a1",
+              "resourceId": "5d9213e98f90902526af849b",
+              "resourceIndex": 2,
+              "resourceType": "collection"
+            },
+            "y1": {
+              "attributeId": "a3",
+              "resourceId": "5d9213e98f90902526af849c",
+              "resourceIndex": 1,
+              "resourceType": "linkType"
+            }
+          },
+          "sort": {
+            "type": "asc"
+          },
+          "type": "bar",
+          "aggregations": {
+            "y1": "sum",
+            "y2": "sum"
+          }
+        }
+      },
+      "authorId": "5d4daf2513dedf5073e5a498",
+      "authorRights": null,
+      "lastTimeUsed": null,
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84c6"
+    },
+    {
+      "code": "881b6560708b5287",
+      "name": "Monthly time on projects",
+      "icon": null,
+      "color": null,
+      "version": 0,
+      "description": null,
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5c1136e9857aba00900e7a1f",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          },
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "query": {
+        "stems": [
+          {
+            "collectionId": "5d9213e98f90902526af849a",
+            "linkTypeIds": [
+              "5d9213e98f90902526af849c"
+            ],
+            "documentIds": [],
+            "filters": [],
+            "linkFilters": []
+          }
+        ],
+        "fulltexts": [],
+        "page": null,
+        "pageSize": null
+      },
+      "perspective": "pivot",
+      "config": {
+        "pivot": {
+          "version": "1",
+          "stemsConfigs": [
+            {
+              "stem": {
+                "collectionId": "5d9213e98f90902526af849a",
+                "documentIds": [],
+                "filters": [],
+                "linkFilters": [],
+                "linkTypeIds": [
+                  "5d9213e98f90902526af849c"
+                ]
+              },
+              "rowAttributes": [
+                {
+                  "attributeId": "a1",
+                  "resourceId": "5d9213e98f90902526af849a",
+                  "showSums": true,
+                  "resourceIndex": 0,
+                  "resourceType": "collection"
+                }
+              ],
+              "columnAttributes": [
+                {
+                  "resourceIndex": 1,
+                  "attributeId": "a1",
+                  "resourceId": "5d9213e98f90902526af849c",
+                  "resourceType": "linkType",
+                  "showSums": true,
+                  "sort": {
+                    "attribute": {
+                      "resourceIndex": 1,
+                      "attributeId": "a1",
+                      "resourceId": "5d9213e98f90902526af849c",
+                      "resourceType": "linkType"
+                    },
+                    "asc": true
+                  },
+                  "constraint": {
+                    "type": "DateTime",
+                    "config": {
+                      "format": "MM.YYYY"
+                    }
+                  }
+                },
+                {
+                  "attributeId": "a1",
+                  "resourceId": "5d9213e98f90902526af849b",
+                  "showSums": false,
+                  "resourceIndex": 2,
+                  "resourceType": "collection"
+                }
+              ],
+              "valueAttributes": [
+                {
+                  "attributeId": "a2",
+                  "resourceId": "5d9213e98f90902526af849c",
+                  "aggregation": "sum",
+                  "resourceIndex": 1,
+                  "resourceType": "linkType"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "authorId": "5d4daf2513dedf5073e5a498",
+      "authorRights": null,
+      "lastTimeUsed": null,
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84c7"
+    },
+    {
+      "code": "3e671b553e57396a",
+      "name": "Monthly costs on projects",
+      "icon": null,
+      "color": null,
+      "version": 0,
+      "description": null,
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5c1136e9857aba00900e7a1f",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          },
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "query": {
+        "stems": [
+          {
+            "collectionId": "5d9213e98f90902526af849a",
+            "linkTypeIds": [
+              "5d9213e98f90902526af849c"
+            ],
+            "documentIds": [],
+            "filters": [],
+            "linkFilters": []
+          }
+        ],
+        "fulltexts": [],
+        "page": null,
+        "pageSize": null
+      },
+      "perspective": "pivot",
+      "config": {
+        "pivot": {
+          "version": "1",
+          "stemsConfigs": [
+            {
+              "stem": {
+                "collectionId": "5d9213e98f90902526af849a",
+                "documentIds": [],
+                "filters": [],
+                "linkFilters": [],
+                "linkTypeIds": [
+                  "5d9213e98f90902526af849c"
+                ]
+              },
+              "rowAttributes": [
+                {
+                  "attributeId": "a1",
+                  "resourceId": "5d9213e98f90902526af849a",
+                  "showSums": true,
+                  "resourceIndex": 0,
+                  "resourceType": "collection"
+                }
+              ],
+              "columnAttributes": [
+                {
+                  "resourceIndex": 1,
+                  "attributeId": "a1",
+                  "resourceId": "5d9213e98f90902526af849c",
+                  "resourceType": "linkType",
+                  "showSums": true,
+                  "sort": {
+                    "attribute": {
+                      "resourceIndex": 1,
+                      "attributeId": "a1",
+                      "resourceId": "5d9213e98f90902526af849c",
+                      "resourceType": "linkType"
+                    },
+                    "asc": true
+                  },
+                  "constraint": {
+                    "type": "DateTime",
+                    "config": {
+                      "format": "MM.YYYY"
+                    }
+                  }
+                },
+                {
+                  "attributeId": "a1",
+                  "resourceId": "5d9213e98f90902526af849b",
+                  "showSums": false,
+                  "resourceIndex": 2,
+                  "resourceType": "collection"
+                }
+              ],
+              "valueAttributes": [
+                {
+                  "attributeId": "a3",
+                  "resourceId": "5d9213e98f90902526af849c",
+                  "aggregation": "sum",
+                  "resourceIndex": 1,
+                  "resourceType": "linkType"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "authorId": "5d4daf2513dedf5073e5a498",
+      "authorRights": null,
+      "lastTimeUsed": null,
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84c8"
+    },
+    {
+      "code": "55182757160e82df",
+      "name": "Monthly costs in chart",
+      "icon": null,
+      "color": null,
+      "version": 0,
+      "description": null,
+      "nonRemovable": false,
+      "permissions": {
+        "users": [
+          {
+            "id": "5d4daf2513dedf5073e5a498",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          },
+          {
+            "id": "5ae78884857aba00623b9569",
+            "roles": [
+              "SHARE",
+              "MANAGE",
+              "READ",
+              "WRITE",
+              "CLONE"
+            ]
+          }
+        ],
+        "groups": []
+      },
+      "query": {
+        "stems": [
+          {
+            "collectionId": "5d9213e98f90902526af849a",
+            "linkTypeIds": [
+              "5d9213e98f90902526af849c"
+            ],
+            "documentIds": [],
+            "filters": [],
+            "linkFilters": []
+          }
+        ],
+        "fulltexts": [],
+        "page": null,
+        "pageSize": null
+      },
+      "perspective": "chart",
+      "config": {
+        "chart": {
+          "names": {
+            "y1": {
+              "attributeId": "a1",
+              "resourceId": "5d9213e98f90902526af849b",
+              "resourceIndex": 2,
+              "resourceType": "collection"
+            }
+          },
+          "axes": {
+            "y1": {
+              "attributeId": "a3",
+              "resourceId": "5d9213e98f90902526af849c",
+              "resourceIndex": 1,
+              "resourceType": "linkType"
+            },
+            "x": {
+              "resourceId": "5d9213e98f90902526af849c",
+              "attributeId": "a1",
+              "resourceType": "linkType",
+              "resourceIndex": 1
+            }
+          },
+          "sort": {
+            "type": "asc"
+          },
+          "type": "bar",
+          "aggregations": {
+            "y1": "sum",
+            "y2": "sum"
+          }
+        }
+      },
+      "authorId": "5d4daf2513dedf5073e5a498",
+      "authorRights": null,
+      "lastTimeUsed": null,
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84c9"
+    }
   ],
   "linkTypes": [
-    { "_id" : "5cf6f208857aba009210af9a", "name" : "Work on project", "collectionIds" : [ "5cf6eb98857aba008f0655d8", "5cf6f078857aba008f0655e8" ], "attributes" : [ { "id" : "a1", "name" : "Date", "constraint" : { "type" : "DateTime", "config" : { "format" : "DD.MM.YYYY", "minValue" : null, "maxValue" : null } }, "function" : null, "usageCount" : 22 }, { "id" : "a2", "name" : "Hours", "constraint" : { "type" : "Number", "config" : { "decimal" : null, "minValue" : null, "maxValue" : null } }, "function" : null, "usageCount" : 26 }, { "id" : "a3", "name" : "Costs", "constraint" : { "type" : "Number", "config" : { "decimal" : null, "minValue" : null, "maxValue" : null } }, "function" : { "js" : "var thisLink;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setLinkAttribute(thisLink, 'a3', (lumeer.getDocumentAttribute(lumeer.getLinkDocument(thisLink, '5cf6eb98857aba008f0655d8'), 'a6') * lumeer.getLinkAttribute(thisLink, 'a2')))\n", "xml" : "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5cf6f208857aba009210af9a_linkinst\" id=\"Hykf:j$+KFw}sj|_]{dZ\">thisLink</variable>\n  </variables>\n  <block type=\"link_container\" id=\"l~)TZu`QK{.1bTa;kJ4l\" deletable=\"false\" x=\"94\" y=\"143\">\n    <value name=\"VALUE\">\n      <block type=\"math_arithmetic\" id=\"?I@]c:chLk/$Au-[6.Ku\">\n        <field name=\"OP\">MULTIPLY</field>\n        <value name=\"A\">\n          <shadow type=\"math_number\" id=\"]2%h{N;k9k^+5v:Ouv(d\">\n            <field name=\"NUM\">1</field>\n          </shadow>\n          <block type=\"get_attribute\" id=\"cE*rzR8kWZ^XTZ9$CHae\">\n            <field name=\"ATTR\">a6</field>\n            <value name=\"DOCUMENT\">\n              <block type=\"get_link_document\" id=\"t^)Q0V.857`zjEn*3AK#\">\n                <field name=\"COLLECTION\">5cf6eb98857aba008f0655d8</field>\n                <value name=\"LINK\">\n                  <block type=\"variables_get_5cf6f208857aba009210af9a_linkinst\" id=\"e]Utsd`Ae]2m{Gw%$aSL\" editable=\"false\">\n                    <field name=\"VAR\" id=\"Hykf:j$+KFw}sj|_]{dZ\" variabletype=\"5cf6f208857aba009210af9a_linkinst\">thisLink</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </value>\n        <value name=\"B\">\n          <shadow type=\"math_number\" id=\"nF}P]~vyXne;aAOg~f+^\">\n            <field name=\"NUM\">1</field>\n          </shadow>\n          <block type=\"get_link_attribute\" id=\"J4n*QR8qn`sU51W%?mLf\">\n            <field name=\"ATTR\">a2</field>\n            <value name=\"LINK\">\n              <block type=\"variables_get_5cf6f208857aba009210af9a_linkinst\" id=\"q)7YxwU#9,h%!z?=;G45\" editable=\"false\">\n                <field name=\"VAR\" id=\"Hykf:j$+KFw}sj|_]{dZ\" variabletype=\"5cf6f208857aba009210af9a_linkinst\">thisLink</field>\n              </block>\n            </value>\n          </block>\n        </value>\n      </block>\n    </value>\n  </block>\n</xml>", "errorReport" : null, "timestamp" : 0, "editable" : false }, "usageCount" : 22 }, { "id" : "a4", "name" : "Month", "constraint" : { "type" : "DateTime", "config" : { "format" : "YY/MM", "minValue" : null, "maxValue" : null } }, "function" : { "js" : "var thisLink;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setLinkAttribute(thisLink, 'a4', lumeer.getLinkAttribute(thisLink, 'a1'))\n", "xml" : "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5cf6f208857aba009210af9a_linkinst\" id=\"3mss`(:-H.2-Me|;P#f5\">thisLink</variable>\n  </variables>\n  <block type=\"link_container\" id=\"}?!-c78V@cSQpr|t(%yA\" deletable=\"false\" x=\"28\" y=\"79\">\n    <value name=\"VALUE\">\n      <block type=\"get_link_attribute\" id=\"gqK_dFT3-R}kHi-?OKdu\">\n        <field name=\"ATTR\">a1</field>\n        <value name=\"LINK\">\n          <block type=\"variables_get_5cf6f208857aba009210af9a_linkinst\" id=\"dB8V{0WX4Grh}HS(~*.3\" editable=\"false\">\n            <field name=\"VAR\" id=\"3mss`(:-H.2-Me|;P#f5\" variabletype=\"5cf6f208857aba009210af9a_linkinst\">thisLink</field>\n          </block>\n        </value>\n      </block>\n    </value>\n  </block>\n</xml>", "errorReport" : null, "timestamp" : 0, "editable" : false }, "usageCount" : 22 } ], "lastAttributeNum" : 4, "version" : 105 }
+    {
+      "name": "Work on project",
+      "version": 36,
+      "collectionIds": [
+        "5d9213e98f90902526af849a",
+        "5d9213e98f90902526af849b"
+      ],
+      "attributes": [
+        {
+          "id": "a1",
+          "name": "Date",
+          "constraint": {
+            "type": "DateTime",
+            "config": {
+              "minValue": null,
+              "maxValue": null,
+              "format": "DD.MM.YYYY"
+            }
+          },
+          "function": null,
+          "usageCount": 0
+        },
+        {
+          "id": "a2",
+          "name": "Time",
+          "constraint": {
+            "type": "Duration",
+            "config": {
+              "type": "Work",
+              "conversions": {
+                "w": 5,
+                "d": 8,
+                "h": 60,
+                "m": 60,
+                "s": 1000
+              }
+            }
+          },
+          "function": null,
+          "usageCount": 0
+        },
+        {
+          "id": "a3",
+          "name": "Costs",
+          "constraint": {
+            "type": "Number",
+            "config": {
+              "decimal": null,
+              "minValue": null,
+              "maxValue": null
+            }
+          },
+          "function": {
+            "js": "var thisLink;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setLinkAttribute(thisLink, 'a3', (lumeer.getDocumentAttribute(lumeer.getLinkDocument(thisLink, '5d9213e98f90902526af849a'), 'a6') * ((lumeer.getLinkAttribute(thisLink, 'a2'))/3600000)));\n",
+            "xml": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5d9213e98f90902526af849c_linkinst\" id=\"Hykf:j$+KFw}sj|_]{dZ\">thisLink</variable>\n  </variables>\n  <block type=\"link_container\" id=\"l~)TZu`QK{.1bTa;kJ4l\" deletable=\"false\" x=\"10\" y=\"138\">\n    <value name=\"VALUE\">\n      <block type=\"math_arithmetic\" id=\"?I@]c:chLk/$Au-[6.Ku\">\n        <field name=\"OP\">MULTIPLY</field>\n        <value name=\"A\">\n          <shadow type=\"math_number\" id=\"]2%h{N;k9k^+5v:Ouv(d\">\n            <field name=\"NUM\">1</field>\n          </shadow>\n          <block type=\"get_attribute\" id=\"cE*rzR8kWZ^XTZ9$CHae\">\n            <field name=\"ATTR\">a6</field>\n            <value name=\"DOCUMENT\">\n              <block type=\"get_link_document\" id=\"t^)Q0V.857`zjEn*3AK#\">\n                <field name=\"COLLECTION\">5d9213e98f90902526af849a</field>\n                <value name=\"LINK\">\n                  <block type=\"variables_get_5d9213e98f90902526af849c_linkinst\" id=\"e]Utsd`Ae]2m{Gw%$aSL\" editable=\"false\">\n                    <field name=\"VAR\" id=\"Hykf:j$+KFw}sj|_]{dZ\" variabletype=\"5d9213e98f90902526af849c_linkinst\">thisLink</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </value>\n        <value name=\"B\">\n          <shadow type=\"math_number\" id=\"nF}P]~vyXne;aAOg~f+^\">\n            <field name=\"NUM\">1</field>\n          </shadow>\n          <block type=\"ms_to_unit\" id=\"b+[T[!N7_9}Hyb2a[Ew6\">\n            <field name=\"UNIT\">HOURS</field>\n            <value name=\"MS\">\n              <block type=\"get_link_attribute\" id=\"F8M+AkSl=}kh_Bmzs]NJ\">\n                <field name=\"ATTR\">a2</field>\n                <value name=\"LINK\">\n                  <block type=\"variables_get_5d9213e98f90902526af849c_linkinst\" id=\"sraXKI$Y+NVsm[Ycc=cH\" editable=\"false\">\n                    <field name=\"VAR\" id=\"Hykf:j$+KFw}sj|_]{dZ\" variabletype=\"5d9213e98f90902526af849c_linkinst\">thisLink</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </value>\n      </block>\n    </value>\n  </block>\n</xml>",
+            "errorReport": null,
+            "timestamp": 0,
+            "editable": false
+          },
+          "usageCount": 0
+        }
+      ],
+      "lastAttributeNum": 4,
+      "_id": "5d9213e98f90902526af849c"
+    }
   ],
-  "linkInstances" : [
-    { "_id" : "5cf6f239857aba009210af9d", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec2c857aba008f0655dc", "5cf6f0f0857aba008f0655ec" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:35:37.401Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:01.357Z" },
-    { "_id" : "5cf6f2ab857aba009210afa0", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec32857aba008f0655dd", "5cf6f109857aba008f0655ee" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:37:31.788Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.742Z" },
-    { "_id" : "5cf6f360857aba008f0655f1", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec2c857aba008f0655dc", "5cf6f109857aba008f0655ee" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:40:32.210Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:01.274Z" },
-    { "_id" : "5cf6f37d857aba008f0655f2", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec2c857aba008f0655dc", "5cf6f0fb857aba008f0655ed" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:41:01.888Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.556Z" },
-    { "_id" : "5cf6f390857aba008f0655f3", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec2c857aba008f0655dc", "5cf6f114857aba008f0655ef" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:41:20.243Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:07:59.726Z" },
-    { "_id" : "5cf6f3a1857aba008f0655f4", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec32857aba008f0655dd", "5cf6f114857aba008f0655ef" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:41:37.866Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:07:59.643Z" },
-    { "_id" : "5cf6f3b9857aba008f0655f7", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec32857aba008f0655dd", "5cf6f0f0857aba008f0655ec" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:42:01.574Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.116Z" },
-    { "_id" : "5cf6f3cd857aba008f0655fa", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec39857aba008f0655de", "5cf6f0f0857aba008f0655ec" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:42:21.811Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:01.189Z" },
-    { "_id" : "5cf6f3e4857aba008f0655fd", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec39857aba008f0655de", "5cf6f0fb857aba008f0655ed" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:42:44.239Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.459Z" },
-    { "_id" : "5cf6f448857aba009210afa6", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec39857aba008f0655de", "5cf6f0e9857aba008f0655eb" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:44:24.869Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:01.103Z" },
-    { "_id" : "5cf6f459857aba009210afa7", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec39857aba008f0655de", "5cf6f114857aba008f0655ef" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:44:41.736Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.206Z" },
-    { "_id" : "5cf6f46d857aba009210afa8", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec42857aba008f0655df", "5cf6f0f0857aba008f0655ec" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:45:01.113Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:07:59.422Z" },
-    { "_id" : "5cf6f47a857aba009210afa9", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec42857aba008f0655df", "5cf6f0e9857aba008f0655eb" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:45:14.948Z", "dataVersion" : 5, "updateDate" : "2019-06-05T08:08:00.830Z" },
-    { "_id" : "5cf6f489857aba009210afaa", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec42857aba008f0655df", "5cf6f0e9857aba008f0655eb" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:45:29.151Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:07:59.550Z" },
-    { "_id" : "5cf6f4b8857aba009210afab", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec4b857aba008f0655e0", "5cf6f109857aba008f0655ee" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:46:16.213Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.653Z" },
-    { "_id" : "5cf6f4d9857aba009210afae", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec56857aba008f0655e1", "5cf6f0e9857aba008f0655eb" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:46:49.433Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:07:59.819Z" },
-    { "_id" : "5cf6f4eb857aba009210afaf", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec5f857aba008f0655e2", "5cf6f114857aba008f0655ef" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:47:07.783Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.918Z" },
-    { "_id" : "5cf6f4fd857aba009210afb0", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec6f857aba008f0655e4", "5cf6f0f0857aba008f0655ec" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:47:25.151Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:01.013Z" },
-    { "_id" : "5cf6f510857aba009210afb1", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec6f857aba008f0655e4", "5cf6f109857aba008f0655ee" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:47:44.090Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:01.438Z" },
-    { "_id" : "5cf6f51c857aba009210afb2", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec7c857aba008f0655e5", "5cf6f0fb857aba008f0655ed" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:47:56.716Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.029Z" },
-    { "_id" : "5cf6f531857aba009210afb5", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec66857aba008f0655e3", "5cf6f0fb857aba008f0655ed" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:48:17.214Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:08:00.359Z" },
-    { "_id" : "5cf6f540857aba009210afb6", "linkTypeId" : "5cf6f208857aba009210af9a", "documentIds" : [ "5cf6ec85857aba008f0655e6", "5cf6f109857aba008f0655ee" ], "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "creationDate" : "2019-06-04T22:48:32.295Z", "dataVersion" : 4, "updateDate" : "2019-06-05T08:07:59.941Z" }
+  "linkInstances": [
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066613,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a3",
+        "5d9213e98f90902526af849e"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84ae"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066490,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a4",
+        "5d9213e98f90902526af84a0"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84af"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855064170,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a3",
+        "5d9213e98f90902526af84a0"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b0"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065123,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a3",
+        "5d9213e98f90902526af849f"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b1"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855064833,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a3",
+        "5d9213e98f90902526af84a1"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b2"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855064701,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a4",
+        "5d9213e98f90902526af84a1"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b3"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855064582,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a4",
+        "5d9213e98f90902526af849e"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b4"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065768,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a5",
+        "5d9213e98f90902526af849e"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b5"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065651,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a5",
+        "5d9213e98f90902526af849f"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b6"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065526,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a5",
+        "5d9213e98f90902526af849d"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b7"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065389,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a5",
+        "5d9213e98f90902526af84a1"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b8"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065884,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a6",
+        "5d9213e98f90902526af849e"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84b9"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066370,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a6",
+        "5d9213e98f90902526af849d"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84ba"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066251,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a6",
+        "5d9213e98f90902526af849d"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84bb"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066129,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a7",
+        "5d9213e98f90902526af84a0"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84bc"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066010,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a8",
+        "5d9213e98f90902526af849d"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84bd"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066860,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84a9",
+        "5d9213e98f90902526af84a1"
+      ],
+      "dataVersion": 7,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84be"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855066739,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84ab",
+        "5d9213e98f90902526af849e"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84bf"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855064461,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84ab",
+        "5d9213e98f90902526af84a0"
+      ],
+      "dataVersion": 9,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84c0"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855064341,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84ac",
+        "5d9213e98f90902526af849f"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84c1"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065258,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84aa",
+        "5d9213e98f90902526af849f"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84c2"
+    },
+    {
+      "linkTypeId": "5d9213e98f90902526af849c",
+      "creationDate": 1569854442252,
+      "updateDate": 1569855065001,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "documentIds": [
+        "5d9213ea8f90902526af84ad",
+        "5d9213e98f90902526af84a0"
+      ],
+      "dataVersion": 5,
+      "data": {},
+      "_id": "5d9213ea8f90902526af84c3"
+    }
   ],
   "linkData": {
-    "5cf6f208857aba009210af9a": [
-      { "_id" : "5cf6f239857aba009210af9d", "a1" : "2019-03-31T22:00:00Z", "a2" : 4, "a3" : 300, "a4" : "2019-03-31T22:00:00Z" },
-      { "_id" : "5cf6f2ab857aba009210afa0", "a1" : "2019-03-31T22:00:00Z", "a2" : 2, "a3" : 120, "a4" : "2019-03-31T22:00:00Z" },
-      { "_id" : "5cf6f360857aba008f0655f1", "a1" : "2019-03-31T22:00:00Z", "a2" : 4, "a3" : 300, "a4" : "2019-03-31T22:00:00Z" },
-      { "_id" : "5cf6f37d857aba008f0655f2", "a1" : "2019-04-01T22:00:00Z", "a2" : 6, "a3" : 450, "a4" : "2019-04-01T22:00:00Z" },
-      { "_id" : "5cf6f390857aba008f0655f3", "a1" : "2019-04-01T22:00:00Z", "a2" : 2, "a3" : 150, "a4" : "2019-04-01T22:00:00Z" },
-      { "_id" : "5cf6f3a1857aba008f0655f4", "a2" : 6, "a1" : "2019-03-31T22:00:00Z", "a3" : 360, "a4" : "2019-03-31T22:00:00Z" },
-      { "_id" : "5cf6f3b9857aba008f0655f7", "a1" : "2019-04-01T22:00:00Z", "a2" : 8, "a3" : 480, "a4" : "2019-04-01T22:00:00Z" },
-      { "_id" : "5cf6f3cd857aba008f0655fa", "a1" : "2019-04-30T22:00:00Z", "a2" : 8, "a3" : 480, "a4" : "2019-04-30T22:00:00Z" },
-      { "_id" : "5cf6f3e4857aba008f0655fd", "a2" : 8, "a1" : "2019-05-01T22:00:00Z", "a3" : 480, "a4" : "2019-05-01T22:00:00Z" },
-      { "_id" : "5cf6f448857aba009210afa6", "a1" : "2019-05-02T22:00:00Z", "a2" : 7, "a3" : 420, "a4" : "2019-05-02T22:00:00Z" },
-      { "_id" : "5cf6f459857aba009210afa7", "a2" : 1, "a1" : "2019-05-02T22:00:00Z", "a3" : 60, "a4" : "2019-05-02T22:00:00Z" },
-      { "_id" : "5cf6f46d857aba009210afa8", "a1" : "2019-04-08T22:00:00Z", "a2" : 8, "a3" : 480, "a4" : "2019-04-08T22:00:00Z" },
-      { "_id" : "5cf6f47a857aba009210afa9", "a1" : "2019-04-09T22:00:00Z", "a2" : 8, "a3" : 480, "a4" : "2019-04-09T22:00:00Z" },
-      { "_id" : "5cf6f489857aba009210afaa", "a1" : "2019-04-10T22:00:00Z", "a2" : 8, "a3" : 480, "a4" : "2019-04-10T22:00:00Z" },
-      { "_id" : "5cf6f4b8857aba009210afab", "a1" : "2019-05-07T22:00:00Z", "a2" : 8, "a3" : 480, "a4" : "2019-05-07T22:00:00Z" },
-      { "_id" : "5cf6f4d9857aba009210afae", "a2" : 8, "a1" : "2019-05-08T22:00:00Z", "a3" : 480, "a4" : "2019-05-08T22:00:00Z" },
-      { "_id" : "5cf6f4eb857aba009210afaf", "a2" : 8, "a1" : "2019-05-09T22:00:00Z", "a3" : 520, "a4" : "2019-05-09T22:00:00Z" },
-      { "_id" : "5cf6f4fd857aba009210afb0", "a2" : 6, "a1" : "2019-05-09T22:00:00Z", "a3" : 390, "a4" : "2019-05-09T22:00:00Z" },
-      { "_id" : "5cf6f510857aba009210afb1", "a1" : "2019-05-09T22:00:00Z", "a2" : 2, "a3" : 130, "a4" : "2019-05-09T22:00:00Z" },
-      { "_id" : "5cf6f51c857aba009210afb2", "a2" : 7, "a1" : "2019-05-05T22:00:00Z", "a3" : 525, "a4" : "2019-05-05T22:00:00Z" },
-      { "_id" : "5cf6f531857aba009210afb5", "a2" : 9, "a1" : "2019-05-05T22:00:00Z", "a3" : 630, "a4" : "2019-05-05T22:00:00Z" },
-      { "_id" : "5cf6f540857aba009210afb6", "a2" : 7, "a1" : "2019-05-05T22:00:00Z", "a3" : 420, "a4" : "2019-05-05T22:00:00Z" }
+    "5d9213e98f90902526af849c": [
+      {
+        "_id": "5d9213ea8f90902526af84ae",
+        "a1": "2019-03-31T22:00:00Z",
+        "a2": 14400000,
+        "a3": 300.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84af",
+        "a1": "2019-03-31T22:00:00Z",
+        "a2": 7200000,
+        "a3": 120.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b0",
+        "a1": "2019-03-31T22:00:00Z",
+        "a2": 14400000,
+        "a3": 300.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b1",
+        "a1": "2019-04-01T22:00:00Z",
+        "a2": 21600000,
+        "a3": 450.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b2",
+        "a1": "2019-04-01T22:00:00Z",
+        "a2": 7200000,
+        "a3": 150.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b3",
+        "a1": "2019-03-31T22:00:00Z",
+        "a2": 21600000,
+        "a3": 360.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b4",
+        "a1": "2019-04-01T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b5",
+        "a1": "2019-04-30T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b6",
+        "a1": "2019-05-01T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b7",
+        "a1": "2019-05-02T22:00:00Z",
+        "a2": 25200000,
+        "a3": 420.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b8",
+        "a1": "2019-05-02T22:00:00Z",
+        "a2": 3600000,
+        "a3": 60.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84b9",
+        "a1": "2019-04-08T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84ba",
+        "a1": "2019-04-09T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84bb",
+        "a1": "2019-04-10T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84bc",
+        "a1": "2019-05-07T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84bd",
+        "a1": "2019-05-08T22:00:00Z",
+        "a2": 28800000,
+        "a3": 480.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84be",
+        "a1": "2019-05-09T22:00:00Z",
+        "a2": 28800000,
+        "a3": 520.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84bf",
+        "a1": "2019-05-09T22:00:00Z",
+        "a2": 21600000,
+        "a3": 390.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84c0",
+        "a1": "2019-05-09T22:00:00Z",
+        "a2": 7200000,
+        "a3": 130.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84c1",
+        "a1": "2019-05-05T22:00:00Z",
+        "a2": 25200000,
+        "a3": 525.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84c2",
+        "a1": "2019-05-05T22:00:00Z",
+        "a2": 32400000,
+        "a3": 630.0
+      },
+      {
+        "_id": "5d9213ea8f90902526af84c3",
+        "a1": "2019-05-05T22:00:00Z",
+        "a2": 25200000,
+        "a3": 420.0
+      }
     ]
   },
   "documents": [
-    { "_id" : "5cf6ec20857aba008f0655db", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-04T22:09:36.107Z", "dataVersion" : 6, "updateDate" : "2019-06-04T22:26:53.027Z" },
-    { "_id" : "5cf6ec2c857aba008f0655dc", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec20857aba008f0655db" }, "creationDate" : "2019-06-04T22:09:48.029Z", "dataVersion" : 7, "updateDate" : "2019-06-04T22:26:59.562Z" },
-    { "_id" : "5cf6ec32857aba008f0655dd", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:09:54.131Z", "dataVersion" : 8, "updateDate" : "2019-06-04T22:27:00.739Z" },
-    { "_id" : "5cf6ec39857aba008f0655de", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:10:01.179Z", "dataVersion" : 7, "updateDate" : "2019-06-04T22:27:02.294Z" },
-    { "_id" : "5cf6ec42857aba008f0655df", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:10:10.592Z", "dataVersion" : 7, "updateDate" : "2019-06-04T22:27:04.459Z" },
-    { "_id" : "5cf6ec4b857aba008f0655e0", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:10:19.535Z", "dataVersion" : 7, "updateDate" : "2019-06-04T22:27:05.306Z" },
-    { "_id" : "5cf6ec56857aba008f0655e1", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:10:30.195Z", "dataVersion" : 7, "updateDate" : "2019-06-04T22:27:07.506Z" },
-    { "_id" : "5cf6ec5f857aba008f0655e2", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:10:39.280Z", "dataVersion" : 7, "updateDate" : "2019-06-04T22:27:13.179Z" },
-    { "_id" : "5cf6ec66857aba008f0655e3", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec20857aba008f0655db" }, "creationDate" : "2019-06-04T22:10:46.961Z", "dataVersion" : 8, "updateDate" : "2019-06-04T22:27:31.485Z" },
-    { "_id" : "5cf6ec6f857aba008f0655e4", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:10:55.582Z", "dataVersion" : 8, "updateDate" : "2019-06-04T22:27:14.829Z" },
-    { "_id" : "5cf6ec7c857aba008f0655e5", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec2c857aba008f0655dc" }, "creationDate" : "2019-06-04T22:11:08.072Z", "dataVersion" : 8, "updateDate" : "2019-06-04T22:27:17.456Z" },
-    { "_id" : "5cf6ec85857aba008f0655e6", "collectionId" : "5cf6eb98857aba008f0655d8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : { "parentId" : "5cf6ec20857aba008f0655db" }, "creationDate" : "2019-06-04T22:11:17.795Z", "dataVersion" : 8, "updateDate" : "2019-06-04T22:27:26.644Z" },
-    { "_id" : "5cf6f0e9857aba008f0655eb", "collectionId" : "5cf6f078857aba008f0655e8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-04T22:30:01.332Z", "dataVersion" : 2, "updateDate" : "2019-06-04T22:32:19.070Z" },
-    { "_id" : "5cf6f0f0857aba008f0655ec", "collectionId" : "5cf6f078857aba008f0655e8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-04T22:30:08.827Z", "dataVersion" : 2, "updateDate" : "2019-06-04T22:32:42.828Z" },
-    { "_id" : "5cf6f0fb857aba008f0655ed", "collectionId" : "5cf6f078857aba008f0655e8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-04T22:30:19.680Z", "dataVersion" : 2, "updateDate" : "2019-06-04T22:32:50.692Z" },
-    { "_id" : "5cf6f109857aba008f0655ee", "collectionId" : "5cf6f078857aba008f0655e8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-04T22:30:33.522Z", "dataVersion" : 2, "updateDate" : "2019-06-04T22:33:07.476Z" },
-    { "_id" : "5cf6f114857aba008f0655ef", "collectionId" : "5cf6f078857aba008f0655e8", "createdBy" : "5c1136e9857aba00900e7a1f", "updatedBy" : "5c1136e9857aba00900e7a1f", "metaData" : {  }, "creationDate" : "2019-06-04T22:30:44.994Z", "dataVersion" : 2, "updateDate" : "2019-06-04T22:33:23.812Z" }
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 0,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec20857aba008f0655db"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a2"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442166,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec2c857aba008f0655dc",
+        "parentId": "5d9213ea8f90902526af84a2"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a3"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442167,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec32857aba008f0655dd",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a4"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442169,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec39857aba008f0655de",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a5"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442170,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec42857aba008f0655df",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a6"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442172,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec4b857aba008f0655e0",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a7"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442173,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec56857aba008f0655e1",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a8"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442174,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec5f857aba008f0655e2",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84a9"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442176,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec66857aba008f0655e3",
+        "parentId": "5d9213ea8f90902526af84a2"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84aa"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442179,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec6f857aba008f0655e4",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84ab"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442180,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec7c857aba008f0655e5",
+        "parentId": "5d9213ea8f90902526af84a3"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84ac"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849a",
+      "creationDate": 1569854442046,
+      "updateDate": 1569854442182,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "updatedBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 1,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6ec85857aba008f0655e6",
+        "parentId": "5d9213ea8f90902526af84a2"
+      },
+      "favorite": false,
+      "_id": "5d9213ea8f90902526af84ad"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849b",
+      "creationDate": 1569854441912,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 0,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6f0e9857aba008f0655eb"
+      },
+      "favorite": false,
+      "_id": "5d9213e98f90902526af849d"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849b",
+      "creationDate": 1569854441912,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 0,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6f0f0857aba008f0655ec"
+      },
+      "favorite": false,
+      "_id": "5d9213e98f90902526af849e"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849b",
+      "creationDate": 1569854441912,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 0,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6f0fb857aba008f0655ed"
+      },
+      "favorite": false,
+      "_id": "5d9213e98f90902526af849f"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849b",
+      "creationDate": 1569854441912,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 0,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6f109857aba008f0655ee"
+      },
+      "favorite": false,
+      "_id": "5d9213e98f90902526af84a0"
+    },
+    {
+      "collectionId": "5d9213e98f90902526af849b",
+      "creationDate": 1569854441912,
+      "createdBy": "5d4daf2513dedf5073e5a498",
+      "dataVersion": 0,
+      "data": {},
+      "metaData": {
+        "templateId": "5cf6f114857aba008f0655ef"
+      },
+      "favorite": false,
+      "_id": "5d9213e98f90902526af84a1"
+    }
   ],
   "data": {
-    "5cf6eb98857aba008f0655d8": [
-      { "_id" : "5cf6ec20857aba008f0655db", "a1" : "Macie To", "a2" : "macie@lumeerio.com", "a3" : "CEO", "a4" : "Ljubljana", "a5" : "G3", "a6" : 90 },
-      { "_id" : "5cf6ec2c857aba008f0655dc", "a1" : "Marta Cagley", "a2" : "marta@lumeerio.com", "a3" : "Head of R&D", "a4" : "Ljubljana", "a5" : "G3 RD", "a6" : 75 },
-      { "_id" : "5cf6ec32857aba008f0655dd", "a1" : "Jasmin Peace", "a2" : "jasmin@lumeerio.com", "a3" : "Designer", "a4" : "Ljubljana", "a5" : "G3 Design", "a6" : 60 },
-      { "_id" : "5cf6ec39857aba008f0655de", "a1" : "Natosha Runk", "a2" : "natosha@lumeerio.com", "a3" : "Designer", "a4" : "Maribor", "a5" : "G3 Design", "a6" : 60 },
-      { "_id" : "5cf6ec42857aba008f0655df", "a1" : "Alexis Gauntt", "a2" : "alexis@lumeerio.com", "a3" : "Engineer", "a4" : "Murska Sobota", "a5" : "G3 RD", "a6" : 60 },
-      { "_id" : "5cf6ec4b857aba008f0655e0", "a1" : "Shwanta Cybart", "a2" : "shwanta@lumeerio.com", "a3" : "Engineer", "a4" : "Bled", "a5" : "G3 RD", "a6" : 60 },
-      { "_id" : "5cf6ec56857aba008f0655e1", "a1" : "Carmen Farner", "a2" : "carmen@lumeerio.com", "a3" : "Engineer", "a4" : "Slavonski Brod", "a5" : "G3 RD", "a6" : 60 },
-      { "_id" : "5cf6ec5f857aba008f0655e2", "a1" : "Nathaniel Fritze", "a2" : "nathaniel@lumeerio.com", "a3" : "Engineer", "a4" : "Maribor", "a5" : "G3 RD", "a6" : 65 },
-      { "_id" : "5cf6ec66857aba008f0655e3", "a1" : "Vinita Collins", "a2" : "vinita@lumeerio.com", "a3" : "Head of experiment team", "a4" : "Maribor", "a5" : "G3 Star", "a6" : 70 },
-      { "_id" : "5cf6ec6f857aba008f0655e4", "a1" : "Sylvia Housand", "a2" : "sylvia@lumeerio.com", "a3" : "Manufacturer", "a4" : "Bled", "a5" : "G3 RD", "a6" : 65 },
-      { "_id" : "5cf6ec7c857aba008f0655e5", "a1" : "Keenan Buczek", "a2" : "keenan@lumeerio.com", "a3" : "Sales", "a4" : "Maribor", "a5" : "G3 Kickstart", "a6" : 75 },
-      { "_id" : "5cf6ec85857aba008f0655e6", "a1" : "Bebe Maxon", "a2" : "bebe@lumeerio.com", "a3" : "Freelancer", "a4" : "Zgornje Jezersko", "a5" : "G3 Kickstart", "a6" : 60 }
+    "5d9213e98f90902526af849a": [
+      {
+        "_id": "5d9213ea8f90902526af84a2",
+        "a1": "Macie To",
+        "a2": "macie@lumeerio.com",
+        "a3": "CEO",
+        "a4": "Ljubljana",
+        "a5": "G3",
+        "a6": 90
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a3",
+        "a1": "Marta Cagley",
+        "a2": "marta@lumeerio.com",
+        "a3": "Head of R&D",
+        "a4": "Ljubljana",
+        "a5": "G3 RD",
+        "a6": 75
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a4",
+        "a1": "Jasmin Peace",
+        "a2": "jasmin@lumeerio.com",
+        "a3": "Designer",
+        "a4": "Ljubljana",
+        "a5": "G3 Design",
+        "a6": 60
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a5",
+        "a1": "Natosha Runk",
+        "a2": "natosha@lumeerio.com",
+        "a3": "Designer",
+        "a4": "Maribor",
+        "a5": "G3 Design",
+        "a6": 60
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a6",
+        "a1": "Alexis Gauntt",
+        "a2": "alexis@lumeerio.com",
+        "a3": "Engineer",
+        "a4": "Murska Sobota",
+        "a5": "G3 RD",
+        "a6": 60
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a7",
+        "a1": "Shwanta Cybart",
+        "a2": "shwanta@lumeerio.com",
+        "a3": "Engineer",
+        "a4": "Bled",
+        "a5": "G3 RD",
+        "a6": 60
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a8",
+        "a1": "Carmen Farner",
+        "a2": "carmen@lumeerio.com",
+        "a3": "Engineer",
+        "a4": "Slavonski Brod",
+        "a5": "G3 RD",
+        "a6": 60
+      },
+      {
+        "_id": "5d9213ea8f90902526af84a9",
+        "a1": "Nathaniel Fritze",
+        "a2": "nathaniel@lumeerio.com",
+        "a3": "Engineer",
+        "a4": "Maribor",
+        "a5": "G3 RD",
+        "a6": 65
+      },
+      {
+        "_id": "5d9213ea8f90902526af84aa",
+        "a1": "Vinita Collins",
+        "a2": "vinita@lumeerio.com",
+        "a3": "Head of experiment team",
+        "a4": "Maribor",
+        "a5": "G3 Star",
+        "a6": 70
+      },
+      {
+        "_id": "5d9213ea8f90902526af84ab",
+        "a1": "Sylvia Housand",
+        "a2": "sylvia@lumeerio.com",
+        "a3": "Manufacturer",
+        "a4": "Bled",
+        "a5": "G3 RD",
+        "a6": 65
+      },
+      {
+        "_id": "5d9213ea8f90902526af84ac",
+        "a1": "Keenan Buczek",
+        "a2": "keenan@lumeerio.com",
+        "a3": "Sales",
+        "a4": "Maribor",
+        "a5": "G3 Kickstart",
+        "a6": 75
+      },
+      {
+        "_id": "5d9213ea8f90902526af84ad",
+        "a1": "Bebe Maxon",
+        "a2": "bebe@lumeerio.com",
+        "a3": "Freelancer",
+        "a4": "Zgornje Jezersko",
+        "a5": "G3 Kickstart",
+        "a6": 60
+      }
     ],
-    "5cf6f078857aba008f0655e8": [
-      { "_id" : "5cf6f0e9857aba008f0655eb", "a1" : "TP 260", "a2" : "2019-03-31T22:00:00Z", "a3" : "2022-01-30T23:00:00Z" },
-      { "_id" : "5cf6f0f0857aba008f0655ec", "a1" : "AK 990", "a2" : "2019-01-31T23:00:00Z", "a3" : "2020-04-28T22:00:00Z" },
-      { "_id" : "5cf6f0fb857aba008f0655ed", "a1" : "CW 21", "a2" : "2018-07-31T22:00:00Z", "a3" : "2019-06-30T22:00:00Z" },
-      { "_id" : "5cf6f109857aba008f0655ee", "a1" : "SI Show", "a2" : "2019-03-31T22:00:00Z", "a3" : "2035-11-05T23:00:00Z" },
-      { "_id" : "5cf6f114857aba008f0655ef", "a1" : "Project Q", "a2" : "2014-04-25T22:00:00Z", "a3" : "2015-01-18T23:00:00Z" }
+    "5d9213e98f90902526af849b": [
+      {
+        "_id": "5d9213e98f90902526af849d",
+        "a1": "TP 260",
+        "a2": "2019-03-31T22:00:00Z",
+        "a3": "2022-01-30T23:00:00Z"
+      },
+      {
+        "_id": "5d9213e98f90902526af849e",
+        "a1": "AK 990",
+        "a2": "2019-01-31T23:00:00Z",
+        "a3": "2020-04-28T22:00:00Z"
+      },
+      {
+        "_id": "5d9213e98f90902526af849f",
+        "a1": "CW 21",
+        "a2": "2018-07-31T22:00:00Z",
+        "a3": "2019-06-30T22:00:00Z"
+      },
+      {
+        "_id": "5d9213e98f90902526af84a0",
+        "a1": "SI Show",
+        "a2": "2019-03-31T22:00:00Z",
+        "a3": "2035-11-05T23:00:00Z"
+      },
+      {
+        "_id": "5d9213e98f90902526af84a1",
+        "a1": "Project Q",
+        "a2": "2014-04-25T22:00:00Z",
+        "a3": "2015-01-18T23:00:00Z"
+      }
     ]
   }
 }
