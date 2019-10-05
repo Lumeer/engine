@@ -92,6 +92,7 @@ public class View extends Resource {
       o.authorRights = this.authorRights;
       o.version = this.version;
       o.lastTimeUsed = this.lastTimeUsed;
+      o.favorite = this.favorite;
 
       return o;
    }

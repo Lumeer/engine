@@ -140,6 +140,9 @@ public class PusherFacade extends AbstractFacade {
    private OrganizationDao organizationDao;
 
    @Inject
+   private DocumentFacade documentFacade;
+
+   @Inject
    private RequestDataKeeper requestDataKeeper;
 
    @Inject
@@ -553,12 +556,14 @@ public class PusherFacade extends AbstractFacade {
       Set<String> userIds = ResourceUtils.usersAllowedRead(view);
       userIds.addAll(getWorkspaceManagers());
       view.setAuthorRights(viewFacade.getViewAuthorRights(view));
+      view.setFavorite(viewFacade.isFavorite(view.getId()));
       ObjectWithParent object = new ObjectWithParent(view, getOrganization().getId(), getProject().getId());
       sendNotificationsByUsers(object, userIds, event);
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
       Set<String> userIds = collectionFacade.getUsersIdsWithAccess(collection);
+      collection.setFavorite(collectionFacade.isFavorite(collection.getId()));
       sendNotificationsByUsers(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId()), userIds, event);
    }
 
@@ -587,6 +592,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Collection collection = collectionFacade.getCollection(document.getCollectionId());
             constraintManager.decodeDataTypes(collection, document.getData());
+            document.setFavorite(documentFacade.isFavorite(document.getId()));
             sendNotificationsByUsers(document, collectionFacade.getUsersIdsWithAccess(document.getCollectionId()), eventSuffix);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -915,13 +921,6 @@ public class PusherFacade extends AbstractFacade {
          this.object = object;
          this.organizationId = organizationId;
          this.projectId = projectId;
-      }
-
-      public ObjectWithParent(final Object alternateObject, final ObjectWithParent original) {
-         this.object = alternateObject;
-         this.organizationId = original.organizationId;
-         this.projectId = original.projectId;
-         this.correlationId = original.correlationId;
       }
 
       public Object getObject() {
