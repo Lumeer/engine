@@ -35,4 +35,12 @@ public class RequestDataKeeper {
          this.correlationId = correlationId;
       }
    }
+
+   public RequestDataKeeper() {
+   }
+
+   public RequestDataKeeper(final RequestDataKeeper original) {
+      var keeper = new RequestDataKeeper();
+      keeper.setCorrelationId(original.correlationId);
+   }
 }

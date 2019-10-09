@@ -23,6 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public interface ContextualTask extends Task {
 
-   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient);
+   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper);
 
    DaoContextSnapshot getDaoContextSnapshot();
    PusherClient getPusherClient();
