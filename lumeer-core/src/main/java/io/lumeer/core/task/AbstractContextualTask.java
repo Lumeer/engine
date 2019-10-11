@@ -25,6 +25,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -46,12 +47,14 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected DaoContextSnapshot daoContextSnapshot;
    protected PusherClient pusherClient;
    protected Task parent;
+   protected RequestDataKeeper requestDataKeeper;
 
    @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient) {
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper) {
       this.initiator = initiator;
       this.daoContextSnapshot = daoContextSnapshot;
       this.pusherClient = pusherClient;
+      this.requestDataKeeper = requestDataKeeper;
 
       return this;
    }
@@ -105,26 +108,31 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private Event createEventForCollection(final Collection collection, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(collection), null);
    }
 
    private Event createEventForDocument(final Document document, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(document), null);
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkType), null);
    }
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance), null);
    }
 
    private Event createEventForSequence(final Sequence sequence, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(sequence, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence), null);
    }
 
@@ -179,6 +187,12 @@ public abstract class AbstractContextualTask implements ContextualTask {
       });
 
       getPusherClient().trigger(events);
+   }
+
+   private void injectCorrelationId(final PusherFacade.ObjectWithParent obj) {
+      if (requestDataKeeper != null) {
+         obj.setCorrelationId(requestDataKeeper.getCorrelationId());
+      }
    }
 
 }
