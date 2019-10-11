@@ -77,7 +77,7 @@
       <version.commons.io>2.6</version.commons.io>
       <version.commons.beanutils>1.9.3</version.commons.beanutils>
       <version.commons.collections>4.2</version.commons.collections>
-      <version.commons.lang>3.7</version.commons.lang>
+      <version.commons.lang>3.9</version.commons.lang>
       <version.commons.text>1.7</version.commons.text>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.cli>1.4</version.commons.cli>
