@@ -26,6 +26,8 @@ public class RequestDataKeeper {
 
    private String correlationId;
 
+   private String userLocale = "en";
+
    public String getCorrelationId() {
       return correlationId;
    }
@@ -36,11 +38,20 @@ public class RequestDataKeeper {
       }
    }
 
+   public String getUserLocale() {
+      return userLocale;
+   }
+
+   public void setUserLocale(String userLocale) {
+      this.userLocale = userLocale;
+   }
+
    public RequestDataKeeper() {
    }
 
    public RequestDataKeeper(final RequestDataKeeper original) {
       var keeper = new RequestDataKeeper();
       keeper.setCorrelationId(original.correlationId);
+      keeper.setUserLocale(original.userLocale);
    }
 }

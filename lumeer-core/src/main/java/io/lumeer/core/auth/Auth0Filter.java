@@ -69,6 +69,7 @@ public class Auth0Filter implements Filter {
    private static final String VIEW_ID = "view_id";
    private static final String CORRELATION_ID = "correlation_id";
    private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
+   private static final String LOCALE_HEADER = "X-Lumeer-Locale";
 
    @Inject
    private Logger log;
@@ -123,6 +124,7 @@ public class Auth0Filter implements Filter {
       parseViewId(req);
       parseRequestData(req);
       processStartTimestamp(req, res);
+      processUserLocale(req, res);
 
       if (System.getenv("SKIP_SECURITY") != null) {
          fakeUserLogin(req); // try to consume test user from request header
@@ -244,6 +246,13 @@ public class Auth0Filter implements Filter {
       String tm = req.getHeader(TIMESTAMP_HEADER);
       if (tm != null) {
          res.addHeader(TIMESTAMP_HEADER, tm);
+      }
+   }
+
+   private void processUserLocale(final HttpServletRequest req, final HttpServletResponse res) {
+      String locale = req.getHeader(LOCALE_HEADER);
+      if (locale != null) {
+         requestDataKeeper.setUserLocale(locale);
       }
    }
 
