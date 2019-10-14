@@ -77,6 +77,9 @@ public class ConversionFacade {
                   );
                });
 
+               if (reloadResourceContentEvent != null) {
+                  reloadResourceContentEvent.fire(new ReloadResourceContent(collection));
+               }
             }
          }
       }
