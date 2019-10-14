@@ -5,4 +5,4 @@ services:
 script: ./travis.sh
 dist: bionic
 jdk:
-  - openjdk12
+  - openjdk13
