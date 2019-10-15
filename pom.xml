@@ -97,7 +97,7 @@
       <maven.plugin.plugin>3.5.2</maven.plugin.plugin>
       <maven.war.plugin.version>3.0.0</maven.war.plugin.version>
       <maven.wildfly.plugin.version>2.0.1.Final</maven.wildfly.plugin.version>
-      <maven.failsafe.plugin.version>2.22.0</maven.failsafe.plugin.version>
+      <maven.failsafe.plugin.version>2.22.2</maven.failsafe.plugin.version>
       <maven.cargo.plugin.version>1.7.6</maven.cargo.plugin.version>
 
       <version.wildfly>17.0.1.Final</version.wildfly>
