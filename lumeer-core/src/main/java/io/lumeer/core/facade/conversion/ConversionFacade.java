@@ -20,11 +20,11 @@ package io.lumeer.core.facade.conversion;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintConverter;
+import io.lumeer.core.constraint.ConstraintConverterFactory;
 import io.lumeer.core.constraint.ConstraintManager;
-import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.ReloadResourceContent;
@@ -57,29 +57,39 @@ public class ConversionFacade {
 
    private ConstraintManager constraintManager;
 
+   private ConstraintConverterFactory constraintConverterFactory;
+
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
+      constraintConverterFactory = new ConstraintConverterFactory(constraintManager, requestDataKeeper.getUserLocale());
    }
 
    public void convertStoredDocuments(final Collection collection, final Attribute originalAttribute, final Attribute newAttribute) {
       if (areConstraintsDifferent(originalAttribute, newAttribute)) {
          if (originalAttribute.getConstraint() == null || newAttribute.getConstraint() == null) { // for now, we only proceed for conversions NONE -> SOME, SOME -> NONE
 
-            final List<Document> documents = documentDao.getDocumentsByCollection(collection.getId());
+            final ConstraintConverter converter = constraintConverterFactory.getConstraintConverter(originalAttribute, newAttribute);
 
-            if (documents.size() < 1_000_000) { // only if the number of documents is manageable
-               documents.forEach(doc -> {
-                  dataDao.patchData(
-                          collection.getId(),
-                          doc.getId(),
-                          getConversionUpdate(dataDao.getData(collection.getId(), doc.getId()))
-                  );
-               });
+            if (converter != null) {
 
-               if (reloadResourceContentEvent != null) {
-                  reloadResourceContentEvent.fire(new ReloadResourceContent(collection));
+               final List<Document> documents = documentDao.getDocumentsByCollection(collection.getId());
+
+               if (documents.size() < 1_000_000) { // only if the number of documents is manageable
+
+                  documents.forEach(doc -> {
+                     final DataDocument update = getConversionUpdate(converter, dataDao.getData(collection.getId(), doc.getId()));
+
+                     if (update != null && update.size() > 0) {
+                        dataDao.patchData(collection.getId(), doc.getId(), update);
+                     }
+                  });
+
+                  if (reloadResourceContentEvent != null) {
+                     reloadResourceContentEvent.fire(new ReloadResourceContent(collection));
+                  }
                }
+
             }
          }
       }
@@ -99,7 +109,7 @@ public class ConversionFacade {
       return true;
    }
 
-   private DataDocument getConversionUpdate(final DataDocument originalDocument) {
-      return null;
+   private DataDocument getConversionUpdate(final ConstraintConverter constraintConverter, final DataDocument originalDocument) {
+      return constraintConverter.getPatchDocument(originalDocument);
    }
 }

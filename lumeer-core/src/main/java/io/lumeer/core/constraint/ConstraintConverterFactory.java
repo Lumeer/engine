@@ -35,7 +35,7 @@ public class ConstraintConverterFactory {
       this.userLocale = userLocale;
    }
 
-   ConstraintConverter getConstraintConvertor(final Attribute fromAttribute, final Attribute toAttribute) {
+   public ConstraintConverter getConstraintConverter(final Attribute fromAttribute, final Attribute toAttribute) {
       final ConstraintType fromType = fromAttribute != null && fromAttribute.getConstraint() != null ? fromAttribute.getConstraint().getType() : null;
       final ConstraintType toType = toAttribute != null && toAttribute.getConstraint() != null ? toAttribute.getConstraint().getType() : null;
 
@@ -48,7 +48,7 @@ public class ConstraintConverterFactory {
       return converter;
    }
 
-   static void registerConvertor(final ConstraintConverter constraintConverter) {
+   static void registerConverter(final ConstraintConverter constraintConverter) {
       converters.add(constraintConverter);
    }
 }

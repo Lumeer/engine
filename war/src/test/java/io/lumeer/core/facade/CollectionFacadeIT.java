@@ -47,6 +47,7 @@ import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -61,12 +62,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -99,9 +102,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private static final Integer ATTRIBUTE_COUNT = 0;
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
+   static final String ATTRIBUTE_STATE = "State";
 
    private static final String CODE2 = "TCOLL2";
-   private static final String NAME2 = "Test collection 2";
+   private static final String CODE3 = "TCOLL3";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -117,6 +121,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Inject
    private ProjectDao projectDao;
+
+   @Inject
+   private DocumentDao documentDao;
 
    @Inject
    private UserDao userDao;
@@ -608,6 +615,33 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       assertThat(collectionFacade.getCollections()).isEmpty();
    }
+
+   @Test
+   public void testAttributeConversion() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE3));
+
+      var values = Arrays.asList("New", "In Progress", "To Do", "Done", "Won't fix");
+      var rnd = new Random();
+
+      for(int i = 0; i < 10; i++) {
+         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("Task", "Task-" + (i + 1)).append(ATTRIBUTE_STATE, values.get(rnd.nextInt(values.size())))));
+      }
+
+      var attr = collectionFacade.getCollection(collection.getId()).getAttributes().stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
+
+      var documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+
+         assertThat(doc.getData().getString(attr.getId())).isIn(values);
+      });
+
+      assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(3);
+   }
+
 
    public void testTaskExecutor() throws InterruptedException {
       taskExecutor.submitTask(contextualTaskFactory.getInstance(ListCollectionsIn10SecondsTask.class));

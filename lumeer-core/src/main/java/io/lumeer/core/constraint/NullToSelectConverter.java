@@ -35,13 +35,11 @@ public class NullToSelectConverter extends AbstractConstraintConverter {
       super.init(cm, userLocale, fromAttribute, toAttribute);
 
       if (toAttribute != null && toAttribute.getConstraint() != null && toAttribute.getConstraint().getConfig() != null) {
-         org.bson.Document config = (org.bson.Document) toAttribute.getConstraint().getConfig();
-         List<org.bson.Document> options = (List<org.bson.Document>) config.get("options");
+         Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
+         List<Map<String, Object>> options = (List<Map<String, Object>>) config.get("options");
 
          if (options != null) {
-            options.forEach(o -> {
-               org.bson.Document opt = (org.bson.Document) o;
-
+            options.forEach(opt -> {
                if (opt.get("displayValue") != null) {
                   translations.put(opt.get("displayValue").toString(), opt.get("value").toString());
                }
