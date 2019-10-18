@@ -89,7 +89,7 @@
       <version.jaxrs>3.0.12.Final</version.jaxrs>
       <version.apache.httpclient>4.5.9</version.apache.httpclient>
       <version.apache.httpcore>4.4.12</version.apache.httpcore>
-      <version.univocity>2.8.2</version.univocity>
+      <version.univocity>2.8.3</version.univocity>
       <version.mvc-auth>1.0.9</version.mvc-auth>
       <version.jwt>3.8.1</version.jwt>
       <version.jaxb>2.3.1</version.jaxb>
