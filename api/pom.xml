@@ -44,7 +44,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
       <version.velocity>1.7</version.velocity>
-      <version.puppycrawl>8.23</version.puppycrawl>
+      <version.puppycrawl>8.25</version.puppycrawl>
 
       <java.level>12</java.level>
       <maven.compiler.source>10</maven.compiler.source>
