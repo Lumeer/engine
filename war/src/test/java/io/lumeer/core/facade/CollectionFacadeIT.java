@@ -619,15 +619,32 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Test
    public void testAttributeConversion() {
       Collection collection = collectionFacade.createCollection(prepareCollection(CODE3));
+      collectionFacade.createCollectionAttributes(
+            collection.getId(),
+            Arrays.asList(
+                  new Attribute("a1", "Task", null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+            )
+      );
 
       var values = Arrays.asList("New", "In Progress", "To Do", "Done", "Won't fix");
       var rnd = new Random();
 
-      for(int i = 0; i < 10; i++) {
-         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("Task", "Task-" + (i + 1)).append(ATTRIBUTE_STATE, values.get(rnd.nextInt(values.size())))));
+      for(int i = 0; i < 1_000; i++) {
+         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + (i + 1)).append("a2", values.get(rnd.nextInt(values.size())))));
       }
 
-      var attr = collectionFacade.getCollection(collection.getId()).getAttributes().stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
+      var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr.setConstraint(new Constraint(ConstraintType.Select, new org.bson.Document("options",
+            List.of(
+                  new org.bson.Document("value", "New").append("displayValue", ""),
+                  new org.bson.Document("value", "In Progress").append("displayValue", ""),
+                  new org.bson.Document("value", "To Do").append("displayValue", ""),
+                  new org.bson.Document("value", "Done").append("displayValue", ""),
+                  new org.bson.Document("value", "Won't fix").append("displayValue", "")
+            )
+      )));
 
       collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
 
@@ -639,7 +656,40 @@ public class CollectionFacadeIT extends IntegrationTestBase {
          assertThat(doc.getData().getString(attr.getId())).isIn(values);
       });
 
-      assertThat(collectionFacade.getDocumentsCountInAllCollections()).isEqualTo(3);
+      // now add display value
+      var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr2.setConstraint(new Constraint(ConstraintType.Select, new org.bson.Document("options",
+            List.of(
+                  new org.bson.Document("value", 0).append("displayValue", "New"),
+                  new org.bson.Document("value", 1).append("displayValue", "In Progress"),
+                  new org.bson.Document("value", 2).append("displayValue", "To Do"),
+                  new org.bson.Document("value", 3).append("displayValue", "Done"),
+                  new org.bson.Document("value", 4).append("displayValue", "Won't fix")
+            )
+      ).append("displayValues", List.of("New", "In Progress", "To Do", "Done", "Won't fix"))));
+
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
+
+      documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+
+         assertThat(doc.getData().getInteger(attr.getId())).isBetween(0, 4);
+      });
+
+      // now add display value
+      var attr3 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr3.setConstraint(null);
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr3.getId(), attr3);
+
+      documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+
+         assertThat(doc.getData().getString(attr.getId())).isIn(values);
+      });
    }
 
 

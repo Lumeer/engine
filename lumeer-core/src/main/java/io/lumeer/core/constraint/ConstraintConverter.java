@@ -21,13 +21,15 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Set;
+
 public interface ConstraintConverter {
 
    void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
 
-   ConstraintType getFromType();
+   Set<ConstraintType> getFromTypes();
 
-   ConstraintType getToType();
+   Set<ConstraintType> getToTypes();
 
    DataDocument getPatchDocument(final DataDocument document);
 }

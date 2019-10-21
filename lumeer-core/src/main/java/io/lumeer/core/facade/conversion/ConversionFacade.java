@@ -20,6 +20,7 @@ package io.lumeer.core.facade.conversion;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintConverter;
@@ -32,6 +33,7 @@ import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 
 import java.util.List;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
@@ -67,29 +69,24 @@ public class ConversionFacade {
 
    public void convertStoredDocuments(final Collection collection, final Attribute originalAttribute, final Attribute newAttribute) {
       if (areConstraintsDifferent(originalAttribute, newAttribute)) {
-         if (originalAttribute.getConstraint() == null || newAttribute.getConstraint() == null) { // for now, we only proceed for conversions NONE -> SOME, SOME -> NONE
+         final ConstraintConverter converter = constraintConverterFactory.getConstraintConverter(originalAttribute, newAttribute);
 
-            final ConstraintConverter converter = constraintConverterFactory.getConstraintConverter(originalAttribute, newAttribute);
+         if (converter != null) {
+            final List<Document> documents = documentDao.getDocumentsByCollection(collection.getId());
 
-            if (converter != null) {
+            if (documents.size() < 1_000_000) { // only if the number of documents is manageable
 
-               final List<Document> documents = documentDao.getDocumentsByCollection(collection.getId());
+               documents.forEach(doc -> {
+                  final DataDocument update = getConversionUpdate(converter, dataDao.getData(collection.getId(), doc.getId()));
 
-               if (documents.size() < 1_000_000) { // only if the number of documents is manageable
-
-                  documents.forEach(doc -> {
-                     final DataDocument update = getConversionUpdate(converter, dataDao.getData(collection.getId(), doc.getId()));
-
-                     if (update != null && update.size() > 0) {
-                        dataDao.patchData(collection.getId(), doc.getId(), update);
-                     }
-                  });
-
-                  if (reloadResourceContentEvent != null) {
-                     reloadResourceContentEvent.fire(new ReloadResourceContent(collection));
+                  if (update != null && update.size() > 0) {
+                     dataDao.patchData(collection.getId(), doc.getId(), update);
                   }
-               }
+               });
 
+               if (reloadResourceContentEvent != null) {
+                  reloadResourceContentEvent.fire(new ReloadResourceContent(collection));
+               }
             }
          }
       }
@@ -101,9 +98,24 @@ public class ConversionFacade {
       }
 
       if (originalAttribute.getConstraint() != null && newAttribute.getConstraint() != null) {
-         if (originalAttribute.getConstraint().getType() == newAttribute.getConstraint().getType()) {
-            return false;
-         }
+         return originalAttribute.getConstraint().getType() != newAttribute.getConstraint().getType() ||
+               (originalAttribute.getConstraint().getType() == ConstraintType.Select && areSelectConstraintDifferent(originalAttribute, newAttribute));
+      }
+
+      return true;
+   }
+
+   @SuppressWarnings("unchecked")
+   private boolean areSelectConstraintDifferent(final Attribute originalAttribute, final Attribute newAttribute) {
+      var originalDisplayValues = ((Map<String, Object>) originalAttribute.getConstraint().getConfig()).get("displayValues");
+      var newDisplayValues = ((Map<String, Object>) newAttribute.getConstraint().getConfig()).get("displayValues");
+
+      if (originalDisplayValues == null && newDisplayValues == null) {
+         return false;
+      }
+
+      if (originalDisplayValues != null && newDisplayValues != null) {
+         return !originalDisplayValues.equals(newDisplayValues);
       }
 
       return true;

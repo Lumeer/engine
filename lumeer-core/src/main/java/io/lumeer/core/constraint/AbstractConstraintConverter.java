@@ -18,14 +18,13 @@ package io.lumeer.core.constraint;/*
  */
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
 
 public abstract class AbstractConstraintConverter implements ConstraintConverter {
 
    protected ConstraintManager constraintManager;
    protected String userLocale;
-   protected Attribute fromAttribute;
-   protected Attribute toAttribute;
+   Attribute fromAttribute;
+   Attribute toAttribute;
 
    @Override
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
@@ -33,5 +32,9 @@ public abstract class AbstractConstraintConverter implements ConstraintConverter
       this.userLocale = userLocale;
       this.fromAttribute = fromAttribute;
       this.toAttribute = toAttribute;
+   }
+
+   protected boolean isConstraintWithConfig(final Attribute attribute) {
+      return attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getConfig() != null;
    }
 }

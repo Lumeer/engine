@@ -449,4 +449,8 @@ public class ConstraintManager {
    public DateTimeFormatter getDateDecoder() {
       return dateDecoder;
    }
+
+   public boolean isNumber(final String value) {
+      return numberMatch.matcher(value).matches();
+   }
 }

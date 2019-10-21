@@ -18,45 +18,23 @@ package io.lumeer.core.constraint;/*
  */
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class NullToSelectConverter extends AbstractConstraintConverter {
+public abstract class AbstractTranslatingConverter extends AbstractConstraintConverter {
 
-   private Map<String, String> translations = new HashMap<>();
+   protected Map<String, Object> translations = new HashMap<>();
 
    @Override
-   @SuppressWarnings("unchecked")
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       super.init(cm, userLocale, fromAttribute, toAttribute);
 
-      if (toAttribute != null && toAttribute.getConstraint() != null && toAttribute.getConstraint().getConfig() != null) {
-         Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
-         List<Map<String, Object>> options = (List<Map<String, Object>>) config.get("options");
-
-         if (options != null) {
-            options.forEach(opt -> {
-               if (opt.get("displayValue") != null) {
-                  translations.put(opt.get("displayValue").toString(), opt.get("value").toString());
-               }
-            });
-         }
-      }
+      initTranslationsTable(cm, userLocale, fromAttribute, toAttribute);
    }
 
-   @Override
-   public ConstraintType getFromType() {
-      return null;
-   }
-
-   @Override
-   public ConstraintType getToType() {
-      return ConstraintType.Select;
-   }
+   abstract void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute);
 
    @Override
    public DataDocument getPatchDocument(DataDocument document) {
@@ -67,7 +45,9 @@ public class NullToSelectConverter extends AbstractConstraintConverter {
             if (originalValue != null) {
                var newValue = translations.getOrDefault(originalValue, "");
 
-               return new DataDocument("$set", new DataDocument(toAttribute.getId(), newValue));
+               if (!newValue.equals(originalValue)) {
+                  return new DataDocument(toAttribute.getId(), newValue);
+               }
             }
          }
       }

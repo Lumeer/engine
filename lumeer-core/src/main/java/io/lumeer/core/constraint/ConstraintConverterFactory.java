@@ -25,7 +25,7 @@ import java.util.List;
 
 public class ConstraintConverterFactory {
 
-   private static List<ConstraintConverter> converters = new ArrayList<>();
+   private List<ConstraintConverter> converters = new ArrayList<>();
 
    private ConstraintManager constraintManager;
    private String userLocale;
@@ -33,13 +33,17 @@ public class ConstraintConverterFactory {
    public ConstraintConverterFactory(ConstraintManager constraintManager, String userLocale) {
       this.constraintManager = constraintManager;
       this.userLocale = userLocale;
+
+      registerConverter(new NoneOrSelectToSelectConverter());
+      registerConverter(new SelectToNoneConverter());
+      registerConverter(new NoneToColorConverter());
    }
 
    public ConstraintConverter getConstraintConverter(final Attribute fromAttribute, final Attribute toAttribute) {
-      final ConstraintType fromType = fromAttribute != null && fromAttribute.getConstraint() != null ? fromAttribute.getConstraint().getType() : null;
-      final ConstraintType toType = toAttribute != null && toAttribute.getConstraint() != null ? toAttribute.getConstraint().getType() : null;
+      final ConstraintType fromType = fromAttribute != null && fromAttribute.getConstraint() != null ? fromAttribute.getConstraint().getType() : ConstraintType.None;
+      final ConstraintType toType = toAttribute != null && toAttribute.getConstraint() != null ? toAttribute.getConstraint().getType() : ConstraintType.None;
 
-      final ConstraintConverter converter = converters.stream().filter(c -> c.getFromType() == fromType && c.getToType() == toType).findFirst().orElse(null);
+      final ConstraintConverter converter = converters.stream().filter(c -> c.getFromTypes().contains(fromType) && c.getToTypes().contains(toType)).findFirst().orElse(null);
 
       if (converter != null) {
          converter.init(constraintManager, userLocale, fromAttribute, toAttribute);
@@ -48,7 +52,7 @@ public class ConstraintConverterFactory {
       return converter;
    }
 
-   static void registerConverter(final ConstraintConverter constraintConverter) {
+   private void registerConverter(final ConstraintConverter constraintConverter) {
       converters.add(constraintConverter);
    }
 }
