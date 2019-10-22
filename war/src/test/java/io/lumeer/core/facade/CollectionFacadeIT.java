@@ -71,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -692,6 +693,101 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       });
    }
 
+   @Test
+   public void testDurationAttributeConversion() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE3));
+      collectionFacade.createCollectionAttributes(
+              collection.getId(),
+              Arrays.asList(
+                      new Attribute("a1", "Task", null, null, 0),
+                      new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+              )
+      );
+
+      // 100800000, 77700000, 86466000, 1345, 1434534000, 10806000, 14580000
+      // 3d4h, 2d5h35m, 3d1m6s, 1s, 9w4d6h28m54s, 3h6s, 4h3m
+      var values = Arrays.asList("3d4h", "14h455m", "3d66s", "1345", "1434534s", "3h6s", "0d3m4h0s");
+      var rnd = new Random();
+
+      var i = new AtomicInteger(1);
+      values.forEach(value -> {
+         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + i.getAndIncrement()).append("a2", value)));
+      });
+
+      var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
+      var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr.setConstraint(new Constraint(ConstraintType.Duration, new org.bson.Document("type", "Work").append("conversions",
+              new org.bson.Document("w", 5).append("d", 8).append("h", 60).append("m", 60).append("s", 1000)
+      )));
+
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
+
+      var documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, Long> res = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res.put(doc.getData().getString("a1"), doc.getData().getLong("a2"));
+      });
+
+      assertThat(res).contains(
+              Map.entry("Task-1", 100800000L),
+              Map.entry("Task-2", 77700000L),
+              Map.entry("Task-3", 86466000L),
+              Map.entry("Task-4", 1345L),
+              Map.entry("Task-5", 1434534000L),
+              Map.entry("Task-6", 10806000L),
+              Map.entry("Task-7", 14580000L)
+      );
+
+      // now back to no constraint
+      var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr2.setConstraint(new Constraint(ConstraintType.None, null));
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
+
+      documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, String> res2 = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res2.put(doc.getData().getString("a1"), doc.getData().getString("a2"));
+      });
+
+      assertThat(res2).contains(
+              Map.entry("Task-1", "3d4h"),
+              Map.entry("Task-2", "2d5h35m"),
+              Map.entry("Task-3", "3d1m6s"),
+              Map.entry("Task-4", "1s"),
+              Map.entry("Task-5", "9w4d6h28m54s"),
+              Map.entry("Task-6", "3h6s"),
+              Map.entry("Task-7", "4h3m")
+      );
+
+      // custom unit lengths
+      var attr3 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr3.setConstraint(new Constraint(ConstraintType.Duration, new org.bson.Document("type", "Custom").append("conversions",
+              new org.bson.Document("w", 5).append("d", 5).append("h", 30).append("m", 60).append("s", 1000)
+      )));
+
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr3.getId(), attr3);
+
+      documents = documentDao.getDocumentsByCollection(collection.getId());
+      Map<String, Long> res3 = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res3.put(doc.getData().getString("a1"), doc.getData().getLong("a2"));
+      });
+
+      assertThat(res3).contains(
+              Map.entry("Task-1", 34200000L),
+              Map.entry("Task-2", 29100000L),
+              Map.entry("Task-3", 27066000L),
+              Map.entry("Task-4", 1000L),
+              Map.entry("Task-5", 453534000L),
+              Map.entry("Task-6", 5406000L),
+              Map.entry("Task-7", 7380000L)
+      );
+   }
 
    public void testTaskExecutor() throws InterruptedException {
       taskExecutor.submitTask(contextualTaskFactory.getInstance(ListCollectionsIn10SecondsTask.class));

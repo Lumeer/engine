@@ -37,6 +37,8 @@ public class ConstraintConverterFactory {
       registerConverter(new NoneOrSelectToSelectConverter());
       registerConverter(new SelectToNoneConverter());
       registerConverter(new NoneToColorConverter());
+      registerConverter(new NoneToDurationConverter());
+      registerConverter(new DurationToNoneConverter());
    }
 
    public ConstraintConverter getConstraintConverter(final Attribute fromAttribute, final Attribute toAttribute) {

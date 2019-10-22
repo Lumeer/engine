@@ -20,21 +20,42 @@ package io.lumeer.core.constraint;/*
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NoneToDurationConverter extends AbstractDurationConverter {
+public class DurationToNoneConverter extends AbstractDurationConverter {
+
+   private static class DurationUnit {
+      int value;
+      String name;
+
+      public DurationUnit(int value, String name) {
+         this.value = value;
+         this.name = name;
+      }
+   }
+
+   private static class DurationUnitComparator implements java.util.Comparator<DurationUnit> {
+      @Override
+      public int compare(DurationUnit o1, DurationUnit o2) {
+         return o2.value - o1.value;
+      }
+   }
 
    @Override
    public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
+      return Set.of(ConstraintType.Duration);
    }
 
    @Override
    public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.Duration);
+      return Set.of(ConstraintType.None);
    }
 
    @Override
@@ -44,37 +65,29 @@ public class NoneToDurationConverter extends AbstractDurationConverter {
 
          if (originalValue != null) {
 
-            if (originalValue instanceof Number) {
+            if (!(originalValue instanceof Number)) {
                return null;
             }
 
-            var originalValueStr = originalValue.toString();
+            long originalValueLong = ((Number) originalValue).longValue();
 
-            if (constraintManager.isNumber(originalValueStr)) {
-               return null;
-            }
+            var units = new ArrayList<DurationUnit>(conversions.size());
 
-            var accum = new AtomicLong(0);
+            conversions.forEach((k, v) -> units.add(new DurationUnit(v, k)));
+            Collections.sort(units, new DurationUnitComparator());
 
-            conversions.forEach((k, v) -> {
-               final Pattern p = Pattern.compile("[0-9]+" + k);
-               final Matcher m = p.matcher(originalValueStr);
+            final StringBuilder sb = new StringBuilder();
+            var rem = originalValueLong;
+            for (int i = 0; i < units.size(); i++) {
+               var m = rem / units.get(i).value;
+               rem = rem % units.get(i).value;
 
-               int lastEnd = 0;
-               while (m.find()) {
-                  var num = originalValueStr.substring(m.start(), m.end() - 1);
-
-                  try {
-                     accum.addAndGet(Long.parseLong(num) * v);
-                  } catch (NumberFormatException nfe) {
-                     // nps
-                  }
+               if (m > 0) {
+                  sb.append(m).append(translations.get(units.get(i).name));
                }
-            });
-
-            if (!originalValue.equals(Long.valueOf(accum.get()).toString())) {
-               return new DataDocument(toAttribute.getId(), accum.get());
             }
+
+            return new DataDocument(toAttribute.getId(), sb.toString());
          }
       }
       return null;
