@@ -1,4 +1,4 @@
-package io.lumeer.core.constraint;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,6 +16,7 @@ package io.lumeer.core.constraint;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
@@ -23,7 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Set;
 
-public interface ConstraintConverter {
+public interface ConstraintConverter extends AutoCloseable {
 
    void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
 
@@ -32,4 +33,6 @@ public interface ConstraintConverter {
    Set<ConstraintType> getToTypes();
 
    DataDocument getPatchDocument(final DataDocument document);
+
+   default void close() {}
 }

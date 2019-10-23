@@ -21,12 +21,13 @@ package io.lumeer.core.constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.math.BigDecimal;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class NoneToDurationConverter extends AbstractDurationConverter {
+public class NoneToPercentageConverter extends AbstractConstraintConverter {
 
    @Override
    public Set<ConstraintType> getFromTypes() {
@@ -35,7 +36,7 @@ public class NoneToDurationConverter extends AbstractDurationConverter {
 
    @Override
    public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.Duration);
+      return Set.of(ConstraintType.Percentage);
    }
 
    @Override
@@ -43,38 +44,27 @@ public class NoneToDurationConverter extends AbstractDurationConverter {
       if (document.containsKey(toAttribute.getId())) {
          var originalValue = document.get(fromAttribute.getId());
 
-         if (originalValue != null) {
+         if (originalValue instanceof String) {
 
-            if (originalValue instanceof Number) {
-               return null;
-            }
+            var originalValueStr = ((String) originalValue).trim();
 
-            var originalValueStr = originalValue.toString();
+            if (originalValueStr.indexOf("%") == originalValueStr.length() - 1) { // ends with %
+               var num = originalValueStr.substring(0, originalValueStr.length() - 1).trim();
+               if (constraintManager.isNumber(num)) {
+                  var res = constraintManager.encode(num);
 
-            if (constraintManager.isNumber(originalValueStr)) {
-               return null;
-            }
-
-            var accum = new AtomicLong(0);
-
-            conversions.forEach((k, v) -> {
-               final Pattern p = Pattern.compile("[0-9]+" + k);
-               final Matcher m = p.matcher(originalValueStr);
-
-               int lastEnd = 0;
-               while (m.find()) {
-                  var num = originalValueStr.substring(m.start(), m.end() - 1);
-
-                  try {
-                     accum.addAndGet(Long.parseLong(num) * v);
-                  } catch (NumberFormatException nfe) {
-                     // nps
+                  if (res instanceof BigDecimal) {
+                     res = ((BigDecimal) res).movePointLeft(2);
+                  } else if (res instanceof Double) {
+                     res = (double) res / 100d;
+                  } else if (res instanceof Long) {
+                     res = (long) res / 100d;
+                  } else {
+                     return null;
                   }
-               }
-            });
 
-            if (!originalValue.equals(Long.valueOf(accum.get()).toString())) {
-               return new DataDocument(toAttribute.getId(), accum.get());
+                  return new DataDocument(toAttribute.getId(), res);
+               }
             }
          }
       }

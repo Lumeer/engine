@@ -21,37 +21,13 @@ package io.lumeer.core.constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class DurationToNoneConverter extends AbstractDurationConverter {
-
-   private static class DurationUnit {
-      int value;
-      String name;
-
-      public DurationUnit(int value, String name) {
-         this.value = value;
-         this.name = name;
-      }
-   }
-
-   private static class DurationUnitComparator implements java.util.Comparator<DurationUnit> {
-      @Override
-      public int compare(DurationUnit o1, DurationUnit o2) {
-         return o2.value - o1.value;
-      }
-   }
+public class DateToNoneConverter extends AbstractDateConverter {
 
    @Override
    public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.Duration);
+      return Set.of(ConstraintType.DateTime);
    }
 
    @Override
@@ -61,7 +37,7 @@ public class DurationToNoneConverter extends AbstractDurationConverter {
 
    @Override
    public DataDocument getPatchDocument(DataDocument document) {
-      if (document.containsKey(toAttribute.getId())) {
+      if (initialized && document.containsKey(toAttribute.getId())) {
          var originalValue = document.get(fromAttribute.getId());
 
          if (originalValue != null) {
@@ -72,23 +48,12 @@ public class DurationToNoneConverter extends AbstractDurationConverter {
 
             long originalValueLong = ((Number) originalValue).longValue();
 
-            var units = new ArrayList<DurationUnit>(conversions.size());
-
-            conversions.forEach((k, v) -> units.add(new DurationUnit(v, k)));
-            Collections.sort(units, new DurationUnitComparator());
-
-            final StringBuilder sb = new StringBuilder();
-            var rem = originalValueLong;
-            for (int i = 0; i < units.size(); i++) {
-               var m = rem / units.get(i).value;
-               rem = rem % units.get(i).value;
-
-               if (m > 0) {
-                  sb.append(m).append(translations.get(units.get(i).name));
-               }
+            try {
+               var instant = momentJsParser.formatMomentJsDate(originalValueLong);
+               return new DataDocument(toAttribute.getId(), instant);
+            } catch (RuntimeException e) {
+               return null;
             }
-
-            return new DataDocument(toAttribute.getId(), sb.toString());
          }
       }
       return null;

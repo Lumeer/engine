@@ -19,39 +19,36 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.core.util.MomentJsParser;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractTranslatingConverter extends AbstractConstraintConverter {
+public abstract class AbstractDateConverter extends AbstractConstraintConverter {
 
-   protected Map<String, Object> translations = new HashMap<>();
+   protected MomentJsParser momentJsParser;
+   protected boolean initialized = false;
 
    @Override
+   @SuppressWarnings("unchecked")
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       super.init(cm, userLocale, fromAttribute, toAttribute);
 
-      initTranslationsTable(cm, userLocale, fromAttribute, toAttribute);
-   }
+      if (isConstraintWithConfig(toAttribute) || isConstraintWithConfig(fromAttribute)) {
+         var attr = isConstraintWithConfig(toAttribute) ? toAttribute : fromAttribute;
 
-   abstract void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute);
+         var config = (Map<String, Object>) attr.getConstraint().getConfig();
+         var format = config.get("format").toString();
 
-   @Override
-   public DataDocument getPatchDocument(DataDocument document) {
-      if (translations.size() > 0) {
-         if (document.containsKey(toAttribute.getId())) {
-            var originalValue = document.get(fromAttribute.getId()).toString();
-
-            if (originalValue != null) {
-               var newValue = translations.getOrDefault(originalValue, "");
-
-               if (!newValue.equals(originalValue)) {
-                  return new DataDocument(toAttribute.getId(), newValue);
-               }
-            }
+         if (format != null && !"".equals(format)) {
+            momentJsParser = new MomentJsParser(format, userLocale);
+            initialized = true;
          }
       }
-      return null;
+   }
+
+   public void close() {
+      super.close();
+
+      momentJsParser.close();
    }
 }

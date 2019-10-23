@@ -789,6 +789,126 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       );
    }
 
+   @Test
+   public void testDateAttributeConversion() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE3));
+      collectionFacade.createCollectionAttributes(
+            collection.getId(),
+            Arrays.asList(
+                  new Attribute("a1", "Task", null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+            )
+      );
+
+      var values = Arrays.asList("23/11/2019 8:23:10", "28/02/2019 23:34:12", "24/03/1943 6:55:19", "12/04/1529 9:37:01");
+
+      var i = new AtomicInteger(1);
+      values.forEach(value -> {
+         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + i.getAndIncrement()).append("a2", value)));
+      });
+
+      var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
+      var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr.setConstraint(new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")));
+
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
+
+      var documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, Long> res = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res.put(doc.getData().getString("a1"), doc.getData().getLong("a2"));
+      });
+
+      assertThat(res).contains(
+            Map.entry("Task-1", 1574493790000L),
+            Map.entry("Task-2", 1551393252000L),
+            Map.entry("Task-3", -844970681000L),
+            Map.entry("Task-4", -13907863379000L)
+      );
+
+      // now back to no constraint
+      var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr2.setConstraint(new Constraint(ConstraintType.None, null));
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
+
+      documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, String> res2 = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res2.put(doc.getData().getString("a1"), doc.getData().getString("a2"));
+      });
+
+      assertThat(res2).contains(
+            Map.entry("Task-1", "23/11/2019 8:23:10"),
+            Map.entry("Task-2", "28/02/2019 23:34:12"),
+            Map.entry("Task-3", "24/03/1943 6:55:19"),
+            Map.entry("Task-4", "12/04/1529 9:37:01")
+      );
+   }
+
+   @Test
+   public void testPercentageAttributeConversion() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE3));
+      collectionFacade.createCollectionAttributes(
+            collection.getId(),
+            Arrays.asList(
+                  new Attribute("a1", "Task", null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+            )
+      );
+
+      var values = Arrays.asList("10", "12%", "0.12", "0.12 %");
+
+      var i = new AtomicInteger(1);
+      values.forEach(value -> {
+         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + i.getAndIncrement()).append("a2", value)));
+      });
+
+      var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
+      var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr.setConstraint(new Constraint(ConstraintType.Percentage, null));
+
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
+
+      var documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, Object> res = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res.put(doc.getData().getString("a1"), doc.getData().get("a2"));
+      });
+
+      assertThat(res).contains(
+            Map.entry("Task-1", 10L),
+            Map.entry("Task-2", 0.12d),
+            Map.entry("Task-3", 0.12d),
+            Map.entry("Task-4", 0.0012d)
+      );
+
+      // now back to no constraint
+      var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
+      attr2.setConstraint(new Constraint(ConstraintType.None, null));
+      collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
+
+      documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, Object> res2 = new HashMap<>();
+      documents.forEach(document -> {
+         var doc = documentFacade.getDocument(collection.getId(), document.getId());
+         res2.put(doc.getData().getString("a1"), doc.getData().get("a2"));
+      });
+
+      assertThat(res2).contains(
+            Map.entry("Task-1", 10L),
+            Map.entry("Task-2", 0.12d),
+            Map.entry("Task-3", 0.12d),
+            Map.entry("Task-4", 0.0012d)
+      );
+   }
+
    public void testTaskExecutor() throws InterruptedException {
       taskExecutor.submitTask(contextualTaskFactory.getInstance(ListCollectionsIn10SecondsTask.class));
       Thread.sleep(15_000);

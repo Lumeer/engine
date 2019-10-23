@@ -22,11 +22,8 @@ import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class NoneToDurationConverter extends AbstractDurationConverter {
+public class NoneToDateConverter extends AbstractDateConverter {
 
    @Override
    public Set<ConstraintType> getFromTypes() {
@@ -35,12 +32,12 @@ public class NoneToDurationConverter extends AbstractDurationConverter {
 
    @Override
    public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.Duration);
+      return Set.of(ConstraintType.DateTime);
    }
 
    @Override
    public DataDocument getPatchDocument(DataDocument document) {
-      if (document.containsKey(toAttribute.getId())) {
+      if (initialized && document.containsKey(toAttribute.getId())) {
          var originalValue = document.get(fromAttribute.getId());
 
          if (originalValue != null) {
@@ -55,26 +52,14 @@ public class NoneToDurationConverter extends AbstractDurationConverter {
                return null;
             }
 
-            var accum = new AtomicLong(0);
+            try {
+               var instant = momentJsParser.parseMomentJsDate(originalValueStr);
 
-            conversions.forEach((k, v) -> {
-               final Pattern p = Pattern.compile("[0-9]+" + k);
-               final Matcher m = p.matcher(originalValueStr);
-
-               int lastEnd = 0;
-               while (m.find()) {
-                  var num = originalValueStr.substring(m.start(), m.end() - 1);
-
-                  try {
-                     accum.addAndGet(Long.parseLong(num) * v);
-                  } catch (NumberFormatException nfe) {
-                     // nps
-                  }
+               if (instant != null) {
+                  return new DataDocument(toAttribute.getId(), instant);
                }
-            });
-
-            if (!originalValue.equals(Long.valueOf(accum.get()).toString())) {
-               return new DataDocument(toAttribute.getId(), accum.get());
+            } catch (RuntimeException e) {
+               return null;
             }
          }
       }

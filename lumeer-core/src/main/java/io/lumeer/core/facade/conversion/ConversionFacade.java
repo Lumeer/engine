@@ -88,6 +88,8 @@ public class ConversionFacade {
                   reloadResourceContentEvent.fire(new ReloadResourceContent(collection));
                }
             }
+
+            converter.close();
          }
       }
    }
