@@ -19,6 +19,7 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.core.util.MomentJsParser;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
       super.init(cm, userLocale, fromAttribute, toAttribute);
 
       if (isConstraintWithConfig(toAttribute) || isConstraintWithConfig(fromAttribute)) {
-         var attr = isConstraintWithConfig(toAttribute) ? toAttribute : fromAttribute;
+         var attr = isConstraintWithConfig(toAttribute) && toAttribute.getConstraint().getType() == ConstraintType.DateTime ? toAttribute : fromAttribute;
 
          var config = (Map<String, Object>) attr.getConstraint().getConfig();
          var format = config.get("format").toString();

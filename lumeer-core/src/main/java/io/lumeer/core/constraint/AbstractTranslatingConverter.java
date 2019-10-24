@@ -27,6 +27,7 @@ import java.util.Map;
 public abstract class AbstractTranslatingConverter extends AbstractConstraintConverter {
 
    protected Map<String, Object> translations = new HashMap<>();
+   protected boolean ignoreMissing = false;
 
    @Override
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
@@ -44,7 +45,7 @@ public abstract class AbstractTranslatingConverter extends AbstractConstraintCon
             var originalValue = document.get(fromAttribute.getId()).toString();
 
             if (originalValue != null) {
-               var newValue = translations.getOrDefault(originalValue, "");
+               var newValue = translations.getOrDefault(originalValue, ignoreMissing ? originalValue : "");
 
                if (!newValue.equals(originalValue)) {
                   return new DataDocument(toAttribute.getId(), newValue);

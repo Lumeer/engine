@@ -21,6 +21,7 @@ package io.lumeer.core.constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Date;
 import java.util.Set;
 
 public class NoneToDateConverter extends AbstractDateConverter {
@@ -56,7 +57,7 @@ public class NoneToDateConverter extends AbstractDateConverter {
                var instant = momentJsParser.parseMomentJsDate(originalValueStr);
 
                if (instant != null) {
-                  return new DataDocument(toAttribute.getId(), instant);
+                  return new DataDocument(toAttribute.getId(), new Date(instant));
                }
             } catch (RuntimeException e) {
                return null;

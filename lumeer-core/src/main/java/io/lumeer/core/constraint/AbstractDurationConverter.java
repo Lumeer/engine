@@ -19,6 +19,7 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.ConstraintType;
 
 import java.util.Map;
 
@@ -37,7 +38,7 @@ public abstract class AbstractDurationConverter extends AbstractConstraintConver
               Map.of("w", "w", "d", "d", "h", "h", "m", "m", "s", "s");
 
       if (isConstraintWithConfig(toAttribute) || isConstraintWithConfig(fromAttribute)) {
-         var attr = isConstraintWithConfig(toAttribute) ? toAttribute : fromAttribute;
+         var attr = isConstraintWithConfig(toAttribute) && toAttribute.getConstraint().getType() == ConstraintType.Duration ? toAttribute : fromAttribute;
 
          var config = (Map<String, Object>) attr.getConstraint().getConfig();
          var durationType = config.get("type").toString(); // Work, Classic, Custom

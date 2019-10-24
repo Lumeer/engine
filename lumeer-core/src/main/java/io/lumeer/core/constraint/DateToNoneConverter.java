@@ -21,6 +21,7 @@ package io.lumeer.core.constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Date;
 import java.util.Set;
 
 public class DateToNoneConverter extends AbstractDateConverter {
@@ -42,11 +43,15 @@ public class DateToNoneConverter extends AbstractDateConverter {
 
          if (originalValue != null) {
 
-            if (!(originalValue instanceof Number)) {
+            long originalValueLong;
+
+            if (originalValue instanceof Number) {
+               originalValueLong = ((Number) originalValue).longValue();
+            } else if (originalValue instanceof Date) {
+               originalValueLong = ((Date) originalValue).getTime();
+            } else {
                return null;
             }
-
-            long originalValueLong = ((Number) originalValue).longValue();
 
             try {
                var instant = momentJsParser.formatMomentJsDate(originalValueLong);

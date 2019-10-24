@@ -27,10 +27,11 @@ import java.util.Set;
 
 public class NoneToColorConverter extends AbstractTranslatingConverter {
 
-
    @Override
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
+      this.ignoreMissing = true;
+
       if (isConstraintWithConfig(toAttribute)) {
          translations.put("black", "#000000");
          translations.put("silver", "#c0c0c0");
