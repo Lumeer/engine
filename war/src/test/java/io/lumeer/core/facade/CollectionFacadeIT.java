@@ -47,6 +47,7 @@ import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -61,6 +62,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -125,6 +127,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private DataDao dataDao;
 
    @Inject
    private UserDao userDao;
@@ -877,15 +882,15 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Map<String, Object> res = new HashMap<>();
       documents.forEach(document -> {
-         var doc = documentFacade.getDocument(collection.getId(), document.getId());
-         res.put(doc.getData().getString("a1"), doc.getData().get("a2"));
+         DataDocument data = dataDao.getData(collection.getId(), document.getId()); // without that, BigDecimal gets converted to String for compatibility with UI
+         res.put(data.getString("a1"), data.getObject("a2"));
       });
 
       assertThat(res).contains(
             Map.entry("Task-1", 10L),
-            Map.entry("Task-2", 0.12d),
-            Map.entry("Task-3", 0.12d),
-            Map.entry("Task-4", 0.0012d)
+            Map.entry("Task-2", new BigDecimal("0.12")),
+            Map.entry("Task-3", new BigDecimal("0.12")),
+            Map.entry("Task-4", new BigDecimal("0.0012"))
       );
 
       // now back to no constraint
@@ -897,15 +902,15 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Map<String, Object> res2 = new HashMap<>();
       documents.forEach(document -> {
-         var doc = documentFacade.getDocument(collection.getId(), document.getId());
-         res2.put(doc.getData().getString("a1"), doc.getData().get("a2"));
+         DataDocument data = dataDao.getData(collection.getId(), document.getId()); // without that, BigDecimal gets converted to String for compatibility with UI
+         res2.put(data.getString("a1"), data.getObject("a2"));
       });
 
       assertThat(res2).contains(
-            Map.entry("Task-1", 10L),
-            Map.entry("Task-2", 0.12d),
-            Map.entry("Task-3", 0.12d),
-            Map.entry("Task-4", 0.0012d)
+              Map.entry("Task-1", 10L),
+              Map.entry("Task-2", new BigDecimal("0.12")),
+              Map.entry("Task-3", new BigDecimal("0.12")),
+              Map.entry("Task-4", new BigDecimal("0.0012"))
       );
    }
 

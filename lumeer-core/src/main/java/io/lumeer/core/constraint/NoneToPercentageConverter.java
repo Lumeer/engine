@@ -44,28 +44,10 @@ public class NoneToPercentageConverter extends AbstractConstraintConverter {
       if (document.containsKey(toAttribute.getId())) {
          var originalValue = document.get(fromAttribute.getId());
 
-         if (originalValue instanceof String) {
+         var newValue = constraintManager.encode(originalValue, toAttribute.getConstraint());
 
-            var originalValueStr = ((String) originalValue).trim();
-
-            if (originalValueStr.indexOf("%") == originalValueStr.length() - 1) { // ends with %
-               var num = originalValueStr.substring(0, originalValueStr.length() - 1).trim();
-               if (constraintManager.isNumber(num)) {
-                  var res = constraintManager.encode(num);
-
-                  if (res instanceof BigDecimal) {
-                     res = ((BigDecimal) res).movePointLeft(2);
-                  } else if (res instanceof Double) {
-                     res = (double) res / 100d;
-                  } else if (res instanceof Long) {
-                     res = (long) res / 100d;
-                  } else {
-                     return null;
-                  }
-
-                  return new DataDocument(toAttribute.getId(), res);
-               }
-            }
+         if (newValue != null && !newValue.equals(originalValue)) {
+            return new DataDocument(toAttribute.getId(), newValue);
          }
       }
       return null;
