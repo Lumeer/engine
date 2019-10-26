@@ -66,6 +66,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -820,17 +821,17 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var documents = documentDao.getDocumentsByCollection(collection.getId());
 
-      Map<String, Long> res = new HashMap<>();
+      Map<String, Object> res = new HashMap<>();
       documents.forEach(document -> {
-         var doc = documentFacade.getDocument(collection.getId(), document.getId());
-         res.put(doc.getData().getString("a1"), doc.getData().getLong("a2"));
+         DataDocument data = dataDao.getData(collection.getId(), document.getId()); // we must skip DocumentFacade because with that, Date gets converted to String for compatibility with UI
+         res.put(data.getString("a1"), data.get("a2"));
       });
 
       assertThat(res).contains(
-            Map.entry("Task-1", 1574493790000L),
-            Map.entry("Task-2", 1551393252000L),
-            Map.entry("Task-3", -844970681000L),
-            Map.entry("Task-4", -13907863379000L)
+            Map.entry("Task-1", new Date(1574493790000L)),
+            Map.entry("Task-2", new Date(1551393252000L)),
+            Map.entry("Task-3", new Date(-844970681000L)),
+            Map.entry("Task-4", new Date(-13907863379000L))
       );
 
       // now back to no constraint
@@ -882,7 +883,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Map<String, Object> res = new HashMap<>();
       documents.forEach(document -> {
-         DataDocument data = dataDao.getData(collection.getId(), document.getId()); // without that, BigDecimal gets converted to String for compatibility with UI
+         DataDocument data = dataDao.getData(collection.getId(), document.getId()); //  we must skip DocumentFacade because with that, BigDecimal gets converted to String for compatibility with UI
          res.put(data.getString("a1"), data.getObject("a2"));
       });
 
@@ -902,7 +903,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Map<String, Object> res2 = new HashMap<>();
       documents.forEach(document -> {
-         DataDocument data = dataDao.getData(collection.getId(), document.getId()); // without that, BigDecimal gets converted to String for compatibility with UI
+         DataDocument data = dataDao.getData(collection.getId(), document.getId()); //  we must skip DocumentFacade because with that,, BigDecimal gets converted to String for compatibility with UI
          res2.put(data.getString("a1"), data.getObject("a2"));
       });
 
