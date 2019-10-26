@@ -637,7 +637,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       var values = Arrays.asList("New", "In Progress", "To Do", "Done", "Won't fix");
       var rnd = new Random();
 
-      for(int i = 0; i < 1_000; i++) {
+      for(int i = 0; i < 100; i++) {
          documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + (i + 1)).append("a2", values.get(rnd.nextInt(values.size())))));
       }
 
