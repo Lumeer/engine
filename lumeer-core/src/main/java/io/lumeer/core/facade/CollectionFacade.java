@@ -32,6 +32,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -46,6 +47,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
@@ -80,6 +82,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
+
+   @Inject
+   private ConversionFacade conversionFacade;
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
@@ -257,6 +262,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
+      final Optional<Attribute> originalAttribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, Role.MANAGE);
 
@@ -267,6 +273,10 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+
+      if (originalAttribute.isPresent()) {
+         conversionFacade.convertStoredDocuments(collection, originalAttribute.get(), attribute);
+      }
 
       return attribute;
    }

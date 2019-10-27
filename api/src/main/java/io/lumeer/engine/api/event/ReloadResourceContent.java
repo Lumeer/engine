@@ -17,26 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.lumeer.api.model;
+package io.lumeer.engine.api.event;
 
-public enum ConstraintType {
-   Address,
-   Boolean,
-   Coordinates,
-   DateTime,
-   Email,
-   Function,
-   FileAttachment,
-   Image,
-   Link,
-   Number,
-   Percentage,
-   Rating,
-   Select,
-   Tag,
-   Text,
-   User,
-   Color,
-   Duration,
-   None,
+import io.lumeer.api.model.common.Resource;
+
+public class ReloadResourceContent extends ResourceEvent {
+
+   public ReloadResourceContent(Resource resource) {
+      super(resource);
+   }
 }

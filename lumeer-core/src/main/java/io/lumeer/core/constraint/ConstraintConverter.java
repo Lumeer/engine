@@ -16,27 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.constraint;
 
-package io.lumeer.api.model;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.ConstraintType;
+import io.lumeer.engine.api.data.DataDocument;
 
-public enum ConstraintType {
-   Address,
-   Boolean,
-   Coordinates,
-   DateTime,
-   Email,
-   Function,
-   FileAttachment,
-   Image,
-   Link,
-   Number,
-   Percentage,
-   Rating,
-   Select,
-   Tag,
-   Text,
-   User,
-   Color,
-   Duration,
-   None,
+import java.util.Set;
+
+public interface ConstraintConverter extends AutoCloseable {
+
+   void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
+
+   Set<ConstraintType> getFromTypes();
+
+   Set<ConstraintType> getToTypes();
+
+   DataDocument getPatchDocument(final DataDocument document);
+
+   default void close() {}
 }

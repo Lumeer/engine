@@ -50,6 +50,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
+import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
@@ -104,6 +105,7 @@ public class PusherFacade extends AbstractFacade {
    public static final String CREATE_EVENT_SUFFIX = ":create";
    public static final String REMOVE_EVENT_SUFFIX = ":remove";
    public static final String IMPORT_EVENT_SUFFIX = ":import";
+   public static final String RELOAD_EVENT_SUFFIX = ":reload";
 
    private String PUSHER_APP_ID;
    private String PUSHER_KEY;
@@ -219,6 +221,16 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             processWithId(importResource.getResource(), IMPORT_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void reloadResource(@Observes final ReloadResourceContent reloadResourceContent) {
+      if (isEnabled()) {
+         try {
+            processWithId(reloadResourceContent.getResource(), RELOAD_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }

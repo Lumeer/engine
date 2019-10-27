@@ -16,27 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.constraint;
 
-package io.lumeer.api.model;
+import io.lumeer.api.model.Attribute;
 
-public enum ConstraintType {
-   Address,
-   Boolean,
-   Coordinates,
-   DateTime,
-   Email,
-   Function,
-   FileAttachment,
-   Image,
-   Link,
-   Number,
-   Percentage,
-   Rating,
-   Select,
-   Tag,
-   Text,
-   User,
-   Color,
-   Duration,
-   None,
+public abstract class AbstractConstraintConverter implements ConstraintConverter {
+
+   protected ConstraintManager constraintManager;
+   protected String userLocale;
+   Attribute fromAttribute;
+   Attribute toAttribute;
+
+   @Override
+   public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
+      this.constraintManager = cm;
+      this.userLocale = userLocale;
+      this.fromAttribute = fromAttribute;
+      this.toAttribute = toAttribute;
+   }
+
+   protected boolean isConstraintWithConfig(final Attribute attribute) {
+      return attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getConfig() != null;
+   }
 }
