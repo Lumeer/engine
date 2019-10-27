@@ -63,6 +63,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -806,10 +809,17 @@ public class CollectionFacadeIT extends IntegrationTestBase {
             )
       );
 
-      var values = Arrays.asList("23/11/2019 8:23:10", "28/02/2019 23:34:12", "24/03/1943 6:55:19", "12/04/1529 9:37:01");
+      var dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy H:mm:ss");
+
+      var values = Arrays.asList(
+            dtf.format(LocalDateTime.of(2019, 11, 23, 8, 23, 10)),
+            dtf.format(LocalDateTime.of(2019, 2, 28, 23, 34, 12)),
+            dtf.format(LocalDateTime.of(1943, 3, 24, 6, 55, 19)),
+            dtf.format(LocalDateTime.of(1829, 4, 21, 9, 37, 1)));
 
       var i = new AtomicInteger(1);
       values.forEach(value -> {
+         System.out.println(value);
          documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + i.getAndIncrement()).append("a2", value)));
       });
 
@@ -824,18 +834,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Map<String, Object> res = new HashMap<>();
       documents.forEach(document -> {
          DataDocument data = dataDao.getData(collection.getId(), document.getId()); // we must skip DocumentFacade because with that, Date gets converted to String for compatibility with UI
-         var o = data.getObject("a2");
          res.put(data.getString("a1"), data.getObject("a2"));
-         System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-         System.out.println(o);
-         System.out.println(o.getClass().getCanonicalName());
       });
 
       assertThat(res).contains(
             Map.entry("Task-1", new Date(1574493790000L)),
             Map.entry("Task-2", new Date(1551393252000L)),
             Map.entry("Task-3", new Date(-844970681000L)),
-            Map.entry("Task-4", new Date(-13907863379000L))
+            Map.entry("Task-4", new Date(-4439978579000L))
       );
 
       // now back to no constraint
@@ -855,7 +861,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
             Map.entry("Task-1", "23/11/2019 8:23:10"),
             Map.entry("Task-2", "28/02/2019 23:34:12"),
             Map.entry("Task-3", "24/03/1943 6:55:19"),
-            Map.entry("Task-4", "12/04/1529 9:37:01")
+            Map.entry("Task-4", "21/04/1829 9:37:01")
       );
    }
 
