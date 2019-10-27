@@ -65,6 +65,8 @@ import org.junit.runner.RunWith;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -812,10 +814,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       var dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy H:mm:ss");
 
       var values = Arrays.asList(
-            dtf.format(LocalDateTime.of(2019, 11, 23, 8, 23, 10)),
-            dtf.format(LocalDateTime.of(2019, 2, 28, 23, 34, 12)),
-            dtf.format(LocalDateTime.of(1943, 3, 24, 6, 55, 19)),
-            dtf.format(LocalDateTime.of(1829, 4, 21, 9, 37, 1)));
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 11, 23, 8, 23, 10), ZoneId.systemDefault())),
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 2, 28, 23, 34, 12), ZoneId.systemDefault())),
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(1943, 3, 24, 6, 55, 19), ZoneId.systemDefault())),
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(1829, 4, 21, 9, 37, 1), ZoneId.systemDefault())));
 
       var i = new AtomicInteger(1);
       values.forEach(value -> {
