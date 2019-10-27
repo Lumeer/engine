@@ -824,7 +824,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Map<String, Object> res = new HashMap<>();
       documents.forEach(document -> {
          DataDocument data = dataDao.getData(collection.getId(), document.getId()); // we must skip DocumentFacade because with that, Date gets converted to String for compatibility with UI
+         var o = data.getObject("a2");
          res.put(data.getString("a1"), data.getObject("a2"));
+         System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+         System.out.println(o);
+         System.out.println(o.getClass().getCanonicalName());
       });
 
       assertThat(res).contains(
