@@ -812,12 +812,17 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       );
 
       var dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy H:mm:ss");
+      var d1 = ZonedDateTime.of(LocalDateTime.of(2019, 11, 23, 8, 23, 10), ZoneId.systemDefault());
+      var d2 = ZonedDateTime.of(LocalDateTime.of(2019, 2, 28, 23, 34, 12), ZoneId.systemDefault());
+      var d3 = ZonedDateTime.of(LocalDateTime.of(1943, 3, 24, 6, 55, 19), ZoneId.systemDefault());
+      var d4 = ZonedDateTime.of(LocalDateTime.of(1929, 4, 21, 9, 37, 1), ZoneId.systemDefault());
 
       var values = Arrays.asList(
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 11, 23, 8, 23, 10), ZoneId.of("UTC"))),
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 2, 28, 23, 34, 12), ZoneId.of("UTC"))),
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(1943, 3, 24, 6, 55, 19), ZoneId.of("UTC"))),
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(1829, 4, 21, 9, 37, 1), ZoneId.of("UTC"))));
+            dtf.format(d1),
+            dtf.format(d2),
+            dtf.format(d3),
+            dtf.format(d4)
+      );
 
       var i = new AtomicInteger(1);
       values.forEach(value -> {
@@ -840,10 +845,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       });
 
       assertThat(res).contains(
-            Map.entry("Task-1", new Date(1574493790000L)),
-            Map.entry("Task-2", new Date(1551393252000L)),
-            Map.entry("Task-3", new Date(-844970681000L)),
-            Map.entry("Task-4", new Date(-4439978579000L))
+            Map.entry("Task-1", Date.from(d1.toInstant())),
+            Map.entry("Task-2", Date.from(d2.toInstant())),
+            Map.entry("Task-3", Date.from(d3.toInstant())),
+            Map.entry("Task-4", Date.from(d4.toInstant()))
       );
 
       // now back to no constraint
@@ -863,7 +868,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
             Map.entry("Task-1", "23/11/2019 8:23:10"),
             Map.entry("Task-2", "28/02/2019 23:34:12"),
             Map.entry("Task-3", "24/03/1943 6:55:19"),
-            Map.entry("Task-4", "21/04/1829 9:37:01")
+            Map.entry("Task-4", "21/04/1929 9:37:01")
       );
    }
 
