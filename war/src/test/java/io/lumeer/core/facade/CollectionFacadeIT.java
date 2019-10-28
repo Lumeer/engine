@@ -814,10 +814,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       var dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy H:mm:ss");
 
       var values = Arrays.asList(
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 11, 23, 8, 23, 10), ZoneId.systemDefault())),
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 2, 28, 23, 34, 12), ZoneId.systemDefault())),
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(1943, 3, 24, 6, 55, 19), ZoneId.systemDefault())),
-            dtf.format(ZonedDateTime.of(LocalDateTime.of(1829, 4, 21, 9, 37, 1), ZoneId.systemDefault())));
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 11, 23, 8, 23, 10), ZoneId.of("UTC"))),
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(2019, 2, 28, 23, 34, 12), ZoneId.of("UTC"))),
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(1943, 3, 24, 6, 55, 19), ZoneId.of("UTC"))),
+            dtf.format(ZonedDateTime.of(LocalDateTime.of(1829, 4, 21, 9, 37, 1), ZoneId.of("UTC"))));
 
       var i = new AtomicInteger(1);
       values.forEach(value -> {
