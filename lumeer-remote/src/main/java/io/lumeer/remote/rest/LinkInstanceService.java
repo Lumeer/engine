@@ -82,6 +82,12 @@ public class LinkInstanceService extends AbstractService {
    }
 
    @PUT
+   @Path("{linkInstanceId}")
+   public LinkInstance updateLinkInstance(@PathParam("linkInstanceId") String id, LinkInstance linkInstance) {
+      return linkInstanceFacade.updateLinkInstance(id, linkInstance);
+   }
+
+   @PUT
    @Path("{linkInstanceId}/data")
    public LinkInstance updateLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
       return linkInstanceFacade.updateLinkInstanceData(id, data);
