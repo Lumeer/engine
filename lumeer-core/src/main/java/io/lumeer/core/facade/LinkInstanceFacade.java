@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -160,6 +161,26 @@ public class LinkInstanceFacade extends AbstractFacade {
       return linkInstances;
    }
 
+   public LinkInstance updateLinkInstance(final String linkInstanceId, final LinkInstance linkInstance){
+      final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      final LinkInstance originalLinkInstance = new LinkInstance(stored);
+      final String linkTypeId = Objects.requireNonNullElse(linkInstance.getLinkTypeId(), stored.getLinkTypeId());
+
+      final LinkType linkType = checkLinkTypeWritePermissions(linkTypeId);
+
+      updateLinkTypeMetadata(linkType, Collections.emptySet(), Collections.emptySet());
+
+      final DataDocument data = linkDataDao.getData(linkType.getId(), linkInstanceId);
+      stored.setDocumentIds(linkInstance.getDocumentIds());
+      stored.setLinkTypeId(linkTypeId);
+
+      final LinkInstance updatedLinkInstance = updateLinkInstance(stored, data, originalLinkInstance);
+
+      constraintManager.decodeDataTypes(linkType, data);
+
+      return updatedLinkInstance;
+   }
+
    public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument data) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
@@ -193,15 +214,14 @@ public class LinkInstanceFacade extends AbstractFacade {
       LinkInstance updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
       updatedLinkInstance.setData(newData);
 
-      fireLinkInstanceUpdate(linkInstance, updatedLinkInstance, originalLinkInstance);
+      fireLinkInstanceUpdate(updatedLinkInstance, originalLinkInstance);
 
       return updatedLinkInstance;
    }
 
-   private void fireLinkInstanceUpdate(final LinkInstance toBeStored, final LinkInstance updatedLinkInstance, final LinkInstance originalLinkInstance) {
+   private void fireLinkInstanceUpdate(final LinkInstance updatedLinkInstance, final LinkInstance originalLinkInstance) {
       if (updateLinkInstanceEvent != null) {
          LinkInstance updatedLinkInstanceWithData = new LinkInstance(updatedLinkInstance);
-         updatedLinkInstanceWithData.setDataVersion(toBeStored.getDataVersion());
          updateLinkInstanceEvent.fire(new UpdateLinkInstance(updatedLinkInstanceWithData, originalLinkInstance));
       }
    }
