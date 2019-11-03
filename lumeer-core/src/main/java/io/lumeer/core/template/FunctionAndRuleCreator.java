@@ -119,8 +119,8 @@ public class FunctionAndRuleCreator extends WithIdCreator {
    }
 
    private Rule getRule(final Collection collection, final JSONObject o) {
-      var type = Rule.RuleType.values()[((Long) o.get(Rule.TYPE)).intValue()];
-      var timing = Rule.RuleTiming.values()[((Long) o.get(Rule.TIMING)).intValue()];
+      var type = Rule.RuleType.valueOf(o.get(Rule.TYPE).toString());
+      var timing = Rule.RuleTiming.valueOf(o.get(Rule.TIMING).toString());
       var rule = new Rule(type, timing, new DataDocument((JSONObject) o.get("configuration")));
 
       if (type == Rule.RuleType.BLOCKLY) {

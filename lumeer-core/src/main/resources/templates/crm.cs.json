@@ -1,0 +1,2664 @@
+{
+    "templateMeta": {
+        "prefix": "CRM",
+        "collectionCount": 5,
+        "linkTypeCount": 6,
+        "viewCount": 7,
+        "documentCount": 24
+    },
+    "collections": [
+        {
+            "code": "4923413b40d7212d",
+            "name": "Firmy",
+            "icon": "fas fa-industry-alt",
+            "color": "#a2c4c9",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Firma",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a2",
+                    "name": "Odvětví",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Gastronomie",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Marketing",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Stavitelství",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Vydavatelství",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Prodej",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a3",
+                    "name": "Web",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a4",
+                    "name": "Adresa",
+                    "constraint": {
+                        "type": "Address",
+                        "config": {
+                            "fields": [
+                                "houseNumber",
+                                "street",
+                                "city",
+                                "state",
+                                "postalCode"
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a5",
+                    "name": "Velikost",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "1-10 zaměstnanců",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "11-50 zaměstnanců",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "51-200 zaměstnanců",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "201+ zaměstnanců",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 4
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5db57d9a484f6305976e7e53"
+        },
+        {
+            "code": "b450645debe2cf0a",
+            "name": "Kontakty",
+            "icon": "fas fa-user-friends",
+            "color": "#6aa84f",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Kontakt",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a2",
+                    "name": "Pozice",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a3",
+                    "name": "Telefon",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a4",
+                    "name": "Email",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a5",
+                    "name": "Firmy",
+                    "constraint": null,
+                    "function": {
+                        "js": "var thisDocument;\n\n\nvar lumeer = Polyglot.import('lumeer');\n\nlumeer.setDocumentAttribute(thisDocument, 'a5', (String(lumeer.getDocumentAttribute(lumeer.getLinkedDocuments(thisDocument, '5db57f7e4f39c779bad0521f'), 'a1')) + ''));\n",
+                        "xml": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5db57da7484f6305976e7e57_document\" id=\"LF0+jMn9Uj+_^w|=p}48\">thisDocument</variable>\n  </variables>\n  <block type=\"value_container\" id=\"z}mG-KLY0/@jcX!(u7vX\" deletable=\"false\" x=\"36\" y=\"149\">\n    <value name=\"VALUE\">\n      <block type=\"text_join\" id=\"b:z6=]rNV:yPMH*n%!%5\">\n        <mutation items=\"2\"></mutation>\n        <value name=\"ADD0\">\n          <block type=\"get_attribute\" id=\"D!:2oTteZqz1c~xfw7Vl\">\n            <field name=\"ATTR\">a1</field>\n            <value name=\"DOCUMENT\">\n              <block type=\"5db57f7e4f39c779bad0521f-5db57d9a484f6305976e7e53_5db57da7484f6305976e7e57_link\" id=\":UI,ldbIPr_VUaY08}yg\">\n                <value name=\"DOCUMENT\">\n                  <block type=\"variables_get_5db57da7484f6305976e7e57_document\" id=\"l1u_EZp!R%L|k%5@01|A\" editable=\"false\">\n                    <field name=\"VAR\" id=\"LF0+jMn9Uj+_^w|=p}48\" variabletype=\"5db57da7484f6305976e7e57_document\">thisDocument</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </value>\n      </block>\n    </value>\n  </block>\n</xml>",
+                        "errorReport": null,
+                        "timestamp": 0,
+                        "editable": false
+                    },
+                    "usageCount": 5
+                },
+                {
+                    "id": "a6",
+                    "name": "Aktivní?",
+                    "constraint": {
+                        "type": "Boolean",
+                        "config": {}
+                    },
+                    "function": null,
+                    "usageCount": 5
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5db57da7484f6305976e7e57"
+        },
+        {
+            "code": "4d0076e6b4c71059",
+            "name": "Aktivity",
+            "icon": "fas fa-skating",
+            "color": "#3d85c6",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Aktivita",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a2",
+                    "name": "Typ",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Osobní setkání",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Telefonní/video hovor",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Emailová komunikace",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a3",
+                    "name": "Datum",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "YYYY-MM-DD H:mm",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 4
+                },
+                {
+                    "id": "a4",
+                    "name": "Hotovo?",
+                    "constraint": {
+                        "type": "Boolean",
+                        "config": {}
+                    },
+                    "function": null,
+                    "usageCount": 2
+                },
+                {
+                    "id": "a5",
+                    "name": "Poznámky",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 1
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5db57dbf484f6305976e7e5b"
+        },
+        {
+            "code": "1e6e878c9dc923dd",
+            "name": "Příležitosti",
+            "icon": "fas fa-dice-d10",
+            "color": "#f13285",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Příležitost",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a2",
+                    "name": "Priorita",
+                    "constraint": {
+                        "type": "Color",
+                        "config": {}
+                    },
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a3",
+                    "name": "Stav",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Otevřená",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Probíhá",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Uzavřená",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Odmítnutá",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a4",
+                    "name": "Hodnota",
+                    "constraint": {
+                        "type": "Number",
+                        "config": {
+                            "decimal": null,
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a5",
+                    "name": "Datum zahájení",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 5
+                },
+                {
+                    "id": "a6",
+                    "name": "Datum uzavření",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "YYYY-MM-DD",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a7",
+                    "name": "Dokumenty",
+                    "constraint": {
+                        "type": "FileAttachment",
+                        "config": {}
+                    },
+                    "function": null,
+                    "usageCount": 0
+                },
+                {
+                    "id": "a8",
+                    "name": "Poznámky",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a9",
+                    "name": "Kvartál",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Q1 2019",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Q2 2019",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Q3 2019",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Q4 2019",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 5
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {
+                "Set Date closed on opportunity": {
+                    "type": "BLOCKLY",
+                    "timing": "UPDATE",
+                    "configuration": {
+                        "blocklyXml": "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n  <variables>\n    <variable type=\"5db57e09484f6305976e7e5f_document\" id=\"-R9UgU}pUKq!;]uQt%D:\">newDocument</variable>\n  </variables>\n  <block type=\"statement_container\" id=\"x^gxtFX,gX#u]e7bbFrA\" deletable=\"false\" x=\"192\" y=\"81\">\n    <statement name=\"COMMANDS\">\n      <block type=\"controls_if\" id=\"Q=Zlzl,V?cZ?ciT,NfzV\">\n        <value name=\"IF0\">\n          <block type=\"logic_compare\" id=\"GK)JvsS|Y:Dx3z3Efq{]\">\n            <field name=\"OP\">EQ</field>\n            <value name=\"A\">\n              <block type=\"get_attribute\" id=\",KJ;twhiTR,!;`-q6i#n\">\n                <field name=\"ATTR\">a3</field>\n                <value name=\"DOCUMENT\">\n                  <block type=\"variables_get_5db57e09484f6305976e7e5f_document\" id=\"PEJG4aSyEXaZ/KC^X/;y\" editable=\"false\">\n                    <field name=\"VAR\" id=\"-R9UgU}pUKq!;]uQt%D:\" variabletype=\"5db57e09484f6305976e7e5f_document\">newDocument</field>\n                  </block>\n                </value>\n              </block>\n            </value>\n            <value name=\"B\">\n              <block type=\"text\" id=\"GS|l+=0STy4Y8{8?z:b(\">\n                <field name=\"TEXT\">Uzavřená</field>\n              </block>\n            </value>\n          </block>\n        </value>\n        <statement name=\"DO0\">\n          <block type=\"set_attribute\" id=\"(^8ZwS=8/L)LpvowzqWY\">\n            <field name=\"ATTR\">a6</field>\n            <value name=\"DOCUMENT\">\n              <block type=\"variables_get_5db57e09484f6305976e7e5f_document\" id=\"keH#qL[J8%R71-k7[sD)\" editable=\"false\">\n                <field name=\"VAR\" id=\"-R9UgU}pUKq!;]uQt%D:\" variabletype=\"5db57e09484f6305976e7e5f_document\">newDocument</field>\n              </block>\n            </value>\n            <value name=\"VALUE\">\n              <block type=\"ms_to_date\" id=\"?j~P+A}{RSG)|@~349Bu\">\n                <value name=\"MS\">\n                  <block type=\"date_now\" id=\"gnoV^;!seQ6yT=Tkd0,u\"></block>\n                </value>\n              </block>\n            </value>\n          </block>\n        </statement>\n      </block>\n    </statement>\n  </block>\n</xml>",
+                        "blocklyJs": "var newDocument;\n\n\nvar lumeer = Polyglot.import('lumeer');\n  if (lumeer.getDocumentAttribute(newDocument, 'a3') == 'Uzavřená') {\n    lumeer.setDocumentAttribute(newDocument, 'a6', (new Date((+(new Date())))).toISOString());\n  }\n",
+                        "blocklyDryRun": false,
+                        "blocklyDryRunResult": "",
+                        "blocklyError": "",
+                        "blocklyResultTimestamp": ""
+                    }
+                }
+            },
+            "dataDescription": null,
+            "_id": "5db57e09484f6305976e7e5f"
+        },
+        {
+            "code": "c98270317b51cbb3",
+            "name": "Zaměstnanci",
+            "icon": "fas fa-users",
+            "color": "#ffd966",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Zaměstnanec",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 6
+                },
+                {
+                    "id": "a2",
+                    "name": "Pozice",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 6
+                },
+                {
+                    "id": "a3",
+                    "name": "Email",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 6
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5db57e12484f6305976e7e63"
+        }
+    ],
+    "views": [
+        {
+            "code": "e3e4a95ee9079061",
+            "name": "Příležitosti podle stavu",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57e09484f6305976e7e5f",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "kanban",
+            "config": {
+                "kanban": {
+                    "columns": [
+                        {
+                            "id": "157219014346713838df4517",
+                            "title": "Otevřená",
+                            "width": 300,
+                            "resourcesOrder": [
+                                {
+                                    "id": "5db5b691484f6305976e7e8f",
+                                    "attributeId": "a3",
+                                    "resourceType": "collection",
+                                    "stemIndex": 0
+                                }
+                            ],
+                            "createdFromAttributes": [
+                                {
+                                    "attributeId": "a3",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection",
+                                    "resourceId": "5db57e09484f6305976e7e5f",
+                                    "constraint": {
+                                        "config": {
+                                            "displayValues": null,
+                                            "options": [
+                                                {
+                                                    "value": "Otevřená",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Probíná",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Uzavřená",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Odmítnutá",
+                                                    "displayValue": ""
+                                                }
+                                            ]
+                                        },
+                                        "type": "Select"
+                                    }
+                                }
+                            ],
+                            "constraintType": "Select"
+                        },
+                        {
+                            "id": "1572190143467156cc0dac34",
+                            "title": "Probíná",
+                            "width": 300,
+                            "resourcesOrder": [
+                                {
+                                    "id": "5db5b688484f6305976e7e8d",
+                                    "attributeId": "a3",
+                                    "resourceType": "collection",
+                                    "stemIndex": 0
+                                }
+                            ],
+                            "createdFromAttributes": [
+                                {
+                                    "attributeId": "a3",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection",
+                                    "resourceId": "5db57e09484f6305976e7e5f",
+                                    "constraint": {
+                                        "config": {
+                                            "displayValues": null,
+                                            "options": [
+                                                {
+                                                    "value": "Otevřená",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Probíná",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Uzavřená",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Odmítnutá",
+                                                    "displayValue": ""
+                                                }
+                                            ]
+                                        },
+                                        "type": "Select"
+                                    }
+                                }
+                            ],
+                            "constraintType": "Select"
+                        },
+                        {
+                            "id": "157219014346717428623622",
+                            "title": "Uzavřená",
+                            "width": 300,
+                            "resourcesOrder": [
+                                {
+                                    "id": "5db5b682484f6305976e7e8c",
+                                    "attributeId": "a3",
+                                    "resourceType": "collection",
+                                    "stemIndex": 0
+                                },
+                                {
+                                    "id": "5db5b68d484f6305976e7e8e",
+                                    "attributeId": "a3",
+                                    "resourceType": "collection",
+                                    "stemIndex": 0
+                                },
+                                {
+                                    "id": "5db5b76c484f6305976e7e90",
+                                    "attributeId": "a3",
+                                    "resourceType": "collection",
+                                    "stemIndex": 0
+                                }
+                            ],
+                            "createdFromAttributes": [
+                                {
+                                    "attributeId": "a3",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection",
+                                    "resourceId": "5db57e09484f6305976e7e5f",
+                                    "constraint": {
+                                        "config": {
+                                            "displayValues": null,
+                                            "options": [
+                                                {
+                                                    "value": "Otevřená",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Probíná",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Uzavřená",
+                                                    "displayValue": ""
+                                                },
+                                                {
+                                                    "value": "Odmítnutá",
+                                                    "displayValue": ""
+                                                }
+                                            ]
+                                        },
+                                        "type": "Select"
+                                    }
+                                }
+                            ],
+                            "constraintType": "Select"
+                        }
+                    ],
+                    "stemsConfigs": [
+                        {
+                            "attribute": {
+                                "attributeId": "a3",
+                                "resourceIndex": 0,
+                                "resourceType": "collection",
+                                "resourceId": "5db57e09484f6305976e7e5f",
+                                "constraint": {
+                                    "config": {
+                                        "displayValues": null,
+                                        "options": [
+                                            {
+                                                "value": "Otevřená",
+                                                "displayValue": ""
+                                            },
+                                            {
+                                                "value": "Probíná",
+                                                "displayValue": ""
+                                            },
+                                            {
+                                                "value": "Uzavřená",
+                                                "displayValue": ""
+                                            },
+                                            {
+                                                "value": "Odmítnutá",
+                                                "displayValue": ""
+                                            }
+                                        ]
+                                    },
+                                    "type": "Select"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5db57e09484f6305976e7e5f",
+                                "documentIds": [],
+                                "filters": [],
+                                "linkFilters": [],
+                                "linkTypeIds": []
+                            },
+                            "dueDate": null,
+                            "doneColumnTitles": []
+                        }
+                    ],
+                    "version": "1",
+                    "otherColumn": {
+                        "id": "1572187772020122b2e84df8",
+                        "width": 300,
+                        "resourcesOrder": []
+                    }
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5ae86484f6305976e7e6e"
+        },
+        {
+            "code": "efce3ed6fe13dbd2",
+            "name": "Kalendář aktivit",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57dbf484f6305976e7e5b",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-10-27T14:50:08.962Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5db57dbf484f6305976e7e5b",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5db57dbf484f6305976e7e5b",
+                                    "attributeId": "a3",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5db57dbf484f6305976e7e5b",
+                                "documentIds": [],
+                                "filters": [],
+                                "linkFilters": [],
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5aeb2484f6305976e7e72"
+        },
+        {
+            "code": "1c9c8c7702468921",
+            "name": "Firmy a kontakty",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57d9a484f6305976e7e53",
+                        "linkTypeIds": [
+                            "5db57f7e4f39c779bad0521f"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5db57d9a484f6305976e7e53",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": [],
+                                    "width": 150
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": [],
+                                    "width": 140
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a5",
+                                        "a4"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5db57f7e4f39c779bad0521f",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5db57da7484f6305976e7e57",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": [],
+                                    "width": 140
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": [],
+                                    "width": 120
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": [],
+                                    "width": 230
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a5"
+                                    ]
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "documentId": "5db5b22b484f6305976e7e87",
+                            "linkedRows": [
+                                {
+                                    "documentId": "5db5b3e24f39c779bad0523f",
+                                    "linkInstanceId": "5db5b4144f39c779bad05246",
+                                    "linkedRows": []
+                                }
+                            ]
+                        },
+                        {
+                            "documentId": "5db5b239484f6305976e7e88",
+                            "linkedRows": [
+                                {
+                                    "documentId": "5db5b3b84f39c779bad0523c",
+                                    "linkInstanceId": "5db5b4014f39c779bad05241",
+                                    "linkedRows": []
+                                },
+                                {
+                                    "documentId": "5db5b3d64f39c779bad0523e",
+                                    "linkInstanceId": "5db5b40e4f39c779bad05245",
+                                    "linkedRows": []
+                                }
+                            ],
+                            "expanded": true
+                        },
+                        {
+                            "documentId": "5db5b253484f6305976e7e89",
+                            "linkedRows": [
+                                {
+                                    "documentId": "5db5b3c44f39c779bad0523d",
+                                    "linkInstanceId": "5db5b4094f39c779bad05244",
+                                    "linkedRows": []
+                                }
+                            ]
+                        },
+                        {
+                            "documentId": "5db5b261484f6305976e7e8a",
+                            "linkedRows": [
+                                {
+                                    "documentId": "5db5b3964f39c779bad0523b",
+                                    "linkInstanceId": "5db5b3f84f39c779bad05240",
+                                    "linkedRows": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5af0b484f6305976e7e7a"
+        },
+        {
+            "code": "322e8b06246e4cb4",
+            "name": "Plánované aktivity podle zaměstnanců",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57e12484f6305976e7e63",
+                        "linkTypeIds": [
+                            "5db57fe04f39c779bad05222"
+                        ],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5db57dbf484f6305976e7e5b",
+                                "attributeId": "a4",
+                                "operator": "=",
+                                "value": false
+                            }
+                        ],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5db57e12484f6305976e7e63",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": [],
+                                    "width": 160
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a2",
+                                        "a3"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5db57fe04f39c779bad05222",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5db57dbf484f6305976e7e5b",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "documentId": "5db5b0f04f39c779bad05234",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b0fc4f39c779bad05236",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b1014f39c779bad05237",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b11b4f39c779bad05238",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b0f54f39c779bad05235",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b12f4f39c779bad05239",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5af49484f6305976e7e7e"
+        },
+        {
+            "code": "9ad810cf46449088",
+            "name": "Otevřené příležitosti podle zaměstnanců",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57e12484f6305976e7e63",
+                        "linkTypeIds": [
+                            "5db57fec4f39c779bad05223"
+                        ],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5db57e09484f6305976e7e5f",
+                                "attributeId": "a3",
+                                "operator": "!=",
+                                "value": "Odmítnutá"
+                            },
+                            {
+                                "collectionId": "5db57e09484f6305976e7e5f",
+                                "attributeId": "a3",
+                                "operator": "!=",
+                                "value": "Uzavřená"
+                            }
+                        ],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5db57e12484f6305976e7e63",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": [],
+                                    "width": 170
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a3",
+                                        "a2"
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5db57fec4f39c779bad05223",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5db57e09484f6305976e7e5f",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a6",
+                                        "a5"
+                                    ]
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a9"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "documentId": "5db5b0f04f39c779bad05234",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b0fc4f39c779bad05236",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b1014f39c779bad05237",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b11b4f39c779bad05238",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b0f54f39c779bad05235",
+                            "linkedRows": []
+                        },
+                        {
+                            "documentId": "5db5b12f4f39c779bad05239",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5af62484f6305976e7e82"
+        },
+        {
+            "code": "acdf4dfc259b83fd",
+            "name": "Hodnota uzavřených příležitostí podle kvartálů",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57e09484f6305976e7e5f",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5db57e09484f6305976e7e5f",
+                                "attributeId": "a3",
+                                "operator": "=",
+                                "value": "Uzavřená"
+                            }
+                        ],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "chart",
+            "config": {
+                "chart": {
+                    "type": "bar",
+                    "axes": {
+                        "x": {
+                            "resourceIndex": 0,
+                            "attributeId": "a9",
+                            "resourceId": "5db57e09484f6305976e7e5f",
+                            "resourceType": "collection"
+                        },
+                        "y1": {
+                            "resourceIndex": 0,
+                            "attributeId": "a4",
+                            "resourceId": "5db57e09484f6305976e7e5f",
+                            "resourceType": "collection"
+                        }
+                    },
+                    "aggregations": {
+                        "y1": "sum",
+                        "y2": "sum"
+                    },
+                    "sort": {
+                        "type": "asc"
+                    }
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5afd84f39c779bad0522c"
+        },
+        {
+            "code": "939cf6634e7a6a89",
+            "name": "Vytížení zaměstnanců",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "READ",
+                            "WRITE",
+                            "MANAGE",
+                            "CLONE",
+                            "SHARE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5db57e12484f6305976e7e63",
+                        "linkTypeIds": [
+                            "5db57fe04f39c779bad05222"
+                        ],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5db57dbf484f6305976e7e5b",
+                                "attributeId": "a4",
+                                "operator": "=",
+                                "value": ""
+                            }
+                        ],
+                        "linkFilters": []
+                    },
+                    {
+                        "collectionId": "5db57e12484f6305976e7e63",
+                        "linkTypeIds": [
+                            "5db57fec4f39c779bad05223"
+                        ],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5db57e09484f6305976e7e5f",
+                                "attributeId": "a3",
+                                "operator": "!=",
+                                "value": "Odmítnutá"
+                            },
+                            {
+                                "collectionId": "5db57e09484f6305976e7e5f",
+                                "attributeId": "a3",
+                                "operator": "!=",
+                                "value": "Uzavřená"
+                            }
+                        ],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "pivot",
+            "config": {
+                "pivot": {
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "stem": {
+                                "collectionId": "5db57e12484f6305976e7e63",
+                                "documentIds": [],
+                                "filters": [
+                                    {
+                                        "condition": "=",
+                                        "attributeId": "a4",
+                                        "value": "",
+                                        "collectionId": "5db57dbf484f6305976e7e5b"
+                                    }
+                                ],
+                                "linkFilters": [],
+                                "linkTypeIds": [
+                                    "5db57fe04f39c779bad05222"
+                                ]
+                            },
+                            "rowAttributes": [
+                                {
+                                    "resourceIndex": 0,
+                                    "attributeId": "a1",
+                                    "resourceId": "5db57e12484f6305976e7e63",
+                                    "resourceType": "collection",
+                                    "showSums": true,
+                                    "sort": {
+                                        "attribute": {
+                                            "resourceIndex": 0,
+                                            "attributeId": "a1",
+                                            "resourceId": "5db57e12484f6305976e7e63",
+                                            "resourceType": "collection"
+                                        },
+                                        "asc": true
+                                    }
+                                }
+                            ],
+                            "columnAttributes": [],
+                            "valueAttributes": [
+                                {
+                                    "resourceIndex": 2,
+                                    "attributeId": "a1",
+                                    "resourceId": "5db57dbf484f6305976e7e5b",
+                                    "resourceType": "collection",
+                                    "aggregation": "count",
+                                    "valueType": "default"
+                                }
+                            ]
+                        },
+                        {
+                            "stem": {
+                                "collectionId": "5db57e12484f6305976e7e63",
+                                "documentIds": [],
+                                "filters": [
+                                    {
+                                        "condition": "!=",
+                                        "attributeId": "a3",
+                                        "value": "Uzavřená",
+                                        "collectionId": "5db57e09484f6305976e7e5f"
+                                    },
+                                    {
+                                        "condition": "!=",
+                                        "attributeId": "a3",
+                                        "value": "Odmítnutá",
+                                        "collectionId": "5db57e09484f6305976e7e5f"
+                                    }
+                                ],
+                                "linkFilters": [],
+                                "linkTypeIds": [
+                                    "5db57fec4f39c779bad05223"
+                                ]
+                            },
+                            "rowAttributes": [
+                                {
+                                    "resourceIndex": 0,
+                                    "attributeId": "a1",
+                                    "resourceId": "5db57e12484f6305976e7e63",
+                                    "resourceType": "collection",
+                                    "showSums": true,
+                                    "sort": {
+                                        "attribute": {
+                                            "resourceIndex": 0,
+                                            "attributeId": "a1",
+                                            "resourceId": "5db57e12484f6305976e7e63",
+                                            "resourceType": "collection"
+                                        },
+                                        "asc": true
+                                    }
+                                }
+                            ],
+                            "columnAttributes": [],
+                            "valueAttributes": [
+                                {
+                                    "resourceIndex": 2,
+                                    "attributeId": "a1",
+                                    "resourceId": "5db57e09484f6305976e7e5f",
+                                    "resourceType": "collection",
+                                    "aggregation": "count",
+                                    "valueType": "default"
+                                }
+                            ]
+                        }
+                    ],
+                    "mergeTables": true
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "lastTimeUsed": null,
+            "favorite": false,
+            "_id": "5db5b0c64f39c779bad05230"
+        }
+    ],
+    "linkTypes": [
+        {
+            "name": "Kontakty firem",
+            "version": 0,
+            "collectionIds": [
+                "5db57d9a484f6305976e7e53",
+                "5db57da7484f6305976e7e57"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5db57f7e4f39c779bad0521f"
+        },
+        {
+            "name": "Kontakty aktivit",
+            "version": 0,
+            "collectionIds": [
+                "5db57dbf484f6305976e7e5b",
+                "5db57da7484f6305976e7e57"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5db57f944f39c779bad05220"
+        },
+        {
+            "name": "Vlastníci aktivit",
+            "version": 0,
+            "collectionIds": [
+                "5db57dbf484f6305976e7e5b",
+                "5db57e12484f6305976e7e63"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5db57fe04f39c779bad05222"
+        },
+        {
+            "name": "Vlastníci příležitostí",
+            "version": 0,
+            "collectionIds": [
+                "5db57e09484f6305976e7e5f",
+                "5db57e12484f6305976e7e63"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5db57fec4f39c779bad05223"
+        },
+        {
+            "name": "Kontakty příležitostí",
+            "version": 0,
+            "collectionIds": [
+                "5db57e09484f6305976e7e5f",
+                "5db57da7484f6305976e7e57"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5db5802c4f39c779bad05224"
+        },
+        {
+            "name": "Aktivity příležitostí",
+            "version": 0,
+            "collectionIds": [
+                "5db57e09484f6305976e7e5f",
+                "5db57dbf484f6305976e7e5b"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5db5803e4f39c779bad05225"
+        }
+    ],
+    "linkInstances": [
+        {
+            "linkTypeId": "5db57f7e4f39c779bad0521f",
+            "creationDate": 1572189176467,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b3964f39c779bad0523b",
+                "5db5b261484f6305976e7e8a"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b3f84f39c779bad05240"
+        },
+        {
+            "linkTypeId": "5db57f7e4f39c779bad0521f",
+            "creationDate": 1572189185600,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b3b84f39c779bad0523c",
+                "5db5b239484f6305976e7e88"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b4014f39c779bad05241"
+        },
+        {
+            "linkTypeId": "5db57f7e4f39c779bad0521f",
+            "creationDate": 1572189193148,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b3c44f39c779bad0523d",
+                "5db5b253484f6305976e7e89"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b4094f39c779bad05244"
+        },
+        {
+            "linkTypeId": "5db57f7e4f39c779bad0521f",
+            "creationDate": 1572189198390,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b3d64f39c779bad0523e",
+                "5db5b239484f6305976e7e88"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b40e4f39c779bad05245"
+        },
+        {
+            "linkTypeId": "5db57f7e4f39c779bad0521f",
+            "creationDate": 1572189204487,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b3e24f39c779bad0523f",
+                "5db5b22b484f6305976e7e87"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b4144f39c779bad05246"
+        },
+        {
+            "linkTypeId": "5db57f944f39c779bad05220",
+            "creationDate": 1572191152622,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bbac4f39c779bad05253",
+                "5db5b3964f39c779bad0523b"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bbb04f39c779bad05254"
+        },
+        {
+            "linkTypeId": "5db57f944f39c779bad05220",
+            "creationDate": 1572191207184,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bbdc4f39c779bad05255",
+                "5db5b3e24f39c779bad0523f"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bbe74f39c779bad05256"
+        },
+        {
+            "linkTypeId": "5db57f944f39c779bad05220",
+            "creationDate": 1572191243318,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bbfd4f39c779bad05257",
+                "5db5b3c44f39c779bad0523d"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bc0b4f39c779bad05258"
+        },
+        {
+            "linkTypeId": "5db57fe04f39c779bad05222",
+            "creationDate": 1572191301224,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bbac4f39c779bad05253",
+                "5db5b0f54f39c779bad05235"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bc454f39c779bad05259"
+        },
+        {
+            "linkTypeId": "5db57fe04f39c779bad05222",
+            "creationDate": 1572191303614,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bbdc4f39c779bad05255",
+                "5db5b0f04f39c779bad05234"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bc474f39c779bad0525a"
+        },
+        {
+            "linkTypeId": "5db57fe04f39c779bad05222",
+            "creationDate": 1572191305767,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bbfd4f39c779bad05257",
+                "5db5b0fc4f39c779bad05236"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bc494f39c779bad0525b"
+        },
+        {
+            "linkTypeId": "5db57fe04f39c779bad05222",
+            "creationDate": 1572191710087,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5bdcb484f6305976e7ea4",
+                "5db5b0f54f39c779bad05235"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bdde484f6305976e7ea5"
+        },
+        {
+            "linkTypeId": "5db57fec4f39c779bad05223",
+            "creationDate": 1572190627711,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b0f04f39c779bad05234",
+                "5db5b688484f6305976e7e8d"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b9a3484f6305976e7e92"
+        },
+        {
+            "linkTypeId": "5db57fec4f39c779bad05223",
+            "creationDate": 1572190705063,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b0fc4f39c779bad05236",
+                "5db5b68d484f6305976e7e8e"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b9f1484f6305976e7e9a"
+        },
+        {
+            "linkTypeId": "5db57fec4f39c779bad05223",
+            "creationDate": 1572190772526,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b0fc4f39c779bad05236",
+                "5db5b682484f6305976e7e8c"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5ba34484f6305976e7ea1"
+        },
+        {
+            "linkTypeId": "5db57fec4f39c779bad05223",
+            "creationDate": 1572190883154,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b1014f39c779bad05237",
+                "5db5b76c484f6305976e7e90"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5baa34f39c779bad05251"
+        },
+        {
+            "linkTypeId": "5db57fec4f39c779bad05223",
+            "creationDate": 1572190992526,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b691484f6305976e7e8f",
+                "5db5b0f54f39c779bad05235"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bb104f39c779bad05252"
+        },
+        {
+            "linkTypeId": "5db5802c4f39c779bad05224",
+            "creationDate": 1572190452658,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b682484f6305976e7e8c",
+                "5db5b3964f39c779bad0523b"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b8f44f39c779bad05249"
+        },
+        {
+            "linkTypeId": "5db5802c4f39c779bad05224",
+            "creationDate": 1572190461108,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b688484f6305976e7e8d",
+                "5db5b3d64f39c779bad0523e"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b8fd4f39c779bad0524a"
+        },
+        {
+            "linkTypeId": "5db5802c4f39c779bad05224",
+            "creationDate": 1572190465359,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b68d484f6305976e7e8e",
+                "5db5b3c44f39c779bad0523d"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b9014f39c779bad0524b"
+        },
+        {
+            "linkTypeId": "5db5802c4f39c779bad05224",
+            "creationDate": 1572190469344,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b691484f6305976e7e8f",
+                "5db5b3c44f39c779bad0523d"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b9054f39c779bad0524c"
+        },
+        {
+            "linkTypeId": "5db5802c4f39c779bad05224",
+            "creationDate": 1572190474328,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b76c484f6305976e7e90",
+                "5db5b3e24f39c779bad0523f"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5b90a4f39c779bad0524d"
+        },
+        {
+            "linkTypeId": "5db5803e4f39c779bad05225",
+            "creationDate": 1572191389449,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b682484f6305976e7e8c",
+                "5db5bbac4f39c779bad05253"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bc9d4f39c779bad0525c"
+        },
+        {
+            "linkTypeId": "5db5803e4f39c779bad05225",
+            "creationDate": 1572191401724,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b68d484f6305976e7e8e",
+                "5db5bbfd4f39c779bad05257"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bca94f39c779bad0525d"
+        },
+        {
+            "linkTypeId": "5db5803e4f39c779bad05225",
+            "creationDate": 1572191407390,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5db5b76c484f6305976e7e90",
+                "5db5bbdc4f39c779bad05255"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5db5bcaf4f39c779bad0525e"
+        }
+    ],
+    "linkData": {
+        "5db57fe04f39c779bad05222": [
+            {
+                "_id": "5db5bc454f39c779bad05259"
+            },
+            {
+                "_id": "5db5bc474f39c779bad0525a"
+            },
+            {
+                "_id": "5db5bc494f39c779bad0525b"
+            },
+            {
+                "_id": "5db5bdde484f6305976e7ea5"
+            }
+        ],
+        "5db5803e4f39c779bad05225": [
+            {
+                "_id": "5db5bc9d4f39c779bad0525c"
+            },
+            {
+                "_id": "5db5bca94f39c779bad0525d"
+            },
+            {
+                "_id": "5db5bcaf4f39c779bad0525e"
+            }
+        ],
+        "5db57f944f39c779bad05220": [
+            {
+                "_id": "5db5bbb04f39c779bad05254"
+            },
+            {
+                "_id": "5db5bbe74f39c779bad05256"
+            },
+            {
+                "_id": "5db5bc0b4f39c779bad05258"
+            }
+        ],
+        "5db5802c4f39c779bad05224": [
+            {
+                "_id": "5db5b8f44f39c779bad05249"
+            },
+            {
+                "_id": "5db5b8fd4f39c779bad0524a"
+            },
+            {
+                "_id": "5db5b9014f39c779bad0524b"
+            },
+            {
+                "_id": "5db5b9054f39c779bad0524c"
+            },
+            {
+                "_id": "5db5b90a4f39c779bad0524d"
+            }
+        ],
+        "5db57f7e4f39c779bad0521f": [
+            {
+                "_id": "5db5b3f84f39c779bad05240"
+            },
+            {
+                "_id": "5db5b4014f39c779bad05241"
+            },
+            {
+                "_id": "5db5b4094f39c779bad05244"
+            },
+            {
+                "_id": "5db5b40e4f39c779bad05245"
+            },
+            {
+                "_id": "5db5b4144f39c779bad05246"
+            }
+        ],
+        "5db57fec4f39c779bad05223": [
+            {
+                "_id": "5db5b9a3484f6305976e7e92"
+            },
+            {
+                "_id": "5db5b9f1484f6305976e7e9a"
+            },
+            {
+                "_id": "5db5ba34484f6305976e7ea1"
+            },
+            {
+                "_id": "5db5baa34f39c779bad05251"
+            },
+            {
+                "_id": "5db5bb104f39c779bad05252"
+            }
+        ]
+    },
+    "documents": [
+        {
+            "collectionId": "5db57d9a484f6305976e7e53",
+            "creationDate": 1572188715225,
+            "updateDate": 1572188923911,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 7,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b22b484f6305976e7e87"
+        },
+        {
+            "collectionId": "5db57d9a484f6305976e7e53",
+            "creationDate": 1572188729701,
+            "updateDate": 1572189012329,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 4,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b239484f6305976e7e88"
+        },
+        {
+            "collectionId": "5db57d9a484f6305976e7e53",
+            "creationDate": 1572188755081,
+            "updateDate": 1572189026317,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 4,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b253484f6305976e7e89"
+        },
+        {
+            "collectionId": "5db57d9a484f6305976e7e53",
+            "creationDate": 1572188769188,
+            "updateDate": 1572189035958,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b261484f6305976e7e8a"
+        },
+        {
+            "collectionId": "5db57da7484f6305976e7e57",
+            "creationDate": 1572189078947,
+            "updateDate": 1572189368486,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b3964f39c779bad0523b"
+        },
+        {
+            "collectionId": "5db57da7484f6305976e7e57",
+            "creationDate": 1572189112226,
+            "updateDate": 1572189352708,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b3b84f39c779bad0523c"
+        },
+        {
+            "collectionId": "5db57da7484f6305976e7e57",
+            "creationDate": 1572189124018,
+            "updateDate": 1572189360809,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 9,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b3c44f39c779bad0523d"
+        },
+        {
+            "collectionId": "5db57da7484f6305976e7e57",
+            "creationDate": 1572189142049,
+            "updateDate": 1572189525636,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 9,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b3d64f39c779bad0523e"
+        },
+        {
+            "collectionId": "5db57da7484f6305976e7e57",
+            "creationDate": 1572189154316,
+            "updateDate": 1572189336492,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b3e24f39c779bad0523f"
+        },
+        {
+            "collectionId": "5db57dbf484f6305976e7e5b",
+            "creationDate": 1572191148236,
+            "updateDate": 1572191674894,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 8,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5bbac4f39c779bad05253"
+        },
+        {
+            "collectionId": "5db57dbf484f6305976e7e5b",
+            "creationDate": 1572191196664,
+            "updateDate": 1572191672389,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5bbdc4f39c779bad05255"
+        },
+        {
+            "collectionId": "5db57dbf484f6305976e7e5b",
+            "creationDate": 1572191229895,
+            "updateDate": 1572191285173,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5bbfd4f39c779bad05257"
+        },
+        {
+            "collectionId": "5db57dbf484f6305976e7e5b",
+            "creationDate": 1572191691900,
+            "updateDate": 1572191703654,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 2,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5bdcb484f6305976e7ea4"
+        },
+        {
+            "collectionId": "5db57e09484f6305976e7e5f",
+            "creationDate": 1572189826006,
+            "updateDate": 1572646368666,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5c1136e9857aba00900e7a1f",
+            "dataVersion": 32,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b682484f6305976e7e8c"
+        },
+        {
+            "collectionId": "5db57e09484f6305976e7e5f",
+            "creationDate": 1572189832921,
+            "updateDate": 1572646365246,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5c1136e9857aba00900e7a1f",
+            "dataVersion": 10,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b688484f6305976e7e8d"
+        },
+        {
+            "collectionId": "5db57e09484f6305976e7e5f",
+            "creationDate": 1572189837883,
+            "updateDate": 1572646352968,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5c1136e9857aba00900e7a1f",
+            "dataVersion": 22,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b68d484f6305976e7e8e"
+        },
+        {
+            "collectionId": "5db57e09484f6305976e7e5f",
+            "creationDate": 1572189841394,
+            "updateDate": 1572646356419,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5c1136e9857aba00900e7a1f",
+            "dataVersion": 7,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b691484f6305976e7e8f"
+        },
+        {
+            "collectionId": "5db57e09484f6305976e7e5f",
+            "creationDate": 1572190060885,
+            "updateDate": 1572646361265,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5c1136e9857aba00900e7a1f",
+            "dataVersion": 8,
+            "data": {},
+            "metaData": {
+                "parentId": null
+            },
+            "favorite": false,
+            "_id": "5db5b76c484f6305976e7e90"
+        },
+        {
+            "collectionId": "5db57e12484f6305976e7e63",
+            "creationDate": 1572188400620,
+            "updateDate": 1572188663551,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b0f04f39c779bad05234"
+        },
+        {
+            "collectionId": "5db57e12484f6305976e7e63",
+            "creationDate": 1572188405644,
+            "updateDate": 1572188686183,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5db5b0f54f39c779bad05235"
+        },
+        {
+            "collectionId": "5db57e12484f6305976e7e63",
+            "creationDate": 1572188412694,
+            "updateDate": 1572188671662,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {
+                "parentId": "5db5b0f04f39c779bad05234"
+            },
+            "favorite": false,
+            "_id": "5db5b0fc4f39c779bad05236"
+        },
+        {
+            "collectionId": "5db57e12484f6305976e7e63",
+            "creationDate": 1572188417785,
+            "updateDate": 1572188675081,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {
+                "parentId": "5db5b0f04f39c779bad05234"
+            },
+            "favorite": false,
+            "_id": "5db5b1014f39c779bad05237"
+        },
+        {
+            "collectionId": "5db57e12484f6305976e7e63",
+            "creationDate": 1572188443014,
+            "updateDate": 1572188679351,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {
+                "parentId": "5db5b0f04f39c779bad05234"
+            },
+            "favorite": false,
+            "_id": "5db5b11b4f39c779bad05238"
+        },
+        {
+            "collectionId": "5db57e12484f6305976e7e63",
+            "creationDate": 1572188463803,
+            "updateDate": 1572188692006,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {
+                "parentId": "5db5b0f54f39c779bad05235"
+            },
+            "favorite": false,
+            "_id": "5db5b12f4f39c779bad05239"
+        }
+    ],
+    "data": {
+        "5db57da7484f6305976e7e57": [
+            {
+                "_id": "5db5b3964f39c779bad0523b",
+                "a1": "Melissa Hunt",
+                "a5": "[MeWork]",
+                "a3": "355-8305-01",
+                "a4": "melissa.hunt@mework.com",
+                "a6": true,
+                "a2": "Ředitel"
+            },
+            {
+                "_id": "5db5b3b84f39c779bad0523c",
+                "a1": "Spike Stevens",
+                "a5": "[McFonald's]",
+                "a3": "070-2116-16",
+                "a4": "spike.stevens@mcfonalds.com",
+                "a6": true,
+                "a2": "Konzultant"
+            },
+            {
+                "_id": "5db5b3c44f39c779bad0523d",
+                "a1": "Emma Farrell",
+                "a5": "[Dew York Times]",
+                "a3": "700-9810-65",
+                "a4": "emma.farrell@dewyorktimes.com",
+                "a6": true,
+                "a2": "CEO"
+            },
+            {
+                "_id": "5db5b3d64f39c779bad0523e",
+                "a1": "Paige Alexander",
+                "a5": "[McFonald's]",
+                "a3": "459-9810-68",
+                "a4": "paige.alexander@mcfonalds.com",
+                "a6": false,
+                "a2": "Asistentka"
+            },
+            {
+                "_id": "5db5b3e24f39c779bad0523f",
+                "a1": "Henry Harris",
+                "a5": "[Tall-Mart]",
+                "a3": "509-3735-61",
+                "a4": "henry.harris@tallmart.com",
+                "a6": true,
+                "a2": "COO"
+            }
+        ],
+        "5db57e09484f6305976e7e5f": [
+            {
+                "_id": "5db5b682484f6305976e7e8c",
+                "a2": "#e06666",
+                "a3": "Uzavřená",
+                "a4": 10000,
+                "a5": "2019-09-02T22:00:00Z",
+                "a9": "Q3 2019",
+                "a8": "",
+                "a6": "2019-11-01T22:12:48Z",
+                "a1": "MeWork - chairs"
+            },
+            {
+                "_id": "5db5b688484f6305976e7e8d",
+                "a2": "#e06666",
+                "a3": "Probíná",
+                "a4": 12500,
+                "a5": "2019-08-11T22:00:00Z",
+                "a9": "Q3 2019",
+                "a8": "vypadá velmi slibně",
+                "a1": "McFonald's - tables and counters"
+            },
+            {
+                "_id": "5db5b68d484f6305976e7e8e",
+                "a2": "#ffd966",
+                "a3": "Uzavřená",
+                "a4": 3250,
+                "a5": "2019-10-14T22:00:00Z",
+                "a6": "2019-11-01T22:12:32Z",
+                "a9": "Q4 2019",
+                "a8": "",
+                "a1": "Dew York Times - stoly"
+            },
+            {
+                "_id": "5db5b691484f6305976e7e8f",
+                "a2": "#93c47d",
+                "a3": "Otevřená",
+                "a4": 9860,
+                "a5": "2019-10-21T22:00:00Z",
+                "a9": "Q4 2019",
+                "a1": "Dew York Times - další objednávka stolů"
+            },
+            {
+                "_id": "5db5b76c484f6305976e7e90",
+                "a2": "#ffd966",
+                "a3": "Uzavřená",
+                "a4": 76210,
+                "a5": "2019-09-16T22:00:00Z",
+                "a6": "2019-11-01T22:12:41Z",
+                "a9": "Q3 2019",
+                "a1": "Tall-Mart - regály"
+            }
+        ],
+        "5db57d9a484f6305976e7e53": [
+            {
+                "_id": "5db5b22b484f6305976e7e87",
+                "a1": "Tall-Mart",
+                "a2": "Prodej",
+                "a3": "tallmart.com",
+                "a5": "201+ zaměstnanců",
+                "a4": "7 Leatherwood Lane, Soddy Daisy, TN 37379"
+            },
+            {
+                "_id": "5db5b239484f6305976e7e88",
+                "a1": "McFonald's",
+                "a2": "Gastronomie",
+                "a3": "mcfonalds.com",
+                "a5": "1-10 zaměstnanců",
+                "a4": "24 N. Lyme Circle, Mcallen, TX 78501"
+            },
+            {
+                "_id": "5db5b253484f6305976e7e89",
+                "a1": "Dew York Times",
+                "a2": "Vydavatelství",
+                "a3": "dewyorktimes.com",
+                "a5": "51-200 zaměstnanců",
+                "a4": "8108 Tanglewood Ave., Sewell, NJ 08080"
+            },
+            {
+                "_id": "5db5b261484f6305976e7e8a",
+                "a1": "MeWork",
+                "a2": "Stavitelství",
+                "a3": "mework.com",
+                "a5": "1-10 zaměstnanců",
+                "a4": "4 E. Front Drive, Berwyn, IL 60402"
+            }
+        ],
+        "5db57e12484f6305976e7e63": [
+            {
+                "_id": "5db5b0f04f39c779bad05234",
+                "a2": "Manažer prodeje",
+                "a1": "Stuart Armstrong",
+                "a3": "stuart.armstrong@lumeer.io"
+            },
+            {
+                "_id": "5db5b0f54f39c779bad05235",
+                "a2": "Manažer prodeje",
+                "a1": "Vivian Craig",
+                "a3": "vivian.craig@lumeer.io"
+            },
+            {
+                "_id": "5db5b0fc4f39c779bad05236",
+                "a2": "Prodejní reprezentant",
+                "a1": "Kirsten Miller",
+                "a3": "kirsten.miller@lumeer.io"
+            },
+            {
+                "_id": "5db5b1014f39c779bad05237",
+                "a2": "Prodejní reprezentant",
+                "a1": "Oliver Baker",
+                "a3": "oliver.baker@lumeer.io"
+            },
+            {
+                "_id": "5db5b11b4f39c779bad05238",
+                "a2": "Prodejní reprezentant",
+                "a1": "Alissa Adams",
+                "a3": "alissa.adams@lumeer.io"
+            },
+            {
+                "_id": "5db5b12f4f39c779bad05239",
+                "a2": "Prodejní reprezentant",
+                "a1": "Arthur Carroll",
+                "a3": "arthur.carroll@lumeer.io"
+            }
+        ],
+        "5db57dbf484f6305976e7e5b": [
+            {
+                "_id": "5db5bbac4f39c779bad05253",
+                "a1": "Dát si oběd s Melissou z MeWork",
+                "a2": "Osobní setkání",
+                "a3": "2019-10-27T11:30:00Z",
+                "a4": true,
+                "a5": ""
+            },
+            {
+                "_id": "5db5bbdc4f39c779bad05255",
+                "a1": "Zavolat Henrymu z Tall-Mart",
+                "a2": "Telefonní/video hovor",
+                "a3": "2019-10-15T14:00:00Z",
+                "a4": false
+            },
+            {
+                "_id": "5db5bbfd4f39c779bad05257",
+                "a2": "Emailová komunikace",
+                "a1": "Poslat email Emmě z DYT",
+                "a3": "2019-10-31T12:00:00Z"
+            },
+            {
+                "_id": "5db5bdcb484f6305976e7ea4",
+                "a1": "Poslat email Melisse z MeWork",
+                "a2": "Emailová komunikace",
+                "a3": "2019-11-01T23:00:00Z"
+            }
+        ]
+    }
+}
