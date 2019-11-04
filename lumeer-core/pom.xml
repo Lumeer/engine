@@ -107,7 +107,7 @@
       <dependency>
          <groupId>cz.gopay</groupId>
          <artifactId>gp-java-api-v3-resteasy</artifactId>
-         <version>3.4.4</version>
+         <version>3.4.6</version>
          <exclusions>
             <exclusion>
                <groupId>org.jboss.resteasy</groupId>
