@@ -17,15 +17,17 @@ package io.lumeer.remote.rest;/*
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.ZapierFacade;
 
-import java.util.ArrayList;
+import org.assertj.core.util.Lists;
+
 import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -37,73 +39,43 @@ import javax.ws.rs.core.MediaType;
 @Path("zapier")
 public class ZapierService extends AbstractService {
 
-   public static class ZapierField {
-      private final String key;
-      private final String label;
-      private final String type;
-      private final boolean computed;
+   @Inject
+   private ZapierFacade zapierFacade;
 
-      public ZapierField(final String key, final String label, final String type, final boolean computed) {
-         this.key = key;
-         this.label = label;
-         this.type = type;
-         this.computed = computed;
+   @GET
+   @Path("collection/attributes")
+   public List<? super ZapierFacade.ZapierField> getCollectionFields(@QueryParam("collection_id") final String collectionHash) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId == null) {
+         return Lists.emptyList();
       }
 
-      public String getKey() {
-         return key;
-      }
-
-      public String getLabel() {
-         return label;
-      }
-
-      public String getType() {
-         return type;
-      }
-
-      public boolean isComputed() {
-         return computed;
-      }
+      return zapierFacade.getCollectionFields(collectionId);
    }
 
-   @Inject
-   private CollectionFacade collectionFacade;
+   @POST
+   @Path("collection/documents")
+   public Map<String, Object> createDocument(@QueryParam("collection_id") final String collectionHash, final Map<String, Object> data) {
+      final String collectionId = initWorkspace(collectionHash);
 
-   public List<ZapierField> getCollectionFields(@QueryParam("collection_id") final String collectionHash) {
-      final List<ZapierField> result = new ArrayList<>();
+      if (collectionId == null) {
+         return Map.of();
+      }
+
+      return zapierFacade.createDocument(collectionId, data);
+   }
+
+   private String initWorkspace(final String collectionHash) {
       final String[] parts = collectionHash.split("/");
 
       if (parts.length < 3) {
-         return result;
+         return null;
       }
 
-      final String organization = parts[0], project = parts[1], collectionId = parts[3];
+      final String organization = parts[0], project = parts[1], collectionId = parts[2];
       workspaceKeeper.setWorkspace(organization, project);
 
-      final Collection collection = collectionFacade.getCollection(collectionId);
-      collection.getAttributes().forEach(attribute -> {
-         final String attributeId = attribute.getId();
-         final String label = attribute.getName();
-         final boolean readOnly = attribute.getFunction() != null && !attribute.getFunction().isEditable();
-         String type = "string";
-
-         if (attribute.getConstraint() != null) {
-            if (attribute.getConstraint().getType() == ConstraintType.DateTime) {
-               type = "datetime";
-            } else if (attribute.getConstraint().getType() == ConstraintType.Number) {
-               type = "number";
-            } else if (attribute.getConstraint().getType() == ConstraintType.Boolean) {
-               type = "boolean";
-            } else if (attribute.getConstraint().getType() == ConstraintType.Select) {
-               // init choices
-               // https://github.com/zapier/zapier-platform/blob/master/packages/schema/docs/build/schema.md#fieldschema
-            }
-         }
-
-         result.add(new ZapierField(attributeId, label, type, readOnly));
-      });
-
-      return result;
+      return collectionId;
    }
 }
