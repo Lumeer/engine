@@ -23,9 +23,13 @@ import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -38,8 +42,8 @@ public class ZapierFacade extends AbstractFacade {
       private final String type;
       private final boolean computed;
 
-
-      public ZapierField(final String key, final String label, final String type, final boolean computed) {
+      @JsonCreator
+      public ZapierField(@JsonProperty("key") final String key, @JsonProperty("label") final String label, @JsonProperty("type") final String type, @JsonProperty("computed") final boolean computed) {
          this.key = key;
          this.label = label;
          this.type = type;
@@ -61,18 +65,59 @@ public class ZapierFacade extends AbstractFacade {
       public boolean isComputed() {
          return computed;
       }
+
+      @Override
+      public boolean equals(final Object o) {
+         if (this == o) {
+            return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+            return false;
+         }
+         final ZapierField that = (ZapierField) o;
+         return computed == that.computed &&
+               Objects.equals(key, that.key) &&
+               Objects.equals(label, that.label) &&
+               Objects.equals(type, that.type);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hash(key, label, type, computed);
+      }
    }
 
    public static class ZapierSelectField extends ZapierField {
       private final List<Map<String, String>> choices;
 
-      public ZapierSelectField(final String key, final String label, final String type, final boolean computed, final List<Map<String, String>> choices) {
+      @JsonCreator
+      public ZapierSelectField(@JsonProperty("key") final String key, @JsonProperty("label") final String label, @JsonProperty("type") final String type, @JsonProperty("computed") final boolean computed, @JsonProperty("choices") final List<Map<String, String>> choices) {
          super(key, label, type, computed);
          this.choices = choices;
       }
 
       public List<Map<String, String>> getChoices() {
          return choices;
+      }
+
+      @Override
+      public boolean equals(final Object o) {
+         if (this == o) {
+            return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+            return false;
+         }
+         if (!super.equals(o)) {
+            return false;
+         }
+         final ZapierSelectField that = (ZapierSelectField) o;
+         return Objects.equals(choices, that.choices);
+      }
+
+      @Override
+      public int hashCode() {
+         return Objects.hash(super.hashCode(), choices);
       }
    }
 
@@ -82,8 +127,8 @@ public class ZapierFacade extends AbstractFacade {
    @Inject
    private DocumentFacade documentFacade;
 
-   public List<? super ZapierField> getCollectionFields(final String collectionId) {
-      final List<? super ZapierField> result = new ArrayList<>();
+   public List<? extends ZapierField> getCollectionFields(final String collectionId) {
+      final List<ZapierField> result = new ArrayList<>();
       final Collection collection = collectionFacade.getCollection(collectionId);
 
       collection.getAttributes().forEach(attribute -> {

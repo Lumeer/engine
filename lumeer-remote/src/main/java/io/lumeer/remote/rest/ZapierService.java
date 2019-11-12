@@ -44,7 +44,7 @@ public class ZapierService extends AbstractService {
 
    @GET
    @Path("collection/attributes")
-   public List<? super ZapierFacade.ZapierField> getCollectionFields(@QueryParam("collection_id") final String collectionHash) {
+   public List<? extends ZapierFacade.ZapierField> getCollectionFields(@QueryParam("collection_hash") final String collectionHash) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
@@ -56,7 +56,7 @@ public class ZapierService extends AbstractService {
 
    @POST
    @Path("collection/documents")
-   public Map<String, Object> createDocument(@QueryParam("collection_id") final String collectionHash, final Map<String, Object> data) {
+   public Map<String, Object> createDocument(@QueryParam("collection_hash") final String collectionHash, final Map<String, Object> data) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
