@@ -18,6 +18,7 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.engine.IntegrationTestBase;
@@ -56,5 +57,13 @@ public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
 
    protected String projectPath(Organization organization, Project project) {
       return organizationPath(organization) + "projects/" + project.getId() + "/";
+   }
+
+   protected String zapierPath() {
+      return basePath() + "zapier/";
+   }
+
+   protected String getZapierCollectionHash(Organization organization, Project project, Collection collection) {
+      return organization.getId() + "/" + project.getId() + "/" + collection.getId();
    }
 }

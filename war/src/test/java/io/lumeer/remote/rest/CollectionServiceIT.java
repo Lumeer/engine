@@ -36,6 +36,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -81,6 +82,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
+   private Organization organization;
+   private Project project;
 
    private static final String CODE2 = "TCOLL2";
    private static final String NAME2 = "Test collection 2";
@@ -142,6 +145,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       collectionDao.createCollectionsRepository(project);
 
       this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
+      this.organization = storedOrganization;
+      this.project = storedProject;
    }
 
    private Collection prepareCollection(String code) {
@@ -313,6 +318,22 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(attribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
       assertions.assertAll();
+   }
+
+   @Test
+   public void testGetZapierAttributes() {
+      Collection collection = createCollection(CODE);
+      assertThat(collection.getAttributes()).hasSize(1);
+
+      Response response = client.target(zapierPath()).path("collection").path("attributes")
+                                .queryParam("collection_hash", getZapierCollectionHash(organization, project, collection))
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
+
+      List<? extends ZapierFacade.ZapierField> fields = response.readEntity(new GenericType<List<? extends ZapierFacade.ZapierField>>() {});
+
+      assertThat(fields).hasSize(1);
+      assertThat(fields.get(0)).isEqualTo(new ZapierFacade.ZapierField("a1", "fullname", "boolean", true));
    }
 
    @Test
