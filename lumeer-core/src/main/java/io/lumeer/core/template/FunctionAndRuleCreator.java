@@ -137,6 +137,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
 
       if (type == Rule.RuleType.ZAPIER) {
          rule.getConfiguration().put(ZapierRule.HOOK_URL, templateParser.getDict().getLinkTypeId(rule.getConfiguration().getString(ZapierRule.HOOK_URL)));
+         rule.getConfiguration().put(ZapierRule.SUBSCRIBE_ID, templateParser.getDict().getLinkTypeId(rule.getConfiguration().getString(ZapierRule.SUBSCRIBE_ID)));
       }
 
       return rule;

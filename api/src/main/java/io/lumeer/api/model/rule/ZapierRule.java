@@ -21,6 +21,7 @@ import io.lumeer.api.model.Rule;
 
 public class ZapierRule {
    public static final String HOOK_URL = "hookUrl";
+   public static final String SUBSCRIBE_ID = "id";
 
    private final Rule rule;
 
@@ -43,4 +44,13 @@ public class ZapierRule {
    public void setHookUrl(final String hookUrl) {
       rule.getConfiguration().put(HOOK_URL, hookUrl);
    }
+
+   public String getSubscribeId() {
+      return rule.getConfiguration().getString(SUBSCRIBE_ID);
+   }
+
+   public void setSubscribeId(final String subscribeId) {
+      rule.getConfiguration().put(SUBSCRIBE_ID, subscribeId);
+   }
+
 }
