@@ -86,7 +86,7 @@ public class ZapierService extends AbstractService {
 
    @GET
    @Path("collection/documents")
-   public List<DataDocument> createDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("by_update") final Boolean byUpdate) {
+   public List<DataDocument> getSampleDocuments(@QueryParam("collection_hash") final String collectionHash, @QueryParam("by_update") final Boolean byUpdate) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
@@ -98,41 +98,53 @@ public class ZapierService extends AbstractService {
 
    @POST
    @Path("collection/document/created")
-   public void subscribeToDocumentCreated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+   public DataDocument subscribeToDocumentCreated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId != null) {
-         zapierFacade.createCollectionRule(collectionId, Rule.RuleTiming.CREATE, hookUrl.getHookUrl());
+         final Rule rule = zapierFacade.createCollectionRule(collectionId, Rule.RuleTiming.CREATE, hookUrl.getHookUrl());
+
+         if (rule != null) {
+            return rule.getConfiguration();
+         }
       }
+
+      return null;
    }
 
    @DELETE
    @Path("collection/document/created")
-   public void unsubscribeFromDocumentCreated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+   public void unsubscribeFromDocumentCreated(@QueryParam("collection_hash") final String collectionHash, @QueryParam("subscribe_id") final String subscribeId) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId != null) {
-         zapierFacade.removeCollectionRule(collectionId, hookUrl.getHookUrl());
+         zapierFacade.removeCollectionRule(collectionId, subscribeId);
       }
    }
 
    @POST
    @Path("collection/document/updated")
-   public void subscribeToDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+   public DataDocument subscribeToDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId != null) {
-         zapierFacade.createCollectionRule(collectionId, Rule.RuleTiming.UPDATE, hookUrl.getHookUrl());
+         final Rule rule = zapierFacade.createCollectionRule(collectionId, Rule.RuleTiming.UPDATE, hookUrl.getHookUrl());
+
+         if (rule != null) {
+            return rule.getConfiguration();
+         }
       }
+
+      return null;
    }
 
    @DELETE
    @Path("collection/document/updated")
-   public void unsubscribeFromDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+   public void unsubscribeFromDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, @QueryParam("subscribe_id") final String subscribeId) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId != null) {
-         zapierFacade.removeCollectionRule(collectionId, hookUrl.getHookUrl());
+         zapierFacade.removeCollectionRule(collectionId, subscribeId);
       }
    }
 

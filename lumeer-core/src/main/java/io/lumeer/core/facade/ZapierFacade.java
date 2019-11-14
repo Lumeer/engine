@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -190,7 +191,7 @@ public class ZapierFacade extends AbstractFacade {
       return documentFacade.createDocument(collectionId, document).getData();
    }
 
-   public void createCollectionRule(final String collectionId, final Rule.RuleTiming timing, final String hookUrl) {
+   public Rule createCollectionRule(final String collectionId, final Rule.RuleTiming timing, final String hookUrl) {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
       final Optional<Rule> existingRule = collection.getRules().values().stream().filter(rule ->
@@ -198,18 +199,22 @@ public class ZapierFacade extends AbstractFacade {
       ).findFirst();
 
       if (!existingRule.isPresent()) {
-         final Rule rule = new Rule(Rule.RuleType.ZAPIER, timing, new DataDocument(ZapierRule.HOOK_URL, hookUrl));
+         final Rule rule = new Rule(Rule.RuleType.ZAPIER, timing, new DataDocument(ZapierRule.HOOK_URL, hookUrl).append(ZapierRule.SUBSCRIBE_ID, UUID.randomUUID().toString()));
          final String userEmail = authenticatedUser.getUserEmail();
          collection.getRules().put("Zapier" + (userEmail != null && userEmail.length() > 0 ? " (" + userEmail + ")" : ""), rule);
          collectionFacade.updateCollection(collection.getId(), collection);
+
+         return rule;
       }
+
+      return null;
    }
 
-   public void removeCollectionRule(final String collectionId, final String hookUrl) {
+   public void removeCollectionRule(final String collectionId, final String subscribeId) {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
       final List<String> ruleKeysForRemoval = collection.getRules().entrySet().stream().filter(entry ->
-            entry.getValue().getType() == Rule.RuleType.ZAPIER && entry.getValue().getConfiguration().getString(ZapierRule.HOOK_URL).equals(hookUrl)
+            entry.getValue().getType() == Rule.RuleType.ZAPIER && entry.getValue().getConfiguration().getString(ZapierRule.SUBSCRIBE_ID).equals(subscribeId)
       ).map(Map.Entry::getKey).collect(Collectors.toList());
 
       if (ruleKeysForRemoval.size() > 0) {
