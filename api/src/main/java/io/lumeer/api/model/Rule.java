@@ -35,7 +35,7 @@ public class Rule {
    public static final String CONFIGURATION = "configuration";
 
    public enum RuleType {
-      AUTO_LINK, BLOCKLY
+      AUTO_LINK, BLOCKLY, ZAPIER
    }
 
    public enum RuleTiming {

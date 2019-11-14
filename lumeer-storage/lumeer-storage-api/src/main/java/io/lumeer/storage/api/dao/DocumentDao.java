@@ -46,6 +46,8 @@ public interface DocumentDao {
 
    List<Document> getDocumentsByCollection(String collectionId);
 
+   List<Document> getRecentDocuments(final String collectionId, boolean byUpdate);
+
    List<Document> getDocumentsByParentIds(Collection<String> parentIds);
 
    void setProject(Project project);

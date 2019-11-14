@@ -205,6 +205,12 @@ public class DocumentFacade extends AbstractFacade {
       return collection;
    }
 
+   private Collection checkCollectionReadPermissions(String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
+      return collection;
+   }
+
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
       final Collection collection = checkCollectionWritePermissions(collectionId);
 
@@ -413,6 +419,19 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, result.getData());
 
       return result;
+   }
+
+   public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {
+      final Collection collection = checkCollectionReadPermissions(collectionId);
+      final List<Document> documents = documentDao.getRecentDocuments(collectionId, byUpdate);
+
+      documents.forEach(doc -> {
+         DataDocument data = dataDao.getData(collection.getId(), doc.getId());
+         doc.setData(data);
+         constraintManager.decodeDataTypes(collection, doc.getData());
+      });
+
+      return documents;
    }
 
    private Document getDocument(Collection collection, String documentId) {
