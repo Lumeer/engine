@@ -25,6 +25,7 @@ import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
+import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.engine.api.data.DataDocument;
@@ -132,6 +133,10 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          rule.getConfiguration().put(AutoLinkRule.AUTO_LINK_LINK_TYPE, templateParser.getDict().getLinkTypeId(rule.getConfiguration().getString(AutoLinkRule.AUTO_LINK_LINK_TYPE)));
          rule.getConfiguration().put(AutoLinkRule.AUTO_LINK_COLLECTION1, templateParser.getDict().getCollectionId(rule.getConfiguration().getString(AutoLinkRule.AUTO_LINK_COLLECTION1)));
          rule.getConfiguration().put(AutoLinkRule.AUTO_LINK_COLLECTION2, templateParser.getDict().getCollectionId(rule.getConfiguration().getString(AutoLinkRule.AUTO_LINK_COLLECTION2)));
+      }
+
+      if (type == Rule.RuleType.ZAPIER) {
+         rule.getConfiguration().put(ZapierRule.HOOK_URL, templateParser.getDict().getLinkTypeId(rule.getConfiguration().getString(ZapierRule.HOOK_URL)));
       }
 
       return rule;

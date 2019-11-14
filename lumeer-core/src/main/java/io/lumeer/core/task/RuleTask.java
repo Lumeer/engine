@@ -23,6 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
+import io.lumeer.core.task.executor.ZapierRuleTaskExecutor;
 
 public class RuleTask extends AbstractContextualTask {
 
@@ -48,6 +49,9 @@ public class RuleTask extends AbstractContextualTask {
          executor.execute();
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
+         executor.execute();
+      } else if (rule.getType() == Rule.RuleType.ZAPIER) {
+         final ZapierRuleTaskExecutor executor = new ZapierRuleTaskExecutor(ruleName, this);
          executor.execute();
       }
 

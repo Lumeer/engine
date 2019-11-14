@@ -17,8 +17,12 @@ package io.lumeer.remote.rest;/*
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import io.lumeer.api.model.Rule;
 import io.lumeer.core.facade.ZapierFacade;
+import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.assertj.core.util.Lists;
 
 import java.util.List;
@@ -26,6 +30,7 @@ import java.util.Map;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -38,6 +43,19 @@ import javax.ws.rs.core.MediaType;
 @Consumes(MediaType.APPLICATION_JSON)
 @Path("zapier")
 public class ZapierService extends AbstractService {
+
+   public static class HookUrl {
+      private final String hookUrl;
+
+      @JsonCreator
+      public HookUrl(@JsonProperty("hookUrl") final String hookUrl) {
+         this.hookUrl = hookUrl;
+      }
+
+      public String getHookUrl() {
+         return hookUrl;
+      }
+   }
 
    @Inject
    private ZapierFacade zapierFacade;
@@ -64,6 +82,58 @@ public class ZapierService extends AbstractService {
       }
 
       return zapierFacade.createDocument(collectionId, data);
+   }
+
+   @GET
+   @Path("collection/documents")
+   public List<DataDocument> createDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("by_update") final Boolean byUpdate) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId == null) {
+         return Lists.emptyList();
+      }
+
+      return zapierFacade.getSampleEntries(collectionId, byUpdate != null && byUpdate);
+   }
+
+   @POST
+   @Path("collection/document/created")
+   public void subscribeToDocumentCreated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId != null) {
+         zapierFacade.createCollectionRule(collectionId, Rule.RuleTiming.CREATE, hookUrl.getHookUrl());
+      }
+   }
+
+   @DELETE
+   @Path("collection/document/created")
+   public void unsubscribeFromDocumentCreated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId != null) {
+         zapierFacade.removeCollectionRule(collectionId, hookUrl.getHookUrl());
+      }
+   }
+
+   @POST
+   @Path("collection/document/updated")
+   public void subscribeToDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId != null) {
+         zapierFacade.createCollectionRule(collectionId, Rule.RuleTiming.UPDATE, hookUrl.getHookUrl());
+      }
+   }
+
+   @DELETE
+   @Path("collection/document/updated")
+   public void unsubscribeFromDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId != null) {
+         zapierFacade.removeCollectionRule(collectionId, hookUrl.getHookUrl());
+      }
    }
 
    private String initWorkspace(final String collectionHash) {

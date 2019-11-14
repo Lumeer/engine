@@ -21,6 +21,9 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.rule.ZapierRule;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -121,11 +126,15 @@ public class ZapierFacade extends AbstractFacade {
       }
    }
 
+
    @Inject
    private CollectionFacade collectionFacade;
 
    @Inject
    private DocumentFacade documentFacade;
+
+   @Inject
+   protected AuthenticatedUser authenticatedUser;
 
    public List<? extends ZapierField> getCollectionFields(final String collectionId) {
       final List<ZapierField> result = new ArrayList<>();
@@ -180,4 +189,37 @@ public class ZapierFacade extends AbstractFacade {
 
       return documentFacade.createDocument(collectionId, document).getData();
    }
+
+   public void createCollectionRule(final String collectionId, final Rule.RuleTiming timing, final String hookUrl) {
+      final Collection collection = collectionFacade.getCollection(collectionId);
+
+      final Optional<Rule> existingRule = collection.getRules().values().stream().filter(rule ->
+         rule.getType() == Rule.RuleType.ZAPIER && rule.getConfiguration().getString(ZapierRule.HOOK_URL).equals(hookUrl)
+      ).findFirst();
+
+      if (!existingRule.isPresent()) {
+         final Rule rule = new Rule(Rule.RuleType.ZAPIER, timing, new DataDocument(ZapierRule.HOOK_URL, hookUrl));
+         final String userEmail = authenticatedUser.getUserEmail();
+         collection.getRules().put("Zapier" + (userEmail != null && userEmail.length() > 0 ? " (" + userEmail + ")" : ""), rule);
+         collectionFacade.updateCollection(collection.getId(), collection);
+      }
+   }
+
+   public void removeCollectionRule(final String collectionId, final String hookUrl) {
+      final Collection collection = collectionFacade.getCollection(collectionId);
+
+      final List<String> ruleKeysForRemoval = collection.getRules().entrySet().stream().filter(entry ->
+            entry.getValue().getType() == Rule.RuleType.ZAPIER && entry.getValue().getConfiguration().getString(ZapierRule.HOOK_URL).equals(hookUrl)
+      ).map(Map.Entry::getKey).collect(Collectors.toList());
+
+      if (ruleKeysForRemoval.size() > 0) {
+         ruleKeysForRemoval.forEach(key -> collection.getRules().remove(key));
+         collectionFacade.updateCollection(collection.getId(), collection);
+      }
+   }
+
+   public List<DataDocument> getSampleEntries(final String collectionId, final boolean byUpdate) {
+      return documentFacade.getRecentDocuments(collectionId, byUpdate).stream().map(Document::getData).collect(Collectors.toList());
+   }
+
 }

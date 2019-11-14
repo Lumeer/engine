@@ -38,6 +38,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Sorts;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
@@ -65,6 +66,8 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
 
       MongoCollection<org.bson.Document> collection = database.getCollection(databaseCollectionName(project));
       collection.createIndex(Indexes.ascending(DocumentCodec.COLLECTION_ID), new IndexOptions().unique(false));
+      collection.createIndex(Indexes.descending(DocumentCodec.CREATION_DATE), new IndexOptions().unique(false));
+      collection.createIndex(Indexes.descending(DocumentCodec.UPDATE_DATE), new IndexOptions().unique(false));
    }
 
    @Override
@@ -154,6 +157,15 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    @Override
    public List<Document> getDocumentsByCollection(final String collectionId) {
       return databaseCollection().find(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<Document> getRecentDocuments(final String collectionId, boolean byUpdate) {
+      return databaseCollection()
+            .find(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId))
+            .sort(Sorts.descending(byUpdate ? DocumentCodec.UPDATE_DATE : DocumentCodec.CREATION_DATE))
+            .limit(10)
+            .into(new ArrayList<>());
    }
 
    @Override
