@@ -114,12 +114,16 @@ public class ZapierService extends AbstractService {
 
    @DELETE
    @Path("collection/document/created")
-   public void unsubscribeFromDocumentCreated(@QueryParam("collection_hash") final String collectionHash, @QueryParam("subscribe_id") final String subscribeId) {
+   public DataDocument unsubscribeFromDocumentCreated(@QueryParam("collection_hash") final String collectionHash, @QueryParam("subscribe_id") final String subscribeId) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId != null) {
          zapierFacade.removeCollectionRule(collectionId, subscribeId);
+
+         return new DataDocument("id", subscribeId);
       }
+
+      return null;
    }
 
    @POST
@@ -140,12 +144,16 @@ public class ZapierService extends AbstractService {
 
    @DELETE
    @Path("collection/document/updated")
-   public void unsubscribeFromDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, @QueryParam("subscribe_id") final String subscribeId) {
+   public DataDocument unsubscribeFromDocumentUpdated(@QueryParam("collection_hash") final String collectionHash, @QueryParam("subscribe_id") final String subscribeId) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId != null) {
          zapierFacade.removeCollectionRule(collectionId, subscribeId);
+
+         return new DataDocument("id", subscribeId);
       }
+
+      return null;
    }
 
    private String initWorkspace(final String collectionHash) {
