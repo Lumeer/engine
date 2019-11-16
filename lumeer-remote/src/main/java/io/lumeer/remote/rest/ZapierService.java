@@ -33,6 +33,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -82,6 +83,18 @@ public class ZapierService extends AbstractService {
       }
 
       return zapierFacade.createDocument(collectionId, data);
+   }
+
+   @PUT
+   @Path("collection/documents")
+   public List<DataDocument> updateDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("key") final String key, final Map<String, Object> data) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId == null) {
+         return Lists.emptyList();
+      }
+
+      return zapierFacade.updateDocument(collectionId, key, data);
    }
 
    @GET
