@@ -17,11 +17,15 @@ package io.lumeer.core.task.executor;/*
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.task.RuleTask;
+import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
@@ -44,6 +48,16 @@ public class ZapierRuleTaskExecutor {
    public void execute() {
       final Document document = ruleTask.getNewDocument();
       final Entity entity = Entity.json(document);
+      final Collection collection = ruleTask.getCollection();
+      final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      document.setData(new DataDocument(
+            document.getData()
+                    .entrySet()
+                    .stream()
+                    .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+      ));
 
       final Client client = ClientBuilder.newClient();
       client.target(rule.getHookUrl()).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();

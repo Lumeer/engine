@@ -19,8 +19,11 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -34,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -135,6 +139,9 @@ public class ZapierFacade extends AbstractFacade {
    private DocumentFacade documentFacade;
 
    @Inject
+   private SearchFacade searchFacade;
+
+   @Inject
    protected AuthenticatedUser authenticatedUser;
 
    public List<? extends ZapierField> getCollectionFields(final String collectionId) {
@@ -189,6 +196,26 @@ public class ZapierFacade extends AbstractFacade {
       final Document document = new Document(dataDocument);
 
       return documentFacade.createDocument(collectionId, document).getData();
+   }
+
+   public List<DataDocument> updateDocument(final String collectionId, final String key, final Map<String, Object> data) {
+      final List<DataDocument> results = new ArrayList<>();
+      final List<Document> documents = searchFacade.searchDocuments(
+            new Query(
+                  new QueryStem(
+                        collectionId,
+                        null,
+                        null,
+                        Set.of(new CollectionAttributeFilter(collectionId, key, "=", data.get(key))),
+                        null)
+            )
+      );
+
+      documents.forEach(document -> {
+         results.add(documentFacade.patchDocumentData(collectionId, document.getId(), new DataDocument(data)).getData());
+      });
+
+      return results;
    }
 
    public Rule createCollectionRule(final String collectionId, final Rule.RuleTiming timing, final String hookUrl) {
