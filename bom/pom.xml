@@ -87,7 +87,7 @@
       <version.json.simple>1.1.1</version.json.simple>
       <version.resteasy>3.9.1.Final</version.resteasy>
       <version.jaxrs>3.0.12.Final</version.jaxrs>
-      <version.apache.httpclient>4.5.9</version.apache.httpclient>
+      <version.apache.httpclient>4.5.10</version.apache.httpclient>
       <version.apache.httpcore>4.4.12</version.apache.httpcore>
       <version.univocity>2.8.3</version.univocity>
       <version.mvc-auth>1.1.0</version.mvc-auth>
