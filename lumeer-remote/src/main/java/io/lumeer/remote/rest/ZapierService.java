@@ -82,19 +82,29 @@ public class ZapierService extends AbstractService {
          return Map.of();
       }
 
+      cleanInput(data);
+
       return zapierFacade.createDocument(collectionId, data);
    }
 
    @PUT
    @Path("collection/documents")
-   public List<DataDocument> updateDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("key") final String key, final Map<String, Object> data) {
+   public List<DataDocument> updateDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("key") final String key, @QueryParam("create_update") final Boolean createUpdate, final Map<String, Object> data) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
          return Lists.emptyList();
       }
 
-      return zapierFacade.updateDocument(collectionId, key, data);
+      cleanInput(data);
+
+      final List<DataDocument> result = zapierFacade.updateDocument(collectionId, key, data);
+
+      if (result.size() <= 0) {
+         return List.of(zapierFacade.createDocument(collectionId, data));
+      }
+
+      return result;
    }
 
    @GET
@@ -180,5 +190,11 @@ public class ZapierService extends AbstractService {
       workspaceKeeper.setWorkspace(organization, project);
 
       return collectionId;
+   }
+
+   private void cleanInput(final Map<String, Object> data) {
+      data.remove("collection_hash");
+      data.remove("key");
+      data.remove("create_update");
    }
 }
