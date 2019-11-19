@@ -62,6 +62,36 @@ public class ZapierService extends AbstractService {
    private ZapierFacade zapierFacade;
 
    @GET
+   @Path("organizations")
+   public List<? extends ZapierFacade.ZapierField> getOrganizations() {
+      return zapierFacade.getOrganizations();
+   }
+
+   @GET
+   @Path("projects")
+   public List<? extends ZapierFacade.ZapierField> getProjects(@QueryParam("organization_id") final String organizationId) {
+      if (organizationId != null) {
+         workspaceKeeper.setWorkspace(organizationId.trim(), null);
+
+         return zapierFacade.getProjects();
+      }
+
+      return Lists.emptyList();
+   }
+
+   @GET
+   @Path("collections")
+   public List<? extends ZapierFacade.ZapierField> getCollections(@QueryParam("organization_id") final String organizationId, @QueryParam("project_id") final String projectId) {
+      if (organizationId != null && projectId != null) {
+         workspaceKeeper.setWorkspace(organizationId.trim(), projectId.trim());
+
+         return zapierFacade.getCollections();
+      }
+
+      return Lists.emptyList();
+   }
+
+   @GET
    @Path("collection/attributes")
    public List<? extends ZapierFacade.ZapierField> getCollectionFields(@QueryParam("collection_hash") final String collectionHash) {
       final String collectionId = initWorkspace(collectionHash);
@@ -180,7 +210,7 @@ public class ZapierService extends AbstractService {
    }
 
    private String initWorkspace(final String collectionHash) {
-      final String[] parts = collectionHash.split("/");
+      final String[] parts = collectionHash.trim().split("/");
 
       if (parts.length < 3) {
          return null;
@@ -194,6 +224,9 @@ public class ZapierService extends AbstractService {
 
    private void cleanInput(final Map<String, Object> data) {
       data.remove("collection_hash");
+      data.remove("organization_id");
+      data.remove("project_id");
+      data.remove("collection_id");
       data.remove("key");
       data.remove("create_update");
    }

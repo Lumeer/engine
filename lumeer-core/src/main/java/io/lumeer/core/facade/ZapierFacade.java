@@ -33,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -51,13 +52,17 @@ public class ZapierFacade extends AbstractFacade {
       private final String label;
       private final String type;
       private final boolean computed;
+      private final boolean required;
+      private final boolean altersDynamicFields;
 
       @JsonCreator
-      public ZapierField(@JsonProperty("key") final String key, @JsonProperty("label") final String label, @JsonProperty("type") final String type, @JsonProperty("computed") final boolean computed) {
+      public ZapierField(@JsonProperty("key") final String key, @JsonProperty("label") final String label, @JsonProperty("type") final String type, @JsonProperty("computed") final boolean computed, @JsonProperty("required") final boolean required, @JsonProperty("altersDynamicFields") final boolean altersDynamicFields) {
          this.key = key;
          this.label = label;
          this.type = type;
          this.computed = computed;
+         this.required = required;
+         this.altersDynamicFields = altersDynamicFields;
       }
 
       public String getKey() {
@@ -76,6 +81,14 @@ public class ZapierFacade extends AbstractFacade {
          return computed;
       }
 
+      public boolean isRequired() {
+         return required;
+      }
+
+      public boolean isAltersDynamicFields() {
+         return altersDynamicFields;
+      }
+
       @Override
       public boolean equals(final Object o) {
          if (this == o) {
@@ -86,6 +99,8 @@ public class ZapierFacade extends AbstractFacade {
          }
          final ZapierField that = (ZapierField) o;
          return computed == that.computed &&
+               required == that.required &&
+               altersDynamicFields == that.altersDynamicFields &&
                Objects.equals(key, that.key) &&
                Objects.equals(label, that.label) &&
                Objects.equals(type, that.type);
@@ -93,7 +108,7 @@ public class ZapierFacade extends AbstractFacade {
 
       @Override
       public int hashCode() {
-         return Objects.hash(key, label, type, computed);
+         return Objects.hash(key, label, type, computed, required, altersDynamicFields);
       }
    }
 
@@ -101,8 +116,8 @@ public class ZapierFacade extends AbstractFacade {
       private final List<Map<String, String>> choices;
 
       @JsonCreator
-      public ZapierSelectField(@JsonProperty("key") final String key, @JsonProperty("label") final String label, @JsonProperty("type") final String type, @JsonProperty("computed") final boolean computed, @JsonProperty("choices") final List<Map<String, String>> choices) {
-         super(key, label, type, computed);
+      public ZapierSelectField(@JsonProperty("key") final String key, @JsonProperty("label") final String label, @JsonProperty("type") final String type, @JsonProperty("computed") final boolean computed, @JsonProperty("required") final boolean required, @JsonProperty("altersDynamicFields") final boolean altersDynamicFields, @JsonProperty("choices") final List<Map<String, String>> choices) {
+         super(key, label, type, computed, required, altersDynamicFields);
          this.choices = choices;
       }
 
@@ -142,7 +157,43 @@ public class ZapierFacade extends AbstractFacade {
    private SearchFacade searchFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    protected AuthenticatedUser authenticatedUser;
+
+   public List<? extends ZapierField> getOrganizations() {
+      final List<Map<String, String>> choices = new ArrayList<>();
+
+      organizationFacade.getOrganizations().forEach(organization -> {
+         choices.add(Map.of("value", organization.getId(), "label", organization.getCode() + ": " + organization.getName()));
+      });
+
+      return List.of(new ZapierSelectField("organization_id", "Organization", "string", false, true, true, choices));
+   }
+
+   public List<? extends ZapierField> getProjects() {
+      final List<Map<String, String>> choices = new ArrayList<>();
+
+      projectFacade.getProjects().forEach(project -> {
+         choices.add(Map.of("value", project.getId(), "label", project.getCode() + ": " + project.getName()));
+      });
+
+      return List.of(new ZapierSelectField("project_id", "Project", "string", false, true, true, choices));
+   }
+
+   public List<? extends ZapierField> getCollections() {
+      final List<Map<String, String>> choices = new ArrayList<>();
+
+      collectionFacade.getCollections().forEach(collection -> {
+         choices.add(Map.of("value", collection.getId(), "label", collection.getName()));
+      });
+
+      return List.of(new ZapierSelectField("collection_id", "Table", "string", false, true, true, choices));
+   }
 
    public List<? extends ZapierField> getCollectionFields(final String collectionId) {
       final List<ZapierField> result = new ArrayList<>();
@@ -182,9 +233,9 @@ public class ZapierFacade extends AbstractFacade {
          }
 
          if (type.equals("choices")) {
-            result.add(new ZapierSelectField(attributeId, label, type, readOnly, choices));
+            result.add(new ZapierSelectField(attributeId, label, type, readOnly, false, false, choices));
          } else {
-            result.add(new ZapierField(attributeId, label, type, readOnly));
+            result.add(new ZapierField(attributeId, label, type, readOnly, false, false));
          }
       });
 
