@@ -23,7 +23,6 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.assertj.core.util.Lists;
 
 import java.util.List;
 import java.util.Map;
@@ -76,7 +75,7 @@ public class ZapierService extends AbstractService {
          return zapierFacade.getProjects();
       }
 
-      return Lists.emptyList();
+      return List.of();
    }
 
    @GET
@@ -88,7 +87,7 @@ public class ZapierService extends AbstractService {
          return zapierFacade.getCollections();
       }
 
-      return Lists.emptyList();
+      return List.of();
    }
 
    @GET
@@ -97,7 +96,7 @@ public class ZapierService extends AbstractService {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
-         return Lists.emptyList();
+         return List.of();
       }
 
       return zapierFacade.getCollectionFields(collectionId);
@@ -123,7 +122,7 @@ public class ZapierService extends AbstractService {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
-         return Lists.emptyList();
+         return List.of();
       }
 
       cleanInput(data);
@@ -143,7 +142,7 @@ public class ZapierService extends AbstractService {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
-         return Lists.emptyList();
+         return List.of();
       }
 
       return zapierFacade.getSampleEntries(collectionId, byUpdate != null && byUpdate);
