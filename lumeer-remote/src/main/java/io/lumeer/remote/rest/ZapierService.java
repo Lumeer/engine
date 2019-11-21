@@ -111,9 +111,9 @@ public class ZapierService extends AbstractService {
          return Map.of();
       }
 
-      cleanInput(data);
+      final String id = cleanInput(data);
 
-      return zapierFacade.createDocument(collectionId, data);
+      return zapierFacade.createDocument(collectionId, data).append("id", id);
    }
 
    @PUT
@@ -125,15 +125,15 @@ public class ZapierService extends AbstractService {
          return new DataDocument();
       }
 
-      cleanInput(data);
+      final String id = cleanInput(data);
 
       final List<DataDocument> result = zapierFacade.updateDocument(collectionId, key, data);
 
       if (result.size() <= 0 && createUpdate != null && createUpdate) {
-         return zapierFacade.createDocument(collectionId, data).append("updated_count", 1);
+         return zapierFacade.createDocument(collectionId, data).append("updated_count", 1).append("id", id);
       }
 
-      return result.get(0).append("updated_count", result.size());
+      return result.get(0).append("updated_count", result.size()).append("id", id);
    }
 
    @GET
@@ -221,7 +221,7 @@ public class ZapierService extends AbstractService {
       return collectionId;
    }
 
-   private void cleanInput(final Map<String, Object> data) {
+   private String cleanInput(final Map<String, Object> data) {
       System.out.println(data);
       data.remove("collection_hash");
       data.remove("organization_id");
@@ -229,5 +229,9 @@ public class ZapierService extends AbstractService {
       data.remove("collection_id");
       data.remove("key_attribute");
       data.remove("create_update");
+
+      final Object o = data.remove("id");
+
+      return o != null ? toString() : null;
    }
 }
