@@ -222,6 +222,7 @@ public class ZapierService extends AbstractService {
    }
 
    private void cleanInput(final Map<String, Object> data) {
+      System.out.println(data);
       data.remove("collection_hash");
       data.remove("organization_id");
       data.remove("project_id");
