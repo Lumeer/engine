@@ -146,7 +146,6 @@ public class ZapierFacade extends AbstractFacade {
       }
    }
 
-
    @Inject
    private CollectionFacade collectionFacade;
 
@@ -273,7 +272,7 @@ public class ZapierFacade extends AbstractFacade {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
       final Optional<Rule> existingRule = collection.getRules().values().stream().filter(rule ->
-         rule.getType() == Rule.RuleType.ZAPIER && rule.getConfiguration().getString(ZapierRule.HOOK_URL).equals(hookUrl)
+            rule.getType() == Rule.RuleType.ZAPIER && rule.getConfiguration().getString(ZapierRule.HOOK_URL).equals(hookUrl)
       ).findFirst();
 
       if (!existingRule.isPresent()) {
@@ -302,7 +301,19 @@ public class ZapierFacade extends AbstractFacade {
    }
 
    public List<DataDocument> getSampleEntries(final String collectionId, final boolean byUpdate) {
-      return documentFacade.getRecentDocuments(collectionId, byUpdate).stream().map(Document::getData).collect(Collectors.toList());
+      final Collection collection = collectionFacade.getCollection(collectionId);
+      final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      return documentFacade
+            .getRecentDocuments(collectionId, byUpdate)
+            .stream()
+            .map(Document::getData)
+            .map(data -> new DataDocument(
+                  data.entrySet()
+                      .stream()
+                      .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
+                      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
+            .collect(Collectors.toList());
    }
 
 }
