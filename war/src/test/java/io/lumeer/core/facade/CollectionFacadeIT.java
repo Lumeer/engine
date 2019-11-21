@@ -115,6 +115,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    private static final String CODE2 = "TCOLL2";
    private static final String CODE3 = "TCOLL3";
+   private static final String CODE4 = "TCOLL4";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -157,6 +158,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Inject
    private ContextualTaskFactory contextualTaskFactory;
+
+   @Inject
+   private ZapierFacade zapierFacade;
 
    @Before
    public void configureProject() {
@@ -930,6 +934,38 @@ public class CollectionFacadeIT extends IntegrationTestBase {
               Map.entry("Task-3", new BigDecimal("0.12")),
               Map.entry("Task-4", new BigDecimal("0.0012"))
       );
+   }
+
+   @Test
+   public void testUpdateDocumentWithZapier() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE4));
+      collectionFacade.createCollectionAttributes(
+              collection.getId(),
+              Arrays.asList(
+                      new Attribute("a1", "Task", null, null, 0),
+                      new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+              )
+      );
+
+      var values = Arrays.asList("10", "12%", "0.12", "0.12 %");
+
+      var i = new AtomicInteger(1);
+      values.forEach(value -> {
+         documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + i.getAndIncrement()).append("a2", value)));
+      });
+
+      zapierFacade.updateDocument(collection.getId(), "a1", new DataDocument("a1", "Task-2").append("a2", "94%"));
+
+      var documents = documentDao.getDocumentsByCollection(collection.getId());
+
+      Map<String, Object> res = new HashMap<>();
+      documents.forEach(document -> {
+         DataDocument data = dataDao.getData(collection.getId(), document.getId()); //  we must skip DocumentFacade because with that, BigDecimal gets converted to String for compatibility with UI
+         res.put(data.getString("a1"), data.getObject("a2"));
+      });
+
+      assertThat(res).hasSize(4);
+      assertThat(res).contains(Map.entry("Task-2", "94%"));
    }
 
    public void testTaskExecutor() throws InterruptedException {

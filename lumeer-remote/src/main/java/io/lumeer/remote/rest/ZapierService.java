@@ -118,22 +118,22 @@ public class ZapierService extends AbstractService {
 
    @PUT
    @Path("collection/documents")
-   public List<DataDocument> updateDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("key") final String key, @QueryParam("create_update") final Boolean createUpdate, final Map<String, Object> data) {
+   public DataDocument updateDocument(@QueryParam("collection_hash") final String collectionHash, @QueryParam("key") final String key, @QueryParam("create_update") final Boolean createUpdate, final Map<String, Object> data) {
       final String collectionId = initWorkspace(collectionHash);
 
       if (collectionId == null) {
-         return List.of();
+         return new DataDocument();
       }
 
       cleanInput(data);
 
       final List<DataDocument> result = zapierFacade.updateDocument(collectionId, key, data);
 
-      if (result.size() <= 0) {
-         return List.of(zapierFacade.createDocument(collectionId, data));
+      if (result.size() <= 0 && createUpdate != null && createUpdate) {
+         return zapierFacade.createDocument(collectionId, data).append("updated_count", 1);
       }
 
-      return result;
+      return result.get(0).append("updated_count", result.size());
    }
 
    @GET
@@ -226,7 +226,7 @@ public class ZapierService extends AbstractService {
       data.remove("organization_id");
       data.remove("project_id");
       data.remove("collection_id");
-      data.remove("key");
+      data.remove("key_attribute");
       data.remove("create_update");
    }
 }
