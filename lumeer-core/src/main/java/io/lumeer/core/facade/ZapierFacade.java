@@ -242,14 +242,16 @@ public class ZapierFacade extends AbstractFacade {
    }
 
    public DataDocument createDocument(final String collectionId, final Map<String, Object> data) {
+      final Collection collection = collectionFacade.getCollection(collectionId);
       final DataDocument dataDocument = new DataDocument(data);
       final Document document = new Document(dataDocument);
 
-      return documentFacade.createDocument(collectionId, document).getData();
+      return translateAttributes(collection, documentFacade.createDocument(collectionId, document).getData());
    }
 
    public List<DataDocument> updateDocument(final String collectionId, final String key, final Map<String, Object> data) {
       final List<DataDocument> results = new ArrayList<>();
+      final Collection collection = collectionFacade.getCollection(collectionId);
       final List<Document> documents = searchFacade.searchDocuments(
             new Query(
                   new QueryStem(
@@ -262,7 +264,7 @@ public class ZapierFacade extends AbstractFacade {
       );
 
       documents.forEach(document -> {
-         results.add(documentFacade.patchDocumentData(collectionId, document.getId(), new DataDocument(data)).getData());
+         results.add(translateAttributes(collection, documentFacade.patchDocumentData(collectionId, document.getId(), new DataDocument(data)).getData()));
       });
 
       return results;
@@ -308,12 +310,18 @@ public class ZapierFacade extends AbstractFacade {
             .getRecentDocuments(collectionId, byUpdate)
             .stream()
             .map(Document::getData)
-            .map(data -> new DataDocument(
-                  data.entrySet()
-                      .stream()
-                      .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
-                      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
+            .map(data -> translateAttributes(collection, data))
             .collect(Collectors.toList());
+   }
+
+   private DataDocument translateAttributes(final Collection collection, final DataDocument data) {
+      final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      return new DataDocument(
+            data.entrySet()
+                .stream()
+                .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
    }
 
 }
