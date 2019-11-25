@@ -91,7 +91,7 @@
       <maven.javadoc.plugin.version>3.0.1</maven.javadoc.plugin.version>
       <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
       <maven.xml.plugin.version>1.0.2</maven.xml.plugin.version>
-      <maven.surefire.plugin.version>2.22.1</maven.surefire.plugin.version>
+      <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
       <maven.dependency.plugin.version>3.1.1</maven.dependency.plugin.version>
       <maven.pit.version>1.11.12</maven.pit.version>
       <maven.plugin.plugin>3.5.2</maven.plugin.plugin>
