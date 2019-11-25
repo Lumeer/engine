@@ -76,7 +76,7 @@
       <version.commons.math3>3.6.1</version.commons.math3>
       <version.commons.io>2.6</version.commons.io>
       <version.commons.beanutils>1.9.4</version.commons.beanutils>
-      <version.commons.collections>4.2</version.commons.collections>
+      <version.commons.collections>4.4</version.commons.collections>
       <version.commons.lang>3.9</version.commons.lang>
       <version.commons.text>1.8</version.commons.text>
       <version.commons.logging>1.2</version.commons.logging>
