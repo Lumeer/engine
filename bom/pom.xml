@@ -115,7 +115,7 @@
       <version.wildfly>17.0.1.Final</version.wildfly>
       <version.amq>5.14.0</version.amq>
       <version.mockito>3.2.0</version.mockito>
-      <version.bytebuddy>1.10.3</version.bytebuddy>
+      <version.bytebuddy>1.10.4</version.bytebuddy>
       <version.junit>4.12</version.junit>
       <version.embedded.mongodb>2.2.0</version.embedded.mongodb>
       <version.awssdk>2.10.25</version.awssdk>
