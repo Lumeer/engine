@@ -618,7 +618,7 @@
                                                     "displayValue": ""
                                                 },
                                                 {
-                                                    "value": "Probíná",
+                                                    "value": "Probíhá",
                                                     "displayValue": ""
                                                 },
                                                 {
@@ -2516,7 +2516,7 @@
                 "a9": "Q3 2019",
                 "a8": "",
                 "a6": "2019-11-01T22:12:48Z",
-                "a1": "MeWork - chairs"
+                "a1": "MeWork - židle"
             },
             {
                 "_id": "5db5b688484f6305976e7e8d",
@@ -2526,7 +2526,7 @@
                 "a5": "2019-08-11T22:00:00Z",
                 "a9": "Q3 2019",
                 "a8": "vypadá velmi slibně",
-                "a1": "McFonald's - tables and counters"
+                "a1": "McFonald's - stoly a pulty"
             },
             {
                 "_id": "5db5b68d484f6305976e7e8e",
