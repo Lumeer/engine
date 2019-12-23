@@ -268,6 +268,10 @@ public class DataDocument extends LinkedHashMap<String, Object> {
     *
     * @param key
     *       the key
+    * @param cl
+    *       class of the elements in the array
+    * @param <T>
+    *       the type of elements in the array
     * @return the value as a typed ArrayList, or null
     * @throws java.lang.NullPointerException
     *       if key nested path is not valid
