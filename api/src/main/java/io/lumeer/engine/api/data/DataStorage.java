@@ -245,6 +245,8 @@ public interface DataStorage extends Serializable {
     *       the name of an attribute to add item
     * @param item
     *       the item to add to array
+    * @param <T>
+    *       the type of the elements in the array
     */
    <T> void addItemToArray(final String collectionName, final DataFilter filter, final String attributeName, final T item);
 
@@ -259,6 +261,8 @@ public interface DataStorage extends Serializable {
     *       the name of an attribute to add item
     * @param items
     *       the items to add to array
+    * @param <T>
+    *       the type of the elements in the array
     */
    <T> void addItemsToArray(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items);
 
@@ -273,6 +277,8 @@ public interface DataStorage extends Serializable {
     *       the name of an attribute to add item
     * @param item
     *       the item that will be deleted from the array
+    * @param <T>
+    *       the type of the elements in the array
     */
    <T> void removeItemFromArray(final String collectionName, final DataFilter filter, final String attributeName, final T item);
 
@@ -287,6 +293,8 @@ public interface DataStorage extends Serializable {
     *       the name of an attribute to remove item
     * @param items
     *       the items that will be deleted from the array
+    * @param <T>
+    *       the type of the elements in the array
     */
    <T> void removeItemsFromArray(final String collectionName, final DataFilter filter, final String attributeName, final List<T> items);
 

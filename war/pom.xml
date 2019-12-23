@@ -51,10 +51,11 @@
       <version.mongo.driver>3.12.0</version.mongo.driver>
       <version.commons.io>2.6</version.commons.io>
       <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
+      <version.arquillian-container>2.2.0.Final</version.arquillian-container>
 
       <java.level>12</java.level>
-      <maven.compiler.source>10</maven.compiler.source>
-      <maven.compiler.target>10</maven.compiler.target>
+      <maven.compiler.source>11</maven.compiler.source>
+      <maven.compiler.target>11</maven.compiler.target>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
       <wildfly.version>17.0.1.Final</wildfly.version>
    </properties>
@@ -453,6 +454,7 @@
             <dependency>
                <groupId>org.wildfly.arquillian</groupId>
                <artifactId>wildfly-arquillian-container-managed</artifactId>
+               <version>${version.arquillian-container}</version>
                <scope>test</scope>
             </dependency>
          </dependencies>
@@ -463,6 +465,7 @@
             <dependency>
                <groupId>org.wildfly.arquillian</groupId>
                <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <version>${version.arquillian-container}</version>
                <scope>test</scope>
             </dependency>
          </dependencies>
@@ -489,6 +492,7 @@
             <dependency>
                <groupId>org.wildfly.arquillian</groupId>
                <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <version>${version.arquillian-container}</version>
                <scope>test</scope>
             </dependency>
          </dependencies>
@@ -515,6 +519,7 @@
             <dependency>
                <groupId>org.wildfly.arquillian</groupId>
                <artifactId>wildfly-arquillian-container-remote</artifactId>
+               <version>${version.arquillian-container}</version>
                <scope>test</scope>
             </dependency>
          </dependencies>
