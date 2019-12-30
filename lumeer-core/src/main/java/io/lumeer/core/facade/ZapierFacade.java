@@ -33,7 +33,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -258,7 +257,7 @@ public class ZapierFacade extends AbstractFacade {
                         collectionId,
                         null,
                         null,
-                        Set.of(new CollectionAttributeFilter(collectionId, key, "=", data.get(key))),
+                        Set.of(CollectionAttributeFilter.createFromValue(collectionId, key, "=", data.get(key))),
                         null)
             )
       );

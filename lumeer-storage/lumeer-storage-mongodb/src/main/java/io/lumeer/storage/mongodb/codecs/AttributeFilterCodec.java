@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.ConditionValue;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -29,11 +30,16 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
 
    public static final String COLLECTION_ID = "collectionId";
-   public static final String OPERATOR = "condition";
+   public static final String CONDITION = "condition";
    public static final String VALUE = "value";
+   public static final String TYPE = "type";
    public static final String ATTRIBUTE_ID = "attributeId";
 
    private final Codec<Document> documentCodec;
@@ -52,18 +58,28 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
    public static CollectionAttributeFilter convertFromDocument(final Document document) {
       String collectionId = document.getString(COLLECTION_ID);
       String attributeId = document.getString(ATTRIBUTE_ID);
-      String operator = document.getString(OPERATOR);
-      Object value = document.get(VALUE);
+      String operator = document.getString(CONDITION);
 
-      return new CollectionAttributeFilter(collectionId, attributeId, operator, value);
+      List<ConditionValue> values;
+      Object value = document.get(VALUE);
+      if (value instanceof List<?>) {
+         values = document.getList(VALUE, Document.class)
+                          .stream()
+                          .map(doc -> new ConditionValue(doc.getString(TYPE), doc.get(VALUE)))
+                          .collect(Collectors.toList());
+      } else {
+         values = Collections.singletonList(new ConditionValue(value));
+      }
+
+      return new CollectionAttributeFilter(collectionId, attributeId, operator, values);
    }
 
    @Override
    public void encode(final BsonWriter writer, final CollectionAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(COLLECTION_ID, value.getCollectionId())
-            .append(OPERATOR, value.getOperator())
-            .append(VALUE, value.getValue())
+            .append(CONDITION, value.getCondition())
+            .append(VALUE, value.getValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 
       documentCodec.encode(writer, bson, encoderContext);

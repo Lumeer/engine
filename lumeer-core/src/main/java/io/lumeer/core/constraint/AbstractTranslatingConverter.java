@@ -22,12 +22,18 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class AbstractTranslatingConverter extends AbstractConstraintConverter {
 
    protected Map<String, Object> translations = new HashMap<>();
    protected boolean ignoreMissing = false;
+
+   protected boolean translateFromArray = false;
+   protected boolean translateToArray = false;
 
    @Override
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
@@ -40,17 +46,47 @@ public abstract class AbstractTranslatingConverter extends AbstractConstraintCon
 
    @Override
    public DataDocument getPatchDocument(DataDocument document) {
-      if (translations.size() > 0) {
+      if (!translations.isEmpty() || translateFromArray || translateToArray) {
          if (document.containsKey(toAttribute.getId())) {
-            var originalValue = document.get(fromAttribute.getId()).toString();
+            var originalValue = document.get(fromAttribute.getId());
 
             if (originalValue != null) {
-               var newValue = translations.getOrDefault(originalValue, ignoreMissing ? originalValue : "");
-
-               if (!newValue.equals(originalValue)) {
-                  return new DataDocument(toAttribute.getId(), newValue);
+               var translatedArray = translateArray(originalValue);
+               if (translatedArray != null) {
+                  return translatedArray;
                }
+
+               return translate(originalValue);
             }
+         }
+      }
+      return null;
+   }
+
+   private DataDocument translateArray(Object originalValue) {
+      if (translateFromArray && originalValue instanceof List<?>) {
+         var originalValues = ((List<?>) originalValue).stream()
+                                                       .map(value -> translations.getOrDefault(value.toString(), value.toString()).toString())
+                                                       .collect(Collectors.toList());
+
+         return new DataDocument(toAttribute.getId(), String.join(", ", originalValues));
+      } else if (translateToArray && originalValue instanceof String) {
+         var stringList = Stream.of(originalValue.toString().split(","))
+                                .map(String::trim)
+                                .map(value -> translations.getOrDefault(value, value))
+                                .collect(Collectors.toList());
+         return new DataDocument(toAttribute.getId(), stringList);
+      }
+
+      return null;
+   }
+
+   private DataDocument translate(Object originalValue) {
+      if (!translations.isEmpty()) {
+         var newValue = translations.getOrDefault(originalValue.toString(), ignoreMissing ? originalValue : "");
+
+         if (!newValue.equals(originalValue.toString())) {
+            return new DataDocument(toAttribute.getId(), newValue);
          }
       }
       return null;

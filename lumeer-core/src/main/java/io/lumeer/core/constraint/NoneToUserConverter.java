@@ -21,38 +21,27 @@ package io.lumeer.core.constraint;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class SelectToNoneConverter extends AbstractTranslatingConverter { ;
+public class NoneToUserConverter extends AbstractTranslatingConverter {
 
    @Override
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      if (isConstraintWithConfig(fromAttribute)) {
-         this.translateFromArray = true;
-         Map<String, Object> config = (Map<String, Object>) fromAttribute.getConstraint().getConfig();
-         List<Map<String, Object>> options = (List<Map<String, Object>>) config.get("options");
-
-         if (options != null) {
-            options.forEach(opt -> {
-               var displayValue = opt.get("displayValue");
-               if (displayValue != null && !"".equals(displayValue)) {
-                  translations.put(opt.get("value").toString(), displayValue.toString());
-               }
-            });
-         }
+      if (isConstraintWithConfig(toAttribute)) {
+         Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
+         this.translateToArray = (Boolean) config.get("multi");
       }
    }
 
    @Override
    public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.Select);
+      return Set.of(ConstraintType.None);
    }
 
    @Override
    public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.None);
+      return Set.of(ConstraintType.User);
    }
 }
