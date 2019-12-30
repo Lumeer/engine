@@ -39,7 +39,6 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
    public static final String LINK_TYPE_ID = "linkTypeId";
    public static final String CONDITION = "condition";
    public static final String VALUE = "value";
-   public static final String TYPE = "type";
    public static final String ATTRIBUTE_ID = "attributeId";
 
    private final Codec<Document> documentCodec;
@@ -65,7 +64,7 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
       if (value instanceof List<?>) {
          values = document.getList(VALUE, Document.class)
                           .stream()
-                          .map(doc -> new ConditionValue(doc.getString(TYPE), doc.get(VALUE)))
+                          .map(ConditionValueCodec::convertFromDocument)
                           .collect(Collectors.toList());
       } else {
          values = Collections.singletonList(new ConditionValue(value));
@@ -79,7 +78,7 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
       Document bson = new Document()
             .append(LINK_TYPE_ID, value.getLinkTypeId())
             .append(CONDITION, value.getCondition())
-            .append(VALUE, value.getValues())
+            .append(VALUE, value.getConditionValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 
       documentCodec.encode(writer, bson, encoderContext);

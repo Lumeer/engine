@@ -39,7 +39,6 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
    public static final String COLLECTION_ID = "collectionId";
    public static final String CONDITION = "condition";
    public static final String VALUE = "value";
-   public static final String TYPE = "type";
    public static final String ATTRIBUTE_ID = "attributeId";
 
    private final Codec<Document> documentCodec;
@@ -65,7 +64,7 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
       if (value instanceof List<?>) {
          values = document.getList(VALUE, Document.class)
                           .stream()
-                          .map(doc -> new ConditionValue(doc.getString(TYPE), doc.get(VALUE)))
+                          .map(ConditionValueCodec::convertFromDocument)
                           .collect(Collectors.toList());
       } else {
          values = Collections.singletonList(new ConditionValue(value));
@@ -79,7 +78,7 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
       Document bson = new Document()
             .append(COLLECTION_ID, value.getCollectionId())
             .append(CONDITION, value.getCondition())
-            .append(VALUE, value.getValues())
+            .append(VALUE, value.getConditionValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 
       documentCodec.encode(writer, bson, encoderContext);

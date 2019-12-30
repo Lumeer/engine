@@ -27,12 +27,12 @@ public class AttributeFilter {
 
    private final String attributeId;
    private final String condition;
-   private List<ConditionValue> values;
+   private List<ConditionValue> conditionValues;
 
    public AttributeFilter(final String attributeId, final String condition, final List<ConditionValue> value) {
       this.attributeId = attributeId;
       this.condition = condition;
-      this.values = value;
+      this.conditionValues = value;
    }
 
    public String getAttributeId() {
@@ -43,16 +43,16 @@ public class AttributeFilter {
       return condition;
    }
 
-   public List<ConditionValue> getValues() {
-      return values;
+   public List<ConditionValue> getConditionValues() {
+      return conditionValues;
    }
 
    public Object getValue() {
-      return values != null && !values.isEmpty() ? values.get(0).getValue() : null;
+      return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getValue() : null;
    }
 
    public void setValue(final Object value) {
-      this.values = Collections.singletonList(new ConditionValue(value));
+      this.conditionValues = Collections.singletonList(new ConditionValue(value));
    }
 
    @Override
@@ -66,12 +66,12 @@ public class AttributeFilter {
       final AttributeFilter that = (AttributeFilter) o;
       return Objects.equals(attributeId, that.attributeId) &&
             Objects.equals(condition, that.condition) &&
-            Objects.equals(values, that.values);
+            Objects.equals(conditionValues, that.conditionValues);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(attributeId, condition, values);
+      return Objects.hash(attributeId, condition, conditionValues);
    }
 
    @Override
@@ -79,7 +79,7 @@ public class AttributeFilter {
       return "AttributeFilter{" +
             "attributeId='" + attributeId + '\'' +
             ", condition='" + condition + '\'' +
-            ", value=" + values +
+            ", value=" + conditionValues +
             '}';
    }
 }
