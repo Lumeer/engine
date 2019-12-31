@@ -44,6 +44,8 @@ public class ConstraintConverterFactory {
       registerConverter(new DateToNoneConverter());
       registerConverter(new NoneToPercentageConverter());
       registerConverter(new NoneToBooleanConverter());
+      registerConverter(new UserToNoneConverter());
+      registerConverter(new NoneToUserConverter());
    }
 
    public ConstraintConverter getConstraintConverter(final Attribute fromAttribute, final Attribute toAttribute) {

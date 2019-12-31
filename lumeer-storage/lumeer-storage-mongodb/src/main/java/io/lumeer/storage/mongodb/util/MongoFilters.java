@@ -131,6 +131,9 @@ public class MongoFilters {
    }
 
    public static Bson attributeFilter(SearchAttributeFilter filter) {
+      if (filter == null || filter.getConditionType() == null) {
+         return null;
+      }
       switch (filter.getConditionType()) {
          case EQUALS:
             return Filters.eq(filter.getAttributeId(), filter.getValue());

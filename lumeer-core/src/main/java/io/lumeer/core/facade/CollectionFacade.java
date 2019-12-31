@@ -274,9 +274,7 @@ public class CollectionFacade extends AbstractFacade {
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
-      if (originalAttribute.isPresent()) {
-         conversionFacade.convertStoredDocuments(collection, originalAttribute.get(), attribute);
-      }
+      originalAttribute.ifPresent(value -> conversionFacade.convertStoredDocuments(collection, value, attribute));
 
       return attribute;
    }

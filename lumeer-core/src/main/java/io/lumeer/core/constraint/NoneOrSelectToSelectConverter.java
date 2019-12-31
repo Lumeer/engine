@@ -23,6 +23,7 @@ import io.lumeer.api.model.ConstraintType;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter {
@@ -30,9 +31,11 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
    @Override
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      if (isConstraintWithConfig(toAttribute)) {
+      if (isConstraintWithConfig(toAttribute) && onlyOptionsChanged(fromAttribute, toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
-         List<Map<String, Object>> options = (List<Map<String, Object>>) config.get("options");
+         this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))
+               && (Boolean) config.get("multi");
+         List<Map<String, Object>> options = getConfigOptions(config);
 
          if (options != null) {
             options.forEach(opt -> {
@@ -43,6 +46,23 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
             });
          }
       }
+   }
+
+   @SuppressWarnings("unchecked")
+   private boolean onlyOptionsChanged(Attribute fromAttribute, Attribute toAttribute) {
+      if (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None) || fromAttribute.getConstraint().getConfig() == null) {
+         return true;
+      }
+
+      Map<String, Object> previousConfig = (Map<String, Object>) fromAttribute.getConstraint().getConfig();
+      Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
+
+      return !Objects.deepEquals(getConfigOptions(config), getConfigOptions(previousConfig));
+   }
+
+   @SuppressWarnings("unchecked")
+   private List<Map<String, Object>> getConfigOptions(Map<String, Object> config) {
+      return (List<Map<String, Object>>) config.get("options");
    }
 
    @Override
