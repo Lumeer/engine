@@ -34,7 +34,7 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
       if (isConstraintWithConfig(toAttribute) && onlyOptionsChanged(fromAttribute, toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
          this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))
-               && (Boolean) config.get("multi");
+               && (Boolean) config.getOrDefault("multi", false);
          List<Map<String, Object>> options = getConfigOptions(config);
 
          if (options != null) {
