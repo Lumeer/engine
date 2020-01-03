@@ -97,7 +97,7 @@ public class MongoDocumentDao extends ProjectScopedDao implements DocumentDao {
    }
 
    @Override
-   public Document updateDocument(final String id, final Document document, final Document originalDocument) {
+   public Document updateDocument(final String id, final Document document) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 
       try {

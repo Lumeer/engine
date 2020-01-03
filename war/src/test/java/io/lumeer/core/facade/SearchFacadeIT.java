@@ -458,7 +458,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       final Document a1 = createDocument(collectionIds.get(0), "a1", a0.getId());
       final Document a2 = createDocument(collectionIds.get(0), "a2", a1.getId());
       a0.setMetaData(new DataDocument(Document.META_PARENT_ID, a2.getId()));
-      documentDao.updateDocument(a0.getId(), a0, null);
+      documentDao.updateDocument(a0.getId(), a0);
 
       Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptySet(), Collections.emptySet()));
       List<Document> documents = searchFacade.searchDocuments(query);
@@ -502,7 +502,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    private Document createDocument(final String collectionId, final String value, final String parentId) {
       final Document doc = createDocument(collectionId, value);
       doc.setMetaData(new DataDocument(Document.META_PARENT_ID, parentId));
-      return documentDao.updateDocument(doc.getId(), doc, null);
+      return documentDao.updateDocument(doc.getId(), doc);
    }
 
    @Test
