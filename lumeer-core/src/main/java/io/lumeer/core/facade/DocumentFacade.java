@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.*;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
@@ -234,7 +233,7 @@ public class DocumentFacade extends AbstractFacade {
          final Document originalDocument = new Document(document);
          document.setUpdatedBy(authenticatedUser.getCurrentUserId());
          document.setUpdateDate(ZonedDateTime.now());
-         final Document updatedDocument = documentDao.updateDocument(document.getId(), document, originalDocument);
+         final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
          updatedDocument.setData(document.getData());
          constraintManager.decodeDataTypes(collection, updatedDocument.getData());
          updatedDocuments.add(updatedDocument);
@@ -306,7 +305,7 @@ public class DocumentFacade extends AbstractFacade {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
 
-      final Document updatedDocument = documentDao.updateDocument(document.getId(), document, originalDocument);
+      final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
 
       fireDocumentUpdate(document, updatedDocument, originalDocument);
 
