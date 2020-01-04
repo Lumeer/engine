@@ -31,19 +31,24 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
    @Override
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      if (isConstraintWithConfig(toAttribute) && onlyOptionsChanged(fromAttribute, toAttribute)) {
+      this.ignoreMissing = true;
+      
+      if (isConstraintWithConfig(toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
          this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))
                && (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
-         List<Map<String, Object>> options = getConfigOptions(config);
 
-         if (options != null) {
-            options.forEach(opt -> {
-               var displayValue = opt.get("displayValue");
-               if (displayValue != null && !"".equals(displayValue)) {
-                  translations.put(opt.get("displayValue").toString(), opt.get("value"));
-               }
-            });
+         if (onlyOptionsChanged(fromAttribute, toAttribute)) {
+            List<Map<String, Object>> options = getConfigOptions(config);
+
+            if (options != null) {
+               options.forEach(opt -> {
+                  var displayValue = opt.get("displayValue");
+                  if (displayValue != null && !"".equals(displayValue)) {
+                     translations.put(opt.get("displayValue").toString(), opt.get("value"));
+                  }
+               });
+            }
          }
       }
    }
@@ -57,8 +62,7 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
       Map<String, Object> previousConfig = (Map<String, Object>) fromAttribute.getConstraint().getConfig();
       Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
 
-      return !Objects.deepEquals(getConfigOptions(config), getConfigOptions(previousConfig))
-            && config.getOrDefault("displayValues", false).equals(previousConfig.getOrDefault("displayValues", false));
+      return !Objects.deepEquals(getConfigOptions(config), getConfigOptions(previousConfig));
    }
 
    @SuppressWarnings("unchecked")
