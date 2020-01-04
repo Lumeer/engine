@@ -33,8 +33,8 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       if (isConstraintWithConfig(toAttribute) && onlyOptionsChanged(fromAttribute, toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
-         this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))
-               && (Boolean) config.getOrDefault("multi", false);
+         this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))
+               && (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
          List<Map<String, Object>> options = getConfigOptions(config);
 
          if (options != null) {
@@ -57,7 +57,8 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
       Map<String, Object> previousConfig = (Map<String, Object>) fromAttribute.getConstraint().getConfig();
       Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
 
-      return !Objects.deepEquals(getConfigOptions(config), getConfigOptions(previousConfig));
+      return !Objects.deepEquals(getConfigOptions(config), getConfigOptions(previousConfig))
+            && config.getOrDefault("displayValues", false).equals(previousConfig.getOrDefault("displayValues", false));
    }
 
    @SuppressWarnings("unchecked")

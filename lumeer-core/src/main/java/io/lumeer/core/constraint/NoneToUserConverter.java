@@ -22,6 +22,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class NoneToUserConverter extends AbstractTranslatingConverter {
@@ -31,7 +32,7 @@ public class NoneToUserConverter extends AbstractTranslatingConverter {
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       if (isConstraintWithConfig(toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
-         this.translateToArray = (Boolean) config.get("multi");
+         this.translateToArray = (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
       }
    }
 
