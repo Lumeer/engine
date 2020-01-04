@@ -1098,8 +1098,8 @@
                             {
                                 "collectionId": "5db57dbf484f6305976e7e5b",
                                 "attributeId": "a4",
-                                "operator": "=",
-                                "value": false
+                                "condition": "=",
+                                "conditionValues": [{ "value": false }]
                             }
                         ],
                         "linkFilters": []
@@ -1247,14 +1247,14 @@
                             {
                                 "collectionId": "5db57e09484f6305976e7e5f",
                                 "attributeId": "a3",
-                                "operator": "!=",
-                                "value": "Odmítnutá"
+                                "condition": "!=",
+                                "conditionValues": [{ "value": "Odmítnutá" }]
                             },
                             {
                                 "collectionId": "5db57e09484f6305976e7e5f",
                                 "attributeId": "a3",
-                                "operator": "!=",
-                                "value": "Uzavřená"
+                                "condition": "!=",
+                                "conditionValues": [{ "value": "Uzavřená" }]
                             }
                         ],
                         "linkFilters": []
@@ -1421,8 +1421,8 @@
                             {
                                 "collectionId": "5db57e09484f6305976e7e5f",
                                 "attributeId": "a3",
-                                "operator": "=",
-                                "value": "Uzavřená"
+                                "condition": "=",
+                                "conditionValues": [{ "value": "Uzavřená" }]
                             }
                         ],
                         "linkFilters": []
@@ -1500,8 +1500,8 @@
                             {
                                 "collectionId": "5db57dbf484f6305976e7e5b",
                                 "attributeId": "a4",
-                                "operator": "=",
-                                "value": ""
+                                "condition": "=",
+                                "conditionValues": [{ "value": "" }]
                             }
                         ],
                         "linkFilters": []
@@ -1516,14 +1516,14 @@
                             {
                                 "collectionId": "5db57e09484f6305976e7e5f",
                                 "attributeId": "a3",
-                                "operator": "!=",
-                                "value": "Odmítnutá"
+                                "condition": "!=",
+                                "conditionValues": [{ "value": "Odmítnutá" }]
                             },
                             {
                                 "collectionId": "5db57e09484f6305976e7e5f",
                                 "attributeId": "a3",
-                                "operator": "!=",
-                                "value": "Uzavřená"
+                                "condition": "!=",
+                                "conditionValues": [{ "value": "Uzavřená" }]
                             }
                         ],
                         "linkFilters": []
@@ -1546,7 +1546,7 @@
                                     {
                                         "condition": "=",
                                         "attributeId": "a4",
-                                        "value": "",
+                                        "conditionValues": [{ "value": "" }],
                                         "collectionId": "5db57dbf484f6305976e7e5b"
                                     }
                                 ],
@@ -1593,13 +1593,13 @@
                                     {
                                         "condition": "!=",
                                         "attributeId": "a3",
-                                        "value": "Uzavřená",
+                                        "conditionValues": [{ "value": "Uzavřená" }],
                                         "collectionId": "5db57e09484f6305976e7e5f"
                                     },
                                     {
                                         "condition": "!=",
                                         "attributeId": "a3",
-                                        "value": "Odmítnutá",
+                                        "conditionValues": [{ "value": "Odmítnutá" }],
                                         "collectionId": "5db57e09484f6305976e7e5f"
                                     }
                                 ],

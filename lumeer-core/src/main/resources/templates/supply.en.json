@@ -2255,8 +2255,8 @@
               {
                 "collectionId": "5d0de9ea857aba0090ad1acf",
                 "attributeId": "a4",
-                "operator": "=",
-                "value": false
+                "condition": "=",
+                "conditionValues": [{ "value": false }]
               }
             ],
             "linkFilters": []
@@ -2292,7 +2292,7 @@
                     "collectionId": "5d0de9ea857aba0090ad1acf",
                     "attributeId": "a4",
                     "condition": "=",
-                    "value": false
+                    "conditionValues": [{ "value": false }]
                   }
                 ]
               },
