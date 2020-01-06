@@ -33,7 +33,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class MongoFeedbackDao extends SystemScopedDao implements FeedbackDao {
+public class MongoFeedbackDao extends MongoSystemScopedDao implements FeedbackDao {
 
    private static final String COLLECTION_NAME = "feedback";
 

@@ -16,10 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.collection;
+package io.lumeer.storage.api.dao;
 
-import io.lumeer.storage.mongodb.dao.project.ProjectScopedDao;
+import io.lumeer.api.model.Organization;
 
-abstract class CollectionScopedDao extends ProjectScopedDao {
+public interface OrganizationScopedDao {
+
+   void createRepository(Organization organization);
+
+   void deleteRepository(Organization organization);
+
+   void setOrganization(Organization organization);
 
 }

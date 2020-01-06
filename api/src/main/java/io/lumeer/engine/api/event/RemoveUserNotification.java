@@ -20,9 +20,6 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.UserNotification;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class RemoveUserNotification extends ChangeUserNotification {
 
    public RemoveUserNotification(final UserNotification userNotification) {

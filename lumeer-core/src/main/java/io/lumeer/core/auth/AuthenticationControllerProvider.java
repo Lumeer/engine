@@ -43,9 +43,6 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
 import javax.servlet.ServletConfig;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public abstract class AuthenticationControllerProvider {
 
    protected static AuthenticationController getInstance(ServletConfig config) throws UnsupportedEncodingException {

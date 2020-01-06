@@ -49,21 +49,21 @@ import io.lumeer.storage.mongodb.dao.organization.MongoCompanyContactDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoFavoriteItemDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoPaymentDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoProjectDao;
-import io.lumeer.storage.mongodb.dao.organization.OrganizationScopedDao;
+import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 import io.lumeer.storage.mongodb.dao.project.MongoCollectionDao;
 import io.lumeer.storage.mongodb.dao.project.MongoDocumentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoLinkInstanceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoLinkTypeDao;
 import io.lumeer.storage.mongodb.dao.project.MongoSequenceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoViewDao;
-import io.lumeer.storage.mongodb.dao.project.ProjectScopedDao;
+import io.lumeer.storage.mongodb.dao.project.MongoProjectScopedDao;
 import io.lumeer.storage.mongodb.dao.system.MongoFeedbackDao;
 import io.lumeer.storage.mongodb.dao.system.MongoGroupDao;
 import io.lumeer.storage.mongodb.dao.system.MongoOrganizationDao;
 import io.lumeer.storage.mongodb.dao.system.MongoUserDao;
 import io.lumeer.storage.mongodb.dao.system.MongoUserLoginDao;
 import io.lumeer.storage.mongodb.dao.system.MongoUserNotificationDao;
-import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
+import io.lumeer.storage.mongodb.dao.system.MongoSystemScopedDao;
 
 import com.mongodb.client.MongoDatabase;
 
@@ -71,9 +71,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class MongoDaoContextSnapshot implements DaoContextSnapshot {
 
    final private MongoDatabase systemDatabase;
@@ -98,18 +95,18 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       }
    }
 
-   private <T extends SystemScopedDao> T initSystemScopedDao(T dao) {
+   private <T extends MongoSystemScopedDao> T initSystemScopedDao(T dao) {
       dao.setDatabase(systemDatabase);
       return dao;
    }
 
-   private <T extends OrganizationScopedDao> T initOrganizationScopedDao(T dao) {
+   private <T extends MongoOrganizationScopedDao> T initOrganizationScopedDao(T dao) {
       dao.setDatabase(userDatabase);
       dao.setOrganization(organization);
       return dao;
    }
 
-   private <T extends ProjectScopedDao> T initProjectScopedDao(T dao) {
+   private <T extends MongoProjectScopedDao> T initProjectScopedDao(T dao) {
       dao.setDatabase(userDatabase);
       dao.setOrganization(organization);
       dao.setProject(project);
@@ -186,7 +183,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
 
    @Override
    public PaymentDao getPaymentDao() {
-      return initSystemScopedDao(new MongoPaymentDao());
+      return initOrganizationScopedDao(new MongoPaymentDao());
    }
 
    @Override

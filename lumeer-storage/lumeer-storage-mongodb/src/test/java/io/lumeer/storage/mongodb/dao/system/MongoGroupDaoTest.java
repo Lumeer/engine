@@ -55,13 +55,13 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
       mongoGroupDao.setDatabase(database);
 
       mongoGroupDao.setOrganization(organization);
-      mongoGroupDao.createGroupsRepository(organization);
+      mongoGroupDao.createRepository(organization);
       assertThat(database.listCollectionNames()).contains(mongoGroupDao.databaseCollectionName());
    }
 
    @Test
    public void testDeleteRepository() {
-      mongoGroupDao.deleteGroupsRepository(organization);
+      mongoGroupDao.deleteRepository(organization);
       assertThat(database.listCollectionNames()).doesNotContain(mongoGroupDao.databaseCollectionName());
    }
 

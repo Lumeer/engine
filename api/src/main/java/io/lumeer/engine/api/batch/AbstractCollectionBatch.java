@@ -20,8 +20,6 @@ package io.lumeer.engine.api.batch;
 
 /**
  * Represents a batch operation on a collection.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public abstract class AbstractCollectionBatch implements Batch {
 

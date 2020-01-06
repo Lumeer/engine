@@ -10,9 +10,6 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @RunWith(Arquillian.class)
 public class FreshdeskFacadeIT extends IntegrationTestBase {
 

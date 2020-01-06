@@ -29,8 +29,6 @@ import java.math.BigDecimal;
 
 /**
  * A codec to convert {@link BigDecimal} to internal MongoDb Decimal128 type.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class BigDecimalCodec implements Codec<BigDecimal> {
 

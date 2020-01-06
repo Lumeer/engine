@@ -72,7 +72,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       documentDao.setDatabase(database);
 
       documentDao.setProject(project);
-      documentDao.createDocumentsRepository(project);
+      documentDao.createRepository(project);
    }
 
    private Document prepareDocument() {

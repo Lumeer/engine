@@ -32,9 +32,6 @@ import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class PusherClient {
 
    private Pusher pusher;

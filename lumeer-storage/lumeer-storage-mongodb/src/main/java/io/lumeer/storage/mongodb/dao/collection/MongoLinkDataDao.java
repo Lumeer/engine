@@ -59,7 +59,7 @@ import java.util.stream.StreamSupport;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
-public class MongoLinkDataDao extends CollectionScopedDao implements LinkDataDao {
+public class MongoLinkDataDao extends MongoCollectionScopedDao implements LinkDataDao {
 
    private static final String ID = "_id";
    private static final String PREFIX = "linkData_c-";

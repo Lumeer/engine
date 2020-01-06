@@ -16,37 +16,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.project;
+package io.lumeer.storage.mongodb.dao.organization;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.Project;
-import io.lumeer.storage.mongodb.dao.organization.OrganizationScopedDao;
+import io.lumeer.api.model.Organization;
+import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.mongodb.dao.MongoDao;
+
+import com.mongodb.client.MongoDatabase;
 
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-public abstract class ProjectScopedDao extends OrganizationScopedDao {
+public abstract class MongoOrganizationScopedDao extends MongoDao {
+
+   private Organization organization;
 
    @Inject
    private SelectedWorkspace selectedWorkspace;
 
-   private Project project;
+   @Inject
+   @UserDataStorage
+   private DataStorage dataStorage;
 
    @PostConstruct
    public void init() {
-      super.init();
+      this.database = (MongoDatabase) dataStorage.getDatabase();
 
-      if (selectedWorkspace.getProject().isPresent()) {
-         this.project = selectedWorkspace.getProject().get();
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         this.organization = selectedWorkspace.getOrganization().get();
       }
    }
 
-   public Optional<Project> getProject() {
-      return Optional.ofNullable(project);
+   public Optional<Organization> getOrganization() {
+      return Optional.ofNullable(organization);
    }
 
-   public void setProject(final Project project) {
-      this.project = project;
+   public void setOrganization(final Organization organization) {
+      this.organization = organization;
    }
 }

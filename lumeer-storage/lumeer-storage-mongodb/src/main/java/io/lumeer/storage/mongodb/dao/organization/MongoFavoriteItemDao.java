@@ -43,7 +43,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoFavoriteItemDao extends OrganizationScopedDao implements FavoriteItemDao {
+public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements FavoriteItemDao {
 
    private static final String PREFIX_COLLECTIONS = "fav_collection-";
    private static final String PREFIX_DOCUMENTS = "fav_document-";
@@ -62,7 +62,7 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    private Event<RemoveFavoriteItem> removeFavoriteItemEvent;
 
    @Override
-   public void createRepositories(final Organization organization) {
+   public void createRepository(final Organization organization) {
       createCollectionsRepository(organization);
       createViewsRepository(organization);
       createDocumentsRepository(organization);
@@ -90,7 +90,7 @@ public class MongoFavoriteItemDao extends OrganizationScopedDao implements Favor
    }
 
    @Override
-   public void deleteRepositories(final Organization organization) {
+   public void deleteRepository(final Organization organization) {
       database.getCollection(favoriteCollectionsDBName(organization)).drop();
       database.getCollection(favoriteViewsDBName(organization)).drop();
       database.getCollection(favoriteDocumentsDBName(organization)).drop();

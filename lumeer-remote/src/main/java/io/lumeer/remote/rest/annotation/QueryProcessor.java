@@ -25,9 +25,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import javax.interceptor.InterceptorBinding;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @Inherited
 @InterceptorBinding
 @Target( {ElementType.TYPE, ElementType.METHOD})

@@ -20,9 +20,6 @@ package io.lumeer.api.model.rule;
 
 import io.lumeer.api.model.Rule;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class AutoLinkRule {
 
    public static final String AUTO_LINK_COLLECTION1 = "collection1";

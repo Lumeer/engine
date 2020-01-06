@@ -22,9 +22,6 @@ package io.lumeer.core.util;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class Colors {
    
    final public static List<String> palette = Arrays.asList(new String[] {

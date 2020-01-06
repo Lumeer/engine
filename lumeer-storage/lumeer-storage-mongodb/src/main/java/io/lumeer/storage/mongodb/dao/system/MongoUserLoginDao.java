@@ -20,6 +20,7 @@ package io.lumeer.storage.mongodb.dao.system;
 
 import io.lumeer.api.model.UserLoginEvent;
 import io.lumeer.storage.api.dao.UserLoginDao;
+import io.lumeer.storage.mongodb.codecs.UserLoginEventCodec;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
@@ -34,11 +35,10 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
-public class MongoUserLoginDao extends SystemScopedDao implements UserLoginDao {
+public class MongoUserLoginDao extends MongoSystemScopedDao implements UserLoginDao {
+
+   String COLLECTION_NAME = "userLogins";
 
    @PostConstruct
    public void initDb() {
@@ -53,8 +53,8 @@ public class MongoUserLoginDao extends SystemScopedDao implements UserLoginDao {
    @Override
    public ZonedDateTime getPreviousLoginDate(final String userId) {
       List<UserLoginEvent> result = database.getCollection(COLLECTION_NAME, UserLoginEvent.class)
-                                            .find(Filters.eq(UserLoginEvent.USER_ID, userId))
-                                            .sort(Sorts.descending(UserLoginEvent.DATE))
+                                            .find(Filters.eq(UserLoginEventCodec.USER_ID, userId))
+                                            .sort(Sorts.descending(UserLoginEventCodec.DATE))
                                             .limit(2).into(new ArrayList<>());
       if (result.size() > 1) {
          return result.get(1).getDate();
@@ -69,7 +69,7 @@ public class MongoUserLoginDao extends SystemScopedDao implements UserLoginDao {
          database.createCollection(COLLECTION_NAME);
 
          MongoCollection<Document> groupCollection = database.getCollection(COLLECTION_NAME);
-         groupCollection.createIndex(Indexes.ascending(UserLoginEvent.USER_ID, UserLoginEvent.DATE), new IndexOptions().unique(true));
+         groupCollection.createIndex(Indexes.ascending(UserLoginEventCodec.USER_ID, UserLoginEventCodec.DATE), new IndexOptions().unique(true));
       }
    }
 }

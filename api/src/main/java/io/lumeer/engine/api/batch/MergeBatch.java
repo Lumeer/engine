@@ -20,9 +20,6 @@ package io.lumeer.engine.api.batch;
 
 import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class MergeBatch extends AbstractCollectionBatch {
 
    public enum MergeType {

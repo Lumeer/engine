@@ -1,14 +1,8 @@
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
-
 import java.util.Set;
 
-public interface FavoriteItemDao {
-
-   void createRepositories(Organization organization);
-
-   void deleteRepositories(Organization organization);
+public interface FavoriteItemDao extends OrganizationScopedDao {
 
    void addFavoriteCollection(String userId, String projectId, String collectionId);
 

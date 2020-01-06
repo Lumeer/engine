@@ -21,9 +21,6 @@ package io.lumeer.engine.api.exception;
 
 import io.lumeer.api.exception.LumeerException;
 
-/**
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 public abstract class DbException extends LumeerException {
 
    public DbException(final String message) {

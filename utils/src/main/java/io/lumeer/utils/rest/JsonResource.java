@@ -22,9 +22,6 @@ import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class JsonResource implements Comparable<JsonResource> {
 
    private static final int DEFAULT_ORDER = 99_999;

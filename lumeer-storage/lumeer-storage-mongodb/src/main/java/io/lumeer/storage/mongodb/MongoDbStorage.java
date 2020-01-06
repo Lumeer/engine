@@ -40,6 +40,7 @@ import io.lumeer.storage.mongodb.codecs.providers.CollectionCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.CompanyContactCodedProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ConditionValueCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ConstraintCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.DefaultViewConfigCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.DocumentCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.FeedbackCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.FileAttachmentCodecProvider;
@@ -98,11 +99,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 public class MongoDbStorage implements DataStorage {
 
    private static final String CURSOR_KEY = "cursor";
@@ -139,7 +135,7 @@ public class MongoDbStorage implements DataStorage {
             new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),
             new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
             new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
-            new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider()
+            new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(), new DefaultViewConfigCodecProvider()
       );
       final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

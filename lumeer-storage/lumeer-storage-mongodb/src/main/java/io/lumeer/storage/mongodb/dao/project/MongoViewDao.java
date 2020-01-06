@@ -65,7 +65,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoViewDao extends ProjectScopedDao implements ViewDao {
+public class MongoViewDao extends MongoProjectScopedDao implements ViewDao {
 
    private static final String PREFIX = "views_p-";
 
@@ -79,7 +79,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    private Event<RemoveResource> removeResourceEvent;
 
    @Override
-   public void createViewsRepository(Project project) {
+   public void createRepository(Project project) {
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
@@ -89,7 +89,7 @@ public class MongoViewDao extends ProjectScopedDao implements ViewDao {
    }
 
    @Override
-   public void deleteViewsRepository(Project project) {
+   public void deleteRepository(Project project) {
       database.getCollection(databaseCollectionName(project)).drop();
    }
 

@@ -18,9 +18,6 @@
  */
 package io.lumeer.core.task;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class ListCollectionsIn10SecondsTask extends AbstractContextualTask {
 
    private AbstractContextualTask parent;

@@ -34,9 +34,6 @@ import org.bson.types.ObjectId;
 
 import java.util.Date;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class PaymentCodec implements CollectibleCodec<Payment> {
 
    public static final String ID = "_id";

@@ -22,8 +22,6 @@ import java.io.Serializable;
 
 /**
  * A task that can be processed.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface Task extends Serializable {
 

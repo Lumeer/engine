@@ -20,9 +20,6 @@ package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class AccessForbiddenException extends LumeerException {
 
    public AccessForbiddenException(final String cause) {

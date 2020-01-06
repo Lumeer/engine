@@ -28,9 +28,6 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @RequestScoped
 public class MongoDaoContextSnapshotFactory implements DaoContextSnapshotFactory {
 

@@ -22,9 +22,6 @@ import io.lumeer.api.model.Collection;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class CollectionWithId extends Collection {
 
    public CollectionWithId(final Collection collection) {

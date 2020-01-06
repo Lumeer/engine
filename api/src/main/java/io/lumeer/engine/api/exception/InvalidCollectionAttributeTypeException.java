@@ -18,9 +18,6 @@
  */
 package io.lumeer.engine.api.exception;
 
-/**
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 public class InvalidCollectionAttributeTypeException extends DbException {
 
    public InvalidCollectionAttributeTypeException(final String message) {

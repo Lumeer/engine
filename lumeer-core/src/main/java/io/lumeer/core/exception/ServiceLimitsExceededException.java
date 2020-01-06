@@ -30,8 +30,6 @@ import java.util.Set;
 
 /**
  * Used when user tries to create more resources than allowed.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class ServiceLimitsExceededException extends LumeerException {
    private final Resource resource;

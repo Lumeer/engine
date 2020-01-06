@@ -129,7 +129,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       collectionDao.setDatabase(database);
 
       collectionDao.setProject(project);
-      collectionDao.createCollectionsRepository(project);
+      collectionDao.createRepository(project);
    }
 
    private Collection prepareManageCollection(String code, String name) {

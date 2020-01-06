@@ -24,10 +24,7 @@ import io.lumeer.api.model.Payment;
 import java.util.Date;
 import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
-public interface PaymentDao {
+public interface PaymentDao extends OrganizationScopedDao {
 
    Payment createPayment(final Organization organization, final Payment payment);
 
@@ -46,8 +43,4 @@ public interface PaymentDao {
    Payment getPaymentAt(final Organization organization, final Date date);
 
    Payment getLatestPayment(final Organization organization);
-
-   void createPaymentRepository(final Organization organization);
-
-   void deletePaymentRepository(final Organization organization);
 }

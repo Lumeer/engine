@@ -37,9 +37,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class UserNotificationCodec implements CollectibleCodec<UserNotification> {
 
    public static final String ID = "_id";

@@ -61,6 +61,7 @@ import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
+import io.lumeer.engine.api.event.UpdateDefaultViewConfig;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
@@ -94,9 +95,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
 public class PusherFacade extends AbstractFacade {
 
@@ -707,10 +705,23 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
+   public void updateDefaultViewConfig(@Observes final UpdateDefaultViewConfig updateDefaultViewConfig) {
+      if (isEnabled()) {
+         try {
+            ObjectWithParent object = new ObjectWithParent(updateDefaultViewConfig.getConfig(),getOrganization().getId(), getProject().getId());
+            Set<String> userIds = Collections.singleton(authenticatedUser.getCurrentUserId());
+
+            sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
    public void createOrUpdateSequence(@Observes final CreateOrUpdateSequence createOrUpdateSequence) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(), createOrUpdateSequence.getOrganization().getId(), createOrUpdateSequence.getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(),getOrganization().getId(), getProject().getId());
             Set<String> userIds = permissionsChecker.getWorkspaceManagers();
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);

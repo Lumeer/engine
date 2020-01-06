@@ -25,9 +25,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class ServiceLimits {
 
    public static final String SERVICE_LEVEL = "serviceLevel";

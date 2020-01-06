@@ -12,9 +12,6 @@ import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class PaymentFacadeTest {
 
    private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ");

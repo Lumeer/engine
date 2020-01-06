@@ -20,8 +20,6 @@ package io.lumeer.engine.api.data;
 
 /**
  * Carries statistics about database or collection usage.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class DataStorageStats {
 

@@ -24,8 +24,6 @@ import javax.inject.Inject;
 
 /**
  * TODO JMS is disabled at the moment
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RequestScoped
 public class JmsService {

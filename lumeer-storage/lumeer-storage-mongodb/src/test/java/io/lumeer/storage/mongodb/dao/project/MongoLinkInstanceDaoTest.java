@@ -76,13 +76,13 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       linkInstanceDao.setDatabase(database);
 
       linkInstanceDao.setProject(project);
-      linkInstanceDao.createLinkInstanceRepository(project);
+      linkInstanceDao.createRepository(project);
       assertThat(database.listCollectionNames()).contains(linkInstanceDao.databaseCollectionName());
    }
 
    @Test
    public void testDeleteLinkInstanceRepository() {
-      linkInstanceDao.deleteLinkInstanceRepository(project);
+      linkInstanceDao.deleteRepository(project);
       assertThat(database.listCollectionNames()).doesNotContain(linkInstanceDao.databaseCollectionName());
    }
 

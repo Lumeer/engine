@@ -28,9 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class LinkTypeCreator extends WithIdCreator {
 
    private final LinkTypeFacade linkTypeFacade;

@@ -18,9 +18,6 @@
  */
 package io.lumeer.engine.api.exception;
 
-/**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
- */
 public class InvalidDocumentKeyException extends DbException {
 
    public InvalidDocumentKeyException(final String message) {

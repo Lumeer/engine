@@ -40,9 +40,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class AutoLinkRuleTaskExecutor {
 
    private static Logger log = Logger.getLogger(AutoLinkRuleTaskExecutor.class.getName());

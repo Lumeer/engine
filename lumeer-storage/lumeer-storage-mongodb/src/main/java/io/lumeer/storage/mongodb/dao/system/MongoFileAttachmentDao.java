@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 
-public class MongoFileAttachmentDao extends SystemScopedDao implements FileAttachmentDao {
+public class MongoFileAttachmentDao extends MongoSystemScopedDao implements FileAttachmentDao {
 
    public static final String COLLECTION_NAME = "fileAttachments";
 

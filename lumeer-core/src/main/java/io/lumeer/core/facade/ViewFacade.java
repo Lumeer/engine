@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -258,6 +259,19 @@ public class ViewFacade extends AbstractFacade {
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {
       return getCollectionsByView(view).stream()
                                        .collect(Collectors.toMap(Resource::getId, c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
+   }
+
+   public List<DefaultViewConfig> getDefaultConfigs() {
+      var userId = authenticatedUser.getCurrentUserId();
+
+      return Collections.emptyList();
+   }
+
+   public DefaultViewConfig updateDefaultConfig(DefaultViewConfig config) {
+      var userId = authenticatedUser.getCurrentUserId();
+      config.setUserId(userId);
+
+      return config;
    }
 
    private List<Collection> getCollectionsByView(final View view) {

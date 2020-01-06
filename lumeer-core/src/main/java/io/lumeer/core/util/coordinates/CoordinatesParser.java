@@ -26,9 +26,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class CoordinatesParser {
    private final static String DMS = "\\s*(\\d{1,3})\\s*(?:°|d|º| |g|o)"  // The degrees
          + "\\s*([0-6]?\\d)\\s*(?:'|m| |´|’|′)" // The minutes

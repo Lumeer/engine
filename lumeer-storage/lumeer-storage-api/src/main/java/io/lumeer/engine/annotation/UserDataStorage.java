@@ -27,8 +27,6 @@ import javax.inject.Qualifier;
 
 /**
  * Annotates system data storage with user data etc.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @Qualifier
 @Retention(RUNTIME)

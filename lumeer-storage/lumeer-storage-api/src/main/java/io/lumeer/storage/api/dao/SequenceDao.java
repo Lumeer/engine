@@ -18,24 +18,22 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
 
 import java.util.List;
 
-public interface SequenceDao {
-
-   String INDEX_NAME = "name";
-
-   void createSequencesRepository(final Project project);
-   void deleteSequencesRepository(final Project project);
+public interface SequenceDao extends ProjectScopedDao {
 
    List<Sequence> getAllSequences();
+
    Sequence getSequence(final String name);
+
    Sequence updateSequence(final String id, final Sequence sequence);
+
    void deleteSequence(final String id);
 
    int getNextSequenceNo(final String indexName);
+
    void resetSequence(final String indexName);
 
 }

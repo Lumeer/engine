@@ -29,7 +29,6 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
-import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
@@ -100,13 +99,13 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       viewDao.setDatabase(database);
 
       viewDao.setProject(project);
-      viewDao.createViewsRepository(project);
+      viewDao.createRepository(project);
       assertThat(database.listCollectionNames()).contains(viewDao.databaseCollectionName());
 
       linkTypeDao = new MongoLinkTypeDao();
       linkTypeDao.setDatabase(database);
       linkTypeDao.setProject(project);
-      linkTypeDao.createLinkTypeRepository(project);
+      linkTypeDao.createRepository(project);
 
       assertThat(database.listCollectionNames()).contains(linkTypeDao.databaseCollectionName());
    }
@@ -135,7 +134,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteViewsRepository() {
-      viewDao.deleteViewsRepository(project);
+      viewDao.deleteRepository(project);
       assertThat(database.listCollectionNames()).doesNotContain(viewDao.databaseCollectionName());
    }
 

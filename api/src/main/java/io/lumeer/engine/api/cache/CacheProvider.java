@@ -20,8 +20,6 @@ package io.lumeer.engine.api.cache;
 
 /**
  * Provides a mean of obtaining a named cache and thus keeping a list of multiple caches.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface CacheProvider {
 

@@ -24,8 +24,6 @@ import javax.inject.Inject;
 
 /**
  * Executes tasks in background.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @ApplicationScoped
 public class TaskExecutor {

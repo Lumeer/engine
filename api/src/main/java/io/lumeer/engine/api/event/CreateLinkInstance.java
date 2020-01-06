@@ -20,9 +20,6 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.LinkInstance;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class CreateLinkInstance extends LinkInstanceEvent {
 
    public CreateLinkInstance(final LinkInstance linkInstance) {

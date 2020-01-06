@@ -20,8 +20,6 @@ package io.lumeer.engine.api.cache;
 
 /**
  * The factory is needed so that we can have a replaceable Cache implementations. The factory is the part that is injectable.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface CacheFactory {
 

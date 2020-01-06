@@ -24,7 +24,7 @@ import io.lumeer.api.model.Sequence;
 
 public class CreateOrUpdateSequence extends SequenceEvent {
 
-   public CreateOrUpdateSequence(final Organization organization, final Project project, final Sequence sequence) {
-      super(organization, project, sequence);
+   public CreateOrUpdateSequence(final Sequence sequence) {
+      super(sequence);
    }
 }

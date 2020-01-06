@@ -32,9 +32,6 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class SequenceCodec implements CollectibleCodec<Sequence> {
 
    public static final String ID = "_id";

@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
@@ -26,11 +25,7 @@ import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import java.util.List;
 import java.util.Set;
 
-public interface ViewDao {
-
-   void createViewsRepository(Project project);
-
-   void deleteViewsRepository(Project project);
+public interface ViewDao extends ProjectScopedDao {
 
    View createView(View view);
 
@@ -51,8 +46,6 @@ public interface ViewDao {
    List<View> getViews(SearchSuggestionQuery query, boolean skipPermissions);
 
    List<View> getViewsPermissionsByCollection(final String collectionId);
-
-   void setProject(final Project project);
 
    Set<String> getAllViewCodes();
 

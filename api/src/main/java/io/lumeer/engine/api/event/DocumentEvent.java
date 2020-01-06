@@ -22,8 +22,6 @@ import io.lumeer.api.model.Document;
 
 /**
  * CDI event that carries information about manipulation with a {@link Document}.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public abstract class DocumentEvent {
 

@@ -18,9 +18,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class ConstraintManagerTest {
 
    final static Locale l = Locale.forLanguageTag("en_US");

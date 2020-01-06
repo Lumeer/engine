@@ -22,9 +22,6 @@ import io.lumeer.api.model.Project;
 
 import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class TemplateCreated {
 
    private Project project;

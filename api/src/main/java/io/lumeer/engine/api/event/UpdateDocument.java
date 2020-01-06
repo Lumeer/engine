@@ -22,8 +22,6 @@ import io.lumeer.api.model.Document;
 
 /**
  * CDI event that is sent when an {@link Document} is updated.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class UpdateDocument extends DocumentEvent {
 

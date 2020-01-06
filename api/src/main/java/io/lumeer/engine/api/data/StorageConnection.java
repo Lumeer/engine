@@ -23,8 +23,6 @@ import java.util.Arrays;
 
 /**
  * Credentials and URL to get a database connection.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class StorageConnection implements Serializable {
 

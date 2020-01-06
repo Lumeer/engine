@@ -27,7 +27,7 @@ import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.GroupCodec;
-import io.lumeer.storage.mongodb.dao.organization.OrganizationScopedDao;
+import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -44,12 +44,12 @@ import java.util.List;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
-public class MongoGroupDao extends OrganizationScopedDao implements GroupDao {
+public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDao {
 
    private static final String PREFIX = "groups_o-";
 
    @Override
-   public void createGroupsRepository(Organization organization) {
+   public void createRepository(Organization organization) {
       database.createCollection(databaseCollectionName(organization));
 
       MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
@@ -57,7 +57,7 @@ public class MongoGroupDao extends OrganizationScopedDao implements GroupDao {
    }
 
    @Override
-   public void deleteGroupsRepository(Organization organization) {
+   public void deleteRepository(Organization organization) {
       database.getCollection(databaseCollectionName(organization)).drop();
    }
 

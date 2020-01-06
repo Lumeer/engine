@@ -67,7 +67,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoCollectionDao extends ProjectScopedDao implements CollectionDao {
+public class MongoCollectionDao extends MongoProjectScopedDao implements CollectionDao {
 
    private static final String PREFIX = "collections_p-";
 
@@ -81,7 +81,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    private Event<RemoveResource> removeResourceEvent;
 
    @Override
-   public void createCollectionsRepository(final Project project) {
+   public void createRepository(final Project project) {
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
@@ -92,7 +92,7 @@ public class MongoCollectionDao extends ProjectScopedDao implements CollectionDa
    }
 
    @Override
-   public void deleteCollectionsRepository(final Project project) {
+   public void deleteRepository(final Project project) {
       database.getCollection(databaseCollectionName(project)).drop();
    }
 

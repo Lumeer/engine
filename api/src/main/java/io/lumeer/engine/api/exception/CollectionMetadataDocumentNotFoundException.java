@@ -20,8 +20,6 @@ package io.lumeer.engine.api.exception;
 
 /**
  * Thrown in case metadata document does not exist, or when given key is not found in metadata document.
- *
- * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 public class CollectionMetadataDocumentNotFoundException extends DbException {
 

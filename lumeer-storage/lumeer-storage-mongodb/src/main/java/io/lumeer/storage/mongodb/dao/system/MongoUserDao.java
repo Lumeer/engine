@@ -48,7 +48,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class MongoUserDao extends SystemScopedDao implements UserDao {
+public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
 
    private static final String COLLECTION_NAME = "users";
    private static final String ELEMENT_NAME = "group";

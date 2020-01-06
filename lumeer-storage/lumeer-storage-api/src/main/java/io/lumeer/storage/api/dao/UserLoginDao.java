@@ -20,15 +20,12 @@ package io.lumeer.storage.api.dao;
 
 import java.time.ZonedDateTime;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public interface UserLoginDao {
 
-   String COLLECTION_NAME = "userLogins";
-
    void userLoggedIn(final String userId);
+
    void createLoginRepository();
+
    ZonedDateTime getPreviousLoginDate(final String userId);
 
 }

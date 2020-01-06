@@ -31,14 +31,12 @@ public class Sequence implements WithId {
    public static final String NAME = "name";
    public static final String SEQ = "seq";
 
-
    private String id;
    private String name;
    private int seq;
 
    @JsonCreator
    public Sequence(@JsonProperty(NAME) final String name, @JsonProperty(SEQ) final int seq) {
-      this.id = id;
       this.name = name;
       this.seq = seq;
    }

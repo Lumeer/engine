@@ -29,9 +29,6 @@ import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.Locale;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class WithIdCreator {
 
    private DateTimeFormatter dateDecoder = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX", Locale.forLanguageTag("en_US"));

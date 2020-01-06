@@ -18,9 +18,6 @@
  */
 package io.lumeer.engine.api.exception;
 
-/**
- * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 public class AttributeNotFoundException extends DbException {
 
    public AttributeNotFoundException(final String message) {

@@ -35,8 +35,6 @@ import javax.ws.rs.core.Response;
  * We need organization code in the URL but it must be at the end.
  * Hence we needed to extract this single method in a separate class
  * with its own prefix.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)

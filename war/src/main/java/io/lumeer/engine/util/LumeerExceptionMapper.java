@@ -54,9 +54,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-/**
- * * @author <a href="mailto:mat.per.vt@gmail.com">Matej Perejda</a>
- */
 @Provider
 public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
 

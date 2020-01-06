@@ -22,9 +22,6 @@ import io.lumeer.api.model.LinkType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class LinkTypeWithId extends LinkType {
 
    public LinkTypeWithId(final LinkType linkType) {

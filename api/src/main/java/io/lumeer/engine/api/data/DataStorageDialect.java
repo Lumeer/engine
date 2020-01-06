@@ -19,12 +19,8 @@
 package io.lumeer.engine.api.data;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public interface DataStorageDialect extends Serializable {
 
    DataFilter fieldValueFilter(final String fieldName, final Object value);

@@ -34,9 +34,6 @@ import io.lumeer.engine.api.event.TemplateCreated;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class TemplateFacade extends AbstractFacade {
 
    @Inject
