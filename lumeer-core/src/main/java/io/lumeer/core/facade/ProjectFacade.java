@@ -238,21 +238,21 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    private void createProjectScopedRepositories(Project project) {
-      collectionDao.createCollectionsRepository(project);
-      documentDao.createDocumentsRepository(project);
-      viewDao.createViewsRepository(project);
-      linkInstanceDao.createLinkInstanceRepository(project);
-      linkTypeDao.createLinkTypeRepository(project);
-      sequenceDao.createSequencesRepository(project);
+      collectionDao.createRepository(project);
+      documentDao.createRepository(project);
+      viewDao.createRepository(project);
+      linkInstanceDao.createRepository(project);
+      linkTypeDao.createRepository(project);
+      sequenceDao.createRepository(project);
    }
 
    private void deleteProjectScopedRepositories(Project project) {
-      collectionDao.deleteCollectionsRepository(project);
-      documentDao.deleteDocumentsRepository(project);
-      viewDao.deleteViewsRepository(project);
-      linkTypeDao.deleteLinkTypeRepository(project);
-      linkInstanceDao.deleteLinkInstanceRepository(project);
-      sequenceDao.deleteSequencesRepository(project);
+      collectionDao.deleteRepository(project);
+      documentDao.deleteRepository(project);
+      viewDao.deleteRepository(project);
+      linkTypeDao.deleteRepository(project);
+      linkInstanceDao.deleteRepository(project);
+      sequenceDao.deleteRepository(project);
 
       favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());

@@ -214,17 +214,17 @@ public class OrganizationFacade extends AbstractFacade {
    private void createOrganizationScopedRepositories(Organization organization) {
       projectDao.setOrganization(organization);
       projectDao.createRepository(organization);
-      groupDao.createGroupsRepository(organization);
-      paymentDao.createPaymentRepository(organization);
-      favoriteItemDao.createRepositories(organization);
+      groupDao.createRepository(organization);
+      paymentDao.createRepository(organization);
+      favoriteItemDao.createRepository(organization);
    }
 
    private void deleteOrganizationScopedRepositories(Organization organization) {
       projectDao.setOrganization(organization);
       projectDao.deleteRepository(organization);
-      groupDao.deleteGroupsRepository(organization);
-      paymentDao.deletePaymentRepository(organization);
-      favoriteItemDao.deleteRepositories(organization);
+      groupDao.deleteRepository(organization);
+      paymentDao.deleteRepository(organization);
+      favoriteItemDao.deleteRepository(organization);
 
       userDao.deleteUsersGroups(organization.getId());
       userCache.clear();
