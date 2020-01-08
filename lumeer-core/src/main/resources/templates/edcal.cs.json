@@ -584,8 +584,8 @@
                             {
                                 "collectionId": "5d4697e3857aba0090b33483",
                                 "attributeId": "a5",
-                                "operator": "=",
-                                "value": "Idea"
+                                "condition": "=",
+                                "conditionValues": [{ "value": "Idea" }]
                             }
                         ],
                         "linkFilters": []

@@ -19,34 +19,40 @@
 
 package io.lumeer.api.model;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class AttributeFilter {
 
    private final String attributeId;
-   private final String operator;
-   private Object value;
+   private final String condition;
+   private List<ConditionValue> conditionValues;
 
-   public AttributeFilter(final String attributeId, final String operator, final Object value) {
+   public AttributeFilter(final String attributeId, final String condition, final List<ConditionValue> value) {
       this.attributeId = attributeId;
-      this.operator = operator;
-      this.value = value;
+      this.condition = condition;
+      this.conditionValues = value;
    }
 
    public String getAttributeId() {
       return attributeId;
    }
 
-   public String getOperator() {
-      return operator;
+   public String getCondition() {
+      return condition;
+   }
+
+   public List<ConditionValue> getConditionValues() {
+      return conditionValues;
    }
 
    public Object getValue() {
-      return value;
+      return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getValue() : null;
    }
 
    public void setValue(final Object value) {
-      this.value = value;
+      this.conditionValues = Collections.singletonList(new ConditionValue(value));
    }
 
    @Override
@@ -59,21 +65,21 @@ public class AttributeFilter {
       }
       final AttributeFilter that = (AttributeFilter) o;
       return Objects.equals(attributeId, that.attributeId) &&
-            Objects.equals(operator, that.operator) &&
-            Objects.equals(value, that.value);
+            Objects.equals(condition, that.condition) &&
+            Objects.equals(conditionValues, that.conditionValues);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(attributeId, operator, value);
+      return Objects.hash(attributeId, condition, conditionValues);
    }
 
    @Override
    public String toString() {
       return "AttributeFilter{" +
             "attributeId='" + attributeId + '\'' +
-            ", operator='" + operator + '\'' +
-            ", value=" + value +
+            ", condition='" + condition + '\'' +
+            ", value=" + conditionValues +
             '}';
    }
 }

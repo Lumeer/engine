@@ -319,7 +319,7 @@ public class JsExecutor {
                                                .patchData(documentChange.getEntity().getCollectionId(), documentChange.getEntity().getId(), newData);
 
             Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
-                                               .updateDocument(document.getId(), document, null);
+                                               .updateDocument(document.getId(), document);
 
             constraintManager.decodeDataTypes(collection, patchedData);
             updatedDocument.setData(patchedData);

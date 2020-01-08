@@ -65,12 +65,12 @@ public class SearchQueryStem {
    }
 
    private CollectionSearchAttributeFilter convertFilter(final CollectionAttributeFilter attr) {
-      ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
+      ConditionType conditionType = ConditionType.fromString(attr.getCondition().toLowerCase());
       return new CollectionSearchAttributeFilter(attr.getCollectionId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 
    private LinkSearchAttributeFilter convertLinkFilter(final LinkAttributeFilter attr) {
-      ConditionType conditionType = ConditionType.fromString(attr.getOperator().toLowerCase());
+      ConditionType conditionType = ConditionType.fromString(attr.getCondition().toLowerCase());
       return new LinkSearchAttributeFilter(attr.getLinkTypeId(), conditionType, attr.getAttributeId(), attr.getValue());
    }
 

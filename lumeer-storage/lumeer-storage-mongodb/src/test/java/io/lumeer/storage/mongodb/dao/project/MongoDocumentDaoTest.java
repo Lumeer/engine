@@ -139,7 +139,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       document.setUpdatedBy(UPDATED_BY);
       document.setUpdateDate(updateDate);
 
-      documentDao.updateDocument(document.getId(), document, null);
+      documentDao.updateDocument(document.getId(), document);
 
       Document storedDocument = documentDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedDocument).isNotNull();
@@ -158,7 +158,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
    @Test
    public void testUpdateDocumentNotExisting() {
       Document document = prepareDocument();
-      assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document, null))
+      assertThatThrownBy(() -> documentDao.updateDocument(DOCUMENT_ID, document))
             .isInstanceOf(StorageException.class);
    }
 

@@ -62,12 +62,12 @@ public class QueryProcessorInterceptor {
 
    private CollectionAttributeFilter processFilter(final CollectionAttributeFilter filter) {
       Object transformed = transformValue(filter);
-      return new CollectionAttributeFilter(filter.getCollectionId(), filter.getAttributeId(), filter.getOperator(), transformed);
+      return CollectionAttributeFilter.createFromValue(filter.getCollectionId(), filter.getAttributeId(), filter.getCondition(), transformed);
    }
 
    private LinkAttributeFilter processFilter(final LinkAttributeFilter filter) {
       Object transformed = transformValue(filter);
-      return new LinkAttributeFilter(filter.getLinkTypeId(), filter.getAttributeId(), filter.getOperator(), transformed);
+      return LinkAttributeFilter.createFromValue(filter.getLinkTypeId(), filter.getAttributeId(), filter.getCondition(), transformed);
    }
 
    private Object transformValue(AttributeFilter filter) {

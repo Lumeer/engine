@@ -22,6 +22,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintConverter;
 import io.lumeer.core.constraint.ConstraintConverterFactory;
@@ -32,6 +33,7 @@ import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -41,6 +43,9 @@ import javax.inject.Inject;
 
 @RequestScoped
 public class ConversionFacade {
+
+   @Inject
+   protected AuthenticatedUser authenticatedUser;
 
    @Inject
    private RequestDataKeeper requestDataKeeper;
@@ -81,6 +86,7 @@ public class ConversionFacade {
 
                   if (update != null && update.size() > 0) {
                      dataDao.patchData(collection.getId(), doc.getId(), update);
+                     updateDocument(doc);
                   }
                });
 
@@ -92,6 +98,13 @@ public class ConversionFacade {
             converter.close();
          }
       }
+   }
+
+   private void updateDocument(Document document) {
+      document.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      document.setUpdateDate(ZonedDateTime.now());
+
+      documentDao.updateDocument(document.getId(), document);
    }
 
    private boolean areConstraintsDifferent(final Attribute originalAttribute, final Attribute newAttribute) {

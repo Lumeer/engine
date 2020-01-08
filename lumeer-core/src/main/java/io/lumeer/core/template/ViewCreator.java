@@ -117,10 +117,10 @@ public class ViewCreator extends WithIdCreator {
          var filtersUsed = false;
          if (stem.getFilters() != null) {
             filtersUsed = true;
-            stem.getFilters().forEach(filter -> collectionAttributeFilters.add(new CollectionAttributeFilter(
+            stem.getFilters().forEach(filter -> collectionAttributeFilters.add(CollectionAttributeFilter.createFromValue(
                   templateParser.getDict().getCollectionId(filter.getCollectionId()),
                   filter.getAttributeId(),
-                  filter.getOperator(),
+                  filter.getCondition(),
                   filter.getValue()
             )));
          }
@@ -129,10 +129,10 @@ public class ViewCreator extends WithIdCreator {
          var linkFiltersUsed = false;
          if (stem.getCollectionId() != null) {
             linkFiltersUsed = true;
-            stem.getLinkFilters().forEach(filter -> linkAttributeFilters.add(new LinkAttributeFilter(
+            stem.getLinkFilters().forEach(filter -> linkAttributeFilters.add(LinkAttributeFilter.createFromValue(
                   templateParser.getDict().getLinkTypeId(filter.getLinkTypeId()),
                   filter.getAttributeId(),
-                  filter.getOperator(),
+                  filter.getCondition(),
                   filter.getValue()
             )));
          }

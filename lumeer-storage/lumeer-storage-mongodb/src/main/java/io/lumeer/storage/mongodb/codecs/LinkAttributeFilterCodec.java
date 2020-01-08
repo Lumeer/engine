@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.ConditionValue;
 import io.lumeer.api.model.LinkAttributeFilter;
 
 import org.bson.BsonReader;
@@ -29,10 +30,14 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
 
    public static final String LINK_TYPE_ID = "linkTypeId";
-   public static final String OPERATOR = "condition";
+   public static final String CONDITION = "condition";
    public static final String VALUE = "value";
    public static final String ATTRIBUTE_ID = "attributeId";
 
@@ -52,18 +57,28 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
    public static LinkAttributeFilter convertFromDocument(final Document document) {
       String linkTypeId = document.getString(LINK_TYPE_ID);
       String attributeId = document.getString(ATTRIBUTE_ID);
-      String operator = document.getString(OPERATOR);
-      Object value = document.get(VALUE);
+      String operator = document.getString(CONDITION);
 
-      return new LinkAttributeFilter(linkTypeId, attributeId, operator, value);
+      List<ConditionValue> values;
+      Object value = document.get(VALUE);
+      if (value instanceof List<?>) {
+         values = document.getList(VALUE, Document.class)
+                          .stream()
+                          .map(ConditionValueCodec::convertFromDocument)
+                          .collect(Collectors.toList());
+      } else {
+         values = Collections.singletonList(new ConditionValue(value));
+      }
+
+      return new LinkAttributeFilter(linkTypeId, attributeId, operator, values);
    }
 
    @Override
    public void encode(final BsonWriter writer, final LinkAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(LINK_TYPE_ID, value.getLinkTypeId())
-            .append(OPERATOR, value.getOperator())
-            .append(VALUE, value.getValue())
+            .append(CONDITION, value.getCondition())
+            .append(VALUE, value.getConditionValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 
       documentCodec.encode(writer, bson, encoderContext);
