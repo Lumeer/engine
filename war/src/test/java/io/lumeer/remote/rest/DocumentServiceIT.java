@@ -120,7 +120,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       collectionDao.setProject(storedProject);
-      collectionDao.createCollectionsRepository(storedProject);
+      collectionDao.createRepository(storedProject);
 
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));

@@ -135,7 +135,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
 
       collectionDao.setProject(storedProject);
-      collectionDao.createCollectionsRepository(storedProject);
+      collectionDao.createRepository(storedProject);
 
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));

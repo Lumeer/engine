@@ -90,7 +90,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       organization = organizationDao.createOrganization(organization1);
 
       workspaceKeeper.setOrganization(organization.getId());
-      groupDao.createGroupsRepository(organization);
+      groupDao.createRepository(organization);
       groupDao.setOrganization(organization);
    }
 
@@ -232,7 +232,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       Organization organizationNotPermission = organizationDao.createOrganization(organization3);
 
       workspaceKeeper.setOrganization(organizationNotPermission.getId());
-      groupDao.createGroupsRepository(organizationNotPermission);
+      groupDao.createRepository(organizationNotPermission);
       groupDao.setOrganization(organizationNotPermission);
    }
 }
