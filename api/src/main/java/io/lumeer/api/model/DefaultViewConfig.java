@@ -18,26 +18,41 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.ZonedDateTime;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class DefaultViewConfig {
 
    private String userId;
-   private String collectionId;
+   private String key;
    private String perspective;
    private Object config;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime updatedAt;
 
    public DefaultViewConfig() {
    }
 
    @JsonCreator
-   public DefaultViewConfig(@JsonProperty("collectionId") final String collectionId,
+   public DefaultViewConfig(@JsonProperty("key") final String key,
          @JsonProperty("perspective") final String perspective,
-         @JsonProperty("config") final Object config) {
-      this.collectionId = collectionId;
+         @JsonProperty("config") final Object config,
+         @JsonProperty("updatedAt")
+         @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class) final ZonedDateTime updateAt) {
+      this.key = key;
       this.perspective = perspective;
       this.config = config;
+      this.updatedAt = updateAt;
+   }
+
+   public ZonedDateTime getUpdatedAt() {
+      return updatedAt;
    }
 
    public String getUserId() {
@@ -48,8 +63,8 @@ public class DefaultViewConfig {
       this.userId = userId;
    }
 
-   public String getCollectionId() {
-      return collectionId;
+   public String getKey() {
+      return key;
    }
 
    public String getPerspective() {
@@ -64,7 +79,7 @@ public class DefaultViewConfig {
    public String toString() {
       return "DefaultViewConfig{" +
             "userId='" + userId + '\'' +
-            ", collectionId='" + collectionId + '\'' +
+            ", key='" + key + '\'' +
             ", perspective='" + perspective + '\'' +
             ", config=" + config +
             '}';

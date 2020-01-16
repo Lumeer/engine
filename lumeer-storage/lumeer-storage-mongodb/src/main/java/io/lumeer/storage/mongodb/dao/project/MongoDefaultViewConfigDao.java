@@ -58,7 +58,7 @@ public class MongoDefaultViewConfigDao extends MongoProjectScopedDao implements 
       database.createCollection(getCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(getCollectionName(project));
-      projectCollection.createIndex(Indexes.ascending(DefaultViewConfigCodec.USER_ID, DefaultViewConfigCodec.COLLECTION_ID, DefaultViewConfigCodec.PERSPECTIVE), new IndexOptions().unique(true));
+      projectCollection.createIndex(Indexes.ascending(DefaultViewConfigCodec.USER_ID, DefaultViewConfigCodec.KEY, DefaultViewConfigCodec.PERSPECTIVE), new IndexOptions().unique(true));
    }
 
    @Override
@@ -85,7 +85,7 @@ public class MongoDefaultViewConfigDao extends MongoProjectScopedDao implements 
    private Bson configFilter(final DefaultViewConfig config) {
       return and(
             eq(DefaultViewConfigCodec.USER_ID, config.getUserId()),
-            eq(DefaultViewConfigCodec.COLLECTION_ID, config.getCollectionId()),
+            eq(DefaultViewConfigCodec.KEY, config.getKey()),
             eq(DefaultViewConfigCodec.PERSPECTIVE, config.getPerspective())
       );
    }
@@ -97,7 +97,7 @@ public class MongoDefaultViewConfigDao extends MongoProjectScopedDao implements 
 
    @Override
    public void deleteByCollection(final String collectionId) {
-      databaseCollection().deleteMany(eq(DefaultViewConfigCodec.COLLECTION_ID, collectionId));
+      databaseCollection().deleteMany(eq(DefaultViewConfigCodec.KEY, collectionId));
    }
 
    public String getCollectionName(Project project) {

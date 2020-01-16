@@ -28,6 +28,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.time.ZonedDateTime;
+
 public class MongoDefaultViewConfigDaoTest extends MongoDbTestBase {
 
    private static final String PROJECT_ID = "596e3b86d412bc5a3caaa22a";
@@ -85,7 +87,7 @@ public class MongoDefaultViewConfigDaoTest extends MongoDbTestBase {
    }
 
    private DefaultViewConfig createConfig(String userId, String collectionId) {
-      var config = new DefaultViewConfig(collectionId, "perspective", new org.bson.Document());
+      var config = new DefaultViewConfig(collectionId, "perspective", new org.bson.Document(), ZonedDateTime.now());
       config.setUserId(userId);
       return config;
    }
