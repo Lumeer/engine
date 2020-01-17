@@ -23,9 +23,6 @@ import java.text.NumberFormat;
 import java.text.ParsePosition;
 import java.util.Locale;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class NumberParser {
 
    public static Double parseDouble(String x) {

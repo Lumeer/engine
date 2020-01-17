@@ -36,6 +36,7 @@ import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -85,6 +86,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private ConversionFacade conversionFacade;
+
+   @Inject
+   private DefaultViewConfigDao defaultViewConfigDao;
 
    public Collection createCollection(Collection collection) {
       checkProjectWriteRole();
@@ -144,6 +148,7 @@ public class CollectionFacade extends AbstractFacade {
 
       favoriteItemDao.removeFavoriteCollectionFromUsers(getCurrentProject().getId(), collectionId);
       favoriteItemDao.removeFavoriteDocumentsByCollectionFromUsers(getCurrentProject().getId(), collectionId);
+      defaultViewConfigDao.deleteByCollection(collectionId);
    }
 
    public Collection getCollection(String collectionId) {

@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class FunctionOrder {
 
    public static <T extends FunctionParameter> Deque<T> orderFunctions(final Map<T, List<T>> dependencies) {

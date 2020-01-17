@@ -18,9 +18,6 @@
  */
 package io.lumeer.engine.api.data;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public interface DataFilter {
 
    <T> T get();

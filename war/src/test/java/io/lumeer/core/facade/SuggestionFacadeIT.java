@@ -130,13 +130,13 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
 
       collectionDao.setProject(storedProject);
-      collectionDao.createCollectionsRepository(storedProject);
+      collectionDao.createRepository(storedProject);
 
       linkTypeDao.setProject(storedProject);
-      linkTypeDao.createLinkTypeRepository(storedProject);
+      linkTypeDao.createRepository(storedProject);
 
       viewDao.setProject(storedProject);
-      viewDao.createViewsRepository(storedProject);
+      viewDao.createRepository(storedProject);
 
       collectionIds.clear();
 

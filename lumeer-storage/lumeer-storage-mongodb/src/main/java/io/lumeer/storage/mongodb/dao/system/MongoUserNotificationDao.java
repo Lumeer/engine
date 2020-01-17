@@ -51,11 +51,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
-public class MongoUserNotificationDao extends SystemScopedDao implements UserNotificationDao {
+public class MongoUserNotificationDao extends MongoSystemScopedDao implements UserNotificationDao {
 
    public static final String COLLECTION_NAME = "userNotifications";
 

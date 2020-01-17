@@ -16,45 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.mongodb.dao.organization;
+package io.lumeer.storage.mongodb.dao.system;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.Organization;
-import io.lumeer.engine.annotation.UserDataStorage;
+import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.mongodb.dao.MongoDao;
 
 import com.mongodb.client.MongoDatabase;
 
-import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
-public abstract class OrganizationScopedDao extends MongoDao {
-
-   private Organization organization;
+public abstract class MongoSystemScopedDao extends MongoDao {
 
    @Inject
-   private SelectedWorkspace selectedWorkspace;
-
-   @Inject
-   @UserDataStorage
+   @SystemDataStorage
    private DataStorage dataStorage;
 
    @PostConstruct
    public void init() {
       this.database = (MongoDatabase) dataStorage.getDatabase();
-
-      if (selectedWorkspace.getOrganization().isPresent()) {
-         this.organization = selectedWorkspace.getOrganization().get();
-      }
-   }
-
-   public Optional<Organization> getOrganization() {
-      return Optional.ofNullable(organization);
-   }
-
-   public void setOrganization(final Organization organization) {
-      this.organization = organization;
    }
 }

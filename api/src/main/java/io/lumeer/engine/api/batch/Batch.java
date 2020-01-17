@@ -20,8 +20,6 @@ package io.lumeer.engine.api.batch;
 
 /**
  * Represents batch database operation.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface Batch {
 

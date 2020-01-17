@@ -28,9 +28,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class FunctionTaskExecutor {
 
    private static Logger log = Logger.getLogger(FunctionTaskExecutor.class.getName());

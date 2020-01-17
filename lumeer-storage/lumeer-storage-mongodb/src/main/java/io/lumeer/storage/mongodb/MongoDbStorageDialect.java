@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
 public class MongoDbStorageDialect implements DataStorageDialect {
 

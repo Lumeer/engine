@@ -20,9 +20,6 @@ package io.lumeer.engine.util;
 
 import java.text.MessageFormat;
 
-/**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
- */
 public class ErrorMessageBuilder {
 
    private ErrorMessageBuilder() {

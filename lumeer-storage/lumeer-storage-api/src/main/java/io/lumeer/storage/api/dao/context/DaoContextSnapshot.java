@@ -48,8 +48,6 @@ import java.util.Set;
  * Please remember that nothing that gets injected into Dao objects will work. This includes
  * mainly invocation of CDI events that lead to creation of Push and User Notifications.
  * If it is desired to send these notifications, they must be created manually in the batch task.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface DaoContextSnapshot {
 

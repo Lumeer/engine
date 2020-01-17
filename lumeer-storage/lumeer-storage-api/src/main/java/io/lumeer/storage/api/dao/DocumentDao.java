@@ -19,16 +19,11 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Project;
 
 import java.util.Collection;
 import java.util.List;
 
-public interface DocumentDao {
-
-   void createDocumentsRepository(Project project);
-
-   void deleteDocumentsRepository(Project project);
+public interface DocumentDao extends ProjectScopedDao {
 
    Document createDocument(Document document);
 
@@ -49,8 +44,6 @@ public interface DocumentDao {
    List<Document> getRecentDocuments(final String collectionId, boolean byUpdate);
 
    List<Document> getDocumentsByParentIds(Collection<String> parentIds);
-
-   void setProject(Project project);
 
    List<Document> duplicateDocuments(List<String> documentIds);
 

@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class MongoFunctionDao extends ProjectScopedDao implements FunctionDao {
+public class MongoFunctionDao extends MongoProjectScopedDao implements FunctionDao {
 
    private static final String PREFIX = "functions_p-";
 

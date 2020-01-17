@@ -18,15 +18,8 @@
  */
 package io.lumeer.storage.api.dao.context;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
-import io.lumeer.engine.api.data.DataStorage;
-
 /**
  * Gets a {@link DaoContextSnapshot} based on provided information.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface DaoContextSnapshotFactory {
    DaoContextSnapshot getInstance();

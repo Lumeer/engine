@@ -24,7 +24,7 @@ import io.lumeer.api.model.Sequence;
 
 public class RemoveSequence extends SequenceEvent {
 
-   public RemoveSequence(final Organization organization, final Project project, final Sequence sequence) {
-      super(organization, project, sequence);
+   public RemoveSequence(final Sequence sequence) {
+      super(sequence);
    }
 }

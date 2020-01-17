@@ -23,9 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class UserLoginEvent {
 
    public static final String ID = "id";

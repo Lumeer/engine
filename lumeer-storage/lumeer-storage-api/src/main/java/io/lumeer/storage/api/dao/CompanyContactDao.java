@@ -21,9 +21,6 @@ package io.lumeer.storage.api.dao;
 import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public interface CompanyContactDao {
 
    CompanyContact getCompanyContact(final Organization organization);

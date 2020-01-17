@@ -55,7 +55,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstanceDao {
+public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkInstanceDao {
 
    private static final String PREFIX = "linkinstances_p-";
 
@@ -66,7 +66,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    private Event<RemoveLinkInstance> removeLinkInstanceEvent;
 
    @Override
-   public void createLinkInstanceRepository(Project project) {
+   public void createRepository(Project project) {
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
@@ -74,7 +74,7 @@ public class MongoLinkInstanceDao extends ProjectScopedDao implements LinkInstan
    }
 
    @Override
-   public void deleteLinkInstanceRepository(Project project) {
+   public void deleteRepository(Project project) {
       database.getCollection(databaseCollectionName(project)).drop();
    }
 

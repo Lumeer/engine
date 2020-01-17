@@ -83,7 +83,7 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
       projectDao.setDatabase(database);
 
       projectDao.setOrganization(organization);
-      projectDao.createProjectsRepository(organization);
+      projectDao.createRepository(organization);
    }
 
    private Project prepareProject(String code) {

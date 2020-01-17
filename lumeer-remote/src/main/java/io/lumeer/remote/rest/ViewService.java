@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -159,13 +160,25 @@ public class ViewService extends AbstractService {
    }
 
    @GET
-   @Path("all/collections")
+   @Path("defaultConfigs/all")
+   public List<DefaultViewConfig> getDefaultConfigs() {
+      return this.viewFacade.getDefaultConfigs();
+   }
+
+   @PUT
+   @Path("defaultConfigs/config")
+   public DefaultViewConfig setDefaultConfig(DefaultViewConfig config) {
+      return this.viewFacade.updateDefaultConfig(config);
+   }
+
+   @GET
+   @Path("collections/all")
    public List<Collection> getViewsCollections() {
       return viewFacade.getViewsCollections();
    }
 
    @GET
-   @Path("all/linkTypes")
+   @Path("linkTypes/all")
    public List<LinkType> getViewsLinkTypes() {
       return viewFacade.getViewsLinkTypes();
    }

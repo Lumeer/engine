@@ -21,8 +21,6 @@ package io.lumeer.core.auth;
 
 /**
  * A helper class that allows us to change view id through a single test run.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public abstract class PermissionCheckerUtil {
 

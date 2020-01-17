@@ -20,9 +20,6 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.LinkType;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class CreateLinkType extends LinkTypeEvent {
 
    public CreateLinkType(final LinkType linkType) {

@@ -26,9 +26,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class SimpleCache<T> implements Cache<T> {
 
    private Map<String, T> cache = new ConcurrentHashMap<>();

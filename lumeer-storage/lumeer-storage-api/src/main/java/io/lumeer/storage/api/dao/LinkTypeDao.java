@@ -26,13 +26,7 @@ import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import java.util.List;
 import java.util.Set;
 
-public interface LinkTypeDao {
-
-   void createLinkTypeRepository(Project project);
-
-   void deleteLinkTypeRepository(Project project);
-
-   void setProject(Project project);
+public interface LinkTypeDao extends ProjectScopedDao {
 
    LinkType createLinkType(LinkType linkType);
 

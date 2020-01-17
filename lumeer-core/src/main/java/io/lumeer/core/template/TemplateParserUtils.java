@@ -33,9 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class TemplateParserUtils {
 
    public static List<Attribute> getAttributes(final JSONArray a) {

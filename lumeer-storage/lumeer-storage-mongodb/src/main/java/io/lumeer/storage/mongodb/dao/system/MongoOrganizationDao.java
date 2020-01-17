@@ -56,7 +56,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class MongoOrganizationDao extends SystemScopedDao implements OrganizationDao {
+public class MongoOrganizationDao extends MongoSystemScopedDao implements OrganizationDao {
 
    public static final String COLLECTION_NAME = "organizations";
 

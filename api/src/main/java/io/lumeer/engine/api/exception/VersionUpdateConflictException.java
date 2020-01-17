@@ -18,9 +18,6 @@
  */
 package io.lumeer.engine.api.exception;
 
-/**
- * @author <a href="mailto:kotrady.johnny@gmail.com">Jan Kotrady</a>
- */
 public class VersionUpdateConflictException extends DbException {
 
    public VersionUpdateConflictException(final String message) {

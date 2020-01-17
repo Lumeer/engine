@@ -43,8 +43,6 @@ import javax.ws.rs.core.MultivaluedMap;
 
 /**
  * Imports JSON files through a REST API.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class RestImport {
 

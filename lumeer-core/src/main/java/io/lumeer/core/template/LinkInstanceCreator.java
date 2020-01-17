@@ -31,9 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class LinkInstanceCreator extends WithIdCreator {
 
    private final LinkInstanceFacade linkInstanceFacade;

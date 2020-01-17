@@ -56,7 +56,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao {
+public class MongoProjectDao extends MongoOrganizationScopedDao implements ProjectDao {
 
    private static final String PREFIX = "projects_o-";
 
@@ -70,7 +70,7 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    private Event<RemoveResource> removeResourceEvent;
 
    @Override
-   public void createProjectsRepository(final Organization organization) {
+   public void createRepository(final Organization organization) {
       database.createCollection(databaseCollectionName(organization));
 
       MongoCollection<Document> collection = database.getCollection(databaseCollectionName(organization));
@@ -78,7 +78,7 @@ public class MongoProjectDao extends OrganizationScopedDao implements ProjectDao
    }
 
    @Override
-   public void deleteProjectsRepository(final Organization organization) {
+   public void deleteRepository(final Organization organization) {
       database.getCollection(databaseCollectionName()).drop();
    }
 

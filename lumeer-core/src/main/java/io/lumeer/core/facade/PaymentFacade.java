@@ -45,9 +45,6 @@ import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @RequestScoped
 public class PaymentFacade extends AbstractFacade {
 

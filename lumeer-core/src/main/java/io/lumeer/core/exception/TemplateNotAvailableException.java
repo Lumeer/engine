@@ -20,9 +20,6 @@ package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class TemplateNotAvailableException extends LumeerException {
 
    public TemplateNotAvailableException(final Throwable cause) {

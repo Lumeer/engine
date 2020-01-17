@@ -22,8 +22,6 @@ import io.lumeer.api.model.Document;
 
 /**
  * CDI event that is fired when a document is removed.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class RemoveDocument extends DocumentEvent {
 

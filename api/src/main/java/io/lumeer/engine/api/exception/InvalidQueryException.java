@@ -20,8 +20,6 @@ package io.lumeer.engine.api.exception;
 
 /**
  * Thrown when a data query has any issues.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class InvalidQueryException extends DbException {
    public InvalidQueryException(final String message) {

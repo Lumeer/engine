@@ -22,9 +22,6 @@ import io.lumeer.api.exception.LumeerException;
 
 import cz.gopay.api.v3.GPClientException;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class PaymentGatewayException extends LumeerException {
 
    public PaymentGatewayException(final GPClientException exception) {

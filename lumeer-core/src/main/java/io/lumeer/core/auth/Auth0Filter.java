@@ -59,9 +59,6 @@ import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @WebFilter(urlPatterns = "/*")
 public class Auth0Filter implements Filter {
 

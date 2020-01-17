@@ -142,7 +142,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       collectionDao.setProject(storedProject);
-      collectionDao.createCollectionsRepository(project);
+      collectionDao.createRepository(project);
 
       this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
       this.organization = storedOrganization;

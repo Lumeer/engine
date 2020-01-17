@@ -23,13 +23,7 @@ import io.lumeer.api.model.Organization;
 
 import java.util.List;
 
-public interface GroupDao {
-
-   void createGroupsRepository(Organization organization);
-
-   void deleteGroupsRepository(Organization organization);
-
-   void setOrganization(Organization organization);
+public interface GroupDao extends OrganizationScopedDao {
 
    Group createGroup(Group group);
 

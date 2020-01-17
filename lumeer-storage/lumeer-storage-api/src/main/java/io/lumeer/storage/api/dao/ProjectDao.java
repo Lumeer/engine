@@ -25,11 +25,11 @@ import io.lumeer.storage.api.query.DatabaseQuery;
 import java.util.List;
 import java.util.Set;
 
-public interface ProjectDao {
+public interface ProjectDao extends OrganizationScopedDao {
 
-   void createProjectsRepository(Organization organization);
+   void createRepository(Organization organization);
 
-   void deleteProjectsRepository(Organization organization);
+   void deleteRepository(Organization organization);
 
    void setOrganization(Organization organization);
 

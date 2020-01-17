@@ -60,7 +60,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
+public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeDao {
 
    public static final String PREFIX = "linktypes_p-";
 
@@ -74,7 +74,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    private Event<RemoveLinkType> removeLinkTypeEvent;
 
    @Override
-   public void createLinkTypeRepository(Project project) {
+   public void createRepository(Project project) {
       database.createCollection(databaseCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
@@ -83,7 +83,7 @@ public class MongoLinkTypeDao extends ProjectScopedDao implements LinkTypeDao {
    }
 
    @Override
-   public void deleteLinkTypeRepository(Project project) {
+   public void deleteRepository(Project project) {
       database.getCollection(databaseCollectionName(project)).drop();
    }
 

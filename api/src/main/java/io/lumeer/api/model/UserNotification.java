@@ -28,9 +28,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class UserNotification {
 
    public static final String USER_ID = "userId";

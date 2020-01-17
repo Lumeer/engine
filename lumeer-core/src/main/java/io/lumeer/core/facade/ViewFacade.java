@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -31,6 +32,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -63,6 +65,9 @@ public class ViewFacade extends AbstractFacade {
 
    @Inject
    private FavoriteItemDao favoriteItemDao;
+
+   @Inject
+   private DefaultViewConfigDao defaultViewConfigDao;
 
    public View createView(View view) {
       if (view.getQuery().getCollectionIds() != null) {
@@ -258,6 +263,17 @@ public class ViewFacade extends AbstractFacade {
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {
       return getCollectionsByView(view).stream()
                                        .collect(Collectors.toMap(Resource::getId, c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
+   }
+
+   public List<DefaultViewConfig> getDefaultConfigs() {
+      return defaultViewConfigDao.getConfigs(authenticatedUser.getCurrentUserId());
+   }
+
+   public DefaultViewConfig updateDefaultConfig(DefaultViewConfig config) {
+      var userId = authenticatedUser.getCurrentUserId();
+      config.setUserId(userId);
+
+      return defaultViewConfigDao.updateConfig(config);
    }
 
    private List<Collection> getCollectionsByView(final View view) {

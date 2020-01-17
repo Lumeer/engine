@@ -24,9 +24,6 @@ import io.lumeer.engine.api.cache.CacheFactory;
 import java.io.Serializable;
 import javax.enterprise.context.ApplicationScoped;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
 public class SimpleCacheFactory implements CacheFactory, Serializable {
 

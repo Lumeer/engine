@@ -20,7 +20,6 @@ package io.lumeer.storage.mongodb.dao.project;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Updates.inc;
-import static com.mongodb.client.model.Updates.set;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.nameFilter;
 
@@ -32,6 +31,7 @@ import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.codecs.SequenceCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
@@ -51,7 +51,7 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
-public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
+public class MongoSequenceDao extends MongoProjectScopedDao implements SequenceDao {
 
    private static final String PREFIX = "sequences_p-";
 
@@ -62,28 +62,26 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
    private Event<RemoveSequence> removeSequenceEvent;
 
    @Override
-   public void createSequencesRepository(final Project project) {
+   public void createRepository(final Project project) {
       database.createCollection(getSequenceCollectionName(project));
 
       MongoCollection<Document> projectCollection = database.getCollection(getSequenceCollectionName(project));
-      projectCollection.createIndex(Indexes.ascending(INDEX_NAME), new IndexOptions().unique(true));
+      projectCollection.createIndex(Indexes.ascending(SequenceCodec.NAME), new IndexOptions().unique(true));
    }
 
    @Override
-   public void deleteSequencesRepository(final Project project) {
+   public void deleteRepository(final Project project) {
       database.getCollection(getSequenceCollectionName(project)).drop();
    }
 
    @Override
    public List<Sequence> getAllSequences() {
-      return databaseCollection().find().sort(Sorts.ascending(Sequence.NAME)).into(new ArrayList<>());
+      return databaseCollection().find().sort(Sorts.ascending(SequenceCodec.NAME)).into(new ArrayList<>());
    }
 
    @Override
    public Sequence getSequence(final String name) {
-      final Sequence sequence = databaseCollection().find(nameFilter(name)).first();
-
-      return sequence;
+      return databaseCollection().find(nameFilter(name)).first();
    }
 
    @Override
@@ -98,7 +96,7 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
          throw new StorageException("Sequence '" + id + "' has not been deleted.");
       }
       if (removeSequenceEvent != null) {
-         removeSequenceEvent.fire(new RemoveSequence(getOrganization().orElse(null), getProject().orElse(null), sequence));
+         removeSequenceEvent.fire(new RemoveSequence(sequence));
       }
    }
 
@@ -111,7 +109,7 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
             throw new StorageException("Sequence '" + sequence.getId() + "' has not been updated.");
          }
          if (createOrUpdateSequenceEvent != null) {
-            createOrUpdateSequenceEvent.fire(new CreateOrUpdateSequence(getOrganization().orElse(null), getProject().orElse(null), returnedSequence));
+            createOrUpdateSequenceEvent.fire(new CreateOrUpdateSequence(returnedSequence));
          }
          return returnedSequence;
       } catch (MongoException ex) {
@@ -124,31 +122,23 @@ public class MongoSequenceDao extends ProjectScopedDao implements SequenceDao {
       final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
       options.returnDocument(ReturnDocument.AFTER);
 
-      final Document doc = database.getCollection(getDatabaseCollectionName()).findOneAndUpdate(eq(INDEX_NAME, indexName), inc("seq", 1),
+      final Sequence seq = databaseCollection().findOneAndUpdate(eq(SequenceCodec.NAME, indexName), inc(SequenceCodec.SEQ, 1),
             options);
 
-      if (doc == null) { // the sequence did not exist
+      if (seq == null) { // the sequence did not exist
          resetSequence(indexName);
          return 0;
       } else {
-         return doc.getInteger("seq");
+         return seq.getSeq();
       }
    }
 
    @Override
    public synchronized void resetSequence(final String indexName) {
-      final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
-      options.returnDocument(ReturnDocument.AFTER);
-
-      final Document doc = database.getCollection(getDatabaseCollectionName()).findOneAndUpdate(eq(INDEX_NAME, indexName), set("seq", 0),
-            options);
-
-      if (doc == null) {
-         Document newSeq = new Document();
-         newSeq.put(INDEX_NAME, indexName);
-         newSeq.put("seq", 0);
-         database.getCollection(getDatabaseCollectionName()).insertOne(newSeq);
-      }
+      final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
+      final Sequence sequence = new Sequence(indexName, 0);
+      Bson update = new org.bson.Document("$set", sequence);
+      databaseCollection().findOneAndUpdate(eq(SequenceCodec.NAME, indexName), update, options);
    }
 
    public String getSequenceCollectionName(Project project) {

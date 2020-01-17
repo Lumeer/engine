@@ -27,13 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public interface LinkInstanceDao {
-
-   void createLinkInstanceRepository(Project project);
-
-   void deleteLinkInstanceRepository(Project project);
-
-   void setProject(Project project);
+public interface LinkInstanceDao extends ProjectScopedDao {
 
    LinkInstance createLinkInstance(LinkInstance linkInstance);
 

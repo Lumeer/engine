@@ -35,7 +35,6 @@ import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.CollectionFacade;
-import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -108,9 +107,6 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private CollectionFacade collectionFacade;
 
    @Inject
-   private CollectionDao collectionDao;
-
-   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    @Before
@@ -155,7 +151,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       query = new Query(new QueryStem(collection.getId()));
 
       viewsUrl = projectPath(storedOrganization, storedProject) + "views";
-      viewsCollectionsUrl = viewsUrl + "/all/collections";
+      viewsCollectionsUrl = viewsUrl + "/collections/all";
    }
 
    private View prepareView(String code) {

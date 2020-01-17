@@ -20,8 +20,6 @@ package io.lumeer.engine.api.exception;
 
 /**
  * Thrown in case the collection with given user name is not found.
- *
- * @author <a href="mailto:alica.kacengova@gmail.com">Alica Kačengová</a>
  */
 public class UserCollectionNotFoundException extends CollectionNotFoundException {
 

@@ -38,9 +38,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public abstract class AbstractContextualTask implements ContextualTask {
 
    protected User initiator;

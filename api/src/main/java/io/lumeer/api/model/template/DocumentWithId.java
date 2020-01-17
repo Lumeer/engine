@@ -22,9 +22,6 @@ import io.lumeer.api.model.Document;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class DocumentWithId extends Document {
 
    public DocumentWithId(final Document document) {

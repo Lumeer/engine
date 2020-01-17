@@ -18,19 +18,12 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 
 import java.util.List;
 
-public interface FunctionDao {
-
-   void createRepository(Project project);
-
-   void deleteRepository(Project project);
-
-   void setProject(Project project);
+public interface FunctionDao extends ProjectScopedDao {
 
    void createRows(List<FunctionRow> rows);
 

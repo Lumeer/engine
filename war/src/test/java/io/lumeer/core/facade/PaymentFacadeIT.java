@@ -35,9 +35,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @RunWith(Arquillian.class)
 public class PaymentFacadeIT extends IntegrationTestBase {
 

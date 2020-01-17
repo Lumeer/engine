@@ -22,9 +22,6 @@ import io.lumeer.api.model.View;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class ViewWithId extends View {
 
    public ViewWithId(final View view) {

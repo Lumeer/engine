@@ -26,7 +26,6 @@ import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.PaymentCodec;
-import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
@@ -47,11 +46,8 @@ import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @RequestScoped
-public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
+public class MongoPaymentDao extends MongoOrganizationScopedDao implements PaymentDao {
 
    private static final String PREFIX = "payments_o-";
 
@@ -144,7 +140,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    }
 
    @Override
-   public void createPaymentRepository(final Organization organization) {
+   public void createRepository(final Organization organization) {
       database.createCollection(databaseCollectionName(organization));
 
       MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
@@ -155,7 +151,7 @@ public class MongoPaymentDao extends SystemScopedDao implements PaymentDao {
    }
 
    @Override
-   public void deletePaymentRepository(final Organization organization) {
+   public void deleteRepository(final Organization organization) {
       database.getCollection(databaseCollectionName(organization)).drop();
    }
 

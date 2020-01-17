@@ -31,9 +31,6 @@ import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @RequestScoped
 public class AuthenticatedUserGroups {
 

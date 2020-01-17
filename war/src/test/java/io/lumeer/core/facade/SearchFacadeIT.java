@@ -146,7 +146,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
 
       collectionDao.setProject(storedProject);
-      collectionDao.createCollectionsRepository(storedProject);
+      collectionDao.createRepository(storedProject);
       documentDao.setProject(storedProject);
       linkInstanceDao.setProject(project);
       linkTypeDao.setProject(project);

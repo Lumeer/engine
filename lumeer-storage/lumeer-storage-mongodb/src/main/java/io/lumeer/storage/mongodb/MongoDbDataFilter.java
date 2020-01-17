@@ -22,9 +22,6 @@ import io.lumeer.engine.api.data.DataFilter;
 
 import org.bson.conversions.Bson;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class MongoDbDataFilter implements DataFilter {
 
    private final Bson filter;

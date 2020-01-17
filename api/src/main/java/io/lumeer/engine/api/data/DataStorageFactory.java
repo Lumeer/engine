@@ -23,8 +23,6 @@ import java.util.List;
 
 /**
  * Factory to allow creating injectable CDI factories without the need for the DataStorage to be a CDI bean.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface DataStorageFactory {
 

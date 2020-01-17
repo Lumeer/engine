@@ -22,8 +22,6 @@ import java.util.function.Function;
 
 /**
  * Cache of values of given type. It is possible to lock on particular cache entry.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface Cache<T> {
 

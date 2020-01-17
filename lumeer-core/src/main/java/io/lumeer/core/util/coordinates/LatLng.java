@@ -20,9 +20,6 @@ package io.lumeer.core.util.coordinates;
 
 import java.util.Objects;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class LatLng {
    private final Double lat;
    private final Double lng;

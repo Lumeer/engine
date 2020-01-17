@@ -14,9 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class FunctionOrderTest {
 
    final static FunctionParameter fpA = fp("A"), fpB = fp("B"), fpC = fp("C"),

@@ -29,9 +29,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class NaiveTrustManager implements X509TrustManager {
 
    private static SSLSocketFactory sslSocketFactory;

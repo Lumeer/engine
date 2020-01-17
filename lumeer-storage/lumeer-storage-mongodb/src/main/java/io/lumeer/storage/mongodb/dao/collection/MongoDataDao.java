@@ -61,7 +61,7 @@ import java.util.stream.StreamSupport;
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
-public class MongoDataDao extends CollectionScopedDao implements DataDao {
+public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
 
    private static final String ID = "_id";
    private static final String PREFIX = "data_c-";

@@ -18,30 +18,16 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
 
 public class SequenceEvent {
-   private final Organization organization;
-   private final Project project;
    private final Sequence sequence;
 
-   public SequenceEvent(final Organization organization, final Project project, final Sequence sequence) {
-      this.organization = organization;
-      this.project = project;
+   public SequenceEvent(final Sequence sequence) {
       this.sequence = sequence;
    }
 
    public Sequence getSequence() {
       return sequence;
-   }
-
-   public Organization getOrganization() {
-      return organization;
-   }
-
-   public Project getProject() {
-      return project;
    }
 }

@@ -23,8 +23,6 @@ package io.lumeer.engine.api.cache;
  * and we are still able to distinguish between caches from multiple instances of the same class.
  * Normally, all instances of a class share the same caches. However, there might be multiple groups of instances
  * that fulfill a different purpose and need to distinguish between their caches.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public interface CacheManager {
 

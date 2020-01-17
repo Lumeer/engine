@@ -21,9 +21,6 @@ package io.lumeer.engine.api.event;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class CreateOrUpdatePayment {
 
    private final Organization organization;

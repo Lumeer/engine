@@ -20,9 +20,6 @@ package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class ProjectMeta {
 
    @JsonProperty("prefix")

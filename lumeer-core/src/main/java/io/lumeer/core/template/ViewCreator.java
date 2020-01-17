@@ -47,9 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class ViewCreator extends WithIdCreator {
 
    private final ViewFacade viewFacade;

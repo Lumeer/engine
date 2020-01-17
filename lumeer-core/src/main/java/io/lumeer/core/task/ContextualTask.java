@@ -29,9 +29,6 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.List;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public interface ContextualTask extends Task {
 
    ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper);

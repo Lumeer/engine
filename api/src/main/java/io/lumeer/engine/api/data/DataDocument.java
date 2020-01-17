@@ -26,8 +26,6 @@ import java.util.Map;
 
 /**
  * Represents a single data record.
- *
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
  */
 public class DataDocument extends LinkedHashMap<String, Object> {
 

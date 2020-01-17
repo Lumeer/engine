@@ -20,9 +20,6 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.common.Resource;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class RemoveResource extends ResourceEvent {
 
    public RemoveResource(final Resource resource) {

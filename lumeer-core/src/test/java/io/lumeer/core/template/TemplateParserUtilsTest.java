@@ -4,9 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.Test;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class TemplateParserUtilsTest {
 
    public static final String XML = "      <value name=\"DOCUMENT\">\n              <block type=\"variables_get_5cbb90e2857aba0090d78dbc_document\" id=\"y7iJEiiD^sd0KHU@:UV?\" editable=\"false\">\n                <field name=\"VAR\" id=\"X@fvQjT{Q8(k+CBPJUg-\" variabletype=\"5cbb90e2857aba0090d78dbc_document\">newDocument</field>\n              </block>\n            </value>\n            <value"

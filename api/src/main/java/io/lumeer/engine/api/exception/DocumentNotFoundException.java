@@ -18,9 +18,6 @@
  */
 package io.lumeer.engine.api.exception;
 
-/**
- * @author <a href="mailto:kubedo8@gmail.com">Jakub Rodák</a>
- */
 public class DocumentNotFoundException extends DbException {
 
    public DocumentNotFoundException(final String message) {

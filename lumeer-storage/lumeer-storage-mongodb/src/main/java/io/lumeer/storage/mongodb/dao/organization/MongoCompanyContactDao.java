@@ -24,7 +24,7 @@ import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.CompanyContactCodec;
-import io.lumeer.storage.mongodb.dao.system.SystemScopedDao;
+import io.lumeer.storage.mongodb.dao.system.MongoSystemScopedDao;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -42,11 +42,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 @ApplicationScoped
-public class MongoCompanyContactDao extends SystemScopedDao implements CompanyContactDao {
+public class MongoCompanyContactDao extends MongoSystemScopedDao implements CompanyContactDao {
 
    public static final String COMPANY_CONTACT_COLLECTION = "companyContact";
 

@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public interface UserNotificationDao {
 
    List<UserNotification> getRecentNotifications(final String userId);

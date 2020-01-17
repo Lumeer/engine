@@ -36,9 +36,6 @@ import org.json.simple.JSONObject;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class FunctionAndRuleCreator extends WithIdCreator {
 
    private final CollectionFacade collectionFacade;

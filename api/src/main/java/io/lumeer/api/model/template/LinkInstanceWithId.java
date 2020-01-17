@@ -22,9 +22,6 @@ import io.lumeer.api.model.LinkInstance;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
- */
 public class LinkInstanceWithId extends LinkInstance {
 
    public LinkInstanceWithId(final LinkInstance linkInstance) {

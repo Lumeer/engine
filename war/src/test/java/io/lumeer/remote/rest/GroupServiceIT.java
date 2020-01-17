@@ -61,7 +61,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
       organization = organizationDao.createOrganization(organization1);
 
-      groupDao.createGroupsRepository(organization);
+      groupDao.createRepository(organization);
       groupDao.setOrganization(organization);
 
       this.urlPrefix = organizationPath(organization) + "groups";

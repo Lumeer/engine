@@ -61,8 +61,6 @@ import java.util.stream.Collectors;
 
 /**
  * Holds a list of constraints that can be obtained from a list of string configurations.
- *
- * @author <a href="mailto:marvenec@gmail.com">Martin Večeřa</a>
  */
 public class ConstraintManager {
 
