@@ -102,7 +102,7 @@
       <version.maven.plugin.api>3.5.4</version.maven.plugin.api>
       <version.maven.core>3.5.4</version.maven.core>
       <version.maven.plugin.annotations>3.5.2</version.maven.plugin.annotations>
-      <version.graalvm>19.3.0.2</version.graalvm>
+      <version.graalvm>19.3.1</version.graalvm>
 
       <!-- Tools -->
       <version.findbugs>3.0.1u2</version.findbugs>
