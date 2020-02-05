@@ -98,7 +98,7 @@
       <maven.war.plugin.version>3.2.3</maven.war.plugin.version>
       <maven.wildfly.plugin.version>2.0.2.Final</maven.wildfly.plugin.version>
       <maven.failsafe.plugin.version>2.22.2</maven.failsafe.plugin.version>
-      <maven.cargo.plugin.version>1.7.9</maven.cargo.plugin.version>
+      <maven.cargo.plugin.version>1.7.10</maven.cargo.plugin.version>
 
       <version.wildfly>17.0.1.Final</version.wildfly>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
