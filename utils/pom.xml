@@ -283,7 +283,7 @@
             <artifactId>maven-project-info-reports-plugin</artifactId>
             <version>${maven.project.info.reports.plugin.version}</version>
             <configuration>
-               <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+               <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
             </configuration>
          </plugin>
          <plugin>
