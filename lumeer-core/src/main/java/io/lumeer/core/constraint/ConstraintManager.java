@@ -31,6 +31,7 @@ import io.lumeer.core.util.coordinates.CoordinatesParser;
 import io.lumeer.core.util.coordinates.LatLng;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.mongodb.client.model.geojson.GeoJsonObjectType;
 import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
@@ -348,6 +349,12 @@ public class ConstraintManager {
             final String type = ((DataDocument) value).getString("type");
             if (type != null && type.equals("Point") && ((DataDocument) value).containsKey("coordinates")) {
                List<Double> values = ((DataDocument) value).getArrayList("coordinates", Double.class);
+               return values.get(0) + ", " + values.get(1);
+            }
+         } else if (value instanceof Point) {
+            final Point p = (Point) value;
+            if (p.getType() == GeoJsonObjectType.POINT) {
+               List<Double> values = p.getCoordinates().getValues();
                return values.get(0) + ", " + values.get(1);
             }
          }

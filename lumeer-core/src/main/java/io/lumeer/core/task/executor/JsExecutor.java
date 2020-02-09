@@ -555,6 +555,25 @@ public class JsExecutor {
       context.eval("js", js);
    }
 
+   public Value createFunction(final String innerJs) {
+      final String function = "function run(bindings, lumeer) {\n" + innerJs + "\n}";
+
+      Context context = Context
+            .newBuilder("js")
+            .engine(Engine
+                  .newBuilder()
+                  .allowExperimentalOptions(true)
+                  .option("js.experimental-foreign-object-prototype", "true")
+                  .build())
+            .allowAllAccess(true)
+            .build();
+
+      context.initialize("js");
+      context.eval("js", function);
+
+      return context.getBindings("js").getMember("run");
+   }
+
    public void commitChanges() {
       lumeerBridge.commitChanges();
    }
