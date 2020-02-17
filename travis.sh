@@ -44,12 +44,22 @@ export _JAVA_OPTIONS=-Djava.net.preferIPv4Stack=true
 export LUMEER_HOME=$(pwd)/war
 export LUMEER_DEFAULTS=defaults-ci.properties
 export SKIP_SECURITY=true
+
+PASSED=false
 mvn -Ptests install -B -Dlumeer.db.embed.skip=true
 #mvn -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci
 #mvn -l $BUILD_OUTPUT -P-default install -Dlumeer.db.host=ds119508.mlab.com -Dlumeer.db.port=19508 -Dlumeer.db.name=lumeer-ci
+if [[ $? -eq 0 ]]; then
+  PASSED=true
+fi
 
 # The build finished without returning an error so dump a tail of the output
 #dump_output
+
+if [ "x$PASSED" = "xtrue" ]; then
+  echo Tests passed, triggering docker image creation...
+  ./docker-trigger.sh
+fi
 
 # nicely terminate the ping output loop
 kill $PING_LOOP_PID
