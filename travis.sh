@@ -58,6 +58,7 @@ fi
 
 if [ "x$PASSED" = "xtrue" ]; then
   echo Tests passed, triggering docker image creation...
+  echo $CONTENT_TYPE
   ./docker-trigger.sh
 fi
 

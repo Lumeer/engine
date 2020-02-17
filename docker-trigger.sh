@@ -2,6 +2,8 @@
 
 VERSION=$(git log --pretty=format:'%h' -n 1)
 
+echo $CONTENT_TYPE $VERSION
+
 if [ "x$TRAVIS_PULL_REQUEST" = "xfalse" -o -z "$TRAVIS_PULL_REQUEST" ]; then
   if [ "x$TRAVIS_BRANCH" = "xdevel" ]; then
     echo Trigger devel rebuild
