@@ -1,8 +1,6 @@
 #!/bin/bash
 # Abort on Error
 set -e
-echo content type:
-echo $CONTENT_TYPE
 
 export PING_SLEEP=500s
 #export WORKDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
