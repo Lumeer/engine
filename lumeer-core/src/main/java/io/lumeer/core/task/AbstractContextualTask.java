@@ -96,7 +96,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       if (getPusherClient() != null) {
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
          final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
-         final Set<String> users = users1.stream().filter(userId -> users2.contains(userId)).collect(Collectors.toSet());
+         final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
          final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user)).collect(Collectors.toList());
 
          getPusherClient().trigger(events);
@@ -106,35 +106,35 @@ public abstract class AbstractContextualTask implements ContextualTask {
    private Event createEventForCollection(final Collection collection, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(collection), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(collection, null), null);
    }
 
    private Event createEventForDocument(final Document document, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(document), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(document, document.getCollectionId()), null);
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkType), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkType, null), null);
    }
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
    }
 
    private Event createEventForSequence(final Sequence sequence, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(sequence, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence, null), null);
    }
 
-   private PusherFacade.ResourceId getResourceId(final WithId idObject) {
-      return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+   private PusherFacade.ResourceId getResourceId(final WithId idObject, final String extraId) {
+      return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
    }
 
    @Override
