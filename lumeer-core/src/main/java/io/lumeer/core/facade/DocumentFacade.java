@@ -22,7 +22,10 @@ import io.lumeer.api.model.*;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.Tuple;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.CreateChain;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.ImportCollectionContent;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -31,10 +34,12 @@ import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,7 +69,13 @@ public class DocumentFacade extends AbstractFacade {
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkTypeDao linkTypeDao;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -77,6 +88,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private Event<ImportCollectionContent> importCollectionContentEvent;
+
+   @Inject
+   private Event<CreateChain> createChainEvent;
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
@@ -92,6 +106,16 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = checkCollectionWritePermissions(collectionId);
       permissionsChecker.checkDocumentLimits(document);
 
+      final Tuple<Document, Document> documentTuple = createDocument(collection, document);
+
+      if (createDocumentEvent != null) {
+         createDocumentEvent.fire(new CreateDocument(documentTuple.getFirst()));
+      }
+
+      return documentTuple.getSecond();
+   }
+
+   private Tuple<Document, Document> createDocument(Collection collection, Document document) {
       DataDocument data = document.getData();
       constraintManager.encodeDataTypes(collection, data);
 
@@ -100,15 +124,13 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), data);
       storedDocument.setData(storedData);
 
-      updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
+      Document storedDocumentCopy = new Document(storedDocument);
 
-      if (createDocumentEvent != null) {
-         createDocumentEvent.fire(new CreateDocument(new Document(storedDocument)));
-      }
+      updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
 
       constraintManager.decodeDataTypes(collection, storedData);
 
-      return storedDocument;
+      return new Tuple<>(storedDocumentCopy, storedDocument);
    }
 
    public List<Document> createDocuments(final String collectionId, final List<Document> documents, final boolean sendNotification) {
@@ -196,6 +218,51 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
+   }
+
+   public DocumentsChain createDocumentsChain(List<Document> documents, List<LinkInstance> linkInstances) {
+      documents.forEach(document -> checkCollectionWritePermissions(document.getCollectionId()));
+      permissionsChecker.checkDocumentLimits(documents);
+
+      if (documents.isEmpty()) {
+         return new DocumentsChain(Collections.emptyList(), Collections.emptyList());
+      }
+
+      String previousDocumentId = null;
+      if (linkInstances.size() == documents.size()) {
+         previousDocumentId = Utils.firstNotNullElement(linkInstances.get(0).getDocumentIds());
+      }
+
+      List<Document> createdDocuments = new ArrayList<>();
+      List<LinkInstance> createdLinks = new ArrayList<>();
+
+      var linkInstanceIndex = 0;
+      for (Document document : documents) {
+         var collection = collectionDao.getCollectionById(document.getCollectionId());
+         var data = createDocument(collection, document);
+         createdDocuments.add(data.getSecond());
+
+         var currentDocumentId = data.getFirst().getId();
+         var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
+         if (previousDocumentId != null && linkInstance != null) {
+            var linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
+            linkInstance.setDocumentIds(Arrays.asList(previousDocumentId, currentDocumentId));
+            var linkData = linkInstanceFacade.createLinkInstance(linkType, linkInstance);
+            createdLinks.add(linkData.getSecond());
+
+            linkInstanceIndex++;
+         }
+
+         previousDocumentId = currentDocumentId;
+      }
+      if (this.createChainEvent != null) {
+         this.createChainEvent.fire(new CreateChain(
+               createdDocuments.stream().map(Document::getId).collect(Collectors.toSet()),
+               createdLinks.stream().map(LinkInstance::getId).collect(Collectors.toSet())
+         ));
+      }
+
+      return new DocumentsChain(createdDocuments, createdLinks);
    }
 
    private Collection checkCollectionWritePermissions(String collectionId) {
@@ -418,6 +485,34 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, result.getData());
 
       return result;
+   }
+
+   public List<Document> getDocuments(Set<String> ids) {
+      var documentsMap = documentDao.getDocumentsByIds(ids.toArray(new String[0]))
+                                    .stream()
+                                    .collect(Collectors.groupingBy(Document::getCollectionId));
+
+      documentsMap.forEach((collectionId, value) -> {
+         var collection = collectionDao.getCollectionById(collectionId);
+         if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
+
+            var dataMap = dataDao.getData(collectionId, value.stream().map(Document::getId).collect(Collectors.toSet()))
+                                 .stream()
+                                 .collect(Collectors.toMap(DataDocument::getId, d -> d));
+
+            value.forEach(document -> {
+               var data = dataMap.get(document.getId());
+               if (data != null) {
+                  constraintManager.decodeDataTypes(collection, data);
+                  document.setData(data);
+               }
+            });
+         }
+      });
+
+      return documentsMap.entrySet().stream()
+                         .flatMap(entry -> entry.getValue().stream())
+                         .collect(Collectors.toList());
    }
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {

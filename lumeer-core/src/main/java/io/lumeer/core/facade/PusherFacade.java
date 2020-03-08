@@ -40,6 +40,7 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
+import io.lumeer.engine.api.event.CreateChain;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
@@ -708,7 +709,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateDefaultViewConfig(@Observes final UpdateDefaultViewConfig updateDefaultViewConfig) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(updateDefaultViewConfig.getConfig(),getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(updateDefaultViewConfig.getConfig(), getOrganization().getId(), getProject().getId());
             Set<String> userIds = Collections.singleton(authenticatedUser.getCurrentUserId());
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
@@ -721,7 +722,7 @@ public class PusherFacade extends AbstractFacade {
    public void createOrUpdateSequence(@Observes final CreateOrUpdateSequence createOrUpdateSequence) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(),getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(), getOrganization().getId(), getProject().getId());
             Set<String> userIds = permissionsChecker.getWorkspaceManagers();
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
@@ -830,6 +831,21 @@ public class PusherFacade extends AbstractFacade {
             ObjectWithParent object = new ObjectWithParent(cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
             Set<String> users = ResourceUtils.usersAllowedRead(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createChainNotification(@Observes final CreateChain createChain) {
+      if (isEnabled()) {
+         try {
+            Set<String> users = getWorkspaceManagers();
+            Project project = getProject();
+            users.addAll(ResourceUtils.usersAllowedRead(project));
+            ObjectWithParent object = new ObjectWithParent(createChain, getOrganization().getId(), project.getId());
+            List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "Chain" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
