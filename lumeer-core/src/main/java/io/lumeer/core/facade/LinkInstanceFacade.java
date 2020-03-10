@@ -30,6 +30,7 @@ import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.Tuple;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.ImportLinkTypeContent;
@@ -99,6 +100,16 @@ public class LinkInstanceFacade extends AbstractFacade {
       checkDocumentsExists(linkInstance.getDocumentIds());
       var linkType = checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
 
+      var linkInstanceData = createLinkInstance(linkType, linkInstance);
+
+      if (createLinkInstanceEvent != null) {
+         createLinkInstanceEvent.fire(new CreateLinkInstance(linkInstanceData.getFirst()));
+      }
+
+      return linkInstanceData.getSecond();
+   }
+
+   public Tuple<LinkInstance, LinkInstance> createLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
       linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
       LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
@@ -109,13 +120,11 @@ public class LinkInstanceFacade extends AbstractFacade {
       var storedData = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), data);
       createdLinkInstance.setData(storedData);
 
-      if (createLinkInstanceEvent != null) {
-         createLinkInstanceEvent.fire(new CreateLinkInstance(new LinkInstance(createdLinkInstance)));
-      }
+      var createdLinkInstanceCopy = new LinkInstance(createdLinkInstance);
 
       constraintManager.decodeDataTypes(linkType, storedData);
 
-      return createdLinkInstance;
+      return new Tuple<>(createdLinkInstanceCopy, createdLinkInstance);
    }
 
    public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendIndividualNotifications) {
@@ -123,7 +132,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          checkLinkDocumentsExists(linkInstances);
          final String linkTypeId = linkInstances.get(0).getLinkTypeId();
 
-         if (linkInstances.stream().filter(linkInstance -> !linkInstance.getLinkTypeId().equals(linkTypeId)).findFirst().isPresent()) {
+         if (linkInstances.stream().anyMatch(linkInstance -> !linkInstance.getLinkTypeId().equals(linkTypeId))) {
             throw new BadFormatException("Cannot create link instances of multiple link types at once.");
          }
 
@@ -161,7 +170,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       return linkInstances;
    }
 
-   public LinkInstance updateLinkInstance(final String linkInstanceId, final LinkInstance linkInstance){
+   public LinkInstance updateLinkInstance(final String linkInstanceId, final LinkInstance linkInstance) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final String linkTypeId = Objects.requireNonNullElse(linkInstance.getLinkTypeId(), stored.getLinkTypeId());
@@ -279,6 +288,34 @@ public class LinkInstanceFacade extends AbstractFacade {
       return stored;
    }
 
+   public List<LinkInstance> getLinkInstances(Set<String> ids) {
+      var linksMap = linkInstanceDao.getLinkInstances(ids)
+                                    .stream()
+                                    .collect(Collectors.groupingBy(LinkInstance::getLinkTypeId));
+
+      linksMap.forEach((linkTypeId, value) -> {
+         var linkType = linkTypeDao.getLinkType(linkTypeId);
+         if (hasLinkTypePermissions(linkType, Role.READ)) {
+
+            var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
+                                     .stream()
+                                     .collect(Collectors.toMap(DataDocument::getId, d -> d));
+
+            value.forEach(linkInstance -> {
+               var data = dataMap.get(linkInstance.getId());
+               if (data != null) {
+                  constraintManager.decodeDataTypes(linkType, data);
+                  linkInstance.setData(data);
+               }
+            });
+         }
+      });
+
+      return linksMap.entrySet().stream()
+                     .flatMap(entry -> entry.getValue().stream())
+                     .collect(Collectors.toList());
+   }
+
    public List<LinkInstance> duplicateLinkInstances(final String originalDocumentId, final String newDocumentId, final Set<String> linkInstanceIds, final Map<String, String> documentMap) {
       final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
       if (linkInstances.size() <= 0 || linkInstances.stream().map(LinkInstance::getLinkTypeId).distinct().count() != 1) {
@@ -318,11 +355,25 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      checkLinkTypePermissions(linkType, role);
+      return linkType;
+   }
+
+   private void checkLinkTypePermissions(LinkType linkType, Role role) {
       List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       for (Collection collection : collections) {
          permissionsChecker.checkRoleWithView(collection, role, role);
       }
-      return linkType;
+   }
+
+   private boolean hasLinkTypePermissions(LinkType linkType, Role role) {
+      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
+      var hasPermissions = true;
+      for (Collection collection : collections) {
+         hasPermissions = hasPermissions && permissionsChecker.hasRoleWithView(collection, role, role);
+      }
+
+      return hasPermissions;
    }
 
    private void checkDocumentsExists(final List<String> documentIds) {

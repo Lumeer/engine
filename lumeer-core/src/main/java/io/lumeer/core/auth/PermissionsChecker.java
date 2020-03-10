@@ -499,8 +499,8 @@ public class PermissionsChecker {
     *
     * @param organizationId
     *       Organization ID where the user is being added.
-    * @param currentCount
-    *       Current no of users.
+    * @param newCount
+    *       New no of users.
     */
    public void checkUserCreationLimits(final String organizationId, final long newCount) {
       if (skipLimits()) {

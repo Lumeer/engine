@@ -18,32 +18,21 @@
  */
 package io.lumeer.core.util;
 
-import io.lumeer.core.exception.BadFormatException;
+public class Tuple<K, V> {
 
-import java.util.List;
+   private K first;
+   private V second;
 
-public abstract class Utils {
-
-   public static boolean isCodeSafe(final String code) {
-      return code.matches("[A-Za-z0-9_]*");
+   public Tuple(K first, V second){
+      this.first = first;
+      this.second = second;
    }
 
-   public static void checkCodeSafe(final String code) {
-      if (!isCodeSafe(code)) {
-         throw new BadFormatException("Invalid characters. Only A-Z, a-z, 0-9, _ are allowed in code.");
-      }
+   public K getFirst() {
+      return first;
    }
 
-   public static boolean isEmpty(final String str) {
-      return str == null || "".equals(str);
-   }
-
-   public static <T> T firstNotNullElement(List<T> list) {
-      for (T element : list) {
-         if (element != null) {
-            return element;
-         }
-      }
-      return null;
+   public V getSecond() {
+      return second;
    }
 }
