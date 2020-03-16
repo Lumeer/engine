@@ -114,7 +114,7 @@
       <version.javassist>3.25.0-GA</version.javassist>
       <version.wildfly>17.0.1.Final</version.wildfly>
       <version.amq>5.14.0</version.amq>
-      <version.mockito>3.2.4</version.mockito>
+      <version.mockito>3.3.3</version.mockito>
       <version.bytebuddy>1.10.8</version.bytebuddy>
       <version.junit>4.13</version.junit>
       <version.embedded.mongodb>2.2.0</version.embedded.mongodb>
