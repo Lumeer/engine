@@ -52,7 +52,7 @@ public class SequenceService extends AbstractService {
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationId, projectId);
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
    }
 
    @PUT

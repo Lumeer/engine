@@ -25,6 +25,7 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.cache.WorkspaceCache;
 
 import java.util.Optional;
+import java.util.Stack;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -33,6 +34,8 @@ public class WorkspaceKeeper implements SelectedWorkspace {
 
    private String organizationId;
    private String projectId;
+
+   private Stack<Workspace> workspaceStack = new Stack<>();
 
    @Inject
    private WorkspaceCache workspaceCache;
@@ -53,17 +56,46 @@ public class WorkspaceKeeper implements SelectedWorkspace {
       return Optional.of(workspaceCache.getProject(projectId));
    }
 
-   public void setOrganization(String organizationId) {
+   public void push() {
+      if (this.organizationId != null) {
+         this.workspaceStack.push(new Workspace(this.organizationId, this.projectId));
+      }
+   }
+
+   public void pop() {
+      if (!this.workspaceStack.isEmpty()) {
+         var workspace = this.workspaceStack.pop();
+         this.setWorkspaceIds(workspace.getOrganizationId(), workspace.getProjectId());
+      }
+
+   }
+
+   public void setOrganizationId(String organizationId) {
       this.organizationId = organizationId;
    }
 
-   public void setProject(String projectId) {
+   public void setOrganization(Organization organization) {
+      this.organizationId = organization.getId();
+      this.workspaceCache.updateOrganization(organization.getId(), organization);
+   }
+
+   public void setProjectId(String projectId) {
       this.projectId = projectId;
    }
 
-   public void setWorkspace(String organizationId, String projectId) {
-      setOrganization(organizationId);
-      setProject(projectId);
+   public void setProject(Project project) {
+      this.projectId = project.getId();
+      this.workspaceCache.updateProject(project.getId(), project);
+   }
+
+   public void setWorkspaceIds(String organizationId, String projectId) {
+      setOrganizationId(organizationId);
+      setProjectId(projectId);
+   }
+
+   public void setWorkspace(Organization organization, Project project) {
+      this.setOrganization(organization);
+      this.setProject(project);
    }
 
    public void setServiceLimits(final Organization organization, final ServiceLimits serviceLimits) {
@@ -83,6 +115,24 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    public void clearServiceLimits(final Organization organization) {
       if (organization != null) {
          workspaceCache.removeServiceLimits(organization.getId());
+      }
+   }
+
+   private class Workspace {
+      private final String organizationId;
+      private final String projectId;
+
+      public Workspace(final String organizationId, final String projectId) {
+         this.organizationId = organizationId;
+         this.projectId = projectId;
+      }
+
+      public String getOrganizationId() {
+         return organizationId;
+      }
+
+      public String getProjectId() {
+         return projectId;
       }
    }
 }

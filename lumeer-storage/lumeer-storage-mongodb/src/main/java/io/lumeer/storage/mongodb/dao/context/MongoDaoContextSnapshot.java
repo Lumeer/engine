@@ -88,6 +88,8 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
          this.organization = null;
       }
 
+      System.out.println("xx: " + (this.organization != null ? this.organization.getId() : "null") + " /// " + selectedWorkspace.toString());
+
       if (selectedWorkspace.getProject().isPresent()) {
          this.project = selectedWorkspace.getProject().get();
       } else {

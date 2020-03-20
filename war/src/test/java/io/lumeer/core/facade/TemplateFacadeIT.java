@@ -123,7 +123,7 @@ public class TemplateFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       project = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(organization.getId(), project.getId());
+      workspaceKeeper.setWorkspaceIds(organization.getId(), project.getId());
    }
 
    @Test

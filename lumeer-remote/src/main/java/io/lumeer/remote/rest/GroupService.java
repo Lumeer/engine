@@ -47,7 +47,7 @@ public class GroupService extends AbstractService {
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setOrganization(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
    }
 
    @Inject

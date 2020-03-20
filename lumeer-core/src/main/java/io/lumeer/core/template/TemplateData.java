@@ -16,16 +16,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao.context;
+package io.lumeer.core.template;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.engine.api.data.DataStorage;
+import java.util.Date;
 
-/**
- * Gets a {@link DaoContextSnapshot} based on provided information.
- */
-public interface DaoContextSnapshotFactory {
-   DaoContextSnapshot getInstance();
+public class TemplateData {
+   private String organizationCode;
+   private String projectCode;
+   private Date dateStart;
 
-   DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace);
+   public TemplateData(final String organizationCode, final String projectCode, final Date dateStart) {
+      this.organizationCode = organizationCode;
+      this.projectCode = projectCode;
+      this.dateStart = dateStart;
+   }
+
+   public String getOrganizationCode() {
+      return organizationCode;
+   }
+
+   public String getProjectCode() {
+      return projectCode;
+   }
+
+   public Date getDateStart() {
+      return dateStart;
+   }
 }

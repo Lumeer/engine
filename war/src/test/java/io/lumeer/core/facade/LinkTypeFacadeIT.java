@@ -122,7 +122,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
 
-      workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
+      workspaceKeeper.setWorkspaceIds(storedOrganization.getId(), storedProject.getId());
 
       collectionDao.setProject(storedProject);
 

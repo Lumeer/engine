@@ -54,7 +54,7 @@ public class FileAttachmentService extends AbstractService {
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setWorkspace(organizationId, projectId);
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
    }
 
    @POST

@@ -44,6 +44,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.text.SimpleDateFormat;
@@ -99,6 +100,19 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private SequenceDao sequenceDao;
+
+   void init(DaoContextSnapshot daoContextSnapshot) {
+      this.collectionDao = daoContextSnapshot.getCollectionDao();
+      this.documentDao = daoContextSnapshot.getDocumentDao();
+      this.dataDao = daoContextSnapshot.getDataDao();
+      this.projectDao = daoContextSnapshot.getProjectDao();
+      this.viewDao = daoContextSnapshot.getViewDao();
+      this.linkTypeDao = daoContextSnapshot.getLinkTypeDao();
+      this.linkInstanceDao = daoContextSnapshot.getLinkInstanceDao();
+      this.linkDataDao = daoContextSnapshot.getLinkDataDao();
+      this.favoriteItemDao = daoContextSnapshot.getFavoriteItemDao();
+      this.sequenceDao = daoContextSnapshot.getSequenceDao();
+   }
 
    public Project createProject(Project project) {
       Utils.checkCodeSafe(project.getCode());
@@ -279,15 +293,15 @@ public class ProjectFacade extends AbstractFacade {
    public ProjectContent getRawProjectContent(final String projectId) {
       final ProjectContent content = new ProjectContent();
 
-      content.setCollections(collectionDao.getAllCollections().stream().map(c -> new CollectionWithId(c)).collect(Collectors.toList()));
-      content.setViews(viewDao.getAllViews().stream().map(v -> new ViewWithId(v)).collect(Collectors.toList()));
-      content.setLinkTypes(linkTypeDao.getAllLinkTypes().stream().map(l -> new LinkTypeWithId(l)).collect(Collectors.toList()));
+      content.setCollections(collectionDao.getAllCollections().stream().map(CollectionWithId::new).collect(Collectors.toList()));
+      content.setViews(viewDao.getAllViews().stream().map(ViewWithId::new).collect(Collectors.toList()));
+      content.setLinkTypes(linkTypeDao.getAllLinkTypes().stream().map(LinkTypeWithId::new).collect(Collectors.toList()));
 
       final List<LinkInstanceWithId> linkInstances = new ArrayList<>();
       final Map<String, List<DataDocument>> linksData = new HashMap<>();
       content.getLinkTypes().forEach(lt -> {
          linksData.put(lt.getId(), linkDataDao.getDataStream(lt.getId()).map(this::translateDataDocument).collect(Collectors.toList()));
-         linkInstances.addAll(linkInstanceDao.getLinkInstancesByLinkType(lt.getId()).stream().map(li -> new LinkInstanceWithId(li)).collect(Collectors.toList()));
+         linkInstances.addAll(linkInstanceDao.getLinkInstancesByLinkType(lt.getId()).stream().map(LinkInstanceWithId::new).collect(Collectors.toList()));
       });
       content.setLinkInstances(linkInstances);
       content.setLinkData(linksData);
@@ -296,7 +310,7 @@ public class ProjectFacade extends AbstractFacade {
       final Map<String, List<DataDocument>> documentsData = new HashMap<>();
       content.getCollections().forEach(c -> {
          documentsData.put(c.getId(), dataDao.getDataStream(c.getId()).map(this::translateDataDocument).collect(Collectors.toList()));
-         documents.addAll(documentDao.getDocumentsByCollection(c.getId()).stream().map(d -> new DocumentWithId(d)).collect(Collectors.toList()));
+         documents.addAll(documentDao.getDocumentsByCollection(c.getId()).stream().map(DocumentWithId::new).collect(Collectors.toList()));
       });
       content.setDocuments(documents);
       content.setData(documentsData);

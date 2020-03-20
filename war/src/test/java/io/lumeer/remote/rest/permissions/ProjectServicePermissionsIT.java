@@ -95,7 +95,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       projectDao.setOrganization(storedOrganization);
-      workspaceKeeper.setOrganization(storedOrganization.getId());
+      workspaceKeeper.setOrganizationId(storedOrganization.getId());
 
       projectsUrl = organizationPath(storedOrganization) + "projects/";
    }

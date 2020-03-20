@@ -132,7 +132,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       project.setPermissions(new Permissions());
       Project storedProject = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
+      workspaceKeeper.setWorkspaceIds(storedOrganization.getId(), storedProject.getId());
 
       Permissions projectPermissions = new Permissions();
       Permission userProjectPermission = Permission.buildWithRoles(this.user.getId(), Project.ROLES);

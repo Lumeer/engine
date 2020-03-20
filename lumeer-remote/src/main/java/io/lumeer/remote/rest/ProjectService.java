@@ -23,9 +23,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.core.facade.ProjectFacade;
-import io.lumeer.core.facade.TemplateFacade;
-import io.lumeer.core.template.TemplateType;
 
 import java.util.List;
 import java.util.Set;
@@ -60,11 +59,11 @@ public class ProjectService extends AbstractService {
    private ProjectFacade projectFacade;
 
    @Inject
-   private TemplateFacade templateFacade;
+   private CopyFacade copyFacade;
 
    @PostConstruct
    public void init() {
-      workspaceKeeper.setOrganization(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
    }
 
    @POST
@@ -77,11 +76,11 @@ public class ProjectService extends AbstractService {
    @POST
    @Path("{projectId}/templates/{templateId}")
    public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId, @QueryParam("l") final String language) {
-      workspaceKeeper.setProject(projectId);
+      workspaceKeeper.setProjectId(projectId);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final Project project = projectFacade.getProjectById(projectId);
-         templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), project, TemplateType.valueOf(templateId), parseLanguage(language));
+         copyFacade.deepCopyTemplate(project, templateId, language);
          return Response.ok().build();
       }
 
@@ -170,7 +169,7 @@ public class ProjectService extends AbstractService {
    @GET
    @Path("{projectId}/raw")
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
-      workspaceKeeper.setWorkspace(organizationId, projectId);
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
       return projectFacade.getRawProjectContent(projectId);
    }
 }

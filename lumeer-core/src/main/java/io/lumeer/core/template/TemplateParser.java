@@ -19,9 +19,12 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.engine.api.event.TemplateCreated;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -29,6 +32,7 @@ import org.json.simple.parser.ParseException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Parses a project template from a JSON file.
@@ -43,13 +47,29 @@ public class TemplateParser {
       final Object o;
 
       try (final BufferedReader br = new BufferedReader(new InputStreamReader(
-            this.getClass().getResourceAsStream("/templates/" + templateType.toString().toLowerCase() + "." + language + ".json"), "UTF-8"))) {
+            this.getClass().getResourceAsStream("/templates/" + templateType.toString().toLowerCase() + "." + language + ".json"), StandardCharsets.UTF_8))) {
          o = parser.parse(br);
          if (!(o instanceof JSONObject)) {
             throw new IOException("Template file does not contain a valid JSON object.");
          }
          template = (JSONObject) o;
       } catch (IOException | ParseException e) {
+         throw new TemplateNotAvailableException(e);
+      }
+   }
+
+   public TemplateParser(final ProjectContent projectContent) {
+      final JSONParser parser = new JSONParser();
+      final ObjectMapper mapper = new ObjectMapper();
+      final Object o;
+      try {
+         final String json = mapper.writeValueAsString(projectContent);
+         o = parser.parse(json);
+         if (!(o instanceof JSONObject)) {
+            throw new IOException("Template file does not contain a valid JSON object.");
+         }
+         template = (JSONObject) o;
+      } catch (ParseException | IOException e) {
          throw new TemplateNotAvailableException(e);
       }
    }

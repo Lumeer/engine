@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.template.CollectionCreator;
 import io.lumeer.core.template.DocumentCreator;
@@ -60,6 +61,16 @@ public class TemplateFacade extends AbstractFacade {
    public void installTemplate(final Organization organization, final Project project, final TemplateType templateType, final String language) {
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
+      installTemplate(project, templateParser);
+   }
+
+   public void installTemplate(final Project project, final ProjectContent projectContent) {
+      final TemplateParser templateParser = new TemplateParser(projectContent);
+
+      installTemplate(project, templateParser);
+   }
+
+   private void installTemplate(final Project project, final TemplateParser templateParser) {
       CollectionCreator.createCollections(templateParser, collectionFacade);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
       DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser);

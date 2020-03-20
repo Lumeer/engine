@@ -106,7 +106,7 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(organization.getId(), storedProject.getId());
+      workspaceKeeper.setWorkspaceIds(organization.getId(), storedProject.getId());
    }
 
    @Test

@@ -130,7 +130,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(this.organization);
 
-      workspaceKeeper.setOrganization(organization.getId());
+      workspaceKeeper.setOrganizationId(organization.getId());
    }
 
    @Test
