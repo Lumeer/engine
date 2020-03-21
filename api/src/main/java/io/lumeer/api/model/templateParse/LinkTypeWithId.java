@@ -16,30 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model.template;
+package io.lumeer.api.model.templateParse;
 
-import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CollectionWithId extends Collection {
+public class LinkTypeWithId extends LinkType {
 
-   public CollectionWithId(final Collection collection) {
-      super(
-            collection.getCode(),
-            collection.getName(),
-            collection.getIcon(),
-            collection.getColor(),
-            collection.getDescription(),
-            collection.getPermissions(),
-            collection.getAttributes(),
-            collection.getRules(),
-            collection.getDataDescription());
-      this.setId(collection.getId());
+   public LinkTypeWithId(final LinkType linkType) {
+      super(linkType);
    }
 
-   @Override
    @JsonProperty("_id")
+   @Override
    public String getId() {
       return super.getId();
    }

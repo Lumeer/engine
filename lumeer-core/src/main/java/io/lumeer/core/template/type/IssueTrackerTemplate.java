@@ -16,11 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.template;
+package io.lumeer.core.template.type;
 
-/**
- * Types of all templates that can be created automatically.
- */
-public enum TemplateType {
-   OKR, HR, PROJ, BUG, TIME, WORK, SUPPLY, EDCAL, TASK, CRM
+import io.lumeer.api.model.Language;
+import io.lumeer.core.template.type.Template;
+
+import java.util.Date;
+
+public class IssueTrackerTemplate extends Template {
+
+   @Override
+   public String getOrganizationCode(final Language language) {
+      switch (language) {
+         case CS:
+            return "TMPCS";
+         default:
+            return "TMPEN";
+      }
+   }
+
+   @Override
+   public String getProjectCode(final Language language) {
+      return "BUG";
+   }
+
+   @Override
+   public Date getRelativeDate(final Language language) {
+      return createDate(2019, 6, 1);
+   }
 }

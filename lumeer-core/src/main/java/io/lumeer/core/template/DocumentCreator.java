@@ -91,7 +91,7 @@ public class DocumentCreator extends WithIdCreator {
          }
       });
 
-      updates.forEach((collectionId, documentUpdates) -> documentFacade.updateDocumentsMetaData(collectionId, documentUpdates));
+      updates.forEach(documentFacade::updateDocumentsMetaData);
    }
 
    @SuppressWarnings("unchecked")

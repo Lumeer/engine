@@ -16,30 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.template;
+package io.lumeer.core.template.type;
+
+import io.lumeer.api.model.Language;
 
 import java.util.Date;
 
-public class TemplateData {
-   private String organizationCode;
-   private String projectCode;
-   private Date dateStart;
+public class CandidatesCoordinationTemplate extends Template {
 
-   public TemplateData(final String organizationCode, final String projectCode, final Date dateStart) {
-      this.organizationCode = organizationCode;
-      this.projectCode = projectCode;
-      this.dateStart = dateStart;
+   @Override
+   public String getOrganizationCode(final Language language) {
+      switch (language) {
+         case CS:
+            return "TMPCS";
+         default:
+            return "TMPEN";
+      }
    }
 
-   public String getOrganizationCode() {
-      return organizationCode;
+   @Override
+   public String getProjectCode(final Language language) {
+      return "HR";
    }
 
-   public String getProjectCode() {
-      return projectCode;
-   }
-
-   public Date getDateStart() {
-      return dateStart;
+   @Override
+   public Date getRelativeDate(final Language language) {
+      return createDate(2019, 6, 1);
    }
 }

@@ -19,11 +19,10 @@
 
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.core.provider.DataStorageProvider;
-import io.lumeer.core.template.TemplateType;
-import io.lumeer.core.template.TemplateWorkspace;
+import io.lumeer.core.template.type.Template;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
@@ -43,34 +42,30 @@ public class CopyFacade extends AbstractFacade {
    @Inject
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
-   public void deepCopyTemplate(Project project, String templateId, String language) {
-      var templateType = TemplateType.valueOf(templateId);
-      var templateData = TemplateWorkspace.getTemplateData(templateType, language);
-      var fromOrganization = organizationDao.getOrganizationByCode(templateData.getOrganizationCode());
+   public void deepCopyTemplate(Project project, String templateId, Language language) {
+      var template = Template.create(templateId);
+      if (template != null) {
+         var fromOrganization = organizationDao.getOrganizationByCode(template.getOrganizationCode(language));
 
-      workspaceKeeper.push();
-      workspaceKeeper.setOrganization(fromOrganization);
+         workspaceKeeper.push();
+         workspaceKeeper.setOrganization(fromOrganization);
 
-      var storage = dataStorageProvider.getUserStorage();
-      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
-      var fromProject = contextSnapshot.getProjectDao().getProjectByCode(templateData.getProjectCode());
+         var storage = dataStorageProvider.getUserStorage();
+         var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+         var fromProject = contextSnapshot.getProjectDao().getProjectByCode(template.getProjectCode(language));
 
-      workspaceKeeper.pop();
-      deepCopyProject(fromOrganization, fromProject, project);
-   }
+         workspaceKeeper.setWorkspace(fromOrganization, fromProject);
 
-   public void deepCopyProject(Organization fromOrganization, Project fromProject, Project toProject) {
-      workspaceKeeper.push();
-      workspaceKeeper.setWorkspace(fromOrganization, fromProject);
+         contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+         var facade = new ProjectFacade();
+         facade.init(contextSnapshot);
+         var content = facade.getRawProjectContent(fromProject.getId());
 
-      var storage = dataStorageProvider.getUserStorage();
-      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
-      var facade = new ProjectFacade();
-      facade.init(contextSnapshot);
-      var content = facade.getRawProjectContent(fromProject.getId());
+         workspaceKeeper.pop();
 
-      workspaceKeeper.pop();
-      templateFacade.installTemplate(toProject, content);
+         templateFacade.installTemplate(project, content, template.getRelativeDate(language)); // TODO date
+      }
 
    }
+
 }

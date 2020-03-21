@@ -18,11 +18,11 @@
  */
 package io.lumeer.api.model;
 
-import io.lumeer.api.model.template.CollectionWithId;
-import io.lumeer.api.model.template.DocumentWithId;
-import io.lumeer.api.model.template.LinkInstanceWithId;
-import io.lumeer.api.model.template.LinkTypeWithId;
-import io.lumeer.api.model.template.ViewWithId;
+import io.lumeer.api.model.templateParse.CollectionWithId;
+import io.lumeer.api.model.templateParse.DocumentWithId;
+import io.lumeer.api.model.templateParse.LinkInstanceWithId;
+import io.lumeer.api.model.templateParse.LinkTypeWithId;
+import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonProperty;

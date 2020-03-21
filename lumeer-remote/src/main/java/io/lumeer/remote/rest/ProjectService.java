@@ -18,6 +18,7 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -75,7 +76,7 @@ public class ProjectService extends AbstractService {
 
    @POST
    @Path("{projectId}/templates/{templateId}")
-   public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId, @QueryParam("l") final String language) {
+   public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId, @QueryParam("l") final Language language) {
       workspaceKeeper.setProjectId(projectId);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
