@@ -63,7 +63,7 @@ public class CopyFacade extends AbstractFacade {
 
          workspaceKeeper.pop();
 
-         templateFacade.installTemplate(project, content, template.getRelativeDate(language)); // TODO date
+         templateFacade.installTemplate(project, content, template.getRelativeDate(language));
       }
 
    }

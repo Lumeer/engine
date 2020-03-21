@@ -39,7 +39,7 @@ public class WithIdCreator {
       this.templateParser = templateParser;
    }
 
-   protected DataDocument translateDataDocument(final WithId resource, final JSONObject o, final String defaultUser) {
+   protected DataDocument translateDataDocument(final JSONObject o, final String defaultUser, long dateAddition) {
       final DataDocument data = new DataDocument();
 
       o.forEach((k, v) -> {
@@ -51,10 +51,10 @@ public class WithIdCreator {
                if (v != null) {
                   try {
                      var accessor = dateDecoder.parse(v.toString());
-                     data.append(
-                           (String) k,
-                           Date.from(ZonedDateTime.from(accessor).toInstant())
-                     );
+                     var date = Date.from(ZonedDateTime.from(accessor).toInstant());
+                     var resultDate = new Date(date.getTime() + dateAddition);
+
+                     data.append((String) k, resultDate);
                      passed = true;
                   } catch (DateTimeParseException dtpe) {
                   }

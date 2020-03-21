@@ -50,7 +50,7 @@ public abstract class Template {
             return new OKRTrackingTemplate();
          case "CRM":
             return new SalesCRMTemplate();
-         case "SUPPL":
+         case "SUPPLY":
             return new SupplyChainManagementTemplate();
          case "TASK":
             return new TaskTrackerTemplate();

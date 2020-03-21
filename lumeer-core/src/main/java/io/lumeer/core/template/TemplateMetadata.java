@@ -16,32 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.template.type;
+package io.lumeer.core.template;
 
-import io.lumeer.api.model.Language;
+public class TemplateMetadata {
 
-import java.util.Calendar;
-import java.util.Date;
+   private long dateAddition;
 
-public class OKRTrackingTemplate extends Template {
-
-   @Override
-   public String getOrganizationCode(final Language language) {
-      switch (language) {
-         case CS:
-            return "TMPCS";
-         default:
-            return "TMPEN";
-      }
+   public TemplateMetadata(final long dateAddition) {
+      this.dateAddition = dateAddition;
    }
 
-   @Override
-   public String getProjectCode(final Language language) {
-      return "OKR";
-   }
-
-   @Override
-   public Date getRelativeDate(final Language language) {
-      return createDate(2019, Calendar.JUNE, 1);
+   public long getDateAddition() {
+      return dateAddition;
    }
 }

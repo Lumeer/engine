@@ -35,15 +35,17 @@ public class LinkInstanceCreator extends WithIdCreator {
 
    private final LinkInstanceFacade linkInstanceFacade;
    private final AuthenticatedUser authenticatedUser;
+   private final TemplateMetadata templateMetadata;
 
-   private LinkInstanceCreator(final TemplateParser templateParser, final LinkInstanceFacade linkInstanceFacade, final AuthenticatedUser authenticatedUser) {
+   private LinkInstanceCreator(final TemplateParser templateParser, final LinkInstanceFacade linkInstanceFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata) {
       super(templateParser);
       this.linkInstanceFacade = linkInstanceFacade;
       this.authenticatedUser = authenticatedUser;
+      this.templateMetadata = templateMetadata;
    }
 
-   public static void createLinkInstances(final TemplateParser templateParser, final LinkInstanceFacade linkInstanceFacade, final AuthenticatedUser authenticatedUser) {
-      final LinkInstanceCreator creator = new LinkInstanceCreator(templateParser, linkInstanceFacade, authenticatedUser);
+   public static void createLinkInstances(final TemplateParser templateParser, final LinkInstanceFacade linkInstanceFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata) {
+      final LinkInstanceCreator creator = new LinkInstanceCreator(templateParser, linkInstanceFacade, authenticatedUser, templateMetadata);
       creator.createLinkInstances();
    }
 
@@ -81,7 +83,7 @@ public class LinkInstanceCreator extends WithIdCreator {
       final Optional<JSONObject> data = ((JSONArray) ((JSONObject) templateParser.getTemplate().get("linkData")).get(linkTypeTemplateId)).stream().filter(d -> linkTemplateId.equals(TemplateParserUtils.getId((JSONObject) d))).findFirst();
 
       if (data.isPresent() && data.get().size() > 1) {
-         linkInstance.setData(translateDataDocument(templateParser.getDict().getLinkType(linkTypeTemplateId), data.get(), authenticatedUser.getUserEmail()));
+         linkInstance.setData(translateDataDocument(data.get(), authenticatedUser.getUserEmail(), templateMetadata.getDateAddition()));
       }
 
       return linkInstance;

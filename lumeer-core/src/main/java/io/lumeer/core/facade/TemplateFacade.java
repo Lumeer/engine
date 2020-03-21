@@ -26,6 +26,7 @@ import io.lumeer.core.template.DocumentCreator;
 import io.lumeer.core.template.FunctionAndRuleCreator;
 import io.lumeer.core.template.LinkInstanceCreator;
 import io.lumeer.core.template.LinkTypeCreator;
+import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.ViewCreator;
 import io.lumeer.engine.api.event.TemplateCreated;
@@ -60,14 +61,23 @@ public class TemplateFacade extends AbstractFacade {
    public void installTemplate(final Project project, final ProjectContent projectContent, final Date relativeDate) {
       final TemplateParser templateParser = new TemplateParser(projectContent);
 
-      installTemplate(project, templateParser);
+      installTemplate(project, templateParser, createTemplateMetadata(relativeDate));
    }
 
-   private void installTemplate(final Project project, final TemplateParser templateParser) {
+   private TemplateMetadata createTemplateMetadata(final Date relativeDate) {
+      long dateAddition = 0;
+      if (relativeDate != null) {
+         dateAddition = new Date().getTime() - relativeDate.getTime();
+      }
+
+      return new TemplateMetadata(dateAddition);
+   }
+
+   private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata) {
       CollectionCreator.createCollections(templateParser, collectionFacade);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
-      DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser);
-      LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser);
+      DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser, templateMetadata);
+      LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser, templateMetadata);
       ViewCreator.createViews(templateParser, viewFacade, defaultConfigurationProducer);
       FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade);
 

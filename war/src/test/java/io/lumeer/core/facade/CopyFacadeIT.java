@@ -52,7 +52,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
    private static final String PROJECT_CODE = "TEMPL";
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
 
-   private static final String TEMPLATE = "SUPPL";
+   private static final String TEMPLATE = "SUPPLY";
    private static final Language language = Language.EN;
 
    @Inject

@@ -20,6 +20,7 @@ package io.lumeer.core.template.type;
 
 import io.lumeer.api.model.Language;
 
+import java.util.Calendar;
 import java.util.Date;
 
 public class WorkTrackerTemplate extends Template {
@@ -41,6 +42,6 @@ public class WorkTrackerTemplate extends Template {
 
    @Override
    public Date getRelativeDate(final Language language) {
-      return createDate(2019, 6, 1);
+      return createDate(2019, Calendar.JUNE, 1);
    }
 }
