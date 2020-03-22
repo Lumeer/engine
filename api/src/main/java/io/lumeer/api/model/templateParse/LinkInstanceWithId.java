@@ -16,11 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.template;
+package io.lumeer.api.model.templateParse;
 
-/**
- * Types of all templates that can be created automatically.
- */
-public enum TemplateType {
-   OKR, HR, PROJ, BUG, TIME, WORK, SUPPLY, EDCAL, TASK, CRM
+import io.lumeer.api.model.LinkInstance;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class LinkInstanceWithId extends LinkInstance {
+
+   public LinkInstanceWithId(final LinkInstance linkInstance) {
+      super(linkInstance);
+   }
+
+   @JsonProperty("_id")
+   @Override
+   public String getId() {
+      return super.getId();
+   }
 }

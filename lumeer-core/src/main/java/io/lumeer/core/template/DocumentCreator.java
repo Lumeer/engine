@@ -36,15 +36,17 @@ public class DocumentCreator extends WithIdCreator {
 
    final private DocumentFacade documentFacade;
    final private AuthenticatedUser authenticatedUser;
+   final private TemplateMetadata templateMetadata;
 
-   private DocumentCreator(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser) {
+   private DocumentCreator(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata) {
       super(templateParser);
       this.documentFacade = documentFacade;
       this.authenticatedUser = authenticatedUser;
+      this.templateMetadata = templateMetadata;
    }
 
-   public static void createDocuments(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser) {
-      final DocumentCreator creator = new DocumentCreator(templateParser, documentFacade, authenticatedUser);
+   public static void createDocuments(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata) {
+      final DocumentCreator creator = new DocumentCreator(templateParser, documentFacade, authenticatedUser, templateMetadata);
       creator.createDocuments();
    }
 
@@ -91,7 +93,7 @@ public class DocumentCreator extends WithIdCreator {
          }
       });
 
-      updates.forEach((collectionId, documentUpdates) -> documentFacade.updateDocumentsMetaData(collectionId, documentUpdates));
+      updates.forEach(documentFacade::updateDocumentsMetaData);
    }
 
    @SuppressWarnings("unchecked")
@@ -99,7 +101,7 @@ public class DocumentCreator extends WithIdCreator {
       final Optional<JSONObject> data = ((JSONArray) ((JSONObject) templateParser.getTemplate().get("data")).get(collectionTemplateId)).stream().filter(d -> documentTemplateId.equals(TemplateParserUtils.getId((JSONObject) d))).findFirst();
 
       if (data.isPresent() && data.get().size() > 1) {
-         document.setData(translateDataDocument(templateParser.getDict().getCollection(collectionTemplateId), data.get(), authenticatedUser.getUserEmail()));
+         document.setData(translateDataDocument(data.get(), authenticatedUser.getUserEmail(), templateMetadata.getDateAddition()));
       }
 
       return document;

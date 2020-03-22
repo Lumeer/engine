@@ -37,7 +37,7 @@ public class MongoDaoContextSnapshotFactory implements DaoContextSnapshotFactory
 
    @SystemDataStorage
    @Inject
-   private  DataStorage systemDataStorage;
+   private DataStorage systemDataStorage;
 
    @Inject
    private SelectedWorkspace selectedWorkspace;
@@ -45,5 +45,10 @@ public class MongoDaoContextSnapshotFactory implements DaoContextSnapshotFactory
    @Override
    public DaoContextSnapshot getInstance() {
       return new MongoDaoContextSnapshot(systemDataStorage, dataStorage, selectedWorkspace);
+   }
+
+   @Override
+   public DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace) {
+      return new MongoDaoContextSnapshot(systemDataStorage, userDataStorage, selectedWorkspace);
    }
 }

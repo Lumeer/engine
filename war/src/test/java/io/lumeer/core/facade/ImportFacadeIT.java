@@ -110,7 +110,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(storedOrganization.getId(), storedProject.getId());
+      workspaceKeeper.setWorkspaceIds(storedOrganization.getId(), storedProject.getId());
 
       collectionDao.setProject(storedProject);
    }

@@ -16,16 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao.context;
+package io.lumeer.core.template.type;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.api.model.Language;
 
-/**
- * Gets a {@link DaoContextSnapshot} based on provided information.
- */
-public interface DaoContextSnapshotFactory {
-   DaoContextSnapshot getInstance();
+import java.util.Calendar;
+import java.util.Date;
 
-   DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace);
+public class TimeManagementTemplate extends Template {
+
+   @Override
+   public String getOrganizationCode(final Language language) {
+      switch (language) {
+         case CS:
+            return "TMPCS";
+         default:
+            return "TMPEN";
+      }
+   }
+
+   @Override
+   public String getProjectCode(final Language language) {
+      return "TIME";
+   }
+
+   @Override
+   public Date getRelativeDate(final Language language) {
+      return createDate(2019, Calendar.JUNE, 1);
+   }
 }

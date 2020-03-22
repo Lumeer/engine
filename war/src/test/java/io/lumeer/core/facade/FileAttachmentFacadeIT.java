@@ -124,7 +124,7 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
       project.setPermissions(projectPermissions);
       this.project = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(this.organization.getId(), this.project.getId());
+      workspaceKeeper.setWorkspaceIds(this.organization.getId(), this.project.getId());
 
       collectionDao.setProject(project);
 

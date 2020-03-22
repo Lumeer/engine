@@ -65,8 +65,6 @@ public abstract class IntegrationTestBase {
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties")
-                       .addAsResource("templates/okr.en.json")
-                       .addAsResource("templates/hr.en.json")
                        .addAsResource("moment-with-locales.min.js")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")

@@ -70,7 +70,7 @@ public class ZapierService extends AbstractService {
    @Path("projects")
    public List<? extends ZapierFacade.ZapierField> getProjects(@QueryParam("organization_id") final String organizationId) {
       if (organizationId != null && !"".equals(organizationId)) {
-         workspaceKeeper.setWorkspace(organizationId.trim(), null);
+         workspaceKeeper.setWorkspaceIds(organizationId.trim(), null);
 
          return zapierFacade.getProjects();
       }
@@ -82,7 +82,7 @@ public class ZapierService extends AbstractService {
    @Path("collections")
    public List<? extends ZapierFacade.ZapierField> getCollections(@QueryParam("organization_id") final String organizationId, @QueryParam("project_id") final String projectId) {
       if (organizationId != null && !"".equals(organizationId) && projectId != null && !"".equals(projectId)) {
-         workspaceKeeper.setWorkspace(organizationId.trim(), projectId.trim());
+         workspaceKeeper.setWorkspaceIds(organizationId.trim(), projectId.trim());
 
          return zapierFacade.getCollections();
       }
@@ -216,7 +216,7 @@ public class ZapierService extends AbstractService {
       }
 
       final String organization = parts[0], project = parts[1], collectionId = parts[2];
-      workspaceKeeper.setWorkspace(organization, project);
+      workspaceKeeper.setWorkspaceIds(organization, project);
 
       return collectionId;
    }

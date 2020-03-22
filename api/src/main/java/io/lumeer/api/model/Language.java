@@ -16,16 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao.context;
+package io.lumeer.api.model;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.engine.api.data.DataStorage;
+public enum Language {
+   EN,
+   CS;
 
-/**
- * Gets a {@link DaoContextSnapshot} based on provided information.
- */
-public interface DaoContextSnapshotFactory {
-   DaoContextSnapshot getInstance();
+   public static Language fromString(String language) {
+      if (language == null || language.isEmpty()) {
+         return Language.EN;
+      }
 
-   DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace);
+      try {
+         return Language.valueOf(language.toUpperCase());
+      } catch (IllegalArgumentException exception) {
+         return Language.EN;
+      }
+   }
 }

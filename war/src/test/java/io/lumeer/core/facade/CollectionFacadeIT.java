@@ -63,7 +63,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -191,7 +190,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       this.project = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspace(this.organization.getId(), this.project.getId());
+      workspaceKeeper.setWorkspaceIds(this.organization.getId(), this.project.getId());
 
       collectionDao.setProject(project);
    }

@@ -84,7 +84,7 @@ public class CollectionCreator extends WithIdCreator {
    }
 
    private boolean collectionNameExists(final List<String> names) {
-      return collectionFacade.getCollections().stream().map(Collection::getName).filter(name -> names.contains(name)).count() > 0;
+      return collectionFacade.getCollections().stream().map(Collection::getName).anyMatch(names::contains);
    }
 
    private void setDefaultAttributeId(final Collection storedCollection, final JSONObject o) {

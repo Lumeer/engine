@@ -16,16 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model.template;
+package io.lumeer.api.model.templateParse;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.View;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class DocumentWithId extends Document {
+public class ViewWithId extends View {
 
-   public DocumentWithId(final Document document) {
-      super(document);
+   public ViewWithId(final View view) {
+      super(view.getCode(), view.getName(), view.getIcon(), view.getColor(),
+            view.getDescription(), view.getPermissions(), view.getQuery(), view.getPerspective(),
+            view.getConfig(), view.getAuthorId());
+      this.setId(view.getId());
    }
 
    @JsonProperty("_id")

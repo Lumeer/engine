@@ -171,7 +171,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void shareResources(final Organization organization, final Project project, final List<User> users, final InvitationType invitationType) {
-      workspaceKeeper.setWorkspace(organization.getId(), project.getId());
+      workspaceKeeper.setWorkspaceIds(organization.getId(), project.getId());
 
       final Set<Role> roles = getInvitationRoles(invitationType);
 
@@ -210,7 +210,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void addUsersToProject(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
-      workspaceKeeper.setOrganization(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
       var newPermissions = users.stream()
                                 .map(user -> Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, Set.of(Role.READ))))
                                 .collect(Collectors.toSet());
@@ -384,7 +384,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private Project checkProjectPermissions(final String organizationId, final String projectId, final Role role) {
-      workspaceKeeper.setOrganization(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
 
@@ -392,7 +392,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final Role role) {
-      workspaceKeeper.setOrganization(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, role);
 

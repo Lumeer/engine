@@ -16,31 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model.template;
+package io.lumeer.core.template.type;
 
-import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Language;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Calendar;
+import java.util.Date;
 
-public class CollectionWithId extends Collection {
+public class OKRTrackingTemplate extends Template {
 
-   public CollectionWithId(final Collection collection) {
-      super(
-            collection.getCode(),
-            collection.getName(),
-            collection.getIcon(),
-            collection.getColor(),
-            collection.getDescription(),
-            collection.getPermissions(),
-            collection.getAttributes(),
-            collection.getRules(),
-            collection.getDataDescription());
-      this.setId(collection.getId());
+   @Override
+   public String getOrganizationCode(final Language language) {
+      switch (language) {
+         case CS:
+            return "TMPCS";
+         default:
+            return "TMPEN";
+      }
    }
 
    @Override
-   @JsonProperty("_id")
-   public String getId() {
-      return super.getId();
+   public String getProjectCode(final Language language) {
+      return "OKR";
+   }
+
+   @Override
+   public Date getRelativeDate(final Language language) {
+      return createDate(2019, Calendar.JUNE, 1);
    }
 }

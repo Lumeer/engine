@@ -16,16 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao.context;
+package io.lumeer.api.model.templateParse;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.api.model.Document;
 
-/**
- * Gets a {@link DaoContextSnapshot} based on provided information.
- */
-public interface DaoContextSnapshotFactory {
-   DaoContextSnapshot getInstance();
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-   DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace);
+public class DocumentWithId extends Document {
+
+   public DocumentWithId(final Document document) {
+      super(document);
+   }
+
+   @JsonProperty("_id")
+   @Override
+   public String getId() {
+      return super.getId();
+   }
 }
