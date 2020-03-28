@@ -16,26 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.core.template.type;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-
-public enum Language {
-   EN,
-   CS;
-
-   @JsonCreator
-   public static Language fromString(String language) {
-      if (language == null || language.isEmpty()) {
-         return Language.EN;
-      }
-
-      try {
-         return Language.valueOf(language.toUpperCase());
-      } catch (IllegalArgumentException exception) {
-         return Language.EN;
-      }
-   }
-
-
+/**
+ * Types of all templates that can be created automatically.
+ */
+public enum TemplateType {
+   OKR, HR, PROJ, BUG, TIME, WORK, SUPPLY, EDCAL, TASK, CRM
 }

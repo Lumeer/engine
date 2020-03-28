@@ -18,9 +18,11 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.exception.TemplateNotAvailableException;
+import io.lumeer.core.template.type.TemplateType;
 import io.lumeer.engine.api.event.TemplateCreated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +30,10 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Parses a project template from a JSON file.
@@ -37,6 +42,22 @@ public class TemplateParser {
 
    final TemplateObjectsDictionary dict = new TemplateObjectsDictionary();
    final JSONObject template;
+
+   public TemplateParser(final TemplateType templateType, final Language language) {
+      final JSONParser parser = new JSONParser();
+      final Object o;
+
+      try (final BufferedReader br = new BufferedReader(new InputStreamReader(
+            this.getClass().getResourceAsStream("/templates/" + templateType.toString().toLowerCase() + "." + language.toString().toLowerCase() + ".json"), StandardCharsets.UTF_8))) {
+         o = parser.parse(br);
+         if (!(o instanceof JSONObject)) {
+            throw new IOException("Template file does not contain a valid JSON object.");
+         }
+         template = (JSONObject) o;
+      } catch (IOException | ParseException e) {
+         throw new TemplateNotAvailableException(e);
+      }
+   }
 
    public TemplateParser(final ProjectContent projectContent) {
       final JSONParser parser = new JSONParser();

@@ -37,28 +37,27 @@ public abstract class Template {
       return calendar.getTime();
    }
 
-   public static Template create(String id) {
-      var templateId = id != null ? id.toUpperCase() : "";
-      switch (templateId) {
-         case "PROJ":
+   public static Template create(TemplateType templateType) {
+      switch (templateType) {
+         case PROJ:
             return new ProjectTrackerTemplate();
-         case "HR":
+         case HR:
             return new CandidatesCoordinationTemplate();
-         case "EDCAL":
+         case EDCAL:
             return new EditorialCalendarTemplate();
-         case "OKR":
+         case OKR:
             return new OKRTrackingTemplate();
-         case "CRM":
+         case CRM:
             return new SalesCRMTemplate();
-         case "SUPPLY":
+         case SUPPLY:
             return new SupplyChainManagementTemplate();
-         case "TASK":
+         case TASK:
             return new TaskTrackerTemplate();
-         case "WORK":
+         case WORK:
             return new WorkTrackerTemplate();
-         case "BUG":
+         case BUG:
             return new IssueTrackerTemplate();
-         case "TIME":
+         case TIME:
             return new TimeManagementTemplate();
          default:
             return null;

@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -29,6 +30,7 @@ import io.lumeer.core.template.LinkTypeCreator;
 import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.ViewCreator;
+import io.lumeer.core.template.type.TemplateType;
 import io.lumeer.engine.api.event.TemplateCreated;
 
 import java.util.Date;
@@ -57,6 +59,12 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private Event<TemplateCreated> templateCreatedEvent;
+
+   public void installTemplate(final Project project, final TemplateType templateType, final Language language) {
+      final TemplateParser templateParser = new TemplateParser(templateType, language);
+
+      installTemplate(project, templateParser, createTemplateMetadata(new Date()));
+   }
 
    public void installTemplate(final Project project, final ProjectContent projectContent, final Date relativeDate) {
       final TemplateParser templateParser = new TemplateParser(projectContent);

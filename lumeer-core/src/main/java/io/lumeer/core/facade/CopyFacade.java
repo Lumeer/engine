@@ -21,11 +21,14 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.core.template.type.Template;
+import io.lumeer.core.template.type.TemplateType;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 public class CopyFacade extends AbstractFacade {
@@ -42,9 +45,23 @@ public class CopyFacade extends AbstractFacade {
    @Inject
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private Boolean templatesFromResources;
+
+   @PostConstruct
+   public void init() {
+      this.templatesFromResources = Boolean.valueOf(configurationProducer.get(DefaultConfigurationProducer.TEMPLATES_FROM_RESOURCES));
+   }
+
    public void deepCopyTemplate(Project project, String templateId, Language language) {
-      var template = Template.create(templateId);
-      if (template != null) {
+      var templateType = TemplateType.valueOf(templateId != null ? templateId.toUpperCase() : "");
+      var template = Template.create(templateType);
+
+      if (templatesFromResources) {
+         templateFacade.installTemplate(project, templateType, language);
+      } else if (template != null) {
          var fromOrganization = organizationDao.getOrganizationByCode(template.getOrganizationCode(language));
 
          workspaceKeeper.push();
