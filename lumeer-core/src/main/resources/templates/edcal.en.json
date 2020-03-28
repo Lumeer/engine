@@ -1,0 +1,1781 @@
+{
+    "templateMeta": {
+        "prefix": "EDCAL",
+        "collectionCount": 3,
+        "linkTypeCount": 2,
+        "viewCount": 9,
+        "documentCount": 14
+    },
+    "collections": [
+        {
+            "code": "b14ac78a46e90b71",
+            "name": "Articles",
+            "icon": "fas fa-edit",
+            "color": "#e69138",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Name",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a2",
+                    "name": "Writer",
+                    "constraint": {
+                        "type": "User",
+                        "config": {
+                            "externalUsers": true
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a3",
+                    "name": "Editor",
+                    "constraint": {
+                        "type": "User",
+                        "config": {
+                            "externalUsers": true
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a4",
+                    "name": "Category",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "News",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Culture",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Travel",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Food",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Fashion",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a5",
+                    "name": "Status",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Idea",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "To do",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Draft in progress",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Waiting for approval",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Approval in progress",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Done",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a6",
+                    "name": "Draft deadline",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 6
+                },
+                {
+                    "id": "a7",
+                    "name": "Edits deadline",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 6
+                },
+                {
+                    "id": "a8",
+                    "name": "Published?",
+                    "constraint": {
+                        "type": "Boolean",
+                        "config": null
+                    },
+                    "function": null,
+                    "usageCount": 3
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": "a1",
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5d4697e3857aba0090b33483"
+        },
+        {
+            "code": "666067dd376e5d45",
+            "name": "Issues",
+            "icon": "fas fa-book",
+            "color": "#6aa84f",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Name",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a3",
+                    "name": "Description",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a4",
+                    "name": "Cover",
+                    "constraint": {
+                        "type": "FileAttachment",
+                        "config": null
+                    },
+                    "function": null,
+                    "usageCount": 1
+                },
+                {
+                    "id": "a5",
+                    "name": "Closing date",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a6",
+                    "name": "Release date",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": "a1",
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5d469821857aba0090b33487"
+        },
+        {
+            "code": "4a2202ae4201c550",
+            "name": "Social posts",
+            "icon": "fas fa-bullhorn",
+            "color": "#cc0000",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Type",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Facebook",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Instagram",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Twitter",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a2",
+                    "name": "Description",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 2
+                },
+                {
+                    "id": "a3",
+                    "name": "Due Date",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a4",
+                    "name": "Publish date",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a5",
+                    "name": "Text",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a6",
+                    "name": "Attachment",
+                    "constraint": {
+                        "type": "FileAttachment",
+                        "config": null
+                    },
+                    "function": null,
+                    "usageCount": 1
+                },
+                {
+                    "id": "a7",
+                    "name": "Published link",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 0
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5d469876857aba0090b3348b"
+        }
+    ],
+    "views": [
+        {
+            "code": "067b9c35b97edbb5",
+            "name": "Issues with articles",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469821857aba0090b33487",
+                        "linkTypeIds": [
+                            "5d469e53857aba0090b33496"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5d469821857aba0090b33487",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5d469e53857aba0090b33496",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5d4697e3857aba0090b33483",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "correlationId": "1564909127839:0.316794577874129",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d469e5e857aba0090b33497"
+        },
+        {
+            "code": "ddaeb1a6c501bfa0",
+            "name": "Content ideas",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5d4697e3857aba0090b33483",
+                                "attributeId": "a5",
+                                "condition": "=",
+                                "conditionValues": [{ "value": "Idea" }]
+                            }
+                        ],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5d4697e3857aba0090b33483",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "correlationId": "1564909426045:0.8618882215490815",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d469f88857aba0090e24421"
+        },
+        {
+            "code": "a2a582cc6e7f1024",
+            "name": "Social posts by article",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [
+                            "5d48765c857aba0090b3349c"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5d4697e3857aba0090b33483",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a3"
+                                    ]
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a6",
+                                        "a7"
+                                    ]
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5d48765c857aba0090b3349c",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5d469876857aba0090b3348b",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "correlationId": "1565030005874:0.8384362112398007",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d487683857aba0090b3349d"
+        },
+        {
+            "code": "7cc7ca4b891972c5",
+            "name": "Number of articles per issue",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469821857aba0090b33487",
+                        "linkTypeIds": [
+                            "5d469e53857aba0090b33496"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "chart",
+            "config": {
+                "chart": {
+                    "type": "bar",
+                    "axes": {
+                        "x": {
+                            "resourceId": "5d469821857aba0090b33487",
+                            "attributeId": "a1",
+                            "resourceType": "collection",
+                            "resourceIndex": 0
+                        },
+                        "y1": {
+                            "resourceId": "5d4697e3857aba0090b33483",
+                            "attributeId": "a1",
+                            "resourceType": "collection",
+                            "resourceIndex": 2
+                        }
+                    },
+                    "aggregations": {
+                        "y1": "count",
+                        "y2": "sum"
+                    },
+                    "sort": {
+                        "type": "asc"
+                    },
+                    "names": {}
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d4876f4857aba0090e24428"
+        },
+        {
+            "code": "f0b50c4e0b6fe2d3",
+            "name": "Content calendar (drafts)",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:36:00.199Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a6",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d4697e3857aba0090b33483",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d487760857aba0090e2442c"
+        },
+        {
+            "code": "40c1f20bfd64822c",
+            "name": "Content calendar (editing)",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:36:00.199Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a7",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d4697e3857aba0090b33483",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d487773857aba0090e24430"
+        },
+        {
+            "code": "fd888fe671076a26",
+            "name": "Articles by status",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "kanban",
+            "config": {
+                "kanban": {
+                    "columns": [],
+                    "collections": {
+                        "5d4697e3857aba0090b33483": {
+                            "attribute": {
+                                "attributeId": "a5",
+                                "collectionId": "5d4697e3857aba0090b33483"
+                            }
+                        }
+                    },
+                    "otherColumn": {
+                        "id": "1565030356867187295cc5e4",
+                        "width": 300,
+                        "documentsIdsOrder": []
+                    }
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d4877e1857aba0090b334a2"
+        },
+        {
+            "code": "c9fa4e41242e051c",
+            "name": "Social calendar",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469876857aba0090b3348b",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:39:50.320Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d469876857aba0090b3348b",
+                                    "attributeId": "a2",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d469876857aba0090b3348b",
+                                    "attributeId": "a4",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d469876857aba0090b3348b",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d48780d857aba0090b334a6"
+        },
+        {
+            "code": "247cf79e9a578f91",
+            "name": "Issue calendar",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469821857aba0090b33487",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:44:05.517Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d469821857aba0090b33487",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d469821857aba0090b33487",
+                                    "attributeId": "a6",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d469821857aba0090b33487",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d4878ff857aba0090e24435"
+        }
+    ],
+    "linkTypes": [
+        {
+            "name": "Issues with articles",
+            "version": 0,
+            "collectionIds": [
+                "5d469821857aba0090b33487",
+                "5d4697e3857aba0090b33483"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5d469e53857aba0090b33496"
+        },
+        {
+            "name": "Social posts by article",
+            "version": 0,
+            "collectionIds": [
+                "5d4697e3857aba0090b33483",
+                "5d469876857aba0090b3348b"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5d48765c857aba0090b3349c"
+        }
+    ],
+    "linkInstances": [
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031147769,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487957857aba0090e24439",
+                "5d487aeb857aba0090b334ac"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487aeb857aba0090b334ad"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031267107,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487957857aba0090e24439",
+                "5d487b62857aba0090b334ae"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487b63857aba0090b334af"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031290245,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487957857aba0090e24439",
+                "5d487b79857aba0090e2443d"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487b7a857aba0090e2443e"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031511343,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d4879ef857aba0090e2443b",
+                "5d487c57857aba0090e2443f"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487c57857aba0090e24440"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031535409,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d4879ef857aba0090e2443b",
+                "5d487c6f857aba0090e24441"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487c6f857aba0090e24442"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031668745,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487a49857aba0090b334ab",
+                "5d487cf4857aba0090b334b1"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487cf4857aba0090b334b2"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565034115071,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487a49857aba0090b334ab",
+                "5d488682857aba0090e24444"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d488683857aba0090e24445"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565034151718,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487a49857aba0090b334ab",
+                "5d4886a7857aba0090e24446"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d4886a7857aba0090e24447"
+        },
+        {
+            "linkTypeId": "5d48765c857aba0090b3349c",
+            "creationDate": 1565034857314,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487aeb857aba0090b334ac",
+                "5d488968857aba0090e24449"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d488969857aba0090e2444a"
+        },
+        {
+            "linkTypeId": "5d48765c857aba0090b3349c",
+            "creationDate": 1565034970397,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487aeb857aba0090b334ac",
+                "5d4889da857aba0090b334b5"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d4889da857aba0090b334b6"
+        },
+        {
+            "linkTypeId": "5d48765c857aba0090b3349c",
+            "creationDate": 1565035022263,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487c57857aba0090e2443f",
+                "5d488a0e857aba0090b334b7"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d488a0e857aba0090b334b8"
+        }
+    ],
+    "linkData": {
+        "5d469e53857aba0090b33496": [
+            {
+                "_id": "5d487aeb857aba0090b334ad"
+            },
+            {
+                "_id": "5d487b63857aba0090b334af"
+            },
+            {
+                "_id": "5d487b7a857aba0090e2443e"
+            },
+            {
+                "_id": "5d487c57857aba0090e24440"
+            },
+            {
+                "_id": "5d487c6f857aba0090e24442"
+            },
+            {
+                "_id": "5d487cf4857aba0090b334b2"
+            },
+            {
+                "_id": "5d488683857aba0090e24445"
+            },
+            {
+                "_id": "5d4886a7857aba0090e24447"
+            }
+        ],
+        "5d48765c857aba0090b3349c": [
+            {
+                "_id": "5d488969857aba0090e2444a"
+            },
+            {
+                "_id": "5d4889da857aba0090b334b6"
+            },
+            {
+                "_id": "5d488a0e857aba0090b334b8"
+            }
+        ]
+    },
+    "documents": [
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031147604,
+            "updateDate": 1565031420444,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 8,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487aeb857aba0090b334ac"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031266958,
+            "updateDate": 1565031440825,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 7,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487b62857aba0090b334ae"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031289982,
+            "updateDate": 1565031487484,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 7,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487b79857aba0090e2443d"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031511181,
+            "updateDate": 1565031621118,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487c57857aba0090e2443f"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031535234,
+            "updateDate": 1565031644227,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487c6f857aba0090e24441"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031668582,
+            "updateDate": 1565034193602,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487cf4857aba0090b334b1"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565034114900,
+            "updateDate": 1565034230666,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d488682857aba0090e24444"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565034151560,
+            "updateDate": 1565034198596,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d4886a7857aba0090e24446"
+        },
+        {
+            "collectionId": "5d469821857aba0090b33487",
+            "creationDate": 1565030743536,
+            "updateDate": 1565121142721,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 9,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487957857aba0090e24439"
+        },
+        {
+            "collectionId": "5d469821857aba0090b33487",
+            "creationDate": 1565030895170,
+            "updateDate": 1565030946900,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 4,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d4879ef857aba0090e2443b"
+        },
+        {
+            "collectionId": "5d469821857aba0090b33487",
+            "creationDate": 1565030985079,
+            "updateDate": 1565034234370,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487a49857aba0090b334ab"
+        },
+        {
+            "collectionId": "5d469876857aba0090b3348b",
+            "creationDate": 1565034856992,
+            "updateDate": 1565034956677,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 4,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d488968857aba0090e24449"
+        },
+        {
+            "collectionId": "5d469876857aba0090b3348b",
+            "creationDate": 1565034970251,
+            "updateDate": 1565120837724,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d4889da857aba0090b334b5"
+        },
+        {
+            "collectionId": "5d469876857aba0090b3348b",
+            "creationDate": 1565035022112,
+            "updateDate": 1565035098021,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d488a0e857aba0090b334b7"
+        }
+    ],
+    "data": {
+        "5d469876857aba0090b3348b": [
+            {
+                "_id": "5d488968857aba0090e24449",
+                "a1": "Facebook",
+                "a2": "promote the article",
+                "a3": "2019-07-07T22:00:00Z",
+                "a4": "2019-07-14T22:00:00Z",
+                "a5": "Everybody loves avocados. Did you know you can even create soup from it?"
+            },
+            {
+                "_id": "5d4889da857aba0090b334b5",
+                "a1": "Instagram",
+                "a2": "show nice avocado",
+                "a3": "2019-07-06T22:00:00Z",
+                "a4": "2019-07-15T22:00:00Z",
+                "a5": "Could you not love that green?",
+                "a6": "IMG_20181128_085734.jpg"
+            },
+            {
+                "_id": "5d488a0e857aba0090b334b7",
+                "a1": "Twitter",
+                "a5": "Black is black.",
+                "a3": "2019-07-22T22:00:00Z",
+                "a4": "2019-07-26T22:00:00Z"
+            }
+        ],
+        "5d4697e3857aba0090b33483": [
+            {
+                "_id": "5d487aeb857aba0090b334ac",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Food",
+                "a5": "Done",
+                "a1": "Avocado soup",
+                "a6": "2019-07-01T22:00:00Z",
+                "a7": "2019-07-10T22:00:00Z",
+                "a8": true
+            },
+            {
+                "_id": "5d487b62857aba0090b334ae",
+                "a1": "Beef hot dog",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Food",
+                "a5": "Done",
+                "a6": "2019-07-07T22:00:00Z",
+                "a7": "2019-07-11T22:00:00Z",
+                "a8": true
+            },
+            {
+                "_id": "5d487b79857aba0090e2443d",
+                "a1": "Chicken cake",
+                "a8": true,
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Food",
+                "a5": "Done",
+                "a6": "2019-07-06T22:00:00Z",
+                "a7": "2019-07-12T22:00:00Z"
+            },
+            {
+                "_id": "5d487c57857aba0090e2443f",
+                "a1": "Black is the new black",
+                "a5": "Draft in progress",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Fashion",
+                "a6": "2019-07-13T22:00:00Z",
+                "a7": "2019-07-18T22:00:00Z"
+            },
+            {
+                "_id": "5d487c6f857aba0090e24441",
+                "a5": "Waiting for approval",
+                "a1": "Suit for every day",
+                "a6": "2019-07-06T22:00:00Z",
+                "a7": "2019-07-09T22:00:00Z",
+                "a4": "Fashion",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER"
+            },
+            {
+                "_id": "5d487cf4857aba0090b334b1",
+                "a1": "Five weeks in a balloon",
+                "a4": "Travel",
+                "a5": "Idea",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER"
+            },
+            {
+                "_id": "5d488682857aba0090e24444",
+                "a1": "Around the world in 80 days",
+                "a4": "Travel",
+                "a5": "To do",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a6": "2019-08-17T22:00:00Z",
+                "a7": "2019-08-19T22:00:00Z"
+            },
+            {
+                "_id": "5d4886a7857aba0090e24446",
+                "a1": "From the Earth to the Moon",
+                "a4": "Travel",
+                "a5": "Idea",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER"
+            }
+        ],
+        "5d469821857aba0090b33487": [
+            {
+                "_id": "5d487957857aba0090e24439",
+                "a1": "That's delicious!",
+                "a3": "The best recipes, all in one place.",
+                "a5": "2019-07-14T22:00:00Z",
+                "a6": "2019-08-03T22:00:00Z",
+                "a4": ""
+            },
+            {
+                "_id": "5d4879ef857aba0090e2443b",
+                "a1": "Dress me baby",
+                "a3": "Let's make your wardrobe happy.",
+                "a5": "2019-07-23T22:00:00Z",
+                "a6": "2019-08-18T22:00:00Z"
+            },
+            {
+                "_id": "5d487a49857aba0090b334ab",
+                "a1": "Far away",
+                "a5": "2019-08-22T22:00:00Z",
+                "a6": "2019-08-27T22:00:00Z",
+                "a3": "Everybody travels, but there are still some lonely places."
+            }
+        ]
+    }
+}

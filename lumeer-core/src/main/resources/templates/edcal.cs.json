@@ -1,0 +1,1781 @@
+{
+    "templateMeta": {
+        "prefix": "EDCAL",
+        "collectionCount": 3,
+        "linkTypeCount": 2,
+        "viewCount": 9,
+        "documentCount": 14
+    },
+    "collections": [
+        {
+            "code": "b14ac78a46e90b71",
+            "name": "Články",
+            "icon": "fas fa-edit",
+            "color": "#e69138",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Název",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a2",
+                    "name": "Autor",
+                    "constraint": {
+                        "type": "User",
+                        "config": {
+                            "externalUsers": true
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a3",
+                    "name": "Editor",
+                    "constraint": {
+                        "type": "User",
+                        "config": {
+                            "externalUsers": true
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a4",
+                    "name": "Kategorie",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Zprávy",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Kultura",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Cestování",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Jídlo",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Móda",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a5",
+                    "name": "Stav",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Nápad",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "K napsání",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Píše se",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Čeká na schválení",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Schvaluje se",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Hotovo",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 8
+                },
+                {
+                    "id": "a6",
+                    "name": "Termín odevzdání",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 6
+                },
+                {
+                    "id": "a7",
+                    "name": "Termín připomínkování",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 6
+                },
+                {
+                    "id": "a8",
+                    "name": "Publikováno?",
+                    "constraint": {
+                        "type": "Boolean",
+                        "config": null
+                    },
+                    "function": null,
+                    "usageCount": 3
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": "a1",
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5d4697e3857aba0090b33483"
+        },
+        {
+            "code": "666067dd376e5d45",
+            "name": "Vydání",
+            "icon": "fas fa-book",
+            "color": "#6aa84f",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Název",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a3",
+                    "name": "Popis",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a4",
+                    "name": "Obálka",
+                    "constraint": {
+                        "type": "FileAttachment",
+                        "config": null
+                    },
+                    "function": null,
+                    "usageCount": 1
+                },
+                {
+                    "id": "a5",
+                    "name": "Uzávěrka",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a6",
+                    "name": "Datum vydání",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": "a1",
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5d469821857aba0090b33487"
+        },
+        {
+            "code": "4a2202ae4201c550",
+            "name": "Sociální sítě",
+            "icon": "fas fa-bullhorn",
+            "color": "#cc0000",
+            "version": 0,
+            "description": "",
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "attributes": [
+                {
+                    "id": "a1",
+                    "name": "Typ",
+                    "constraint": {
+                        "type": "Select",
+                        "config": {
+                            "displayValues": null,
+                            "options": [
+                                {
+                                    "value": "Facebook",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Instagram",
+                                    "displayValue": ""
+                                },
+                                {
+                                    "value": "Twitter",
+                                    "displayValue": ""
+                                }
+                            ]
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a2",
+                    "name": "Popis",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 2
+                },
+                {
+                    "id": "a3",
+                    "name": "Termín vyhotovení",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a4",
+                    "name": "Datum zveřejnění",
+                    "constraint": {
+                        "type": "DateTime",
+                        "config": {
+                            "format": "DD.MM.YYYY",
+                            "minValue": null,
+                            "maxValue": null
+                        }
+                    },
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a5",
+                    "name": "Obsah",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 3
+                },
+                {
+                    "id": "a6",
+                    "name": "Příloha",
+                    "constraint": {
+                        "type": "FileAttachment",
+                        "config": null
+                    },
+                    "function": null,
+                    "usageCount": 1
+                },
+                {
+                    "id": "a7",
+                    "name": "Odkaz",
+                    "constraint": null,
+                    "function": null,
+                    "usageCount": 0
+                }
+            ],
+            "documentsCount": 0,
+            "lastTimeUsed": null,
+            "defaultAttributeId": null,
+            "favorite": false,
+            "rules": {},
+            "dataDescription": null,
+            "_id": "5d469876857aba0090b3348b"
+        }
+    ],
+    "views": [
+        {
+            "code": "067b9c35b97edbb5",
+            "name": "Vydání s články",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469821857aba0090b33487",
+                        "linkTypeIds": [
+                            "5d469e53857aba0090b33496"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5d469821857aba0090b33487",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5d469e53857aba0090b33496",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5d4697e3857aba0090b33483",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "correlationId": "1564909127839:0.316794577874129",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d469e5e857aba0090b33497"
+        },
+        {
+            "code": "ddaeb1a6c501bfa0",
+            "name": "Nápady na obsah",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [
+                            {
+                                "collectionId": "5d4697e3857aba0090b33483",
+                                "attributeId": "a5",
+                                "condition": "=",
+                                "conditionValues": [{ "value": "Idea" }]
+                            }
+                        ],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5d4697e3857aba0090b33483",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "correlationId": "1564909426045:0.8618882215490815",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d469f88857aba0090e24421"
+        },
+        {
+            "code": "a2a582cc6e7f1024",
+            "name": "Sociální sítě podle článků",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [
+                            "5d48765c857aba0090b3349c"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "table",
+            "config": {
+                "table": {
+                    "parts": [
+                        {
+                            "collectionId": "5d4697e3857aba0090b33483",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a3"
+                                    ]
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "hidden",
+                                    "attributeIds": [
+                                        "a6",
+                                        "a7"
+                                    ]
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a8"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        },
+                        {
+                            "linkTypeId": "5d48765c857aba0090b3349c",
+                            "columns": []
+                        },
+                        {
+                            "collectionId": "5d469876857aba0090b3348b",
+                            "columns": [
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a1"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a2"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a3"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a4"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a5"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a6"
+                                    ],
+                                    "children": []
+                                },
+                                {
+                                    "type": "compound",
+                                    "attributeIds": [
+                                        "a7"
+                                    ],
+                                    "children": []
+                                }
+                            ]
+                        }
+                    ],
+                    "rows": [
+                        {
+                            "correlationId": "1565030005874:0.8384362112398007",
+                            "linkedRows": []
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d487683857aba0090b3349d"
+        },
+        {
+            "code": "7cc7ca4b891972c5",
+            "name": "Počet článků podle vydání",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469821857aba0090b33487",
+                        "linkTypeIds": [
+                            "5d469e53857aba0090b33496"
+                        ],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "chart",
+            "config": {
+                "chart": {
+                    "type": "bar",
+                    "axes": {
+                        "x": {
+                            "resourceId": "5d469821857aba0090b33487",
+                            "attributeId": "a1",
+                            "resourceType": "collection",
+                            "resourceIndex": 0
+                        },
+                        "y1": {
+                            "resourceId": "5d4697e3857aba0090b33483",
+                            "attributeId": "a1",
+                            "resourceType": "collection",
+                            "resourceIndex": 2
+                        }
+                    },
+                    "aggregations": {
+                        "y1": "count",
+                        "y2": "sum"
+                    },
+                    "sort": {
+                        "type": "asc"
+                    },
+                    "names": {}
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d4876f4857aba0090e24428"
+        },
+        {
+            "code": "f0b50c4e0b6fe2d3",
+            "name": "Kalendář obsahu (návrhy)",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:36:00.199Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a6",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d4697e3857aba0090b33483",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d487760857aba0090e2442c"
+        },
+        {
+            "code": "40c1f20bfd64822c",
+            "name": "Kalendář obsahu (u editora)",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:36:00.199Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d4697e3857aba0090b33483",
+                                    "attributeId": "a7",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d4697e3857aba0090b33483",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d487773857aba0090e24430"
+        },
+        {
+            "code": "fd888fe671076a26",
+            "name": "Články podle stavu",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d4697e3857aba0090b33483",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "kanban",
+            "config": {
+                "kanban": {
+                    "columns": [],
+                    "collections": {
+                        "5d4697e3857aba0090b33483": {
+                            "attribute": {
+                                "attributeId": "a5",
+                                "collectionId": "5d4697e3857aba0090b33483"
+                            }
+                        }
+                    },
+                    "otherColumn": {
+                        "id": "1565030356867187295cc5e4",
+                        "width": 300,
+                        "documentsIdsOrder": []
+                    }
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d4877e1857aba0090b334a2"
+        },
+        {
+            "code": "c9fa4e41242e051c",
+            "name": "Kalendář sociálních sítí",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469876857aba0090b3348b",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:39:50.320Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d469876857aba0090b3348b",
+                                    "attributeId": "a2",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d469876857aba0090b3348b",
+                                    "attributeId": "a4",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d469876857aba0090b3348b",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d48780d857aba0090b334a6"
+        },
+        {
+            "code": "247cf79e9a578f91",
+            "name": "Kalendář vydání",
+            "icon": null,
+            "color": null,
+            "version": 0,
+            "description": null,
+            "nonRemovable": false,
+            "permissions": {
+                "users": [
+                    {
+                        "id": "5b538ecc857aba0061886b97",
+                        "roles": [
+                            "CLONE",
+                            "SHARE",
+                            "MANAGE",
+                            "READ",
+                            "WRITE"
+                        ]
+                    }
+                ],
+                "groups": []
+            },
+            "query": {
+                "stems": [
+                    {
+                        "collectionId": "5d469821857aba0090b33487",
+                        "linkTypeIds": [],
+                        "documentIds": [],
+                        "filters": [],
+                        "linkFilters": []
+                    }
+                ],
+                "fulltexts": [],
+                "page": null,
+                "pageSize": null
+            },
+            "perspective": "calendar",
+            "config": {
+                "calendar": {
+                    "mode": "month",
+                    "date": "2019-08-05T18:44:05.517Z",
+                    "version": "1",
+                    "stemsConfigs": [
+                        {
+                            "barsProperties": {
+                                "name": {
+                                    "resourceId": "5d469821857aba0090b33487",
+                                    "attributeId": "a1",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                },
+                                "start": {
+                                    "resourceId": "5d469821857aba0090b33487",
+                                    "attributeId": "a6",
+                                    "resourceIndex": 0,
+                                    "resourceType": "collection"
+                                }
+                            },
+                            "stem": {
+                                "collectionId": "5d469821857aba0090b33487",
+                                "linkTypeIds": []
+                            }
+                        }
+                    ]
+                }
+            },
+            "authorId": "5b538ecc857aba0061886b97",
+            "authorRights": null,
+            "_id": "5d4878ff857aba0090e24435"
+        }
+    ],
+    "linkTypes": [
+        {
+            "name": "Články ve vydání",
+            "version": 0,
+            "collectionIds": [
+                "5d469821857aba0090b33487",
+                "5d4697e3857aba0090b33483"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5d469e53857aba0090b33496"
+        },
+        {
+            "name": "Sociální sítě ke článkům",
+            "version": 0,
+            "collectionIds": [
+                "5d4697e3857aba0090b33483",
+                "5d469876857aba0090b3348b"
+            ],
+            "attributes": [],
+            "lastAttributeNum": 0,
+            "_id": "5d48765c857aba0090b3349c"
+        }
+    ],
+    "linkInstances": [
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031147769,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487957857aba0090e24439",
+                "5d487aeb857aba0090b334ac"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487aeb857aba0090b334ad"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031267107,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487957857aba0090e24439",
+                "5d487b62857aba0090b334ae"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487b63857aba0090b334af"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031290245,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487957857aba0090e24439",
+                "5d487b79857aba0090e2443d"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487b7a857aba0090e2443e"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031511343,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d4879ef857aba0090e2443b",
+                "5d487c57857aba0090e2443f"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487c57857aba0090e24440"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031535409,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d4879ef857aba0090e2443b",
+                "5d487c6f857aba0090e24441"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487c6f857aba0090e24442"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565031668745,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487a49857aba0090b334ab",
+                "5d487cf4857aba0090b334b1"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d487cf4857aba0090b334b2"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565034115071,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487a49857aba0090b334ab",
+                "5d488682857aba0090e24444"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d488683857aba0090e24445"
+        },
+        {
+            "linkTypeId": "5d469e53857aba0090b33496",
+            "creationDate": 1565034151718,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487a49857aba0090b334ab",
+                "5d4886a7857aba0090e24446"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d4886a7857aba0090e24447"
+        },
+        {
+            "linkTypeId": "5d48765c857aba0090b3349c",
+            "creationDate": 1565034857314,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487aeb857aba0090b334ac",
+                "5d488968857aba0090e24449"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d488969857aba0090e2444a"
+        },
+        {
+            "linkTypeId": "5d48765c857aba0090b3349c",
+            "creationDate": 1565034970397,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487aeb857aba0090b334ac",
+                "5d4889da857aba0090b334b5"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d4889da857aba0090b334b6"
+        },
+        {
+            "linkTypeId": "5d48765c857aba0090b3349c",
+            "creationDate": 1565035022263,
+            "updateDate": null,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": null,
+            "documentIds": [
+                "5d487c57857aba0090e2443f",
+                "5d488a0e857aba0090b334b7"
+            ],
+            "dataVersion": 0,
+            "data": {},
+            "_id": "5d488a0e857aba0090b334b8"
+        }
+    ],
+    "linkData": {
+        "5d469e53857aba0090b33496": [
+            {
+                "_id": "5d487aeb857aba0090b334ad"
+            },
+            {
+                "_id": "5d487b63857aba0090b334af"
+            },
+            {
+                "_id": "5d487b7a857aba0090e2443e"
+            },
+            {
+                "_id": "5d487c57857aba0090e24440"
+            },
+            {
+                "_id": "5d487c6f857aba0090e24442"
+            },
+            {
+                "_id": "5d487cf4857aba0090b334b2"
+            },
+            {
+                "_id": "5d488683857aba0090e24445"
+            },
+            {
+                "_id": "5d4886a7857aba0090e24447"
+            }
+        ],
+        "5d48765c857aba0090b3349c": [
+            {
+                "_id": "5d488969857aba0090e2444a"
+            },
+            {
+                "_id": "5d4889da857aba0090b334b6"
+            },
+            {
+                "_id": "5d488a0e857aba0090b334b8"
+            }
+        ]
+    },
+    "documents": [
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031147604,
+            "updateDate": 1565031420444,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 8,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487aeb857aba0090b334ac"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031266958,
+            "updateDate": 1565031440825,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 7,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487b62857aba0090b334ae"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031289982,
+            "updateDate": 1565031487484,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 7,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487b79857aba0090e2443d"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031511181,
+            "updateDate": 1565031621118,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487c57857aba0090e2443f"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031535234,
+            "updateDate": 1565031644227,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487c6f857aba0090e24441"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565031668582,
+            "updateDate": 1565034193602,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487cf4857aba0090b334b1"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565034114900,
+            "updateDate": 1565034230666,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d488682857aba0090e24444"
+        },
+        {
+            "collectionId": "5d4697e3857aba0090b33483",
+            "creationDate": 1565034151560,
+            "updateDate": 1565034198596,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d4886a7857aba0090e24446"
+        },
+        {
+            "collectionId": "5d469821857aba0090b33487",
+            "creationDate": 1565030743536,
+            "updateDate": 1565121142721,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 9,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487957857aba0090e24439"
+        },
+        {
+            "collectionId": "5d469821857aba0090b33487",
+            "creationDate": 1565030895170,
+            "updateDate": 1565030946900,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 4,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d4879ef857aba0090e2443b"
+        },
+        {
+            "collectionId": "5d469821857aba0090b33487",
+            "creationDate": 1565030985079,
+            "updateDate": 1565034234370,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 6,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d487a49857aba0090b334ab"
+        },
+        {
+            "collectionId": "5d469876857aba0090b3348b",
+            "creationDate": 1565034856992,
+            "updateDate": 1565034956677,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 4,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d488968857aba0090e24449"
+        },
+        {
+            "collectionId": "5d469876857aba0090b3348b",
+            "creationDate": 1565034970251,
+            "updateDate": 1565120837724,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 5,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d4889da857aba0090b334b5"
+        },
+        {
+            "collectionId": "5d469876857aba0090b3348b",
+            "creationDate": 1565035022112,
+            "updateDate": 1565035098021,
+            "createdBy": "5b538ecc857aba0061886b97",
+            "updatedBy": "5b538ecc857aba0061886b97",
+            "dataVersion": 3,
+            "data": {},
+            "metaData": {},
+            "favorite": false,
+            "_id": "5d488a0e857aba0090b334b7"
+        }
+    ],
+    "data": {
+        "5d469876857aba0090b3348b": [
+            {
+                "_id": "5d488968857aba0090e24449",
+                "a1": "Facebook",
+                "a2": "promotuj článek",
+                "a3": "2019-07-07T22:00:00Z",
+                "a4": "2019-07-14T22:00:00Z",
+                "a5": "Všichni milují avokádo. Věděli jste, že z něj můžete udělat i polévku?"
+            },
+            {
+                "_id": "5d4889da857aba0090b334b5",
+                "a1": "Instagram",
+                "a2": "ukázat pěkné avokádo",
+                "a3": "2019-07-06T22:00:00Z",
+                "a4": "2019-07-15T22:00:00Z",
+                "a5": "Můžete nemilovat tu zelenou?",
+                "a6": "IMG_20181128_085734.jpg"
+            },
+            {
+                "_id": "5d488a0e857aba0090b334b7",
+                "a1": "Twitter",
+                "a5": "Černá je černá.",
+                "a3": "2019-07-22T22:00:00Z",
+                "a4": "2019-07-26T22:00:00Z"
+            }
+        ],
+        "5d4697e3857aba0090b33483": [
+            {
+                "_id": "5d487aeb857aba0090b334ac",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Jídlo",
+                "a5": "Hotovo",
+                "a1": "Polévka z avokáda",
+                "a6": "2019-07-01T22:00:00Z",
+                "a7": "2019-07-10T22:00:00Z",
+                "a8": true
+            },
+            {
+                "_id": "5d487b62857aba0090b334ae",
+                "a1": "Hovězí hot dog",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Jídlo",
+                "a5": "Hotovo",
+                "a6": "2019-07-07T22:00:00Z",
+                "a7": "2019-07-11T22:00:00Z",
+                "a8": true
+            },
+            {
+                "_id": "5d487b79857aba0090e2443d",
+                "a1": "Kuřecí koláč",
+                "a8": true,
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Jídlo",
+                "a5": "Hotovo",
+                "a6": "2019-07-06T22:00:00Z",
+                "a7": "2019-07-12T22:00:00Z"
+            },
+            {
+                "_id": "5d487c57857aba0090e2443f",
+                "a1": "Černá je nová černá",
+                "a5": "Píše se",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a4": "Móda",
+                "a6": "2019-07-13T22:00:00Z",
+                "a7": "2019-07-18T22:00:00Z"
+            },
+            {
+                "_id": "5d487c6f857aba0090e24441",
+                "a5": "Čeká na schválení",
+                "a1": "Oblek na každý den",
+                "a6": "2019-07-06T22:00:00Z",
+                "a7": "2019-07-09T22:00:00Z",
+                "a4": "Móda",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER"
+            },
+            {
+                "_id": "5d487cf4857aba0090b334b1",
+                "a1": "Pět týdnů v balónu",
+                "a4": "Cestování",
+                "a5": "Nápad",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER"
+            },
+            {
+                "_id": "5d488682857aba0090e24444",
+                "a1": "Kolem světa za 80 dní",
+                "a4": "Cestování",
+                "a5": "K napsání",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER",
+                "a6": "2019-08-17T22:00:00Z",
+                "a7": "2019-08-19T22:00:00Z"
+            },
+            {
+                "_id": "5d4886a7857aba0090e24446",
+                "a1": "Ze Země na Měsíc",
+                "a4": "Cestování",
+                "a5": "Nápad",
+                "a2": "macieto@lumeerio.com",
+                "a3": "$USER"
+            }
+        ],
+        "5d469821857aba0090b33487": [
+            {
+                "_id": "5d487957857aba0090e24439",
+                "a1": "Je to vynikající!",
+                "a3": "Nejlepší recepty na jednom místě.",
+                "a5": "2019-07-14T22:00:00Z",
+                "a6": "2019-08-03T22:00:00Z",
+                "a4": ""
+            },
+            {
+                "_id": "5d4879ef857aba0090e2443b",
+                "a1": "Obleč mě holka",
+                "a3": "Udělejte si svůj šatník veselejší.",
+                "a5": "2019-07-23T22:00:00Z",
+                "a6": "2019-08-18T22:00:00Z"
+            },
+            {
+                "_id": "5d487a49857aba0090b334ab",
+                "a1": "Daleko, předaleko",
+                "a5": "2019-08-22T22:00:00Z",
+                "a6": "2019-08-27T22:00:00Z",
+                "a3": "Každý sice cestuje, ale stále je možné nalézt místa dosud neobjevená."
+            }
+        ]
+    }
+}
