@@ -83,7 +83,7 @@ public class LinkInstanceCreator extends WithIdCreator {
       final Optional<JSONObject> data = ((JSONArray) ((JSONObject) templateParser.getTemplate().get("linkData")).get(linkTypeTemplateId)).stream().filter(d -> linkTemplateId.equals(TemplateParserUtils.getId((JSONObject) d))).findFirst();
 
       if (data.isPresent() && data.get().size() > 1) {
-         linkInstance.setData(translateDataDocument(data.get(), authenticatedUser.getUserEmail(), templateMetadata.getDateAddition()));
+         linkInstance.setData(translateDataDocument(data.get(), authenticatedUser, templateMetadata.getDateAddition()));
       }
 
       return linkInstance;

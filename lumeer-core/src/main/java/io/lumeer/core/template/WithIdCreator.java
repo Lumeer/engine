@@ -19,6 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.json.simple.JSONObject;
@@ -39,13 +40,15 @@ public class WithIdCreator {
       this.templateParser = templateParser;
    }
 
-   protected DataDocument translateDataDocument(final JSONObject o, final String defaultUser, long dateAddition) {
+   protected DataDocument translateDataDocument(final JSONObject o, final AuthenticatedUser defaultUser, long dateAddition) {
       final DataDocument data = new DataDocument();
 
       o.forEach((k, v) -> {
          if (!"_id".equals(k)) {
-            if ("$USER".equals(v)) {
-               data.append((String) k, defaultUser);
+            if ("$USER".equals(v) || "$USER@lumeerio.com".equals(v)) {
+               data.append((String) k, defaultUser.getUserEmail());
+            } else if ("$USER.NAME".equals(v)) {
+               data.append((String) k, defaultUser.getUserName());
             } else {
                var passed = false;
                if (v != null) {
