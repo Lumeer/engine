@@ -101,7 +101,7 @@ public class DocumentCreator extends WithIdCreator {
       final Optional<JSONObject> data = ((JSONArray) ((JSONObject) templateParser.getTemplate().get("data")).get(collectionTemplateId)).stream().filter(d -> documentTemplateId.equals(TemplateParserUtils.getId((JSONObject) d))).findFirst();
 
       if (data.isPresent() && data.get().size() > 1) {
-         document.setData(translateDataDocument(data.get(), authenticatedUser.getUserEmail(), templateMetadata.getDateAddition()));
+         document.setData(translateDataDocument(data.get(), authenticatedUser, templateMetadata.getDateAddition()));
       }
 
       return document;

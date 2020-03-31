@@ -273,7 +273,7 @@ public class AuthenticatedUser implements Serializable {
     *
     * @return The name of currently logged in user.
     */
-   private String getUserName() {
+   public String getUserName() {
       return authUserInfo.user != null && authUserInfo.user.getName() != null ? authUserInfo.user.getName() : DEFAULT_USERNAME;
    }
 
