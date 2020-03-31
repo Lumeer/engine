@@ -59,6 +59,8 @@ public abstract class Template {
             return new IssueTrackerTemplate();
          case TIME:
             return new TimeManagementTemplate();
+         case SCRUM:
+            return new ScrumTemplate();
          default:
             return null;
       }
