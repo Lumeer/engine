@@ -65,7 +65,6 @@ public class TemplateParser {
       final Object o;
       try {
          final String json = mapper.writeValueAsString(projectContent);
-         System.out.println("@@@@@@ " + json);
          o = parser.parse(json);
          if (!(o instanceof JSONObject)) {
             throw new IOException("Template file does not contain a valid JSON object.");
