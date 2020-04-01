@@ -29,7 +29,7 @@ public class ScrumTemplate extends Template {
    public String getOrganizationCode(final Language language) {
       switch (language) {
          case CS:
-            return "TMPEN";
+            return "TMPCS";
          default:
             return "TMPEN";
       }
