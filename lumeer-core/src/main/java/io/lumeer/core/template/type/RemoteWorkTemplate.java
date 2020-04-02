@@ -18,9 +18,30 @@
  */
 package io.lumeer.core.template.type;
 
-/**
- * Types of all templates that can be created automatically.
- */
-public enum TemplateType {
-   OKR, HR, PROJ, BUG, TIME, WORK, SUPPLY, EDCAL, TASK, CRM, SCRUM, RMTW
+import io.lumeer.api.model.Language;
+
+import java.util.Calendar;
+import java.util.Date;
+
+public class RemoteWorkTemplate extends Template {
+
+   @Override
+   public String getOrganizationCode(final Language language) {
+      switch (language) {
+         case CS:
+            return "TMPCS";
+         default:
+            return "TMPEN";
+      }
+   }
+
+   @Override
+   public String getProjectCode(final Language language) {
+      return "RMTW";
+   }
+
+   @Override
+   public Date getRelativeDate(final Language language) {
+      return createDate(2019, Calendar.JUNE, 1);
+   }
 }

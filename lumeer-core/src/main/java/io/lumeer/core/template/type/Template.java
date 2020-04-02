@@ -61,6 +61,8 @@ public abstract class Template {
             return new TimeManagementTemplate();
          case SCRUM:
             return new ScrumTemplate();
+         case RMTW:
+            return new RemoteWorkTemplate();
          default:
             return null;
       }
