@@ -22,6 +22,8 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 public class ConditionValue {
 
    private final String type;
@@ -44,5 +46,31 @@ public class ConditionValue {
 
    public String getType() {
       return type;
+   }
+
+   @Override
+   public String toString() {
+      return "ConditionValue{" +
+            "type='" + type + '\'' +
+            ", value=" + value +
+            '}';
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      final ConditionValue that = (ConditionValue) o;
+      return Objects.equals(type, that.type) &&
+            Objects.equals(value, that.value);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(type, value);
    }
 }
