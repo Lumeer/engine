@@ -26,8 +26,10 @@ import java.util.Map;
 
 public abstract class AbstractDateConverter extends AbstractConstraintConverter {
 
-   protected MomentJsParser momentJsParser;
+   protected String format;
+   protected String locale;
    protected boolean initialized = false;
+   protected String userLocale;
 
    @Override
    @SuppressWarnings("unchecked")
@@ -41,7 +43,8 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
          var format = config.get("format").toString();
 
          if (format != null && !"".equals(format)) {
-            momentJsParser = new MomentJsParser(format, userLocale);
+            this.format = format;
+            this.userLocale = userLocale;
             initialized = true;
          }
       }
@@ -49,7 +52,5 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
 
    public void close() {
       super.close();
-
-      momentJsParser.close();
    }
 }

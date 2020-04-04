@@ -27,31 +27,17 @@ import java.nio.charset.StandardCharsets;
 
 public class MomentJsParser implements AutoCloseable {
 
-   private String js;
-   private String format;
-   private String locale;
-   private Context context;
-   private Value formatMomentJsDate;
-   private Value parseMomentJsDate;
+   private static Context context = null;
+   private static Value formatMomentJsDate;
+   private static Value parseMomentJsDate;
 
-   public MomentJsParser(final String format, final String locale) {
-      try (var stream = getClass().getResourceAsStream("/moment-with-locales.min.js")) {
-         js = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-      } catch (IOException ioe) {
-         js = null;
-      }
-
-      if (js != null) {
-         this.format = format.replaceAll("'", "\\'");
-         this.locale = locale;
-
+   public static Long parseMomentJsDate(final String date, final String format, final String locale) {
+      if (context == null) {
          initContext();
       }
-   }
 
-   public Long parseMomentJsDate(final String date) {
       try {
-         var result = parseMomentJsDate.execute(date.replaceAll("'", "\\'"));
+         var result = parseMomentJsDate.execute(date.replaceAll("'", "\\'"), format.replaceAll("'", "\\'"), locale);
 
          if (result.isNull()) {
             return null;
@@ -79,9 +65,13 @@ public class MomentJsParser implements AutoCloseable {
       return null;
    }
 
-   public String formatMomentJsDate(final long time) {
+   public static String formatMomentJsDate(final long time, final String format, final String locale) {
+      if (context == null) {
+         initContext();
+      }
+
       try {
-         var result = formatMomentJsDate.execute(time);
+         var result = formatMomentJsDate.execute(time, format.replaceAll("'", "\\'"), locale);
 
          return result.asString();
       } catch (Exception e) {
@@ -89,24 +79,36 @@ public class MomentJsParser implements AutoCloseable {
       }
    }
 
-   private void initContext() {
-      context = Context
-            .newBuilder("js")
-            .engine(Engine
-                  .newBuilder()
-                  .allowExperimentalOptions(true)
-                  .option("js.experimental-foreign-object-prototype", "true")
-                  .build())
-            .allowAllAccess(true)
-            .build();
-      context.initialize("js");
+   private synchronized static void initContext() {
+      if (context == null) {
 
-      var result = context.eval("js", js +
-            "; function formatMomentJsDate(time) { return moment(time).format('" + format + "'); }" +
-            "; function parseMomentJsDate(date) { return moment(date, '" + format + "', '" + locale + "').valueOf(); } ");
+         String js;
+         try (var stream = MomentJsParser.class.getResourceAsStream("/moment-with-locales.min.js")) {
+            js = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+         } catch (IOException ioe) {
+            js = null;
+         }
 
-      formatMomentJsDate = context.getBindings("js").getMember("formatMomentJsDate");
-      parseMomentJsDate = context.getBindings("js").getMember("parseMomentJsDate");
+         if (js != null) {
+            context = Context
+                  .newBuilder("js")
+                  .engine(Engine
+                        .newBuilder()
+                        .allowExperimentalOptions(true)
+                        .option("js.experimental-foreign-object-prototype", "true")
+                        .build())
+                  .allowAllAccess(true)
+                  .build();
+            context.initialize("js");
+
+            var result = context.eval("js", js +
+                  "; function formatMomentJsDate(time, format, locale) { return moment(time).locale(locale).format(format); }" +
+                  "; function parseMomentJsDate(date, format, locale) { return moment(date, format, locale).valueOf(); } ");
+
+            formatMomentJsDate = context.getBindings("js").getMember("formatMomentJsDate");
+            parseMomentJsDate = context.getBindings("js").getMember("parseMomentJsDate");
+         }
+      }
    }
 
    public void close() {
