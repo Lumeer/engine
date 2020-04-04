@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ProjectContent {
 
@@ -55,6 +56,15 @@ public class ProjectContent {
 
    @JsonProperty("data")
    private Map<String, List<DataDocument>> data;
+
+   @JsonProperty("favoriteCollections")
+   private Set<String> favoriteCollectionIds;
+
+   @JsonProperty("favoriteViews")
+   private Set<String> favoriteViewIds;
+
+   @JsonProperty("sequences")
+   private List<Sequence> sequences;
 
    public ProjectMeta getTemplateMeta() {
       return templateMeta;
@@ -118,5 +128,29 @@ public class ProjectContent {
 
    public void setData(final Map<String, List<DataDocument>> data) {
       this.data = data;
+   }
+
+   public Set<String> getFavoriteCollectionIds() {
+      return favoriteCollectionIds;
+   }
+
+   public void setFavoriteCollectionIds(final Set<String> favoriteCollectionIds) {
+      this.favoriteCollectionIds = favoriteCollectionIds;
+   }
+
+   public Set<String> getFavoriteViewIds() {
+      return favoriteViewIds;
+   }
+
+   public void setFavoriteViewIds(final Set<String> favoriteViewIds) {
+      this.favoriteViewIds = favoriteViewIds;
+   }
+
+   public List<Sequence> getSequences() {
+      return sequences;
+   }
+
+   public void setSequences(final List<Sequence> sequences) {
+      this.sequences = sequences;
    }
 }

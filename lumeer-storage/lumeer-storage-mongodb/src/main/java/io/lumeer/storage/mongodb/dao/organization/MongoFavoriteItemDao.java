@@ -143,6 +143,15 @@ public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements 
    }
 
    @Override
+   public Set<String> getFavoriteCollectionIds(final String projectId) {
+      Bson filter = eq(PROJECT_ID, projectId);
+      final ArrayList<Document> favoriteCollections = favoriteCollectionsDBCollection().find(filter).into(new ArrayList<>());
+      return favoriteCollections.stream()
+                                .map(document -> document.getString(COLLECTION_ID))
+                                .collect(Collectors.toSet());
+   }
+
+   @Override
    public void addFavoriteView(final String userId, final String projectId, final String viewId) {
       Document document = new Document()
             .append(USER_ID, userId)
@@ -186,6 +195,15 @@ public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements 
       return favoriteViews.stream()
                                 .map(document -> document.getString(VIEW_ID))
                                 .collect(Collectors.toSet());
+   }
+
+   @Override
+   public Set<String> getFavoriteViewIds(final String projectId) {
+      Bson filter = eq(PROJECT_ID, projectId);
+      final ArrayList<Document> favoriteViews = favoriteViewsDBCollection().find(filter).into(new ArrayList<>());
+      return favoriteViews.stream()
+                          .map(document -> document.getString(VIEW_ID))
+                          .collect(Collectors.toSet());
    }
 
    @Override

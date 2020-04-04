@@ -14,6 +14,8 @@ public interface FavoriteItemDao extends OrganizationScopedDao {
 
    Set<String> getFavoriteCollectionIds(String userId, String projectId);
 
+   Set<String> getFavoriteCollectionIds(String projectId);
+
    void addFavoriteView(String userId, String projectId, String viewId);
 
    void removeFavoriteView(String userId, String viewId);
@@ -23,6 +25,8 @@ public interface FavoriteItemDao extends OrganizationScopedDao {
    void removeFavoriteViewByProjectFromUsers(String projectId);
 
    Set<String> getFavoriteViewIds(String userId, String projectId);
+
+   Set<String> getFavoriteViewIds(String projectId);
 
    void addFavoriteDocument(String userId, String projectId, String collectionId, String documentId);
 
