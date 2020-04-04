@@ -19,6 +19,8 @@
 
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -51,6 +53,7 @@ public class AttributeFilter {
       return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getValue() : null;
    }
 
+   @JsonIgnore
    public void setValue(final Object value) {
       this.conditionValues = Collections.singletonList(new ConditionValue(value));
    }

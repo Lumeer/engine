@@ -57,7 +57,7 @@ public class CollectionAttributeFilter extends AttributeFilter {
             "collectionId='" + getCollectionId() + '\'' +
             ", attributeId='" + getAttributeId() + '\'' +
             ", condition='" + getCondition() + '\'' +
-            ", value=" + getValue() +
+            ", values=" + getConditionValues() +
             '}';
    }
 }
