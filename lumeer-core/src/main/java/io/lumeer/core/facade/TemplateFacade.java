@@ -24,9 +24,11 @@ import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.template.CollectionCreator;
 import io.lumeer.core.template.DocumentCreator;
+import io.lumeer.core.template.FavoriteItemsCreator;
 import io.lumeer.core.template.FunctionAndRuleCreator;
 import io.lumeer.core.template.LinkInstanceCreator;
 import io.lumeer.core.template.LinkTypeCreator;
+import io.lumeer.core.template.SequenceCreator;
 import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.ViewCreator;
@@ -53,6 +55,9 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private ViewFacade viewFacade;
+
+   @Inject
+   private SequenceFacade sequenceFacade;
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -88,6 +93,8 @@ public class TemplateFacade extends AbstractFacade {
       LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser, templateMetadata);
       ViewCreator.createViews(templateParser, viewFacade, defaultConfigurationProducer);
       FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade);
+      FavoriteItemsCreator.createFavoriteItems(templateParser, collectionFacade, viewFacade);
+      SequenceCreator.createSequences(templateParser, sequenceFacade);
 
       if (templateCreatedEvent != null) {
          templateCreatedEvent.fire(templateParser.getReport(project));

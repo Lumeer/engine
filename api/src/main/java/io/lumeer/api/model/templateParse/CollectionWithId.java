@@ -36,6 +36,7 @@ public class CollectionWithId extends Collection {
             collection.getRules(),
             collection.getDataDescription());
       this.setId(collection.getId());
+      this.setDefaultAttributeId(collection.getDefaultAttributeId());
    }
 
    @Override
