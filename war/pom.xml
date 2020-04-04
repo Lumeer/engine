@@ -47,7 +47,7 @@
       <maven.embedmongo.plugin.version>0.4.2</maven.embedmongo.plugin.version>
 
       <version.velocity>1.7</version.velocity>
-      <version.puppycrawl>8.29</version.puppycrawl>
+      <version.puppycrawl>8.31</version.puppycrawl>
       <version.mongo.driver>3.12.2</version.mongo.driver>
       <version.commons.io>2.6</version.commons.io>
       <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
