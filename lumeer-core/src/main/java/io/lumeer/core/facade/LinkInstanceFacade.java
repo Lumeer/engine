@@ -237,6 +237,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private void updateLinkTypeMetadata(LinkType linkType, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
       linkType.setAttributes(new ArrayList<>(ResourceUtils.incOrDecAttributes(linkType.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
+      linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()));
       linkTypeDao.updateLinkType(linkType.getId(), linkType, new LinkType(linkType));
    }
 

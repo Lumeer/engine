@@ -51,6 +51,10 @@ public interface LinkInstanceDao extends ProjectScopedDao {
 
    List<LinkInstance> getLinkInstancesByLinkType(String linkTypeId);
 
+   Long getLinkInstancesCountByLinkType(String linkTypeId);
+
+   Map<String, Long> getLinkInstancesCounts();
+
    List<LinkInstance> getLinkInstancesByLinkTypes(Set<String> linkTypeIds);
 
    List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds, String linkTypeId);

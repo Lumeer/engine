@@ -36,7 +36,6 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
-import io.lumeer.storage.api.dao.LinkTypeDao;
 
 import java.util.Collections;
 import java.util.Deque;
@@ -69,7 +68,7 @@ public class FunctionFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
-   private LinkTypeDao linkTypeDao;
+   private LinkTypeFacade linkTypeFacade;
 
    @Inject
    private ContextualTaskFactory contextualTaskFactory;
@@ -183,7 +182,7 @@ public class FunctionFacade extends AbstractFacade {
       Set<String> linkTypeIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.LINK && q.getLinkType() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
 
       Map<String, Collection> collectionMap = collectionIds.size() > 0 ? collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Resource::getId, c -> c)) : new HashMap<>();
-      Map<String, LinkType> linkTypeMap = linkTypeIds.size() > 0 ? linkTypeDao.getLinkTypesByIds(linkTypeIds).stream().collect(Collectors.toMap(LinkType::getId, c -> c)) : new HashMap<>();
+      Map<String, LinkType> linkTypeMap = linkTypeIds.size() > 0 ? linkTypeFacade.getLinkTypesByIds(linkTypeIds).stream().collect(Collectors.toMap(LinkType::getId, c -> c)) : new HashMap<>();
 
       FunctionTask task = null;
 

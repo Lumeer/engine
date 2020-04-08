@@ -49,6 +49,7 @@ public class LinkType implements WithId {
    private List<String> collectionIds;
    private List<Attribute> attributes;
    private Integer lastAttributeNum;
+   private Long linksCount;
 
    @JsonCreator
    public LinkType(@JsonProperty(NAME) final String name,
@@ -66,6 +67,11 @@ public class LinkType implements WithId {
       this.version = linkType.getVersion();
       this.attributes = linkType.getAttributes() != null ? new ArrayList<>(linkType.getAttributes()) : Collections.emptyList();
       this.lastAttributeNum = linkType.getLastAttributeNum();
+      this.linksCount = linkType.getLinksCount();
+   }
+
+   public void copyComputedProperties(LinkType linkType) {
+      this.setLinksCount(linkType.getLinksCount());
    }
 
    public String getId() {
@@ -141,6 +147,14 @@ public class LinkType implements WithId {
       this.lastAttributeNum = lastAttributeNum;
    }
 
+   public Long getLinksCount() {
+      return linksCount;
+   }
+
+   public void setLinksCount(final Long linksCount) {
+      this.linksCount = linksCount;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -169,6 +183,7 @@ public class LinkType implements WithId {
             ", collectionIds=" + collectionIds +
             ", attributes=" + attributes +
             ", lastAttributeNum=" + lastAttributeNum +
+            ", linksCount=" + linksCount +
             '}';
    }
 }
