@@ -35,6 +35,7 @@ import io.lumeer.storage.mongodb.codecs.LinkInstanceCodec;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
@@ -46,6 +47,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -168,6 +170,19 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
    }
 
    @Override
+   public Long getLinkInstancesCountByLinkType(final String linkTypeId) {
+      return databaseCollection().countDocuments(Filters.in(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId));
+   }
+
+   @Override
+   public Map<String, Long> getLinkInstancesCounts() {
+      return rawDatabaseCollection().aggregate(Collections.singletonList(Aggregates.sortByCount("$" + LinkInstanceCodec.LINK_TYPE_ID)))
+                                    .into(new ArrayList<>())
+                                    .stream()
+                                    .collect(Collectors.toMap(doc -> doc.getString("_id"), doc -> Long.valueOf(doc.getInteger("count"))));
+   }
+
+   @Override
    public List<LinkInstance> getLinkInstancesByLinkTypes(final Set<String> linkTypeIds) {
       return databaseCollection().find(Filters.in(LinkInstanceCodec.LINK_TYPE_ID, linkTypeIds)).into(new ArrayList<>());
    }
@@ -247,6 +262,10 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return databaseCollectionName(getProject().get());
+   }
+
+   private MongoCollection<Document> rawDatabaseCollection() {
+      return database.getCollection(databaseCollectionName());
    }
 
    MongoCollection<LinkInstance> databaseCollection() {

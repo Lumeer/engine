@@ -64,6 +64,9 @@ public class ViewFacade extends AbstractFacade {
    private LinkTypeDao linkTypeDao;
 
    @Inject
+   private LinkTypeFacade linkTypeFacade;
+
+   @Inject
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
@@ -257,7 +260,7 @@ public class ViewFacade extends AbstractFacade {
                                       .flatMap(java.util.Collection::stream)
                                       .collect(Collectors.toSet());
 
-      return linkTypeDao.getLinkTypesByIds(linkTypesIds);
+      return linkTypeFacade.assignComputedParameters(linkTypeDao.getLinkTypesByIds(linkTypesIds));
    }
 
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {

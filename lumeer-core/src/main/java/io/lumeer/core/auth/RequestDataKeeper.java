@@ -50,8 +50,7 @@ public class RequestDataKeeper {
    }
 
    public RequestDataKeeper(final RequestDataKeeper original) {
-      var keeper = new RequestDataKeeper();
-      keeper.setCorrelationId(original.correlationId);
-      keeper.setUserLocale(original.userLocale);
+      this.correlationId = original.getCorrelationId();
+      this.userLocale = original.getUserLocale();
    }
 }

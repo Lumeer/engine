@@ -69,6 +69,7 @@ public class LinkTypeFacade extends AbstractFacade {
       checkLinkTypePermission(linkType.getCollectionIds());
 
       linkType.setLastAttributeNum(0);
+      linkType.setLinksCount(0L);
       return linkTypeDao.createLinkType(linkType);
    }
 
@@ -82,6 +83,7 @@ public class LinkTypeFacade extends AbstractFacade {
       checkLinkTypePermission(collectionIds);
       keepUnmodifiableFields(linkType, storedLinkType);
 
+      assignComputedParameters(originalLinkType);
       return linkTypeDao.updateLinkType(id, linkType, originalLinkType);
    }
 
@@ -124,20 +126,39 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType getLinkType(final String linkTypeId) {
-      return linkTypeDao.getLinkType(linkTypeId);
+      return assignComputedParameters(linkTypeDao.getLinkType(linkTypeId));
    }
 
    public List<LinkType> getLinkTypes() {
       List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
       if (isManager()) {
-         return allLinkTypes;
+         return assignComputedParameters(allLinkTypes);
       }
 
       List<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
                                                        .map(Collection::getId).collect(Collectors.toList());
-      return allLinkTypes.stream()
-                         .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
-                         .collect(Collectors.toList());
+
+      var linkTypes = allLinkTypes.stream()
+                                  .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
+                                  .collect(Collectors.toList());
+      return assignComputedParameters(linkTypes);
+   }
+
+   public List<LinkType> getLinkTypesByIds(Set<String> ids) {
+      return assignComputedParameters(linkTypeDao.getLinkTypesByIds(ids));
+   }
+
+   public LinkType assignComputedParameters(LinkType linkType) {
+      linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()));
+      return linkType;
+   }
+
+   public List<LinkType> assignComputedParameters(List<LinkType> linkTypes) {
+      var countsMap = linkInstanceDao.getLinkInstancesCounts();
+
+      return linkTypes.stream()
+                      .peek(linkType -> linkType.setLinksCount(countsMap.getOrDefault(linkType.getId(), 0L)))
+                      .collect(Collectors.toList());
    }
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {

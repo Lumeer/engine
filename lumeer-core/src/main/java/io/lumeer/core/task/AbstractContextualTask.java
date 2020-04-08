@@ -94,6 +94,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public void sendPushNotifications(final LinkType linkType) {
       if (getPusherClient() != null) {
+         linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
          final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
          final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
@@ -155,9 +156,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances) {
       if (linkType.getCollectionIds().size() == 2) {
+         linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
          final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
-         final Set<String> users = users1.stream().filter(userId -> users2.contains(userId)).collect(Collectors.toSet());
+         final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
 
          final List<Event> events = new ArrayList<>();
          final List<Event> linkInstanceEvents = new ArrayList<>();
