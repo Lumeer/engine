@@ -20,6 +20,8 @@ package io.lumeer.core.task;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
@@ -30,16 +32,37 @@ public class RuleTask extends AbstractContextualTask {
    private String ruleName;
    private Rule rule;
    private Collection collection;
+   private LinkType linkType;
    private Document oldDocument;
    private Document newDocument;
+   private LinkInstance oldLinkInstance;
+   private LinkInstance newLinkInstance;
    private AbstractContextualTask parent;
 
    public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
       this.ruleName = ruleName;
       this.rule = rule;
       this.collection = collection;
+      this.linkType = null;
       this.oldDocument = oldDocument;
       this.newDocument = newDocument;
+      this.oldLinkInstance = null;
+      this.newLinkInstance = null;
+   }
+
+   public void setRule(final String ruleName, final Rule rule, final LinkType linkType, final LinkInstance oldLinkInstance, final LinkInstance newLinkInstance) {
+      this.ruleName = ruleName;
+      this.rule = rule;
+      this.collection = null;
+      this.linkType = linkType;
+      this.oldDocument = null;
+      this.newDocument = null;
+      this.oldLinkInstance = oldLinkInstance;
+      this.newLinkInstance = newLinkInstance;
+   }
+
+   public boolean isCollectionBased() {
+      return collection != null;
    }
 
    @Override
@@ -68,11 +91,23 @@ public class RuleTask extends AbstractContextualTask {
       return collection;
    }
 
+   public LinkType getLinkType() {
+      return linkType;
+   }
+
    public Document getOldDocument() {
       return oldDocument;
    }
 
    public Document getNewDocument() {
       return newDocument;
+   }
+
+   public LinkInstance getOldLinkInstance() {
+      return oldLinkInstance;
+   }
+
+   public LinkInstance getNewLinkInstance() {
+      return newLinkInstance;
    }
 }

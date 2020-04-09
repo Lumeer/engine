@@ -19,12 +19,14 @@
 package io.lumeer.core.task.executor;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.task.RuleTask;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,9 +46,15 @@ public class BlocklyRuleTaskExecutor {
    }
 
    public void execute() {
-      final JsExecutor.DocumentBridge oldDocument = new JsExecutor.DocumentBridge(ruleTask.getOldDocument());
-      final JsExecutor.DocumentBridge newDocument = new JsExecutor.DocumentBridge(ruleTask.getNewDocument());
-      final Map<String, Object> bindings = Map.of("oldDocument", oldDocument, "newDocument", newDocument);
+      final Map<String, Object> bindings = new HashMap<>();
+
+      if (ruleTask.isCollectionBased()) {
+         bindings.put("oldDocument", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
+         bindings.put("newDocument", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
+      } else {
+         bindings.put("oldLink", new JsExecutor.LinkBridge(ruleTask.getOldLinkInstance()));
+         bindings.put("newLink", new JsExecutor.LinkBridge(ruleTask.getNewLinkInstance()));
+      }
 
       final JsExecutor jsExecutor = new JsExecutor();
       jsExecutor.setDryRun(rule.isDryRun());
@@ -81,7 +89,11 @@ public class BlocklyRuleTaskExecutor {
          rule.setError(sw.toString());
          updateRule();
 
-         ruleTask.sendPushNotifications(ruleTask.getCollection());
+         if (ruleTask.isCollectionBased()) {
+            ruleTask.sendPushNotifications(ruleTask.getCollection());
+         } else {
+            ruleTask.sendPushNotifications(ruleTask.getLinkType());
+         }
       } catch (IOException ioe) {
          // we tried, cannot do more
       }
@@ -91,14 +103,24 @@ public class BlocklyRuleTaskExecutor {
       rule.setDryRunResult(results);
       updateRule();
 
-      ruleTask.sendPushNotifications(ruleTask.getCollection());
+      if (ruleTask.isCollectionBased()) {
+         ruleTask.sendPushNotifications(ruleTask.getCollection());
+      } else {
+         ruleTask.sendPushNotifications(ruleTask.getLinkType());
+      }
    }
 
    private void updateRule() {
-      final Collection originalCollection = ruleTask.getCollection().copy();
-
       rule.setResultTimestamp(System.currentTimeMillis());
-      ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
-      ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
+
+      if (ruleTask.isCollectionBased()) {
+         final Collection originalCollection = ruleTask.getCollection().copy();
+         ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
+         ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
+      } else {
+         final LinkType originalLinkType = new LinkType(ruleTask.getLinkType());
+         ruleTask.getLinkType().getRules().put(ruleName, rule.getRule());
+         ruleTask.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(ruleTask.getCollection().getId(), ruleTask.getLinkType(), originalLinkType);
+      }
    }
 }

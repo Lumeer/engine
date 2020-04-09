@@ -458,6 +458,18 @@ public class PermissionsChecker {
 
    }
 
+   public void checkRulesLimit(final LinkType linkType) {
+      if (skipLimits()) {
+         return;
+      }
+
+      final ServiceLimits limits = getServiceLimits();
+      if (limits.getRulesPerCollection() != 0 && linkType.getRules().size() > limits.getRulesPerCollection()) {
+         throw new ServiceLimitsExceededException(linkType.getRules(), limits.getRulesPerCollection());
+      }
+
+   }
+
    public void checkFunctionsLimit(final Collection collection) {
       if (skipLimits()) {
          return;
