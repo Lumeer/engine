@@ -256,10 +256,7 @@ public class DocumentFacade extends AbstractFacade {
          previousDocumentId = currentDocumentId;
       }
       if (this.createChainEvent != null) {
-         this.createChainEvent.fire(new CreateChain(
-               createdDocuments.stream().map(Document::getId).collect(Collectors.toSet()),
-               createdLinks.stream().map(LinkInstance::getId).collect(Collectors.toSet())
-         ));
+         this.createChainEvent.fire(new CreateChain(createdDocuments, createdLinks));
       }
 
       return new DocumentsChain(createdDocuments, createdLinks);

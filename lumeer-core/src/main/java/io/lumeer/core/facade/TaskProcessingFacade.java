@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.task.ContextualTaskFactory;
@@ -28,6 +29,7 @@ import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
+import io.lumeer.engine.api.event.CreateChain;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.DocumentEvent;
@@ -75,17 +77,42 @@ public class TaskProcessingFacade {
    @Inject
    private FunctionFacade functionFacade;
 
-   public void onCreateDocument(@Observes final CreateDocument createDocument) {
-      final Collection collection = getCollectionForEvent(createDocument);
-      if (collection == null) {
-         return;
+   public void onCreateChain(@Observes final CreateChain chain) {
+      List<Task> allTasks = new ArrayList<>();
+
+      var linkOffset = 0;
+      // it means that first link was created before first document
+      if (chain.getDocuments().size() == chain.getLinkInstances().size() && chain.getDocuments().size() > 0) {
+         allTasks.addAll(linkCreatedTasks(chain.getLinkInstances().get(0)));
+         linkOffset = 1;
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForCreatedDocument(collection, createDocument.getDocument());
-      List<RuleTask> tasks = createDocumentCreateRuleTasks(collection, createDocument);
-      RuleTask ruleTask = createOrderedRuleTask(tasks);
+      for (int i = 0; i < chain.getDocuments().size(); i++) {
+         allTasks.addAll(documentCreatedTasks(chain.getDocuments().get(i)));
 
-      processTasks(functionTask, ruleTask);
+         var linkIndex = i + linkOffset;
+         if (linkIndex < chain.getLinkInstances().size()) {
+            allTasks.addAll(linkCreatedTasks(chain.getLinkInstances().get(linkIndex)));
+         }
+      }
+
+      processTasks(allTasks.toArray(new Task[0]));
+   }
+
+   public void onCreateDocument(@Observes final CreateDocument createDocument) {
+      List<Task> tasks = documentCreatedTasks(createDocument.getDocument());
+      processTasks(tasks.toArray(new Task[0]));
+   }
+
+   private List<Task> documentCreatedTasks(Document document) {
+      final Collection collection = collectionDao.getCollectionById(document.getCollectionId());
+      if (collection == null) {
+         return Collections.emptyList();
+      }
+      FunctionTask functionTask = functionFacade.createTaskForCreatedDocument(collection, document);
+      List<RuleTask> tasks = createDocumentCreateRuleTasks(collection, document);
+      RuleTask ruleTask = createOrderedRuleTask(tasks);
+      return Arrays.asList(functionTask, ruleTask);
    }
 
    private Collection getCollectionForEvent(final DocumentEvent event) {
@@ -95,9 +122,9 @@ public class TaskProcessingFacade {
       return null;
    }
 
-   private List<RuleTask> createDocumentCreateRuleTasks(final Collection collection, final CreateDocument createDocument) {
-      if (createDocument.getDocument() != null) {
-         return createRuleTasks(collection, null, createDocument.getDocument(), Arrays.asList(Rule.RuleTiming.CREATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.ALL));
+   private List<RuleTask> createDocumentCreateRuleTasks(final Collection collection, final Document document) {
+      if (document != null) {
+         return createRuleTasks(collection, null, document, Arrays.asList(Rule.RuleTiming.CREATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
@@ -191,13 +218,18 @@ public class TaskProcessingFacade {
    }
 
    public void onCreateLink(@Observes final CreateLinkInstance createLinkEvent) {
-      LinkType linkType = getLinkTypeForEvent(createLinkEvent);
+      List<Task> tasks = linkCreatedTasks(createLinkEvent.getLinkInstance());
+      processTasks(tasks.toArray(new Task[0]));
+   }
+
+   private List<Task> linkCreatedTasks(LinkInstance linkInstance) {
+      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
       if (linkType == null) {
-         return;
+         return Collections.emptyList();
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForCreatedLink(linkType, createLinkEvent.getLinkInstance());
-      processTasks(functionTask);
+      FunctionTask functionTask = functionFacade.createTaskForCreatedLink(linkType, linkInstance);
+      return Collections.singletonList(functionTask);
    }
 
    private LinkType getLinkTypeForEvent(LinkInstanceEvent event) {
