@@ -295,11 +295,11 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    }
 
    private LinkType createLinkType(String name, String collId1, String collId2) {
-      LinkType linkType = new LinkType(name, Arrays.asList(collId1, collId2), ATTRIBUTES);
+      LinkType linkType = new LinkType(name, Arrays.asList(collId1, collId2), ATTRIBUTES, null);
       return linkTypeDao.createLinkType(linkType);
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), ATTRIBUTES);
+      return new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), ATTRIBUTES, null);
    }
 }

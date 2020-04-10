@@ -55,7 +55,7 @@ public class ServiceLimitsExceededException extends LumeerException {
    }
 
    public ServiceLimitsExceededException(final Map<String, Rule> rules, final int rulesLimit) {
-      super("Cannot create more rules. You are only allowed to have " + rulesLimit + " rule per collection. Update your service level in organization settings.");
+      super("Cannot create more rules. You are only allowed to have " + rulesLimit + " rule per collection or link type. Update your service level in organization settings.");
       this.resource = null;
    }
 
