@@ -75,7 +75,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          if (rules != null) {
             var collectionRules = new HashMap<String, Rule>();
             rules.forEach((k, v) -> {
-               collectionRules.put((String) k, getRule(collection, (JSONObject) v));
+               collectionRules.put((String) k, getRule((JSONObject) v));
             });
             collection.setRules(collectionRules);
             collectionFacade.updateCollection(collection.getId(), collection);
@@ -98,6 +98,16 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                attr.setFunction(fce);
                linkTypeFacade.updateLinkTypeAttribute(linkType.getId(), attr.getId(), attr);
             }
+
+            var rules = (JSONObject) ((JSONObject) o).get("rules");
+            if (rules != null) {
+               var linkTypeRules = new HashMap<String, Rule>();
+               rules.forEach((k, v) -> {
+                  linkTypeRules.put((String) k, getRule((JSONObject) v));
+               });
+               linkType.setRules(linkTypeRules);
+               linkTypeFacade.updateLinkType(linkType.getId(), linkType);
+            }
          });
       });
    }
@@ -116,7 +126,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       return new Function(cureJs((String) o.get(Function.JS)), cureXml((String) o.get(Function.XML)), null, 0, (Boolean) o.get(Function.EDITABLE));
    }
 
-   private Rule getRule(final Collection collection, final JSONObject o) {
+   private Rule getRule(final JSONObject o) {
       var type = Rule.RuleType.valueOf(o.get(Rule.TYPE).toString());
       var timing = Rule.RuleTiming.valueOf(o.get(Rule.TIMING).toString());
       var rule = new Rule(type, timing, new DataDocument((JSONObject) o.get("configuration")));
