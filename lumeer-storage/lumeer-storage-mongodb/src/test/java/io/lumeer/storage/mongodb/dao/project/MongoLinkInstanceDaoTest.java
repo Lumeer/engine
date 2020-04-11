@@ -97,7 +97,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(LINK_TYPE_ID1);
-      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(DOCUMENT_ID1, DOCUMENT_ID2));
+      assertThat(storedLinkInstance.getDocumentIds()).containsOnly(DOCUMENT_ID1, DOCUMENT_ID2);
    }
 
    @Test
@@ -121,7 +121,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(LINK_TYPE_ID2);
-      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(DOCUMENT_ID3, DOCUMENT_ID4));
+      assertThat(storedLinkInstance.getDocumentIds()).containsOnly(DOCUMENT_ID3, DOCUMENT_ID4);
    }
 
    @Test
@@ -201,7 +201,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(new HashSet<>(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2)));
       List<LinkInstance> linkInstances = linkInstanceDao.databaseCollection().find().into(new ArrayList<>());
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id4));
+      assertThat(linkInstances).extracting("id").containsOnly(id4);
    }
 
    @Test
@@ -223,12 +223,12 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       SearchQueryStem stem1 = SearchQueryStem.createBuilder("Collection").documentIds(Collections.singleton(DOCUMENT_ID1)).build();
       SearchQuery query1 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem1)).build();
       List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(query1);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id3);
 
       SearchQueryStem stem2 = SearchQueryStem.createBuilder("Collection").documentIds(Collections.singleton(DOCUMENT_ID2)).build();
       SearchQuery query2 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem2)).build();
       linkInstances = linkInstanceDao.searchLinkInstances(query2);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id4);
    }
 
    @Test
@@ -250,12 +250,12 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       SearchQueryStem stem1 = SearchQueryStem.createBuilder("Collection").linkTypeIds(Arrays.asList(LINK_TYPE_ID1, LINK_TYPE_ID2)).build();
       SearchQuery query1 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem1)).build();
       List<LinkInstance> linkInstances = linkInstanceDao.searchLinkInstances(query1);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id3);
 
       SearchQueryStem stem2 = SearchQueryStem.createBuilder("Collection").linkTypeIds(Collections.singletonList(LINK_TYPE_ID3)).build();
       SearchQuery query2 = SearchQuery.createBuilder(USER).stems(Collections.singletonList(stem2)).build();
       linkInstances = linkInstanceDao.searchLinkInstances(query2);
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id4));
+      assertThat(linkInstances).extracting("id").containsOnly(id4);
    }
 
    private LinkInstance prepareLinkInstance() {

@@ -174,9 +174,9 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       collection2.setDocumentsCount(0);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();
@@ -207,7 +207,7 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       LinkInstance storedLinkInstance = linkInstanceDao.getLinkInstance(id);
       assertThat(storedLinkInstance).isNotNull();
       assertThat(storedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
-      assertThat(storedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
+      assertThat(storedLinkInstance.getDocumentIds()).containsOnly(documentIdsColl1.get(0), documentIdsColl2.get(0));
 
       var storedData = linkDataDao.getData(linkInstance.getLinkTypeId(), id);
       assertThat(storedData).containsEntry(KEY1, VALUE1);

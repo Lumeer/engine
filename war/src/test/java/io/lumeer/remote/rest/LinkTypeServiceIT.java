@@ -175,7 +175,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       assertThat(returnedLinkType).isNotNull();
       assertThat(returnedLinkType.getName()).isEqualTo(NAME);
-      assertThat(returnedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(0), collectionIds.get(1)));
+      assertThat(returnedLinkType.getCollectionIds()).containsOnly(collectionIds.get(0), collectionIds.get(1));
    }
 
    @Test
@@ -247,7 +247,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       List<LinkType> linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
       });
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4));
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id3, id4);
 
       // test fromViews
       response = client.target(linkTypesUrl)
@@ -260,11 +260,11 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
       });
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3, id4, linkTypeIdFromView));
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id3, id4, linkTypeIdFromView);
 
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
+      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
    }
 }
