@@ -151,7 +151,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME);
-      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(collectionIds.get(0), collectionIds.get(1)));
+      assertThat(storedLinkType.getCollectionIds()).containsOnly(collectionIds.get(0), collectionIds.get(1));
    }
 
    @Test
@@ -197,7 +197,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       linkTypeDao.createLinkType(linkType4);
 
       List<LinkType> linkTypes = linkTypeFacade.getLinkTypes();
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id3);
    }
 
    @Test
@@ -246,7 +246,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
+      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
    }
 
 }

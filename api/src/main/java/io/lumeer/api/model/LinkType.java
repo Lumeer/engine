@@ -28,10 +28,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkType implements WithId {
@@ -40,6 +43,7 @@ public class LinkType implements WithId {
    public static final String NAME = "name";
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
+   public static final String RULES = "rules";
 
    public static String ATTRIBUTE_PREFIX = "a";
 
@@ -50,14 +54,17 @@ public class LinkType implements WithId {
    private List<Attribute> attributes;
    private Integer lastAttributeNum;
    private Long linksCount;
+   private Map<String, Rule> rules;
 
    @JsonCreator
    public LinkType(@JsonProperty(NAME) final String name,
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
-         @JsonProperty(ATTRIBUTES) final List<Attribute> attributes) {
+         @JsonProperty(ATTRIBUTES) final List<Attribute> attributes,
+         @JsonProperty(RULES) final Map<String, Rule> rules) {
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;
+      this.rules = rules;
    }
 
    public LinkType(LinkType linkType) {
@@ -68,6 +75,7 @@ public class LinkType implements WithId {
       this.attributes = linkType.getAttributes() != null ? new ArrayList<>(linkType.getAttributes()) : Collections.emptyList();
       this.lastAttributeNum = linkType.getLastAttributeNum();
       this.linksCount = linkType.getLinksCount();
+      this.rules = linkType.rules != null ? linkType.rules.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new Rule(e.getValue()))) : null;
    }
 
    public void copyComputedProperties(LinkType linkType) {
@@ -155,6 +163,14 @@ public class LinkType implements WithId {
       this.linksCount = linksCount;
    }
 
+   public Map<String, Rule> getRules() {
+      return rules;
+   }
+
+   public void setRules(final Map<String, Rule> rules) {
+      this.rules = rules;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -184,6 +200,7 @@ public class LinkType implements WithId {
             ", attributes=" + attributes +
             ", lastAttributeNum=" + lastAttributeNum +
             ", linksCount=" + linksCount +
+            ", rules=" + rules +
             '}';
    }
 }

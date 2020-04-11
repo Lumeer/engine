@@ -50,10 +50,11 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
    private static final String EMAIL = "user@email.com";
+   private static final String[] GROUPS_ARRAY = { "group1", "group2", "group3" };
    private static final Set<String> GROUPS;
 
    static {
-      GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
+      GROUPS = new HashSet<>(Arrays.asList(GROUPS_ARRAY));
    }
 
    private MongoUserDao mongoUserDao;
@@ -95,7 +96,7 @@ public class MongoUserDaoTest extends MongoDbTestBase {
       assertThat(storedUser.getEmail()).isEqualTo(user.getEmail());
       assertThat(storedUser.getName()).isEqualTo(user.getName());
       assertThat(storedUser.getGroups()).containsKey(organization.getId());
-      assertThat(storedUser.getGroups().get(organization.getId())).containsOnlyElementsOf(GROUPS);
+      assertThat(storedUser.getGroups().get(organization.getId())).containsOnly(GROUPS_ARRAY);
    }
 
    @Test
@@ -113,8 +114,8 @@ public class MongoUserDaoTest extends MongoDbTestBase {
       assertThat(storedUser.getEmail()).isEqualTo(user.getEmail());
       assertThat(storedUser.getName()).isEqualTo(user.getName());
       assertThat(storedUser.getGroups()).containsKeys(organization.getId(), organization2.getId());
-      assertThat(storedUser.getGroups().get(organization.getId())).containsOnlyElementsOf(GROUPS);
-      assertThat(storedUser.getGroups().get(organization2.getId())).containsOnlyElementsOf(GROUPS);
+      assertThat(storedUser.getGroups().get(organization.getId())).containsOnly(GROUPS_ARRAY);
+      assertThat(storedUser.getGroups().get(organization2.getId())).containsOnly(GROUPS_ARRAY);
    }
 
    @Test
@@ -142,7 +143,7 @@ public class MongoUserDaoTest extends MongoDbTestBase {
       assertThat(storedUser.getEmail()).isEqualTo(anotherMail);
       assertThat(storedUser.getName()).isEqualTo(USERNAME2);
       assertThat(storedUser.getGroups()).containsKey(organization.getId());
-      assertThat(storedUser.getGroups().get(organization.getId())).containsOnlyElementsOf(GROUPS);
+      assertThat(storedUser.getGroups().get(organization.getId())).containsOnly(GROUPS_ARRAY);
    }
 
    @Test
@@ -151,13 +152,14 @@ public class MongoUserDaoTest extends MongoDbTestBase {
       String id = mongoUserDao.createUser(user).getId();
       assertThat(id).isNotNull().isNotEmpty();
 
-      Set<String> newGroups = new HashSet<>(Arrays.asList("groupU1", "groupU2"));
+      String[] newGroupsArray = { "groupU1", "groupU2" };
+      Set<String> newGroups = new HashSet<>(Arrays.asList(newGroupsArray));
       user.setGroups(Collections.singletonMap(organization.getId(), newGroups));
       mongoUserDao.updateUser(id, user);
 
       User storedUser = mongoUserDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedUser).isNotNull();
-      assertThat(storedUser.getGroups().get(organization.getId())).containsOnlyElementsOf(newGroups);
+      assertThat(storedUser.getGroups().get(organization.getId())).containsOnly(newGroupsArray);
    }
 
    @Test

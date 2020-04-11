@@ -50,6 +50,12 @@ public class Rule {
       this.configuration = configuration;
    }
 
+   public Rule(Rule rule) {
+      this.type = rule.type;
+      this.timing = rule.timing;
+      this.configuration = new DataDocument(rule.configuration);
+   }
+
    public RuleType getType() {
       return type;
    }

@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Rule;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -35,7 +36,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class LinkTypeCodec implements CollectibleCodec<LinkType> {
@@ -46,6 +49,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public static final String VERSION = "version";
    public static final String ATTRIBUTES = "attributes";
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
+   public static final String RULES = "rules";
 
    private final Codec<Document> documentCodec;
 
@@ -66,7 +70,13 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       Long version = bson.getLong(VERSION);
       Integer lastAttributeNum = bson.getInteger(LAST_ATTRIBUTE_NUM);
 
-      LinkType linkType =  new LinkType(name, collectionCodes, attributes);
+      Map<String, Rule> rules = new HashMap<>();
+      Document rulesMap = bson.get(RULES, Document.class);
+      if (rulesMap != null) {
+         rulesMap.forEach((k, v) -> rules.put(k, RuleCodec.convertFromDocument(rulesMap.get(k, Document.class))));
+      }
+
+      LinkType linkType = new LinkType(name, collectionCodes, attributes, rules);
       linkType.setId(id);
       linkType.setVersion(version == null ? 0 : version);
       linkType.setLastAttributeNum(lastAttributeNum);
@@ -79,7 +89,8 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       bson.append(NAME, value.getName())
           .append(COLLECTION_IDS, value.getCollectionIds())
           .append(ATTRIBUTES, value.getAttributes())
-          .append(LAST_ATTRIBUTE_NUM, value.getLastAttributeNum());
+          .append(LAST_ATTRIBUTE_NUM, value.getLastAttributeNum())
+          .append(RULES, value.getRules());
 
       documentCodec.encode(writer, bson, encoderContext);
    }

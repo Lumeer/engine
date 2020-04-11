@@ -66,6 +66,7 @@ public class LinkTypeFacade extends AbstractFacade {
 
    public LinkType createLinkType(LinkType linkType) {
       permissionsChecker.checkFunctionsLimit(linkType);
+      permissionsChecker.checkRulesLimit(linkType);
       checkLinkTypePermission(linkType.getCollectionIds());
 
       linkType.setLastAttributeNum(0);
@@ -80,6 +81,7 @@ public class LinkTypeFacade extends AbstractFacade {
       collectionIds.addAll(storedLinkType.getCollectionIds());
 
       permissionsChecker.checkFunctionsLimit(linkType);
+      permissionsChecker.checkRulesLimit(linkType);
       checkLinkTypePermission(collectionIds);
       keepUnmodifiableFields(linkType, storedLinkType);
 

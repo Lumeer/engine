@@ -64,7 +64,8 @@ public class LinkTypeCreator extends WithIdCreator {
       return new LinkType(
             (String) o.get(LinkType.NAME),
             collections,
-            new ArrayList<>()
+            new ArrayList<>(),
+            null
       );
    }
 }

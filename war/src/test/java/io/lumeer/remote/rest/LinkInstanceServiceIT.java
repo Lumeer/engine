@@ -173,9 +173,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       collection2.setDocumentsCount(0);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES);
+      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();
@@ -209,7 +209,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       assertThat(returnedLinkInstance).isNotNull();
       assertThat(returnedLinkInstance.getLinkTypeId()).isEqualTo(linkTypeId1);
-      assertThat(returnedLinkInstance.getDocumentIds()).containsOnlyElementsOf(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
+      assertThat(returnedLinkInstance.getDocumentIds()).containsOnly(documentIdsColl1.get(0), documentIdsColl2.get(0));
    }
 
    @Test
@@ -260,7 +260,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       List<LinkInstance> linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id4);
 
       QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null, null);
       Query query2 = new Query(stem2);
@@ -274,7 +274,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Collections.singletonList(id3));
+      assertThat(linkInstances).extracting("id").containsOnly(id3);
    }
 
    @Test
@@ -308,7 +308,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       List<LinkInstance> linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id3, id4);
 
       QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null, null);
       Query query2 = new Query(stem2);
@@ -322,7 +322,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id3);
    }
 
    private LinkInstance prepareLinkInstance() {

@@ -376,9 +376,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id11 = createDocument(collectionIds.get(2), "mr lumr").getId();
       String id12 = createDocument(collectionIds.get(2), "lol").getId();
       String linkType01Id = linkTypeDao.createLinkType(new LinkType("lmr",
-            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList())).getId();
+            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null)).getId();
       String linkType12Id = linkTypeDao.createLinkType(new LinkType("lmrr",
-            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList())).getId();
+            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList(), null)).getId();
       createLinkInstance(linkType01Id, Arrays.asList(id1, id6));
       createLinkInstance(linkType01Id, Arrays.asList(id1, id7));
       createLinkInstance(linkType01Id, Arrays.asList(id2, id8));
@@ -507,9 +507,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchLinkInstances() {
-      LinkType linkType = new LinkType("nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
+      LinkType linkType = new LinkType("nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
       String linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType("nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList());
+      LinkType linkType2 = new LinkType("nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
       String linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       String id10 = createDocument(collectionIds.get(0), "lumeer").getId();
@@ -537,21 +537,21 @@ public class SearchFacadeIT extends IntegrationTestBase {
       QueryStem stem1 = new QueryStem(collectionIds.get(0), null, Collections.singleton(id10), null, null);
       Query query1 = new Query(stem1);
       List<LinkInstance> linkInstances = searchFacade.getLinkInstances(query1);
-      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnlyElementsOf(Arrays.asList(id1, id2, id4));
+      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id1, id2, id4);
 
       QueryStem stem2 = new QueryStem(collectionIds.get(1), null, Collections.singleton(id21), null, null);
       Query query = new Query(stem2);
       linkInstances = searchFacade.getLinkInstances(query);
-      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnlyElementsOf(Collections.singletonList(id3));
+      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id3);
 
       QueryStem stem3 = new QueryStem(collectionIds.get(0), Arrays.asList(linkTypeId1, linkTypeId2), null, null, null);
       Query query3 = new Query(stem3);
       linkInstances = searchFacade.getLinkInstances(query3);
-      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnlyElementsOf(Arrays.asList(id1, id2, id3, id4));
+      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id1, id2, id3, id4);
 
       QueryStem stem4 = new QueryStem(collectionIds.get(0), Collections.singletonList(linkTypeId1), null, null, null);
       Query query4 = new Query(stem4);
       linkInstances = searchFacade.getLinkInstances(query4);
-      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnlyElementsOf(Arrays.asList(id1, id2, id3));
+      assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id1, id2, id3);
    }
 }

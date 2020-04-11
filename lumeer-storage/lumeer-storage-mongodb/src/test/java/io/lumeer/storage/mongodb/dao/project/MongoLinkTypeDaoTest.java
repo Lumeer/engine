@@ -100,7 +100,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME);
       assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(COLLECTION_ID1, COLLECTION_ID2));
+      assertThat(storedLinkType.getCollectionIds()).containsOnly(COLLECTION_ID1, COLLECTION_ID2);
    }
 
    @Test
@@ -125,7 +125,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME2);
       assertThat(storedLinkType.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedLinkType.getCollectionIds()).containsOnlyElementsOf(Arrays.asList(COLLECTION_ID3, COLLECTION_ID4));
+      assertThat(storedLinkType.getCollectionIds()).containsOnly(COLLECTION_ID3, COLLECTION_ID4);
    }
 
    @Test
@@ -216,10 +216,10 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
       List<LinkType> linkTypes = linkTypeDao.getLinkTypesByCollectionId(COLLECTION_ID1);
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id3));
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id3);
 
       linkTypes = linkTypeDao.getLinkTypesByCollectionId(COLLECTION_ID3);
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id2, id4));
+      assertThat(linkTypes).extracting("id").containsOnly(id2, id4);
    }
 
    @Test
@@ -239,7 +239,7 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
       String id4 = linkTypeDao.createLinkType(linkType4).getId();
 
       List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(new HashSet<>(Arrays.asList(id1, id4)));
-      assertThat(linkTypes).extracting("id").containsOnlyElementsOf(Arrays.asList(id1, id4));
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id4);
 
       linkTypes = linkTypeDao.getLinkTypesByIds(Collections.singleton(id2));
       assertThat(linkTypes).extracting("id").containsOnly(id2);
@@ -295,11 +295,11 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
    }
 
    private LinkType createLinkType(String name, String collId1, String collId2) {
-      LinkType linkType = new LinkType(name, Arrays.asList(collId1, collId2), ATTRIBUTES);
+      LinkType linkType = new LinkType(name, Arrays.asList(collId1, collId2), ATTRIBUTES, null);
       return linkTypeDao.createLinkType(linkType);
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), ATTRIBUTES);
+      return new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), ATTRIBUTES, null);
    }
 }
