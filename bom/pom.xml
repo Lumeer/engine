@@ -85,7 +85,7 @@
       <version.mongo.driver>3.12.3</version.mongo.driver>
       <version.jcommander>1.78</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
-      <version.resteasy>3.11.0.Final</version.resteasy>
+      <version.resteasy>3.11.2.Final</version.resteasy>
       <version.jaxrs>3.0.12.Final</version.jaxrs>
       <version.apache.httpclient>4.5.12</version.apache.httpclient>
       <version.apache.httpcore>4.4.13</version.apache.httpcore>
