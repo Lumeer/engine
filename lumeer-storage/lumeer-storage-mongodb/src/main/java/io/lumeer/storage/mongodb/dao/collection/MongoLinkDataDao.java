@@ -115,6 +115,11 @@ public class MongoLinkDataDao extends MongoCollectionScopedDao implements LinkDa
    @Override
    public DataDocument patchData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
       data.remove(ID);
+
+      if (data.size() == 0) {
+         return getData(linkTypeId, linkInstanceId);
+      }
+
       Document updateDocument = new Document("$set", new Document(data));
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
