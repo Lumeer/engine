@@ -180,6 +180,11 @@ public class MongoProjectDao extends MongoOrganizationScopedDao implements Proje
       }
    }
 
+   @Override
+   public void switchOrganization() {
+      init();
+   }
+
    String databaseCollectionName() {
       if (!getOrganization().isPresent()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);

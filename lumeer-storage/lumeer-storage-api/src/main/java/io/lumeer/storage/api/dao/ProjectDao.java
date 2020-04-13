@@ -53,4 +53,6 @@ public interface ProjectDao extends OrganizationScopedDao {
 
    Project updateProject(String projectId, Project project, Project originalProject);
 
+   void switchOrganization();
+
 }
