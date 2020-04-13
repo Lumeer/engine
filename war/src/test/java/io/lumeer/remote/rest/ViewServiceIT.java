@@ -168,7 +168,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testCreateView() {
       View view = prepareView(CODE);
-      Entity entity = Entity.json(view);
+      Entity<View> entity = Entity.json(view);
 
       Response response = client.target(viewsUrl)
                                 .request(MediaType.APPLICATION_JSON)
@@ -197,7 +197,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       final View view = createView(CODE);
 
       View updatedView = prepareView(CODE2);
-      Entity entity = Entity.json(updatedView);
+      Entity<View> entity = Entity.json(updatedView);
 
       Response response = client.target(viewsUrl).path(view.getId())
                                 .request(MediaType.APPLICATION_JSON)
@@ -274,11 +274,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
+   @SuppressWarnings("unchecked")
    public void testGetViewWithAuthorRights() {
       final String USER = "aaaaa4444400000000111112"; // non-existing author
-      Permission permission = new Permission(USER, new HashSet<>(Arrays.asList(Role.WRITE.toString())));
+      Permission permission = new Permission(USER, new HashSet<>(Collections.singletonList(Role.WRITE.toString())));
       Collection collection = collectionFacade.createCollection(
-            new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Arrays.asList(permission)), Collections.emptySet())));
+            new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Collections.singletonList(permission)), Collections.emptySet())));
       collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(USER, Set.of(Role.WRITE))));
 
       View view = prepareView(CODE + "3");
@@ -297,7 +298,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), new HashSet<>(Arrays.asList(Role.WRITE))));
+      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), new HashSet<>(Collections.singletonList(Role.WRITE))));
       assertions.assertAll();
    }
 
@@ -312,7 +313,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      List<View> views = response.readEntity(new GenericType<List<View>>() {
+      List<View> views = response.readEntity(new GenericType<>() {
       });
       assertThat(views).extracting(View::getCode).containsOnly(CODE, CODE2);
 
@@ -347,7 +348,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       final View view = createView(CODE);
 
       Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
-      Entity entity = Entity.json(userPermission);
+      Entity<Permission[]> entity = Entity.json(userPermission);
 
       Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("users")
                                 .request(MediaType.APPLICATION_JSON)
@@ -355,7 +356,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), userPermission[0]);
@@ -387,7 +388,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       final View view = createView(CODE);
 
       Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
-      Entity entity = Entity.json(groupPermission);
+      Entity<Permission[]> entity = Entity.json(groupPermission);
 
       Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("groups")
                                 .request(MediaType.APPLICATION_JSON)
@@ -395,7 +396,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 
-      Set<Permission> returnedPermissions = response.readEntity(new GenericType<Set<Permission>>() {
+      Set<Permission> returnedPermissions = response.readEntity(new GenericType<>() {
       });
       assertThat(returnedPermissions).isNotNull().hasSize(1);
       assertPermissions(Collections.unmodifiableSet(returnedPermissions), groupPermission[0]);
@@ -460,7 +461,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      Set<Collection> collections = response.readEntity(new GenericType<Set<Collection>>() {
+      Set<Collection> collections = response.readEntity(new GenericType<>() {
       });
 
       assertThat(collections).hasSize(1).hasOnlyOneElementSatisfying(c ->

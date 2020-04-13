@@ -61,6 +61,7 @@ public class LinkInstanceCodec implements CollectibleCodec<LinkInstance> {
 
       String id = bson.getObjectId(ID).toHexString();
       String linkTypeId = bson.getString(LINK_TYPE_ID);
+      @SuppressWarnings("unchecked")
       List<String> documentIds = bson.get(DOCUMENTS_IDS, List.class);
       Date creationDate = bson.getDate(CREATION_DATE);
       ZonedDateTime creationZonedDate = creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null;

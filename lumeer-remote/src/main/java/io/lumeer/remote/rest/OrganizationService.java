@@ -23,11 +23,14 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.facade.CompanyContactFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.facade.ProjectFacade;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +63,9 @@ public class OrganizationService extends AbstractService {
 
    @Inject
    private CompanyContactFacade companyContactFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @POST
    public Organization createOrganization(Organization organization) {
@@ -162,6 +168,34 @@ public class OrganizationService extends AbstractService {
    @Path("info/serviceLimits")
    public Map<String, ServiceLimits> getAllServiceLimits() {
       return paymentFacade.getAllServiceLimits(organizationFacade.getOrganizations());
+   }
+
+   @GET
+   @Path("info/allProjects")
+   public Map<String, List<Project>> getAllProjects() {
+      final Map<String, List<Project>> result = new HashMap<>();
+
+      organizationFacade.getOrganizations().forEach(o -> {
+         workspaceKeeper.setOrganization(o);
+         projectFacade.switchOrganization();
+         result.put(o.getId(), projectFacade.getProjects());
+      });
+
+      return result;
+   }
+
+   @GET
+   @Path("info/allProjectCodes")
+   public Map<String, Set<String>> getAllProjectCodes() {
+      final Map<String, Set<String>> result = new HashMap<>();
+
+      organizationFacade.getOrganizations().forEach(o -> {
+         workspaceKeeper.setOrganization(o);
+         projectFacade.switchOrganization();
+         result.put(o.getId(), projectFacade.getProjectsCodes());
+      });
+
+      return result;
    }
 
    /* Creates a new payment. Communicates with payment gateway. Returns the payment updated with payment ID.

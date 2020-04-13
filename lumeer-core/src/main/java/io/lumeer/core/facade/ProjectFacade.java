@@ -342,4 +342,11 @@ public class ProjectFacade extends AbstractFacade {
 
       return doc;
    }
+
+   public void switchOrganization() {
+      workspaceKeeper.getOrganization().ifPresent(o -> {
+         permissionsChecker.checkRole(o, Role.READ);
+         projectDao.switchOrganization();
+      });
+   }
 }

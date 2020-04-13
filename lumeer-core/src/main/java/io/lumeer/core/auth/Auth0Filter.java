@@ -38,6 +38,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -98,6 +100,8 @@ public class Auth0Filter implements Filter {
 
    private AtomicLong lastCheck = new AtomicLong(System.currentTimeMillis());
 
+   private Set<String> allowedHosts = new HashSet<String>();
+
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
       if (System.getenv("SKIP_SECURITY") == null) {
@@ -105,6 +109,9 @@ public class Auth0Filter implements Filter {
          clientId = filterConfig.getServletContext().getInitParameter("com.auth0.clientId");
          clientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.clientSecret");
          verifier = AuthenticationControllerProvider.getVerifier(domain);
+
+         final Optional<String> allowedHostsConfig = configurationFacade.getConfigurationString("allowed_hosts");
+         allowedHostsConfig.ifPresent(s -> allowedHosts = Arrays.asList(s.split(",")).stream().map(String::trim).collect(Collectors.toSet()));
       }
    }
 
@@ -116,12 +123,18 @@ public class Auth0Filter implements Filter {
       final HttpServletRequest req = (HttpServletRequest) servletRequest;
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
 
+      if (!allowedHost(req, res)) {
+         res.sendError(HttpServletResponse.SC_FORBIDDEN, "Unknown host");
+         return;
+      }
+
       addCorsHeaders(req, res);
 
       parseViewId(req);
       parseRequestData(req);
       processStartTimestamp(req, res);
       processUserLocale(req, res);
+      processCustomHeaders(req, res);
 
       if (System.getenv("SKIP_SECURITY") != null) {
          fakeUserLogin(req); // try to consume test user from request header
@@ -253,6 +266,10 @@ public class Auth0Filter implements Filter {
       }
    }
 
+   private void processCustomHeaders(final HttpServletRequest req, final HttpServletResponse res) {
+      res.addHeader("X-Frame-Options", "DENY");
+   }
+
    private void parseRequestData(final HttpServletRequest req) {
       final String correlationId = req.getHeader(CORRELATION_ID);
 
@@ -343,6 +360,19 @@ public class Auth0Filter implements Filter {
             res.addHeader("Access-Control-Allow-Headers", reqHeader);
          }
       }
+   }
+
+   private boolean allowedHost(HttpServletRequest req, HttpServletResponse res) {
+      if (allowedHosts == null || allowedHosts.size() == 0) {
+         return true;
+      }
+
+      final String host = req.getHeader("Host");
+      if (host == null || "".equals(host)) {
+         return false;
+      }
+
+      return allowedHosts.contains(host);
    }
 
 }

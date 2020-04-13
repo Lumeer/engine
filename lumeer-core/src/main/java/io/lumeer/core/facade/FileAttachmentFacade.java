@@ -356,8 +356,8 @@ public class FileAttachmentFacade extends AbstractFacade {
             CopyObjectRequest
                   .builder()
                   .copySource(S3_BUCKET + "/" + getFileAttachmentKey(sourceFileAttachment))
-                  .bucket(S3_BUCKET)
-                  .key(getFileAttachmentKey(targetFileAttachment))
+                  .destinationBucket(S3_BUCKET)
+                  .destinationKey(getFileAttachmentKey(targetFileAttachment))
                   .build()
       );
    }
