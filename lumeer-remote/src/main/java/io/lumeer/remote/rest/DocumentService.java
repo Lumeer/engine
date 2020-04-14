@@ -41,7 +41,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/collections/{collectionId}/documents")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/collections/{collectionId:[0-9a-fA-F]{24}}/documents")
 public class DocumentService extends AbstractService {
 
    @PathParam("organizationId")
@@ -73,7 +73,7 @@ public class DocumentService extends AbstractService {
    }
 
    @PUT
-   @Path("{documentId}/data")
+   @Path("{documentId:[0-9a-fA-F]{24}}/data")
    public Document updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
@@ -81,7 +81,7 @@ public class DocumentService extends AbstractService {
    }
 
    @PATCH
-   @Path("{documentId}/data")
+   @Path("{documentId:[0-9a-fA-F]{24}}/data")
    public Document patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
@@ -89,7 +89,7 @@ public class DocumentService extends AbstractService {
    }
 
    @PUT
-   @Path("{documentId}/meta")
+   @Path("{documentId:[0-9a-fA-F]{24}}/meta")
    public Document updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
@@ -97,7 +97,7 @@ public class DocumentService extends AbstractService {
    }
 
    @PATCH
-   @Path("{documentId}/meta")
+   @Path("{documentId:[0-9a-fA-F]{24}}/meta")
    public Document patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
@@ -105,7 +105,7 @@ public class DocumentService extends AbstractService {
    }
 
    @DELETE
-   @Path("{documentId}")
+   @Path("{documentId:[0-9a-fA-F]{24}}")
    public Response deleteDocument(@PathParam("documentId") String documentId) {
       documentFacade.deleteDocument(collectionId, documentId);
 
@@ -113,7 +113,7 @@ public class DocumentService extends AbstractService {
    }
 
    @GET
-   @Path("{documentId}")
+   @Path("{documentId:[0-9a-fA-F]{24}}")
    public Document getDocument(@PathParam("documentId") String documentId) {
       Document document = documentFacade.getDocument(collectionId, documentId);
       document.setFavorite(documentFacade.isFavorite(document.getId()));
@@ -121,7 +121,7 @@ public class DocumentService extends AbstractService {
    }
 
    @POST
-   @Path("{documentId}/favorite")
+   @Path("{documentId:[0-9a-fA-F]{24}}/favorite")
    public Response addFavoriteDocument(@PathParam("documentId") String documentId) {
       documentFacade.addFavoriteDocument(collectionId, documentId);
 
@@ -129,7 +129,7 @@ public class DocumentService extends AbstractService {
    }
 
    @DELETE
-   @Path("{documentId}/favorite")
+   @Path("{documentId:[0-9a-fA-F]{24}}/favorite")
    public Response removeFavoriteDocument(@PathParam("documentId") String documentId) {
       documentFacade.removeFavoriteDocument(collectionId, documentId);
 

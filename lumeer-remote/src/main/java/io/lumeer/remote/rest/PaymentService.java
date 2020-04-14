@@ -47,7 +47,7 @@ public class PaymentService extends AbstractService {
 
    /* Callback method for the payment gateway. */
    @GET
-   @Path("{organizationId}/{id}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/{id}")
    public Response updatePaymentState(@PathParam("organizationId") final String organizationId, @PathParam("id") final String id) {
       paymentFacade.updatePayment(organizationId, id);
 

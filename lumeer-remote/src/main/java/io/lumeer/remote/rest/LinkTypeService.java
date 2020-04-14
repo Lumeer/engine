@@ -45,7 +45,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/link-types")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/link-types")
 public class LinkTypeService extends AbstractService {
 
    @PathParam("organizationId")
@@ -71,13 +71,13 @@ public class LinkTypeService extends AbstractService {
    }
 
    @PUT
-   @Path("{linkTypeId}")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}")
    public LinkType updateLinkType(@PathParam("linkTypeId") String id, LinkType linkType) {
       return linkTypeFacade.updateLinkType(id, linkType);
    }
 
    @DELETE
-   @Path("{linkTypeId}")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}")
    public Response deleteLinkType(@PathParam("linkTypeId") String id) {
       linkTypeFacade.deleteLinkType(id);
 
@@ -85,7 +85,7 @@ public class LinkTypeService extends AbstractService {
    }
 
    @GET
-   @Path("{linkTypeId}")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}")
    public LinkType getLinkType(@PathParam("linkTypeId") String id) {
       return linkTypeFacade.getLinkType(id);
    }
@@ -102,19 +102,19 @@ public class LinkTypeService extends AbstractService {
    }
 
    @POST
-   @Path("{linkTypeId}/attributes")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/attributes")
    public List<Attribute> createLinkTypeAttributes(@PathParam("linkTypeId") String linkTypeId, List<Attribute> attributes) {
       return new ArrayList<>(linkTypeFacade.createLinkTypeAttributes(linkTypeId, attributes));
    }
 
    @PUT
-   @Path("{linkTypeId}/attributes/{attributeId}")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/attributes/{attributeId}")
    public Attribute updateLinkTypeAttribute(@PathParam("linkTypeId") String linkTypeId, @PathParam("attributeId") String attributeId, Attribute attribute) {
       return linkTypeFacade.updateLinkTypeAttribute(linkTypeId, attributeId, attribute);
    }
 
    @DELETE
-   @Path("{linkTypeId}/attributes/{attributeId}")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/attributes/{attributeId}")
    public Response deleteCollectionAttribute(@PathParam("linkTypeId") String linkTypeId, @PathParam("attributeId") String attributeId) {
       if (attributeId == null) {
          throw new BadRequestException("attributeId");

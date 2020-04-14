@@ -47,7 +47,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/collections")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/collections")
 public class CollectionService extends AbstractService {
 
    @PathParam("organizationId")
@@ -75,7 +75,7 @@ public class CollectionService extends AbstractService {
    }
 
    @PUT
-   @Path("{collectionId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}")
    public Collection updateCollection(@PathParam("collectionId") String collectionId, Collection collection) {
       Collection storedCollection = collectionFacade.updateCollection(collectionId, collection);
       storedCollection.setFavorite(collectionFacade.isFavorite(storedCollection.getId()));
@@ -83,7 +83,7 @@ public class CollectionService extends AbstractService {
    }
 
    @DELETE
-   @Path("{collectionId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}")
    public Response deleteCollection(@PathParam("collectionId") String collectionId) {
       collectionFacade.deleteCollection(collectionId);
 
@@ -91,7 +91,7 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   @Path("{collectionId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}")
    public Collection getCollection(@PathParam("collectionId") String collectionId) {
       Collection collection = collectionFacade.getCollection(collectionId);
       collection.setFavorite(collectionFacade.isFavorite(collection.getId()));
@@ -113,13 +113,13 @@ public class CollectionService extends AbstractService {
 
    @GET
    @Deprecated
-   @Path("{collectionId}/attributes")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/attributes")
    public Set<Attribute> getCollectionAttributes(@PathParam("collectionId") String collectionId) {
       return getCollection(collectionId).getAttributes();
    }
 
    @PUT
-   @Path("{collectionId}/attributes/{attributeId}/default")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/attributes/{attributeId}/default")
    public Response setDefaultAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId) {
       collectionFacade.setDefaultAttribute(collectionId, attributeId);
 
@@ -127,19 +127,19 @@ public class CollectionService extends AbstractService {
    }
 
    @POST
-   @Path("{collectionId}/attributes")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/attributes")
    public Set<Attribute> createCollectionAttributes(@PathParam("collectionId") String collectionId, List<Attribute> attributes) {
       return new HashSet<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
    @PUT
-   @Path("{collectionId}/attributes/{attributeId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/attributes/{attributeId}")
    public Attribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, Attribute attribute) {
       return collectionFacade.updateCollectionAttribute(collectionId, attributeId, attribute);
    }
 
    @DELETE
-   @Path("{collectionId}/attributes/{attributeId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/attributes/{attributeId}")
    public Response deleteCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId) {
       if (attributeId == null) {
          throw new BadRequestException("attributeId");
@@ -151,19 +151,19 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   @Path("{collectionId}/permissions")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions")
    public Permissions getCollectionPermissions(@PathParam("collectionId") String collectionId) {
       return collectionFacade.getCollectionPermissions(collectionId);
    }
 
    @PUT
-   @Path("{collectionId}/permissions/users")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/users")
    public Set<Permission> updateUserPermission(@PathParam("collectionId") String collectionId, Set<Permission> userPermission) {
       return collectionFacade.updateUserPermissions(collectionId, userPermission);
    }
 
    @DELETE
-   @Path("{collectionId}/permissions/users/{userId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/users/{userId}")
    public Response removeUserPermission(@PathParam("collectionId") String collectionId, @PathParam("userId") String userId) {
       collectionFacade.removeUserPermission(collectionId, userId);
 
@@ -171,13 +171,13 @@ public class CollectionService extends AbstractService {
    }
 
    @PUT
-   @Path("{collectionId}/permissions/groups")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/groups")
    public Set<Permission> updateGroupPermission(@PathParam("collectionId") String collectionId, Set<Permission> groupPermission) {
       return collectionFacade.updateGroupPermissions(collectionId, groupPermission);
    }
 
    @DELETE
-   @Path("{collectionId}/permissions/groups/{groupId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
    public Response removeGroupPermission(@PathParam("collectionId") String collectionId, @PathParam("groupId") String groupId) {
       collectionFacade.removeGroupPermission(collectionId, groupId);
 
@@ -185,7 +185,7 @@ public class CollectionService extends AbstractService {
    }
 
    @POST
-   @Path("{collectionId}/favorite")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/favorite")
    public Response addFavoriteCollection(@PathParam("collectionId") String collectionId) {
       collectionFacade.addFavoriteCollection(collectionId);
 
@@ -193,7 +193,7 @@ public class CollectionService extends AbstractService {
    }
 
    @DELETE
-   @Path("{collectionId}/favorite")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/favorite")
    public Response removeFavoriteCollection(@PathParam("collectionId") String collectionId) {
       collectionFacade.removeFavoriteCollection(collectionId);
 

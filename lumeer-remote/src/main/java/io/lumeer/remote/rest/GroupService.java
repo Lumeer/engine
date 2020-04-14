@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("/organizations/{organizationId}/groups")
+@Path("/organizations/{organizationId:[0-9a-fA-F]{24}}/groups")
 public class GroupService extends AbstractService {
 
    @PathParam("organizationId")
