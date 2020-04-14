@@ -45,7 +45,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/views")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/views")
 public class ViewService extends AbstractService {
 
    @PathParam("organizationId")
@@ -68,7 +68,7 @@ public class ViewService extends AbstractService {
    }
 
    @PUT
-   @Path("{viewId}")
+   @Path("{viewId:[0-9a-fA-F]{24}}")
    public View updateView(@PathParam("viewId") String id, View view) {
       final View updatedView = viewFacade.updateView(id, view);
       updatedView.setFavorite(viewFacade.isFavorite(id));
@@ -77,7 +77,7 @@ public class ViewService extends AbstractService {
    }
 
    @DELETE
-   @Path("{viewId}")
+   @Path("{viewId:[0-9a-fA-F]{24}}")
    public Response deleteView(@PathParam("viewId") String id) {
       viewFacade.deleteView(id);
 
@@ -85,7 +85,7 @@ public class ViewService extends AbstractService {
    }
 
    @GET
-   @Path("{viewId}")
+   @Path("{viewId:[0-9a-fA-F]{24}}")
    public View getView(@PathParam("viewId") String id) {
       final View view = viewFacade.getViewById(id);
       view.setFavorite(viewFacade.isFavorite(id));
@@ -110,19 +110,19 @@ public class ViewService extends AbstractService {
    }
 
    @GET
-   @Path("{viewId}/permissions")
+   @Path("{viewId:[0-9a-fA-F]{24}}/permissions")
    public Permissions getViewPermissions(@PathParam("viewId") String id) {
       return viewFacade.getViewPermissions(id);
    }
 
    @PUT
-   @Path("{viewId}/permissions/users")
+   @Path("{viewId:[0-9a-fA-F]{24}}/permissions/users")
    public Set<Permission> updateUserPermission(@PathParam("viewId") String id, Set<Permission> userPermission) {
       return viewFacade.updateUserPermissions(id, userPermission);
    }
 
    @DELETE
-   @Path("{viewId}/permissions/users/{userId}")
+   @Path("{viewId:[0-9a-fA-F]{24}}/permissions/users/{userId}")
    public Response removeUserPermission(@PathParam("viewId") String id, @PathParam("userId") String userId) {
       viewFacade.removeUserPermission(id, userId);
 
@@ -130,13 +130,13 @@ public class ViewService extends AbstractService {
    }
 
    @PUT
-   @Path("{viewId}/permissions/groups")
+   @Path("{viewId:[0-9a-fA-F]{24}}/permissions/groups")
    public Set<Permission> updateGroupPermission(@PathParam("viewId") String id, Set<Permission> groupPermission) {
       return viewFacade.updateGroupPermissions(id, groupPermission);
    }
 
    @DELETE
-   @Path("{viewId}/permissions/groups/{groupId}")
+   @Path("{viewId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
    public Response removeGroupPermission(@PathParam("viewId") String id, @PathParam("groupId") String groupId) {
       viewFacade.removeGroupPermission(id, groupId);
 
@@ -144,7 +144,7 @@ public class ViewService extends AbstractService {
    }
 
    @POST
-   @Path("{viewId}/favorite")
+   @Path("{viewId:[0-9a-fA-F]{24}}/favorite")
    public Response addFavoriteView(@PathParam("viewId") final String viewId) {
       viewFacade.addFavoriteView(viewId);
 
@@ -152,7 +152,7 @@ public class ViewService extends AbstractService {
    }
 
    @DELETE
-   @Path("{viewId}/favorite")
+   @Path("{viewId:[0-9a-fA-F]{24}}/favorite")
    public Response removeFavoriteView(@PathParam("viewId") final String viewId) {
       viewFacade.removeFavoriteView(viewId);
 

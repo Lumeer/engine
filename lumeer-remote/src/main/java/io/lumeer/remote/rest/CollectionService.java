@@ -163,7 +163,7 @@ public class CollectionService extends AbstractService {
    }
 
    @DELETE
-   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/users/{userId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/users/{userId:[0-9a-fA-F]{24}}")
    public Response removeUserPermission(@PathParam("collectionId") String collectionId, @PathParam("userId") String userId) {
       collectionFacade.removeUserPermission(collectionId, userId);
 
@@ -177,7 +177,7 @@ public class CollectionService extends AbstractService {
    }
 
    @DELETE
-   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
+   @Path("{collectionId:[0-9a-fA-F]{24}}/permissions/groups/{groupId:[0-9a-fA-F]{24}}")
    public Response removeGroupPermission(@PathParam("collectionId") String collectionId, @PathParam("groupId") String groupId) {
       collectionFacade.removeGroupPermission(collectionId, groupId);
 

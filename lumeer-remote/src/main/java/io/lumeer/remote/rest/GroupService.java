@@ -64,13 +64,13 @@ public class GroupService extends AbstractService {
    }
 
    @PUT
-   @Path("{groupId}")
+   @Path("{groupId:[0-9a-fA-F]{24}}")
    public Group updateGroup(@PathParam("groupId") String groupId, Group group) {
       return groupFacade.updateGroup(groupId, group);
    }
 
    @DELETE
-   @Path("{groupId}")
+   @Path("{groupId:[0-9a-fA-F]{24}}")
    public Response deleteGroup(@PathParam("groupId") String groupId) {
       groupFacade.deleteGroup(groupId);
 

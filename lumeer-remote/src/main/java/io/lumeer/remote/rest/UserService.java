@@ -54,27 +54,27 @@ public class UserService extends AbstractService {
 
    @GET
    @JsonView(UserViews.DefaultView.class)
-   @Path("organizations/{organizationId}/users")
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users")
    public List<User> getUsers(@PathParam("organizationId") String organizationId) {
       return userFacade.getUsers(organizationId);
    }
 
    @POST
-   @Path("organizations/{organizationId}/users")
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users")
    @JsonView(UserViews.DefaultView.class)
    public User createUserInOrganization(@PathParam("organizationId") String organizationId, User user) {
       return userFacade.createUser(organizationId, user);
    }
 
    @POST
-   @Path("organizations/{organizationId}/projects/{projectId}/users/{invitationType}")
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/users/{invitationType}")
    @JsonView(UserViews.DefaultView.class)
    public List<User> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, @PathParam("invitationType") final InvitationType invitationType, final List<User> users) {
       return userFacade.createUsersInWorkspace(organizationId, projectId, users, invitationType != null ? invitationType : InvitationType.JOIN_ONLY);
    }
 
    @PUT
-   @Path("organizations/{organizationId}/users/{userId}")
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    @JsonView(UserViews.DefaultView.class)
    public User updateUserInOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId, User user) {
@@ -82,7 +82,7 @@ public class UserService extends AbstractService {
    }
 
    @DELETE
-   @Path("organizations/{organizationId}/users/{userId}")
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    public Response deleteUserFromOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId) {
       userFacade.deleteUser(organizationId, userId);
