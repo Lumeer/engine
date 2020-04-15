@@ -44,6 +44,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
+import org.bson.types.ObjectId;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +68,7 @@ import javax.ws.rs.core.UriBuilder;
 public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
-   private static final String GROUP = "testGroup";
+   private static final String GROUP = new ObjectId().toHexString();
 
    private static final String ORGANIZATION_CODE = "TORG";
    private static final String PROJECT_CODE = "TPROJ";
