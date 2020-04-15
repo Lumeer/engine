@@ -228,27 +228,34 @@ public class DocumentFacade extends AbstractFacade {
          return new DocumentsChain(Collections.emptyList(), Collections.emptyList());
       }
 
-      String previousDocumentId = null;
-      if (linkInstances.size() == documents.size()) {
-         previousDocumentId = Utils.firstNotNullElement(linkInstances.get(0).getDocumentIds());
-      }
-
       List<Document> createdDocuments = new ArrayList<>();
       List<LinkInstance> createdLinks = new ArrayList<>();
 
+      String previousDocumentId = linkInstances.size() == documents.size() ? Utils.firstNotNullElement(linkInstances.get(0).getDocumentIds()) : null;
       var linkInstanceIndex = 0;
       for (Document document : documents) {
-         var collection = collectionDao.getCollectionById(document.getCollectionId());
-         var data = createDocument(collection, document);
-         createdDocuments.add(data.getSecond());
+         String currentDocumentId;
+         if (document.getId() != null) {
+            currentDocumentId = document.getId();
+         } else {
+            var collection = collectionDao.getCollectionById(document.getCollectionId());
+            var data = createDocument(collection, document);
+            createdDocuments.add(data.getSecond());
+            currentDocumentId = data.getFirst().getId();
+         }
 
-         var currentDocumentId = data.getFirst().getId();
          var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
          if (previousDocumentId != null && linkInstance != null) {
             var linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
             linkInstance.setDocumentIds(Arrays.asList(previousDocumentId, currentDocumentId));
-            var linkData = linkInstanceFacade.createLinkInstance(linkType, linkInstance);
-            createdLinks.add(linkData.getSecond());
+            if (linkInstance.getId() != null) {
+               var updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
+               updatedLinkInstance.setData(linkInstance.getData());
+               createdLinks.add(updatedLinkInstance);
+            } else {
+               var linkData = linkInstanceFacade.createLinkInstance(linkType, linkInstance);
+               createdLinks.add(linkData.getSecond());
+            }
 
             linkInstanceIndex++;
          }
