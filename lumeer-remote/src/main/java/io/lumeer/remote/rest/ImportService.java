@@ -35,7 +35,7 @@ import javax.ws.rs.core.MediaType;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/import")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/import")
 public class ImportService extends AbstractService {
 
    @PathParam("organizationId")

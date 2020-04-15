@@ -48,10 +48,7 @@ public class CoordinatesParser {
    private final static String POSITIVE = "NEO";
 
    /**
-    * This parses string representations of latitude and longitude values. It tries its best to interpret the values and
-    * indicates any problems in its result as {@link org.gbif.api.vocabulary.OccurrenceIssue}.
-    * When the {@link ParseResult.STATUS} is FAIL the payload will be null and one or more issues should be set
-    * in {@link org.gbif.common.parsers.core.OccurrenceParseResult#getIssues()}.
+    * This parses string representations of latitude and longitude values. It tries its best to interpret the values.
     *
     * Coordinate precision will be 6 decimals at most, any more precise values will be rounded.
     *

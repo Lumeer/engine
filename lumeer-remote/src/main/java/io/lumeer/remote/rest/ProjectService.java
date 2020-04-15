@@ -47,7 +47,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects")
 public class ProjectService extends AbstractService {
 
    @PathParam("organizationId")
@@ -75,7 +75,7 @@ public class ProjectService extends AbstractService {
    }
 
    @POST
-   @Path("{projectId}/templates/{templateId}")
+   @Path("{projectId:[0-9a-fA-F]{24}}/templates/{templateId}")
    public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId, @QueryParam("l") final Language language) {
       workspaceKeeper.setProjectId(projectId);
 
@@ -89,7 +89,7 @@ public class ProjectService extends AbstractService {
    }
 
    @PUT
-   @Path("{projectId}")
+   @Path("{projectId:[0-9a-fA-F]{24}}")
    public Project updateProject(@PathParam("projectId") String projectId, Project project) {
       Project storedProject = projectFacade.updateProject(projectId, project);
       storedProject.setCollectionsCount(projectFacade.getCollectionsCount(storedProject));
@@ -97,7 +97,7 @@ public class ProjectService extends AbstractService {
    }
 
    @DELETE
-   @Path("{projectId}")
+   @Path("{projectId:[0-9a-fA-F]{24}}")
    public Response deleteProject(@PathParam("projectId") String projectId) {
       projectFacade.deleteProject(projectId);
 
@@ -105,7 +105,7 @@ public class ProjectService extends AbstractService {
    }
 
    @GET
-   @Path("{projectId}")
+   @Path("{projectId:[0-9a-fA-F]{24}}")
    public Project getProject(@PathParam("projectId") String projectId) {
       Project project = projectFacade.getProjectById(projectId);
       project.setCollectionsCount(projectFacade.getCollectionsCount(project));
@@ -113,7 +113,7 @@ public class ProjectService extends AbstractService {
    }
 
    @GET
-   @Path("code/{projectCode}")
+   @Path("code/{projectCode:[a-zA-Z0-9_]{2,5}}")
    public Project getProjectByCode(@PathParam("projectCode") String projectCode) {
       Project project = projectFacade.getProjectByCode(projectCode);
       project.setCollectionsCount(projectFacade.getCollectionsCount(project));
@@ -134,19 +134,19 @@ public class ProjectService extends AbstractService {
    }
 
    @GET
-   @Path("{projectId}/permissions")
+   @Path("{projectId:[0-9a-fA-F]{24}}/permissions")
    public Permissions getProjectPermissions(@PathParam("projectId") String projectId) {
       return projectFacade.getProjectPermissions(projectId);
    }
 
    @PUT
-   @Path("{projectId}/permissions/users")
+   @Path("{projectId:[0-9a-fA-F]{24}}/permissions/users")
    public Set<Permission> updateUserPermission(@PathParam("projectId") String projectId, Set<Permission> userPermission) {
       return projectFacade.updateUserPermissions(projectId, userPermission);
    }
 
    @DELETE
-   @Path("{projectId}/permissions/users/{userId}")
+   @Path("{projectId:[0-9a-fA-F]{24}}/permissions/users/{userId}")
    public Response removeUserPermission(@PathParam("projectId") String projectId, @PathParam("userId") String userId) {
       projectFacade.removeUserPermission(projectId, userId);
 
@@ -154,13 +154,13 @@ public class ProjectService extends AbstractService {
    }
 
    @PUT
-   @Path("{projectId}/permissions/groups")
+   @Path("{projectId:[0-9a-fA-F]{24}}/permissions/groups")
    public Set<Permission> updateGroupPermission(@PathParam("projectId") String projectId, Set<Permission> groupPermission) {
       return projectFacade.updateGroupPermissions(projectId, groupPermission);
    }
 
    @DELETE
-   @Path("{projectId}/permissions/groups/{groupId}")
+   @Path("{projectId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
    public Response removeGroupPermission(@PathParam("projectId") String projectId, @PathParam("groupId") String groupId) {
       projectFacade.removeGroupPermission(projectId, groupId);
 
@@ -168,7 +168,7 @@ public class ProjectService extends AbstractService {
    }
 
    @GET
-   @Path("{projectId}/raw")
+   @Path("{projectId:[0-9a-fA-F]{24}}/raw")
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
       return projectFacade.getRawProjectContent(projectId);

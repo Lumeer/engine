@@ -39,7 +39,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("/organizations/{organizationId}/groups")
+@Path("/organizations/{organizationId:[0-9a-fA-F]{24}}/groups")
 public class GroupService extends AbstractService {
 
    @PathParam("organizationId")
@@ -64,13 +64,13 @@ public class GroupService extends AbstractService {
    }
 
    @PUT
-   @Path("{groupId}")
+   @Path("{groupId:[0-9a-fA-F]{24}}")
    public Group updateGroup(@PathParam("groupId") String groupId, Group group) {
       return groupFacade.updateGroup(groupId, group);
    }
 
    @DELETE
-   @Path("{groupId}")
+   @Path("{groupId:[0-9a-fA-F]{24}}")
    public Response deleteGroup(@PathParam("groupId") String groupId) {
       groupFacade.deleteGroup(groupId);
 

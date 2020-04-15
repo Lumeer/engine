@@ -39,7 +39,7 @@ import javax.ws.rs.core.MediaType;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/data")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/data")
 public class DataService extends AbstractService {
 
    @PathParam("organizationId")

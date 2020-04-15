@@ -38,7 +38,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/sequences")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/sequences")
 public class SequenceService extends AbstractService {
 
    @PathParam("organizationId")
@@ -56,7 +56,7 @@ public class SequenceService extends AbstractService {
    }
 
    @PUT
-   @Path("{sequenceId}")
+   @Path("{sequenceId:[0-9a-fA-F]{24}}")
    public Sequence updateSequence(@PathParam("sequenceId") final String sequenceId, final Sequence sequence) {
       Sequence storedSequence = sequenceFacade.updateSequence(sequenceId, sequence);
       return storedSequence;
@@ -70,7 +70,7 @@ public class SequenceService extends AbstractService {
    }
 
    @DELETE
-   @Path("{sequenceId}")
+   @Path("{sequenceId:[0-9a-fA-F]{24}}")
    public Response deleteSequence(@PathParam("sequenceId") final String sequenceId) {
       sequenceFacade.deleteSequence(sequenceId);
       return Response.ok().link(getParentUri(sequenceId), "parent").build();

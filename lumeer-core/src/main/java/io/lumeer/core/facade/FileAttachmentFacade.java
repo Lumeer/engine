@@ -300,6 +300,7 @@ public class FileAttachmentFacade extends AbstractFacade {
     * @param collectionId ID of a collection.
     * @param documentId   ID of a document.
     * @param attributeId  ID of an attribute.
+    * @param type         the type of file attachment.
     * @return Files present in S3 bucket for the specified collection, document and its attribute.
     */
    public List<FileAttachment> listFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {

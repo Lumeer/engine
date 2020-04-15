@@ -40,7 +40,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/files")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/files")
 public class FileAttachmentService extends AbstractService {
 
    @PathParam("organizationId")
@@ -90,56 +90,56 @@ public class FileAttachmentService extends AbstractService {
 
    // Gets the state of file attachments from DB.
    @GET
-   @Path("collection/{collectionId}/{documentId}/{attributeId}")
+   @Path("collection/{collectionId:[0-9a-fA-F]{24}}/{documentId:[0-9a-fA-F]{24}}/{attributeId}")
    public List<FileAttachment> getFileAttachmentsCollection(@PathParam("collectionId") final String collectionId, @PathParam("documentId") final String documentId, @PathParam("attributeId") final String attributeId) {
       return fileAttachmentFacade.getAllFileAttachments(collectionId, documentId, attributeId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    // Gets the state of file attachments from DB.
    @GET
-   @Path("link/{linkTypeId}/{linkInstanceId}/{attributeId}")
+   @Path("link/{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}/{attributeId}")
    public List<FileAttachment> getFileAttachmentsLink(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId, @PathParam("attributeId") final String attributeId) {
       return fileAttachmentFacade.getAllFileAttachments(linkTypeId, linkInstanceId, attributeId, FileAttachment.AttachmentType.LINK);
    }
 
    // Gets the state of file attachments from DB.
    @GET
-   @Path("collection/{collectionId}/{documentId}")
+   @Path("collection/{collectionId:[0-9a-fA-F]{24}}/{documentId:[0-9a-fA-F]{24}}")
    public List<FileAttachment> getFileAttachmentsCollection(@PathParam("collectionId") final String collectionId, @PathParam("documentId") final String documentId) {
       return fileAttachmentFacade.getAllFileAttachments(collectionId, documentId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    // Gets the state of file attachments from DB.
    @GET
-   @Path("link/{linkTypeId}/{linkInstanceId}")
+   @Path("link/{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}")
    public List<FileAttachment> getFileAttachmentsLink(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId) {
       return fileAttachmentFacade.getAllFileAttachments(linkTypeId, linkInstanceId, FileAttachment.AttachmentType.LINK);
    }
 
    // Gets the state of file attachments from DB.
    @GET
-   @Path("collection/{collectionId}")
+   @Path("collection/{collectionId:[0-9a-fA-F]{24}}")
    public List<FileAttachment> getFileAttachmentsCollection(@PathParam("collectionId") final String collectionId) {
       return fileAttachmentFacade.getAllFileAttachments(collectionId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    // Gets the state of file attachments from DB.
    @GET
-   @Path("link/{linkTypeId}")
+   @Path("link/{linkTypeId:[0-9a-fA-F]{24}}")
    public List<FileAttachment> getFileAttachmentsLink(@PathParam("linkTypeId") final String linkTypeId) {
       return fileAttachmentFacade.getAllFileAttachments(linkTypeId, FileAttachment.AttachmentType.LINK);
    }
 
    // Gets the real file attachments according to S3 content. The results might not have all corresponding DB entries, or some DB entries might not have their corresponding S3 keys.
    @GET
-   @Path("collection/{collectionId}/{documentId}/{attributeId}/details")
+   @Path("collection/{collectionId:[0-9a-fA-F]{24}}/{documentId:[0-9a-fA-F]{24}}/{attributeId}/details")
    public List<FileAttachment> listFileAttachmentsCollection(@PathParam("collectionId") final String collectionId, @PathParam("documentId") final String documentId, @PathParam("attributeId") final String attributeId) {
       return fileAttachmentFacade.listFileAttachments(collectionId, documentId, attributeId, FileAttachment.AttachmentType.DOCUMENT);
    }
 
    // Gets the real file attachments according to S3 content. The results might not have all corresponding DB entries, or some DB entries might not have their corresponding S3 keys.
    @GET
-   @Path("link/{linkTypeId}/{linkInstanceId}/{attributeId}/details")
+   @Path("link/{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}/{attributeId}/details")
    public List<FileAttachment> listFileAttachmentsLink(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId, @PathParam("attributeId") final String attributeId) {
       return fileAttachmentFacade.listFileAttachments(linkTypeId, linkInstanceId, attributeId, FileAttachment.AttachmentType.LINK);
    }

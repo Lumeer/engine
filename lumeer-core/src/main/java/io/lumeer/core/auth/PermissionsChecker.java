@@ -133,6 +133,7 @@ public class PermissionsChecker {
 
    /**
     * Checks if user is manager in organization or project
+    * @return whether the current user is a manager.
     */
    public boolean isManager() {
       return isManager(authenticatedUser.getCurrentUserId());
@@ -306,6 +307,8 @@ public class PermissionsChecker {
     *
     * @param resource
     *       any resource with defined permissions
+    * @param userId
+    *       user ID to get the roles of.
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {

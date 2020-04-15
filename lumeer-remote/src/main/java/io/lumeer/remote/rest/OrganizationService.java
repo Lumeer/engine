@@ -73,13 +73,13 @@ public class OrganizationService extends AbstractService {
    }
 
    @PUT
-   @Path("{organizationId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}")
    public Organization updateOrganization(@PathParam("organizationId") String organizationId, Organization organization) {
       return organizationFacade.updateOrganization(organizationId, organization);
    }
 
    @DELETE
-   @Path("{organizationId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}")
    public Response deleteOrganization(@PathParam("organizationId") String organizationId) {
       organizationFacade.deleteOrganization(organizationId);
 
@@ -87,13 +87,13 @@ public class OrganizationService extends AbstractService {
    }
 
    @GET
-   @Path("{organizationId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}")
    public Organization getOrganization(@PathParam("organizationId") String organizationId) {
       return organizationFacade.getOrganizationById(organizationId);
    }
 
    @GET
-   @Path("code/{organizationCode}")
+   @Path("code/{organizationCode:[a-zA-Z0-9_]{2,5}}")
    public Organization getOrganizationByCode(@PathParam("organizationCode") String organizationCode) {
       return organizationFacade.getOrganizationByCode(organizationCode);
    }
@@ -110,19 +110,19 @@ public class OrganizationService extends AbstractService {
    }
 
    @GET
-   @Path("{organizationId}/permissions")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions")
    public Permissions getOrganizationPermissions(@PathParam("organizationId") String organizationId) {
       return organizationFacade.getOrganizationPermissions(organizationId);
    }
 
    @PUT
-   @Path("{organizationId}/permissions/users")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/users")
    public Set<Permission> updateUserPermission(@PathParam("organizationId") String organizationId, Set<Permission> userPermission) {
       return organizationFacade.updateUserPermissions(organizationId, userPermission);
    }
 
    @DELETE
-   @Path("{organizationId}/permissions/users/{userId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/users/{userId:[0-9a-fA-F]{24}}")
    public Response removeUserPermission(@PathParam("organizationId") String organizationId, @PathParam("userId") String userId) {
       organizationFacade.removeUserPermission(organizationId, userId);
 
@@ -130,13 +130,13 @@ public class OrganizationService extends AbstractService {
    }
 
    @PUT
-   @Path("{organizationId}/permissions/groups")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/groups")
    public Set<Permission> updateGroupPermission(@PathParam("organizationId") String organizationId, Set<Permission> groupPermission) {
       return organizationFacade.updateGroupPermissions(organizationId, groupPermission);
    }
 
    @DELETE
-   @Path("{organizationId}/permissions/groups/{groupId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
    public Response removeGroupPermission(@PathParam("organizationId") String organizationId, @PathParam("groupId") String groupId) {
       organizationFacade.removeGroupPermission(organizationId, groupId);
 
@@ -145,21 +145,21 @@ public class OrganizationService extends AbstractService {
 
    /* Gets a complete list of all payments sorted by valid until descending. */
    @GET
-   @Path("{organizationId}/payments")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/payments")
    public List<Payment> getPayments(@PathParam("organizationId") final String organizationId) {
       return paymentFacade.getPayments(organizationFacade.getOrganizationById(organizationId));
    }
 
    /* Gets a complete list of all payments sorted by valid until descending. */
    @GET
-   @Path("{organizationId}/payment/{paymentId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/payment/{paymentId}")
    public Payment getPayments(@PathParam("organizationId") final String organizationId, @PathParam("paymentId") final String paymentId) {
       return paymentFacade.getPayment(organizationFacade.getOrganizationById(organizationId), paymentId);
    }
 
    /* Gets the current service level the organization has prepaid. */
    @GET
-   @Path("{organizationId}/serviceLimit")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/serviceLimit")
    public ServiceLimits getServiceLimits(@PathParam("organizationId") final String organizationId) {
       return paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganizationById(organizationId));
    }
@@ -201,7 +201,7 @@ public class OrganizationService extends AbstractService {
    /* Creates a new payment. Communicates with payment gateway. Returns the payment updated with payment ID.
       Must pass RETURN_URL header for the successful redirect. */
    @POST
-   @Path("{organizationId}/payments")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/payments")
    public Payment createPayment(@PathParam("organizationId") final String organizationCode, final Payment payment,
          @Context final HttpServletRequest servletContext) {
       final String notifyUrl = servletContext.getRequestURL().toString().replaceAll("/payments$", "").replaceFirst("organizations", "paymentNotify");
@@ -215,13 +215,13 @@ public class OrganizationService extends AbstractService {
    }
 
    @GET
-   @Path("{organizationId}/contact")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/contact")
    public CompanyContact getCompanyContact(@PathParam("organizationId") final String organizationId) {
       return companyContactFacade.getCompanyContact(organizationFacade.getOrganizationById(organizationId));
    }
 
    @PUT
-   @Path("{organizationId}/contact")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/contact")
    public CompanyContact setCompanyContact(@PathParam("organizationId") final String organizationId, final CompanyContact companyContact) {
       return companyContactFacade.setCompanyContact(organizationFacade.getOrganizationById(organizationId), companyContact);
    }

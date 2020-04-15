@@ -43,7 +43,7 @@ import javax.ws.rs.core.Response;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId}/projects/{projectId}/link-instances")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/link-instances")
 public class LinkInstanceService extends AbstractService {
 
    @PathParam("organizationId")
@@ -76,31 +76,31 @@ public class LinkInstanceService extends AbstractService {
    }
 
    @GET
-   @Path("{linkTypeId}/{linkInstanceId}")
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}")
    public LinkInstance updateLinkInstanceData(@PathParam("linkTypeId") String linkTypeId, @PathParam("linkInstanceId") String linkInstanceId) {
       return linkInstanceFacade.getLinkInstance(linkTypeId, linkInstanceId);
    }
 
    @PUT
-   @Path("{linkInstanceId}")
+   @Path("{linkInstanceId:[0-9a-fA-F]{24}}")
    public LinkInstance updateLinkInstance(@PathParam("linkInstanceId") String id, LinkInstance linkInstance) {
       return linkInstanceFacade.updateLinkInstance(id, linkInstance);
    }
 
    @PUT
-   @Path("{linkInstanceId}/data")
+   @Path("{linkInstanceId:[0-9a-fA-F]{24}}/data")
    public LinkInstance updateLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
       return linkInstanceFacade.updateLinkInstanceData(id, data);
    }
 
    @PATCH
-   @Path("{linkInstanceId}/data")
+   @Path("{linkInstanceId:[0-9a-fA-F]{24}}/data")
    public LinkInstance patchLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
       return linkInstanceFacade.patchLinkInstanceData(id, data);
    }
 
    @DELETE
-   @Path("{linkInstanceId}")
+   @Path("{linkInstanceId:[0-9a-fA-F]{24}}")
    public Response deleteLinkInstance(@PathParam("linkInstanceId") String id) {
       linkInstanceFacade.deleteLinkInstance(id);
 
