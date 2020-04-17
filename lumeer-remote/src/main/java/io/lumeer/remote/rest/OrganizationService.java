@@ -93,7 +93,7 @@ public class OrganizationService extends AbstractService {
    }
 
    @GET
-   @Path("code/{organizationCode:[a-zA-Z0-9_]{2,5}}")
+   @Path("code/{organizationCode:[a-zA-Z0-9_]{2,6}}")
    public Organization getOrganizationByCode(@PathParam("organizationCode") String organizationCode) {
       return organizationFacade.getOrganizationByCode(organizationCode);
    }
