@@ -20,6 +20,7 @@ package io.lumeer.core.task.executor;/*
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.rule.ZapierRule;
+import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -61,7 +62,17 @@ public class ZapierRuleTaskExecutor {
       oldDocument.getData()
                  .entrySet()
                  .stream()
-                 .forEach(entry -> doc.put("_previous_" + attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()));
+                 .forEach(entry -> {
+                    final String key = attributeNames.getOrDefault(entry.getKey(), entry.getKey());
+                    final Object o = doc.get(key);
+                    if ((o == null && entry.getValue() != null) || (o != null && !o.equals(entry.getValue()))) {
+                       doc.put(ZapierFacade.CHANGED_PREFIX + key, true);
+                    } else {
+                       doc.put(ZapierFacade.CHANGED_PREFIX + key, false);
+                    }
+
+                    doc.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + key, entry.getValue());
+                 });
 
       final Entity entity = Entity.json(new DataDocument(
             document.getData()

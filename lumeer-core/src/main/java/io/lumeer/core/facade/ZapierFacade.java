@@ -46,6 +46,9 @@ import javax.inject.Inject;
 @RequestScoped
 public class ZapierFacade extends AbstractFacade {
 
+   public static final String CHANGED_PREFIX = "_changed_";
+   public static final String PREVIOUS_VALUE_PREFIX = "_previous_";
+
    public static class ZapierField {
       private final String key;
       private final String label;
@@ -310,7 +313,19 @@ public class ZapierFacade extends AbstractFacade {
             .stream()
             .map(Document::getData)
             .map(data -> translateAttributes(collection, data))
+            .map(data -> addModifiers(data))
             .collect(Collectors.toList());
+   }
+
+   private DataDocument addModifiers(final DataDocument data) {
+      final DataDocument result = new DataDocument(data);
+
+      data.entrySet().stream().forEach(entry -> {
+         result.append(CHANGED_PREFIX + entry.getKey(), false);
+         result.append(PREVIOUS_VALUE_PREFIX + entry.getKey(), entry.getValue());
+      });
+
+      return data;
    }
 
    private DataDocument translateAttributes(final Collection collection, final DataDocument data) {
