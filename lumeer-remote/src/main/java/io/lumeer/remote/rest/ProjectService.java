@@ -113,7 +113,7 @@ public class ProjectService extends AbstractService {
    }
 
    @GET
-   @Path("code/{projectCode:[a-zA-Z0-9_]{2,5}}")
+   @Path("code/{projectCode:[a-zA-Z0-9_]{2,6}}")
    public Project getProjectByCode(@PathParam("projectCode") String projectCode) {
       Project project = projectFacade.getProjectByCode(projectCode);
       project.setCollectionsCount(projectFacade.getCollectionsCount(project));
