@@ -47,8 +47,21 @@ public class ZapierRuleTaskExecutor {
 
    public void execute() {
       final Document document = ruleTask.getNewDocument();
+      final Document oldDocument = ruleTask.getOldDocument();
       final Collection collection = ruleTask.getCollection();
       final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+      final DataDocument doc = new DataDocument(
+            document.getData()
+                    .entrySet()
+                    .stream()
+                    .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+      );
+      oldDocument.getData()
+                 .entrySet()
+                 .stream()
+                 .forEach(entry -> doc.put("_previous_" + attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()));
 
       final Entity entity = Entity.json(new DataDocument(
             document.getData()

@@ -63,6 +63,8 @@ public abstract class Template {
             return new ScrumTemplate();
          case RMTW:
             return new RemoteWorkTemplate();
+         case CMTRY:
+            return new CemeteryTemplate();
          default:
             return null;
       }
