@@ -22,11 +22,8 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.ImportedCollection;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.dao.DataDao;
-import io.lumeer.storage.api.dao.DocumentDao;
 
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
@@ -58,15 +55,6 @@ public class ImportFacade extends AbstractFacade {
 
    @Inject
    private CollectionDao collectionDao;
-
-   @Inject
-   private DocumentDao documentDao;
-
-   @Inject
-   private DataDao dataDao;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
 
    public Collection importDocuments(String format, ImportedCollection importedCollection) {
       Collection collectionToCreate = importedCollection.getCollection();
@@ -103,7 +91,7 @@ public class ImportFacade extends AbstractFacade {
          return;
       }
       CsvParserSettings settings = new CsvParserSettings();
-      settings.detectFormatAutomatically();
+      settings.detectFormatAutomatically(',', ';');
       settings.setHeaderExtractionEnabled(true);
 
       CsvParser parser = new CsvParser(settings);
