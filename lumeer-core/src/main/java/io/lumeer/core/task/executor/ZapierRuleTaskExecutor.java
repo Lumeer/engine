@@ -74,13 +74,7 @@ public class ZapierRuleTaskExecutor {
                     doc.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + key, entry.getValue());
                  });
 
-      final Entity entity = Entity.json(new DataDocument(
-            document.getData()
-                    .entrySet()
-                    .stream()
-                    .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-      ));
+      final Entity<DataDocument> entity = Entity.json(doc);
 
       final Client client = ClientBuilder.newClient();
       client.target(rule.getHookUrl()).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
