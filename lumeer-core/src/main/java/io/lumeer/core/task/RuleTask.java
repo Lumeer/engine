@@ -37,7 +37,6 @@ public class RuleTask extends AbstractContextualTask {
    private Document newDocument;
    private LinkInstance oldLinkInstance;
    private LinkInstance newLinkInstance;
-   private AbstractContextualTask parent;
 
    public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
       this.ruleName = ruleName;
