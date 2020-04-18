@@ -325,7 +325,7 @@ public class ZapierFacade extends AbstractFacade {
          result.append(PREVIOUS_VALUE_PREFIX + entry.getKey(), entry.getValue());
       });
 
-      return data;
+      return result;
    }
 
    private DataDocument translateAttributes(final Collection collection, final DataDocument data) {
