@@ -313,7 +313,7 @@ public class ZapierFacade extends AbstractFacade {
             .stream()
             .map(Document::getData)
             .map(data -> translateAttributes(collection, data))
-            .map(data -> addModifiers(data))
+            .map(this::addModifiers)
             .collect(Collectors.toList());
    }
 

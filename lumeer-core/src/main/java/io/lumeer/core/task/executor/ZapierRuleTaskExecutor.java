@@ -24,7 +24,9 @@ import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
@@ -59,20 +61,21 @@ public class ZapierRuleTaskExecutor {
                     .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
       );
-      oldDocument.getData()
-                 .entrySet()
-                 .stream()
-                 .forEach(entry -> {
-                    final String key = attributeNames.getOrDefault(entry.getKey(), entry.getKey());
-                    final Object o = doc.get(key);
-                    if ((o == null && entry.getValue() != null) || (o != null && !o.equals(entry.getValue()))) {
-                       doc.put(ZapierFacade.CHANGED_PREFIX + key, true);
-                    } else {
-                       doc.put(ZapierFacade.CHANGED_PREFIX + key, false);
-                    }
+      final Set<String> keys = new HashSet<>(oldDocument.getData().keySet());
+      keys.addAll(document.getData().keySet());
 
-                    doc.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + key, entry.getValue());
-                 });
+      keys.forEach(key -> {
+         final String normalizedKey = attributeNames.getOrDefault(key, key);
+         final Object oldValue = oldDocument.getData().get(normalizedKey);
+         final Object newValue = doc.get(normalizedKey);
+         if ((oldValue == null && newValue != null) || (newValue == null && oldValue != null) || (newValue != null && !newValue.equals(oldValue))) {
+            doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, true);
+         } else {
+            doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, false);
+         }
+
+         doc.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + normalizedKey, oldValue);
+      });
 
       final Entity<DataDocument> entity = Entity.json(doc);
 
