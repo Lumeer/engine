@@ -67,7 +67,7 @@ public class ZapierRuleTaskExecutor {
       keys.forEach(key -> {
          final String normalizedKey = attributeNames.getOrDefault(key, key);
          final Object oldValue = oldDocument.getData().get(normalizedKey);
-         final Object newValue = doc.get(normalizedKey);
+         final Object newValue = document.getData().get(normalizedKey);
          if ((oldValue == null && newValue != null) || (newValue == null && oldValue != null) || (newValue != null && !newValue.equals(oldValue))) {
             doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, true);
          } else {
