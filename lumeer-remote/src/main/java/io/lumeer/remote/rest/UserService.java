@@ -130,4 +130,10 @@ public class UserService extends AbstractService {
 
       return Response.ok().build();
    }
+
+   @GET
+   @Path("check")
+   public Response checkAuthentication() {
+      return Response.ok().build();
+   }
 }
