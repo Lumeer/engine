@@ -70,7 +70,10 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Organization createOrganization(final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
-      checkSystemPermission();
+
+      if (getOrganizations().stream().anyMatch(o -> permissionsChecker.hasRole(o, Role.READ))) {
+         checkSystemPermission();
+      }
 
       Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
