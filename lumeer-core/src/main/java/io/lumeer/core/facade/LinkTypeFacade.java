@@ -26,6 +26,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -60,6 +61,9 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private ViewFacade viewFacade;
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
@@ -128,7 +132,18 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType getLinkType(final String linkTypeId) {
-      return assignComputedParameters(linkTypeDao.getLinkType(linkTypeId));
+      var linkType = linkTypeDao.getLinkType(linkTypeId);
+      var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
+      if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))) {
+         return assignComputedParameters(linkType);
+      }
+
+      var viewsLinkTypes = viewFacade.getViewsLinkTypes();
+      if (viewsLinkTypes.stream().anyMatch(lt -> lt.getId().equals(linkTypeId))) {
+         return assignComputedParameters(linkType);
+      }
+
+      throw new NoPermissionException(collections.get(0));
    }
 
    public List<LinkType> getLinkTypes() {
