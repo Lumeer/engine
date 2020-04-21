@@ -32,6 +32,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -86,6 +87,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private ConversionFacade conversionFacade;
+
+   @Inject
+   private ViewFacade viewFacade;
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
@@ -153,9 +157,16 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection getCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
+      if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
+         return mapResource(collection);
+      }
 
-      return mapResource(collection);
+      var viewsCollections = viewFacade.getViewsCollections();
+      if (viewsCollections.stream().anyMatch(coll -> coll.getId().equals(collectionId))) {
+         return mapResource(collection);
+      }
+
+      throw new NoPermissionException(collection);
    }
 
    public List<Collection> getCollections() {
