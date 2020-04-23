@@ -28,6 +28,8 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.io.StringReader;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -170,7 +172,7 @@ public class ImportFacade extends AbstractFacade {
 
       for (int i = 0; i < Math.min(headers.length, row.length); i++) {
          if (row[i] != null) {
-            d.append(headers[i], row[i]);
+            d.append(headers[i], StringEscapeUtils.escapeHtml4(row[i]));
             counts[i]++;
          }
       }
