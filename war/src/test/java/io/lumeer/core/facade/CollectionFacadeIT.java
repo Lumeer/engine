@@ -44,6 +44,7 @@ import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.ListCollectionsIn10SecondsTask;
 import io.lumeer.core.task.TaskExecutor;
+import io.lumeer.core.task.executor.ZapierRuleTaskExecutor;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -115,6 +116,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private static final String CODE2 = "TCOLL2";
    private static final String CODE3 = "TCOLL3";
    private static final String CODE4 = "TCOLL4";
+   private static final String CODE5 = "TCOLL5";
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -965,6 +967,32 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       assertThat(res).hasSize(4);
       assertThat(res).contains(Map.entry("Task-2", "94%"));
+   }
+
+   @Test
+   public void testZapierUpdateReporting() {
+      Collection collection = collectionFacade.createCollection(prepareCollection(CODE5));
+      collectionFacade.createCollectionAttributes(
+            collection.getId(),
+            Arrays.asList(
+                  new Attribute("a1", "Task", null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+            )
+      );
+      collection = collectionFacade.getCollection(collection.getId()); // read it back with the attributes
+
+      var oldDocument = documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-1")));
+      var newDocument = documentFacade.patchDocumentData(collection.getId(), oldDocument.getId(), new DataDocument("a2", "10"));
+
+      var diffData = ZapierRuleTaskExecutor.getZapierUpdateDocumentMessage(collection, oldDocument, newDocument);
+
+      assertThat(diffData).hasSize(7).containsKey("_id");
+      assertThat(diffData.getString("Task")).isEqualTo("Task-1");
+      assertThat(diffData.getBoolean("_changed_Task")).isEqualTo(false);
+      assertThat(diffData.getString("_previous_Task")).isEqualTo("Task-1");
+      assertThat(diffData.getLong("State")).isEqualTo(10L);
+      assertThat(diffData.getBoolean("_changed_State")).isEqualTo(true);
+      assertThat(diffData.getString("_previous_State")).isEqualTo(null);
    }
 
    public void testTaskExecutor() throws InterruptedException {

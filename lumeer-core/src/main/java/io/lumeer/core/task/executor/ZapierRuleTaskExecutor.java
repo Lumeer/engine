@@ -52,22 +52,31 @@ public class ZapierRuleTaskExecutor {
       final Document document = ruleTask.getNewDocument();
       final Document oldDocument = ruleTask.getOldDocument();
       final Collection collection = ruleTask.getCollection();
+      final Entity<DataDocument> entity = Entity.json(getZapierUpdateDocumentMessage(collection, oldDocument, document));
+
+      final Client client = ClientBuilder.newClient();
+      client.target(rule.getHookUrl()).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
+      client.close();
+   }
+
+   public static DataDocument getZapierUpdateDocumentMessage(final Collection collection, final Document oldDocument, final Document newDocument) {
       final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
       final DataDocument doc = new DataDocument(
-            document.getData()
-                    .entrySet()
-                    .stream()
-                    .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+            newDocument.getData()
+                       .entrySet()
+                       .stream()
+                       .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
+                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
       );
       final Set<String> keys = new HashSet<>(oldDocument.getData().keySet());
-      keys.addAll(document.getData().keySet());
+      keys.addAll(newDocument.getData().keySet());
+      keys.remove("_id");
 
       keys.forEach(key -> {
          final String normalizedKey = attributeNames.getOrDefault(key, key);
-         final Object oldValue = oldDocument.getData().get(normalizedKey);
-         final Object newValue = document.getData().get(normalizedKey);
+         final Object oldValue = oldDocument.getData().get(key);
+         final Object newValue = newDocument.getData().get(key);
          if ((oldValue == null && newValue != null) || (newValue == null && oldValue != null) || (newValue != null && !newValue.equals(oldValue))) {
             doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, true);
          } else {
@@ -77,10 +86,7 @@ public class ZapierRuleTaskExecutor {
          doc.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + normalizedKey, oldValue);
       });
 
-      final Entity<DataDocument> entity = Entity.json(doc);
-
-      final Client client = ClientBuilder.newClient();
-      client.target(rule.getHookUrl()).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
-      client.close();
+      return doc;
    }
+
 }
