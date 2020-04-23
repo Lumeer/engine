@@ -65,6 +65,10 @@ public abstract class Template {
             return new RemoteWorkTemplate();
          case CMTRY:
             return new CemeteryTemplate();
+         case ROADM:
+            return new ProductRoadmapTemplate();
+         case LAUNC:
+            return new ProductLaunchTemplate();
          default:
             return null;
       }
