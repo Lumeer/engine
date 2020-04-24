@@ -30,6 +30,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -319,6 +320,10 @@ public class UserFacade extends AbstractFacade {
          currentUser.setWizardDismissed(user.getWizardDismissed());
       }
 
+      if (user.getReferral() != null && (currentUser.getReferral() == null || "".equals(currentUser.getReferral())) && !user.getReferral().equals(Utils.strHexTo36(currentUser.getId()))) {
+         currentUser.setReferral(user.getReferral());
+      }
+
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
@@ -357,6 +362,10 @@ public class UserFacade extends AbstractFacade {
       freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " sent feedback in app", feedback.getMessage());
 
       return feedbackDao.createFeedback(feedback);
+   }
+
+   public boolean isUserAffiliate(final String userId) {
+      return userDao.getUserById(userId).isAffiliatePartner();
    }
 
    private User keepOnlyOrganizationGroups(User user, String organizationId) {

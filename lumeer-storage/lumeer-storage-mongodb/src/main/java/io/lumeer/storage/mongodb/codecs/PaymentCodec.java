@@ -49,6 +49,7 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
    public static final String CURRENCY = "currency";
    public static final String GW_URL = "gwUrl";
    public static final String VERSION = "version";
+   public static final String REFERRAL = "referral";
 
    private final Codec<Document> documentCodec;
 
@@ -77,8 +78,9 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
       String language = bson.getString(LANGUAGE);
       String currency = bson.getString(CURRENCY);
       String gwUrl = bson.getString(GW_URL);
+      String referral = bson.getString(REFERRAL);
 
-      Payment payment = new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
+      Payment payment = new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl, referral);
       payment.setVersion(version == null ? 1 : version);
       return payment;
    }
@@ -96,7 +98,8 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
             .append(USERS, payment.getUsers())
             .append(LANGUAGE, payment.getLanguage())
             .append(CURRENCY, payment.getCurrency())
-            .append(GW_URL, payment.getGwUrl());
+            .append(GW_URL, payment.getGwUrl())
+            .append(REFERRAL, payment.getReferral());
 
       documentCodec.encode(bsonWriter, document, encoderContext);
    }

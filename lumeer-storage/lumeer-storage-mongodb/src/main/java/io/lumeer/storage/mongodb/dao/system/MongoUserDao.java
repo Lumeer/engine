@@ -55,16 +55,17 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
 
    @PostConstruct
    public void checkRepository() {
-      if (!database.listCollectionNames().into(new ArrayList<>()).contains(databaseCollectionName())) {
-         createUsersRepository();
-      }
+      createUsersRepository();
    }
 
    public void createUsersRepository() {
-      database.createCollection(databaseCollectionName());
+      if (!database.listCollectionNames().into(new ArrayList<>()).contains(databaseCollectionName())) {
+         database.createCollection(databaseCollectionName());
+      }
 
       MongoCollection<Document> userCollection = database.getCollection(databaseCollectionName());
       userCollection.createIndex(Indexes.ascending(UserCodec.EMAIL), new IndexOptions().unique(true));
+      userCollection.createIndex(Indexes.ascending(UserCodec.REFERRAL), new IndexOptions().unique(false));
    }
 
    public void deleteUsersRepository() {
@@ -145,6 +146,13 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
       Bson emailFilter = Filters.eq(UserCodec.EMAIL, email);
 
       return databaseCollection().find(emailFilter).first();
+   }
+
+   @Override
+   public long getReferralsCount(final String referral) {
+      Bson referralFilter = Filters.eq(UserCodec.REFERRAL, referral);
+
+      return databaseCollection().countDocuments(referralFilter);
    }
 
    @Override

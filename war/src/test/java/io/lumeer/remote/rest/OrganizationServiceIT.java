@@ -350,7 +350,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
                   LocalDateTime.of(2018, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
             Date.from(ZonedDateTime.ofLocal(
                   LocalDateTime.of(2019, 4, 1, 12, 0), ZoneId.systemDefault(), null).toInstant()),
-            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", "");
+            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", "", null);
 
       payment = createPayment(organization.getId(), payment);
       ServiceLimits serviceLimits = getServiceLimits(organization.getId());

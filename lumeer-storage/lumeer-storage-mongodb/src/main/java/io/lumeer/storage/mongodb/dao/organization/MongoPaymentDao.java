@@ -20,12 +20,18 @@ package io.lumeer.storage.mongodb.dao.organization;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
+import io.lumeer.api.model.PaymentStats;
+import io.lumeer.api.model.ReferralPayment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
+import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
+import io.lumeer.storage.api.dao.ReferralPaymentDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.PaymentCodec;
+import io.lumeer.storage.mongodb.codecs.UserCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
@@ -41,7 +47,11 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.LongAccumulator;
+import java.util.concurrent.atomic.LongAdder;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -53,6 +63,12 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
 
    @Inject
    private Event<CreateOrUpdatePayment> createOrUpdatePaymentEvent;
+
+   @Inject
+   private ReferralPaymentDao referralPaymentDao;
+
+   @Inject
+   private UserDao userDao;
 
    @Override
    public Payment createPayment(final Organization organization, final Payment payment) {
@@ -115,6 +131,20 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
                                              .sort(Sorts.descending(PaymentCodec.VALID_UNTIL)).limit(1).first();
    }
 
+   public PaymentStats getReferralPayments(final String referral) {
+      final Map<String, PaymentStats.PaymentAmount> commissions = new HashMap<>();
+      final Map<String, PaymentStats.PaymentAmount> paidComissions = new HashMap<>();
+      long count = userDao.getReferralsCount(referral);
+
+      referralPaymentDao.getReferralPayments(referral).iterator().forEachRemaining(payment -> {
+         var counter = payment.isPaid() ? paidComissions : commissions;
+         counter.computeIfAbsent(payment.getCurrency(), currency -> new PaymentStats.PaymentAmount(0L, currency))
+                .addAmount(payment.getAmount());
+      });
+
+      return new PaymentStats(count, commissions.values(), paidComissions.values());
+   }
+
    @Override
    public Payment getPaymentAt(final Organization organization, final Date date) {
       return databaseCollection(organization)
@@ -148,6 +178,7 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
       groupCollection.createIndex(Indexes.descending(PaymentCodec.DATE), new IndexOptions().unique(true));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.START), new IndexOptions().unique(true));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.VALID_UNTIL), new IndexOptions().unique(true));
+      groupCollection.createIndex(Indexes.ascending(PaymentCodec.REFERRAL), new IndexOptions().unique(false));
    }
 
    @Override

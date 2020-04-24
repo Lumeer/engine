@@ -38,6 +38,7 @@ public class Payment {
    public static final String LANGUAGE = "language";
    public static final String CURRENCY = "currency";
    public static final String GW_URL = "gwUrl";
+   public static final String REFERRAL = "referral";
 
    public enum PaymentState {
       CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
@@ -76,6 +77,7 @@ public class Payment {
    private String currency;
    private String gwUrl;
    private long version;
+   private String referral;
 
    @JsonCreator
    public Payment(@JsonProperty(ID) final String id,
@@ -83,7 +85,7 @@ public class Payment {
          @JsonProperty(START) Date start, @JsonProperty(VALID_UNTIL) Date validUntil, @JsonProperty(STATE) PaymentState state,
          @JsonProperty(SERVICE_LEVEL) ServiceLevel serviceLevel, @JsonProperty(USERS) int users,
          @JsonProperty(LANGUAGE) final String language, @JsonProperty(CURRENCY) final String currency,
-         @JsonProperty(GW_URL) final String gwUrl) {
+         @JsonProperty(GW_URL) final String gwUrl, @JsonProperty(REFERRAL) final String referral) {
       this.id = id;
       this.date = date;
       this.amount = amount;
@@ -96,6 +98,7 @@ public class Payment {
       this.language = language;
       this.currency = currency;
       this.gwUrl = gwUrl;
+      this.referral = referral;
    }
 
    public String getId() {
@@ -202,6 +205,14 @@ public class Payment {
       this.version = version;
    }
 
+   public String getReferral() {
+      return referral;
+   }
+
+   public void setReferral(final String referral) {
+      this.referral = referral;
+   }
+
    @Override
    public String toString() {
       return "Payment{" +
@@ -217,6 +228,7 @@ public class Payment {
             ", language='" + language + '\'' +
             ", currency='" + currency + '\'' +
             ", gwUrl='" + gwUrl + '\'' +
+            ", referral='" + referral + '\'' +
             '}';
    }
 
@@ -240,6 +252,7 @@ public class Payment {
             serviceLevel == payment.serviceLevel &&
             Objects.equals(language, payment.language) &&
             Objects.equals(currency, payment.currency) &&
+            Objects.equals(referral, payment.referral) &&
             Objects.equals(gwUrl, payment.gwUrl);
    }
 

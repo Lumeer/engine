@@ -19,7 +19,7 @@ public class FreshdeskFacadeIT extends IntegrationTestBase {
    @Test
    @Ignore
    public void testFreshdeskTicket() {
-      final User u = new User("123", "Alan Turing", "aturing@lumeer.io", null, null, false, null, true, false);
+      final User u = new User("123", "Alan Turing", "aturing@lumeer.io", null, null, false, null, true, false, null);
       freshdeskFacade.logTicket(u, "Tady je uživatel", "Který zalogoval ticket přímo z aplikace \" ' !@#$%^&*() \n abc : \"s");
    }
 

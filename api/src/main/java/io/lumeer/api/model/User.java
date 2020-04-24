@@ -47,6 +47,8 @@ public class User {
    public static final String AGREEMENT_DATE = "agreementDate";
    public static final String NEWSLETTER = "newsletter";
    public static final String WIZARD_DISMISSED = "wizard";
+   public static final String REFERRAL = "referral";
+   public static final String AFFILIATE_PARTNER = "affiliatePartner";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -79,6 +81,13 @@ public class User {
    @JsonView(UserViews.FullView.class)
    private Boolean wizardDismissed;
 
+   @JsonView(UserViews.DefaultView.class)
+   private String referral;
+
+   @JsonView(UserViews.DefaultView.class)
+   @JsonProperty(AFFILIATE_PARTNER)
+   private boolean affiliatePartner = false;
+
    private List<String> wishes;
 
    @JsonView(UserViews.DefaultView.class)
@@ -106,7 +115,8 @@ public class User {
          @JsonProperty(AGREEMENT) final Boolean agreement,
          @JsonProperty(AGREEMENT_DATE) final ZonedDateTime agreementDate,
          @JsonProperty(NEWSLETTER) final Boolean newsletter,
-         @JsonProperty(WIZARD_DISMISSED) final Boolean wizardDismissed) {
+         @JsonProperty(WIZARD_DISMISSED) final Boolean wizardDismissed,
+         @JsonProperty(REFERRAL) final String referral) {
       this.id = id;
       this.name = name;
       this.email = email;
@@ -116,6 +126,7 @@ public class User {
       this.agreementDate = agreementDate;
       this.newsletter = newsletter;
       this.wizardDismissed = wizardDismissed;
+      this.referral = referral;
    }
 
    public String getId() {
@@ -206,6 +217,22 @@ public class User {
       this.wizardDismissed = wizardDismissed;
    }
 
+   public String getReferral() {
+      return referral;
+   }
+
+   public void setReferral(final String referral) {
+      this.referral = referral;
+   }
+
+   public boolean isAffiliatePartner() {
+      return affiliatePartner;
+   }
+
+   public void setAffiliatePartner(final boolean affiliatePartner) {
+      this.affiliatePartner = affiliatePartner;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -221,6 +248,8 @@ public class User {
             ", wizardDismissed=" + wizardDismissed +
             ", wishes=" + wishes +
             ", lastLoggedIn=" + lastLoggedIn +
+            ", referral=" + referral +
+            ", affiliatePartner=" + affiliatePartner +
             '}';
    }
 

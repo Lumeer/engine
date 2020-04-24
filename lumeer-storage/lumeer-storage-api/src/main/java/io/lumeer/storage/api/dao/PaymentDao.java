@@ -20,6 +20,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
+import io.lumeer.api.model.PaymentStats;
 
 import java.util.Date;
 import java.util.List;
@@ -43,4 +44,6 @@ public interface PaymentDao extends OrganizationScopedDao {
    Payment getPaymentAt(final Organization organization, final Date date);
 
    Payment getLatestPayment(final Organization organization);
+
+   PaymentStats getReferralPayments(final String referral);
 }

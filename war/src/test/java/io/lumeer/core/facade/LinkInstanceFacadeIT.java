@@ -317,8 +317,6 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       copiedSlaveDocuments.forEach(d -> documentMap.put(d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID), d.getId()));
 
       var newLinks = linkInstanceFacade.duplicateLinkInstances(masterDocument.getId(), masterDocument.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()), documentMap);
-
-      System.out.println(newLinks);
    }
 
    private LinkInstance prepareLinkInstance() {

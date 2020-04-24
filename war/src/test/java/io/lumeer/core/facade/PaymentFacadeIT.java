@@ -187,7 +187,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
       Payment payment = new Payment(null, new Date(), 1770, "",
             getDate(from),
             getDate(until),
-            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", null);
+            Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", null, null);
       final Payment storedPayment = paymentFacade.createPayment(organization, payment, "", "");
 
       if (paid) {

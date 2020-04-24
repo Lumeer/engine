@@ -1,4 +1,4 @@
-/*
+package io.lumeer.storage.mongodb.codecs.providers;/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,35 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.User;
+import io.lumeer.api.model.ReferralPayment;
+import io.lumeer.storage.mongodb.codecs.ReferralPaymentCodec;
 
-import java.util.List;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public interface UserDao {
+public class ReferralPaymentCodecProvider implements CodecProvider {
 
-   User createUser(User user);
+   @Override
+   @SuppressWarnings("unchecked")
+   public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
+      if (aClass == ReferralPayment.class) {
+         return (Codec<T>) new ReferralPaymentCodec(codecRegistry);
+      }
 
-   User updateUser(String userId, User user);
-
-   void deleteUser(String userId);
-
-   void deleteUserGroups(String organizationId, String userId);
-
-   void deleteUsersGroups(String organizationId);
-
-   void deleteGroupFromUsers(String organizationId, String group);
-
-   User getUserByEmail(String email);
-
-   User getUserByAuthId(String authId);
-
-   User getUserById(String id);
-
-   List<User> getAllUsers(String organizationId);
-
-   long getReferralsCount(final String referral);
-
-   long getAllUsersCount(String organizationId);
+      return null;
+   }
 }

@@ -57,6 +57,8 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String AGREEMENT_DATE = "agreementDate";
    public static final String NEWSLETTER = "newsletter";
    public static final String WIZARD_DISMISSED = "wizard";
+   public static final String REFERRAL = "referral";
+   public static final String AFFILIATE_PARTNER = "affiliatePartner";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -93,6 +95,7 @@ public class UserCodec implements CollectibleCodec<User> {
    }
 
    @Override
+   @SuppressWarnings("unchecked")
    public User decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(bsonReader, decoderContext);
 
@@ -102,7 +105,7 @@ public class UserCodec implements CollectibleCodec<User> {
       List<String> authIds = bson.get(AUTH_IDS, List.class);
 
       List<Document> documentList = bson.get(ALL_GROUPS, List.class);
-      Map<String, Set<String>> allGroups = convertListToMap(documentList, GROUPS);
+      Map<String, Set<String>> allGroups = convertGroupsListToMap(documentList);
 
       String defaultOrganizationId = bson.getString(DEFAULT_ORGANIZATION_ID);
       String defaultProjectId = bson.getString(DEFAULT_PROJECT_ID);
@@ -116,10 +119,14 @@ public class UserCodec implements CollectibleCodec<User> {
       }
       Boolean newsletter = bson.getBoolean(NEWSLETTER);
       Boolean wizardDismissed = bson.getBoolean(WIZARD_DISMISSED);
+      Boolean affiliatePartner = bson.getBoolean(AFFILIATE_PARTNER);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed);
+      String referral = bson.getString(REFERRAL);
+
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral);
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
+      user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
 
       return user;
    }
@@ -130,7 +137,9 @@ public class UserCodec implements CollectibleCodec<User> {
       bson.append(NAME, user.getName())
           .append(EMAIL, user.getEmail())
           .append(AUTH_IDS, user.getAuthIds())
-          .append(WISHES, user.getWishes());
+          .append(WISHES, user.getWishes())
+          .append(REFERRAL, user.getReferral())
+          .append(AFFILIATE_PARTNER, user.isAffiliatePartner());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());
@@ -138,7 +147,7 @@ public class UserCodec implements CollectibleCodec<User> {
       }
 
       if (user.getGroups() != null) {
-         bson.append(ALL_GROUPS, convertMapToList(user.getGroups(), GROUPS));
+         bson.append(ALL_GROUPS, convertGroupsMapToList(user.getGroups()));
       } else {
          bson.append(ALL_GROUPS, Collections.emptyList());
       }
@@ -158,23 +167,24 @@ public class UserCodec implements CollectibleCodec<User> {
       return User.class;
    }
 
-   private List<Document> convertMapToList(Map<String, Set<String>> map, String key) {
+   private List<Document> convertGroupsMapToList(Map<String, Set<String>> map) {
       return map.entrySet().stream().map(entry -> new Document(ORGANIZATION_ID, entry.getKey())
-            .append(key, entry.getValue())
+            .append(GROUPS, entry.getValue())
       ).collect(Collectors.toList());
    }
 
-   private Map<String, Set<String>> convertListToMap(List<Document> documentList, String key) {
+   private Map<String, Set<String>> convertGroupsListToMap(List<Document> documentList) {
       if (documentList == null) {
          return new HashMap<>();
       }
 
       return documentList.stream()
-                         .collect(Collectors.toMap(document -> document.getString(ORGANIZATION_ID), document -> convertListToSet(document, key)));
+                         .collect(Collectors.toMap(document -> document.getString(ORGANIZATION_ID), this::convertGroupsListToSet));
    }
 
-   private Set<String> convertListToSet(Document document, String key) {
-      List<String> groups = document.get(key, List.class);
+   @SuppressWarnings("unchecked")
+   private Set<String> convertGroupsListToSet(Document document) {
+      List<String> groups = document.get(GROUPS, List.class);
       if (groups == null) {
          return new HashSet<>();
       }
