@@ -146,9 +146,7 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
       final String content = "Hello world text file";
       final Entity entity = Entity.text(content);
       final String presigned = createdFileAttachment.getPresignedUrl();
-      System.out.println(presigned);
       var response = client.target(presigned).request(MediaType.APPLICATION_JSON).buildPut(entity).invoke();
-      System.out.println(response.getStatusInfo().getReasonPhrase());
 
       var result = fileAttachmentFacade.getAllFileAttachments(createdFileAttachment.getCollectionId(), FileAttachment.AttachmentType.DOCUMENT);
       assertThat(result).containsExactly(createdFileAttachment);

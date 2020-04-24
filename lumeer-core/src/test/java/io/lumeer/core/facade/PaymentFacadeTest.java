@@ -52,7 +52,8 @@ public class PaymentFacadeTest {
             10,
             "en",
             "EUR",
-            "url"
+            "url",
+            null
             )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
@@ -66,7 +67,8 @@ public class PaymentFacadeTest {
             10,
             "en",
             "EUR",
-            "url"
+            "url",
+            null
       )).getAmount()).isEqualTo(Math.round(10 * 12 * 6.99));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
@@ -80,7 +82,8 @@ public class PaymentFacadeTest {
             10,
             "en",
             "EUR",
-            "url"
+            "url",
+            null
       )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
@@ -94,7 +97,8 @@ public class PaymentFacadeTest {
             10,
             "en",
             "EUR",
-            "url"
+            "url",
+            null
       )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
    }
 

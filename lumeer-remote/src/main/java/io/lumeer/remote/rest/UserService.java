@@ -21,8 +21,10 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
+import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
+import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.UserFacade;
 import io.lumeer.remote.rest.annotation.PATCH;
 
@@ -51,6 +53,9 @@ public class UserService extends AbstractService {
 
    @Inject
    private UserFacade userFacade;
+
+   @Inject
+   private PaymentFacade paymentFacade;
 
    @GET
    @JsonView(UserViews.DefaultView.class)
@@ -95,6 +100,12 @@ public class UserService extends AbstractService {
    @JsonView(UserViews.FullView.class)
    public User getCurrentUser() {
       return userFacade.getCurrentUser();
+   }
+
+   @GET
+   @Path("current/referrals")
+   public PaymentStats getReferralStats() {
+      return paymentFacade.getReferralPayments();
    }
 
    @GET

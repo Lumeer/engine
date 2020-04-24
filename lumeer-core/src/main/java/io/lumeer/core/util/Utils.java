@@ -20,6 +20,7 @@ package io.lumeer.core.util;
 
 import io.lumeer.core.exception.BadFormatException;
 
+import java.math.BigInteger;
 import java.util.List;
 
 public abstract class Utils {
@@ -45,5 +46,13 @@ public abstract class Utils {
          }
       }
       return null;
+   }
+
+   public static String strHexTo36(final String hex) {
+      return new BigInteger(hex, 16).toString(36);
+   }
+
+   public static String str36toHex(final String str36) {
+      return new BigInteger(str36, 36).toString(16);
    }
 }

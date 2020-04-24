@@ -37,7 +37,7 @@ public class MailChimpFacadeIT extends IntegrationTestBase {
    @Test
    @Ignore("It does not make sense to communicate with MailChimp API once it was verified")
    public void testMailChimp() {
-      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false);
+      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null);
       mailChimpFacade.setUserSubscription(u, true);
    }
 }

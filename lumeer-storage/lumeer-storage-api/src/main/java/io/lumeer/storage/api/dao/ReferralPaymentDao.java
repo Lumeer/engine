@@ -1,4 +1,4 @@
-/*
+package io.lumeer.storage.api.dao;/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,35 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.User;
+import io.lumeer.api.model.ReferralPayment;
 
 import java.util.List;
 
-public interface UserDao {
+public interface ReferralPaymentDao {
 
-   User createUser(User user);
+   ReferralPayment createReferralPayment(final ReferralPayment referralPayment);
 
-   User updateUser(String userId, User user);
+   ReferralPayment getReferralPayment(final String id);
 
-   void deleteUser(String userId);
+   ReferralPayment patchReferralPayment(final String id, final ReferralPayment referralPayment);
 
-   void deleteUserGroups(String organizationId, String userId);
-
-   void deleteUsersGroups(String organizationId);
-
-   void deleteGroupFromUsers(String organizationId, String group);
-
-   User getUserByEmail(String email);
-
-   User getUserByAuthId(String authId);
-
-   User getUserById(String id);
-
-   List<User> getAllUsers(String organizationId);
-
-   long getReferralsCount(final String referral);
-
-   long getAllUsersCount(String organizationId);
+   List<ReferralPayment> getReferralPayments(final String referral);
 }

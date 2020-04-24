@@ -354,8 +354,6 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id2 = createDocument(collectionId, "45.123°N 74.123°W").getId();
       String id3 = createDocument(collectionId, "60.123°N 74.123°W").getId();
 
-      System.out.println(dataDao.getData(collectionId, id1));
-
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValue(collectionId, DOCUMENT_KEY, "=", "40.123, -74.123"));
       List<Document> documents = searchFacade.searchDocuments(query);
       assertThat(documents).extracting(Document::getId).containsOnly(id1);

@@ -22,14 +22,21 @@ import static java.util.Map.entry;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
+import io.lumeer.api.model.PaymentStats;
+import io.lumeer.api.model.ReferralPayment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
+import io.lumeer.storage.api.dao.ReferralPaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+
+import org.assertj.core.util.Lists;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -66,6 +73,12 @@ public class PaymentFacade extends AbstractFacade {
    private PaymentDao paymentDao;
 
    @Inject
+   private UserFacade userFacade;
+
+   @Inject
+   private ReferralPaymentDao referralPaymentDao;
+
+   @Inject
    private PaymentGatewayFacade paymentGateway;
 
    @Inject
@@ -84,6 +97,12 @@ public class PaymentFacade extends AbstractFacade {
 
    public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
       checkManagePermissions(organization);
+
+      final User currentUser = authenticatedUser.getCurrentUser();
+      if (currentUser.getReferral() != null) {
+         payment.setReferral(currentUser.getReferral());
+      }
+
       final Payment storedPayment = paymentDao.createPayment(organization, payment);
 
       final Payment establishedPayment = paymentGateway.createPayment(storedPayment, returnUrl, notifyUrl + "/" + storedPayment.getId());
@@ -212,6 +231,10 @@ public class PaymentFacade extends AbstractFacade {
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
       final Payment.PaymentState newState = paymentGateway.getPaymentStatus(payment.getPaymentId());
 
+      if (payment.getState() != Payment.PaymentState.PAID && newState == Payment.PaymentState.PAID && payment.getReferral() != null && !"".equals(payment.getReferral())) {
+         storeReferralPayment(payment);
+      }
+
       // when PAID is set manually, ignore GoPay updates to a timeouted payment
       if (payment.getState() == Payment.PaymentState.PAID && newState == Payment.PaymentState.TIMEOUTED) {
          return payment;
@@ -232,6 +255,17 @@ public class PaymentFacade extends AbstractFacade {
       return result;
    }
 
+   private void storeReferralPayment(final Payment payment) {
+      if (getPaymentMonthsDuration(payment) >= 12) {
+         final String referral = payment.getReferral();
+         final String userId = Utils.str36toHex(referral);
+         final boolean isAffiliate = userFacade.isUserAffiliate(userId);
+         final long commission = Math.round(isAffiliate ? payment.getAmount() * 0.1 : payment.getAmount() * 0.05);
+
+         referralPaymentDao.createReferralPayment(new ReferralPayment(null, payment.getReferral(), commission, payment.getCurrency(), false));
+      }
+   }
+
    public Payment getPayment(final Organization organization, final String paymentId) {
       checkManagePermissions(organization);
 
@@ -239,18 +273,34 @@ public class PaymentFacade extends AbstractFacade {
    }
 
    public Payment checkPaymentValues(final Payment payment) {
-      int months = Period.between(
-            LocalDate.ofInstant(payment.getStart().toInstant(), ZoneId.systemDefault()),
-            LocalDate.ofInstant(payment.getValidUntil().toInstant(), ZoneId.systemDefault())
-            ).getMonths();
+      long months = getPaymentMonthsDuration(payment);
       final Map<String, Double> prices = months >= 12 ? DISCOUNT_PRICES : FULL_PRICES;
-      long minPrice = Math.round(months * prices.get(payment.getCurrency()) * payment.getUsers());
+      long minPrice = Math.round(Math.floor(months * prices.get(payment.getCurrency()) * payment.getUsers()));
 
       if (payment.getAmount() < minPrice) {
          payment.setAmount(minPrice);
       }
 
       return payment;
+   }
+
+   private long getPaymentMonthsDuration(final Payment payment) {
+      return Period.between(
+            LocalDate.ofInstant(payment.getStart().toInstant(), ZoneId.systemDefault()),
+            LocalDate.ofInstant(payment.getValidUntil().toInstant(), ZoneId.systemDefault())
+      ).toTotalMonths();
+   }
+
+   public PaymentStats getReferralPayments() {
+      User user = authenticatedUser.getCurrentUser();
+
+      if (user != null) {
+         String referenceNo = Utils.strHexTo36(user.getId());
+
+         return paymentDao.getReferralPayments(referenceNo);
+      }
+
+      return new PaymentStats(0L, Lists.emptyList(), Lists.emptyList());
    }
 
    private void checkManagePermissions(final Organization organization) {

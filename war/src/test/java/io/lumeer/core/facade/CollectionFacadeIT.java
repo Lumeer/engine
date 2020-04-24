@@ -831,7 +831,6 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var i = new AtomicInteger(1);
       values.forEach(value -> {
-         System.out.println(value);
          documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + i.getAndIncrement()).append("a2", value)));
       });
 
