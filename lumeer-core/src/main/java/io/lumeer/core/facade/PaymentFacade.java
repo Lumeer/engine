@@ -256,11 +256,13 @@ public class PaymentFacade extends AbstractFacade {
    }
 
    private void storeReferralPayment(final Payment payment) {
-      if (getPaymentMonthsDuration(payment) >= 12) {
+      final long months = getPaymentMonthsDuration(payment);
+      if (months >= 12) {
          final String referral = payment.getReferral();
          final String userId = Utils.str36toHex(referral);
          final boolean isAffiliate = userFacade.isUserAffiliate(userId);
-         final long commission = Math.round(isAffiliate ? payment.getAmount() * 0.1 : payment.getAmount() * 0.05);
+         final long amount = Math.round(((double) payment.getAmount() / months) * 12);
+         final long commission = Math.round(isAffiliate ? amount * 0.1 : amount * 0.05);
 
          referralPaymentDao.createReferralPayment(new ReferralPayment(null, payment.getReferral(), commission, payment.getCurrency(), false));
       }
