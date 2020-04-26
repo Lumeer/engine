@@ -149,7 +149,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new View(code, NAME, ICON, COLOR, null, null, query, PERSPECTIVE.toString(), CONFIG, this.user.getId());
+      return new View(code, NAME, ICON, COLOR, null, null, query, PERSPECTIVE.toString(), CONFIG, null, this.user.getId());
    }
 
    private View createView(String code) {

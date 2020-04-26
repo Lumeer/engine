@@ -27,7 +27,7 @@ public class ViewWithId extends View {
    public ViewWithId(final View view) {
       super(view.getCode(), view.getName(), view.getIcon(), view.getColor(),
             view.getDescription(), view.getPermissions(), view.getQuery(), view.getPerspective(),
-            view.getConfig(), view.getAuthorId());
+            view.getConfig(), view.getSettings(), view.getAuthorId());
       this.setId(view.getId());
    }
 

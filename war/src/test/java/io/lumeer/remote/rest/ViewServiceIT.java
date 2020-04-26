@@ -155,7 +155,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new View(code, NAME, ICON, COLOR, null, null, query, PERSPECTIVE, CONFIG, this.user.getId());
+      return new View(code, NAME, ICON, COLOR, null, null, query, PERSPECTIVE, CONFIG, null, this.user.getId());
    }
 
    private View createView(String code) {
