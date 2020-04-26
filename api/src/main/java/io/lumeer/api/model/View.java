@@ -38,11 +38,13 @@ public class View extends Resource {
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
+   public static final String SETTINGS = "settings";
    public static final String AUTHOR_ID = "authorId";
 
    private Query query;
    private String perspective;
    private Object config;
+   private Object settings;
    private String authorId;
    private Map<String, Set<Role>> authorRights;
 
@@ -64,12 +66,14 @@ public class View extends Resource {
          @JsonProperty(QUERY) final Query query,
          @JsonProperty(PERSPECTIVE) final String perspective,
          @JsonProperty(CONFIG) final Object config,
+         @JsonProperty(SETTINGS) final Object settings,
          @JsonProperty(AUTHOR_ID) final String authorId) {
       super(code, name, icon, color, description, permissions);
 
       this.query = query;
       this.perspective = perspective;
       this.config = config;
+      this.settings = settings;
       this.authorId = authorId;
    }
 
@@ -88,6 +92,7 @@ public class View extends Resource {
       o.query = this.query;
       o.perspective = this.perspective;
       o.config = this.config;
+      o.settings = this.settings;
       o.authorId = this.authorId;
       o.authorRights = this.authorRights;
       o.version = this.version;
@@ -157,6 +162,14 @@ public class View extends Resource {
       this.favorite = favorite;
    }
 
+   public Object getSettings() {
+      return settings;
+   }
+
+   public void setSettings(final Object settings) {
+      this.settings = settings;
+   }
+
    @Override
    public String toString() {
       return "View{" +
@@ -168,6 +181,7 @@ public class View extends Resource {
             ", permissions=" + permissions +
             ", perspective='" + perspective + '\'' +
             ", config=" + config + '\'' +
+            ", settings=" + settings + '\'' +
             ", authorId='" + authorId + '\'' +
             ", authorRights=" + authorRights +
             ", lastTimeUsed=" + lastTimeUsed +
