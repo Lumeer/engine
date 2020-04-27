@@ -102,7 +102,7 @@
       <dependency>
          <groupId>cz.gopay</groupId>
          <artifactId>gp-java-api-v3-common</artifactId>
-         <version>3.4.6</version>
+         <version>3.4.8</version>
       </dependency>
       <dependency>
          <groupId>cz.gopay</groupId>
