@@ -29,7 +29,7 @@ import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
-import io.lumeer.engine.api.event.CreateChain;
+import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.DocumentEvent;
@@ -77,7 +77,7 @@ public class TaskProcessingFacade {
    @Inject
    private FunctionFacade functionFacade;
 
-   public void onCreateChain(@Observes final CreateChain chain) {
+   public void onCreateChain(@Observes final CreateDocumentsAndLinks chain) {
       List<Task> allTasks = new ArrayList<>();
 
       var linkOffset = 0;

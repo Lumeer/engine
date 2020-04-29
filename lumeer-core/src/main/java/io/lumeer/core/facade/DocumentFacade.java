@@ -19,13 +19,14 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.*;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.event.CreateChain;
+import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.ImportCollectionContent;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -90,7 +91,7 @@ public class DocumentFacade extends AbstractFacade {
    private Event<ImportCollectionContent> importCollectionContentEvent;
 
    @Inject
-   private Event<CreateChain> createChainEvent;
+   private Event<CreateDocumentsAndLinks> createChainEvent;
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
@@ -221,7 +222,10 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public DocumentsChain createDocumentsChain(List<Document> documents, List<LinkInstance> linkInstances) {
-      documents.forEach(document -> checkCollectionWritePermissions(document.getCollectionId()));
+      var collectionsMap = documents.stream()
+                                    .map(document -> checkCollectionWritePermissions(document.getCollectionId()))
+                                    .collect(Collectors.toMap(Resource::getId, collection -> collection));
+
       permissionsChecker.checkDocumentLimits(documents);
 
       if (documents.isEmpty()) {
@@ -238,10 +242,11 @@ public class DocumentFacade extends AbstractFacade {
          if (document.getId() != null) {
             currentDocumentId = document.getId();
          } else {
-            var collection = collectionDao.getCollectionById(document.getCollectionId());
-            var data = createDocument(collection, document);
-            createdDocuments.add(data.getSecond());
-            currentDocumentId = data.getFirst().getId();
+            var collection = collectionsMap.get(document.getCollectionId());
+            var tuple = createDocument(collection, document);
+            createdDocuments.add(tuple.getSecond());
+            currentDocumentId = tuple.getFirst().getId();
+            updateCollectionMetadata(collection, tuple.getSecond().getData().keySet(), Collections.emptySet(), 1);
          }
 
          var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
@@ -263,7 +268,7 @@ public class DocumentFacade extends AbstractFacade {
          previousDocumentId = currentDocumentId;
       }
       if (this.createChainEvent != null) {
-         this.createChainEvent.fire(new CreateChain(createdDocuments, createdLinks));
+         this.createChainEvent.fire(new CreateDocumentsAndLinks(createdDocuments, createdLinks));
       }
 
       return new DocumentsChain(createdDocuments, createdLinks);
@@ -442,8 +447,9 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> duplicateDocuments(final String collectionId, final List<String> documentIds) {
-      final Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.WRITE);
+      final Collection collection = checkCollectionWritePermissions(collectionId);
+      final Map<String, Integer> usages = new HashMap<>();
+      permissionsChecker.checkDocumentLimits(documentIds.size());
 
       final List<Document> documents = documentDao.duplicateDocuments(documentIds);
       final Map<String, Document> documentsDirectory = new HashMap<>();
@@ -453,14 +459,22 @@ public class DocumentFacade extends AbstractFacade {
          keyMap.put(d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID), d.getId());
       });
 
-      final List<DataDocument> data = dataDao.duplicateData(collectionId, keyMap);
-      data.forEach(d -> {
-         if (documentsDirectory.containsKey(d.getId())) {
-            documentsDirectory.get(d.getId()).setData(d);
+      final List<DataDocument> dataList = dataDao.duplicateData(collectionId, keyMap);
+      dataList.forEach(data -> {
+         constraintManager.decodeDataTypes(collection, data);
+         if (documentsDirectory.containsKey(data.getId())) {
+            documentsDirectory.get(data.getId()).setData(data);
          }
+         data.keySet().forEach(key -> usages.put(key, usages.computeIfAbsent(key, k -> 0) + 1));
       });
 
       fileAttachmentFacade.duplicateFileAttachments(collection.getId(), keyMap, FileAttachment.AttachmentType.DOCUMENT);
+
+      if (this.createChainEvent != null) {
+         this.createChainEvent.fire(new CreateDocumentsAndLinks(documents, Collections.emptyList()));
+      }
+
+      updateCollectionMetadata(collection, usages, documents.size());
 
       return documents;
    }
