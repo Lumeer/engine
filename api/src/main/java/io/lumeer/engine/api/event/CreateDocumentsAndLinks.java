@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class CreateChain {
+public class CreateDocumentsAndLinks {
 
    @JsonIgnore
    private List<Document> documents;
@@ -19,7 +19,7 @@ public class CreateChain {
    private List<LinkInstance> linkInstances;
    private Set<String> linkInstancesIds;
 
-   public CreateChain(final List<Document> documents, final List<LinkInstance> linkInstances) {
+   public CreateDocumentsAndLinks(final List<Document> documents, final List<LinkInstance> linkInstances) {
       this.documents = documents;
       this.documentsIds = documents.stream().map(Document::getId).collect(Collectors.toSet());
       this.linkInstances = linkInstances;

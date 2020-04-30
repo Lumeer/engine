@@ -435,6 +435,10 @@ public class PermissionsChecker {
     *       The list of documents that are about to be created.
     */
    public void checkDocumentLimits(final List<Document> documents) {
+      checkDocumentLimits(documents.size());
+   }
+
+   public void checkDocumentLimits(final Integer number) {
       if (skipLimits()) {
          return;
       }
@@ -442,12 +446,13 @@ public class PermissionsChecker {
       final ServiceLimits limits = getServiceLimits();
       final long documentsCount = countDocuments();
 
-      if (limits.getDocuments() > 0 && documentsCount + documents.size() > limits.getDocuments()) {
+      if (limits.getDocuments() > 0 && documentsCount + number > limits.getDocuments()) {
          final Optional<Organization> organization = workspaceKeeper.getOrganization();
          freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
       }
    }
+
 
    public void checkRulesLimit(final Collection collection) {
       if (skipLimits()) {
