@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
@@ -142,11 +143,28 @@ public class UserNotificationFacade extends AbstractFacade {
          data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());
       }
 
-      final List<UserNotification> notifications = newUsers.stream().map(userId ->
+      final List<UserNotification> notifications = newUsers.stream().filter(userId -> filterNotificationsByManagers(resource, userId)).map(userId ->
             createNotification(userId, getNotificationTypeByResource(resource), data)
       ).collect(Collectors.toList());
 
       return dao.createNotificationsBatch(notifications);
+   }
+
+   private boolean filterNotificationsByManagers(final Resource resource, final String userId) {
+      if (resource.getType() == ResourceType.ORGANIZATION) {
+         return true;
+      }
+
+      if (resource.getType() == ResourceType.PROJECT) {
+         if (workspaceKeeper.getOrganization().isPresent()) {
+            return !permissionsChecker.hasRole(workspaceKeeper.getOrganization().get(), Role.MANAGE, userId);
+         } else {
+            return true;
+         }
+      }
+
+      // for collection, view, document
+      return !permissionsChecker.isManager(userId);
    }
 
    private UserNotification.NotificationType getNotificationTypeByResource(final Resource resource) {
