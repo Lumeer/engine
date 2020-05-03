@@ -200,6 +200,8 @@ public class ZapierFacade extends AbstractFacade {
       final List<ZapierField> result = new ArrayList<>();
       final Collection collection = collectionFacade.getCollection(collectionId);
 
+      result.add(new ZapierField("_id", "_id", "string", true, false, false));
+
       collection.getAttributes().forEach(attribute -> {
          final String attributeId = attribute.getId();
          final String label = attribute.getName();
@@ -247,23 +249,30 @@ public class ZapierFacade extends AbstractFacade {
       final Collection collection = collectionFacade.getCollection(collectionId);
       final DataDocument dataDocument = new DataDocument(data);
       final Document document = new Document(dataDocument);
+      final Document createdDocument = documentFacade.createDocument(collectionId, document);
 
-      return translateAttributes(collection, documentFacade.createDocument(collectionId, document).getData());
+      return translateAttributes(collection, createdDocument.getData().append("_id", createdDocument.getId()));
    }
 
    public List<DataDocument> updateDocument(final String collectionId, final String key, final Map<String, Object> data) {
       final List<DataDocument> results = new ArrayList<>();
       final Collection collection = collectionFacade.getCollection(collectionId);
-      final List<Document> documents = searchFacade.searchDocuments(
-            new Query(
-                  new QueryStem(
-                        collectionId,
-                        null,
-                        null,
-                        Set.of(CollectionAttributeFilter.createFromValue(collectionId, key, "=", data.get(key))),
-                        null)
-            )
-      );
+      List<Document> documents;
+
+      if (key.equals("_id")) {
+         documents = List.of(documentFacade.getDocument(collectionId, data.get("_id").toString()));
+      } else {
+         documents = searchFacade.searchDocuments(
+               new Query(
+                     new QueryStem(
+                           collectionId,
+                           null,
+                           null,
+                           Set.of(CollectionAttributeFilter.createFromValue(collectionId, key, "=", data.get(key))),
+                           null)
+               )
+         );
+      }
 
       documents.forEach(document -> {
          results.add(translateAttributes(collection, documentFacade.patchDocumentData(collectionId, document.getId(), new DataDocument(data)).getData()));
@@ -328,12 +337,21 @@ public class ZapierFacade extends AbstractFacade {
              .collect(Collectors.toList());
    }
 
+   public List<DataDocument> getDocument(final String collectionId, final String documentId) {
+      final Document document = documentFacade.getDocument(collectionId, documentId);
+      final Collection collection = collectionFacade.getCollection(collectionId);
+
+      return List.of(translateAttributes(collection, document.getData()));
+   }
+
    private DataDocument addModifiers(final DataDocument data) {
       final DataDocument result = new DataDocument(data);
 
       data.entrySet().stream().forEach(entry -> {
-         result.append(CHANGED_PREFIX + entry.getKey(), false);
-         result.append(PREVIOUS_VALUE_PREFIX + entry.getKey(), entry.getValue());
+         if (!entry.getKey().equals("_id")) {
+            result.append(CHANGED_PREFIX + entry.getKey(), false);
+            result.append(PREVIOUS_VALUE_PREFIX + entry.getKey(), entry.getValue());
+         }
       });
 
       return result;

@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -195,6 +196,13 @@ public class ZapierService extends AbstractService {
 
       if (collectionId == null) {
          return List.of();
+      }
+
+      if (conditions != null) {
+         Optional<Condition> idFilter = conditions.stream().filter(c -> "_id".equals(c.getAttributeId())).findFirst();
+         if (idFilter.isPresent()) {
+            return zapierFacade.getDocument(collectionId, idFilter.get().getValue().toString());
+         }
       }
 
       return zapierFacade.findDocuments(collectionId, conditions != null ? conditions.stream().map(c -> translateCondition(c, collectionId)).collect(Collectors.toSet()) : null);
