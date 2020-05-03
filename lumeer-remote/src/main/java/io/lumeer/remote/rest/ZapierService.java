@@ -17,15 +17,20 @@ package io.lumeer.remote.rest;/*
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.ConditionValue;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -54,6 +59,40 @@ public class ZapierService extends AbstractService {
 
       public String getHookUrl() {
          return hookUrl;
+      }
+   }
+
+   public static class Condition {
+      private final String attributeId;
+      private final String condition;
+      private final Object value;
+
+      @JsonCreator
+      public Condition(@JsonProperty("attributeId") final String attributeId, @JsonProperty("condition") final String condition, @JsonProperty("value") final Object value) {
+         this.attributeId = attributeId;
+         this.condition = condition;
+         this.value = value;
+      }
+
+      public String getAttributeId() {
+         return attributeId;
+      }
+
+      public String getCondition() {
+         return condition;
+      }
+
+      public Object getValue() {
+         return value;
+      }
+
+      @Override
+      public String toString() {
+         return "Condition{" +
+               "attributeId='" + attributeId + '\'' +
+               ", condition='" + condition + '\'' +
+               ", value='" + value + '\'' +
+               '}';
       }
    }
 
@@ -149,6 +188,23 @@ public class ZapierService extends AbstractService {
    }
 
    @POST
+   @Path("find/documents")
+   @QueryProcessor
+   public List<DataDocument> findDocuments(@QueryParam("collection_hash") final String collectionHash, final Set<Condition> conditions) {
+      final String collectionId = initWorkspace(collectionHash);
+
+      if (collectionId == null) {
+         return List.of();
+      }
+
+      return zapierFacade.findDocuments(collectionId, conditions != null ? conditions.stream().map(c -> translateCondition(c, collectionId)).collect(Collectors.toSet()) : null);
+   }
+
+   private CollectionAttributeFilter translateCondition(final Condition condition, final String collectionId) {
+      return new CollectionAttributeFilter(collectionId, condition.getAttributeId(), condition.getCondition(), List.of(new ConditionValue(null, condition.getValue())));
+   }
+
+   @POST
    @Path("collection/document/created")
    public DataDocument subscribeToDocumentCreated(@QueryParam("collection_hash") final String collectionHash, final HookUrl hookUrl) {
       final String collectionId = initWorkspace(collectionHash);
@@ -231,6 +287,6 @@ public class ZapierService extends AbstractService {
 
       final Object o = data.remove("id");
 
-      return o != null ? toString() : null;
+      return o != null ? o.toString() : null;
    }
 }

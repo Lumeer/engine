@@ -306,7 +306,6 @@ public class ZapierFacade extends AbstractFacade {
 
    public List<DataDocument> getSampleEntries(final String collectionId, final boolean byUpdate) {
       final Collection collection = collectionFacade.getCollection(collectionId);
-      final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
       return documentFacade
             .getRecentDocuments(collectionId, byUpdate)
@@ -315,6 +314,16 @@ public class ZapierFacade extends AbstractFacade {
             .map(data -> translateAttributes(collection, data))
             .map(this::addModifiers)
             .collect(Collectors.toList());
+   }
+
+   public List<DataDocument> findDocuments(final String collectionId, final Set<CollectionAttributeFilter> collectionAttributeFilters) {
+      final Collection collection = collectionFacade.getCollection(collectionId);
+
+      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20))
+             .stream()
+             .map(Document::getData)
+             .map(data -> translateAttributes(collection, data))
+             .collect(Collectors.toList());
    }
 
    private DataDocument addModifiers(final DataDocument data) {
@@ -337,5 +346,4 @@ public class ZapierFacade extends AbstractFacade {
                 .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
    }
-
 }
