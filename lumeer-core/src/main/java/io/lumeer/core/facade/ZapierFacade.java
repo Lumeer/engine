@@ -279,10 +279,12 @@ public class ZapierFacade extends AbstractFacade {
             rule.getType() == Rule.RuleType.ZAPIER && rule.getConfiguration().getString(ZapierRule.HOOK_URL).equals(hookUrl)
       ).findFirst();
 
-      if (!existingRule.isPresent()) {
-         final Rule rule = new Rule(Rule.RuleType.ZAPIER, timing, new DataDocument(ZapierRule.HOOK_URL, hookUrl).append(ZapierRule.SUBSCRIBE_ID, UUID.randomUUID().toString()));
+      if (existingRule.isEmpty()) {
+         final String subscribeId = UUID.randomUUID().toString();
+         final Rule rule = new Rule(Rule.RuleType.ZAPIER, timing, new DataDocument(ZapierRule.HOOK_URL, hookUrl).append(ZapierRule.SUBSCRIBE_ID, subscribeId));
          final String userEmail = authenticatedUser.getUserEmail();
-         collection.getRules().put("Zapier" + (userEmail != null && userEmail.length() > 0 ? " (" + userEmail + ")" : ""), rule);
+         final String ruleName = "Zapier" + (userEmail != null && userEmail.length() > 0 ? " (" + userEmail + ")" : "") + " " + subscribeId;
+         collection.getRules().put(ruleName, rule);
          collectionFacade.updateCollection(collection.getId(), collection);
 
          return rule;
