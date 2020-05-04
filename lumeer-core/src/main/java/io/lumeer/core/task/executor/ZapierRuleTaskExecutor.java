@@ -27,6 +27,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
@@ -49,14 +50,18 @@ public class ZapierRuleTaskExecutor {
    }
 
    public void execute() {
-      final Document document = ruleTask.getNewDocument();
-      final Document oldDocument = ruleTask.getOldDocument();
-      final Collection collection = ruleTask.getCollection();
-      final Entity<DataDocument> entity = Entity.json(getZapierUpdateDocumentMessage(collection, oldDocument, document));
+      try {
+         final Document document = ruleTask.getNewDocument();
+         final Document oldDocument = ruleTask.getOldDocument();
+         final Collection collection = ruleTask.getCollection();
+         final Entity<DataDocument> entity = Entity.json(getZapierUpdateDocumentMessage(collection, oldDocument, document));
 
-      final Client client = ClientBuilder.newClient();
-      client.target(rule.getHookUrl()).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
-      client.close();
+         final Client client = ClientBuilder.newClient();
+         client.target(rule.getHookUrl()).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
+         client.close();
+      } catch (Exception e) {
+         log.log(Level.SEVERE, "Could not process Zapier request.", e);
+      }
    }
 
    public static DataDocument getZapierUpdateDocumentMessage(final Collection collection, final Document oldDocument, final Document newDocument) {
@@ -69,13 +74,18 @@ public class ZapierRuleTaskExecutor {
                        .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
       );
-      final Set<String> keys = new HashSet<>(oldDocument.getData().keySet());
-      keys.addAll(newDocument.getData().keySet());
+      final Set<String> keys = new HashSet<>();
+      if (oldDocument != null && oldDocument.getData() != null) {
+         keys.addAll(oldDocument.getData().keySet());
+      }
+      if (newDocument.getData() != null) {
+         keys.addAll(newDocument.getData().keySet());
+      }
       keys.remove("_id");
 
       keys.forEach(key -> {
          final String normalizedKey = attributeNames.getOrDefault(key, key);
-         final Object oldValue = oldDocument.getData().get(key);
+         final Object oldValue = oldDocument != null && oldDocument.getData() != null ? oldDocument.getData().get(key) : null;
          final Object newValue = newDocument.getData().get(key);
          if ((oldValue == null && newValue != null) || (newValue == null && oldValue != null) || (newValue != null && !newValue.equals(oldValue))) {
             doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, true);
