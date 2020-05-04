@@ -1,80 +1,532 @@
 FORMAT: 1A
-HOST: http://polls.apiblueprint.org/
+HOST: https://get.lumeer.io/lumeer-engine/rest/
 
 # Lumeer
 
-Polls is a simple API allowing consumers to view polls and vote in them.
+Lumeer is a flexible data management platform. Therefore, the fields in the requests 
+and reponses vary a lot.
 
-## Questions Collection [/questions]
+The structure is as follows:
+ * users can have access to several organizations
+ * within the organizations, there are projects (users might have further restricted access)
+ * in the projects there are collections (collections are like database tables, the name 
+   is inherited from the underlying NoSQL database)
+ * in the collctions, there are individual documents (i.e. data rows = records)
+ * views are preconfigured queries to collections together with the configuration of 
+   visual representation in UI
+   
+The documents have dynamic attributes, even documents in the same collection can have various
+attributes (as is the case in NoSQL databases).
 
-### List All Questions [GET]
+For us to be able to allow any characters in field names, there is a dictionary stored in
+the collection configuration (e.g. 
+`[ { "fieldIndex1": "fieldName1" }, ..., { "fieldIndexN": "fieldNameN" } ]`).
+
+The field values in documents are then stored under the field indexes. 
+The indexes are typically in the form of `a1, a2, ..., aN`.
+
+So a document then looks like:
+
+```{ a1: "value1", a2: "value2", ..., aN: "valueN" }```
+
+For user convenience, the field indexes need to be translated to field names in UI.
+
+
+## Zapier Service [/zapier]
+
+Lumeer provides a simple API for communicating with the Zapier platform.
+
+### List All Organizations [GET /zapier/organizations]
+
+Gets all organizations available to the authenticated user. 
+
+The response is in the format that is ready to populate a Zapier dropdown.
 
 + Response 200 (application/json)
 
         [
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
+                "key": "organization_id",
+                "label": "Organization",
+                "type": "string",
+                "computed": false,
+                "required": true,
+                "altersDynamicFields": true,
                 "choices": [
                     {
-                        "choice": "Swift",
-                        "votes": 2048
-                    }, {
-                        "choice": "Python",
-                        "votes": 1024
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 512
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 256
+                        "value": "5d9cd42686189a7cac11607a",
+                        "label": "MVCRL: Lumeer demo"
+                    },
+                    {
+                        "value": "5e10cc018d86634a04f74fd1",
+                        "label": "CODE: Organization name"
+                    },
+                    {
+                        "value": "5ea2f35f78c7bb0530142d94",
+                        "label": "TRNGL: Lumeer demo"
                     }
                 ]
             }
         ]
 
-### Create a New Question [POST]
+### List All Projects [GET /zapier/projects?organization_id={organization_id}]
 
-You may create your own question using this action. It takes a JSON
-object containing a question and a collection of answers in the
-form of choices.
+Lists all projects available to the authenticated user under the given organization.
+
+The response is in the format that is ready to populate a Zapier dropdown.
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization to query for projects
+    
++ Response 200 (application/json)
+    
+    + Body
+
+            [
+                {
+                    "key": "project_id",
+                    "label": "Project",
+                    "type": "string",
+                    "computed": false,
+                    "required": true,
+                    "altersDynamicFields": true,
+                    "choices": [
+                        {
+                            "value": "5d9cd42f86189a7cac11607d",
+                            "label": "PROJ: Sample Project Name"
+                        },
+                        {
+                            "value": "5d9cd46986189a7cac116117",
+                            "label": "EMPTY: Another poject"
+                        },
+                        {
+                            "value": "5ead9f5810d3fd1e3dced871",
+                            "label": "CODE: Project name"
+                        }
+                    ]
+                }
+            ]            
+
+### List All Collections [GET /zapier/collections?organization_id={organization_id}&project_id={project_id}]
+
+Lists all collections available to the authenticated user under the given organization and project.
+
+The response is in the format that is ready to populate a Zapier dropdown.
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization to query for collections
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project to query for collections
+    
++ Response 200 (application/json)
+    
+    + Body
+
+            [
+                {
+                    "key": "collection_id",
+                    "label": "Table",
+                    "type": "string",
+                    "computed": false,
+                    "required": true,
+                    "altersDynamicFields": true,
+                    "choices": [
+                        {
+                            "value": "5d9cd42f86189a7cac11607e",
+                            "label": "Employees"
+                        },
+                        {
+                            "value": "5d9cd42f86189a7cac11607f",
+                            "label": "Projects"
+                        },
+                        {
+                            "value": "5d9cd42f86189a7cac116080",
+                            "label": "Clients"
+                        },
+                        {
+                            "value": "5d9cd43086189a7cac116081",
+                            "label": "Tasks"
+                        },
+                    ]
+                }
+            ]
+
+### List Collection Fields [GET /zapier/collection/attributes?collection_hash={organization_id}/{project_id}/{collection_id}]
+
+Lists all fields (attributes) of documents in a collection in the given organization and project.
+
+The response is in the format that is ready to populate a Zapier dropdown.
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to get fields of
+    
++ Response 200 (application/json)
+    
+    + Body
+
+            [
+                {
+                    "key": "a1",
+                    "label": "Task",
+                    "type": "string",
+                    "computed": false,
+                    "required": false,
+                    "altersDynamicFields": false
+                },
+                {
+                    "key": "a2",
+                    "label": "Start",
+                    "type": "datetime",
+                    "computed": false,
+                    "required": false,
+                    "altersDynamicFields": false
+                },
+                {
+                    "key": "a3",
+                    "label": "Due Date",
+                    "type": "datetime",
+                    "computed": false,
+                    "required": false,
+                    "altersDynamicFields": false
+                },
+                {
+                    "key": "a4",
+                    "label": "Budget",
+                    "type": "number",
+                    "computed": false,
+                    "required": false,
+                    "altersDynamicFields": false
+                },
+                {
+                    "key": "a5",
+                    "label": "Description",
+                    "type": "string",
+                    "computed": false,
+                    "required": false,
+                    "altersDynamicFields": false
+                },
+                {
+                    "key": "a6",
+                    "label": "Progress",
+                    "type": "string",
+                    "computed": false,
+                    "required": false,
+                    "altersDynamicFields": false
+                }
+            ]
+            
+### Create a Document in a Collection [POST /zapier/collection/documents?collection_hash={organization_id}/{project_id}/{collection_id}]
+
+Creates a new document (record) in the collection in the given organization and project.
+
+The response is the newly created document. The field names are in a human friendly format. It might be possible that the response contains also automatically 
+populated fields.
+
+In request body:
+ + `id` optional custom ID to correlate the response
+ + `aX` index of the field
+ + `valueX` value to set in the new document
+ 
+In response body:
+ + `id` previously specified correlation ID
+ + `_id` internal document id
+ + `fieldNameX` human friendly field name
+ + `valueX` the new field value
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to create document in
+    
++ Request (application/json)
+
+    + Body
+    
+            {
+                "id": "optional custom id to correlate the response"
+                "a1": "value1",
+                "a2": "value2"
+            }
+    
++ Response 200 (application/json)
+    
+    + Body
+    
+            {
+                "_id": "1234567890abcdef12345678",
+                "id": "previously specified correlation id",
+                "fieldName1": "value1",
+                "fieldName2": "value2"
+            }
+
+
+### Update a Document in a Collection [PUT /zapier/collection/documents?collection_hash={organization_id}/{project_id}/{collection_id}&key={key}&create_update={create_update}]
+
+Updates a document (record) in the collection in the given organization and project.
+
+The response is the updated document (all its fields, including those not being updated). 
+It might be possible that the response contains also automatically populated fields.
+
+Part of the request body must be a so called key attribute that is used to identify the document to update.
+It can be any field of the document that you internally use as an identifier. 
+All the documents matching the key field's value are updated, although only the first one is returned.
+
+Example request: paremeter `key=a2` and body `{ a1: "value1", a2: "identifier" }`.
+The first document having `a2 == "identifier"` gets updated.
+
+In request body:
+ + `id` optional custom ID to correlate the response
+ + `aX` index of the field
+ + `valueX` value to set in the document
+ 
+In response body:
+ + `id` previously specified correlation ID
+ + `_id` internal document id
+ + `updated_count` number of updated documents
+ + `fieldNameX` human friendly field name
+ + `valueX` the new field value
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to update document in
+    + key (string, required) ... index of the attribute in request to match in the document being updated
+    + create_update (boolean, optional, `true`) ... when no document matches the key value, create a new one (defaults to false)
+    
++ Request (application/json)
+
+    + Body
+    
+            {
+                "id": "custom ID",
+                "a1": "value1",
+                "a2": "value2"
+            }
+    
++ Response 200 (application/json)
+    
+    + Body
+    
+            {
+                "id": "custom ID",
+                "_id": "1234567890abcdef12345678",
+                "fieldName1": "value1",
+                "fieldName2": "value2",
+                "updated_count": 2
+            }
+
+
+### Get Sample Documents from a Collection [GET /zapier/collection/documents?collection_hash={organization_id}/{project_id}/{collection_id}&by_updatekey={by_update}]
+
+Gets at most 10 recent documents (records) from the collection in the given organization and project.
+
+If there aren't enough documents in the collection, a smaller number of documents is returned.
+
+The response is human friendly and uses field names instead of their indexes.
+
+There are some special fields for every document field denoting their update state and original value.
+When there is no change to the field, the previous value is the same as the current one.
+
+For a field named `fieldName1`, there will be the following additional fields:
+ + `_changed_fieldName1` -- boolean specifying whether the field value hase changed (true when changed)
+ + `_previous_fieldName1` -- the previous value stored in the field prior to update
+ 
+In addition to that, there is an internal document id stored under `_id`. This ID is always present.
+All other fields in the response body are dynamic.
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to update document in
+    + by_update (boolean, optional, `true`) ... by default (when false) the documents are sorted by creation date descending, when true, the documents are sorted by update date descending
+
++ Response 200 (application/json)
+    
+    + Body
+    
+            [
+                {
+                    "Task": "Game script",
+                    "Progress": 0.12,
+                    "Description": "Fine tune the original game idea",
+                    "Start": "2019-06-26T22:00:00.000+0000",
+                    "Budget": 1000,
+                    "_id": "5d9cd43186189a7cac1160c8",
+                    "Due Date": "2019-07-04T22:00:00.000+0000",
+                    "_changed_Task": false,
+                    "_previous_Task": "Game script",
+                    "_changed_Progress": false,
+                    "_previous_Progress": 0.12,
+                    "_changed_Description": false,
+                    "_previous_Description": "Fine tune the original game idea",
+                    "_changed_Start": false,
+                    "_previous_Start": "2019-06-26T22:00:00.000+0000",
+                    "_changed_Budget": false,
+                    "_previous_Budget": 1000,
+                    "_changed_Due Date": false,
+                    "_previous_Due Date": "2019-07-04T22:00:00.000+0000"
+                }
+            ]
+            
+
+### Subscribe to Document Created Event [POST /zapier/collection/document/created?collection_hash={organization_id}/{project_id}/{collection_id}]
+
+Subscribes the given URL to the document created event. Whenever a document is created in the 
+given collection (that belongs to the given project and organization), the URL is called with the 
+updated document data.
+
+The document data being sent to the hook URL later are the same as in [Get Sample Documents](### Get Sample Documents from a Collection).
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to subscribe to
 
 + Request (application/json)
 
-        {
-            "question": "Favourite programming language?",
-            "choices": [
-                "Swift",
-                "Python",
-                "Objective-C",
-                "Ruby"
-            ]
-        }
-
-+ Response 201 (application/json)
-
-    + Headers
-
-            Location: /questions/2
-
+            {
+                "hookUrl": "https://acme.com/"
+            }
+    
++ Response 200 (application/json)
+    
     + Body
+    
+            {
+                "hookUrl": "https://acme.com/",
+                "id": "subscription id"
+            }
+    
+
+### Unubscribe from Document Created Event [DELETE /zapier/collection/document/created?collection_hash={organization_id}/{project_id}/{collection_id}&subscribe_id={subscribe_id}]
+
+Unsubscribes from the previously subscribed document created event.
+
+The subscription ID must be the same as previously returned by the subscription request.
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection
+    + subscribe_id (string, required, `b9503437-3dcc-4bb9-8bbd-2e1f1fef1a64`) ... previously returned subscribe ID
+
++ Response 200 (application/json)
+    
+    + Body
+    
+            {
+                "id": "subscription id"
+            }
+
+### Subscribe to Document Updated Event [POST /zapier/collection/document/updated?collection_hash={organization_id}/{project_id}/{collection_id}]
+
+Subscribes the given URL to the document updated event. Whenever a document is updated in the 
+given collection (that belongs to the given project and organization), the URL is called with the 
+updated document data.
+
+The document data being sent to the hook URL later are the same as in [Get Sample Documents](### Get Sample Documents from a Collection).
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to subscribe to
+
++ Request (application/json)
 
             {
-                "question": "Favourite programming language?",
-                "published_at": "2015-08-05T08:40:51.620Z",
-                "choices": [
-                    {
-                        "choice": "Swift",
-                        "votes": 0
-                    }, {
-                        "choice": "Python",
-                        "votes": 0
-                    }, {
-                        "choice": "Objective-C",
-                        "votes": 0
-                    }, {
-                        "choice": "Ruby",
-                        "votes": 0
-                    }
-                ]
+                "hookUrl": "https://acme.com/"
             }
+    
++ Response 200 (application/json)
+    
+    + Body
+    
+            {
+                "hookUrl": "https://acme.com/",
+                "id": "subscription id"
+            }
+    
+
+### Unubscribe from Document Updated Event [DELETE /zapier/collection/document/updated?collection_hash={organization_id}/{project_id}/{collection_id}&subscribe_id={subscribe_id}]
+
+Unsubscribes from the previously subscribed document updated event.
+
+The subscription ID must be the same as previously returned by the subscription request.
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection
+    + subscribe_id (string, required, `b9503437-3dcc-4bb9-8bbd-2e1f1fef1a64`) ... previously returned subscribe ID
+
++ Response 200 (application/json)
+    
+    + Body
+    
+            {
+                "id": "subscription id"
+            }
+
+### Find Documents [POST /zapier/find/documents?collection_hash={organization_id}/{project_id}/{collection_id}]
+
+Finds documents in the given collection. Maximum number of returned documents is 20.
+
+The request body contains an array of search conditions. All the conditions are connected with the AND operator.
+The condition value can be any object - string, number, date, boolean...
+
+Valid condition values are:
+ + `eq` - equals `==`
+ + `neq` - not equals `!=`
+ + `lt` - lower than `<`
+ + `lte` - lower than or equals `<=`
+ + `gt` - greater than `>`
+ + `gte` - greater than or equals `>=`
+ + `contains` - contains a string or value in array
+ + `notContains` - does not contain a string or value in array
+ + `startsWith` - starts with a string
+ + `endsWith` - ends with a string
+ + `empty` - value is empty (value request field is ignored and can be null)
+ + `notEmpty` - value is not empty (value request field is ignored and can be null)
+
++ Parameters
+    
+    + organization_id (string, required, `1234567890abcdef12345678`) ... ID of the organization
+    + project_id (string, required, `1234567890abcdef12345678`) ... ID of the project
+    + collection_id (string, required, `1234567890abcdef12345678`) ... ID of the collection to subscribe to
+
++ Request (application/json)
+
+            [
+                {
+                    "attributeId": "a1",
+                    "condition": "eq",
+                    "value": "value"
+                }
+            ]
+    
++ Response 200 (application/json)
+    
+    + Body
+    
+            [
+                {
+                    "Task": "Game script",
+                    "Progress": 0.12,
+                    "Description": "Fine tune the original game idea",
+                    "Start": "2019-06-26T22:00:00.000+0000",
+                    "Budget": 1000,
+                    "_id": "5d9cd43186189a7cac1160c8",
+                    "Due Date": "2019-07-04T22:00:00.000+0000",
+                }
+            ]
