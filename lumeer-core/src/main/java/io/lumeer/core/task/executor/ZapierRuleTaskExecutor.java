@@ -69,6 +69,7 @@ public class ZapierRuleTaskExecutor {
 
       final DataDocument doc = new DataDocument(
             newDocument.getData()
+                       .append("_id", newDocument.getId())
                        .entrySet()
                        .stream()
                        .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
