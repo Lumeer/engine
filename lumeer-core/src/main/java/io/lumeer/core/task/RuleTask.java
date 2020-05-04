@@ -109,4 +109,18 @@ public class RuleTask extends AbstractContextualTask {
    public LinkInstance getNewLinkInstance() {
       return newLinkInstance;
    }
+
+   @Override
+   public String toString() {
+      return "RuleTask{" +
+            "ruleName='" + ruleName + '\'' +
+            ", rule=" + rule +
+            ", collection=" + collection +
+            ", linkType=" + linkType +
+            ", oldDocument=" + oldDocument +
+            ", newDocument=" + newDocument +
+            ", oldLinkInstance=" + oldLinkInstance +
+            ", newLinkInstance=" + newLinkInstance +
+            '}';
+   }
 }
