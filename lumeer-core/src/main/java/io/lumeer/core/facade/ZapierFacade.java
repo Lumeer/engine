@@ -260,7 +260,11 @@ public class ZapierFacade extends AbstractFacade {
       List<Document> documents;
 
       if (key.equals("_id")) {
-         documents = List.of(documentFacade.getDocument(collectionId, data.get("_id").toString()));
+         if (data != null && data.containsKey("_id")) {
+            documents = List.of(documentFacade.getDocument(collectionId, data.get("_id").toString()));
+         } else {
+            return List.of();
+         }
       } else {
          documents = searchFacade.searchDocuments(
                new Query(
