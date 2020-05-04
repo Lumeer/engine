@@ -333,8 +333,9 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
       List<? extends ZapierFacade.ZapierField> fields = response.readEntity(new GenericType<List<? extends ZapierFacade.ZapierField>>() {});
 
-      assertThat(fields).hasSize(1);
-      assertThat(fields.get(0)).isEqualTo(new ZapierFacade.ZapierField("a1", "fullname", "boolean", true, false, false));
+      assertThat(fields).hasSize(2);
+      assertThat(fields.get(0)).isEqualTo(new ZapierFacade.ZapierField("_id", "_id", "string", true, false, false));
+      assertThat(fields.get(1)).isEqualTo(new ZapierFacade.ZapierField("a1", "fullname", "boolean", true, false, false));
    }
 
    @Test

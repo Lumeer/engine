@@ -43,17 +43,19 @@ public class QueryProcessorInterceptor {
    private AuthenticatedUser authenticatedUser;
 
    private void processQuery(final Query query) {
-      for (QueryStem stem : query.getStems()) {
-         if (!stem.getFilters().isEmpty()) {
-            final List<CollectionAttributeFilter> newFilters = stem.getFilters().stream().map(this::processFilter).collect(Collectors.toList());
-            stem.getFilters().clear();
-            stem.getFilters().addAll(newFilters);
-         }
-         if (!stem.getLinkFilters().isEmpty()) {
-            final List<LinkAttributeFilter> newFilters = stem.getLinkFilters().stream().map(this::processFilter).collect(Collectors.toList());
-            stem.getLinkFilters().clear();
-            stem.getLinkFilters().addAll(newFilters);
-         }
+      query.getStems().forEach(this::processStem);
+   }
+
+   private void processStem(final QueryStem stem) {
+      if (!stem.getFilters().isEmpty()) {
+         final List<CollectionAttributeFilter> newFilters = stem.getFilters().stream().map(this::processFilter).collect(Collectors.toList());
+         stem.getFilters().clear();
+         stem.getFilters().addAll(newFilters);
+      }
+      if (!stem.getLinkFilters().isEmpty()) {
+         final List<LinkAttributeFilter> newFilters = stem.getLinkFilters().stream().map(this::processFilter).collect(Collectors.toList());
+         stem.getLinkFilters().clear();
+         stem.getLinkFilters().addAll(newFilters);
       }
    }
 
@@ -86,6 +88,12 @@ public class QueryProcessorInterceptor {
       for (final Object param : params) {
          if (param instanceof Query) {
             processQuery((Query) param);
+         } else if (param instanceof QueryStem) {
+            processStem((QueryStem) param);
+         } else if (param instanceof CollectionAttributeFilter) {
+            processFilter((CollectionAttributeFilter) param);
+         } else if (param instanceof LinkAttributeFilter) {
+            processFilter((LinkAttributeFilter) param);
          }
       }
 
