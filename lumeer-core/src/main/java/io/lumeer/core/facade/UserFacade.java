@@ -94,6 +94,9 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private Event<RemoveUser> removeUserEvent;
 
+   @Inject
+   private EmailFacade emailFacade;
+
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, Role.MANAGE);
@@ -223,6 +226,10 @@ public class UserFacade extends AbstractFacade {
       if (this.createOrUpdateUserEvent != null) {
          this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, created));
       }
+      if (authenticatedUser.getUserEmail() == null || !authenticatedUser.getUserEmail().equals(user.getEmail())) {
+         emailFacade.sendInvitation(user.getEmail());
+      }
+
       return created;
    }
 
