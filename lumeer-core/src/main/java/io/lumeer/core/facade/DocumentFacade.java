@@ -210,6 +210,13 @@ public class DocumentFacade extends AbstractFacade {
       Set<String> attributesIdsToDec = new HashSet<>(oldData.keySet());
       attributesIdsToDec.removeAll(data.keySet());
 
+      if (!isDataDifferent(oldData, data)) { // if there is no difference, just return the document
+         final Document doc = documentDao.getDocumentById(documentId);
+         doc.setData(oldData);
+
+         return doc;
+      }
+
       updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec, 0);
 
       // TODO archive the old document
@@ -219,6 +226,19 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
+   }
+
+   private boolean isDataDifferent(final DataDocument oldDoc, final DataDocument newDoc) {
+      if (oldDoc == null) {
+         return true;
+      }
+
+      // we need to use Map's equals
+      final Map<String, Object> oldData = new HashMap<>(oldDoc);
+      final Map<String, Object> newDataWithId = new HashMap<>(newDoc);
+      newDataWithId.put(DataDocument.ID, oldDoc.getId());
+
+      return !oldData.equals(newDataWithId);
    }
 
    public DocumentsChain createDocumentsChain(List<Document> documents, List<LinkInstance> linkInstances) {
@@ -334,6 +354,13 @@ public class DocumentFacade extends AbstractFacade {
       Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 
+      if (!isPatchDifferent(oldData, data)) { // if there is no difference, just return the document
+         final Document doc = documentDao.getDocumentById(documentId);
+         doc.setData(oldData);
+
+         return doc;
+      }
+
       updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet(), 0);
 
       // TODO archive the old document
@@ -344,6 +371,16 @@ public class DocumentFacade extends AbstractFacade {
       constraintManager.decodeDataTypes(collection, updatedDocument.getData());
 
       return updatedDocument;
+   }
+
+   private boolean isPatchDifferent(final DataDocument oldDoc, final DataDocument patch) {
+      if (oldDoc == null) {
+         return true;
+      }
+
+      return patch.entrySet().stream().anyMatch(entry ->
+         !oldDoc.containsKey(entry.getKey()) || !oldDoc.get(entry.getKey()).equals(entry.getValue())
+      );
    }
 
    public Document patchDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
