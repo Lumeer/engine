@@ -66,6 +66,12 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String S3_REGION = "s3_region";
    public static final String S3_ENDPOINT = "s3_endpoint";
 
+   public static final String SMTP_USER = "smtp_user";
+   public static final String SMTP_PASSWORD = "smtp_password";
+   public static final String SMTP_SERVER = "smtp_server";
+   public static final String SMTP_PORT = "smtp_port";
+   public static final String SMTP_FROM = "smtp_from";
+
    public static final String SENTRY_DSN = "sentry_dsn";
 
    public static final String LOCALE = "locale";
