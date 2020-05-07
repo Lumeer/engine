@@ -367,6 +367,7 @@ public class ZapierFacade extends AbstractFacade {
       return new DataDocument(
             data.entrySet()
                 .stream()
+                .filter(entry -> entry.getValue() != null)
                 .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
    }
