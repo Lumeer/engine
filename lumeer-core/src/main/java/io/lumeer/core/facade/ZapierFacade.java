@@ -251,7 +251,7 @@ public class ZapierFacade extends AbstractFacade {
       final Document document = new Document(dataDocument);
       final Document createdDocument = documentFacade.createDocument(collectionId, document);
 
-      return translateAttributes(collection, createdDocument.getData().append("_id", createdDocument.getId()));
+      return translateAttributes(collection, addMissingAttributes(createdDocument.getData().append("_id", createdDocument.getId()), collection));
    }
 
    public List<DataDocument> updateDocument(final String collectionId, final String key, final Map<String, Object> data) {
@@ -279,7 +279,7 @@ public class ZapierFacade extends AbstractFacade {
       }
 
       documents.forEach(document -> {
-         results.add(translateAttributes(collection, documentFacade.patchDocumentData(collectionId, document.getId(), new DataDocument(data)).getData()));
+         results.add(translateAttributes(collection, addMissingAttributes(documentFacade.patchDocumentData(collectionId, document.getId(), new DataDocument(data)).getData(), collection)));
       });
 
       return results;
@@ -326,6 +326,7 @@ public class ZapierFacade extends AbstractFacade {
             .getRecentDocuments(collectionId, byUpdate)
             .stream()
             .map(Document::getData)
+            .map(data -> addMissingAttributes(data, collection))
             .map(data -> translateAttributes(collection, data))
             .map(this::addModifiers)
             .collect(Collectors.toList());
@@ -337,6 +338,7 @@ public class ZapierFacade extends AbstractFacade {
       return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20))
              .stream()
              .map(Document::getData)
+             .map(data -> addMissingAttributes(data, collection))
              .map(data -> translateAttributes(collection, data))
              .collect(Collectors.toList());
    }
@@ -345,7 +347,17 @@ public class ZapierFacade extends AbstractFacade {
       final Document document = documentFacade.getDocument(collectionId, documentId);
       final Collection collection = collectionFacade.getCollection(collectionId);
 
-      return List.of(translateAttributes(collection, document.getData()));
+      return List.of(translateAttributes(collection, addMissingAttributes(document.getData(), collection)));
+   }
+
+   private DataDocument addMissingAttributes(final DataDocument data, final Collection collection) {
+      collection.getAttributes().forEach(attribute -> {
+         if (!data.containsKey(attribute.getId())) {
+            data.append(attribute.getId(), "");
+         }
+      });
+
+      return data;
    }
 
    private DataDocument addModifiers(final DataDocument data) {
