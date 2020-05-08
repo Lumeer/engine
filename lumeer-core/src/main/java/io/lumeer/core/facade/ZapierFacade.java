@@ -328,7 +328,7 @@ public class ZapierFacade extends AbstractFacade {
             .map(Document::getData)
             .map(data -> addMissingAttributes(data, collection))
             .map(data -> translateAttributes(collection, data))
-            .map(this::addModifiers)
+            .map(ZapierFacade::addModifiers)
             .collect(Collectors.toList());
    }
 
@@ -350,7 +350,7 @@ public class ZapierFacade extends AbstractFacade {
       return List.of(translateAttributes(collection, addMissingAttributes(document.getData(), collection)));
    }
 
-   private DataDocument addMissingAttributes(final DataDocument data, final Collection collection) {
+   public static DataDocument addMissingAttributes(final DataDocument data, final Collection collection) {
       collection.getAttributes().forEach(attribute -> {
          if (!data.containsKey(attribute.getId())) {
             data.append(attribute.getId(), "");
@@ -360,20 +360,37 @@ public class ZapierFacade extends AbstractFacade {
       return data;
    }
 
-   private DataDocument addModifiers(final DataDocument data) {
+   public static DataDocument addModifiers(final DataDocument data, final DataDocument oldDocument) {
       final DataDocument result = new DataDocument(data);
 
       data.entrySet().stream().forEach(entry -> {
          if (!entry.getKey().equals("_id")) {
-            result.append(CHANGED_PREFIX + entry.getKey(), false);
-            result.append(PREVIOUS_VALUE_PREFIX + entry.getKey(), entry.getValue());
+            if (oldDocument == null) {
+               result.append(CHANGED_PREFIX + entry.getKey(), false);
+               result.append(PREVIOUS_VALUE_PREFIX + entry.getKey(), entry.getValue());
+            } else {
+               final Object oldValue = oldDocument.get(entry.getKey());
+               final Object newValue = entry.getValue();
+
+               if ((oldValue == null && newValue != null) || (newValue == null && oldValue != null) || (newValue != null && !newValue.equals(oldValue))) {
+                  result.put(ZapierFacade.CHANGED_PREFIX + entry.getKey(), true);
+               } else {
+                  result.put(ZapierFacade.CHANGED_PREFIX + entry.getKey(), false);
+               }
+
+               result.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + entry.getKey(), oldValue);
+            }
          }
       });
 
       return result;
    }
 
-   private DataDocument translateAttributes(final Collection collection, final DataDocument data) {
+   public static DataDocument addModifiers(final DataDocument data) {
+      return addModifiers(data, null);
+   }
+
+   public static DataDocument translateAttributes(final Collection collection, final DataDocument data) {
       final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
       return new DataDocument(

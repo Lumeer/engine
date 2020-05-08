@@ -65,39 +65,15 @@ public class ZapierRuleTaskExecutor {
    }
 
    public static DataDocument getZapierUpdateDocumentMessage(final Collection collection, final Document oldDocument, final Document newDocument) {
-      final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-      final DataDocument doc = new DataDocument(
-            newDocument.getData()
-                       .append("_id", newDocument.getId())
-                       .entrySet()
-                       .stream()
-                       .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
-                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-      );
-      final Set<String> keys = new HashSet<>();
-      if (oldDocument != null && oldDocument.getData() != null) {
-         keys.addAll(oldDocument.getData().keySet());
-      }
-      if (newDocument.getData() != null) {
-         keys.addAll(newDocument.getData().keySet());
-      }
-      keys.remove("_id");
-
-      keys.forEach(key -> {
-         final String normalizedKey = attributeNames.getOrDefault(key, key);
-         final Object oldValue = oldDocument != null && oldDocument.getData() != null ? oldDocument.getData().get(key) : null;
-         final Object newValue = newDocument.getData().get(key);
-         if ((oldValue == null && newValue != null) || (newValue == null && oldValue != null) || (newValue != null && !newValue.equals(oldValue))) {
-            doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, true);
-         } else {
-            doc.put(ZapierFacade.CHANGED_PREFIX + normalizedKey, false);
-         }
-
-         doc.put(ZapierFacade.PREVIOUS_VALUE_PREFIX + normalizedKey, oldValue);
-      });
-
-      return doc;
+      return
+            ZapierFacade.addModifiers(
+                  ZapierFacade.translateAttributes(
+                        collection,
+                        ZapierFacade.addMissingAttributes(
+                              new DataDocument(newDocument.getData().append("_id", newDocument.getId())), collection)),
+                  ZapierFacade.translateAttributes(
+                        collection,
+                        oldDocument.getData()));
    }
 
 }
