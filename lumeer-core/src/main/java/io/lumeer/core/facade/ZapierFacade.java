@@ -32,6 +32,8 @@ import io.lumeer.engine.api.data.DataDocument;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -327,8 +330,8 @@ public class ZapierFacade extends AbstractFacade {
             .stream()
             .map(Document::getData)
             .map(data -> addMissingAttributes(data, collection))
-            .map(data -> translateAttributes(collection, data))
             .map(ZapierFacade::addModifiers)
+            .map(data -> translateAttributes(collection, data))
             .collect(Collectors.toList());
    }
 
@@ -392,12 +395,27 @@ public class ZapierFacade extends AbstractFacade {
 
    public static DataDocument translateAttributes(final Collection collection, final DataDocument data) {
       final Map<String, String> attributeNames = collection.getAttributes().stream().map(attribute -> Map.entry(attribute.getId(), attribute.getName())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      final DataDocument result = new DataDocument();
 
-      return new DataDocument(
-            data.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue() != null)
-                .map(entry -> Map.entry(attributeNames.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+      data.forEach((key, value) -> result.append(translateAttributeName(attributeNames, key), value));
+
+      return result;
+   }
+
+   private static String translateAttributeName(final Map<String, String> dictionary, final String key) {
+      if (StringUtils.isNotEmpty(key)) {
+         if (key.startsWith(CHANGED_PREFIX)) {
+            final String keySuffix = key.substring(CHANGED_PREFIX.length());
+            return CHANGED_PREFIX + dictionary.getOrDefault(keySuffix, keySuffix);
+         }
+         if (key.startsWith(PREVIOUS_VALUE_PREFIX)) {
+            final String keySuffix = key.substring(PREVIOUS_VALUE_PREFIX.length());
+            return PREVIOUS_VALUE_PREFIX + dictionary.getOrDefault(keySuffix, keySuffix);
+         }
+
+         return dictionary.getOrDefault(key, key);
+      }
+
+      return key;
    }
 }

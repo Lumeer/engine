@@ -66,13 +66,10 @@ public class ZapierRuleTaskExecutor {
 
    public static DataDocument getZapierUpdateDocumentMessage(final Collection collection, final Document oldDocument, final Document newDocument) {
       return
-            ZapierFacade.addModifiers(
-                  ZapierFacade.translateAttributes(
-                        collection,
-                        ZapierFacade.addMissingAttributes(
-                              new DataDocument(newDocument.getData().append("_id", newDocument.getId())), collection)),
-                  ZapierFacade.translateAttributes(
-                        collection,
+            ZapierFacade.translateAttributes(
+                  collection,
+                  ZapierFacade.addModifiers(
+                        ZapierFacade.addMissingAttributes(new DataDocument(newDocument.getData().append("_id", newDocument.getId())), collection),
                         oldDocument.getData()));
    }
 
