@@ -70,7 +70,7 @@ public class ZapierRuleTaskExecutor {
                   collection,
                   ZapierFacade.addModifiers(
                         ZapierFacade.addMissingAttributes(new DataDocument(newDocument.getData().append("_id", newDocument.getId())), collection),
-                        oldDocument.getData()));
+                        oldDocument != null ? oldDocument.getData() : null));
    }
 
 }
