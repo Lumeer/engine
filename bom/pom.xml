@@ -70,7 +70,7 @@
       <maven.assembly.plugin.version>3.3.0</maven.assembly.plugin.version>
       <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
 
-      <version.assertj>3.15.0</version.assertj>
+      <version.assertj>3.16.1</version.assertj>
       <version.slf4j>1.7.30</version.slf4j>
       <version.log4j>2.13.1</version.log4j>
       <version.commons.math3>3.6.1</version.commons.math3>
