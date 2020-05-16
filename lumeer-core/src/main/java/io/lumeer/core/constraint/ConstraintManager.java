@@ -39,6 +39,7 @@ import org.bson.types.Decimal128;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.time.DateTimeException;
@@ -81,6 +82,12 @@ public class ConstraintManager {
    private DateTimeFormatter dateDecoder;
 
    private static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
+
+   private static final DecimalFormat dfFullFraction = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+
+   static {
+      dfFullFraction.setMaximumFractionDigits(340); // 340 = DecimalFormat.DOUBLE_FRACTION_DIGITS
+   }
 
    /**
     * Obtains a default instance of ConstraintManager configured according to system properties.
@@ -355,7 +362,7 @@ public class ConstraintManager {
             final Point p = (Point) value;
             if (p.getType() == GeoJsonObjectType.POINT) {
                List<Double> values = p.getCoordinates().getValues();
-               return values.get(0) + ", " + values.get(1);
+               return doubleToString(values.get(0)) + ", " + doubleToString(values.get(1));
             }
          }
       }
@@ -457,5 +464,9 @@ public class ConstraintManager {
 
    public boolean isNumber(final String value) {
       return numberMatch.matcher(value).matches();
+   }
+
+   private String doubleToString(final Double d) {
+      return d != null ? dfFullFraction.format(d) : null;
    }
 }
