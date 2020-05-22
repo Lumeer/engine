@@ -301,6 +301,7 @@ public class Auth0Filter implements Filter {
             final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
             newAuthUserInfo.user = new User(userId, userId, userId, Collections.emptyMap());
             newAuthUserInfo.user.setAuthIds(Set.of("TEST:" + userId));
+            newAuthUserInfo.user.setEmailVerified(true);
             newAuthUserInfo.accessToken = userId;
             newAuthUserInfo.lastUpdated = System.currentTimeMillis();
             authUserCache.put(userId, newAuthUserInfo);
@@ -314,13 +315,16 @@ public class Auth0Filter implements Filter {
       final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
       final Request<UserInfo> info = auth0.userInfo(accessToken);
       final Map<String, Object> values = info.execute().getValues();
+      System.out.println(values);
       final String nickname = (String) values.get("nickname");
       final String sub = (String) values.get("sub");
       final String name = (String) values.get("name");
       final String email = (String) values.get("email");
+      final Boolean emailVerified = (Boolean) values.get("email_verified");
       final User user = new User(email == null ? (sub.startsWith("google-oauth2") ? nickname + "@gmail.com" : name) : email);
       user.setAuthIds(new HashSet<>(Arrays.asList(sub)));
       user.setName(name);
+      user.setEmailVerified(emailVerified != null && emailVerified);
 
       return user;
    }
