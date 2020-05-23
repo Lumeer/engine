@@ -315,7 +315,6 @@ public class Auth0Filter implements Filter {
       final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
       final Request<UserInfo> info = auth0.userInfo(accessToken);
       final Map<String, Object> values = info.execute().getValues();
-      System.out.println(values);
       final String nickname = (String) values.get("nickname");
       final String sub = (String) values.get("sub");
       final String name = (String) values.get("name");
