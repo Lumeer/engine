@@ -59,6 +59,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String WIZARD_DISMISSED = "wizard";
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
+   public static final String EMAIL_VERIFIED = "emailVerified";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -120,6 +121,7 @@ public class UserCodec implements CollectibleCodec<User> {
       Boolean newsletter = bson.getBoolean(NEWSLETTER);
       Boolean wizardDismissed = bson.getBoolean(WIZARD_DISMISSED);
       Boolean affiliatePartner = bson.getBoolean(AFFILIATE_PARTNER);
+      Boolean emailVerified = bson.getBoolean(EMAIL_VERIFIED);
 
       String referral = bson.getString(REFERRAL);
 
@@ -127,6 +129,7 @@ public class UserCodec implements CollectibleCodec<User> {
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
+      user.setEmailVerified(emailVerified != null && emailVerified);
 
       return user;
    }
@@ -139,7 +142,8 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(AUTH_IDS, user.getAuthIds())
           .append(WISHES, user.getWishes())
           .append(REFERRAL, user.getReferral())
-          .append(AFFILIATE_PARTNER, user.isAffiliatePartner());
+          .append(AFFILIATE_PARTNER, user.isAffiliatePartner())
+          .append(EMAIL_VERIFIED, user.isEmailVerified());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());

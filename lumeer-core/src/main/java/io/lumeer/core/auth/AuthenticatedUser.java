@@ -88,7 +88,7 @@ public class AuthenticatedUser implements Serializable {
       String authId = authIds.isEmpty() ? null : authIds.iterator().next();
 
       if (authId != null) { // production
-         checkUserInProduction(authId, getUserEmail(), getUserName());
+         checkUserInProduction(authId, getUserEmail(), getUserName(), getUserEmailVerified());
       } else {
          checkLocalUser(DEFAULT_EMAIL);
       }
@@ -115,12 +115,13 @@ public class AuthenticatedUser implements Serializable {
       return getCurrentUser().getId();
    }
 
-   private void checkUserInProduction(String authId, String email, String name) {
+   private void checkUserInProduction(String authId, String email, String name, boolean emailVerified) {
       User userByAuthId = userDao.getUserByAuthId(authId);
       if (userByAuthId != null) {
          if (!userByAuthId.getEmail().equals(email)) {
             userByAuthId.setName(name);
             userByAuthId.setEmail(email);
+            userByAuthId.setEmailVerified(emailVerified);
             createDemoWorkspaceIfNeeded(userByAuthId);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          } else {
@@ -128,6 +129,7 @@ public class AuthenticatedUser implements Serializable {
             if (userByAuthId.getName() == null || !userByAuthId.getName().equals(name)) {
                userByAuthId.setName(name);
             }
+            userByAuthId.setEmailVerified(emailVerified);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          }
          userLoginDao.userLoggedIn(userByAuthId.getId());
@@ -135,6 +137,7 @@ public class AuthenticatedUser implements Serializable {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
             userByEmail.setName(name);
+            userByEmail.setEmailVerified(emailVerified);
             if (userByEmail.getAuthIds() != null) {
                userByEmail.getAuthIds().add(authId);
             } else {
@@ -146,6 +149,7 @@ public class AuthenticatedUser implements Serializable {
          } else {
             User createdUser = createNewUser(email, authId);
             createdUser.setName(name);
+            createdUser.setEmailVerified(emailVerified);
             createDemoWorkspaceIfNeeded(createdUser);
             userDao.updateUser(createdUser.getId(), createdUser);
             userLoginDao.userLoggedIn(createdUser.getId());
@@ -284,6 +288,15 @@ public class AuthenticatedUser implements Serializable {
     */
    public String getUserEmail() {
       return authUserInfo.user != null && authUserInfo.user.getEmail() != null ? authUserInfo.user.getEmail() : DEFAULT_EMAIL;
+   }
+
+   /**
+    * Gets the email verification status of the currently logged in user.
+    *
+    * @return The email verification status of the currently logged in user.
+    */
+   public Boolean getUserEmailVerified() {
+      return authUserInfo.user != null && authUserInfo.user.isEmailVerified();
    }
 
    public String getUserSessionId() {

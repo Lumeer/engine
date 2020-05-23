@@ -49,6 +49,7 @@ public class User {
    public static final String WIZARD_DISMISSED = "wizard";
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
+   public static final String EMAIL_VERIFIED = "emailVerified";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -87,6 +88,10 @@ public class User {
    @JsonView(UserViews.DefaultView.class)
    @JsonProperty(AFFILIATE_PARTNER)
    private boolean affiliatePartner = false;
+
+   @JsonView(UserViews.DefaultView.class)
+   @JsonProperty(EMAIL_VERIFIED)
+   private boolean emailVerified = false;
 
    private List<String> wishes;
 
@@ -233,6 +238,14 @@ public class User {
       this.affiliatePartner = affiliatePartner;
    }
 
+   public boolean isEmailVerified() {
+      return emailVerified;
+   }
+
+   public void setEmailVerified(final boolean emailVerified) {
+      this.emailVerified = emailVerified;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -250,6 +263,7 @@ public class User {
             ", lastLoggedIn=" + lastLoggedIn +
             ", referral=" + referral +
             ", affiliatePartner=" + affiliatePartner +
+            ", emailVerified=" + emailVerified +
             '}';
    }
 
