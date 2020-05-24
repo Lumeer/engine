@@ -153,6 +153,10 @@ public class Auth0Filter implements Filter {
       }
 
       if (req.getMethod().equals("OPTIONS")) {
+         if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
+            res.setStatus(HttpServletResponse.SC_OK);
+            return;
+         }
          filterChain.doFilter(servletRequest, servletResponse);
          return;
       }
@@ -258,6 +262,7 @@ public class Auth0Filter implements Filter {
          }
 
          res.sendError(HttpServletResponse.SC_BAD_REQUEST);
+         return;
       }
 
       try {
