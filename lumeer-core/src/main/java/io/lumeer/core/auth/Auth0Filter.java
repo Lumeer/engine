@@ -24,11 +24,14 @@ import io.lumeer.core.facade.SentryFacade;
 
 import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
+import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.UserInfo;
+import com.auth0.json.mgmt.jobs.Job;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.auth0.net.AuthRequest;
 import com.auth0.net.Request;
 
 import java.io.IOException;
@@ -65,6 +68,7 @@ import javax.servlet.http.HttpServletResponse;
 public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
+   private static final long UNVERIFIED_TOKEN_REFRESH_PERIOD = 10L * 1000; // 10 minutes
    private static final String VIEW_ID = "view_id";
    private static final String CORRELATION_ID = "correlation_id";
    private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
@@ -101,6 +105,8 @@ public class Auth0Filter implements Filter {
    private AtomicLong lastCheck = new AtomicLong(System.currentTimeMillis());
 
    private Set<String> allowedHosts = new HashSet<String>();
+
+   private String managementApiToken;
 
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
@@ -175,7 +181,9 @@ public class Auth0Filter implements Filter {
          // we are safe to go, make sure we have user info
          final AuthenticatedUser.AuthUserInfo authUserInfo = getAuthenticatedUser(accessToken);
 
-         if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null || authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) {
+         if (!accessToken.equals(authUserInfo.accessToken) || authUserInfo.user == null ||
+               (authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) ||
+               (!authUserInfo.user.isEmailVerified() && authUserInfo.lastUpdated + UNVERIFIED_TOKEN_REFRESH_PERIOD <= System.currentTimeMillis())) {
             final Semaphore s = semaphores.computeIfAbsent(accessToken, key -> new Semaphore(1));
             if (s.tryAcquire()) { // only one thread must do that at the same time
                try {
@@ -225,6 +233,27 @@ public class Auth0Filter implements Filter {
             }
          }
 
+      }
+
+      // check for verification email resend
+      if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
+         if (authenticatedUser != null && authenticatedUser.getAuthUserInfo() != null && authenticatedUser.getAuthUserInfo().user != null &&
+               !authenticatedUser.getAuthUserInfo().user.isEmailVerified() && authenticatedUser.getAuthUserInfo().user.getAuthIds() != null &&
+               authenticatedUser.getAuthUserInfo().user.getAuthIds().size() > 0) {
+            final String authId = authenticatedUser.getAuthUserInfo().user.getAuthIds().iterator().next();
+
+            try {
+               resendVerificationEmail(authId);
+            } catch (Auth0Exception ae) {
+               res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ae.getLocalizedMessage());
+               return;
+            }
+
+            res.setStatus(200);
+            return;
+         }
+
+         res.sendError(HttpServletResponse.SC_BAD_REQUEST);
       }
 
       try {
@@ -309,6 +338,44 @@ public class Auth0Filter implements Filter {
             authenticatedUser.checkUser();
          }
       }
+   }
+
+   private void resendVerificationEmail(final String authId) throws Auth0Exception {
+      refreshManagementApiToken();
+      final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
+      Job job = mApi.jobs().sendVerificationEmail(authId, clientId).execute();
+   }
+
+   private void refreshManagementApiToken() throws Auth0Exception {
+      if (managementApiToken == null) {
+         managementApiToken = requestManagementApiToken();
+      } else {
+         if (!isValidManagementApiToken()) {
+            managementApiToken = requestManagementApiToken();
+
+            if (!isValidManagementApiToken()) {
+               throw new Auth0Exception("Unable to get management API token.");
+            }
+         }
+      }
+   }
+
+   private String requestManagementApiToken() throws Auth0Exception {
+      final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
+      AuthRequest req = auth0.requestToken("https://" + domain + "/api/v2/");
+      return req.execute().getAccessToken();
+   }
+
+   private boolean isValidManagementApiToken() {
+      final DecodedJWT jwt;
+      try {
+         jwt = JWT.decode(managementApiToken);
+         verifier.verify(jwt.getToken());
+      } catch (Exception e) {
+         return false;
+      }
+
+      return true;
    }
 
    private User getUserInfo(final String accessToken) throws Auth0Exception {
