@@ -98,7 +98,9 @@ public class Auth0Filter implements Filter {
    private JWTVerifier verifier = null;
    private String domain;
    private String clientId;
+   private String backendClientId;
    private String clientSecret;
+   private String backendClientSecret;
 
    private ExecutorService executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), new ThreadPoolExecutor.DiscardPolicy());
 
@@ -113,7 +115,9 @@ public class Auth0Filter implements Filter {
       if (System.getenv("SKIP_SECURITY") == null) {
          domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
          clientId = filterConfig.getServletContext().getInitParameter("com.auth0.clientId");
+         backendClientId = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId");
          clientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.clientSecret");
+         backendClientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret");
          verifier = AuthenticationControllerProvider.getVerifier(domain);
 
          final Optional<String> allowedHostsConfig = configurationFacade.getConfigurationString("allowed_hosts");
@@ -343,7 +347,7 @@ public class Auth0Filter implements Filter {
    private void resendVerificationEmail(final String authId) throws Auth0Exception {
       refreshManagementApiToken();
       final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
-      Job job = mApi.jobs().sendVerificationEmail(authId, clientId).execute();
+      Job job = mApi.jobs().sendVerificationEmail(authId, backendClientId).execute();
    }
 
    private void refreshManagementApiToken() throws Auth0Exception {
@@ -361,7 +365,7 @@ public class Auth0Filter implements Filter {
    }
 
    private String requestManagementApiToken() throws Auth0Exception {
-      final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
+      final AuthAPI auth0 = new AuthAPI(domain, backendClientId, backendClientSecret);
       AuthRequest req = auth0.requestToken("https://" + domain + "/api/v2/");
       return req.execute().getAccessToken();
    }

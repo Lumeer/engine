@@ -8,8 +8,16 @@
 		<param-value>Hjee0La2DjlYjIH5ClCx3Xnfaj02n2On</param-value>
 	</context-param>
 	<context-param>
+		<param-name>com.auth0.backend.clientId</param-name>
+		<param-value>5CZclgZ74vR1uIMm9pbxrsS5M7l3IKEB</param-value>
+	</context-param>
+	<context-param>
 		<param-name>com.auth0.clientSecret</param-name>
 		<param-value>ZcyJKbH5994vtemZYSo_ZrwRYrwleCsns2vOvM5IOsSyzrJqo9k-SCeBSs5asyzS</param-value>
+	</context-param>
+	<context-param>
+		<param-name>com.auth0.backend.clientSecret</param-name>
+		<param-value>OAPyuPZzKS3A1WS4KlrBT7ePNFt1qDpwC86jJQxv21LwSW70e5kgYfqUSqb3lPvn</param-value>
 	</context-param>
 	<context-param>
 		<param-name>com.auth0.domain</param-name>
