@@ -119,7 +119,7 @@
       <version.bytebuddy>1.10.10</version.bytebuddy>
       <version.junit>4.13</version.junit>
       <version.embedded.mongodb>2.2.0</version.embedded.mongodb>
-      <version.awssdk>2.13.8</version.awssdk>
+      <version.awssdk>2.13.23</version.awssdk>
 
       <java.level>12</java.level>
    </properties>
