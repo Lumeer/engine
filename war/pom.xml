@@ -49,7 +49,7 @@
       <version.velocity>1.7</version.velocity>
       <version.puppycrawl>8.32</version.puppycrawl>
       <version.mongo.driver>3.12.3</version.mongo.driver>
-      <version.commons.io>2.6</version.commons.io>
+      <version.commons.io>2.7</version.commons.io>
       <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
       <version.arquillian-container>2.2.0.Final</version.arquillian-container>
 

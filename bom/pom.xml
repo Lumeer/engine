@@ -74,7 +74,7 @@
       <version.slf4j>1.7.30</version.slf4j>
       <version.log4j>2.13.1</version.log4j>
       <version.commons.math3>3.6.1</version.commons.math3>
-      <version.commons.io>2.6</version.commons.io>
+      <version.commons.io>2.7</version.commons.io>
       <version.commons.beanutils>1.9.4</version.commons.beanutils>
       <version.commons.collections>4.4</version.commons.collections>
       <version.commons.lang>3.10</version.commons.lang>
