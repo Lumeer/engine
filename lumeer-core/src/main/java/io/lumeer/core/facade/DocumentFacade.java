@@ -379,7 +379,7 @@ public class DocumentFacade extends AbstractFacade {
       }
 
       return patch.entrySet().stream().anyMatch(entry ->
-         !oldDoc.containsKey(entry.getKey()) || !oldDoc.get(entry.getKey()).equals(entry.getValue())
+         !oldDoc.containsKey(entry.getKey()) || (oldDoc.get(entry.getKey()) == null && entry.getValue() != null) || !oldDoc.get(entry.getKey()).equals(entry.getValue())
       );
    }
 
