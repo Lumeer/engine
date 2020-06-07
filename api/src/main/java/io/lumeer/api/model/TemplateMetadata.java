@@ -29,6 +29,7 @@ public class TemplateMetadata {
    private final String defaultView;
    private final List<String> tags;
    private final String allowedDomains;
+   private final Long relativeDate;
    private final boolean showTopPanel;
    private final boolean isEditable;
 
@@ -37,13 +38,16 @@ public class TemplateMetadata {
          @JsonProperty("showTopPanel") final boolean showTopPanel,
          @JsonProperty("editable") final boolean isEditable,
          @JsonProperty("tags") final List<String> tags,
+         @JsonProperty("relativeDate") final Long relativeDate,
          @JsonProperty("defaultView") final String defaultView,
          @JsonProperty("allowedDomains") final String allowedDomains) {
       this.imageUrl = imageUrl;
       this.isEditable = isEditable;
       this.tags = tags;
+      this.relativeDate = relativeDate;
       this.showTopPanel = showTopPanel;
       this.defaultView = defaultView;
+
       this.allowedDomains = allowedDomains;
    }
 
@@ -51,7 +55,8 @@ public class TemplateMetadata {
       this.imageUrl = metadata.getImageUrl();
       this.isEditable = metadata.isEditable();
       this.tags = metadata.getTags();
-      this.showTopPanel = metadata.getShowTopPanel();
+      this.relativeDate = metadata.getRelativeDate();
+      this.showTopPanel = metadata.isShowTopPanel();
       this.defaultView = metadata.getDefaultView();
       this.allowedDomains = metadata.getAllowedDomains();
    }
@@ -72,7 +77,11 @@ public class TemplateMetadata {
       return tags;
    }
 
-   public Boolean getShowTopPanel() {
+   public Long getRelativeDate() {
+      return relativeDate;
+   }
+
+   public boolean isShowTopPanel() {
       return showTopPanel;
    }
 
