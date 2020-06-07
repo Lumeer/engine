@@ -48,7 +48,7 @@ public class Project extends Resource {
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
-         @JsonProperty("public") final Boolean isPublic,
+         @JsonProperty("public") final boolean isPublic,
          @JsonProperty("templateMetadata") final TemplateMetadata templateMetadata) {
       super(code, name, icon, color, description, permissions);
       this.templateMetadata = templateMetadata;
