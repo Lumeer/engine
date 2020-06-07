@@ -32,7 +32,6 @@ import io.lumeer.core.template.SequenceCreator;
 import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.ViewCreator;
-import io.lumeer.core.template.type.TemplateType;
 import io.lumeer.engine.api.event.TemplateCreated;
 
 import java.util.Date;
@@ -65,7 +64,16 @@ public class TemplateFacade extends AbstractFacade {
    @Inject
    private Event<TemplateCreated> templateCreatedEvent;
 
-   public void installTemplate(final Project project, final TemplateType templateType, final Language language) {
+   public String getTemplateOrganizationId(final Language language) {
+      switch (language) {
+         case CS:
+            return "5e72323afdb59d10a4a61e26";
+         default:
+            return "5e72285d76aff5634c9672f0";
+      }
+   }
+
+   public void installTemplate(final Project project, final String templateType, final Language language) {
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
       installTemplate(project, templateParser, createTemplateMetadata(new Date()));

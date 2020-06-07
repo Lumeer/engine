@@ -16,32 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.template.type;
 
-import io.lumeer.api.model.Language;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import java.util.Calendar;
-import java.util.Date;
+import io.lumeer.api.model.TemplateMetadata;
+import io.lumeer.storage.mongodb.codecs.TemplateMetadataCodec;
 
-public class ProductLaunchTemplate extends Template {
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+
+public class TemplateMetadataCodecProvider implements CodecProvider {
 
    @Override
-   public String getOrganizationCode(final Language language) {
-      switch (language) {
-         case CS:
-            return "TMPCS";
-         default:
-            return "TMPEN";
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == TemplateMetadata.class) {
+         return (Codec<T>) new TemplateMetadataCodec(registry);
       }
+
+      return null;
    }
 
-   @Override
-   public String getProjectCode(final Language language) {
-      return "LAUNC";
-   }
-
-   @Override
-   public Date getRelativeDate(final Language language) {
-      return createDate(2019, Calendar.JUNE, 1);
-   }
 }

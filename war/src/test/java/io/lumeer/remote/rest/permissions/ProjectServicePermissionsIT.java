@@ -101,7 +101,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
    }
 
    private Project createProject(String code, String name) {
-      Project project = new Project(code, name, "a", "b", null, null);
+      Project project = new Project(code, name, "a", "b", null, null, false, null);
       project.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
       return projectDao.createProject(project);
    }
@@ -140,7 +140,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String newProjectName = "NewName2";
-      Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null);
+      Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null, false, null);
 
       Response response = client.target(projectsUrl).path(project.getId())
                                 .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();
@@ -154,7 +154,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ, Role.MANAGE))));
       String newProjectName = "NewName";
-      Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null);
+      Project newProject = new Project(projectCode, newProjectName, "a", "b", null, null, false, null);
 
       Response response = client.target(projectsUrl).path(project.getId())
                                 .request(MediaType.APPLICATION_JSON).buildPut(Entity.json(newProject)).invoke();

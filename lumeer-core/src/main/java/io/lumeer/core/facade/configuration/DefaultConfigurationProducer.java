@@ -40,8 +40,6 @@ public class DefaultConfigurationProducer implements Serializable {
 
    private Map<String, String> defaultConfiguration = null;
 
-   public static final String TEMPLATES_FROM_RESOURCES = "templates_from_resources";
-
    public static final String GOPAY_API = "gopay_api";
    public static final String GOPAY_ID = "gopay_id";
    public static final String GOPAY_CLIENT_ID = "gopay_client_id";

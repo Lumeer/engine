@@ -22,7 +22,6 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.exception.TemplateNotAvailableException;
-import io.lumeer.core.template.type.TemplateType;
 import io.lumeer.engine.api.event.TemplateCreated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,12 +42,13 @@ public class TemplateParser {
    final TemplateObjectsDictionary dict = new TemplateObjectsDictionary();
    final JSONObject template;
 
-   public TemplateParser(final TemplateType templateType, final Language language) {
+   public TemplateParser(final String templateType, final Language language) {
       final JSONParser parser = new JSONParser();
       final Object o;
 
+      System.out.println("/templates/" + templateType.toLowerCase() + "." + language.toString().toLowerCase() + ".json");
       try (final BufferedReader br = new BufferedReader(new InputStreamReader(
-            this.getClass().getResourceAsStream("/templates/" + templateType.toString().toLowerCase() + "." + language.toString().toLowerCase() + ".json"), StandardCharsets.UTF_8))) {
+            this.getClass().getResourceAsStream("/templates/" + templateType.toLowerCase() + "." + language.toString().toLowerCase() + ".json"), StandardCharsets.UTF_8))) {
          o = parser.parse(br);
          if (!(o instanceof JSONObject)) {
             throw new IOException("Template file does not contain a valid JSON object.");

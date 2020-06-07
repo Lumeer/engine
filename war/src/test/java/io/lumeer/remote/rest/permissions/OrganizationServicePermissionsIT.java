@@ -372,7 +372,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
       String projectCode = "proj1";
       String projectName = "proj1_code";
-      Project project = new Project(projectCode, projectName, "a", "b", null, null);
+      Project project = new Project(projectCode, projectName, "a", "b", null, null, false, null);
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -391,7 +391,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       String projectCode = "proj2";
       String projectName = "proj2_code";
-      Project project = new Project(projectCode, projectName, "a", "b", null, null);
+      Project project = new Project(projectCode, projectName, "a", "b", null, null, false, null);
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())

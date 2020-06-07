@@ -33,7 +33,9 @@ public class Project extends Resource {
 
    public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
 
+   private TemplateMetadata templateMetadata;
    private int collectionsCount;
+   private boolean isPublic;
 
    public Project() {
    }
@@ -45,8 +47,12 @@ public class Project extends Resource {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
-         @JsonProperty(PERMISSIONS) final Permissions permissions) {
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty("public") final Boolean isPublic,
+         @JsonProperty("templateMetadata") final TemplateMetadata templateMetadata) {
       super(code, name, icon, color, description, permissions);
+      this.templateMetadata = templateMetadata;
+      this.isPublic = isPublic;
    }
 
    @Override
@@ -74,10 +80,15 @@ public class Project extends Resource {
       o.permissions = new Permissions(this.getPermissions());
       o.collectionsCount = this.collectionsCount;
       o.version = this.version;
+      o.isPublic = this.isPublic;
+      o.templateMetadata = this.templateMetadata != null ? new TemplateMetadata(this.templateMetadata) : null;
 
       return o;
    }
 
+   public TemplateMetadata getTemplateMetadata() {
+      return templateMetadata;
+   }
 
    public ResourceType getType() {
       return ResourceType.PROJECT;
@@ -85,6 +96,10 @@ public class Project extends Resource {
 
    public int getCollectionsCount() {
       return collectionsCount;
+   }
+
+   public boolean isPublic() {
+      return isPublic;
    }
 
    public void setCollectionsCount(final int collectionsCount) {

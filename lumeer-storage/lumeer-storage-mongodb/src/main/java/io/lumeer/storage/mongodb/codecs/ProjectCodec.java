@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.TemplateMetadata;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
 
@@ -34,6 +35,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Project> {
 
+   public static final String TEMPLATE_METADATA = "templateMetadata";
+   public static final String IS_PUBLIC = "isPublic";
+
    public ProjectCodec(final CodecRegistry registry) {
       super(registry);
    }
@@ -42,8 +46,15 @@ public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Proj
    public Project decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
       SimpleResource resource = decodeResource(bson);
+      TemplateMetadata templateMetadata;
+      if (bson.containsKey(TEMPLATE_METADATA)) {
+         templateMetadata = TemplateMetadataCodec.convertFromDocument(bson.get(TEMPLATE_METADATA, Document.class));
+      } else {
+         templateMetadata = null;
+      }
 
-      Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions());
+      boolean isPublic = bson.getBoolean(IS_PUBLIC, false);
+      Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), isPublic, templateMetadata);
       project.setId(resource.getId());
       project.setVersion(resource.getVersion());
       return project;
@@ -51,7 +62,11 @@ public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Proj
 
    @Override
    public void encode(final BsonWriter writer, final Project project, final EncoderContext encoderContext) {
-      Document bson = encodeResource(project);
+      Document bson = encodeResource(project)
+            .append(IS_PUBLIC, project.isPublic());
+      if (project.getTemplateMetadata() != null) {
+         bson = bson.append(TEMPLATE_METADATA, project.getTemplateMetadata());
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }

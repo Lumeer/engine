@@ -21,14 +21,11 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.provider.DataStorageProvider;
-import io.lumeer.core.template.type.Template;
-import io.lumeer.core.template.type.TemplateType;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
-import javax.annotation.PostConstruct;
+import java.util.Calendar;
 import javax.inject.Inject;
 
 public class CopyFacade extends AbstractFacade {
@@ -45,43 +42,32 @@ public class CopyFacade extends AbstractFacade {
    @Inject
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
-   @Inject
-   private DefaultConfigurationProducer configurationProducer;
-
-   private Boolean templatesFromResources;
-
-   @PostConstruct
-   public void init() {
-      this.templatesFromResources = Boolean.valueOf(configurationProducer.get(DefaultConfigurationProducer.TEMPLATES_FROM_RESOURCES));
-   }
-
    public void deepCopyTemplate(Project project, String templateId, Language language) {
-      var templateType = TemplateType.valueOf(templateId != null ? templateId.toUpperCase() : "");
-      var template = Template.create(templateType);
 
-      if (templatesFromResources) {
-         templateFacade.installTemplate(project, templateType, language);
-      } else if (template != null) {
-         var fromOrganization = organizationDao.getOrganizationByCode(template.getOrganizationCode(language));
+      var organizationId = templateFacade.getTemplateOrganizationId(language);
+      var fromOrganization = organizationDao.getOrganizationById(organizationId);
 
-         workspaceKeeper.push();
-         workspaceKeeper.setOrganization(fromOrganization);
+      workspaceKeeper.push();
+      workspaceKeeper.setOrganization(fromOrganization);
 
-         var storage = dataStorageProvider.getUserStorage();
-         var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
-         var fromProject = contextSnapshot.getProjectDao().getProjectByCode(template.getProjectCode(language));
+      var storage = dataStorageProvider.getUserStorage();
+      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+      var fromProject = contextSnapshot.getProjectDao().getProjectById(templateId);
 
-         workspaceKeeper.setWorkspace(fromOrganization, fromProject);
+      workspaceKeeper.setWorkspace(fromOrganization, fromProject);
 
-         contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
-         var facade = new ProjectFacade();
-         facade.init(contextSnapshot);
-         var content = facade.getRawProjectContent(fromProject.getId());
+      contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+      var facade = new ProjectFacade();
+      facade.init(contextSnapshot);
+      var content = facade.getRawProjectContent(fromProject.getId());
 
-         workspaceKeeper.pop();
+      workspaceKeeper.pop();
 
-         templateFacade.installTemplate(project, content, template.getRelativeDate(language));
-      }
+      var calendar = Calendar.getInstance();
+      calendar.set(2019, Calendar.JUNE, 1);
+      var relativeDate = calendar.getTime();
+
+      templateFacade.installTemplate(project, content, relativeDate);
 
    }
 
