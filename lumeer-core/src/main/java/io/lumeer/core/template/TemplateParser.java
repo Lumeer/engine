@@ -46,7 +46,6 @@ public class TemplateParser {
       final JSONParser parser = new JSONParser();
       final Object o;
 
-      System.out.println("/templates/" + templateType.toLowerCase() + "." + language.toString().toLowerCase() + ".json");
       try (final BufferedReader br = new BufferedReader(new InputStreamReader(
             this.getClass().getResourceAsStream("/templates/" + templateType.toLowerCase() + "." + language.toString().toLowerCase() + ".json"), StandardCharsets.UTF_8))) {
          o = parser.parse(br);
