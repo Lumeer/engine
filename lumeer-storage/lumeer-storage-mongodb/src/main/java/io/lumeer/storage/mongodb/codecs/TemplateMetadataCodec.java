@@ -37,6 +37,7 @@ public class TemplateMetadataCodec implements Codec<TemplateMetadata> {
    public static final String SHOW_TOP_PANEL = "showTopPanel";
    public static final String TAGS = "tags";
    public static final String IMAGE_URL = "imageUrl";
+   public static final String RELATIVE_DATE = "relativeDate";
    public static final String DEFAULT_VIEW = "defaultView";
    public static final String ALLOWED_DOMAINS = "allowedDomains";
 
@@ -58,16 +59,18 @@ public class TemplateMetadataCodec implements Codec<TemplateMetadata> {
       boolean hideTopBar = bson.getBoolean(SHOW_TOP_PANEL);
       String imageUrl = bson.getString(IMAGE_URL);
       List<String> tags = bson.getList(TAGS, String.class);
+      Long relativeDate = bson.getLong(RELATIVE_DATE);
       String defaultView = bson.getString(DEFAULT_VIEW);
       String allowedDomains = bson.getString(ALLOWED_DOMAINS);
 
-      return new TemplateMetadata(imageUrl, hideTopBar, editable, tags, defaultView, allowedDomains);
+      return new TemplateMetadata(imageUrl, hideTopBar, editable, tags, relativeDate, defaultView, allowedDomains);
    }
 
    @Override
    public void encode(final BsonWriter writer, final TemplateMetadata value, final EncoderContext encoderContext) {
       Document document = new Document(IS_EDITABLE, value.isEditable())
-            .append(SHOW_TOP_PANEL, value.getShowTopPanel())
+            .append(SHOW_TOP_PANEL, value.isShowTopPanel())
+            .append(RELATIVE_DATE, value.getRelativeDate())
             .append(IMAGE_URL, value.getImageUrl())
             .append(TAGS, value.getTags())
             .append(DEFAULT_VIEW, value.getDefaultView())

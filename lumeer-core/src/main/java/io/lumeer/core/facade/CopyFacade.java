@@ -25,7 +25,7 @@ import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
-import java.util.Calendar;
+import java.util.Date;
 import javax.inject.Inject;
 
 public class CopyFacade extends AbstractFacade {
@@ -63,9 +63,8 @@ public class CopyFacade extends AbstractFacade {
 
       workspaceKeeper.pop();
 
-      var calendar = Calendar.getInstance();
-      calendar.set(2019, Calendar.JUNE, 1);
-      var relativeDate = calendar.getTime();
+      var relativeDateMillis = fromProject.getTemplateMetadata() != null ? fromProject.getTemplateMetadata().getRelativeDate() : null;
+      var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
 
       templateFacade.installTemplate(project, content, relativeDate);
 
