@@ -109,7 +109,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Project createProject(String code) {
-      Project project = new Project(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null, false, null);
       project.getPermissions().updateUserPermissions(userPermission);
       project.getPermissions().updateGroupPermissions(groupPermission);
       return projectDao.createProject(project);
@@ -187,7 +187,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateProject() {
-      Project project = new Project(CODE1, NAME, ICON, COLOR, null, null);
+      Project project = new Project(CODE1, NAME, ICON, COLOR, null, null, false, null);
       Entity entity = Entity.json(project);
 
       Response response = client.target(projectUrl)
@@ -213,7 +213,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateProject() {
       final Project project = createProject(CODE1);
 
-      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null);
+      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, false, null);
       Entity entity = Entity.json(updatedProject);
 
       Response response = client.target(projectUrl).path(project.getId())
@@ -341,7 +341,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Response createProjectViaRest(final String code) {
-      Project project = new Project(code, NAME, ICON, COLOR, null, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null, false, null);
       Entity entity = Entity.json(project);
       return client.target(projectUrl).request(MediaType.APPLICATION_JSON).buildPost(entity).invoke();
    }

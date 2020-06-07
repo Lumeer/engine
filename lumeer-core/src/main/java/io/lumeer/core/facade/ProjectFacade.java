@@ -174,6 +174,10 @@ public class ProjectFacade extends AbstractFacade {
       return getProjectsByPermissions();
    }
 
+   public List<Project> getPublicProjects() {
+      return getAllProjects().stream().filter(Project::isPublic).collect(Collectors.toList());
+   }
+
    private List<Project> getAllProjects() {
       return projectDao.getAllProjects();
    }

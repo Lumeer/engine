@@ -211,7 +211,7 @@ public class AuthenticatedUser implements Serializable {
    private Project createDemoProject(final User user) {
       final String code = generateProjectCode();
       final Permission userPermission = Permission.buildWithRoles(user.getId(), Project.ROLES);
-      Project project = new Project(code, "Project", getDemoIcon(), getDemoColor(), null, null);
+      Project project = new Project(code, "Project", getDemoIcon(), getDemoColor(), null, null,false, null);
       project.getPermissions().updateUserPermissions(userPermission);
       project.setNonRemovable(true);
 
