@@ -51,13 +51,11 @@ public class ViewCreator extends WithIdCreator {
 
    private final ViewFacade viewFacade;
    private final ObjectMapper mapper;
-   private final DefaultConfigurationProducer defaultConfigurationProducer;
    private final ConstraintManager constraintManager;
 
    private ViewCreator(final TemplateParser templateParser, final ViewFacade viewFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
       super(templateParser);
       this.viewFacade = viewFacade;
-      this.defaultConfigurationProducer = defaultConfigurationProducer;
       this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
 
       mapper = new ObjectMapper();
