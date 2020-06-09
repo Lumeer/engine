@@ -35,6 +35,7 @@ import io.lumeer.core.template.ViewCreator;
 import io.lumeer.engine.api.event.TemplateCreated;
 
 import java.util.Date;
+import java.util.Optional;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
@@ -67,9 +68,9 @@ public class TemplateFacade extends AbstractFacade {
    public String getTemplateOrganizationId(final Language language) {
       switch (language) {
          case CS:
-            return "5e72323afdb59d10a4a61e26";
+            return Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.TEMPLATE_ORG_CS)).orElse("");
          default:
-            return "5e72285d76aff5634c9672f0";
+            return Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.TEMPLATE_ORG_EN)).orElse("");
       }
    }
 

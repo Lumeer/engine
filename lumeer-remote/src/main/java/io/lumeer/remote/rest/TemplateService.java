@@ -24,6 +24,8 @@ import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -49,7 +51,13 @@ public class TemplateService extends AbstractService {
 
    @GET
    public List<Project> getTemplates(@QueryParam("l") Language language) {
-      var organization = organizationFacade.getOrganizationById(templateFacade.getTemplateOrganizationId(language));
+      final String orgId = templateFacade.getTemplateOrganizationId(language);
+
+      if (StringUtils.isEmpty(orgId)) {
+         return List.of();
+      }
+
+      var organization = organizationFacade.getOrganizationById(orgId);
       workspaceKeeper.setOrganization(organization);
       return projectFacade.getPublicProjects();
    }
