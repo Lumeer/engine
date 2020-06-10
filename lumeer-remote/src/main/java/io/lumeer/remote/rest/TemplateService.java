@@ -20,9 +20,9 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
-import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
+import io.lumeer.storage.api.dao.OrganizationDao;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,7 +41,7 @@ import javax.ws.rs.core.MediaType;
 public class TemplateService extends AbstractService {
 
    @Inject
-   private OrganizationFacade organizationFacade;
+   private OrganizationDao organizationDao;
 
    @Inject
    private ProjectFacade projectFacade;
@@ -57,7 +57,7 @@ public class TemplateService extends AbstractService {
          return List.of();
       }
 
-      var organization = organizationFacade.getOrganizationById(orgId);
+      var organization = organizationDao.getOrganizationById(orgId);
       workspaceKeeper.setOrganization(organization);
       return projectFacade.getPublicProjects();
    }
