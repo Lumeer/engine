@@ -153,6 +153,15 @@ public class PermissionsChecker {
       return false;
    }
 
+   public boolean isPublic() {
+      if (workspaceKeeper.getProject().isPresent()) {
+         final Project project = workspaceKeeper.getProject().get();
+         return project.isPublic();
+      }
+
+      return false;
+   }
+
    /**
     * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
     *

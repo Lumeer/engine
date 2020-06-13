@@ -116,7 +116,7 @@ public class SearchFacade extends AbstractFacade {
       return setDataForLinkInstances(linkInstances);
    }
 
-   private java.util.Collection<LinkInstance> setDataForLinkInstances(java.util.Collection<LinkInstance> linkInstances) {
+   java.util.Collection<LinkInstance> setDataForLinkInstances(java.util.Collection<LinkInstance> linkInstances) {
       Map<String, Set<String>> linkInstancesIdsMap = linkInstances.stream().
             collect(Collectors.groupingBy(LinkInstance::getLinkTypeId, Collectors.mapping(LinkInstance::getId, Collectors.toSet())));
 
@@ -157,6 +157,10 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<LinkType> getReadLinkTypes() {
+      if (permissionsChecker.isPublic()) {
+         return linkTypeDao.getAllLinkTypes();
+      }
+
       final Set<String> allowedCollectionIds = getReadCollections().stream().map(Resource::getId)
                                                                    .collect(Collectors.toSet());
       return linkTypeDao.getAllLinkTypes().stream()
@@ -202,6 +206,10 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Collection> getReadCollections() {
+      if (permissionsChecker.isPublic()) {
+         return collectionDao.getAllCollections();
+      }
+
       return collectionDao.getAllCollections().stream()
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
                           .collect(Collectors.toList());

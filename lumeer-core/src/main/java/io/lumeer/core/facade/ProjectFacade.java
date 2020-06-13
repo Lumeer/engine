@@ -167,6 +167,16 @@ public class ProjectFacade extends AbstractFacade {
       return mapResource(project);
    }
 
+   public Project getPublicProjectById(final String projectId) {
+      final Project project = projectDao.getProjectById(projectId);
+
+      if (!project.isPublic()) {
+         return null;
+      }
+
+      return clearPermissions(project);
+   }
+
    public List<Project> getProjects() {
       if (permissionsChecker.isManager()) {
          return getAllProjects();

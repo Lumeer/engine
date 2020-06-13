@@ -104,4 +104,9 @@ abstract class AbstractFacade {
                           .groups(groups)
                           .build();
    }
+
+   protected <T extends Resource> T clearPermissions(final T resource) {
+      resource.getPermissions().clear();
+      return resource;
+   }
 }

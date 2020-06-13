@@ -32,6 +32,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
@@ -170,9 +171,12 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public List<Collection> getCollections() {
-      if (permissionsChecker.isManager()) {
+      if (!permissionsChecker.isManager() && permissionsChecker.isPublic()) {
+         return getAllCollections().stream().map(this::clearPermissions).collect(Collectors.toList());
+      } else if (permissionsChecker.isManager()) {
          return getAllCollections();
       }
+
       return getCollectionsByPermissions();
    }
 

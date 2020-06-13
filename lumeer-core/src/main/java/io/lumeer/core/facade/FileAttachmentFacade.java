@@ -126,10 +126,12 @@ public class FileAttachmentFacade extends AbstractFacade {
    public FileAttachment getFileAttachment(final String fileAttachmentId, final boolean write) {
       final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
 
-      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionWritePermissions(fileAttachment.getCollectionId());
-      } else {
-         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+      if (!permissionsChecker.isPublic()) {
+         if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+            checkCollectionWritePermissions(fileAttachment.getCollectionId());
+         } else {
+            checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+         }
       }
 
       return presignFileAttachment(fileAttachment, write);
@@ -190,10 +192,12 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
-      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionReadPermissions(collectionId);
-      } else {
-         checkLinkTypeReadPermissions(collectionId);
+      if (!permissionsChecker.isPublic()) {
+         if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+            checkCollectionReadPermissions(collectionId);
+         } else {
+            checkLinkTypeReadPermissions(collectionId);
+         }
       }
 
       return fileAttachmentDao.findAllFileAttachments(

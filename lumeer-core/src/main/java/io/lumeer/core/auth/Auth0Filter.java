@@ -19,19 +19,15 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.model.User;
-import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.facade.SentryFacade;
 
 import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
-import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.UserInfo;
-import com.auth0.json.mgmt.jobs.Job;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.net.AuthRequest;
 import com.auth0.net.Request;
 
 import java.io.IOException;
@@ -40,8 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -52,7 +46,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -69,10 +62,6 @@ public class Auth0Filter implements Filter {
 
    private static final long TOKEN_REFRESH_PERIOD = 10L * 60 * 1000; // 10 minutes
    private static final long UNVERIFIED_TOKEN_REFRESH_PERIOD = 10L * 1000; // 10 minutes
-   private static final String VIEW_ID = "view_id";
-   private static final String CORRELATION_ID = "correlation_id";
-   private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
-   private static final String LOCALE_HEADER = "X-Lumeer-Locale";
 
    @Inject
    private Logger log;
@@ -81,16 +70,19 @@ public class Auth0Filter implements Filter {
    private AuthenticatedUser authenticatedUser;
 
    @Inject
-   private ConfigurationFacade configurationFacade;
-
-   @Inject
-   private PermissionsChecker permissionsChecker;
-
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
-
-   @Inject
    private SentryFacade sentryFacade;
+
+   @Inject
+   private AllowedHostsFilter allowedHostsFilter;
+
+   @Inject
+   private HeadersFilter headersFilter;
+
+   @Inject
+   private ResendVerificationEmailFilter resendVerificationEmailFilter;
+
+   @Inject
+   private PublicViewFilter publicViewFilter;
 
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
    private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
@@ -98,30 +90,33 @@ public class Auth0Filter implements Filter {
    private JWTVerifier verifier = null;
    private String domain;
    private String clientId;
-   private String backendClientId;
    private String clientSecret;
-   private String backendClientSecret;
 
    private ExecutorService executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), new ThreadPoolExecutor.DiscardPolicy());
 
    private AtomicLong lastCheck = new AtomicLong(System.currentTimeMillis());
 
-   private Set<String> allowedHosts = new HashSet<String>();
-
-   private String managementApiToken;
-
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
+      allowedHostsFilter.init(filterConfig);
+      headersFilter.init(filterConfig);
+      resendVerificationEmailFilter.init(filterConfig);
+
       if (System.getenv("SKIP_SECURITY") == null) {
          domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
          clientId = filterConfig.getServletContext().getInitParameter("com.auth0.clientId");
-         backendClientId = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId");
          clientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.clientSecret");
-         backendClientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret");
          verifier = AuthenticationControllerProvider.getVerifier(domain);
+      }
+   }
 
-         final Optional<String> allowedHostsConfig = configurationFacade.getConfigurationString("allowed_hosts");
-         allowedHostsConfig.ifPresent(s -> allowedHosts = Arrays.asList(s.split(",")).stream().map(String::trim).collect(Collectors.toSet()));
+   private void nextFilter(final ServletRequest servletRequest, final HttpServletResponse res, final FilterChain filterChain) throws IOException, ServletException {
+      try {
+         filterChain.doFilter(servletRequest, res);
+      } catch (RuntimeException e) {
+         log.log(Level.SEVERE, "Unable to serve request: ", e);
+         sentryFacade.reportError(e);
+         res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
       }
    }
 
@@ -132,31 +127,47 @@ public class Auth0Filter implements Filter {
 
       final HttpServletRequest req = (HttpServletRequest) servletRequest;
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
+      FilterResult result;
 
-      if (!allowedHost(req, res)) {
-         res.sendError(HttpServletResponse.SC_FORBIDDEN, "Unknown host");
+      result = allowedHostsFilter.doFilter(req, res);
+      if (result == FilterResult.BREAK) {
+         return;
+      } else if (result == FilterResult.NEXT) {
+         filterChain.doFilter(servletRequest, servletResponse);
          return;
       }
 
-      addCorsHeaders(req, res);
+      result = headersFilter.doFilter(req, res);
+      if (result == FilterResult.BREAK) {
+         return;
+      } else if (result == FilterResult.NEXT) {
+         filterChain.doFilter(servletRequest, servletResponse);
+         return;
+      }
 
-      parseViewId(req);
-      parseRequestData(req);
-      processStartTimestamp(req, res);
-      processUserLocale(req, res);
-      processCustomHeaders(req, res);
-
-      if (System.getenv("SKIP_SECURITY") != null) {
-         fakeUserLogin(req); // try to consume test user from request header
+      result = resendVerificationEmailFilter.doFilter(req, res);
+      if (result == FilterResult.BREAK) {
+         return;
+      } else if (result == FilterResult.NEXT) {
          filterChain.doFilter(servletRequest, servletResponse);
          return;
       }
 
       if (req.getMethod().equals("OPTIONS")) {
-         if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
-            res.setStatus(HttpServletResponse.SC_OK);
-            return;
-         }
+         filterChain.doFilter(servletRequest, servletResponse);
+         return;
+      }
+
+      result = publicViewFilter.doFilter(req, res);
+      if (result == FilterResult.BREAK) {
+         return;
+      } else if (result == FilterResult.NEXT) {
+         filterChain.doFilter(servletRequest, servletResponse);
+         return;
+      }
+
+      if (System.getenv("SKIP_SECURITY") != null) {
+         fakeUserLogin(req); // try to consume test user from request header
          filterChain.doFilter(servletRequest, servletResponse);
          return;
       }
@@ -243,28 +254,6 @@ public class Auth0Filter implements Filter {
 
       }
 
-      // check for verification email resend
-      if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
-         if (authenticatedUser != null && authenticatedUser.getAuthUserInfo() != null && authenticatedUser.getAuthUserInfo().user != null &&
-               !authenticatedUser.getAuthUserInfo().user.isEmailVerified() && authenticatedUser.getAuthUserInfo().user.getAuthIds() != null &&
-               authenticatedUser.getAuthUserInfo().user.getAuthIds().size() > 0) {
-            final String authId = authenticatedUser.getAuthUserInfo().user.getAuthIds().iterator().next();
-
-            try {
-               resendVerificationEmail(authId);
-            } catch (Auth0Exception ae) {
-               res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ae.getLocalizedMessage());
-               return;
-            }
-
-            res.setStatus(200);
-            return;
-         }
-
-         res.sendError(HttpServletResponse.SC_BAD_REQUEST);
-         return;
-      }
-
       try {
          filterChain.doFilter(servletRequest, servletResponse);
       } catch (RuntimeException e) {
@@ -281,37 +270,6 @@ public class Auth0Filter implements Filter {
          authenticatedUser.setAuthUserInfo(authUserInfo);
       }
       return authUserInfo;
-   }
-
-   private void parseViewId(final HttpServletRequest req) {
-      final String viewId = req.getHeader(VIEW_ID);
-
-      // there is no view, by setting it to an empty string, we lock any further view id changes
-      permissionsChecker.setViewId(Objects.requireNonNullElse(viewId, ""));
-   }
-
-   private void processStartTimestamp(final HttpServletRequest req, final HttpServletResponse res) {
-      String tm = req.getHeader(TIMESTAMP_HEADER);
-      if (tm != null) {
-         res.addHeader(TIMESTAMP_HEADER, tm);
-      }
-   }
-
-   private void processUserLocale(final HttpServletRequest req, final HttpServletResponse res) {
-      String locale = req.getHeader(LOCALE_HEADER);
-      if (locale != null) {
-         requestDataKeeper.setUserLocale(locale);
-      }
-   }
-
-   private void processCustomHeaders(final HttpServletRequest req, final HttpServletResponse res) {
-      res.addHeader("X-Frame-Options", "DENY");
-   }
-
-   private void parseRequestData(final HttpServletRequest req) {
-      final String correlationId = req.getHeader(CORRELATION_ID);
-
-      this.requestDataKeeper.setCorrelationId(Objects.requireNonNullElse(correlationId, ""));
    }
 
    @Override
@@ -347,44 +305,6 @@ public class Auth0Filter implements Filter {
             authenticatedUser.checkUser();
          }
       }
-   }
-
-   private void resendVerificationEmail(final String authId) throws Auth0Exception {
-      refreshManagementApiToken();
-      final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
-      Job job = mApi.jobs().sendVerificationEmail(authId, backendClientId).execute();
-   }
-
-   private void refreshManagementApiToken() throws Auth0Exception {
-      if (managementApiToken == null) {
-         managementApiToken = requestManagementApiToken();
-      } else {
-         if (!isValidManagementApiToken()) {
-            managementApiToken = requestManagementApiToken();
-
-            if (!isValidManagementApiToken()) {
-               throw new Auth0Exception("Unable to get management API token.");
-            }
-         }
-      }
-   }
-
-   private String requestManagementApiToken() throws Auth0Exception {
-      final AuthAPI auth0 = new AuthAPI(domain, backendClientId, backendClientSecret);
-      AuthRequest req = auth0.requestToken("https://" + domain + "/api/v2/");
-      return req.execute().getAccessToken();
-   }
-
-   private boolean isValidManagementApiToken() {
-      final DecodedJWT jwt;
-      try {
-         jwt = JWT.decode(managementApiToken);
-         verifier.verify(jwt.getToken());
-      } catch (Exception e) {
-         return false;
-      }
-
-      return true;
    }
 
    private User getUserInfo(final String accessToken) throws Auth0Exception {
@@ -427,31 +347,4 @@ public class Auth0Filter implements Filter {
       authUserCache.remove(accessToken);
       semaphores.remove(accessToken);
    }
-
-   private void addCorsHeaders(HttpServletRequest req, HttpServletResponse res) {
-      if (configurationFacade.getEnvironment() == ConfigurationFacade.DeployEnvironment.DEVEL) {
-         res.addHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
-         res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
-         res.addHeader("Access-Control-Allow-Credentials", "true");
-         res.addHeader("Access-Control-Expose-Headers", TIMESTAMP_HEADER);
-         String reqHeader = req.getHeader("Access-Control-Request-Headers");
-         if (reqHeader != null && !reqHeader.isEmpty()) {
-            res.addHeader("Access-Control-Allow-Headers", reqHeader);
-         }
-      }
-   }
-
-   private boolean allowedHost(HttpServletRequest req, HttpServletResponse res) {
-      if (allowedHosts == null || allowedHosts.size() == 0) {
-         return true;
-      }
-
-      final String host = req.getHeader("Host");
-      if (host == null || "".equals(host)) {
-         return false;
-      }
-
-      return allowedHosts.contains(host);
-   }
-
 }
