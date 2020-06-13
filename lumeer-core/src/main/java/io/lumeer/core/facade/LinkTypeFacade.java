@@ -148,6 +148,10 @@ public class LinkTypeFacade extends AbstractFacade {
 
    public List<LinkType> getLinkTypes() {
       final List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
+      if (isManager()) {
+         return assignComputedParameters(allLinkTypes);
+      }
+
       final List<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
                                                        .map(Collection::getId).collect(Collectors.toList());
 
