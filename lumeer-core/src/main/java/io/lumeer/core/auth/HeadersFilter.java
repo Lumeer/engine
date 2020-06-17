@@ -65,15 +65,13 @@ public class HeadersFilter implements AuthFilter, Serializable {
    }
 
    private void addCorsHeaders(HttpServletRequest req, HttpServletResponse res) {
-      if (configurationFacade.getEnvironment() == ConfigurationFacade.DeployEnvironment.DEVEL) {
-         res.addHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
-         res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
-         res.addHeader("Access-Control-Allow-Credentials", "true");
-         res.addHeader("Access-Control-Expose-Headers", TIMESTAMP_HEADER);
-         String reqHeader = req.getHeader("Access-Control-Request-Headers");
-         if (reqHeader != null && !reqHeader.isEmpty()) {
-            res.addHeader("Access-Control-Allow-Headers", reqHeader);
-         }
+      res.addHeader("Access-Control-Allow-Origin", req.getHeader("Origin"));
+      res.addHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH");
+      res.addHeader("Access-Control-Allow-Credentials", "true");
+      res.addHeader("Access-Control-Expose-Headers", TIMESTAMP_HEADER);
+      String reqHeader = req.getHeader("Access-Control-Request-Headers");
+      if (reqHeader != null && !reqHeader.isEmpty()) {
+         res.addHeader("Access-Control-Allow-Headers", reqHeader);
       }
    }
 
