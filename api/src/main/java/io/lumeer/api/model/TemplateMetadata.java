@@ -21,6 +21,7 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Collections;
 import java.util.List;
 
 public class TemplateMetadata {
@@ -32,6 +33,7 @@ public class TemplateMetadata {
    private final Long relativeDate;
    private final boolean showTopPanel;
    private final boolean isEditable;
+   private String organizationId;
 
    @JsonCreator
    public TemplateMetadata(@JsonProperty("imageUrl") final String imageUrl,
@@ -47,8 +49,17 @@ public class TemplateMetadata {
       this.relativeDate = relativeDate;
       this.showTopPanel = showTopPanel;
       this.defaultView = defaultView;
-
       this.allowedDomains = allowedDomains;
+   }
+
+   public TemplateMetadata() {
+      this.imageUrl = null;
+      this.defaultView = null;
+      this.tags = Collections.emptyList();
+      this.allowedDomains = null;
+      this.relativeDate = null;
+      this.showTopPanel = false;
+      this.isEditable = false;
    }
 
    public TemplateMetadata(TemplateMetadata metadata) {
@@ -87,5 +98,13 @@ public class TemplateMetadata {
 
    public boolean isEditable() {
       return isEditable;
+   }
+
+   public String getOrganizationId() {
+      return organizationId;
+   }
+
+   public void setOrganizationId(final String organizationId) {
+      this.organizationId = organizationId;
    }
 }
