@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.TemplateMetadata;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -27,6 +28,8 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -51,14 +54,24 @@ public class TemplateService extends AbstractService {
 
    @GET
    public List<Project> getTemplates(@QueryParam("l") Language language) {
-      final String orgId = templateFacade.getTemplateOrganizationId(language);
+      var nonNullLanguage = Objects.requireNonNullElse(language, Language.EN);
+      final String organizationId = templateFacade.getTemplateOrganizationId(nonNullLanguage);
 
-      if (StringUtils.isEmpty(orgId)) {
+      if (StringUtils.isEmpty(organizationId)) {
          return List.of();
       }
 
-      var organization = organizationDao.getOrganizationById(orgId);
+      var organization = organizationDao.getOrganizationById(organizationId);
       workspaceKeeper.setOrganization(organization);
-      return projectFacade.getPublicProjects();
+      return projectFacade.getPublicProjects().stream()
+                          .peek(project -> setProjectOrganizationId(project, organizationId))
+                          .collect(Collectors.toList());
+   }
+
+   private void setProjectOrganizationId(Project project, String organizationId) {
+      if (project.getTemplateMetadata() == null) {
+         project.setTemplateMetadata(new TemplateMetadata());
+      }
+      project.getTemplateMetadata().setOrganizationId(organizationId);
    }
 }

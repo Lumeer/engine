@@ -90,6 +90,10 @@ public class Project extends Resource {
       return templateMetadata;
    }
 
+   public void setTemplateMetadata(final TemplateMetadata templateMetadata) {
+      this.templateMetadata = templateMetadata;
+   }
+
    public ResourceType getType() {
       return ResourceType.PROJECT;
    }
