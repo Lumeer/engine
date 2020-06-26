@@ -90,7 +90,7 @@ public class ProjectService extends AbstractService {
 
    @POST
    @Path("{projectId:[0-9a-fA-F]{24}}/copy")
-   public Response installTemplate(@PathParam("projectId") final String projectId, @QueryParam("organizationId") final String copyOrganizationId, @QueryParam("projectId") final String copyProjectId) {
+   public Response copyProject(@PathParam("projectId") final String projectId, @QueryParam("organizationId") final String copyOrganizationId, @QueryParam("projectId") final String copyProjectId) {
       workspaceKeeper.setProjectId(projectId);
 
       if (workspaceKeeper.getOrganization().isPresent() && copyOrganizationId != null && copyProjectId != null) {
