@@ -43,8 +43,15 @@ public class CopyFacade extends AbstractFacade {
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
    public void deepCopyTemplate(Project project, String templateId, Language language) {
-
       var organizationId = templateFacade.getTemplateOrganizationId(language);
+      this.copyProject(project, organizationId, templateId);
+   }
+
+   public void deepCopyProject(Project project, String organizationId, String projectId) {
+      this.copyProject(project, organizationId, projectId);
+   }
+
+   private void copyProject(Project project, String organizationId, String projectId) {
       var fromOrganization = organizationDao.getOrganizationById(organizationId);
 
       workspaceKeeper.push();
@@ -52,7 +59,7 @@ public class CopyFacade extends AbstractFacade {
 
       var storage = dataStorageProvider.getUserStorage();
       var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
-      var fromProject = contextSnapshot.getProjectDao().getProjectById(templateId);
+      var fromProject = contextSnapshot.getProjectDao().getProjectById(projectId);
 
       workspaceKeeper.setWorkspace(fromOrganization, fromProject);
 
@@ -67,7 +74,6 @@ public class CopyFacade extends AbstractFacade {
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
 
       templateFacade.installTemplate(project, content, relativeDate);
-
    }
 
 }
