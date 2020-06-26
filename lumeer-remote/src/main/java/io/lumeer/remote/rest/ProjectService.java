@@ -88,6 +88,20 @@ public class ProjectService extends AbstractService {
       return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
    }
 
+   @POST
+   @Path("{projectId:[0-9a-fA-F]{24}}/copy")
+   public Response installTemplate(@PathParam("projectId") final String projectId, @QueryParam("organizationId") final String copyOrganizationId, @QueryParam("projectId") final String copyProjectId) {
+      workspaceKeeper.setProjectId(projectId);
+
+      if (workspaceKeeper.getOrganization().isPresent() && copyOrganizationId != null && copyProjectId != null) {
+         final Project project = projectFacade.getProjectById(projectId);
+         copyFacade.deepCopyProject(project, copyOrganizationId, copyProjectId);
+         return Response.ok().build();
+      }
+
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+   }
+
    @PUT
    @Path("{projectId:[0-9a-fA-F]{24}}")
    public Project updateProject(@PathParam("projectId") String projectId, Project project) {

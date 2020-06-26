@@ -55,7 +55,7 @@ public class TemplateMetadataCodec implements Codec<TemplateMetadata> {
    }
 
    public static TemplateMetadata convertFromDocument(Document bson) {
-      boolean editable = bson.getBoolean(IS_EDITABLE);
+      boolean editable = true; // bson.getBoolean(IS_EDITABLE);
       boolean hideTopBar = bson.getBoolean(SHOW_TOP_PANEL);
       String imageUrl = bson.getString(IMAGE_URL);
       List<String> tags = bson.getList(TAGS, String.class);
