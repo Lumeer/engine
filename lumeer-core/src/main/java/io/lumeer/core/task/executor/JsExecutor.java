@@ -251,6 +251,10 @@ public class JsExecutor {
 
       public Value getDocumentAttribute(final DocumentBridge d, final String attrId) {
          try {
+            if (d.document == null || d.document.getData() == null) {
+               return null;
+            }
+
             return filterValue(d.document.getData().get(attrId));
          } catch (Exception e) {
             cause = e;
