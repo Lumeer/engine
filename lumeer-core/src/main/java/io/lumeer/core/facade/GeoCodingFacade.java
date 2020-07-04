@@ -92,7 +92,7 @@ public class GeoCodingFacade {
       }
 
       var locations = results.stream()
-                             .filter(result -> result.getOsmType().equals("node") || result.getOsmType().equals("way"))
+                             .filter(result -> result.getOsmType() != null && (result.getOsmType().equals("node") || result.getOsmType().equals("way")))
                              .limit(locationsLimit)
                              .map(OpenSearchResult::toLocation)
                              .collect(Collectors.toList());
