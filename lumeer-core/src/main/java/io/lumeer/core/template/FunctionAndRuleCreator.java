@@ -40,15 +40,17 @@ public class FunctionAndRuleCreator extends WithIdCreator {
 
    private final CollectionFacade collectionFacade;
    private final LinkTypeFacade linkTypeFacade;
+   private final boolean skipFceLimits;
 
-   private FunctionAndRuleCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final LinkTypeFacade linkTypeFacade) {
+   private FunctionAndRuleCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final LinkTypeFacade linkTypeFacade, final boolean skipFceLimits) {
       super(templateParser);
       this.collectionFacade = collectionFacade;
       this.linkTypeFacade = linkTypeFacade;
+      this.skipFceLimits = skipFceLimits;
    }
 
-   public static void createFunctionAndRules(final TemplateParser templateParser, final CollectionFacade collectionFacade, final LinkTypeFacade linkTypeFacade) {
-      final FunctionAndRuleCreator creator = new FunctionAndRuleCreator(templateParser, collectionFacade, linkTypeFacade);
+   public static void createFunctionAndRules(final TemplateParser templateParser, final CollectionFacade collectionFacade, final LinkTypeFacade linkTypeFacade, final boolean skipFceLimits) {
+      final FunctionAndRuleCreator creator = new FunctionAndRuleCreator(templateParser, collectionFacade, linkTypeFacade, skipFceLimits);
       creator.createFunctionAndRules();
    }
 
@@ -67,7 +69,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                var attr = getCollectionAttribute(collection, (String) attrJson.get("id"));
                var fce = getFunction((JSONObject) attrJson.get("function"));
                attr.setFunction(fce);
-               collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
+               collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr, skipFceLimits);
             }
          });
 
@@ -78,7 +80,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                collectionRules.put((String) k, getRule((JSONObject) v));
             });
             collection.setRules(collectionRules);
-            collectionFacade.updateCollection(collection.getId(), collection);
+            collectionFacade.updateCollection(collection.getId(), collection, skipFceLimits);
          }
       });
 
@@ -96,7 +98,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                var attr = getLinkTypeAttribute(linkType, (String) attrJson.get("id"));
                var fce = getFunction((JSONObject) attrJson.get("function"));
                attr.setFunction(fce);
-               linkTypeFacade.updateLinkTypeAttribute(linkType.getId(), attr.getId(), attr);
+               linkTypeFacade.updateLinkTypeAttribute(linkType.getId(), attr.getId(), attr, skipFceLimits);
             }
 
             var rules = (JSONObject) ((JSONObject) o).get("rules");
@@ -106,7 +108,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                   linkTypeRules.put((String) k, getRule((JSONObject) v));
                });
                linkType.setRules(linkTypeRules);
-               linkTypeFacade.updateLinkType(linkType.getId(), linkType);
+               linkTypeFacade.updateLinkType(linkType.getId(), linkType, skipFceLimits);
             }
          });
       });

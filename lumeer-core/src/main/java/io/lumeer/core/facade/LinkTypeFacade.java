@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -79,13 +80,20 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType updateLinkType(String id, LinkType linkType) {
+      return updateLinkType(id, linkType, false);
+   }
+
+   public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       LinkType originalLinkType = new LinkType(storedLinkType);
       Set<String> collectionIds = new HashSet<>(linkType.getCollectionIds());
       collectionIds.addAll(storedLinkType.getCollectionIds());
 
-      permissionsChecker.checkFunctionsLimit(linkType);
-      permissionsChecker.checkRulesLimit(linkType);
+      if (!skipFceLimits) {
+         permissionsChecker.checkFunctionsLimit(linkType);
+         permissionsChecker.checkRulesLimit(linkType);
+      }
+
       checkLinkTypePermission(collectionIds);
       keepUnmodifiableFields(linkType, storedLinkType);
 
@@ -153,11 +161,11 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       final List<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
-                                                       .map(Collection::getId).collect(Collectors.toList());
+                                                             .map(Collection::getId).collect(Collectors.toList());
 
       final List<LinkType> linkTypes = allLinkTypes.stream()
-                                  .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
-                                  .collect(Collectors.toList());
+                                                   .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
+                                                   .collect(Collectors.toList());
       return assignComputedParameters(linkTypes);
    }
 
@@ -216,14 +224,25 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute) {
+      return updateLinkTypeAttribute(linkTypeId, attributeId, attribute, false);
+   }
+
+   public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       checkLinkTypePermission(linkType.getCollectionIds());
 
       LinkType originalLinkType = new LinkType(linkType);
+      final Optional<Attribute> originalAttribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
 
       linkType.updateAttribute(attributeId, attribute);
       if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
          attribute.setFunction(null);
+      }
+
+      if (!skipFceLimits) {
+         if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
+            permissionsChecker.checkFunctionsLimit(linkType);
+         }
       }
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);

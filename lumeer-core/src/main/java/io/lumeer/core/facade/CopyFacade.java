@@ -26,8 +26,10 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import java.util.Date;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
+@RequestScoped
 public class CopyFacade extends AbstractFacade {
 
    @Inject
@@ -73,7 +75,7 @@ public class CopyFacade extends AbstractFacade {
       var relativeDateMillis = fromProject.getTemplateMetadata() != null ? fromProject.getTemplateMetadata().getRelativeDate() : null;
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
 
-      templateFacade.installTemplate(project, content, relativeDate);
+      templateFacade.installTemplate(project, organizationId, content, relativeDate);
    }
 
 }
