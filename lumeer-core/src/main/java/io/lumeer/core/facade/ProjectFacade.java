@@ -18,11 +18,14 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
+import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.ProjectMeta;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
@@ -56,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -363,5 +367,26 @@ public class ProjectFacade extends AbstractFacade {
          permissionsChecker.checkRole(o, Role.READ);
          projectDao.switchOrganization();
       });
+   }
+
+   public ProjectDescription getProjectDescription() {
+      final List<Collection> collections = collectionDao.getAllCollections();
+
+      long documentsCount = collections.stream().mapToLong(Collection::getDocumentsCount).sum();
+      long maxFunctions = collections.stream().mapToLong(c ->
+         c.getAttributes().stream().filter(a -> a.getFunction() != null).count()
+      ).max().orElse(0);
+      long maxRules = collections.stream().mapToLong(c -> c.getRules().size()).max().orElse(0);
+
+      final List<LinkType> linkTypes = linkTypeDao.getAllLinkTypes();
+      long maxLinkFunctions = linkTypes.stream().mapToLong(l ->
+            l.getAttributes().stream().filter(a -> a.getFunction() != null).count()
+      ).max().orElse(0);
+      long maxLinkRules = linkTypes.stream().mapToLong(l -> l.getRules().size()).max().orElse(0);
+
+      maxFunctions = Math.max(maxFunctions, maxLinkFunctions);
+      maxRules = Math.max(maxRules, maxLinkRules);
+
+      return new ProjectDescription(collections.size(), documentsCount, maxFunctions, maxRules);
    }
 }

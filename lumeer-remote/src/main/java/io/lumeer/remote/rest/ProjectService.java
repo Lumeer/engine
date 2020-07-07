@@ -19,12 +19,15 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Language;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.CopyFacade;
+import io.lumeer.core.facade.OrganizationFacade;
+import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.ProjectFacade;
 
 import java.util.List;
@@ -58,6 +61,12 @@ public class ProjectService extends AbstractService {
 
    @Inject
    private ProjectFacade projectFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private PaymentFacade paymentFacade;
 
    @Inject
    private CopyFacade copyFacade;
@@ -186,5 +195,17 @@ public class ProjectService extends AbstractService {
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
       return projectFacade.getRawProjectContent(projectId);
+   }
+
+   @GET
+   @Path("{projectId:[0-9a-fA-F]{24}}/limits/{targetOrganizationId:[0-9a-fA-F]{24}}")
+   public Boolean canBeCopiedToOrganization(@PathParam("projectId") String projectId, @PathParam("targetOrganizationId") String targetOrganizationId) {
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+
+      projectFacade.getPublicProjectById(projectId);
+
+      final Organization organization = organizationFacade.getOrganizationById(targetOrganizationId);
+
+      return paymentFacade.getCurrentServiceLimits(organization).fitsLimits(projectFacade.getProjectDescription());
    }
 }
