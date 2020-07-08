@@ -109,11 +109,18 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Collection updateCollection(final String collectionId, final Collection collection) {
+      return updateCollection(collectionId, collection, false);
+   }
+
+   public Collection updateCollection(final String collectionId, final Collection collection, final boolean skipFceLimits) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = storedCollection.copy();
       permissionsChecker.checkRole(storedCollection, Role.MANAGE);
-      permissionsChecker.checkRulesLimit(collection);
-      permissionsChecker.checkFunctionsLimit(collection);
+
+      if (!skipFceLimits) {
+         permissionsChecker.checkRulesLimit(collection);
+         permissionsChecker.checkFunctionsLimit(collection);
+      }
 
       keepUnmodifiableFields(collection, storedCollection);
       collection.setLastTimeUsed(ZonedDateTime.now());
@@ -279,8 +286,11 @@ public class CollectionFacade extends AbstractFacade {
 
       return last.get();
    }
-
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute) {
+      return updateCollectionAttribute(collectionId, attributeId, attribute, false);
+   }
+
+   public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Optional<Attribute> originalAttribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
       final Collection originalCollection = collection.copy();
@@ -290,6 +300,12 @@ public class CollectionFacade extends AbstractFacade {
       collection.setLastTimeUsed(ZonedDateTime.now());
       if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
          attribute.setFunction(null);
+      }
+
+      if (!skipFceLimits) {
+         if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
+            permissionsChecker.checkFunctionsLimit(collection);
+         }
       }
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);

@@ -34,11 +34,15 @@ import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.ViewCreator;
 import io.lumeer.engine.api.event.TemplateCreated;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
+@RequestScoped
 public class TemplateFacade extends AbstractFacade {
 
    @Inject
@@ -74,16 +78,34 @@ public class TemplateFacade extends AbstractFacade {
       }
    }
 
+   private List<String> getAllTemplateOrganizationIds() {
+      final List<String> result = new ArrayList<>();
+
+      final String csOrg = defaultConfigurationProducer.get(DefaultConfigurationProducer.TEMPLATE_ORG_CS);
+      final String enOrg = defaultConfigurationProducer.get(DefaultConfigurationProducer.TEMPLATE_ORG_EN);
+
+      if (csOrg != null) {
+         result.add(csOrg);
+      }
+
+      if (enOrg != null) {
+         result.add(enOrg);
+      }
+
+      return result;
+   }
+
    public void installTemplate(final Project project, final String templateType, final Language language) {
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
-      installTemplate(project, templateParser, createTemplateMetadata(new Date()));
+      installTemplate(project, templateParser, createTemplateMetadata(new Date()), true);
    }
 
-   public void installTemplate(final Project project, final ProjectContent projectContent, final Date relativeDate) {
+   public void installTemplate(final Project project, final String organizationId, final ProjectContent projectContent, final Date relativeDate) {
       final TemplateParser templateParser = new TemplateParser(projectContent);
+      final boolean originalLumeerTemplate = getAllTemplateOrganizationIds().contains(organizationId);
 
-      installTemplate(project, templateParser, createTemplateMetadata(relativeDate));
+      installTemplate(project, templateParser, createTemplateMetadata(relativeDate), originalLumeerTemplate);
    }
 
    private TemplateMetadata createTemplateMetadata(final Date relativeDate) {
@@ -95,13 +117,13 @@ public class TemplateFacade extends AbstractFacade {
       return new TemplateMetadata(dateAddition);
    }
 
-   private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata) {
+   private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata, final boolean originalLumeerTemplate) {
       CollectionCreator.createCollections(templateParser, collectionFacade);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
       DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser, templateMetadata);
       LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser, templateMetadata);
       ViewCreator.createViews(templateParser, viewFacade, defaultConfigurationProducer);
-      FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade);
+      FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade, originalLumeerTemplate);
       FavoriteItemsCreator.createFavoriteItems(templateParser, collectionFacade, viewFacade);
       SequenceCreator.createSequences(templateParser, sequenceFacade);
 
