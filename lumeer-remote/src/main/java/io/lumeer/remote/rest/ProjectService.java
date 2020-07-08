@@ -29,6 +29,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
+import io.lumeer.core.facade.TemplateFacade;
 
 import java.util.List;
 import java.util.Set;
@@ -67,6 +68,9 @@ public class ProjectService extends AbstractService {
 
    @Inject
    private CopyFacade copyFacade;
+
+   @Inject
+   private TemplateFacade templateFacade;
 
    @PostConstruct
    public void init() {
@@ -203,6 +207,10 @@ public class ProjectService extends AbstractService {
 
       if (desc == null) {
          return List.of();
+      }
+
+      if (templateFacade.getAllTemplateOrganizationIds().contains(organizationId)) {
+         return organizationFacade.getOrganizationsCapableForProject(null);
       }
 
       return organizationFacade.getOrganizationsCapableForProject(desc);

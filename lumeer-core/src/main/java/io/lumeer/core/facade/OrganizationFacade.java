@@ -220,6 +220,10 @@ public class OrganizationFacade extends AbstractFacade {
             return false;
          }
 
+         if (projectDescription == null) {
+            return true;
+         }
+
          return serviceLimits.fitsLimits(projectDescription);
       }).collect(Collectors.toList());
    }
