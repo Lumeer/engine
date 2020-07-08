@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Calendar;
@@ -38,7 +39,7 @@ public class ServiceLimits {
    public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
    public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC,99, 99, -1, -1, -1, new Date(0), 0, 0);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -51,9 +52,9 @@ public class ServiceLimits {
    private int functionsPerCollection;
 
    static {
-       final Calendar c = Calendar.getInstance();
-       c.add(Calendar.MONTH, 3);
-       FREE_LIMITS.validUntil = c.getTime();
+      final Calendar c = Calendar.getInstance();
+      c.add(Calendar.MONTH, 3);
+      FREE_LIMITS.validUntil = c.getTime();
    }
 
    @JsonCreator
@@ -128,6 +129,14 @@ public class ServiceLimits {
             functionsPerCollection == that.functionsPerCollection &&
             serviceLevel == that.serviceLevel &&
             Objects.equals(validUntil, that.validUntil);
+   }
+
+   @JsonIgnore
+   public boolean fitsLimits(final ProjectDescription projectDescription) {
+      return (files < 0 || projectDescription.getCollections() <= files) &&
+            (documents < 0 || projectDescription.getDocuments() <= documents) &&
+            (functionsPerCollection < 0 || projectDescription.getMaxFunctionPerResource() <= functionsPerCollection) &&
+            (rulesPerCollection < 0 || projectDescription.getMaxRulesPerResource() <= rulesPerCollection);
    }
 
    @Override

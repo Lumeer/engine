@@ -21,7 +21,9 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoSystemPermissionException;
@@ -64,6 +66,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private PaymentDao paymentDao;
+
+   @Inject
+   private PaymentFacade paymentFacade;
 
    @Inject
    private WorkspaceCache workspaceCache;
@@ -202,6 +207,25 @@ public class OrganizationFacade extends AbstractFacade {
       organization.getPermissions().removeGroupPermission(groupId);
       organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
+   }
+
+   public List<Organization> getOrganizationsCapableForProject(final ProjectDescription projectDescription) {
+      return getOrganizations().stream().filter(org ->
+            permissionsChecker.hasAnyRoleInResource(org, Set.of(Role.WRITE, Role.MANAGE))
+      ).filter(org -> {
+         final ServiceLimits serviceLimits = paymentFacade.getCurrentServiceLimits(org);
+         final long projects = projectDao.getProjectsCount(org);
+
+         if (projects >= serviceLimits.getProjects()) {
+            return false;
+         }
+
+         if (projectDescription == null) {
+            return true;
+         }
+
+         return serviceLimits.fitsLimits(projectDescription);
+      }).collect(Collectors.toList());
    }
 
    private void createOrganizationInUser(final String organizationId) {

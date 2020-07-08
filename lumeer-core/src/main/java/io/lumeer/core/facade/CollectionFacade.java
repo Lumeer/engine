@@ -96,11 +96,18 @@ public class CollectionFacade extends AbstractFacade {
    private DefaultViewConfigDao defaultViewConfigDao;
 
    public Collection createCollection(Collection collection) {
+      return createCollection(collection, false);
+   }
+
+   public Collection createCollection(Collection collection, final boolean skipLimits) {
       checkProjectWriteRole();
       long collectionsCount = collectionDao.getCollectionsCount();
-      permissionsChecker.checkCreationLimits(collection, collectionsCount);
-      permissionsChecker.checkRulesLimit(collection);
-      permissionsChecker.checkFunctionsLimit(collection);
+
+      if (!skipLimits) {
+         permissionsChecker.checkCreationLimits(collection, collectionsCount);
+         permissionsChecker.checkRulesLimit(collection);
+         permissionsChecker.checkFunctionsLimit(collection);
+      }
 
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());

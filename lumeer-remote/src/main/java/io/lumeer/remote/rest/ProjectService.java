@@ -19,13 +19,17 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Language;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
+import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.CopyFacade;
+import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
+import io.lumeer.core.facade.TemplateFacade;
 
 import java.util.List;
 import java.util.Set;
@@ -60,7 +64,13 @@ public class ProjectService extends AbstractService {
    private ProjectFacade projectFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
    private CopyFacade copyFacade;
+
+   @Inject
+   private TemplateFacade templateFacade;
 
    @PostConstruct
    public void init() {
@@ -186,5 +196,23 @@ public class ProjectService extends AbstractService {
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
       return projectFacade.getRawProjectContent(projectId);
+   }
+
+   @GET
+   @Path("{projectId:[0-9a-fA-F]{24}}/limits")
+   public List<Organization> canBeCopiedToOrganization(@PathParam("projectId") String projectId) {
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+
+      final ProjectDescription desc = projectFacade.getProjectDescription();
+
+      if (desc == null) {
+         return List.of();
+      }
+
+      if (templateFacade.getAllTemplateOrganizationIds().contains(organizationId)) {
+         return organizationFacade.getOrganizationsCapableForProject(null);
+      }
+
+      return organizationFacade.getOrganizationsCapableForProject(desc);
    }
 }

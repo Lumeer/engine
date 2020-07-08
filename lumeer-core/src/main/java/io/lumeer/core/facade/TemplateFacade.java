@@ -78,7 +78,7 @@ public class TemplateFacade extends AbstractFacade {
       }
    }
 
-   private List<String> getAllTemplateOrganizationIds() {
+   public List<String> getAllTemplateOrganizationIds() {
       final List<String> result = new ArrayList<>();
 
       final String csOrg = defaultConfigurationProducer.get(DefaultConfigurationProducer.TEMPLATE_ORG_CS);

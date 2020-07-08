@@ -51,7 +51,7 @@ public class CollectionCreator extends WithIdCreator {
          if (!"".equals(collectionsPrefix)) {
             collection.setName(collectionsPrefix + "_" + collection.getName());
          }
-         final Collection storedCollection = collectionFacade.createCollection(collection);
+         final Collection storedCollection = collectionFacade.createCollection(collection, true);
          templateParser.getDict().addCollection(templateId, storedCollection);
 
          createAttributes(storedCollection, (JSONObject) o);

@@ -47,6 +47,8 @@ public interface ProjectDao extends OrganizationScopedDao {
 
    long getProjectsCount();
 
+   long getProjectsCount(Organization organization);
+
    void deleteProject(String projectId);
 
    Project updateProject(String projectId, Project project);
