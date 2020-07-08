@@ -473,7 +473,7 @@ public class PermissionsChecker {
       }
 
       final ServiceLimits limits = getServiceLimits();
-      if (limits.getRulesPerCollection() != 0 && collection.getRules().size() > limits.getRulesPerCollection()) {
+      if (limits.getRulesPerCollection() >= 0 && collection.getRules().size() > limits.getRulesPerCollection()) {
          throw new ServiceLimitsExceededException(collection.getRules(), limits.getRulesPerCollection());
       }
 
@@ -485,7 +485,7 @@ public class PermissionsChecker {
       }
 
       final ServiceLimits limits = getServiceLimits();
-      if (limits.getRulesPerCollection() != 0 && (linkType.getRules() != null && linkType.getRules().size() > limits.getRulesPerCollection())) {
+      if (limits.getRulesPerCollection() >= 0 && (linkType.getRules() != null && linkType.getRules().size() > limits.getRulesPerCollection())) {
          throw new ServiceLimitsExceededException(linkType.getRules(), limits.getRulesPerCollection());
       }
    }
@@ -496,7 +496,7 @@ public class PermissionsChecker {
       }
 
       final ServiceLimits limits = getServiceLimits();
-      if (limits.getFunctionsPerCollection() != 0) {
+      if (limits.getFunctionsPerCollection() >= 0) {
          long functions = collection.getAttributes().stream().filter(attribute -> attribute.getFunction() != null && !Utils.isEmpty(attribute.getFunction().getJs())).count();
          if (functions > limits.getFunctionsPerCollection()) {
             throw new ServiceLimitsExceededException(collection.getAttributes(), limits.getFunctionsPerCollection());
@@ -510,7 +510,7 @@ public class PermissionsChecker {
       }
 
       final ServiceLimits limits = getServiceLimits();
-      if (limits.getFunctionsPerCollection() != 0) {
+      if (limits.getFunctionsPerCollection() >= 0) {
          long functions = linkType.getAttributes().stream().filter(attribute -> attribute.getFunction() != null && !Utils.isEmpty(attribute.getFunction().getJs())).count();
          if (functions > limits.getFunctionsPerCollection()) {
             throw new ServiceLimitsExceededException(linkType.getAttributes(), limits.getFunctionsPerCollection());

@@ -47,4 +47,14 @@ public class ProjectDescription {
    public long getMaxRulesPerResource() {
       return maxRulesPerResource;
    }
+
+   @Override
+   public String toString() {
+      return "ProjectDescription{" +
+            "collections=" + collections +
+            ", documents=" + documents +
+            ", maxFunctionPerResource=" + maxFunctionPerResource +
+            ", maxRulesPerResource=" + maxRulesPerResource +
+            '}';
+   }
 }

@@ -369,7 +369,7 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public ProjectDescription getProjectDescription() {
-      if (!permissionsChecker.isPublic() || !permissionsChecker.isManager() ||
+      if (!permissionsChecker.isPublic() && !permissionsChecker.isManager() &&
             !permissionsChecker.hasAnyRoleInResource(workspaceKeeper.getProject().get(), Set.of(Role.READ, Role.WRITE))) {
          return null;
       }

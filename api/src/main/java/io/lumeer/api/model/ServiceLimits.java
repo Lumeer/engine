@@ -39,7 +39,7 @@ public class ServiceLimits {
    public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
    public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), 0, 0);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -133,10 +133,10 @@ public class ServiceLimits {
 
    @JsonIgnore
    public boolean fitsLimits(final ProjectDescription projectDescription) {
-      return projectDescription.getCollections() <= files &&
-            projectDescription.getDocuments() <= documents &&
-            projectDescription.getMaxFunctionPerResource() <= functionsPerCollection &&
-            projectDescription.getMaxRulesPerResource() <= rulesPerCollection;
+      return (files < 0 || projectDescription.getCollections() <= files) &&
+            (documents < 0 || projectDescription.getDocuments() <= documents) &&
+            (functionsPerCollection < 0 || projectDescription.getMaxFunctionPerResource() <= functionsPerCollection) &&
+            (rulesPerCollection < 0 || projectDescription.getMaxRulesPerResource() <= rulesPerCollection);
    }
 
    @Override
