@@ -145,6 +145,11 @@ public class MongoProjectDao extends MongoOrganizationScopedDao implements Proje
    }
 
    @Override
+   public long getProjectsCount(final Organization organization) {
+      return databaseCollection(organization).countDocuments();
+   }
+
+   @Override
    public void deleteProject(final String projectId) {
       final Project project = databaseCollection().findOneAndDelete(idFilter(projectId));
       if (project == null) {
@@ -200,4 +205,7 @@ public class MongoProjectDao extends MongoOrganizationScopedDao implements Proje
       return database.getCollection(databaseCollectionName(), Project.class);
    }
 
+   MongoCollection<Project> databaseCollection(final Organization organization) {
+      return database.getCollection(databaseCollectionName(organization), Project.class);
+   }
 }

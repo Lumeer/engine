@@ -59,7 +59,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -370,6 +369,11 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public ProjectDescription getProjectDescription() {
+      if (!permissionsChecker.isPublic() || !permissionsChecker.isManager() ||
+            !permissionsChecker.hasAnyRoleInResource(workspaceKeeper.getProject().get(), Set.of(Role.READ, Role.WRITE))) {
+         return null;
+      }
+
       final List<Collection> collections = collectionDao.getAllCollections();
 
       long documentsCount = collections.stream().mapToLong(Collection::getDocumentsCount).sum();

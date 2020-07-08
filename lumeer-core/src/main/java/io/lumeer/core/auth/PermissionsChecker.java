@@ -220,6 +220,10 @@ public class PermissionsChecker {
       return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
    }
 
+   public boolean hasAnyRoleInResource(Resource resouce, Set<Role> roles) {
+      return roles.stream().anyMatch(role -> hasRoleInResource(resouce, role));
+   }
+
    private boolean hasRoleInResource(Resource resource, Role role, String userId) {
       return getActualRolesInResource(resource, userId).contains(role);
    }
