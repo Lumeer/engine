@@ -30,6 +30,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
+import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -38,7 +39,9 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,6 +63,12 @@ public class JsExecutor {
 
    private LumeerBridge lumeerBridge;
    private boolean dryRun = false;
+   private static Engine engine = Engine
+         .newBuilder()
+         .allowExperimentalOptions(true)
+         .option("js.experimental-foreign-object-prototype", "true")
+         .build();
+   private static String momentJsCode = MomentJsParser.getMomentJsCode();
 
    public static class LumeerBridge {
 
@@ -536,11 +545,7 @@ public class JsExecutor {
 
       Context context = Context
             .newBuilder("js")
-            .engine(Engine
-                  .newBuilder()
-                  .allowExperimentalOptions(true)
-                  .option("js.experimental-foreign-object-prototype", "true")
-                  .build())
+            .engine(engine)
             .allowAllAccess(true)
             .build();
       context.initialize("js");
@@ -556,26 +561,9 @@ public class JsExecutor {
          }
       }, 3000);
 
-      context.eval("js", js);
-   }
+      final String jsCode = (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) ? momentJsCode + ";\n" : "") + js;
 
-   public Value createFunction(final String innerJs) {
-      final String function = "function run(bindings, lumeer) {\n" + innerJs + "\n}";
-
-      Context context = Context
-            .newBuilder("js")
-            .engine(Engine
-                  .newBuilder()
-                  .allowExperimentalOptions(true)
-                  .option("js.experimental-foreign-object-prototype", "true")
-                  .build())
-            .allowAllAccess(true)
-            .build();
-
-      context.initialize("js");
-      context.eval("js", function);
-
-      return context.getBindings("js").getMember("run");
+      context.eval("js", jsCode);
    }
 
    public void commitChanges() {
