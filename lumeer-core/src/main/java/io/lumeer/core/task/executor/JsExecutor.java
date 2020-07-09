@@ -561,7 +561,9 @@ public class JsExecutor {
          }
       }, 3000);
 
-      context.eval("js", js + (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) ? "; \n " + momentJsCode : ""));
+      final String jsCode = (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) ? momentJsCode + ";\n" : "") + js;
+
+      context.eval("js", jsCode);
    }
 
    public void commitChanges() {
