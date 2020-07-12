@@ -39,9 +39,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
-import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -295,9 +293,9 @@ public class JsExecutor {
          }
       }
 
-      private void commitDocumentChanges(final List<DocumentChange> changes) {
+      private List<Document> commitDocumentChanges(final List<DocumentChange> changes) {
          if (changes.isEmpty()) {
-            return;
+            return List.of();
          }
 
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
@@ -350,11 +348,13 @@ public class JsExecutor {
                   ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId))
             );
          }
+
+         return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(Collectors.toList());
       }
 
-      private void commitLinkChanges(final List<LinkChange> changes) {
+      private List<LinkInstance> commitLinkChanges(final List<LinkChange> changes) {
          if (changes.isEmpty()) {
-            return;
+            return List.of();
          }
 
          final Map<String, List<LinkInstance>> updatedLinks = new HashMap<>(); // LinkType -> [LinkInstance]
@@ -404,6 +404,8 @@ public class JsExecutor {
                   ruleTask.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId))
             );
          }
+
+         return updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(Collectors.toList());
       }
 
       void commitChanges() {
@@ -418,8 +420,10 @@ public class JsExecutor {
             throw new IllegalArgumentException(sb.toString());
          }
 
-         commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(Collectors.toList()));
-         commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(Collectors.toList()));
+         final List<Document> changedDocuments = commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(Collectors.toList()));
+         final List<LinkInstance> changedLinkInstances = commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(Collectors.toList()));
+
+         ruleTask.propagateChanges(changedDocuments, changedLinkInstances);
       }
 
       String getChanges() {

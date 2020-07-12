@@ -18,6 +18,11 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+
+import java.util.List;
+
 public class SearchTask implements Task {
 
    private String query;
@@ -39,5 +44,9 @@ public class SearchTask implements Task {
    @Override
    public void process() {
       // TBD
+   }
+
+   @Override
+   public void propagateChanges(final List<Document> documents, final List<LinkInstance> links) {
    }
 }

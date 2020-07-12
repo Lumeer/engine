@@ -27,6 +27,8 @@ import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
 import io.lumeer.core.task.executor.ZapierRuleTaskExecutor;
 
+import java.util.List;
+
 public class RuleTask extends AbstractContextualTask {
 
    private String ruleName;
@@ -122,5 +124,24 @@ public class RuleTask extends AbstractContextualTask {
             ", oldLinkInstance=" + oldLinkInstance +
             ", newLinkInstance=" + newLinkInstance +
             '}';
+   }
+
+   @Override
+   public void propagateChanges(final List<Document> documents, final List<LinkInstance> links) {
+      if (documents != null && newDocument != null) {
+         int idx = documents.indexOf(newDocument);
+         if (idx >= 0) {
+            this.newDocument = documents.get(idx);
+         }
+      }
+
+      if (links != null && newLinkInstance != null) {
+         int idx = links.indexOf(newLinkInstance);
+         if (idx >= 0) {
+            this.newLinkInstance = links.get(idx);
+         }
+      }
+
+      super.propagateChanges(documents, links);
    }
 }
