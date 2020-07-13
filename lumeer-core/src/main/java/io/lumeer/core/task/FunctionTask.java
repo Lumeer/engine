@@ -31,6 +31,7 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -137,5 +138,24 @@ public class FunctionTask extends AbstractContextualTask {
          constraintManager.encodeDataTypesForFce(linkType, dataDocument);
          linkInstance.setData(dataDocument);
       }).collect(Collectors.toSet());
+   }
+
+   @Override
+   public void propagateChanges(final List<Document> documents, final List<LinkInstance> links) {
+      if (documents != null && this.documents != null && this.documents.size() > 0 && this.documents.stream().anyMatch(documents::contains)) {
+         this.documents = this.documents.stream().map(doc -> {
+            int idx = documents.indexOf(doc);
+            return idx >= 0 ? documents.get(idx) : doc;
+         }).collect(Collectors.toSet());
+      }
+
+      if (links != null && this.linkInstances != null && this.linkInstances.size() > 0 && this.linkInstances.stream().anyMatch(links::contains)) {
+         this.linkInstances = this.linkInstances.stream().map(link -> {
+            int idx = links.indexOf(link);
+            return idx >= 0 ? links.get(idx) : link;
+         }).collect(Collectors.toSet());
+      }
+
+      super.propagateChanges(documents, links);
    }
 }

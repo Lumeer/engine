@@ -188,6 +188,13 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(events);
    }
 
+   @Override
+   public void propagateChanges(final List<Document> documents, final List<LinkInstance> links) {
+      if (parent != null) {
+         parent.propagateChanges(documents, links);
+      }
+   }
+
    private void injectCorrelationId(final PusherFacade.ObjectWithParent obj) {
       if (requestDataKeeper != null) {
          obj.setCorrelationId(requestDataKeeper.getCorrelationId());

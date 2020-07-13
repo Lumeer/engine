@@ -18,7 +18,11 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
+
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * A task that can be processed.
@@ -30,4 +34,6 @@ public interface Task extends Serializable {
    Task getParent();
 
    void process();
+
+   void propagateChanges(List<Document> documents, List<LinkInstance> links);
 }
