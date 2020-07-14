@@ -79,6 +79,7 @@ public class ViewFacade extends AbstractFacade {
       }
       view.setAuthorId(authenticatedUser.getCurrentUserId());
       view.setLastTimeUsed(ZonedDateTime.now());
+      view.setId(null);
 
       if (view.getCode() == null || view.getCode().isEmpty()) {
          view.setCode(this.generateViewCode(view.getName()));
