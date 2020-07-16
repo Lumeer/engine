@@ -32,6 +32,6 @@ public class TaskExecutor {
    private ManagedExecutorService executorService;
 
    public void submitTask(final Task task) {
-      executorService.submit(task::process);
+      executorService.submit(() -> task.process(this));
    }
 }

@@ -67,20 +67,20 @@ public class RuleTask extends AbstractContextualTask {
    }
 
    @Override
-   public void process() {
+   public void process(final TaskExecutor taskExecutor) {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
          executor.execute();
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
-         executor.execute();
+         executor.execute(taskExecutor);
       } else if (rule.getType() == Rule.RuleType.ZAPIER) {
          final ZapierRuleTaskExecutor executor = new ZapierRuleTaskExecutor(ruleName, this);
          executor.execute();
       }
 
       if (parent != null) {
-         parent.process();
+         parent.process(taskExecutor);
       }
    }
 

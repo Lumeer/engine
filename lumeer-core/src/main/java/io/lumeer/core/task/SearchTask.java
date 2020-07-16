@@ -42,7 +42,7 @@ public class SearchTask implements Task {
    }
 
    @Override
-   public void process() {
+   public void process(final TaskExecutor executor) {
       // TBD
    }
 

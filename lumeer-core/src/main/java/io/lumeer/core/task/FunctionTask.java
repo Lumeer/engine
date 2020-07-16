@@ -90,7 +90,7 @@ public class FunctionTask extends AbstractContextualTask {
    }
 
    @Override
-   public void process() {
+   public void process(final TaskExecutor taskExecutor) {
       if (documents != null && collection != null) {
          getDocumentsWithData(collection, documents).forEach(document -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
@@ -104,7 +104,7 @@ public class FunctionTask extends AbstractContextualTask {
       }
 
       if (parent != null) {
-         parent.process();
+         parent.process(taskExecutor);
       }
    }
 

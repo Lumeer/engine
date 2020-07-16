@@ -24,10 +24,12 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.List;
+import java.util.logging.Level;
 
 public interface ContextualTask extends Task {
 
@@ -68,4 +70,6 @@ public interface ContextualTask extends Task {
     * @param sequenceName Name of updated sequence.
     */
    void sendPushNotifications(final String sequenceName);
+
+   FunctionFacade getFunctionFacade();
 }

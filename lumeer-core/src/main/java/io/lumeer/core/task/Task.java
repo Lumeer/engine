@@ -33,7 +33,7 @@ public interface Task extends Serializable {
 
    Task getParent();
 
-   void process();
+   void process(TaskExecutor executor);
 
    void propagateChanges(List<Document> documents, List<LinkInstance> links);
 }

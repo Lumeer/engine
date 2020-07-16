@@ -23,7 +23,7 @@ public class ListCollectionsIn10SecondsTask extends AbstractContextualTask {
    private AbstractContextualTask parent;
 
    @Override
-   public void process() {
+   public void process(final TaskExecutor executor) {
       try {
          Thread.sleep(10_000);
       } catch (InterruptedException e) {

@@ -299,7 +299,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       assertThat(queue2.getFirst().getResourceId()).isEqualTo(l12.getId());
       assertThat(queue2.getFirst().getLinkInstances()).hasSize(1);
 
-      final Deque<FunctionFacade.FunctionParameterDocuments> queue3 = functionFacade.createQueueForCreatedLink(l12, linkInstance);
+      final Deque<FunctionFacade.FunctionParameterDocuments> queue3 = functionFacade.createQueueForCreatedLink(l12, linkInstance, null);
       assertThat(queue3).hasSize(5);
    }
 

@@ -36,6 +36,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
 
 import java.util.Collections;
 import java.util.Deque;
@@ -68,10 +69,22 @@ public class FunctionFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
-   private LinkTypeFacade linkTypeFacade;
+   private LinkTypeDao linkTypeDao;
 
    @Inject
    private ContextualTaskFactory contextualTaskFactory;
+
+   public static FunctionFacade getInstance(final FunctionDao functionDao, final CollectionDao collectionDao, final DocumentDao documentDao, final LinkInstanceDao linkInstanceDao, final LinkTypeDao linkTypeDao, final ContextualTaskFactory taskFactory) {
+      final FunctionFacade facade = new FunctionFacade();
+      facade.functionDao = functionDao;
+      facade.collectionDao = collectionDao;
+      facade.documentDao = documentDao;
+      facade.linkInstanceDao = linkInstanceDao;
+      facade.linkTypeDao = linkTypeDao;
+      facade.contextualTaskFactory = taskFactory;
+
+      return facade;
+   }
 
    public FunctionTask createTaskForCreatedFunction(Collection collection, Attribute attribute) {
       List<FunctionRow> functionRows = createCollectionRowsFromXml(collection, attribute);
@@ -182,7 +195,7 @@ public class FunctionFacade extends AbstractFacade {
       Set<String> linkTypeIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.LINK && q.getLinkType() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
 
       Map<String, Collection> collectionMap = collectionIds.size() > 0 ? collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Resource::getId, c -> c)) : new HashMap<>();
-      Map<String, LinkType> linkTypeMap = linkTypeIds.size() > 0 ? linkTypeFacade.getLinkTypesByIds(linkTypeIds).stream().collect(Collectors.toMap(LinkType::getId, c -> c)) : new HashMap<>();
+      Map<String, LinkType> linkTypeMap = linkTypeIds.size() > 0 ? linkTypeDao.getLinkTypesByIds(linkTypeIds).stream().peek(linkType -> linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()))).collect(Collectors.toMap(LinkType::getId, c -> c)) : new HashMap<>();
 
       FunctionTask task = null;
 
@@ -417,12 +430,16 @@ public class FunctionFacade extends AbstractFacade {
       return convertQueueToTask(orderFunctions(parametersMap));
    }
 
-   public FunctionTask createTaskForCreatedLink(LinkType linkType, LinkInstance linkInstance) {
-      Deque<FunctionParameterDocuments> queue = createQueueForCreatedLink(linkType, linkInstance);
+   public FunctionTask createTaskForCreatedLink(LinkType linkType, LinkInstance linkInstance, final List<String> skipCollectionIds) {
+      Deque<FunctionParameterDocuments> queue = createQueueForCreatedLink(linkType, linkInstance, skipCollectionIds);
       return convertQueueToTask(queue);
    }
 
-   public Deque<FunctionParameterDocuments> createQueueForCreatedLink(LinkType linkType, LinkInstance linkInstance) {
+   public FunctionTask createTaskForCreatedLink(LinkType linkType, LinkInstance linkInstance) {
+      return createTaskForCreatedLink(linkType, linkInstance, null);
+   }
+
+   public Deque<FunctionParameterDocuments> createQueueForCreatedLink(LinkType linkType, LinkInstance linkInstance, final List<String> skipCollectionIds) {
       List<Attribute> attributes = linkType.getAttributes().stream().filter(this::functionIsDefined).collect(Collectors.toList());
 
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
@@ -440,12 +457,12 @@ public class FunctionFacade extends AbstractFacade {
          }
       });
 
-      fillParametersMapForDependentLinkType(parametersMap, linkType, linkInstance, Collections.emptyList());
+      fillParametersMapForDependentLinkType(parametersMap, linkType, linkInstance, Collections.emptyList(), skipCollectionIds);
 
       return orderFunctions(parametersMap);
    }
 
-   private void fillParametersMapForDependentLinkType(Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap, LinkType linkType, LinkInstance linkInstance, List<Document> additionalDocuments) {
+   private void fillParametersMapForDependentLinkType(Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap, LinkType linkType, LinkInstance linkInstance, List<Document> additionalDocuments, final List<String> skipCollectionIds) {
       List<FunctionRow> dependentRows = functionDao.searchByDependentLinkType(linkType.getId(), null);
       dependentRows.forEach(row -> {
          FunctionParameterDocuments parameter = new FunctionParameterDocuments(row.getType(), row.getResourceId(), row.getAttributeId());
@@ -453,12 +470,14 @@ public class FunctionFacade extends AbstractFacade {
 
          if (!parametersMap.containsKey(parameter)) {
             if (row.getType() == FunctionResourceType.COLLECTION) {
-               Set<Document> documents = findDocumentsForRowByLinkInstances(row, Collections.singleton(linkInstance.getId()));
-               documents.addAll(additionalDocuments.stream().filter(doc -> doc.getCollectionId().equals(row.getResourceId())).collect(Collectors.toList()));
-               if (!documents.isEmpty()) {
-                  parameter.setDocuments(documents);
-                  parametersMap.put(parameter, rows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
-                  fillParametersMapForCollection(parametersMap, parameter);
+               if (skipCollectionIds == null || skipCollectionIds.size() <= 0 || !skipCollectionIds.contains(row.getResourceId())) {
+                  Set<Document> documents = findDocumentsForRowByLinkInstances(row, Collections.singleton(linkInstance.getId()));
+                  documents.addAll(additionalDocuments.stream().filter(doc -> doc.getCollectionId().equals(row.getResourceId())).collect(Collectors.toList()));
+                  if (!documents.isEmpty()) {
+                     parameter.setDocuments(documents);
+                     parametersMap.put(parameter, rows.stream().map(this::functionRowToParameter).collect(Collectors.toList()));
+                     fillParametersMapForCollection(parametersMap, parameter);
+                  }
                }
             } else if (row.getDependentLinkTypeId() == null || row.getDependentLinkTypeId().equals(row.getResourceId())) {
                parameter.setLinkInstances(Collections.singleton(linkInstance));
@@ -518,12 +537,16 @@ public class FunctionFacade extends AbstractFacade {
       });
    }
 
-   public FunctionTask createTaskForRemovedLink(LinkType linkType, LinkInstance linkInstance) {
+   public FunctionTask createTaskForRemovedLink(LinkType linkType, LinkInstance linkInstance, final List<String> skipCollectionIds) {
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
       List<Document> documentsByIds = documentDao.getDocumentsByIds(linkInstance.getDocumentIds().toArray(new String[0]));
-      fillParametersMapForDependentLinkType(parametersMap, linkType, linkInstance, documentsByIds);
+      fillParametersMapForDependentLinkType(parametersMap, linkType, linkInstance, documentsByIds, skipCollectionIds);
 
       return convertQueueToTask(orderFunctions(parametersMap));
+   }
+
+   public FunctionTask createTaskForRemovedLink(LinkType linkType, LinkInstance linkInstance) {
+      return createTaskForRemovedLink(linkType, linkInstance, null);
    }
 
    public void onDeleteCollection(String collectionId) {
