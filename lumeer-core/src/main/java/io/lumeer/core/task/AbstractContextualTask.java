@@ -26,8 +26,10 @@ import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.AbstractConstraintConverter;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
+import io.lumeer.core.task.executor.JsExecutor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -38,9 +40,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class AbstractContextualTask implements ContextualTask {
+
+   private static Logger log = Logger.getLogger(AbstractConstraintConverter.class.getName());
 
    protected User initiator;
    protected DaoContextSnapshot daoContextSnapshot;
@@ -216,6 +221,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    class LocalContextualTaskFactory extends ContextualTaskFactory {
+
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
@@ -223,6 +229,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
             return t;
          } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to instantiate a task: ", e);
          }
 
          return null;
