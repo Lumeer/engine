@@ -106,11 +106,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   //
-   public void onNewLinkCreated(final TaskExecutor executor, final LinkType linkType, final LinkInstance linkInstance, final Collection affectedCollection, final Document affectedDocument) {
-
-   }
-
    private Event createEventForCollection(final Collection collection, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
