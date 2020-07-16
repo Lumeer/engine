@@ -26,6 +26,7 @@ import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -36,6 +37,7 @@ import org.marvec.pusher.data.Event;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public abstract class AbstractContextualTask implements ContextualTask {
@@ -102,6 +104,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          getPusherClient().trigger(events);
       }
+   }
+
+   //
+   public void onNewLinkCreated(final TaskExecutor executor, final LinkType linkType, final LinkInstance linkInstance, final Collection affectedCollection, final Document affectedDocument) {
+
    }
 
    private Event createEventForCollection(final Collection collection, final String userId) {
@@ -201,4 +208,29 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
+   @Override
+   public FunctionFacade getFunctionFacade() {
+      return FunctionFacade.getInstance(
+            getDaoContextSnapshot().getFunctionDao(),
+            getDaoContextSnapshot().getCollectionDao(),
+            getDaoContextSnapshot().getDocumentDao(),
+            getDaoContextSnapshot().getLinkInstanceDao(),
+            getDaoContextSnapshot().getLinkTypeDao(),
+            new LocalContextualTaskFactory()
+            );
+   }
+
+   class LocalContextualTaskFactory extends ContextualTaskFactory {
+      public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
+         try {
+            T t = clazz.getConstructor().newInstance();
+            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper));
+
+            return t;
+         } catch (Exception e) {
+         }
+
+         return null;
+      }
+   }
 }

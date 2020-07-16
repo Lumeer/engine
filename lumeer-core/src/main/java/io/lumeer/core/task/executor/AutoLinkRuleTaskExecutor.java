@@ -23,8 +23,10 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.AutoLinkRule;
+import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.task.RuleTask;
+import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -54,7 +56,7 @@ public class AutoLinkRuleTaskExecutor {
       this.ruleTask = ruleTask;
    }
 
-   public void execute() {
+   public void execute(final TaskExecutor taskExecutor) {
       final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(rule.getLinkType());
 
       if (linkType != null) {
@@ -80,11 +82,11 @@ public class AutoLinkRuleTaskExecutor {
             if ((o1 != null && !o1.equals(o2)) || (o2 != null && !o2.equals(o1))) {
                // it was not null before
                if (o1 != null) {
-                  removeLinks(ruleTask.getOldDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
+                  removeLinks(taskExecutor, ruleTask.getOldDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
                }
                // and it is not null either
                if (o2 != null) {
-                  addLinks(ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
+                  addLinks(taskExecutor, ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
                }
             }
          } else { // one of the docs is null (i.e. new document created or old document deleted
@@ -92,13 +94,13 @@ public class AutoLinkRuleTaskExecutor {
 
             // new document was created
             if (ruleTask.getNewDocument() != null && ruleTask.getNewDocument().getData().get(thisAttribute) != null) {
-               addLinks(ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
+               addLinks(taskExecutor, ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
             }
          }
       }
    }
 
-   private void removeLinks(final Document oldDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
+   private void removeLinks(final TaskExecutor taskExecutor, final Document oldDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
       final String thisCollection = oldDocument.getCollectionId();
 
       final SearchQuery query = SearchQuery
@@ -117,10 +119,17 @@ public class AutoLinkRuleTaskExecutor {
          ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(linkType.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
 
          sendPushNotifications(thisCollection, thatCollection, links, true);
+
+         final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
+         final List<String> skipCollectionIds = List.of(thisCollection);
+         links.forEach(linkInstance -> {
+            taskExecutor.submitTask(functionFacade.createTaskForRemovedLink(linkType, linkInstance, skipCollectionIds));
+         });
+
       }
    }
 
-   private void addLinks(final Document newDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
+   private void addLinks(final TaskExecutor taskExecutor, final Document newDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
       final String thisCollection = newDocument.getCollectionId();
       if (thisCollection.equals(thatCollection)) {
          return;
@@ -149,6 +158,12 @@ public class AutoLinkRuleTaskExecutor {
          if (!linkInstances.isEmpty()) {
             ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
             sendPushNotifications(thisCollection, thatCollection, linkInstances, false);
+
+            final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
+            final List<String> skipCollectionIds = List.of(thisCollection);
+            linkInstances.forEach(linkInstance -> {
+               taskExecutor.submitTask(functionFacade.createTaskForCreatedLink(linkType, linkInstance, skipCollectionIds));
+            });
          }
       }
    }
