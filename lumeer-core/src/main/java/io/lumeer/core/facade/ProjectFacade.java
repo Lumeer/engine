@@ -192,6 +192,14 @@ public class ProjectFacade extends AbstractFacade {
       return getAllProjects().stream().filter(Project::isPublic).collect(Collectors.toList());
    }
 
+   public Project getPublicProject(String code) {
+      var project = getProjectByCode(code);
+      if (project.isPublic()) {
+         return project;
+      }
+      throw new ResourceNotFoundException(ResourceType.PROJECT);
+   }
+
    private List<Project> getAllProjects() {
       return projectDao.getAllProjects();
    }
@@ -226,9 +234,9 @@ public class ProjectFacade extends AbstractFacade {
       permissionsChecker.checkRole(project, Role.MANAGE);
 
       final Project originalProject = project.copy();
-      if(update) {
+      if (update) {
          project.getPermissions().updateUserPermissions(userPermissions);
-      }else {
+      } else {
          project.getPermissions().addUserPermissions(userPermissions);
       }
       projectDao.updateProject(project.getId(), project, originalProject);
@@ -291,7 +299,7 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    private void checkOrganizationWriteRole() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
+      if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
@@ -378,7 +386,7 @@ public class ProjectFacade extends AbstractFacade {
 
       long documentsCount = collections.stream().mapToLong(Collection::getDocumentsCount).sum();
       long maxFunctions = collections.stream().mapToLong(c ->
-         c.getAttributes().stream().filter(a -> a.getFunction() != null).count()
+            c.getAttributes().stream().filter(a -> a.getFunction() != null).count()
       ).max().orElse(0);
       long maxRules = collections.stream().mapToLong(c -> c.getRules().size()).max().orElse(0);
 
