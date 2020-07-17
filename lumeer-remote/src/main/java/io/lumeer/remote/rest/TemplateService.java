@@ -32,8 +32,10 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -66,6 +68,23 @@ public class TemplateService extends AbstractService {
       return projectFacade.getPublicProjects().stream()
                           .peek(project -> setProjectOrganizationId(project, organizationId))
                           .collect(Collectors.toList());
+   }
+
+   @GET
+   @Path("code/{templateCode:[a-zA-Z0-9_]{2,6}}")
+   public Project getTemplate(@QueryParam("l") Language language, @PathParam("templateCode") String templateCode) {
+      var nonNullLanguage = Objects.requireNonNullElse(language, Language.EN);
+      final String organizationId = templateFacade.getTemplateOrganizationId(nonNullLanguage);
+
+      if (StringUtils.isEmpty(organizationId)) {
+         throw new BadRequestException("Could not find template organization");
+      }
+
+      var organization = organizationDao.getOrganizationById(organizationId);
+      workspaceKeeper.setOrganization(organization);
+      var project = projectFacade.getPublicProject(templateCode);
+      setProjectOrganizationId(project, organizationId);
+      return project;
    }
 
    private void setProjectOrganizationId(Project project, String organizationId) {
