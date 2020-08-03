@@ -56,7 +56,7 @@ public class PaymentGatewayFacade {
 
    static {
       ORDER_FORMAT = new HashMap<>();
-      ORDER_FORMAT.put("cz", "Služba Lumeer %s pro %d uživatelů od %s do %s.");
+      ORDER_FORMAT.put("cs", "Služba Lumeer %s pro %d uživatelů od %s do %s.");
       ORDER_FORMAT.put("en", "Lumeer %s service for %d users since %s until %s.");
    }
 
@@ -121,7 +121,7 @@ public class PaymentGatewayFacade {
 
    private String getPaymentDescription(final Payment payment) {
       final DateFormat df;
-      if ("cz".equals(payment.getLanguage())) {
+      if ("cs".equals(payment.getLanguage())) {
          df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.forLanguageTag("cs_CZ"));
       } else {
          df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ENGLISH);
