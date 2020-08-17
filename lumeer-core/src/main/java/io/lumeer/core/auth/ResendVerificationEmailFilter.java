@@ -48,13 +48,16 @@ public class ResendVerificationEmailFilter implements AuthFilter, Serializable {
    private JWTVerifier verifier = null;
    private String managementApiToken;
 
+   private boolean initialized = false;
+
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
-      if (System.getenv("SKIP_SECURITY") == null) {
+      if (!initialized && System.getenv("SKIP_SECURITY") == null) {
          domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
          backendClientId = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId");
          backendClientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret");
          verifier = AuthenticationControllerProvider.getVerifier(domain);
+         initialized = true;
       }
    }
 
