@@ -79,10 +79,15 @@ public class Auth0Filter implements Filter {
    private HeadersFilter headersFilter;
 
    @Inject
+   private OptionsResendVerificationEmailFilter optionsResendVerificationEmailFilter;
+
+   @Inject
    private ResendVerificationEmailFilter resendVerificationEmailFilter;
 
    @Inject
    private PublicViewFilter publicViewFilter;
+
+   private FilterConfig filterConfig;
 
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
    private Map<String, Semaphore> semaphores = new ConcurrentHashMap<>();
@@ -97,10 +102,8 @@ public class Auth0Filter implements Filter {
    private AtomicLong lastCheck = new AtomicLong(System.currentTimeMillis());
 
    @Override
-   public void init(final FilterConfig filterConfig) throws ServletException {
-      allowedHostsFilter.init(filterConfig);
-      headersFilter.init(filterConfig);
-      resendVerificationEmailFilter.init(filterConfig);
+   public void init(final FilterConfig filterConfig) {
+      this.filterConfig = filterConfig;
 
       if (System.getenv("SKIP_SECURITY") == null) {
          domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
@@ -108,6 +111,13 @@ public class Auth0Filter implements Filter {
          clientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.clientSecret");
          verifier = AuthenticationControllerProvider.getVerifier(domain);
       }
+   }
+
+   private void initFilters() throws ServletException {
+      allowedHostsFilter.init(filterConfig);
+      headersFilter.init(filterConfig);
+      optionsResendVerificationEmailFilter.init(filterConfig);
+      resendVerificationEmailFilter.init(filterConfig);
    }
 
    private void nextFilter(final ServletRequest servletRequest, final HttpServletResponse res, final FilterChain filterChain) throws IOException, ServletException {
@@ -127,6 +137,8 @@ public class Auth0Filter implements Filter {
 
       final HttpServletRequest req = (HttpServletRequest) servletRequest;
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
+
+      initFilters();
       FilterResult result;
 
       result = allowedHostsFilter.doFilter(req, res);
@@ -145,7 +157,7 @@ public class Auth0Filter implements Filter {
          return;
       }
 
-      result = resendVerificationEmailFilter.doFilter(req, res);
+      result = optionsResendVerificationEmailFilter.doFilter(req, res);
       if (result == FilterResult.BREAK) {
          return;
       } else if (result == FilterResult.NEXT) {
@@ -252,6 +264,11 @@ public class Auth0Filter implements Filter {
             }
          }
 
+      }
+
+      result = resendVerificationEmailFilter.doFilter(req, res);
+      if (result == FilterResult.BREAK) {
+         return;
       }
 
       try {

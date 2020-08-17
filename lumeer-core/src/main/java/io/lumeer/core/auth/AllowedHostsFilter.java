@@ -41,11 +41,14 @@ public class AllowedHostsFilter implements AuthFilter, Serializable {
 
    private Set<String> allowedHosts = new HashSet<String>();
 
+   private boolean initialized = false;
+
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
-      if (System.getenv("SKIP_SECURITY") == null) {
+      if (!initialized && System.getenv("SKIP_SECURITY") == null) {
          final Optional<String> allowedHostsConfig = configurationFacade.getConfigurationString("allowed_hosts");
          allowedHostsConfig.ifPresent(s -> allowedHosts = Arrays.asList(s.split(",")).stream().map(String::trim).collect(Collectors.toSet()));
+         initialized = true;
       }
    }
 
