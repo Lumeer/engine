@@ -60,34 +60,27 @@ public class ResendVerificationEmailFilter implements AuthFilter, Serializable {
 
    @Override
    public FilterResult doFilter(final HttpServletRequest req, final HttpServletResponse res) throws IOException, ServletException {
-      if (req.getMethod().equals("OPTIONS")) {
-         if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
-            res.setStatus(HttpServletResponse.SC_OK);
-            return FilterResult.BREAK;
-         }
-         return FilterResult.CONTINUE;
-      }
-
-      // check for verification email resend
       if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
-         if (authenticatedUser != null && authenticatedUser.getAuthUserInfo() != null && authenticatedUser.getAuthUserInfo().user != null &&
+         if (authenticatedUser != null && authenticatedUser.getAuthUserInfo() != null) {
+            if (authenticatedUser.getAuthUserInfo().user != null &&
                !authenticatedUser.getAuthUserInfo().user.isEmailVerified() && authenticatedUser.getAuthUserInfo().user.getAuthIds() != null &&
                authenticatedUser.getAuthUserInfo().user.getAuthIds().size() > 0) {
-            final String authId = authenticatedUser.getAuthUserInfo().user.getAuthIds().iterator().next();
+               final String authId = authenticatedUser.getAuthUserInfo().user.getAuthIds().iterator().next();
 
-            try {
-               resendVerificationEmail(authId);
-            } catch (Auth0Exception ae) {
-               res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ae.getLocalizedMessage());
+               try {
+                  resendVerificationEmail(authId);
+               } catch (Auth0Exception ae) {
+                  res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ae.getLocalizedMessage());
+                  return FilterResult.BREAK;
+               }
+
+               res.setStatus(200);
                return FilterResult.BREAK;
             }
 
-            res.setStatus(200);
+            res.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return FilterResult.BREAK;
          }
-
-         res.sendError(HttpServletResponse.SC_BAD_REQUEST);
-         return FilterResult.BREAK;
       }
 
       return FilterResult.CONTINUE;
