@@ -25,6 +25,8 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -40,6 +42,7 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -290,6 +293,8 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> getLinkInstances(Set<String> ids) {
+      checkProjectRole(Role.READ);
+
       var linksMap = linkInstanceDao.getLinkInstances(ids)
                                     .stream()
                                     .collect(Collectors.groupingBy(LinkInstance::getLinkTypeId));
@@ -375,6 +380,18 @@ public class LinkInstanceFacade extends AbstractFacade {
       }
 
       return hasPermissions;
+   }
+
+   private void checkProjectRole(Role role) {
+      Project project = getCurrentProject();
+      permissionsChecker.checkRole(project, role);
+   }
+
+   private Project getCurrentProject() {
+      if (workspaceKeeper.getProject().isEmpty()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return workspaceKeeper.getProject().get();
    }
 
    private void checkDocumentsExists(final List<String> documentIds) {

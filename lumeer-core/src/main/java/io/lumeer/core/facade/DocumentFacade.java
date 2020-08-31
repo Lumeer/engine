@@ -326,7 +326,6 @@ public class DocumentFacade extends AbstractFacade {
       final List<Document> updatedDocuments = new ArrayList<>();
 
       documents.forEach(document -> {
-         final Document originalDocument = new Document(document);
          document.setUpdatedBy(authenticatedUser.getCurrentUserId());
          document.setUpdateDate(ZonedDateTime.now());
          final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
@@ -593,7 +592,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private Project getCurrentProject() {
-      if (!workspaceKeeper.getProject().isPresent()) {
+      if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return workspaceKeeper.getProject().get();

@@ -138,10 +138,12 @@ public class ViewFacade extends AbstractFacade {
 
    public List<View> getViews() {
       if (!permissionsChecker.isManager() && permissionsChecker.isPublic()) {
-         return viewDao.getAllViews().stream().map(this::clearPermissions).collect(Collectors.toList());
+         return viewDao.getAllViews().stream().map(this::setupPublicPermissions).collect(Collectors.toList());
       } else if (permissionsChecker.isManager()) {
          return viewDao.getAllViews();
       }
+
+      checkProjectRole(Role.READ);
       return getViews(createSimpleQuery());
    }
 
@@ -286,8 +288,13 @@ public class ViewFacade extends AbstractFacade {
       return getViewsCollections(Collections.singletonList(view), false);
    }
 
+   private void checkProjectRole(Role role) {
+      Project project = getCurrentProject();
+      permissionsChecker.checkRole(project, role);
+   }
+
    private Project getCurrentProject() {
-      if (!workspaceKeeper.getProject().isPresent()) {
+      if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return workspaceKeeper.getProject().get();

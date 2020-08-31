@@ -30,6 +30,8 @@ import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -105,8 +107,19 @@ abstract class AbstractFacade {
                           .build();
    }
 
-   protected <T extends Resource> T clearPermissions(final T resource) {
+   protected <T extends Resource> T setupPublicPermissions(final T resource) {
+      String user = authenticatedUser.getCurrentUserId();
+      var userPermission = new Permission(user, new HashSet<>());
+      var currentUserPermission = resource.getPermissions().getUserPermissions()
+                                          .stream()
+                                          .filter(permission -> permission.getId().equals(user))
+                                          .findFirst()
+                                          .orElse(userPermission);
       resource.getPermissions().clear();
+
+      currentUserPermission.getRoles().add(Role.READ);
+      resource.getPermissions().addUserPermissions(Collections.singleton(currentUserPermission));
+
       return resource;
    }
 }

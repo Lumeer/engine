@@ -93,8 +93,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Organization updateOrganization(final String organizationId, final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
-      Organization storedOrganization = organizationDao.getOrganizationById(organizationId);
-      permissionsChecker.checkRole(storedOrganization, Role.MANAGE);
+      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
       keepUnmodifiableFields(organization, storedOrganization);
@@ -105,8 +104,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void deleteOrganization(final String organizationId) {
-      Organization organization = organizationDao.getOrganizationById(organizationId);
-      permissionsChecker.checkRole(organization, Role.MANAGE);
+      Organization organization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
       permissionsChecker.checkCanDelete(organization);
 
       deleteOrganizationScopedRepositories(organization);
@@ -123,10 +121,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Organization getOrganizationById(final String id) {
-      final Organization organization = organizationDao.getOrganizationById(id);
-      permissionsChecker.checkRole(organization, Role.READ);
-
-      return mapResource(organization);
+      return mapResource(checkRoleAndGetOrganization(id, Role.READ));
    }
 
    public List<Organization> getOrganizations() {
@@ -151,10 +146,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Permissions getOrganizationPermissions(final String organizationId) {
-      Organization organization = organizationDao.getOrganizationById(organizationId);
-      permissionsChecker.checkRole(organization, Role.READ);
-
-      return mapResource(organization).getPermissions();
+      return mapResource(checkRoleAndGetOrganization(organizationId, Role.READ)).getPermissions();
    }
 
    public Set<Permission> updateUserPermissions(final String organizationId, final Set<Permission> userPermissions) {

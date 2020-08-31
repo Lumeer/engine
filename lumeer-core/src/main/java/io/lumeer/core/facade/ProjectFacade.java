@@ -120,7 +120,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project createProject(Project project) {
       Utils.checkCodeSafe(project.getCode());
-      checkOrganizationWriteRole();
+      checkOrganizationRole(Role.WRITE);
       checkProjectCreate(project);
 
       Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Project.ROLES);
@@ -178,13 +178,14 @@ public class ProjectFacade extends AbstractFacade {
          throw new NoPermissionException(project);
       }
 
-      return clearPermissions(project);
+      return setupPublicPermissions(project);
    }
 
    public List<Project> getProjects() {
       if (permissionsChecker.isManager()) {
          return getAllProjects();
       }
+      checkOrganizationRole(Role.READ);
       return getProjectsByPermissions();
    }
 
@@ -298,13 +299,13 @@ public class ProjectFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
    }
 
-   private void checkOrganizationWriteRole() {
+   private void checkOrganizationRole(Role role) {
       if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
       Organization organization = workspaceKeeper.getOrganization().get();
-      permissionsChecker.checkRole(organization, Role.WRITE);
+      permissionsChecker.checkRole(organization, role);
    }
 
    public int getCollectionsCount(Project project) {
