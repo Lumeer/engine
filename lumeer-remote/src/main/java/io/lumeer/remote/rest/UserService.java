@@ -24,6 +24,7 @@ import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
+import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.UserFacade;
 import io.lumeer.remote.rest.annotation.PATCH;
@@ -56,6 +57,9 @@ public class UserService extends AbstractService {
 
    @Inject
    private PaymentFacade paymentFacade;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
 
    @GET
    @JsonView(UserViews.DefaultView.class)
@@ -90,6 +94,7 @@ public class UserService extends AbstractService {
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    public Response deleteUserFromOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId) {
+      organizationFacade.removeUserPermission(organizationId, userId);
       userFacade.deleteUser(organizationId, userId);
 
       return Response.ok().link(getParentUri(userId), "parent").build();

@@ -32,7 +32,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
@@ -100,7 +99,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Collection createCollection(Collection collection, final boolean skipLimits) {
-      checkProjectWriteRole();
+      checkProjectRole(Role.WRITE);
       long collectionsCount = collectionDao.getCollectionsCount();
 
       if (!skipLimits) {
@@ -171,6 +170,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Collection getCollection(String collectionId) {
+      checkProjectRole(Role.READ);
       Collection collection = collectionDao.getCollectionById(collectionId);
       if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
          return mapResource(collection);
@@ -186,11 +186,12 @@ public class CollectionFacade extends AbstractFacade {
 
    public List<Collection> getCollections() {
       if (!permissionsChecker.isManager() && permissionsChecker.isPublic()) {
-         return getAllCollections().stream().map(this::clearPermissions).collect(Collectors.toList());
+         return getAllCollections().stream().map(this::setupPublicPermissions).collect(Collectors.toList());
       } else if (permissionsChecker.isManager()) {
          return getAllCollections();
       }
 
+      checkProjectRole(Role.READ);
       return getCollectionsByPermissions();
    }
 
@@ -455,9 +456,9 @@ public class CollectionFacade extends AbstractFacade {
       return workspaceKeeper.getOrganization().get();
    }
 
-   private void checkProjectWriteRole() {
+   private void checkProjectRole(Role role) {
       Project project = getCurrentProject();
-      permissionsChecker.checkRole(project, Role.WRITE);
+      permissionsChecker.checkRole(project, role);
    }
 
    private Project getCurrentProject() {

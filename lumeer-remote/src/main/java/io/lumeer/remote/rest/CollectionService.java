@@ -25,9 +25,11 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.ViewFacade;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -101,14 +103,14 @@ public class CollectionService extends AbstractService {
    @GET
    public List<Collection> getCollections(@QueryParam("fromViews") Boolean includeViewCollections) {
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      List<Collection> collections = collectionFacade.getCollections();
+      Set<Collection> collections = new HashSet<>(collectionFacade.getCollections());
       collections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
 
       if (includeViewCollections != null && includeViewCollections && !isManager()) {
          collections.addAll(viewFacade.getViewsCollections());
       }
 
-      return collections;
+      return new ArrayList<>(collections);
    }
 
    @GET
