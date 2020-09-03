@@ -127,8 +127,8 @@ public class EmailFacade {
          final String subject = StringUtils.isNotEmpty(locale) && "cs".equals(locale) ? "Pozvánka ke spolupráci" : "Invitation for collaboration";
          final String bodyTemplate =
                StringUtils.isNotEmpty(locale) && "cs".equals(locale)
-                     ? "Dobrý den,<br/><br/>Váš kolega %s Vás zve ke spolupráci do Lumeera<br/><a href=\"https://get.lumeer.io/cs/\">https://get.lumeer.io/</a><br/><br/>Hezký den,<br/>Tým Lumeer<br/>"
-                     : "Hello,<br/><br/>your colleague %s has invited you to collaborate in Lumeer<br/><a href=\"https://get.lumeer.io/en/\">https://get.lumeer.io/</a><br/><br/>Cheers,<br/>Lumeer Team<br/>";
+                     ? "Dobrý den,<br/><br/>Váš kolega %s Vás zve ke spolupráci do Lumeera<br/>Prosím přihlašte se, nebo se registrujte na <a href=\"https://get.lumeer.io/cs/\">https://get.lumeer.io/</a><br/><br/>Hezký den,<br/>Tým Lumeer<br/>"
+                     : "Hello,<br/><br/>your colleague %s has invited you to collaborate in Lumeer<br/>Please log in or sign up at <a href=\"https://get.lumeer.io/en/\">https://get.lumeer.io/</a><br/><br/>Cheers,<br/>Lumeer Team<br/>";
          final String colleague = StringUtils.isNotEmpty(userName) ? userName + " (" + userEmail + ")" : userEmail;
          final String body = String.format(bodyTemplate, colleague);
 
