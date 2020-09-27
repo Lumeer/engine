@@ -67,7 +67,7 @@ public class MailChimpFacade {
          final String userId = md5sum(user.getEmail());
 
          if (userSubscribed(listId, userId)) {
-            updateUser(listId, userId, user.hasNewsletter());
+            updateUser(listId, userId, user.hasNewsletter() != null && user.hasNewsletter());
          } else {
             subscribeUser(listId, user);
          }
