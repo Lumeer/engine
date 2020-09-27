@@ -313,13 +313,11 @@ public class UserFacade extends AbstractFacade {
    public User patchCurrentUser(final User user, final String language) {
       User currentUser = authenticatedUser.getCurrentUser();
 
-      if (user.hasNewsletter() != null) {
-         currentUser.setNewsletter(user.hasNewsletter());
-         mailChimpFacade.setUserSubscription(currentUser, language == null || !"cs".equals(language)); // so that en is default
-      }
+      currentUser.setNewsletter(user.hasNewsletter());
+      mailChimpFacade.setUserSubscription(currentUser, !"cs".equals(language)); // so that en is default
 
+      currentUser.setAgreement(user.hasAgreement());
       if (user.hasAgreement() != null && user.hasAgreement()) {
-         currentUser.setAgreement(user.hasAgreement());
          currentUser.setAgreementDate(ZonedDateTime.now());
       }
 
