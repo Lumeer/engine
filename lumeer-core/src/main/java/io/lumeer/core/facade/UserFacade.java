@@ -315,14 +315,14 @@ public class UserFacade extends AbstractFacade {
 
       if (user.hasNewsletter() != null) {
          currentUser.setNewsletter(user.hasNewsletter());
+         mailChimpFacade.setUserSubscription(currentUser, !"cs".equals(language)); // so that en is default
       }
-      mailChimpFacade.setUserSubscription(currentUser, !"cs".equals(language)); // so that en is default
 
-      if (user.hasAgreement() != null && user.hasAgreement()) {
+      if (user.hasAgreement() != null) {
          currentUser.setAgreement(user.hasAgreement());
-      }
-      if (user.hasAgreement() != null && user.hasAgreement()) {
-         currentUser.setAgreementDate(ZonedDateTime.now());
+         if (user.hasAgreement()) {
+            currentUser.setAgreementDate(ZonedDateTime.now());
+         }
       }
 
       if (user.getWizardDismissed() != null) {
