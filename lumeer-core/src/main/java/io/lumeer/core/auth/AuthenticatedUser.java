@@ -118,9 +118,9 @@ public class AuthenticatedUser implements Serializable {
    private void checkUserInProduction(String authId, String email, String name, boolean emailVerified) {
       User userByAuthId = userDao.getUserByAuthId(authId);
       if (userByAuthId != null) {
-         if (!userByAuthId.getEmail().equals(email)) {
+         if (!userByAuthId.getEmail().toLowerCase().equals(email.toLowerCase())) {
             userByAuthId.setName(name);
-            userByAuthId.setEmail(email);
+            userByAuthId.setEmail(email.toLowerCase());
             userByAuthId.setEmailVerified(emailVerified);
             createDemoWorkspaceIfNeeded(userByAuthId);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
@@ -137,6 +137,7 @@ public class AuthenticatedUser implements Serializable {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
             userByEmail.setName(name);
+            userByEmail.setEmail(userByEmail.getEmail().toLowerCase());
             userByEmail.setEmailVerified(emailVerified);
             if (userByEmail.getAuthIds() != null) {
                userByEmail.getAuthIds().add(authId);
@@ -165,7 +166,7 @@ public class AuthenticatedUser implements Serializable {
    }
 
    private User createNewUser(String email, String authId) {
-      User user = new User(email);
+      User user = new User(email.toLowerCase());
       user.setAuthIds(new HashSet<>(Arrays.asList(authId)));
       return userDao.createUser(user);
    }
@@ -179,10 +180,6 @@ public class AuthenticatedUser implements Serializable {
       user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>()));
 
       ((WorkspaceKeeper) selectedWorkspace).setOrganizationId(organization.getId());
-
-      //Project project = createDemoProject(user);
-
-      //user.setDefaultWorkspace(new DefaultWorkspace(organization.getId(), project.getId()));
 
       freshdeskFacade.logTicket(user, "A new user " + user.getEmail() + " logged for the first time in the system",
             "Organization " + organization.getCode() + " was created for them.");

@@ -143,7 +143,7 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
 
    @Override
    public User getUserByEmail(final String email) {
-      Bson emailFilter = Filters.eq(UserCodec.EMAIL, email);
+      Bson emailFilter = Filters.or(Filters.eq(UserCodec.EMAIL, email), Filters.eq(UserCodec.EMAIL, email.toLowerCase()));
 
       return databaseCollection().find(emailFilter).first();
    }
