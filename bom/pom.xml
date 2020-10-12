@@ -117,7 +117,7 @@
       <version.amq>5.14.0</version.amq>
       <version.mockito>3.3.3</version.mockito>
       <version.bytebuddy>1.10.10</version.bytebuddy>
-      <version.junit>4.13</version.junit>
+      <version.junit>4.13.1</version.junit>
       <version.embedded.mongodb>2.2.0</version.embedded.mongodb>
       <version.awssdk>2.13.8</version.awssdk>
 
