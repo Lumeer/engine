@@ -1357,7 +1357,11 @@ public class Icons {
 
    public static String getSafeRandomIcon() {
       final List<String> unsafe = Arrays.asList("fa-coffin", "fa-book-dead", "fa-skull-crossbones",
-            "fa-tombstone", "fa-tombstone-alt", "fa-flask-poison", "fa-hockey-mask");
+            "fa-tombstone", "fa-tombstone-alt", "fa-flask-poison", "fa-hockey-mask", "fa-star-of-david",
+            "fa-star-and-crescent", "fa-praying-hands", "fa-pray", "fa-torah", "fa-tanakh", "fa-quran",
+            "fa-synagogue", "fa-church", "fa-om", "fa-menorah", "fa-bible", "fa-khanda", "fa-hamsa",
+            "fa-hanukiah", "fa-bahai", "fa-ankh", "fa-cross", "fa-vihara", "fa-mosque", "fa-gopuram",
+            "fa-kaaba", "fa-torii-gate", "fa-place-of-worship", "fa-dharmachakra");
       String icon = "";
 
       do {
