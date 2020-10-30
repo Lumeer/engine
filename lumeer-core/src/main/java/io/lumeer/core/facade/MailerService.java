@@ -1,4 +1,4 @@
-/*
+package io.lumeer.core.facade;/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,29 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.facade;
 
 import io.lumeer.api.model.User;
-import io.lumeer.engine.IntegrationTestBase;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+public interface MailerService {
 
-import javax.inject.Inject;
+   void setUserSubscription(final User user, final boolean enSite);
 
-@RunWith(Arquillian.class)
-public class MailChimpFacadeIT extends IntegrationTestBase {
-
-   @Inject
-   @MailChimpMailerService
-   private MailerService mailerService;
-
-   @Test
-   @Ignore("It does not make sense to communicate with MailChimp API once it was verified")
-   public void testMailChimp() {
-      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null);
-      mailerService.setUserSubscription(u, true);
-   }
 }

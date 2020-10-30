@@ -83,7 +83,7 @@ public class UserFacade extends AbstractFacade {
    private FeedbackDao feedbackDao;
 
    @Inject
-   private MailChimpFacade mailChimpFacade;
+   private MailerService mailerService;
 
    @Inject
    private FreshdeskFacade freshdeskFacade;
@@ -315,7 +315,7 @@ public class UserFacade extends AbstractFacade {
 
       if (user.hasNewsletter() != null) {
          currentUser.setNewsletter(user.hasNewsletter());
-         mailChimpFacade.setUserSubscription(currentUser, !"cs".equals(language)); // so that en is default
+         mailerService.setUserSubscription(currentUser, !"cs".equals(language)); // so that en is default
       }
 
       if (user.hasAgreement() != null) {
