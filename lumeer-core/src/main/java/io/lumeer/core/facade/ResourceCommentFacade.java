@@ -96,7 +96,10 @@ public class ResourceCommentFacade extends AbstractFacade {
    }
 
    public void removeResource(@Observes final RemoveResource removeResource) {
-      resourceCommentDao.deleteComments(removeResource.getResource().getType(), removeResource.getResource().getId());
+      final ResourceType type = removeResource.getResource().getType();
+      if (type != ResourceType.ORGANIZATION && type != ResourceType.PROJECT) {
+         resourceCommentDao.deleteComments(removeResource.getResource().getType(), removeResource.getResource().getId());
+      }
    }
 
    public void removeDocument(@Observes final RemoveDocument removeDocument) {
