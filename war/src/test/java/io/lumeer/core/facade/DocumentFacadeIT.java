@@ -28,12 +28,15 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceComment;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -100,6 +103,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private ResourceCommentFacade resourceCommentFacade;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -377,5 +383,45 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       documentFacade.removeFavoriteDocument(collection.getId(), ids.get(9));
 
       assertThat(documentFacade.getFavoriteDocumentsIds()).containsOnly(ids.get(2));
+   }
+
+   @Test
+   public void testDocumentComments() {
+      final String firstMessage = "hello this is a cool comment";
+      final String secondMessage = "Hello, I fixed this!";
+      final Document doc = createDocument();
+
+      final ResourceComment comment1 = new ResourceComment(firstMessage, null);
+      comment1.setResourceType(ResourceType.DOCUMENT);
+      comment1.setResourceId(doc.getId());
+
+      final ResourceComment comment2 = resourceCommentFacade.createResourceComment(comment1);
+      assertThat(comment2.getComment()).isEqualTo(firstMessage);
+      assertThat(comment2.getAuthor()).isEqualTo(user.getId());
+      assertThat(comment2.getAuthorEmail()).isEqualTo(user.getEmail());
+      assertThat(comment2.getAuthorName()).isEqualTo(user.getName());
+      assertThat(comment2.getCreationDate().plusSeconds(5).toInstant().getEpochSecond()).isGreaterThan(System.currentTimeMillis() / 1000);
+      assertThat(comment2.getUpdateDate()).isNull();
+
+      comment2.setComment(secondMessage);
+      final ResourceComment comment3 = resourceCommentFacade.updateResourceComment(comment2);
+      assertThat(comment3.getComment()).isEqualTo(secondMessage);
+      assertThat(comment3.getUpdateDate().plusSeconds(5).toInstant().getEpochSecond()).isGreaterThan(System.currentTimeMillis() / 1000);
+
+      final List<ResourceComment> comments1 = resourceCommentFacade.getComments(ResourceType.DOCUMENT, doc.getId(), 0, 0);
+      assertThat(comments1).hasSize(1);
+      assertThat(comments1.get(0)).isEqualTo(comment3);
+
+      resourceCommentFacade.deleteComment(comment3);
+      final List<ResourceComment> comments2 = resourceCommentFacade.getComments(ResourceType.DOCUMENT, doc.getId(), 0, 0);
+      assertThat(comments2).hasSize(0);
+
+      comment1.setId(null);
+      final ResourceComment comment4 = resourceCommentFacade.createResourceComment(comment1);
+      assertThat(comment4).isNotEqualTo(comment3);
+      resourceCommentFacade.removeDocument(new RemoveDocument(doc));
+
+      final List<ResourceComment> comments3 = resourceCommentFacade.getComments(ResourceType.DOCUMENT, doc.getId(), 0, 0);
+      assertThat(comments3).hasSize(0);
    }
 }

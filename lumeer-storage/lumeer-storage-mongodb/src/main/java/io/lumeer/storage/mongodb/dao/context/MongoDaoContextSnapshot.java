@@ -38,6 +38,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
@@ -56,6 +57,7 @@ import io.lumeer.storage.mongodb.dao.project.MongoDocumentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoFunctionDao;
 import io.lumeer.storage.mongodb.dao.project.MongoLinkInstanceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoLinkTypeDao;
+import io.lumeer.storage.mongodb.dao.project.MongoResourceCommentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoSequenceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoViewDao;
 import io.lumeer.storage.mongodb.dao.project.MongoProjectScopedDao;
@@ -216,6 +218,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    @Override
    public SequenceDao getSequenceDao() {
       return initProjectScopedDao(new MongoSequenceDao());
+   }
+
+   @Override
+   public ResourceCommentDao getResourceCommentDao() {
+      return initProjectScopedDao(new MongoResourceCommentDao());
    }
 
    @Override

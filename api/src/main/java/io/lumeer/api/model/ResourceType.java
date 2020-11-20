@@ -24,7 +24,8 @@ public enum ResourceType {
    PROJECT,
    COLLECTION,
    VIEW,
-   DOCUMENT;
+   DOCUMENT,
+   LINK;
 
    @Override
    public String toString() {

@@ -16,22 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.event;
+package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ResourceComment;
+import io.lumeer.api.model.ResourceType;
 
-/**
- * CDI event that carries information about manipulation with a {@link Document}.
- */
-public abstract class DocumentEvent {
+import java.util.List;
 
-   private final Document document;
+public interface ResourceCommentDao extends ProjectScopedDao {
+   ResourceComment createComment(final ResourceComment comment);
+   ResourceComment getComment(final String id);
+   ResourceComment updateComment(final ResourceComment comment);
+   boolean deleteComment(final ResourceComment comment);
+   boolean deleteComments(final ResourceType resourceType, final String resourceId);
 
-   public DocumentEvent(final Document document) {
-      this.document = document;
-   }
-
-   public Document getDocument() {
-      return document;
-   }
+   List<ResourceComment> getResourceComments(final ResourceType resourceType, final String resourceId, final int pageStart, final int pageLenght);
 }
