@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -76,6 +77,13 @@ public class TaskProcessingFacade {
 
    @Inject
    private FunctionFacade functionFacade;
+
+   public void runRule(final Collection collection, final String ruleName, final Document document) {
+      if (collection != null && document != null) {
+         Optional<RuleTask> task = createRuleTask(collection, ruleName, null, document);
+         task.ifPresent(this::processTasks);
+      }
+   }
 
    public void onCreateChain(@Observes final CreateDocumentsAndLinks chain) {
       List<Task> allTasks = new ArrayList<>();
@@ -137,12 +145,25 @@ public class TaskProcessingFacade {
    }
 
 
+   private Optional<RuleTask> createRuleTask(final Collection collection, final String ruleName, final Document originalDocument, final Document document) {
+      if (collection.getRules() == null) {
+         return Optional.empty();
+      }
+      return collection.getRules().entrySet().stream()
+                       .filter(entry -> entry.getKey().equals(ruleName))
+                       .map(entry -> {
+                          final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
+                          ruleTask.setRule(entry.getKey(), entry.getValue(), collection, originalDocument, document);
+                          return ruleTask;
+                       }).findFirst();
+   }
+
    private List<RuleTask> createRuleTasks(final Collection collection, final Document originalDocument, final Document document, final List<Rule.RuleTiming> timings) {
       if (collection.getRules() == null) {
          return Collections.emptyList();
       }
       return collection.getRules().entrySet().stream()
-                       .filter(entry -> timings.contains(entry.getValue().getTiming()))
+                       .filter(entry -> timings == null || timings.contains(entry.getValue().getTiming()))
                        .map(entry -> {
                           final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
                           ruleTask.setRule(entry.getKey(), entry.getValue(), collection, originalDocument, document);
