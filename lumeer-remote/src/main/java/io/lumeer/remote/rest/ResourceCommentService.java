@@ -53,7 +53,9 @@ public class ResourceCommentService extends AbstractService {
    private String resourceId;
 
    @PathParam("resourceType")
-   private ResourceType resourceType;
+   private String resourceType;
+
+   private ResourceType type;
 
    @Inject
    private ResourceCommentFacade resourceCommentFacade;
@@ -61,11 +63,14 @@ public class ResourceCommentService extends AbstractService {
    @PostConstruct
    public void init() {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+      if (resourceType != null) {
+         type = ResourceType.valueOf(resourceType.toUpperCase());
+      }
    }
 
    @POST
    public ResourceComment createComment(final ResourceComment comment) {
-      comment.setResourceType(resourceType);
+      comment.setResourceType(type);
       comment.setResourceId(resourceId);
 
       return resourceCommentFacade.createResourceComment(comment);
@@ -73,7 +78,7 @@ public class ResourceCommentService extends AbstractService {
 
    @PUT
    public ResourceComment updateComment(final ResourceComment comment) {
-      comment.setResourceType(resourceType);
+      comment.setResourceType(type);
       comment.setResourceId(resourceId);
 
       return resourceCommentFacade.updateResourceComment(comment);
@@ -81,7 +86,7 @@ public class ResourceCommentService extends AbstractService {
 
    @GET
    public List<ResourceComment> getComments(@QueryParam("pageStart") Integer pageStart, @QueryParam("pageLenght") Integer pageLength) {
-      return resourceCommentFacade.getComments(resourceType, resourceId, pageStart != null ? pageStart : 0, pageLength != null ? pageLength : 0);
+      return resourceCommentFacade.getComments(type, resourceId, pageStart != null ? pageStart : 0, pageLength != null ? pageLength : 0);
    }
 
    @DELETE
@@ -89,7 +94,7 @@ public class ResourceCommentService extends AbstractService {
    public void deleteComment(@PathParam("commentId") final String commentId) {
       final ResourceComment comment = new ResourceComment(null, null);
       comment.setId(commentId);
-      comment.setResourceType(resourceType);
+      comment.setResourceType(type);
       comment.setResourceId(resourceId);
 
       resourceCommentFacade.deleteComment(comment);

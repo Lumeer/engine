@@ -498,6 +498,9 @@ public class PusherFacade extends AbstractFacade {
          extraId = ((Document) object).getCollectionId();
       } else if (object instanceof LinkInstance) {
          extraId = ((LinkInstance) object).getLinkTypeId();
+      } else if (object instanceof ResourceComment) {
+         final ResourceComment comment = ((ResourceComment) object);
+         extraId = comment.getResourceType().toString() + '/' + comment.getResourceId();
       }
       final ResourceId alternateMessage = new ResourceId(id, getOrganization().getId(), getProject().getId(), extraId);
       return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId);
