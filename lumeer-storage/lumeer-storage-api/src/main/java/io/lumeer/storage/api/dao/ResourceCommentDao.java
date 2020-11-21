@@ -22,10 +22,14 @@ import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface ResourceCommentDao extends ProjectScopedDao {
    ResourceComment createComment(final ResourceComment comment);
    ResourceComment getComment(final String id);
+   long getCommentsCount(final ResourceType resourceType, final String resourceId);
+   Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds);
    ResourceComment updateComment(final ResourceComment comment);
    boolean deleteComment(final ResourceComment comment);
    boolean deleteComments(final ResourceType resourceType, final String resourceId);

@@ -133,6 +133,9 @@ public class PusherFacade extends AbstractFacade {
    private LinkTypeFacade linkTypeFacade;
 
    @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
    private ViewDao viewDao;
 
    @Inject
@@ -660,6 +663,7 @@ public class PusherFacade extends AbstractFacade {
             Collection collection = collectionFacade.getCollection(document.getCollectionId());
             constraintManager.decodeDataTypes(collection, document.getData());
             document.setFavorite(documentFacade.isFavorite(document.getId()));
+            document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
             sendNotificationsByUsers(document, collectionFacade.getUsersIdsWithAccess(document.getCollectionId()), eventSuffix);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -858,6 +862,7 @@ public class PusherFacade extends AbstractFacade {
    private void sendNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
       LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
       constraintManager.decodeDataTypes(linkType, linkInstance.getData());
+      linkInstance.setCommentsCount(linkInstanceFacade.getCommentsCount(linkInstance.getId()));
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);
    }

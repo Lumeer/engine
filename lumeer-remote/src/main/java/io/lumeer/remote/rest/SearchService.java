@@ -24,12 +24,15 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.SuggestionQuery;
 import io.lumeer.api.model.Suggestions;
 import io.lumeer.core.facade.DocumentFacade;
+import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -59,6 +62,9 @@ public class SearchService extends AbstractService {
    private DocumentFacade documentFacade;
 
    @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
    private SuggestionFacade suggestionFacade;
 
    @PostConstruct
@@ -82,7 +88,13 @@ public class SearchService extends AbstractService {
    public List<Document> searchDocuments(Query query) {
       Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
       List<Document> documents = searchFacade.searchDocuments(query);
-      documents.forEach(document -> document.setFavorite(favoriteDocumentIds.contains(document.getId())));
+      Set<String> documentIds = documents.stream().map(Document::getId).collect(Collectors.toSet());
+      Map<String, Integer> commentCounts = documentFacade.getCommentsCounts(documentIds);
+      documents.forEach(document -> {
+         document.setFavorite(favoriteDocumentIds.contains(document.getId()));
+         document.setCommentsCount((long) commentCounts.getOrDefault(document.getId(), 0));
+      });
+
       return documents;
    }
 
@@ -90,7 +102,15 @@ public class SearchService extends AbstractService {
    @Path("linkInstances")
    @QueryProcessor
    public List<LinkInstance> getLinkInstances(Query query) {
-      return searchFacade.getLinkInstances(query);
+      final List<LinkInstance> links = searchFacade.getLinkInstances(query);
+
+      Set<String> linkIds = links.stream().map(l -> l.getId()).collect(Collectors.toSet());
+      Map<String, Integer> commentCounts = linkInstanceFacade.getCommentsCounts(linkIds);
+      links.forEach(linkInstance -> {
+         linkInstance.setCommentsCount((long) commentCounts.getOrDefault(linkInstance.getId(), 0));
+      });
+
+      return links;
    }
 
 }

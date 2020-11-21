@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.dao.project;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
@@ -34,6 +35,8 @@ import io.lumeer.storage.mongodb.codecs.ResourceCommentCodec;
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
@@ -41,10 +44,14 @@ import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
 import com.mongodb.client.result.DeleteResult;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -100,6 +107,27 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
       } catch (MongoException ex) {
          throw new StorageException("Cannot find comment id: " + id, ex);
       }
+   }
+
+   @Override
+   public long getCommentsCount(final ResourceType resourceType, final String resourceId) {
+      return databaseCollection().countDocuments(
+            Filters.and(
+                  Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
+                  Filters.eq(ResourceCommentCodec.RESOURCE_ID, resourceId))
+      );
+   }
+
+   @Override
+   public Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds) {
+      final List<Document> result = database.getCollection(databaseCollectionName()).aggregate(
+            List.of(
+                  Aggregates.match(Filters.in(ResourceCommentCodec.RESOURCE_ID, resourceIds)),
+                  Aggregates.group("$"+ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
+            )
+      ).into(new ArrayList<>());
+
+      return result.stream().collect(Collectors.toMap(e -> e.getString("_id"), e -> e.getInteger("count")));
    }
 
    @Override

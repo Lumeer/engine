@@ -35,6 +35,8 @@ import io.lumeer.storage.api.dao.ViewDao;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -93,6 +95,14 @@ public class ResourceCommentFacade extends AbstractFacade {
       checkPermissions(resourceType, resourceId);
 
       return resourceCommentDao.getResourceComments(resourceType, resourceId, pageStart, pageLenght);
+   }
+
+   public long getCommentsCount(final ResourceType resourceType, final String resourceId) {
+      return resourceCommentDao.getCommentsCount(resourceType, resourceId);
+   }
+
+   public Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds) {
+      return resourceCommentDao.getCommentsCounts(resourceType, resourceIds);
    }
 
    public void removeResource(@Observes final RemoveResource removeResource) {

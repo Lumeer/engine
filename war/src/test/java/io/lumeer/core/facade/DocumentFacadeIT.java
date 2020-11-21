@@ -45,6 +45,8 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -55,6 +57,8 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.inject.Inject;
@@ -411,6 +415,11 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       final List<ResourceComment> comments1 = resourceCommentFacade.getComments(ResourceType.DOCUMENT, doc.getId(), 0, 0);
       assertThat(comments1).hasSize(1);
       assertThat(comments1.get(0)).isEqualTo(comment3);
+
+      Map<String, Integer> counts = resourceCommentFacade.getCommentsCounts(ResourceType.DOCUMENT, Set.of(doc.getId()));
+      assertThat(counts).hasSize(1);
+      assertThat(counts.get(doc.getId())).isNotNull();
+      assertThat(counts.get(doc.getId())).isEqualTo(1);
 
       resourceCommentFacade.deleteComment(comment3);
       final List<ResourceComment> comments2 = resourceCommentFacade.getComments(ResourceType.DOCUMENT, doc.getId(), 0, 0);
