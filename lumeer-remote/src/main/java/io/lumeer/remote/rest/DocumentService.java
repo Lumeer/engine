@@ -18,8 +18,11 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.DocumentFacade;
+import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
 
@@ -56,6 +59,12 @@ public class DocumentService extends AbstractService {
    @Inject
    private DocumentFacade documentFacade;
 
+   @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
+   private TaskProcessingFacade taskProcessingFacade;
+
    @PostConstruct
    public void init() {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
@@ -70,6 +79,15 @@ public class DocumentService extends AbstractService {
    @Path("duplicate")
    public List<Document> duplicateDocuments(List<String> documentIds) {
       return documentFacade.duplicateDocuments(collectionId, documentIds);
+   }
+
+   @POST
+   @Path("{documentId:[0-9a-fA-F]{24}}/rule/{ruleName}")
+   public void runRule(@PathParam("documentId") final String documentId, @PathParam("ruleName") final String ruleName) {
+      final Collection collection = collectionFacade.getCollection(collectionId);
+      final Document document = documentFacade.getDocument(collectionId, documentId);
+
+      taskProcessingFacade.runRule(collection, ruleName, document);
    }
 
    @PUT
