@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
@@ -118,6 +119,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForDocument(final Document document, final String userId) {
+      document.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.DOCUMENT, document.getId()));
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(document, document.getCollectionId()), null);
@@ -130,6 +132,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId) {
+      linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);

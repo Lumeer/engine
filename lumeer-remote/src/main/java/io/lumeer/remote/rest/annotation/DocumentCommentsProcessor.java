@@ -16,22 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.event;
+package io.lumeer.remote.rest.annotation;
 
-import io.lumeer.api.model.Document;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import javax.interceptor.InterceptorBinding;
 
-/**
- * CDI event that carries information about manipulation with a {@link Document}.
- */
-public abstract class DocumentEvent {
-
-   private final Document document;
-
-   public DocumentEvent(final Document document) {
-      this.document = document;
-   }
-
-   public Document getDocument() {
-      return document;
-   }
+@Inherited
+@InterceptorBinding
+@Target( { ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface DocumentCommentsProcessor {
 }

@@ -18,20 +18,20 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ResourceComment;
 
 /**
- * CDI event that carries information about manipulation with a {@link Document}.
+ * CDI event that carries information about manipulation with a {@link ResourceComment}.
  */
-public abstract class DocumentEvent {
+public abstract class ResourceCommentEvent {
 
-   private final Document document;
+   private final ResourceComment resourceComment;
 
-   public DocumentEvent(final Document document) {
-      this.document = document;
+   public ResourceCommentEvent(final ResourceComment resourceComment) {
+      this.resourceComment = resourceComment;
    }
 
-   public Document getDocument() {
-      return document;
+   public ResourceComment getResourceComment() {
+      return resourceComment;
    }
 }

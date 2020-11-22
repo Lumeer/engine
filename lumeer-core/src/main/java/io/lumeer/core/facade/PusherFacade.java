@@ -25,6 +25,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.Sequence;
@@ -40,8 +41,8 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
-import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
@@ -49,6 +50,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateSequence;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
+import io.lumeer.engine.api.event.CreateResourceComment;
 import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.ReloadResourceContent;
@@ -57,6 +59,7 @@ import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.RemoveResourceComment;
 import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
@@ -67,6 +70,7 @@ import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
+import io.lumeer.engine.api.event.UpdateResourceComment;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.engine.api.event.UserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -127,6 +131,9 @@ public class PusherFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
+
+   @Inject
+   private LinkInstanceFacade linkInstanceFacade;
 
    @Inject
    private ViewDao viewDao;
@@ -469,6 +476,8 @@ public class PusherFacade extends AbstractFacade {
          return createEventForWorkspaceObject(object, ((LinkInstance) object).getId(), event, userId);
       } else if (object instanceof Resource) {
          return createEventForResource((Resource) object, event, userId);
+      } else if (object instanceof ResourceComment) {
+         return createEventForWorkspaceObject(object, ((ResourceComment) object).getId(), event, userId);
       } else if (object instanceof ObjectWithParent) {
          ObjectWithParent objectWithParent = ((ObjectWithParent) object);
          if (objectWithParent.object instanceof Resource) {
@@ -492,6 +501,9 @@ public class PusherFacade extends AbstractFacade {
          extraId = ((Document) object).getCollectionId();
       } else if (object instanceof LinkInstance) {
          extraId = ((LinkInstance) object).getLinkTypeId();
+      } else if (object instanceof ResourceComment) {
+         final ResourceComment comment = ((ResourceComment) object);
+         extraId = comment.getResourceType().toString() + '/' + comment.getResourceId();
       }
       final ResourceId alternateMessage = new ResourceId(id, getOrganization().getId(), getProject().getId(), extraId);
       return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId);
@@ -586,6 +598,53 @@ public class PusherFacade extends AbstractFacade {
       return workspaceKeeper.getProject().get();
    }
 
+   public void createResourceComment(@Observes final CreateResourceComment commentEvent) {
+      resourceCommentNotification(commentEvent.getResourceComment(), CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateResourceComment(@Observes final UpdateResourceComment commentEvent) {
+      resourceCommentNotification(commentEvent.getResourceComment(), UPDATE_EVENT_SUFFIX);
+   }
+
+   public void removeResourceComment(@Observes final RemoveResourceComment commentEvent) {
+      resourceCommentNotification(commentEvent.getResourceComment(), REMOVE_EVENT_SUFFIX);
+   }
+
+   private void resourceCommentNotification(final ResourceComment comment, final String eventSuffix) {
+      if (comment.getResourceType() == ResourceType.COLLECTION) {
+         sendNotificationsByUsers(comment, collectionFacade.getUsersIdsWithAccess(comment.getResourceId()), eventSuffix);
+      } else if (comment.getResourceType() == ResourceType.DOCUMENT) {
+         final List<Document> docs = documentFacade.getDocuments(Set.of(comment.getResourceId()));
+         if (docs != null) {
+            final Set<String> users = new HashSet<>();
+            docs.stream().map(Document::getCollectionId).collect(Collectors.toSet()).forEach(collectionId -> {
+               users.addAll(collectionFacade.getUsersIdsWithAccess(collectionId));
+            });
+
+            sendNotificationsByUsers(comment, users, eventSuffix);
+         }
+      } else if (comment.getResourceType() == ResourceType.LINK) {
+         final LinkType linkType = linkTypeDao.getLinkType(comment.getResourceId());
+         final Set<String> users = getUserIdsForLinkType(linkType);
+
+         sendNotificationsByUsers(comment, users, eventSuffix);
+      } else if (comment.getResourceType() == ResourceType.VIEW) {
+         final Set<String> users = ResourceUtils.usersAllowedRead(viewFacade.getViewById(comment.getResourceId()));
+         users.addAll(getWorkspaceManagers());
+
+         sendNotificationsByUsers(comment, users, eventSuffix);
+      } else if (comment.getResourceType() == ResourceType.PROJECT) {
+         final Set<String> users = ResourceUtils.usersAllowedRead(getProject());
+         users.addAll(getWorkspaceManagers());
+
+         sendNotificationsByUsers(comment, users, eventSuffix);
+      } else if (comment.getResourceType() == ResourceType.ORGANIZATION) {
+         final Set<String> users = ResourceUtils.usersAllowedRead(getOrganization());
+
+         sendNotificationsByUsers(comment, users, eventSuffix);
+      }
+   }
+
    public void createDocument(@Observes final CreateDocument createDocument) {
       documentNotification(createDocument.getDocument(), CREATE_EVENT_SUFFIX);
    }
@@ -604,6 +663,7 @@ public class PusherFacade extends AbstractFacade {
             Collection collection = collectionFacade.getCollection(document.getCollectionId());
             constraintManager.decodeDataTypes(collection, document.getData());
             document.setFavorite(documentFacade.isFavorite(document.getId()));
+            document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
             sendNotificationsByUsers(document, collectionFacade.getUsersIdsWithAccess(document.getCollectionId()), eventSuffix);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -802,6 +862,7 @@ public class PusherFacade extends AbstractFacade {
    private void sendNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
       LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
       constraintManager.decodeDataTypes(linkType, linkInstance.getData());
+      linkInstance.setCommentsCount(linkInstanceFacade.getCommentsCount(linkInstance.getId()));
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);
    }

@@ -82,6 +82,9 @@ public class DocumentFacade extends AbstractFacade {
    private DefaultConfigurationProducer configurationProducer;
 
    @Inject
+   private ResourceCommentFacade resourceCommentFacade;
+
+   @Inject
    private Event<CreateDocument> createDocumentEvent;
 
    @Inject
@@ -580,6 +583,14 @@ public class DocumentFacade extends AbstractFacade {
       });
 
       return documents;
+   }
+
+   public long getCommentsCount(final String documentId) {
+      return resourceCommentFacade.getCommentsCount(ResourceType.DOCUMENT, documentId);
+   }
+
+   public Map<String, Integer> getCommentsCounts(final Set<String> documentIds) {
+      return resourceCommentFacade.getCommentsCounts(ResourceType.DOCUMENT, documentIds);
    }
 
    private Document getDocument(Collection collection, String documentId) {

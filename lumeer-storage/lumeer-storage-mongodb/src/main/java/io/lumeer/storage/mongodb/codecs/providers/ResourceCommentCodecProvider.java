@@ -16,22 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.event;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ResourceComment;
+import io.lumeer.storage.mongodb.codecs.ResourceCommentCodec;
 
-/**
- * CDI event that carries information about manipulation with a {@link Document}.
- */
-public abstract class DocumentEvent {
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-   private final Document document;
+public class ResourceCommentCodecProvider implements CodecProvider {
 
-   public DocumentEvent(final Document document) {
-      this.document = document;
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == ResourceComment.class) {
+         return (Codec<T>) new ResourceCommentCodec(registry);
+      }
+
+      return null;
    }
 
-   public Document getDocument() {
-      return document;
-   }
 }

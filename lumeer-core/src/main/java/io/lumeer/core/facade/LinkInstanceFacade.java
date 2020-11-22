@@ -92,6 +92,9 @@ public class LinkInstanceFacade extends AbstractFacade {
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
 
+   @Inject
+   private ResourceCommentFacade resourceCommentFacade;
+
    private ConstraintManager constraintManager;
 
    @PostConstruct
@@ -349,6 +352,14 @@ public class LinkInstanceFacade extends AbstractFacade {
       fileAttachmentFacade.duplicateFileAttachments(linkTypeId, linkMap, FileAttachment.AttachmentType.LINK);
 
       return newLinks;
+   }
+
+   public long getCommentsCount(final String documentId) {
+      return resourceCommentFacade.getCommentsCount(ResourceType.LINK, documentId);
+   }
+
+   public Map<String, Integer> getCommentsCounts(final Set<String> documentIds) {
+      return resourceCommentFacade.getCommentsCounts(ResourceType.LINK, documentIds);
    }
 
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {

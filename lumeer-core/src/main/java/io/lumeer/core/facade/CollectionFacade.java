@@ -42,6 +42,7 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -90,6 +91,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private ViewFacade viewFacade;
+
+   @Inject
+   private ResourceCommentDao resourceCommentDao;
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
@@ -155,6 +159,10 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void deleteCollectionBasedData(final String collectionId) {
+      documentDao.getDocumentsByCollection(collectionId).forEach(document -> {
+         resourceCommentDao.deleteComments(ResourceType.DOCUMENT, document.getId());
+      });
+
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
 

@@ -55,6 +55,7 @@ public class Document implements WithId {
    private Integer dataVersion;
    private DataDocument data;
    private DataDocument metaData;
+   private Long commentsCount;
 
    private boolean favorite;
 
@@ -173,6 +174,14 @@ public class Document implements WithId {
       this.favorite = favorite;
    }
 
+   public Long getCommentsCount() {
+      return commentsCount;
+   }
+
+   public void setCommentsCount(final Long commentsCount) {
+      this.commentsCount = commentsCount;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -204,6 +213,7 @@ public class Document implements WithId {
             ", data=" + data +
             ", metaData=" + metaData +
             ", favorite=" + favorite +
+            ", commentsCount=" + commentsCount +
             '}';
    }
 }

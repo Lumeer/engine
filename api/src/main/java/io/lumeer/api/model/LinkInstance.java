@@ -56,6 +56,7 @@ public class LinkInstance implements WithId {
    private List<String> documentIds;
    private Integer dataVersion;
    private DataDocument data;
+   private Long commentsCount;
 
    @JsonIgnore
    private String templateId; // used for template creation
@@ -171,6 +172,14 @@ public class LinkInstance implements WithId {
       this.originalLinkInstanceId = originalLinkInstanceId;
    }
 
+   public Long getCommentsCount() {
+      return commentsCount;
+   }
+
+   public void setCommentsCount(final Long commentsCount) {
+      this.commentsCount = commentsCount;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -198,6 +207,7 @@ public class LinkInstance implements WithId {
             ", createdBy='" + createdBy + '\'' +
             ", updatedBy='" + updatedBy + '\'' +
             ", documentIds=" + documentIds +
+            ", commentsCount=" + commentsCount +
             ", dataVersion=" + dataVersion +
             ", data=" + data +
             '}';

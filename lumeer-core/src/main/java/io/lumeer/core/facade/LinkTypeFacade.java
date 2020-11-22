@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
@@ -31,6 +32,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Collections;
@@ -68,6 +70,9 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
+
+   @Inject
+   private ResourceCommentDao resourceCommentDao;
 
    public LinkType createLinkType(LinkType linkType) {
       permissionsChecker.checkFunctionsLimit(linkType);
@@ -116,6 +121,10 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void deleteLinkTypeBasedData(final String linkTypeId) {
+      linkInstanceDao.getLinkInstancesByLinkType(linkTypeId).forEach(linkInstance -> {
+        resourceCommentDao.deleteComments(ResourceType.LINK, linkInstance.getId());
+      });
+
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
       linkDataDao.deleteDataRepository(linkTypeId);
       deleteAutoLinkRulesByLinkType(linkTypeId);

@@ -77,6 +77,7 @@ public class DocumentService extends AbstractService {
    public Document updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
       return storedDocument;
    }
 
@@ -85,6 +86,7 @@ public class DocumentService extends AbstractService {
    public Document patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
       return storedDocument;
    }
 
@@ -93,6 +95,7 @@ public class DocumentService extends AbstractService {
    public Document updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
       return storedDocument;
    }
 
@@ -101,6 +104,7 @@ public class DocumentService extends AbstractService {
    public Document patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
       storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
+      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
       return storedDocument;
    }
 
@@ -117,6 +121,7 @@ public class DocumentService extends AbstractService {
    public Document getDocument(@PathParam("documentId") String documentId) {
       Document document = documentFacade.getDocument(collectionId, documentId);
       document.setFavorite(documentFacade.isFavorite(document.getId()));
+      document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
       return document;
    }
 
