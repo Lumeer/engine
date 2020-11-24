@@ -34,6 +34,7 @@ import io.lumeer.core.facade.ViewFacade;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -89,27 +90,18 @@ public class PublicService extends AbstractService {
    @Path("collections")
    public List<Collection> getCollections() {
       Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      List<Collection> collections = collectionFacade.getCollections();
-      collections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
-
-      return collections;
+      return collectionFacade.getCollectionsPublic().stream()
+                             .peek(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())))
+                             .collect(Collectors.toList());
    }
 
    @GET
    @Path("views")
    public List<View> getViews() {
       final Set<String> favoriteViewIds = viewFacade.getFavoriteViewsIds();
-      final List<View> views = viewFacade.getViews();
-
-      if (favoriteViewIds != null && favoriteViewIds.size() > 0) {
-         views.forEach(v -> {
-            if (favoriteViewIds.contains(v.getId())) {
-               v.setFavorite(true);
-            }
-         });
-      }
-
-      return views;
+      return viewFacade.getViewsPublic().stream()
+                       .peek(view -> view.setFavorite(favoriteViewIds.contains(view.getId())))
+                       .collect(Collectors.toList());
    }
 
    @GET
@@ -121,7 +113,7 @@ public class PublicService extends AbstractService {
    @GET
    @Path("link-instances")
    public List<LinkInstance> getLinkInstances() {
-      return searchFacade.getLinkInstances(new Query());
+      return searchFacade.getLinkInstancesPublic(new Query());
    }
 
    @GET

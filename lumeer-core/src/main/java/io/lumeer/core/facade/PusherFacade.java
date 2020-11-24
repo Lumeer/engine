@@ -568,7 +568,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Organization getOrganization() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
+      if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
@@ -579,19 +579,32 @@ public class PusherFacade extends AbstractFacade {
       Set<String> userIds = ResourceUtils.usersAllowedRead(view);
       userIds.addAll(getWorkspaceManagers());
       view.setAuthorRights(viewFacade.getViewAuthorRights(view));
-      view.setFavorite(viewFacade.isFavorite(view.getId()));
-      ObjectWithParent object = new ObjectWithParent(view, getOrganization().getId(), getProject().getId());
-      sendNotificationsByUsers(object, userIds, event);
+      sendNotificationsBatch(userIds.stream()
+                                    .map(userId -> createEvent(new ObjectWithParent(createViewForUser(view, userId), getOrganization().getId(), getProject().getId()), event, userId))
+                                    .collect(Collectors.toList()));
+   }
+
+   private View createViewForUser(final View view, final String userId) {
+      var viewCopy = view.copy();
+      viewCopy.setFavorite(viewFacade.isFavorite(view.getId(), userId));
+      return viewCopy;
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
       Set<String> userIds = collectionFacade.getUsersIdsWithAccess(collection);
-      collection.setFavorite(collectionFacade.isFavorite(collection.getId()));
-      sendNotificationsByUsers(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId()), userIds, event);
+      sendNotificationsBatch(userIds.stream()
+                                    .map(userId -> createEvent(new ObjectWithParent(createCollectionForUser(collection, userId), getOrganization().getId(), getProject().getId()), event, userId))
+                                    .collect(Collectors.toList()));
+   }
+
+   private Collection createCollectionForUser(final Collection collection, final String userId) {
+      var collectionCopy = collection.copy();
+      collectionCopy.setFavorite(collectionFacade.isFavorite(collectionCopy.getId(), userId));
+      return collectionCopy;
    }
 
    private Project getProject() {
-      if (!workspaceKeeper.getProject().isPresent()) {
+      if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
 
@@ -662,13 +675,21 @@ public class PusherFacade extends AbstractFacade {
          try {
             Collection collection = collectionFacade.getCollection(document.getCollectionId());
             constraintManager.decodeDataTypes(collection, document.getData());
-            document.setFavorite(documentFacade.isFavorite(document.getId()));
             document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
-            sendNotificationsByUsers(document, collectionFacade.getUsersIdsWithAccess(document.getCollectionId()), eventSuffix);
+            Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
+            sendNotificationsBatch(userIds.stream()
+                                          .map(userId -> createEvent(createDocumentForUser(document, userId), eventSuffix, userId))
+                                          .collect(Collectors.toList()));
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
       }
+   }
+
+   private Document createDocumentForUser(final Document document, final String userId) {
+      var documentCopy = new Document(document);
+      documentCopy.setFavorite(documentFacade.isFavorite(documentCopy.getId(), userId));
+      return documentCopy;
    }
 
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {

@@ -460,12 +460,19 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public boolean isFavorite(String documentId) {
-      return getFavoriteDocumentsIds().contains(documentId);
+      return isFavorite(documentId, getCurrentUser().getId());
+   }
+
+   public boolean isFavorite(String documentId, String userId) {
+      return getFavoriteDocumentsIds(userId).contains(documentId);
    }
 
    public Set<String> getFavoriteDocumentsIds() {
+      return getFavoriteDocumentsIds(getCurrentUser().getId());
+   }
+
+   public Set<String> getFavoriteDocumentsIds(String userId) {
       String projectId = getCurrentProject().getId();
-      String userId = getCurrentUser().getId();
 
       return favoriteItemDao.getFavoriteDocumentIds(userId, projectId);
    }
