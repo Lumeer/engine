@@ -119,7 +119,7 @@ public class PublicService extends AbstractService {
    @GET
    @Path("documents")
    public List<Document> getDocuments() {
-      return searchFacade.searchDocuments(new Query());
+      return searchFacade.searchDocumentsPublic(new Query());
    }
 
    @GET
