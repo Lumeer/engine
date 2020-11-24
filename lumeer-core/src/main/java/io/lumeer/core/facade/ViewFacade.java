@@ -112,7 +112,7 @@ public class ViewFacade extends AbstractFacade {
 
       viewDao.deleteView(view.getId());
 
-      favoriteItemDao.removeFavoriteViewFromUsers( getCurrentProject().getId(), id);
+      favoriteItemDao.removeFavoriteViewFromUsers(getCurrentProject().getId(), id);
    }
 
    public View getViewById(final String id) {
@@ -136,10 +136,16 @@ public class ViewFacade extends AbstractFacade {
       return view;
    }
 
+   public List<View> getViewsPublic() {
+      if (permissionsChecker.isPublic()) {
+         return viewDao.getAllViews();
+      }
+
+      return List.of();
+   }
+
    public List<View> getViews() {
-      if (!permissionsChecker.isManager() && permissionsChecker.isPublic()) {
-         return viewDao.getAllViews().stream().map(this::setupPublicPermissions).collect(Collectors.toList());
-      } else if (permissionsChecker.isManager()) {
+      if (permissionsChecker.isManager()) {
          return viewDao.getAllViews();
       }
 
@@ -181,12 +187,19 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public boolean isFavorite(String id) {
-      return getFavoriteViewsIds().contains(id);
+      return isFavorite(id, getCurrentUser().getId());
+   }
+
+   public boolean isFavorite(String id, String userId) {
+      return getFavoriteViewsIds(userId).contains(id);
    }
 
    public Set<String> getFavoriteViewsIds() {
+      return getFavoriteViewsIds(getCurrentUser().getId());
+   }
+
+   public Set<String> getFavoriteViewsIds(String userId) {
       String projectId = getCurrentProject().getId();
-      String userId = getCurrentUser().getId();
 
       return favoriteItemDao.getFavoriteViewIds(userId, projectId);
    }

@@ -91,9 +91,17 @@ public class SearchFacade extends AbstractFacade {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
+   public List<LinkInstance> getLinkInstancesPublic(Query query) {
+      return getLinkInstances(query, true);
+   }
+
    public List<LinkInstance> getLinkInstances(Query query) {
+      return getLinkInstances(query, false);
+   }
+
+   public List<LinkInstance> getLinkInstances(Query query, boolean isPublic) {
       final Query encodedQuery = encodeQuery(query);
-      final List<LinkType> linkTypes = getReadLinkTypes();
+      final List<LinkType> linkTypes = getReadLinkTypes(isPublic);
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
 
       final List<LinkInstance> result;
@@ -156,12 +164,11 @@ public class SearchFacade extends AbstractFacade {
                           .collect(Collectors.toSet());
    }
 
-   private List<LinkType> getReadLinkTypes() {
-      if (permissionsChecker.isPublic()) {
+   private List<LinkType> getReadLinkTypes(boolean isPublic) {
+      if (isPublic && this.permissionsChecker.isPublic()) {
          return linkTypeDao.getAllLinkTypes();
       }
-
-      final Set<String> allowedCollectionIds = getReadCollections().stream().map(Resource::getId)
+      final Set<String> allowedCollectionIds = getReadCollections(isPublic).stream().map(Resource::getId)
                                                                    .collect(Collectors.toSet());
       return linkTypeDao.getAllLinkTypes().stream()
                         .filter(lt -> allowedCollectionIds.containsAll(lt.getCollectionIds()))
@@ -186,9 +193,17 @@ public class SearchFacade extends AbstractFacade {
                         .build();
    }
 
+   public List<Document> searchDocumentsPublic(final Query query) {
+      return searchDocuments(query, true);
+   }
+
    public List<Document> searchDocuments(final Query query) {
+      return searchDocuments(query, false);
+   }
+
+   public List<Document> searchDocuments(final Query query, boolean isPublic) {
       final Query encodedQuery = encodeQuery(query);
-      final List<Collection> collections = getReadCollections();
+      final List<Collection> collections = getReadCollections(isPublic);
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       final List<Document> result;
 
@@ -205,8 +220,8 @@ public class SearchFacade extends AbstractFacade {
       return result;
    }
 
-   private List<Collection> getReadCollections() {
-      if (permissionsChecker.isPublic()) {
+   private List<Collection> getReadCollections(boolean isPublic) {
+      if (isPublic && this.permissionsChecker.isPublic()) {
          return collectionDao.getAllCollections();
       }
 
@@ -423,9 +438,9 @@ public class SearchFacade extends AbstractFacade {
             rootDocuments.stream()
                          .map(Document::getId)
                          .collect(Collectors.toSet()))
-            .stream()
-            .filter(d -> !result.contains(d))
-            .collect(Collectors.toList());
+                                            .stream()
+                                            .filter(d -> !result.contains(d))
+                                            .collect(Collectors.toList());
 
       Set<Document> filteredDocuments = rootDocuments.stream().filter(d -> !result.contains(d))
                                                      .collect(Collectors.toSet());

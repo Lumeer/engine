@@ -192,10 +192,16 @@ public class CollectionFacade extends AbstractFacade {
       throw new NoPermissionException(collection);
    }
 
+   public List<Collection> getCollectionsPublic() {
+      if(permissionsChecker.isPublic()){
+         return getAllCollections();
+      }
+
+      return List.of();
+   }
+
    public List<Collection> getCollections() {
-      if (!permissionsChecker.isManager() && permissionsChecker.isPublic()) {
-         return getAllCollections().stream().map(this::setupPublicPermissions).collect(Collectors.toList());
-      } else if (permissionsChecker.isManager()) {
+      if (permissionsChecker.isManager()) {
          return getAllCollections();
       }
 
@@ -232,12 +238,19 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public boolean isFavorite(String collectionId) {
-      return getFavoriteCollectionsIds().contains(collectionId);
+      return isFavorite(collectionId, getCurrentUser().getId());
+   }
+
+   public boolean isFavorite(String collectionId, String userId) {
+      return getFavoriteCollectionsIds(userId).contains(collectionId);
    }
 
    public Set<String> getFavoriteCollectionsIds() {
+      return getFavoriteCollectionsIds(getCurrentUser().getId());
+   }
+
+   public Set<String> getFavoriteCollectionsIds(String userId) {
       String projectId = getCurrentProject().getId();
-      String userId = getCurrentUser().getId();
 
       return favoriteItemDao.getFavoriteCollectionIds(userId, projectId);
    }
