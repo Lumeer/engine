@@ -74,6 +74,7 @@ import io.lumeer.engine.api.event.UpdateResourceComment;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.engine.api.event.UserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -128,6 +129,9 @@ public class PusherFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
@@ -624,7 +628,8 @@ public class PusherFacade extends AbstractFacade {
             sendNotificationsByUsers(comment, users, eventSuffix);
          }
       } else if (comment.getResourceType() == ResourceType.LINK) {
-         final LinkType linkType = linkTypeDao.getLinkType(comment.getResourceId());
+         final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(comment.getResourceId());
+         final LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
          final Set<String> users = getUserIdsForLinkType(linkType);
 
          sendNotificationsByUsers(comment, users, eventSuffix);

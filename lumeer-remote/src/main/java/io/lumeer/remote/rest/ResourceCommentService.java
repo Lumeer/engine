@@ -40,7 +40,7 @@ import javax.ws.rs.core.MediaType;
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/comments/{resourceType:[a-zA-Z]{12}}/{resourceId:[0-9a-fA-F]{24}}/")
+@Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/comments/{resourceType:[a-zA-Z]{1,12}}/{resourceId:[0-9a-fA-F]{24}}/")
 public class ResourceCommentService extends AbstractService {
 
    @PathParam("organizationId")
