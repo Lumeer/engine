@@ -298,6 +298,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    public List<LinkInstance> getLinkInstances(Set<String> ids) {
       checkProjectRole(Role.READ);
 
+      var linkComments = getCommentsCounts(ids);
       var linksMap = linkInstanceDao.getLinkInstances(ids)
                                     .stream()
                                     .collect(Collectors.groupingBy(LinkInstance::getLinkTypeId));
@@ -315,6 +316,7 @@ public class LinkInstanceFacade extends AbstractFacade {
                if (data != null) {
                   constraintManager.decodeDataTypes(linkType, data);
                   linkInstance.setData(data);
+                  linkInstance.setCommentsCount((long) linkComments.getOrDefault(linkInstance.getId(), 0));
                }
             });
          }

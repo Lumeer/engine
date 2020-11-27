@@ -552,6 +552,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> getDocuments(Set<String> ids) {
+      var documentComments = getCommentsCounts(ids);
       var documentsMap = documentDao.getDocumentsByIds(ids.toArray(new String[0]))
                                     .stream()
                                     .collect(Collectors.groupingBy(Document::getCollectionId));
@@ -569,6 +570,7 @@ public class DocumentFacade extends AbstractFacade {
                if (data != null) {
                   constraintManager.decodeDataTypes(collection, data);
                   document.setData(data);
+                  document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
                }
             });
          }
