@@ -122,7 +122,10 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
    public Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds) {
       final List<Document> result = database.getCollection(databaseCollectionName()).aggregate(
             List.of(
-                  Aggregates.match(Filters.in(ResourceCommentCodec.RESOURCE_ID, resourceIds)),
+                  Aggregates.match(
+                        Filters.and(
+                              Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
+                              Filters.in(ResourceCommentCodec.RESOURCE_ID, resourceIds))),
                   Aggregates.group("$"+ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
             )
       ).into(new ArrayList<>());
