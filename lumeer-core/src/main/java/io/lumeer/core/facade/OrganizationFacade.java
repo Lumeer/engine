@@ -77,7 +77,7 @@ public class OrganizationFacade extends AbstractFacade {
       Utils.checkCodeSafe(organization.getCode());
 
       if (getOrganizations().stream().anyMatch(o -> permissionsChecker.hasRole(o, Role.READ))) {
-         checkSystemPermission();
+         checkCreateOrganization();
       }
 
       Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Organization.ROLES);
@@ -89,6 +89,14 @@ public class OrganizationFacade extends AbstractFacade {
       createOrganizationScopedRepositories(storedOrganization);
 
       return storedOrganization;
+   }
+
+   private void checkCreateOrganization() {
+      List<Organization> organizations = getOrganizations();
+      var hasManagedOrganization = organizations.stream().anyMatch(organization -> permissionsChecker.hasRole(organization, Role.MANAGE));
+      if (hasManagedOrganization) {
+         this.checkSystemPermission();
+      }
    }
 
    public Organization updateOrganization(final String organizationId, final Organization organization) {
@@ -251,7 +259,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    private void checkSystemPermission() {
       String currentUserEmail = authenticatedUser.getUserEmail();
-      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "mvecera@lumeer.io", "kubedo8@gmail.com", "livoratom@gmail.com", "aturing@lumeer.io");
+      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "mvecera@lumeer.io", "kubedo8@gmail.com", "aturing@lumeer.io");
       if (!allowedEmails.contains(currentUserEmail)) {
          throw new NoSystemPermissionException();
       }
