@@ -20,6 +20,9 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.remote.rest.init.StartupFacade;
+
+import org.jboss.resteasy.annotations.LinkHeaderParam;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -38,6 +41,9 @@ abstract class AbstractService {
 
    @Inject
    private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private StartupFacade startupFacade;
 
    protected URI getResourceUri(String additionalPath) {
       return UriBuilder.fromUri(request.getRequestURL() + "/" + additionalPath).build();

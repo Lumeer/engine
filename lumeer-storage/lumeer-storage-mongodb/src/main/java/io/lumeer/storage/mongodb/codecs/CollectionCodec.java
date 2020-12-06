@@ -21,9 +21,11 @@ package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
+import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.BsonReader;
 import org.bson.BsonValue;
@@ -54,6 +56,8 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
    public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
    public static final String RULES = "rules";
    public static final String DATA_DESCRIPTION = "dataDescription";
+   public static final String PURPOSE = "purpose";
+   public static final String META_DATA = "metaData";
 
    public CollectionCodec(final CodecRegistry registry) {
       super(registry);
@@ -85,8 +89,11 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       String defaultAttributeId = bson.getString(DEFAULT_ATTRIBUTE_ID);
       String dataDescription = bson.getString(DATA_DESCRIPTION);
+      String purposeString = bson.getString(PURPOSE);
+      CollectionPurpose purpose = purposeString != null ? CollectionPurpose.valueOf(purposeString) : CollectionPurpose.None;
+      Document metaData = bson.get(META_DATA, Document.class);
 
-      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes, rules, dataDescription);
+      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes, rules, dataDescription, purpose, new DataDocument(metaData == null ? new Document() : metaData));
       collection.setId(resource.getId());
       collection.setDocumentsCount(documentsCount);
       if (lastTimeUsed != null) {
@@ -108,7 +115,9 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
             .append(LAST_ATTRIBUTE_NUM, collection.getLastAttributeNum())
             .append(ATTRIBUTES, collection.getAttributes())
             .append(RULES, collection.getRules())
-            .append(DATA_DESCRIPTION, collection.getDataDescription());
+            .append(DATA_DESCRIPTION, collection.getDataDescription())
+            .append(PURPOSE, collection.getPurpose().toString())
+            .append(META_DATA, collection.createIfAbsentMetaData());
 
       if (collection.getLastTimeUsed() != null) {
          bson.append(LAST_TIME_USED, Date.from(collection.getLastTimeUsed().toInstant()));

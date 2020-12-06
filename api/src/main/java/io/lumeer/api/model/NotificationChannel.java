@@ -1,4 +1,4 @@
-package io.lumeer.core.facade;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,27 +16,10 @@ package io.lumeer.core.facade;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.api.model;
 
-import io.lumeer.api.model.User;
-import io.lumeer.engine.IntegrationTestBase;
-
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import javax.inject.Inject;
-
-@RunWith(Arquillian.class)
-public class MailerLiteFacadeIT extends IntegrationTestBase {
-
-   @Inject
-   private MailerService mailerService;
-
-   @Test
-   @Ignore("It does not make sense to communicate with MailerLite API once it was verified")
-   public void testMailerLite() {
-      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null, null);
-      mailerService.setUserSubscription(u, false);
-   }
+public enum NotificationChannel {
+   Internal,
+   Email,
+   Slack
 }

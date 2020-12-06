@@ -83,12 +83,18 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
    @Override
    public void createRepository(final Project project) {
       database.createCollection(databaseCollectionName(project));
+      ensureIndexes(project);
+   }
 
+   @Override
+   public void ensureIndexes(final Project project) {
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
+
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.NAME), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.CODE), new IndexOptions().unique(true));
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.ATTRIBUTES + "." + AttributeCodec.NAME), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.text(CollectionCodec.NAME));
+      projectCollection.createIndex(Indexes.ascending(CollectionCodec.PURPOSE), new IndexOptions().unique(false));
    }
 
    @Override

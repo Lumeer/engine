@@ -20,6 +20,8 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.NotificationFrequency;
+import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.User;
 
 import org.bson.BsonObjectId;
@@ -60,6 +62,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
    public static final String EMAIL_VERIFIED = "emailVerified";
+   public static final String NOTIFICATIONS = "notifications";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -125,7 +128,13 @@ public class UserCodec implements CollectibleCodec<User> {
 
       String referral = bson.getString(REFERRAL);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral);
+      Map<NotificationChannel, NotificationFrequency> notifications = new HashMap<>();
+      Document notificationsDocument = bson.get(NOTIFICATIONS, Document.class);
+      if (notificationsDocument != null) {
+         notificationsDocument.forEach((k, v) -> notifications.put(NotificationChannel.valueOf(k), NotificationFrequency.valueOf(v.toString())));
+      }
+
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notifications);
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
@@ -143,7 +152,8 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(WISHES, user.getWishes())
           .append(REFERRAL, user.getReferral())
           .append(AFFILIATE_PARTNER, user.isAffiliatePartner())
-          .append(EMAIL_VERIFIED, user.isEmailVerified());
+          .append(EMAIL_VERIFIED, user.isEmailVerified())
+          .append(NOTIFICATIONS, user.getNotifications());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());

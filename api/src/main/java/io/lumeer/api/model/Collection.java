@@ -21,6 +21,7 @@ package io.lumeer.api.model;
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -47,6 +48,8 @@ public class Collection extends Resource {
 
    private static final String ATTRIBUTES = "attributes";
    private static final String DATA_DESCRIPTION = "dataDescription";
+   private static final String PURPOSE = "purpose";
+   private static final String META_DATA = "metaData";
 
    public static final String RULES = "rules";
 
@@ -60,9 +63,11 @@ public class Collection extends Resource {
    private boolean favorite;
    private Map<String, Rule> rules;
    private String dataDescription;
+   private CollectionPurpose purpose;
+   private DataDocument metaData;
 
    public Collection(final String code, final String name, final String icon, final String color, final Permissions permissions) {
-      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>(), "");
+      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>(), "", CollectionPurpose.None, null);
    }
 
    @JsonCreator
@@ -75,7 +80,9 @@ public class Collection extends Resource {
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
          @JsonProperty(RULES) final Map<String, Rule> rules,
-         @JsonProperty(DATA_DESCRIPTION) final String dataDescription) {
+         @JsonProperty(DATA_DESCRIPTION) final String dataDescription,
+         @JsonProperty(PURPOSE) final CollectionPurpose purpose,
+         @JsonProperty(META_DATA) final DataDocument metaData) {
       super(code, name, icon, color, description, permissions);
 
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
@@ -83,6 +90,8 @@ public class Collection extends Resource {
       this.lastAttributeNum = 0;
       this.rules = rules;
       this.dataDescription = dataDescription;
+      this.purpose = purpose;
+      this.metaData = metaData;
    }
 
    @Override
@@ -101,6 +110,8 @@ public class Collection extends Resource {
       o.version = this.version;
       o.rules = this.rules != null ? new HashMap<>(this.rules) : Collections.emptyMap();
       o.dataDescription = this.dataDescription;
+      o.purpose = this.purpose;
+      o.metaData = new DataDocument(this.metaData);
 
       return o;
    }
@@ -196,6 +207,30 @@ public class Collection extends Resource {
       this.dataDescription = dataDescription;
    }
 
+   public DataDocument getMetaData() {
+      return metaData;
+   }
+
+   public DataDocument createIfAbsentMetaData() {
+      if (metaData == null) {
+         this.metaData = new DataDocument();
+      }
+
+      return metaData;
+   }
+
+   public void setMetaData(final DataDocument metaData) {
+      this.metaData = metaData;
+   }
+
+   public CollectionPurpose getPurpose() {
+      return purpose;
+   }
+
+   public void setPurpose(final CollectionPurpose purpose) {
+      this.purpose = purpose;
+   }
+
    @Override
    public String toString() {
       return "Collection{" +
@@ -211,6 +246,8 @@ public class Collection extends Resource {
             ", lastTimeUsed=" + lastTimeUsed +
             ", rules=" + rules +
             ", dataDescription=" + dataDescription +
+            ", tasks=" + purpose +
+            ", metaData=" + metaData +
             '}';
    }
 

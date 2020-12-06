@@ -164,10 +164,6 @@ public class UserNotification {
       return Objects.hash(id, userId, createdAt, read, firstReadAt, type, data);
    }
 
-   public enum NotificationType {
-      ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED
-   }
-
    public interface OrganizationShared {
       String ORGANIZATION_ID = "organizationId";
    }
@@ -192,4 +188,12 @@ public class UserNotification {
       String VIEW_NAME = "viewName";
       String VIEW_PERSPECTIVE = "viewPerspective";
    }
+
+   public interface TaskAssigned extends CollectionShared {
+      String DOCUMENT_ID = "documentId";
+   }
+
+   public interface DueDateSoon extends TaskAssigned {}
+
+   public interface PastDueDate extends TaskAssigned {}
 }

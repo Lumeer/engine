@@ -20,6 +20,7 @@ package io.lumeer.core.provider;
 
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ConfigurationFacade;
+import io.lumeer.core.facade.SystemConfigurationFacade;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.DataStorageFactory;
 
@@ -43,6 +44,9 @@ public class DataStorageProvider {
    private ConfigurationFacade configurationFacade;
 
    @Inject
+   private SystemConfigurationFacade systemConfigurationFacade;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    public DataStorage getUserStorage() {
@@ -53,7 +57,7 @@ public class DataStorageProvider {
 
    public DataStorage getSystemStorage() {
       return connections.computeIfAbsent(SYSTEM_CONNECTION,
-            k -> dataStorageFactory.getStorage(configurationFacade.getSystemDataStorage(), configurationFacade.getSystemDataStorageDatabase(), configurationFacade.getSystemDataStorageUseSsl()));
+            k -> dataStorageFactory.getStorage(systemConfigurationFacade.getSystemDataStorage(), systemConfigurationFacade.getSystemDataStorageDatabase(), systemConfigurationFacade.getSystemDataStorageUseSsl()));
    }
 
    @PreDestroy

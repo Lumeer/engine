@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
 
@@ -58,4 +59,6 @@ public interface CollectionDao extends ProjectScopedDao {
    Set<String> getAllCollectionIds();
 
    Collection bookAttributesNum(String id, Collection collection, int count);
+
+   void ensureIndexes(final Project project);
 }

@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
@@ -167,16 +168,16 @@ public class UserNotificationFacade extends AbstractFacade {
       return !permissionsChecker.isManager(userId);
    }
 
-   private UserNotification.NotificationType getNotificationTypeByResource(final Resource resource) {
+   private NotificationType getNotificationTypeByResource(final Resource resource) {
       switch (resource.getType()) {
          case ORGANIZATION:
-            return UserNotification.NotificationType.ORGANIZATION_SHARED;
+            return NotificationType.ORGANIZATION_SHARED;
          case PROJECT:
-            return UserNotification.NotificationType.PROJECT_SHARED;
+            return NotificationType.PROJECT_SHARED;
          case COLLECTION:
-            return UserNotification.NotificationType.COLLECTION_SHARED;
+            return NotificationType.COLLECTION_SHARED;
          case VIEW:
-            return UserNotification.NotificationType.VIEW_SHARED;
+            return NotificationType.VIEW_SHARED;
          default:
             return null;
       }
@@ -315,7 +316,7 @@ public class UserNotificationFacade extends AbstractFacade {
       return !commonCheck;
    }
 
-   private UserNotification createNotification(final String userId, final UserNotification.NotificationType type, final DataDocument data) {
+   private UserNotification createNotification(final String userId, final NotificationType type, final DataDocument data) {
       return new UserNotification(userId, ZonedDateTime.now(), false, null, type, data);
    }
 }

@@ -49,12 +49,6 @@ public class ConfigurationFacade implements Serializable {
    private static final String DB_PASSWORD_PROPERTY = "db_passwd";
    private static final String DB_USE_SSL = "db_ssl";
 
-   private static final String SYSTEM_DB_HOSTS_PROPERTY = "sys_db_hosts";
-   private static final String SYSTEM_DB_NAME_PROPERTY = "sys_db_name";
-   private static final String SYSTEM_DB_USER_PROPERTY = "sys_db_user";
-   private static final String SYSTEM_DB_PASSWORD_PROPERTY = "sys_db_passwd";
-   private static final String SYSTEM_DB_USE_SSL = "sys_db_ssl";
-
    private static final String ENVIRONMENT = "environment";
 
    public enum ConfigurationLevel {
@@ -104,20 +98,7 @@ public class ConfigurationFacade implements Serializable {
       return Boolean.valueOf(getSystemConfigurationString(DB_USE_SSL).orElse("false"));
    }
 
-   /**
-    * Never ever replace the way of getting data storage here. Data storage configuration depends on this bean and this bean cannot inject it directly.
-    *
-    * @return Pre-configured system data storage.
-    */
-   public List<StorageConnection> getSystemDataStorage() {
-      final String hosts = defaultConfigurationProducer.get(SYSTEM_DB_HOSTS_PROPERTY);
-      final String db = defaultConfigurationProducer.get(SYSTEM_DB_USER_PROPERTY);
-      final String pwd = defaultConfigurationProducer.get(SYSTEM_DB_PASSWORD_PROPERTY);
-
-      return getStorageConnections(hosts, db, pwd);
-   }
-
-   private static List<StorageConnection> getStorageConnections(final String hosts, final String db, final String pwd) {
+   static List<StorageConnection> getStorageConnections(final String hosts, final String db, final String pwd) {
       final List<StorageConnection> result = new ArrayList<>();
       Arrays.asList(hosts.split(",")).forEach(host -> {
          String[] hostParts = host.split(":", 2);
@@ -134,14 +115,6 @@ public class ConfigurationFacade implements Serializable {
       });
 
       return result;
-   }
-
-   public String getSystemDataStorageDatabase() {
-      return defaultConfigurationProducer.get(SYSTEM_DB_NAME_PROPERTY);
-   }
-
-   public Boolean getSystemDataStorageUseSsl() {
-      return Boolean.valueOf(defaultConfigurationProducer.get(SYSTEM_DB_USE_SSL));
    }
 
    public DeployEnvironment getEnvironment() {

@@ -1,4 +1,4 @@
-package io.lumeer.core.facade;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,27 +16,32 @@ package io.lumeer.core.facade;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.facade;
 
-import io.lumeer.api.model.User;
-import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-@RunWith(Arquillian.class)
-public class MailerLiteFacadeIT extends IntegrationTestBase {
+@RequestScoped
+public class DelayedActionFacade {
 
    @Inject
-   private MailerService mailerService;
+   private DelayedActionDao delayedActionDao;
 
-   @Test
-   @Ignore("It does not make sense to communicate with MailerLite API once it was verified")
-   public void testMailerLite() {
-      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null, null);
-      mailerService.setUserSubscription(u, false);
+   public void documentCreated(@Observes final CreateDocument createDocument) {
+
+   }
+
+   public void documentUpdated(@Observes final UpdateDocument updateDocument) {
+
+   }
+
+   public void documentRemoved(@Observes final RemoveDocument removeDocument) {
+
    }
 }
