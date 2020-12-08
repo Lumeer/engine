@@ -16,8 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.core.facade.detector;
 
-public enum NotificationFrequency {
-   Immediately
+import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.User;
+import io.lumeer.engine.api.event.DocumentEvent;
+import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.UserDao;
+
+public interface PurposeChangeDetector {
+
+   void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser);
+   void detectChanges(final DocumentEvent documentEvent, final Collection collection);
 }

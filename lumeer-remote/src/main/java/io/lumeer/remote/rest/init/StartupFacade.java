@@ -24,12 +24,15 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 
 import java.io.Serializable;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class StartupFacade implements Serializable {
+
+   private static Logger log = Logger.getLogger(StartupFacade.class.getName());
 
    @Inject
    private OrganizationDao organizationDao;
@@ -45,6 +48,9 @@ public class StartupFacade implements Serializable {
 
    @PostConstruct
    public void afterDeployment() {
+      log.info("Checking database for updates...");
+      long tm = System.currentTimeMillis();
+
       organizationDao.getAllOrganizations().forEach(organization -> {
          workspaceKeeper.setOrganization(organization);
          projectDao.switchOrganization();
@@ -53,5 +59,7 @@ public class StartupFacade implements Serializable {
             collectionDao.ensureIndexes(project);
          });
       });
+
+      log.info("Updates completed in " + (System.currentTimeMillis() - tm) + "ms.");
    }
 }

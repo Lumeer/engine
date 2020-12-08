@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.DelayedAction;
+import io.lumeer.api.model.NotificationType;
 
 import java.util.List;
 
@@ -26,4 +27,7 @@ public interface DelayedActionDao {
 
    List<DelayedAction> getActions();
 
+   void deleteScheduledActions(final String resourcePath, final NotificationType notificationType);
+   DelayedAction scheduleAction(final DelayedAction delayedAction);
+   List<DelayedAction> scheduleActions(final List<DelayedAction> delayedActions);
 }

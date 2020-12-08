@@ -16,8 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.core.facade.detector;
 
-public enum NotificationFrequency {
-   Immediately
+import io.lumeer.storage.api.dao.CollectionDao;
+
+public interface CollectionChangeDetector {
+
+   void setContext(final CollectionDao collectionDao);
 }

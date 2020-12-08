@@ -51,6 +51,11 @@ public class Collection extends Resource {
    private static final String PURPOSE = "purpose";
    private static final String META_DATA = "metaData";
 
+   public static final String META_DUE_DATE_ATTRIBUTE_ID = "dueDateAttributeId";
+   public static final String META_ASSIGNEE_ATTRIBUTE_ID = "assigneeAttributeId";
+   public static final String META_STATE_ATTRIBUTE_ID = "stateAttributeId";
+   public static final String META_FINAL_STATES_LIST = "finalStatesList";
+
    public static final String RULES = "rules";
 
    private Set<Attribute> attributes;

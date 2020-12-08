@@ -19,10 +19,15 @@
 package io.lumeer.storage.mongodb.dao.system;
 
 import io.lumeer.api.model.DelayedAction;
+import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
+import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.exception.StorageException;
 
+import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import org.bson.Document;
@@ -60,6 +65,38 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
    @Override
    public List<DelayedAction> getActions() {
       return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
+   public void deleteScheduledActions(final String resourcePath, final NotificationType notificationType) {
+      databaseCollection().deleteMany(
+            Filters.and(
+                  Filters.eq(DelayedAction.RESOURCE_PATH, resourcePath),
+                  Filters.eq(DelayedAction.NOTIFICATION_TYPE, notificationType),
+                  Filters.not(Filters.exists(DelayedAction.STARTED_PROCESSING)),
+                  Filters.not(Filters.eq(DelayedAction.COMPLETED, true))
+            )
+      );
+   }
+
+   @Override
+   public DelayedAction scheduleAction(final DelayedAction delayedAction) {
+      try {
+         databaseCollection().insertOne(delayedAction);
+         return delayedAction;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot schedule action: " + delayedAction, ex);
+      }
+   }
+
+   @Override
+   public List<DelayedAction> scheduleActions(final List<DelayedAction> delayedActions) {
+      try {
+         databaseCollection().insertMany(delayedActions);
+         return delayedActions;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot schedule actions: " + delayedActions, ex);
+      }
    }
 
    public void deleteDelayedActionsRepository() {
