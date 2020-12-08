@@ -21,8 +21,6 @@ package io.lumeer.core.facade;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.detector.DueDateChangeDetector;
 import io.lumeer.core.facade.detector.PurposeChangeDetector;

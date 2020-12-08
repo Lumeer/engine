@@ -20,7 +20,6 @@ package io.lumeer.core.facade.detector;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.NotificationType;
-import io.lumeer.core.facade.DelayedActionFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
@@ -28,8 +27,6 @@ import io.lumeer.engine.api.event.RemoveDocument;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalField;
-import java.time.temporal.TemporalUnit;
 
 public class DueDateChangeDetector extends AbstractPurposeChangeDetector {
 

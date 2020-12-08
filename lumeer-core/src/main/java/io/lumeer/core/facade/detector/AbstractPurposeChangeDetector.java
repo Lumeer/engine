@@ -28,7 +28,6 @@ import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.DelayedActionDao;
@@ -41,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public abstract class AbstractPurposeChangeDetector implements PurposeChangeDetector {
 
