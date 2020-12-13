@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.codecs;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
+import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -95,6 +96,7 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
       action.setResourcePath(bson.getString(DelayedAction.RESOURCE_PATH));
       action.setInitiator(bson.getString(DelayedAction.INITIATOR));
       action.setReceiver(bson.getString(DelayedAction.RECEIVER));
+      action.setCorrelationId(bson.getString(DelayedAction.CORRELATION_ID));
 
       if (bson.getString(DelayedAction.NOTIFICATION_TYPE) != null) {
          action.setNotificationType(NotificationType.valueOf(bson.getString(DelayedAction.NOTIFICATION_TYPE)));
@@ -103,6 +105,9 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
       if (bson.getString(DelayedAction.NOTIFICATION_CHANNEL) != null) {
          action.setNotificationChannel(NotificationChannel.valueOf(bson.getString(DelayedAction.NOTIFICATION_CHANNEL)));
       }
+
+      Document data = bson.get(DelayedAction.DATA, Document.class);
+      action.setData(new DataDocument(data == null ? new Document() : data));
 
       return action;
    }
@@ -133,6 +138,9 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
       if (value.getNotificationChannel() != null) {
          bson.append(DelayedAction.NOTIFICATION_CHANNEL, value.getNotificationChannel().toString());
       }
+
+      bson.append(DelayedAction.CORRELATION_ID, value.getCorrelationId())
+          .append(DelayedAction.DATA, value.createIfAbsentData());
 
       documentCodec.encode(writer, bson, encoderContext);
    }

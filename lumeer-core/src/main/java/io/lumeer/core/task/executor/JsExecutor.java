@@ -35,6 +35,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
+import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
@@ -474,7 +475,7 @@ public class JsExecutor {
       }
 
       public boolean isComplete() {
-         return entity != null && attrId != null && !"".equals(attrId);
+         return entity != null && StringUtils.isNotEmpty(attrId);
       }
 
       public T getEntity() {

@@ -18,32 +18,15 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Language;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.Optional;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
 
 @ApplicationScoped
 public class EmailFacade {
-
-   @Inject
-   private DefaultConfigurationProducer defaultConfigurationProducer;
 
    @Inject
    private RequestDataKeeper requestDataKeeper;
@@ -52,88 +35,10 @@ public class EmailFacade {
    private AuthenticatedUser user;
 
    @Inject
-   private Logger log;
-
-   private static String SMTP_USER;
-   private static String SMTP_PASSWORD;
-   private static String SMTP_SERVER;
-   private static Integer SMTP_PORT;
-   private static String SMTP_FROM;
-
-   private Session session;
-
-   @PostConstruct
-   public void init() {
-      SMTP_USER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_USER)).orElse("");
-      SMTP_PASSWORD = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_PASSWORD)).orElse("");
-      SMTP_SERVER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_SERVER)).orElse("");
-      SMTP_FROM = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_FROM)).orElse("");
-      try {
-         SMTP_PORT = Integer.valueOf(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_PORT));
-      } catch (NumberFormatException nfe) {
-         SMTP_PORT = 587;
-      }
-
-      if (isActive()) {
-         final Properties props = new Properties();
-         props.setProperty("mail.smtp.host", SMTP_SERVER);
-         props.setProperty("mail.smtp.port", SMTP_PORT.toString());
-         props.setProperty("mail.smtp.from", SMTP_FROM);
-         props.setProperty("mail.smtp.auth", "true");
-         //props.setProperty("mail.smtp.ssl.enable", "true");
-         props.setProperty("mail.smtp.starttls.enable", "true");
-         props.setProperty("mail.smtp.starttls.required", "true");
-
-         this.session = Session.getDefaultInstance(props, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-               return new PasswordAuthentication(SMTP_USER, SMTP_PASSWORD);
-            }
-         });
-      }
-   }
-
-   private boolean isActive() {
-      return
-            StringUtils.isNotEmpty(SMTP_USER) &&
-            StringUtils.isNotEmpty(SMTP_PASSWORD) &&
-            StringUtils.isNotEmpty(SMTP_SERVER) &&
-            StringUtils.isNotEmpty(SMTP_FROM);
-   }
-
-   private void sendEmail(final String subject, final String to, final String body) {
-      try {
-         final MimeMessage message = new MimeMessage(session);
-         message.setFrom(new InternetAddress(SMTP_FROM, "Lumeer"));
-         message.addRecipient(Message.RecipientType.TO,  new InternetAddress(to));
-         message.setSubject(subject);
-         message.setContent(body, "text/html; charset=utf-8");
-         message.saveChanges();
-
-         final Transport transport = session.getTransport("smtp");
-         transport.connect();
-         transport.sendMessage(message, message.getAllRecipients());
-         transport.close();
-      } catch (Exception e) {
-         log.log(Level.SEVERE, "Unable to send email.", e);
-      }
-   }
+   private EmailService emailService;
 
    public void sendInvitation(final String invitedEmail) {
-      if (session != null) {
-         final String userName = user.getUserName();
-         final String userEmail = user.getUserEmail();
-         final String locale = requestDataKeeper.getUserLocale();
-         final String subject = StringUtils.isNotEmpty(locale) && "cs".equals(locale) ? "Pozvánka ke spolupráci" : "Invitation for collaboration";
-         final String bodyTemplate =
-               StringUtils.isNotEmpty(locale) && "cs".equals(locale)
-                     ? "Dobrý den,<br/><br/>Váš kolega %s Vás zve ke spolupráci do Lumeera<br/>Prosím přihlašte se, nebo se registrujte na <a href=\"https://get.lumeer.io/cs/\">https://get.lumeer.io/</a><br/><br/>Hezký den,<br/>Tým Lumeer<br/>"
-                     : "Hello,<br/><br/>your colleague %s has invited you to collaborate in Lumeer<br/>Please log in or sign up at <a href=\"https://get.lumeer.io/en/\">https://get.lumeer.io/</a><br/><br/>Cheers,<br/>Lumeer Team<br/>";
-         final String colleague = StringUtils.isNotEmpty(userName) ? userName + " (" + userEmail + ")" : userEmail;
-         final String body = String.format(bodyTemplate, colleague);
-
-         sendEmail(subject, invitedEmail, body);
-      }
+      final Language language = "cs".equals(requestDataKeeper.getUserLocale()) ? Language.CS : Language.EN;
+      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, language, emailService.formatUserReference(user.getCurrentUser()), invitedEmail);
    }
-
 }

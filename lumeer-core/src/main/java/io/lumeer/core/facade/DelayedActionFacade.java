@@ -21,19 +21,32 @@ package io.lumeer.core.facade;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.facade.detector.AssigneeChangeDetector;
+import io.lumeer.core.facade.detector.CollectionChangeDetector;
+import io.lumeer.core.facade.detector.CollectionPurposeChangeDetector;
 import io.lumeer.core.facade.detector.DueDateChangeDetector;
 import io.lumeer.core.facade.detector.PurposeChangeDetector;
+import io.lumeer.core.facade.detector.StateChangeDetector;
+import io.lumeer.core.facade.detector.TaskUpdateChangeDetector;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.ResourceEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -56,7 +69,22 @@ public class DelayedActionFacade {
    @Inject
    private CollectionDao collectionDao;
 
-   private static final Map<CollectionPurpose, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurpose.Tasks, Set.of(new DueDateChangeDetector()));
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private ConstraintManager constraintManager;
+
+   @PostConstruct
+   public void init() {
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
+   }
+
+   private static final Map<CollectionPurpose, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurpose.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
+   private static final Map<CollectionPurpose, Set<CollectionChangeDetector>> collectionChangeDetectors = Map.of(CollectionPurpose.None, Set.of(new CollectionPurposeChangeDetector()), CollectionPurpose.Tasks, Set.of(new CollectionPurposeChangeDetector()));
+
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
       processChanges(createDocument);
@@ -70,6 +98,29 @@ public class DelayedActionFacade {
       processChanges(removeDocument);
    }
 
+   public void collectionUpdated(@Observes final UpdateResource collectionUpdated) {
+      if (collectionUpdated.getResource().getType().equals(ResourceType.COLLECTION)) {
+         processChanges(collectionUpdated);
+      }
+   }
+
+   public void collectionRemoved(@Observes final RemoveResource collectionRemoved) {
+      if (collectionRemoved.getResource().getType().equals(ResourceType.COLLECTION)) {
+         processChanges(collectionRemoved);
+      }
+   }
+
+   private void processChanges(final ResourceEvent resourceEvent) {
+      final Set<CollectionChangeDetector> detectors = collectionChangeDetectors.get(((Collection) resourceEvent.getResource()).getPurpose());
+
+      if (detectors != null) {
+         detectors.forEach(detector -> {
+            detector.setContext(delayedActionDao, collectionDao, selectedWorkspace);
+            detector.detectChanges(resourceEvent);
+         });
+      }
+   }
+
    private void processChanges(final DocumentEvent documentEvent) {
       final Collection collection = getCollection(documentEvent);
 
@@ -77,7 +128,7 @@ public class DelayedActionFacade {
 
       if (detectors != null) {
          detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser());
+            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager);
             detector.detectChanges(documentEvent, collection);
          });
       }

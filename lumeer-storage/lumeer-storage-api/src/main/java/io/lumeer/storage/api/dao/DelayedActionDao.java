@@ -22,12 +22,18 @@ import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.NotificationType;
 
 import java.util.List;
+import java.util.Set;
 
 public interface DelayedActionDao {
 
    List<DelayedAction> getActions();
 
-   void deleteScheduledActions(final String resourcePath, final NotificationType notificationType);
+   void deleteScheduledActions(final String resourcePath, final Set<NotificationType> notificationTypes);
+   void deleteAllScheduledActions(final String partialResourcePath);
+   void deleteProcessedActions();
+   void resetTimeoutedActions();
+   List<DelayedAction> getActionsForProcessing();
+   DelayedAction updateAction(final DelayedAction action);
    DelayedAction scheduleAction(final DelayedAction delayedAction);
    List<DelayedAction> scheduleActions(final List<DelayedAction> delayedActions);
 }

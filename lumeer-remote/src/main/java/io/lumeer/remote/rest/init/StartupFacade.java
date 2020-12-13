@@ -32,7 +32,8 @@ import javax.inject.Singleton;
 @Singleton
 public class StartupFacade implements Serializable {
 
-   private static Logger log = Logger.getLogger(StartupFacade.class.getName());
+   @Inject
+   private Logger log;
 
    @Inject
    private OrganizationDao organizationDao;

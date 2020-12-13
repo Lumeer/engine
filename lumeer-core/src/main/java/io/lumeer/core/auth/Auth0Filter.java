@@ -30,6 +30,8 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.Request;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
@@ -307,7 +309,7 @@ public class Auth0Filter implements Filter {
 
    private void fakeUserLogin(final HttpServletRequest request) {
       final String userId = request.getHeader("Test-User");
-      if (userId != null && !"".equals(userId)) {
+      if (StringUtils.isNotEmpty(userId)) {
          final AuthenticatedUser.AuthUserInfo authUserInfo = getAuthenticatedUser(userId);
 
          if (authUserInfo.user == null) {

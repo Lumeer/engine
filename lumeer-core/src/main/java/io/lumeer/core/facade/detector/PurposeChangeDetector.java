@@ -21,12 +21,14 @@ package io.lumeer.core.facade.detector;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.User;
+import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 public interface PurposeChangeDetector {
 
-   void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser);
+   void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager);
    void detectChanges(final DocumentEvent documentEvent, final Collection collection);
 }

@@ -21,6 +21,8 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -63,7 +65,7 @@ public class MailChimpFacade implements MailerService {
    }
 
    public void setUserSubscription(final User user, final boolean enSite) {
-      if (MAILCHIMP_APIKEY != null && !"".equals(MAILCHIMP_APIKEY) && user != null && user.getEmail() != null) {
+      if (StringUtils.isNotEmpty(MAILCHIMP_APIKEY) && user != null && user.getEmail() != null) {
 
          final String listId = enSite ? MAILCHIMP_LIST_EN : MAILCHIMP_LIST_CS;
          final String userId = md5sum(user.getEmail());
@@ -117,7 +119,7 @@ public class MailChimpFacade implements MailerService {
             .header("Content-Type", "application/json");
       Invocation invocation;
 
-      if (body != null && !"".equals(body)) {
+      if (StringUtils.isNotEmpty(body)) {
          if (patch) {
             invocation = builder.build("PATCH", Entity.entity(body, MediaType.APPLICATION_JSON_TYPE));
          } else {

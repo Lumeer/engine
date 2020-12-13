@@ -18,9 +18,13 @@
  */
 package io.lumeer.core.facade.detector;
 
+import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.engine.api.event.ResourceEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 
 public interface CollectionChangeDetector {
 
-   void setContext(final CollectionDao collectionDao);
+   void setContext(final DelayedActionDao delayedActionDao, final CollectionDao collectionDao, final SelectedWorkspace selectedWorkspace);
+   void detectChanges(final ResourceEvent resourceEvent);
 }

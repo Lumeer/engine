@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.engine.api.data.DataDocument;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -37,6 +38,30 @@ public class DelayedAction {
    public static final String RECEIVER = "receiver";
    public static final String NOTIFICATION_TYPE = "notificationType";
    public static final String NOTIFICATION_CHANNEL = "notificationChannel";
+   public static final String CORRELATION_ID = "correlationId";
+   public static final String DATA = "data";
+
+   public static final String DATA_ORGANIZATION_ID = "organizationId";
+   public static final String DATA_ORGANIZATION_CODE = "organizationCode";
+   public static final String DATA_ORGANIZATION_NAME = "organizationName";
+   public static final String DATA_ORGANIZATION_ICON = "organizationIcon";
+   public static final String DATA_ORGANIZATION_COLOR = "organizationColor";
+   public static final String DATA_PROJECT_ID = "projectId";
+   public static final String DATA_PROJECT_CODE = "projectCode";
+   public static final String DATA_PROJECT_NAME = "projectName";
+   public static final String DATA_PROJECT_ICON = "projectIcon";
+   public static final String DATA_PROJECT_COLOR = "projectColor";
+   public static final String DATA_COLLECTION_ID = "collectionId";
+   public static final String DATA_COLLECTION_NAME = "collectionName";
+   public static final String DATA_COLLECTION_ICON = "collectionIcon";
+   public static final String DATA_COLLECTION_COLOR = "collectionColor";
+   public static final String DATA_DOCUMENT_ID = "documentId";
+   public static final String DATA_TASK_NAME = "taskName";
+   public static final String DATA_TASK_DUE_DATE = "taskDueDate";
+   public static final String DATA_DUE_DATE_FORMAT = "dueDateFormat";
+   public static final String DATA_TASK_STATE = "taskState";
+   public static final String DATA_TASK_COMPLETED = "taskCompleted";
+   public static final String DATA_ASSIGNEE = "assignee";
 
    private String id;
 
@@ -87,6 +112,16 @@ public class DelayedAction {
     * What notification channel should be used.
     */
    private NotificationChannel notificationChannel;
+
+   /**
+    * Correlation ID used to notify back the originator for example.
+    */
+   private String correlationId;
+
+   /**
+    * Action data like task summary, due date, state...
+    */
+   private DataDocument data;
 
    public String getId() {
       return id;
@@ -168,6 +203,30 @@ public class DelayedAction {
       this.notificationChannel = notificationChannel;
    }
 
+   public String getCorrelationId() {
+      return correlationId;
+   }
+
+   public void setCorrelationId(final String correlationId) {
+      this.correlationId = correlationId;
+   }
+
+   public DataDocument getData() {
+      return data;
+   }
+
+   public void setData(final DataDocument data) {
+      this.data = data;
+   }
+
+   public DataDocument createIfAbsentData() {
+      if (data == null) {
+         this.data = new DataDocument();
+      }
+
+      return data;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -198,6 +257,8 @@ public class DelayedAction {
             ", receiver='" + receiver + '\'' +
             ", notificationType=" + notificationType +
             ", notificationChannel=" + notificationChannel +
+            ", correlationId=" + correlationId +
+            ", data=" + data +
             '}';
    }
 }

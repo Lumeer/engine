@@ -23,6 +23,7 @@ import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.facade.PusherFacade;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -76,7 +77,7 @@ public class PusherService extends AbstractService {
    public Response authenticateClient(@FormParam("socket_id") final String socketId, @FormParam("channel_name") final String channelName) {
       String auth = null;
 
-      if (pusherFacade.getPusherSecret() != null && !"".equals(pusherFacade.getPusherSecret()) &&
+      if (StringUtils.isNotEmpty(pusherFacade.getPusherSecret()) &&
             channelName != null && channelName.startsWith("private-") &&
             channelName.substring(8).equals(authenticatedUser.getCurrentUserId())) {
          auth = sign(socketId + ":" + channelName, pusherFacade.getPusherSecret());

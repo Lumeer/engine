@@ -35,6 +35,7 @@ import com.mongodb.client.model.geojson.GeoJsonObjectType;
 import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.types.Decimal128;
 
 import java.math.BigDecimal;
@@ -100,7 +101,7 @@ public class ConstraintManager {
       final ConstraintManager constraintManager = new ConstraintManager();
       final String locale = configurationProducer.get(DefaultConfigurationProducer.LOCALE);
 
-      if (locale != null && !"".equals(locale)) {
+      if (StringUtils.isNotEmpty(locale)) {
          constraintManager.setLocale(Locale.forLanguageTag(locale));
       } else {
          constraintManager.setLocale(Locale.getDefault());

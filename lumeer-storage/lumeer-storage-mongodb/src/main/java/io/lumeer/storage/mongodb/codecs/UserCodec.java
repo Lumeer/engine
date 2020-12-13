@@ -20,8 +20,10 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationChannel;
+import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.User;
 
 import org.bson.BsonObjectId;
@@ -63,6 +65,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
    public static final String EMAIL_VERIFIED = "emailVerified";
    public static final String NOTIFICATIONS = "notifications";
+   public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -128,17 +131,15 @@ public class UserCodec implements CollectibleCodec<User> {
 
       String referral = bson.getString(REFERRAL);
 
-      Map<NotificationChannel, NotificationFrequency> notifications = new HashMap<>();
-      Document notificationsDocument = bson.get(NOTIFICATIONS, Document.class);
-      if (notificationsDocument != null) {
-         notificationsDocument.forEach((k, v) -> notifications.put(NotificationChannel.valueOf(k), NotificationFrequency.valueOf(v.toString())));
-      }
+      final List<NotificationSetting> notifications = bson.getList(NOTIFICATIONS, NotificationSetting.class);
+      final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notifications);
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notifications, notificationsLanguage);
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
       user.setEmailVerified(emailVerified != null && emailVerified);
+      user.setNotificationsLanguage(notificationsLanguage);
 
       return user;
    }

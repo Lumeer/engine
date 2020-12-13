@@ -21,6 +21,8 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -58,7 +60,7 @@ public class FreshdeskFacade {
    }
 
    public void logTicket(final User user, final String subject, final String body) {
-      if (FRESHDESK_APIKEY != null && !"".equals(FRESHDESK_APIKEY)) {
+      if (StringUtils.isNotEmpty(FRESHDESK_APIKEY)) {
 
          final String ticket = "{ \"description\": \"" + escape(body) + "\", "
                + "\"subject\": \"" + escape(subject) + "\", "
@@ -86,7 +88,7 @@ public class FreshdeskFacade {
    }
 
    public void logLimitsExceeded(final User user, final String resourceName, final String organizationId) {
-      if (FRESHDESK_APIKEY != null && !"".equals(FRESHDESK_APIKEY)) {
+      if (StringUtils.isNotEmpty(FRESHDESK_APIKEY)) {
          final String id = user.getEmail() + ":" + resourceName + ":" + organizationId;
 
          if (!limitsExceeded.contains(id)) {

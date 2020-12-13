@@ -60,11 +60,14 @@ public abstract class IntegrationTestBase {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb",
                              "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson", "org.graalvm",
-                             "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text")
+                             "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text", "org.apache.commons.io", "com.floreysoft.jmte")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties")
+                       .addAsResource("email-templates/invitation.en.html")
+                       .addAsResource("email-templates/subject.properties")
+                       .addAsResource("META-INF/javamail.default.address.map")
                        .addAsResource("templates/okr.en.json")
                        .addAsResource("templates/hr.en.json")
                        .addAsResource("moment-with-locales.min.js")

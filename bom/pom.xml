@@ -105,6 +105,7 @@
       <version.maven.core>3.5.4</version.maven.core>
       <version.maven.plugin.annotations>3.5.2</version.maven.plugin.annotations>
       <version.graalvm>20.0.0</version.graalvm>
+      <version.jmte>6.0.0</version.jmte>
 
       <!-- Tools -->
       <version.findbugs>3.0.1u2</version.findbugs>
@@ -314,6 +315,12 @@
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
             <version>${version.graalvm}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.floreysoft</groupId>
+            <artifactId>jmte</artifactId>
+            <version>${version.jmte}</version>
          </dependency>
 
          <!-- Logging -->

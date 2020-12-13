@@ -18,22 +18,30 @@
  */
 package io.lumeer.storage.mongodb.dao.system;
 
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.NotificationType;
-import io.lumeer.api.model.Organization;
-import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.exception.StorageException;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -68,15 +76,65 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
    }
 
    @Override
-   public void deleteScheduledActions(final String resourcePath, final NotificationType notificationType) {
+   public void deleteScheduledActions(final String resourcePath, final Set<NotificationType> notificationTypes) {
       databaseCollection().deleteMany(
             Filters.and(
                   Filters.eq(DelayedAction.RESOURCE_PATH, resourcePath),
-                  Filters.eq(DelayedAction.NOTIFICATION_TYPE, notificationType),
+                  Filters.in(DelayedAction.NOTIFICATION_TYPE, notificationTypes),
                   Filters.not(Filters.exists(DelayedAction.STARTED_PROCESSING)),
                   Filters.not(Filters.eq(DelayedAction.COMPLETED, true))
             )
       );
+   }
+
+   @Override
+   public void deleteAllScheduledActions(final String partialResourcePath) {
+      databaseCollection().deleteMany(Filters.regex(DelayedAction.RESOURCE_PATH, "^" + partialResourcePath + ".*"));
+   }
+
+   @Override
+   public void deleteProcessedActions() {
+      databaseCollection().deleteMany(Filters.lt(DelayedAction.COMPLETED, Date.from(ZonedDateTime.now().toInstant())));
+   }
+
+   @Override
+   public void resetTimeoutedActions() {
+      databaseCollection().updateMany(Filters.and(
+            Filters.lt(DelayedAction.STARTED_PROCESSING, Date.from(ZonedDateTime.now().minus(5, ChronoUnit.MINUTES).toInstant())),
+            Filters.not(Filters.exists(DelayedAction.COMPLETED))
+      ), Updates.unset(DelayedAction.STARTED_PROCESSING));
+   }
+
+   public List<DelayedAction> getActionsForProcessing() {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+      final List<DelayedAction> result = new ArrayList<>();
+
+      DelayedAction action;
+      do {
+         action = databaseCollection().findOneAndUpdate(
+               Filters.and(
+                     Filters.not(Filters.exists(DelayedAction.STARTED_PROCESSING)),
+                     Filters.lt(DelayedAction.CHECK_AFTER, Date.from(ZonedDateTime.now().toInstant()))
+               ), Updates.set(DelayedAction.STARTED_PROCESSING, Date.from(ZonedDateTime.now().toInstant())), options);
+         if (action != null) {
+            result.add(action);
+         }
+      } while (action != null);
+
+      return result;
+   }
+
+   public DelayedAction updateAction(final DelayedAction action) {
+      FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
+      try {
+         DelayedAction returnedAction = databaseCollection().findOneAndReplace(idFilter(action.getId()), action, options);
+         if (returnedAction == null) {
+            throw new StorageException("Delayed action '" + action.getId() + "' has not been updated.");
+         }
+         return returnedAction;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update delayed action " + action, ex);
+      }
    }
 
    @Override

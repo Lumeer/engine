@@ -27,6 +27,8 @@ import io.lumeer.remote.rest.annotation.QueryProcessor;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,7 +111,7 @@ public class ZapierService extends AbstractService {
    @GET
    @Path("projects")
    public List<? extends ZapierFacade.ZapierField> getProjects(@QueryParam("organization_id") final String organizationId) {
-      if (organizationId != null && !"".equals(organizationId)) {
+      if (StringUtils.isNotEmpty(organizationId)) {
          workspaceKeeper.setWorkspaceIds(organizationId.trim(), null);
 
          return zapierFacade.getProjects();
@@ -121,7 +123,7 @@ public class ZapierService extends AbstractService {
    @GET
    @Path("collections")
    public List<? extends ZapierFacade.ZapierField> getCollections(@QueryParam("organization_id") final String organizationId, @QueryParam("project_id") final String projectId) {
-      if (organizationId != null && !"".equals(organizationId) && projectId != null && !"".equals(projectId)) {
+      if (StringUtils.isNotEmpty(organizationId) && StringUtils.isNotEmpty(projectId)) {
          workspaceKeeper.setWorkspaceIds(organizationId.trim(), projectId.trim());
 
          return zapierFacade.getCollections();

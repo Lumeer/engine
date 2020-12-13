@@ -25,8 +25,11 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 
 public class DueDateChangeDetector extends AbstractPurposeChangeDetector {
 
@@ -37,14 +40,13 @@ public class DueDateChangeDetector extends AbstractPurposeChangeDetector {
       if (meta != null) {
          final String dueDateAttr = meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
 
-         if (dueDateAttr != null && !"".equals(dueDateAttr) && isAttributeChanged(documentEvent, dueDateAttr)) {
+         if (StringUtils.isNotEmpty(dueDateAttr) && isAttributeChanged(documentEvent, dueDateAttr)) {
             if (!(documentEvent instanceof CreateDocument)) {
                // delete previous due date events on the document
-               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), NotificationType.DUE_DATE_SOON);
-               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), NotificationType.PAST_DUE_DATE);
+               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE));
             }
 
-            if (!(documentEvent instanceof RemoveDocument)) {
+            if (!(documentEvent instanceof RemoveDocument) && !isDoneState(documentEvent, collection)) {
                // create new due date events on the document
                final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
                if (dueDate != null) {

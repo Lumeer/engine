@@ -193,6 +193,8 @@ public class UserNotification {
       String DOCUMENT_ID = "documentId";
    }
 
+   public interface TaskUpdated extends TaskAssigned {}
+
    public interface DueDateSoon extends TaskAssigned {}
 
    public interface PastDueDate extends TaskAssigned {}
