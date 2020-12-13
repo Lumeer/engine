@@ -142,9 +142,9 @@ public class EmailService {
 
          if (StringUtils.isNotEmpty(template)) {
             final Map<String, Object> values = new HashMap<>();
-            values.put("title", subject);
-            values.put("recipient", recipient);
-            values.put("userName", sender);
+            values.put("title", subject); // subject line
+            values.put("recipient", recipient); // email
+            values.put("userName", sender); // John Doe (john@doe.com)
 
             if (additionalData != null && additionalData.size() > 0) {
                values.putAll(additionalData);

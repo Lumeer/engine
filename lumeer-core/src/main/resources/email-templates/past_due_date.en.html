@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   ${description} is past due...
+   ${description} is due soon...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,10 +47,13 @@
             Hello,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            The task <em>${description}</em> is past due ${(,dueDate,)}.
+            The task <em>${description}</em> from ${collectionName} is past due${ (,dueDate,)}.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            <a href="https://get.lumeer.io/en/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Check it out immediately</span></a>.
+            Task state: <em>${taskState(no state set)}</em>
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            <a href="https://get.lumeer.io/en/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Check it out</span></a>.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">&nbsp;</p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
