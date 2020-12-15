@@ -24,6 +24,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,22 +40,32 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
 
       if (meta != null) {
          final String assigneeAttr = meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+         final boolean doneState = isDoneState(documentEvent, collection);
 
          if (StringUtils.isNotEmpty(assigneeAttr) && isAttributeChanged(documentEvent, assigneeAttr)) {
             if (!(documentEvent instanceof CreateDocument)) {
                // delete previous due date and assignee events on the document
                delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED));
+
+               if (!(documentEvent instanceof RemoveDocument) && !doneState) {
+                  final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
+                  if (dueDate != null) {
+                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
+
+                     if (dueDate.minus(1, ChronoUnit.DAYS).isAfter(ZonedDateTime.now())) {
+                        delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(1, ChronoUnit.DAYS)));
+                     }
+                  }
+               }
             }
 
-            if (!(documentEvent instanceof RemoveDocument) && !isDoneState(documentEvent, collection)) {
+            if (documentEvent instanceof UpdateDocument) {
+               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UNASSIGNED, nowPlus(), getRemovedAssignees(documentEvent, collection)));
+            }
+
+            if (!(documentEvent instanceof RemoveDocument) && !doneState) {
                // create new due date events on the document
                delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus()));
-
-               final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
-               if (dueDate != null) {
-                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
-                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(1, ChronoUnit.DAYS)));
-               }
             }
          }
       }

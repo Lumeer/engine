@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Vaše pozvánka ke spolupráci na projektu...
+   Úkol ${taskName} byl odstraněn...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,13 +47,13 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            úkol <em>${description}</em> z ${collectionName} byl odstraněn.${ Úkol odstranil ,userName,.}
+            úkol${ <em>,taskName,</em>} z ${collectionName} byl odstraněn.${ Úkol odstranil ,userName,.}
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Stav úkolu: <em>${taskState(stav není nastaven)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Termín dokončení: <em>${dueDate(nenastaven)}</em>
+            Termín dokončení: <em>${taskDueDate(nenastaven)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">&nbsp;</p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">

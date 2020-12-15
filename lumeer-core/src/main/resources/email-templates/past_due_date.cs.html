@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Vaše pozvánka ke spolupráci na projektu...
+   Termín dokončení ${taskName} již vypršel...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,7 +47,7 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Váš úkol <em>${description}</em> z ${collectionName} je již po termínu dokončení${ (,dueDate,)}.
+            Váš úkol${ <em>,taskName,</em>} z ${collectionName} je již po termínu dokončení${ (,taskDueDate,)}.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Stav úkolu: <em>${taskState(stav není nastaven)}</em>

@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Vaše pozvánka ke spolupráci na projektu...
+   Stav ${taskName} se změnil...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,13 +47,13 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            stav úkol <em>${description}</em> z ${collectionName} se změnil.${ Úkol změnil ,userName,.}
+            stav úkol${ <em>,taskName,</em>} z ${collectionName} se změnil.${ Úkol změnil ,userName,.}
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Stav úkolu: <em>${taskState(stav není nastaven)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Termín dokončení: <em>${dueDate(nenastaven)}</em>
+            Termín dokončení: <em>${taskDueDate(nenastaven)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             <a href="https://get.lumeer.io/cs/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Zkontrolujte jej prosím</span></a>.

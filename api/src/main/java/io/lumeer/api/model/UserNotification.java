@@ -198,4 +198,6 @@ public class UserNotification {
    public interface DueDateSoon extends TaskAssigned {}
 
    public interface PastDueDate extends TaskAssigned {}
+
+   public interface TaskUnassigned extends TaskAssigned {}
 }

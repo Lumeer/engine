@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   ${description} is due soon...
+   ${taskName} is past due date...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,7 +47,7 @@
             Hello,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            The task <em>${description}</em> from ${collectionName} is past due${ (,dueDate,)}.
+            The task${ <em>,taskName,</em>} from ${collectionName} is past due${ (,taskDueDate,)}.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Task state: <em>${taskState(no state set)}</em>

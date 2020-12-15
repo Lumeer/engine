@@ -24,9 +24,12 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +41,6 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
 
       if (meta != null) {
          final String stateAttr = meta.getString(Collection.META_STATE_ATTRIBUTE_ID);
-         final List<String> finalStates = meta.getArrayList(Collection.META_FINAL_STATES_LIST, String.class);
 
          if (StringUtils.isNotEmpty(stateAttr) && isAttributeChanged(documentEvent, stateAttr)) {
             final boolean doneState = isDoneState(documentEvent, collection);
@@ -47,6 +49,23 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
                // delete previous due date and assignee events on the document
                if (doneState) {
                   delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.STATE_UPDATE));
+               }
+            }
+
+            if (documentEvent instanceof UpdateDocument) {
+               // switched back to non-final state, reschedule due dates and assignees
+               if (wasDoneState(documentEvent, collection) && !doneState) {
+                  // create new due date events on the document
+                  final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
+                  if (dueDate != null) {
+                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
+
+                     if (dueDate.minus(1, ChronoUnit.DAYS).isAfter(ZonedDateTime.now())) {
+                        delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(1, ChronoUnit.DAYS)));
+                     }
+                  }
+
+                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus()));
                }
             }
 

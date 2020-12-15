@@ -100,7 +100,7 @@ public class User {
    private List<NotificationSetting> notifications;
 
    @JsonView(UserViews.DefaultView.class)
-   @JsonProperty(NOTIFICATIONS)
+   @JsonProperty(NOTIFICATIONS_LANGUAGE)
    private String notificationsLanguage;
 
    private List<String> wishes;

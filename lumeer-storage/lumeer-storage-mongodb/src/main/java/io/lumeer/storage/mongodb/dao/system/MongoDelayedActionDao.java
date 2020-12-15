@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -80,9 +81,9 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
       databaseCollection().deleteMany(
             Filters.and(
                   Filters.eq(DelayedAction.RESOURCE_PATH, resourcePath),
-                  Filters.in(DelayedAction.NOTIFICATION_TYPE, notificationTypes),
+                  Filters.in(DelayedAction.NOTIFICATION_TYPE, notificationTypes.stream().map(Object::toString).collect(Collectors.toList())),
                   Filters.not(Filters.exists(DelayedAction.STARTED_PROCESSING)),
-                  Filters.not(Filters.eq(DelayedAction.COMPLETED, true))
+                  Filters.not(Filters.exists(DelayedAction.COMPLETED))
             )
       );
    }
@@ -150,7 +151,9 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
    @Override
    public List<DelayedAction> scheduleActions(final List<DelayedAction> delayedActions) {
       try {
-         databaseCollection().insertMany(delayedActions);
+         if (delayedActions != null && delayedActions.size() > 0) {
+            databaseCollection().insertMany(delayedActions);
+         }
          return delayedActions;
       } catch (MongoException ex) {
          throw new StorageException("Cannot schedule actions: " + delayedActions, ex);

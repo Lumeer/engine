@@ -69,7 +69,7 @@ public class EmailService {
    private Engine templateEngine = Engine.createEngine();
 
    public enum EmailTemplate {
-      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED
+      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED
    }
 
    @PostConstruct

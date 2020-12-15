@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationSetting;
@@ -43,6 +44,10 @@ public class NotificationSettingCodec implements Codec<NotificationSetting> {
    public NotificationSetting decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
+      return convertFromDocument(bson);
+   }
+
+   public static NotificationSetting convertFromDocument(final Document bson) {
       final String notificationTypeString = bson.getString(NotificationSetting.NOTIFICATION_TYPE);
       final NotificationType notificationType = notificationTypeString != null ? NotificationType.valueOf(notificationTypeString) : null;
 

@@ -85,7 +85,7 @@ public class DelayedActionProcessor {
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
          if (action.getNotificationChannel() == NotificationChannel.Email) {
-            final String sender = emailService.formatUserReference(users.get(action.getInitiator()));
+            final String sender = userIds.containsKey(action.getInitiator()) ? emailService.formatUserReference(users.get(userIds.get(action.getInitiator()))) : "";
             final String recipient = action.getReceiver();
             final Map<String, Object> additionalData = processDueDate(action.getData(), lang);
 
@@ -113,6 +113,7 @@ public class DelayedActionProcessor {
          final Boolean completed = action.getData().getBoolean(DelayedAction.DATA_TASK_COMPLETED);
 
          if (completed != null && !completed) {
+            action.setStartedProcessing(null);
             action.setCheckAfter(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
 
             return true;
@@ -159,6 +160,8 @@ public class DelayedActionProcessor {
             return EmailService.EmailTemplate.TASK_UPDATED;
          case TASK_REMOVED:
             return EmailService.EmailTemplate.TASK_REMOVED;
+         case TASK_UNASSIGNED:
+            return EmailService.EmailTemplate.TASK_UNASSIGNED;
          default:
             return null;
       }

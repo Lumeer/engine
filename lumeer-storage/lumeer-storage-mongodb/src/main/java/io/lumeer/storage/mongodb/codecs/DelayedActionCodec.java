@@ -77,6 +77,9 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
 
       final DelayedAction action = new DelayedAction();
 
+      final String id = bson.getObjectId(ID).toHexString();
+      action.setId(id);
+
       if (bson.getDate(DelayedAction.CHECK_AFTER) != null) {
          ZonedDateTime checkAfter = ZonedDateTime.ofInstant(bson.getDate(DelayedAction.CHECK_AFTER).toInstant(), ZoneOffset.UTC);
          action.setCheckAfter(checkAfter);
@@ -89,7 +92,7 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
 
       if (bson.getDate(DelayedAction.COMPLETED) != null) {
          ZonedDateTime completed = ZonedDateTime.ofInstant(bson.getDate(DelayedAction.COMPLETED).toInstant(), ZoneOffset.UTC);
-         action.setCheckAfter(completed);
+         action.setCompleted(completed);
       }
 
       action.setProgress(bson.getInteger(DelayedAction.PROGRESS));

@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<html lang="cs">
+<html lang="en">
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
    <meta name="viewport" content="width=device-width" initial-scale="1.0" user-scalable="yes">
-   <meta http-equiv="Content-Language" content="cs-CZ">
+   <meta http-equiv="Content-Language" content="en-US">
    <title>${title}</title>
    <style>
        a:link {
@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Byl Vám přidělen úkol ${taskName}...
+   ${taskName} has been unassigned from you...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -44,31 +44,31 @@
    <tr>
       <td style="font-size: 14px; line-height: 21px; font-family: Tahoma;">
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Dobrý den,
+            Hello,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            byl Vám přidělen úkol${ <em>,taskName,</em>} z ${collectionName}.${ Úkol přidělil ,userName,.}
+            the task <em>${taskName}</em> from ${collectionName} has been un-assigned from you${ by ,userName,}.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Stav úkolu: <em>${taskState(stav není nastaven)}</em>
+            Task state: <em>${taskState(no state set)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Termín dokončení: <em>${taskDueDate(nenastaven)}</em>
+            Due date: <em>${taskDueDate(not set)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            <a href="https://get.lumeer.io/cs/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Zkontrolujte jej prosím</span></a>.
+            <a href="https://get.lumeer.io/en/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Check it out</span></a>.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">&nbsp;</p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            S přáním pěkného dne,
+            Best wishes,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Tým Lumeer
+            Lumeer Team
          </p>
          <hr style="color: #ccc; background-color: #ccc; height: 1px; border: 0; margin: 15px 0px 20px 0px; ">
          <h6 style="font-size: 11px; font-weight: normal; line-height: 150%; margin-bottom: 10px;margin-top: 0px; ">
-            <strong>Lumeer.io</strong> | Purkyňova 127, Brno<br>
-            Tento email byl odeslaný na
+            <strong>Lumeer.io</strong> | Purkyňova 127, Brno, Czech Republic<br>
+            This email was sent to
             <a href="mailto:${recipient}" style="color: #00B388;">
                <span style="color: #00B388;">
                   <strong>${recipient}</strong>
