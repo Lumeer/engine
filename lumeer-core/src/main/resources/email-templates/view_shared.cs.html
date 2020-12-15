@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Stav ${taskName} se změnil...
+   Byl s Vámi sdílen novy pohled...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,16 +47,10 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            stav úkol${ <em>,taskName,</em>} z ${collectionName} se změnil.${ Úkol změnil ,userName,.}
+            Váš kolega ${userName} Vás zve ke spolupráci v pohledu ${viewName} v projektu ${projectCode}${:,projectName,} v organizaci ${organizationCode}${:,organizationName,} v Lumeerovi.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Stav úkolu: <em>${taskState(stav není nastaven)}</em>
-         </p>
-         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Termín dokončení: <em>${taskDueDate(nenastaven)}</em>
-         </p>
-         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            <a href="https://get.lumeer.io/cs/w/${organizationCode}/${projectCode}/view/workflow?q=${collectionQuery}&c=${documentCursor}" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Zkontrolujte jej prosím</span></a>.
+            <a href="https://get.lumeer.io/cs/w/${organizationCode}/${projectCode}/view;vc=${viewCode}" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Podívejte se na něj</span></a>.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">&nbsp;</p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">

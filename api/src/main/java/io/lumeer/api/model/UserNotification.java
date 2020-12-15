@@ -181,6 +181,7 @@ public class UserNotification {
       String COLLECTION_ICON = "collectionIcon";
       String COLLECTION_NAME = "collectionName";
       String COLLECTION_COLOR = "collectionColor";
+      String COLLECTION_QUERY = "collectionQuery";
    }
 
    public interface ViewShared extends ProjectShared {
@@ -191,6 +192,7 @@ public class UserNotification {
 
    public interface TaskAssigned extends CollectionShared {
       String DOCUMENT_ID = "documentId";
+      String DOCUMENT_CURSOR = "documentCursor";
    }
 
    public interface TaskUpdated extends TaskAssigned {}

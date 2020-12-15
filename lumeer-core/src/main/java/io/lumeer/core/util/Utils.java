@@ -21,7 +21,10 @@ package io.lumeer.core.util;
 import io.lumeer.core.exception.BadFormatException;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
+import java.util.zip.CRC32;
 
 public abstract class Utils {
 
@@ -54,5 +57,43 @@ public abstract class Utils {
 
    public static String str36toHex(final String str36) {
       return new BigInteger(str36, 36).toString(16);
+   }
+
+   public static String strToBase64(final String input) {
+      return Base64.getUrlEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8)).replaceFirst("=*$", "");
+   }
+
+   public static String base64ToStr(final String input) {
+      final byte[] decodedBytes = Base64.getUrlDecoder().decode(input);
+      return new String(decodedBytes, StandardCharsets.UTF_8);
+   }
+
+   public static String strCrc32(final String input) {
+      final CRC32 crc = new CRC32();
+      crc.update(input.getBytes(StandardCharsets.UTF_8));
+      final long crcNumber = crc.getValue() + Double.valueOf(Math.pow(16, 8) / 2).longValue();
+      final String str = String.format("%08x", crcNumber);
+
+      if (str.length() > 8) {
+         return str.substring(str.length() - 8);
+      }
+
+      return str;
+   }
+
+   public static String encodeQueryParam(final String param) {
+      final String b64 = strToBase64(param);
+      return b64 + strCrc32(b64);
+   }
+
+   public static String decodeQueryParam(final String param) {
+      final String crc = param.substring(param.length() - 8);
+      final String b64 = param.substring(0, param.length() - 8);
+
+      if (crc.equals(strCrc32(b64))) {
+         return base64ToStr(b64);
+      }
+
+      return "";
    }
 }

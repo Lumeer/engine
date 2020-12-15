@@ -242,8 +242,12 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return null;
    }
 
+   protected String getDescriptionAttribute(final DocumentEvent documentEvent, final Collection collection) {
+      return StringUtils.isNotEmpty(collection.getDefaultAttributeId()) ? collection.getDefaultAttributeId() : (collection.getAttributes().size() > 0 ? collection.getAttributes().iterator().next().getId() : null);
+   }
+
    protected String getDescription(final DocumentEvent documentEvent, final Collection collection) {
-      final String defaultAttributeId = StringUtils.isNotEmpty(collection.getDefaultAttributeId()) ? collection.getDefaultAttributeId() : (collection.getAttributes().size() > 0 ? collection.getAttributes().iterator().next().getId() : null);
+      final String defaultAttributeId = getDescriptionAttribute(documentEvent, collection);
 
       if (defaultAttributeId != null) {
          final Object value = documentEvent.getDocument().getData().getObject(defaultAttributeId);
@@ -334,6 +338,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       data.append(DelayedAction.DATA_TASK_COMPLETED, isDoneState(documentEvent, collection));
       data.append(DelayedAction.DATA_TASK_STATE, getState(documentEvent, collection));
       data.append(DelayedAction.DATA_TASK_NAME, getDescription(documentEvent, collection));
+      data.append(DelayedAction.DATA_TASK_NAME_ATTRIBUTE, getDescriptionAttribute(documentEvent, collection));
       data.append(DelayedAction.DATA_TASK_DUE_DATE, new Date(getDueDate(documentEvent, collection).toInstant().toEpochMilli()));
       data.append(DelayedAction.DATA_DUE_DATE_FORMAT, getDueDateFormat(documentEvent, collection));
       data.append(DelayedAction.DATA_ASSIGNEE, String.join(", ", assignees));

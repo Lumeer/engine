@@ -57,11 +57,15 @@ public class DelayedAction {
    public static final String DATA_COLLECTION_COLOR = "collectionColor";
    public static final String DATA_DOCUMENT_ID = "documentId";
    public static final String DATA_TASK_NAME = "taskName";
+   public static final String DATA_TASK_NAME_ATTRIBUTE = "taskNameAttribute";
    public static final String DATA_TASK_DUE_DATE = "taskDueDate";
    public static final String DATA_DUE_DATE_FORMAT = "dueDateFormat";
    public static final String DATA_TASK_STATE = "taskState";
    public static final String DATA_TASK_COMPLETED = "taskCompleted";
    public static final String DATA_ASSIGNEE = "assignee";
+   public static final String DATA_COLLECTION_QUERY = "collectionQuery";
+   public static final String DATA_DOCUMENT_CURSOR = "documentCursor";
+   public static final String DATA_VIEW_CODE = "viewCode";
 
    private String id;
 

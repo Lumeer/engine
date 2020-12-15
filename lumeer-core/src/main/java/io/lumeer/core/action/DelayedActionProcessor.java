@@ -28,6 +28,7 @@ import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.core.util.PusherClient;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -87,7 +88,7 @@ public class DelayedActionProcessor {
          if (action.getNotificationChannel() == NotificationChannel.Email) {
             final String sender = userIds.containsKey(action.getInitiator()) ? emailService.formatUserReference(users.get(userIds.get(action.getInitiator()))) : "";
             final String recipient = action.getReceiver();
-            final Map<String, Object> additionalData = processDueDate(action.getData(), lang);
+            final Map<String, Object> additionalData = processData(action.getData(), lang);
 
             emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, additionalData);
          } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
@@ -124,7 +125,7 @@ public class DelayedActionProcessor {
    }
 
    // format due date to string according to attribute constraint format and user language
-   private Map<String, Object> processDueDate(final DataDocument originalData, final Language language) {
+   private Map<String, Object> processData(final DataDocument originalData, final Language language) {
       final Map<String, Object> data = new HashMap<>(originalData);
 
       if (originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE) != null) {
@@ -142,6 +143,14 @@ public class DelayedActionProcessor {
                )
          );
       }
+
+      final String query = "{\"s\":[{\"c\":\"" + originalData.getString(DelayedAction.DATA_COLLECTION_ID) + "\"}]}";
+      data.put(DelayedAction.DATA_COLLECTION_QUERY, Utils.encodeQueryParam(query));
+
+      final String cursor = "{\"c\":\"" + originalData.getString(DelayedAction.DATA_COLLECTION_ID) + "\",\"d\":\"" +
+            originalData.getString(DelayedAction.DATA_DOCUMENT_ID) + "\",\"a\":\"" +
+            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE) + "\"}";
+      data.put(DelayedAction.DATA_DOCUMENT_CURSOR, Utils.encodeQueryParam(cursor));
 
       return data;
    }
