@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
+import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -194,12 +195,37 @@ public class UserNotificationFacade extends AbstractFacade {
       return null;
    }
 
+   private boolean hasUserEnabledNotifications(final Resource resource, final User user) {
+      NotificationType type = null;
+      switch (resource.getType()) {
+         case ORGANIZATION:
+            type = NotificationType.ORGANIZATION_SHARED;
+            break;
+         case PROJECT:
+            type = NotificationType.PROJECT_SHARED;
+            break;
+         case COLLECTION:
+            type = NotificationType.COLLECTION_SHARED;
+            break;
+         case VIEW:
+            type = NotificationType.VIEW_SHARED;
+            break;
+      }
+
+      if (type != null) {
+         final NotificationType finalType = type;
+         return user.getNotifications().stream().anyMatch(notification -> notification.getNotificationType() == finalType && notification.getNotificationChannel() == NotificationChannel.Email);
+      }
+
+      return false;
+   }
+
    private void sendResourceSharedEmails(final Resource resource, final java.util.Collection<String> newUsers) {
       if (workspaceKeeper.getOrganization().isPresent() || resource.getType() == ResourceType.ORGANIZATION) {
          final Map<String, User> users = getUsers(newUsers);
          final Map<String, Language> languages = initializeLanguages(users.values());
 
-         newUsers.forEach(user ->
+         newUsers.stream().filter(user -> hasUserEnabledNotifications(resource, users.get(user))).forEach(user ->
                emailService.sendEmailFromTemplate(getEmailTemplate(resource), languages.getOrDefault(user, Language.EN), emailService.formatUserReference(authenticatedUser.getCurrentUser()), users.get(user).getEmail(), getResourceDescription(resource))
          );
       }
