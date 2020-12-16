@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
@@ -151,6 +152,14 @@ public class CollectionService extends AbstractService {
 
       return Response.ok().link(getParentUri(attributeId), "parent").build();
    }
+
+   @POST
+   @Path("{collectionId:[0-9a-fA-F]{24}}/rule/{ruleName}")
+   public void runRule(@PathParam("collectionId") String collectionId, @PathParam("ruleName") final String ruleName) {
+      final Collection collection = collectionFacade.getCollection(collectionId);
+      collectionFacade.runRule(collection, ruleName);
+   }
+
 
    @GET
    @Path("{collectionId:[0-9a-fA-F]{24}}/permissions")
