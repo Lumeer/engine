@@ -109,9 +109,6 @@ public class CollectionFacade extends AbstractFacade {
    private DefaultViewConfigDao defaultViewConfigDao;
 
    @Inject
-   private TaskProcessingFacade taskProcessingFacade;
-
-   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private ConstraintManager constraintManager;

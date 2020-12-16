@@ -114,7 +114,9 @@ public class SearchFacade extends AbstractFacade {
          result = new ArrayList<>(searchLinkInstancesByFulltexts(encodedQuery, linkTypes));
       }
 
-      result.forEach(linkInstance -> constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()));
+      result.forEach(linkInstance ->
+            linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
+      );
 
       return result;
    }
@@ -215,7 +217,9 @@ public class SearchFacade extends AbstractFacade {
          result = new ArrayList<>(getChildDocuments(searchDocumentsByFulltexts(encodedQuery, collections)));
       }
 
-      result.forEach(document -> constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()));
+      result.forEach(document ->
+            document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
+      );
 
       return result;
    }

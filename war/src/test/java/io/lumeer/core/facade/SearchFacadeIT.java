@@ -489,7 +489,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       document.setCreationDate(ZonedDateTime.now());
       Document storedDocument = documentDao.createDocument(document);
 
-      constraintManager.encodeDataTypes(collection, document.getData());
+      document.setData(constraintManager.encodeDataTypes(collection, document.getData()));
 
       DataDocument storedData = dataDao.createData(collectionId, storedDocument.getId(), document.getData());
 

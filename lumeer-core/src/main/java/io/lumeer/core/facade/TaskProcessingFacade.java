@@ -108,7 +108,7 @@ public class TaskProcessingFacade {
    }
 
    public void onCreateDocument(@Observes final CreateDocument createDocument) {
-      List<Task> tasks = documentCreatedTasks(createDocument.getDocument());
+      List<Task> tasks = documentCreatedTasks(new Document(createDocument.getDocument()));
       processTasks(tasks.toArray(new Task[0]));
    }
 
@@ -225,7 +225,7 @@ public class TaskProcessingFacade {
          return;
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForUpdateDocument(collection, updateDocument.getOriginalDocument(), updateDocument.getDocument());
+      FunctionTask functionTask = functionFacade.createTaskForUpdateDocument(collection, new Document(updateDocument.getOriginalDocument()), new Document(updateDocument.getDocument()));
       List<RuleTask> tasks = createDocumentUpdateRuleTasks(collection, updateDocument);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
@@ -234,14 +234,14 @@ public class TaskProcessingFacade {
 
    private List<RuleTask> createDocumentUpdateRuleTasks(final Collection collection, final UpdateDocument updateDocument) {
       if (updateDocument.getOriginalDocument() != null && updateDocument.getDocument() != null) {
-         return createRuleTasks(collection, updateDocument.getOriginalDocument(), updateDocument.getDocument(), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(collection, new Document(updateDocument.getOriginalDocument()), new Document(updateDocument.getDocument()), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
 
    private List<RuleTask> createLinkInstanceUpdateRuleTasks(final LinkType linkType, final UpdateLinkInstance updateLinkInstance) {
       if (updateLinkInstance.getOriginalLinkInstance() != null && updateLinkInstance.getLinkInstance() != null) {
-         return createRuleTasks(linkType, updateLinkInstance.getOriginalLinkInstance(), updateLinkInstance.getLinkInstance(), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(linkType, new LinkInstance(updateLinkInstance.getOriginalLinkInstance()), new LinkInstance(updateLinkInstance.getLinkInstance()), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
@@ -252,7 +252,7 @@ public class TaskProcessingFacade {
          return;
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForRemovedDocument(collection, removeDocument.getDocument());
+      FunctionTask functionTask = functionFacade.createTaskForRemovedDocument(collection, new Document(removeDocument.getDocument()));
       List<RuleTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
@@ -261,20 +261,20 @@ public class TaskProcessingFacade {
 
    private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final RemoveDocument removeDocument) {
       if (removeDocument.getDocument() != null) {
-         return createRuleTasks(collection, removeDocument.getDocument(), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(collection, new Document(removeDocument.getDocument()), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
 
    private List<RuleTask> createLinkInstanceRemoveRuleTasks(final LinkType linkType, final RemoveLinkInstance removeLinkInstance) {
       if (removeLinkInstance.getLinkInstance() != null) {
-         return createRuleTasks(linkType, removeLinkInstance.getLinkInstance(), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(linkType, new LinkInstance(removeLinkInstance.getLinkInstance()), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
 
    public void onCreateLink(@Observes final CreateLinkInstance createLinkEvent) {
-      List<Task> tasks = linkCreatedTasks(createLinkEvent.getLinkInstance());
+      List<Task> tasks = linkCreatedTasks(new LinkInstance(createLinkEvent.getLinkInstance()));
       processTasks(tasks.toArray(new Task[0]));
    }
 
@@ -305,7 +305,7 @@ public class TaskProcessingFacade {
          return;
       }
 
-      FunctionTask functionTask = functionFacade.creatTaskForChangedLink(linkType, updateLinkEvent.getOriginalLinkInstance(), updateLinkEvent.getLinkInstance());
+      FunctionTask functionTask = functionFacade.creatTaskForChangedLink(linkType, new LinkInstance(updateLinkEvent.getOriginalLinkInstance()), new LinkInstance(updateLinkEvent.getLinkInstance()));
       List<RuleTask> tasks = createLinkInstanceUpdateRuleTasks(linkType, updateLinkEvent);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
@@ -318,7 +318,7 @@ public class TaskProcessingFacade {
          return;
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForRemovedLink(linkType, removeLinkInstanceEvent.getLinkInstance());
+      FunctionTask functionTask = functionFacade.createTaskForRemovedLink(linkType, new LinkInstance(removeLinkInstanceEvent.getLinkInstance()));
       List<RuleTask> tasks = createLinkInstanceRemoveRuleTasks(linkType, removeLinkInstanceEvent);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 

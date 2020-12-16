@@ -227,8 +227,6 @@ public class DelayedActionIT extends IntegrationTestBase {
 
    @Test
    public void testAssignment() throws InterruptedException {
-      System.out.println(user.getNotificationsLanguage());
-
       List<UserNotification> notifications = userNotificationFacade.getNotifications();
       assertThat(notifications.size()).isEqualTo(0);
 

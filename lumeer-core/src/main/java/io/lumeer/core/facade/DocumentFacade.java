@@ -121,7 +121,7 @@ public class DocumentFacade extends AbstractFacade {
 
    private Tuple<Document, Document> createDocument(Collection collection, Document document) {
       DataDocument data = document.getData();
-      constraintManager.encodeDataTypes(collection, data);
+      data = constraintManager.encodeDataTypes(collection, data);
 
       Document storedDocument = createDocument(collection, document, new DataDocument(data));
 
@@ -132,7 +132,7 @@ public class DocumentFacade extends AbstractFacade {
 
       updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
 
-      constraintManager.decodeDataTypes(collection, storedData);
+      storedDocument.setData(constraintManager.decodeDataTypes(collection, storedData));
 
       return new Tuple<>(storedDocumentCopy, storedDocument);
    }
@@ -145,9 +145,8 @@ public class DocumentFacade extends AbstractFacade {
 
       // encode the original data and remember them by their original template id
       documents.forEach(document -> {
-         DataDocument data = document.getData();
+         DataDocument data = constraintManager.encodeDataTypes(collection, document.getData());
          documentsData.put((String) document.createIfAbsentMetaData().computeIfAbsent(Document.META_TEMPLATE_ID, key -> UUID.randomUUID().toString()), data);
-         constraintManager.encodeDataTypes(collection, data);
       });
 
       final List<Document> storedDocuments = createDocuments(collection, documents);
@@ -171,7 +170,7 @@ public class DocumentFacade extends AbstractFacade {
          final DataDocument singleStoredData = storedDocumentsData.get(storedDocument.getId());
          storedDocument.setData(singleStoredData);
          singleStoredData.keySet().forEach(key -> usages.put(key, usages.computeIfAbsent(key, k -> 0) + 1));
-         constraintManager.decodeDataTypes(collection, storedDocument.getData());
+         storedDocument.setData(constraintManager.decodeDataTypes(collection, storedDocument.getData()));
       });
 
       updateCollectionMetadata(collection, usages, storedDocuments.size());
@@ -203,7 +202,7 @@ public class DocumentFacade extends AbstractFacade {
    public Document updateDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = checkCollectionWritePermissions(collectionId);
 
-      constraintManager.encodeDataTypes(collection, data);
+      data = constraintManager.encodeDataTypes(collection, data);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
       final DataDocument originalData = new DataDocument(oldData);
@@ -226,7 +225,7 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
       final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
-      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+      updatedDocument.setData(constraintManager.decodeDataTypes(collection, updatedDocument.getData()));
 
       return updatedDocument;
    }
@@ -318,8 +317,7 @@ public class DocumentFacade extends AbstractFacade {
       document.setMetaData(metaData);
 
       final Document updatedDocument = updateDocument(document, originalDocument);
-      updatedDocument.setData(document.getData());
-      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+      updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
       return updatedDocument;
    }
@@ -332,8 +330,7 @@ public class DocumentFacade extends AbstractFacade {
          document.setUpdatedBy(authenticatedUser.getCurrentUserId());
          document.setUpdateDate(ZonedDateTime.now());
          final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
-         updatedDocument.setData(document.getData());
-         constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+         updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
          updatedDocuments.add(updatedDocument);
       });
 
@@ -348,7 +345,7 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
-      constraintManager.encodeDataTypes(collection, data);
+      data = constraintManager.encodeDataTypes(collection, data);
 
       DataDocument oldData = dataDao.getData(collectionId, documentId);
       DataDocument originalData = new DataDocument(oldData);
@@ -370,7 +367,7 @@ public class DocumentFacade extends AbstractFacade {
 
       final Document updatedDocument = updateDocument(collection, documentId, patchedData, originalData);
 
-      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+      updatedDocument.setData(constraintManager.decodeDataTypes(collection, updatedDocument.getData()));
 
       return updatedDocument;
    }
@@ -397,8 +394,7 @@ public class DocumentFacade extends AbstractFacade {
       metaData.forEach((key, value) -> document.getMetaData().put(key, value));
 
       final Document updatedDocument = updateDocument(document, originalDocument);
-      updatedDocument.setData(document.getData());
-      constraintManager.decodeDataTypes(collection, updatedDocument.getData());
+      updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
       return updatedDocument;
    }
@@ -506,8 +502,8 @@ public class DocumentFacade extends AbstractFacade {
       });
 
       final List<DataDocument> dataList = dataDao.duplicateData(collectionId, keyMap);
-      dataList.forEach(data -> {
-         constraintManager.decodeDataTypes(collection, data);
+      dataList.forEach(encodedData -> {
+         final DataDocument data = constraintManager.decodeDataTypes(collection, encodedData);
          if (documentsDirectory.containsKey(data.getId())) {
             documentsDirectory.get(data.getId()).setData(data);
          }
@@ -546,7 +542,7 @@ public class DocumentFacade extends AbstractFacade {
       permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
       final Document result = getDocument(collection, documentId);
-      constraintManager.decodeDataTypes(collection, result.getData());
+      result.setData(constraintManager.decodeDataTypes(collection, result.getData()));
 
       return result;
    }
@@ -568,8 +564,7 @@ public class DocumentFacade extends AbstractFacade {
             value.forEach(document -> {
                var data = dataMap.get(document.getId());
                if (data != null) {
-                  constraintManager.decodeDataTypes(collection, data);
-                  document.setData(data);
+                  document.setData(constraintManager.decodeDataTypes(collection, data));
                   document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
                }
             });
@@ -587,8 +582,7 @@ public class DocumentFacade extends AbstractFacade {
 
       documents.forEach(doc -> {
          DataDocument data = dataDao.getData(collection.getId(), doc.getId());
-         doc.setData(data);
-         constraintManager.decodeDataTypes(collection, doc.getData());
+         doc.setData(constraintManager.decodeDataTypes(collection, data));
       });
 
       return documents;

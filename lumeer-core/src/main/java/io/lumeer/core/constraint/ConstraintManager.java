@@ -414,16 +414,16 @@ public class ConstraintManager {
       });
    }
 
-   public void encodeDataTypes(final Collection collection, final DataDocument data) {
-      processData(data, getConstraints(collection), this::encode);
+   public DataDocument encodeDataTypes(final Collection collection, final DataDocument data) {
+      return processData(data, getConstraints(collection), this::encode);
    }
 
-   public void encodeDataTypesForFce(final Collection collection, final DataDocument data) {
-      processData(data, getConstraints(collection), this::encodeForFce);
+   public DataDocument encodeDataTypesForFce(final Collection collection, final DataDocument data) {
+      return processData(data, getConstraints(collection), this::encodeForFce);
    }
 
-   public void decodeDataTypes(final Collection collection, final DataDocument data) {
-      processData(data, getConstraints(collection), this::decode);
+   public DataDocument decodeDataTypes(final Collection collection, final DataDocument data) {
+      return processData(data, getConstraints(collection), this::decode);
    }
 
    private Map<String, Constraint> getConstraints(final LinkType linkType) {
@@ -436,27 +436,34 @@ public class ConstraintManager {
                      .collect(Collectors.toMap(Attribute::getId, Attribute::getConstraint));
    }
 
-   public void encodeDataTypes(final LinkType linkType, final DataDocument data) {
-      processData(data, getConstraints(linkType), this::encode);
+   public DataDocument encodeDataTypes(final LinkType linkType, final DataDocument data) {
+      return processData(data, getConstraints(linkType), this::encode);
    }
 
-   public void encodeDataTypesForFce(final LinkType linkType, final DataDocument data) {
-      processData(data, getConstraints(linkType), this::encodeForFce);
+   public DataDocument encodeDataTypesForFce(final LinkType linkType, final DataDocument data) {
+      return processData(data, getConstraints(linkType), this::encodeForFce);
    }
 
-   public void decodeDataTypes(final LinkType linkType, final DataDocument data) {
-      processData(data, getConstraints(linkType), this::decode);
+   public DataDocument decodeDataTypes(final LinkType linkType, final DataDocument data) {
+      return processData(data, getConstraints(linkType), this::decode);
    }
 
-   private void processData(final DataDocument data, final Map<String, Constraint> constraints, final BiFunction<Object, Constraint, Object> processor) {
+   private DataDocument processData(final DataDocument data, final Map<String, Constraint> constraints, final BiFunction<Object, Constraint, Object> processor) {
       if (data == null) {
-         return;
+         return null;
       }
+
+      final DataDocument newData = new DataDocument();
+
       data.keySet().forEach(key -> {
          if (!DataDocument.ID.equals(key)) {
-            data.put(key, processor.apply(data.get(key), constraints.get(key)));
+            newData.put(key, processor.apply(data.get(key), constraints.get(key)));
+         } else {
+            newData.put(key, data.get(key));
          }
       });
+
+      return newData;
    }
 
    public DateTimeFormatter getDateDecoder() {

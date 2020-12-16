@@ -153,7 +153,9 @@ public class JsExecutor {
 
          final List<LinkInstance> result = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
                                                    .searchLinkInstances(query);
-         result.stream().forEach(linkInstance -> constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId), linkInstance.getData()));
+         result.stream().forEach(linkInstance ->
+               linkInstance.setData(constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId), linkInstance.getData()))
+         );
 
          return result;
       }
@@ -188,8 +190,9 @@ public class JsExecutor {
             if (documents.size() == 2) {
                final Document doc = documents.get(0).getCollectionId().equals(collectionId) ? documents.get(0) : documents.get(1);
 
-               doc.setData(ruleTask.getDaoContextSnapshot().getDataDao().getData(doc.getCollectionId(), doc.getId()));
-               constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(collectionId), doc.getData());
+               DataDocument data = ruleTask.getDaoContextSnapshot().getDataDao().getData(doc.getCollectionId(), doc.getId());
+               data = constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(collectionId), data);
+               doc.setData(data);
 
                return new DocumentBridge(doc);
             }
@@ -226,8 +229,9 @@ public class JsExecutor {
                return ruleTask.getDaoContextSnapshot().getDocumentDao()
                               .getDocumentsByIds(documentIds.toArray(new String[0]))
                               .stream().map(document -> {
-                        document.setData(data.get(document.getId()));
-                        constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(otherCollectionId), document.getData());
+                        DataDocument dd = data.get(document.getId());
+                        dd = constraintManager.encodeDataTypesForFce(ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(otherCollectionId), dd);
+                        document.setData(dd);
 
                         return new DocumentBridge(document);
                      }).collect(Collectors.toList());
@@ -309,10 +313,8 @@ public class JsExecutor {
          changes.forEach(documentChange -> {
             final Document document = documentChange.getEntity();
             final Collection collection = collectionsMap.get(document.getCollectionId());
-            final DataDocument newData = new DataDocument(documentChange.getAttrId(), documentChange.getValue());
+            final DataDocument newData = constraintManager.encodeDataTypes(collection, new DataDocument(documentChange.getAttrId(), documentChange.getValue()));
             final DataDocument oldData = new DataDocument(document.getData());
-
-            constraintManager.encodeDataTypes(collection, newData);
 
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
@@ -333,7 +335,7 @@ public class JsExecutor {
             Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
                                                .updateDocument(document.getId(), document);
 
-            constraintManager.decodeDataTypes(collection, patchedData);
+            patchedData = constraintManager.decodeDataTypes(collection, patchedData);
             updatedDocument.setData(patchedData);
 
             updatedDocuments.computeIfAbsent(documentChange.getEntity().getCollectionId(), key -> new ArrayList<>())
@@ -366,10 +368,8 @@ public class JsExecutor {
          changes.forEach(linkChange -> {
             final LinkInstance linkInstance = linkChange.getEntity();
             final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
-            final DataDocument newData = new DataDocument(linkChange.getAttrId(), linkChange.getValue());
+            final DataDocument newData = constraintManager.encodeDataTypes(linkType, new DataDocument(linkChange.getAttrId(), linkChange.getValue()));
             final DataDocument oldData = new DataDocument(linkInstance.getData() == null ? new DataDocument() : linkInstance.getData());
-
-            constraintManager.encodeDataTypes(linkType, newData);
 
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
@@ -389,8 +389,7 @@ public class JsExecutor {
             LinkInstance updatedLink = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
                                                .updateLinkInstance(linkInstance.getId(), linkInstance);
 
-            constraintManager.decodeDataTypes(linkType, patchedData);
-            updatedLink.setData(patchedData);
+            updatedLink.setData(constraintManager.decodeDataTypes(linkType, patchedData));
 
             updatedLinks.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), key -> new ArrayList<>())
                         .add(updatedLink);

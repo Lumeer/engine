@@ -682,11 +682,12 @@ public class PusherFacade extends AbstractFacade {
       documentNotification(removeDocument.getDocument(), REMOVE_EVENT_SUFFIX);
    }
 
-   private void documentNotification(final Document document, final String eventSuffix) {
+   private void documentNotification(final Document updatedDocument, final String eventSuffix) {
       if (isEnabled()) {
          try {
-            Collection collection = collectionFacade.getCollection(document.getCollectionId());
-            constraintManager.decodeDataTypes(collection, document.getData());
+            final Document document = new Document(updatedDocument);
+            final Collection collection = collectionFacade.getCollection(document.getCollectionId());
+            document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
             document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
             Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
             sendNotificationsBatch(userIds.stream()
@@ -892,9 +893,10 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
-   private void sendNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
+   private void sendNotificationByLinkType(final LinkInstance originalLinkInstance, final String linkTypeId, final String event) {
+      final LinkInstance linkInstance = new LinkInstance(originalLinkInstance);
       LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
-      constraintManager.decodeDataTypes(linkType, linkInstance.getData());
+      linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
       linkInstance.setCommentsCount(linkInstanceFacade.getCommentsCount(linkInstance.getId()));
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);

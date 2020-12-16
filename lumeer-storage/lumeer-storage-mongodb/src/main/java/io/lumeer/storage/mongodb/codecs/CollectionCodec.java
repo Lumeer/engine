@@ -116,7 +116,7 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
             .append(ATTRIBUTES, collection.getAttributes())
             .append(RULES, collection.getRules())
             .append(DATA_DESCRIPTION, collection.getDataDescription())
-            .append(PURPOSE, collection.getPurpose().toString())
+            .append(PURPOSE, collection.getPurpose() != null ? collection.getPurpose().toString() : null)
             .append(META_DATA, collection.createIfAbsentMetaData());
 
       if (collection.getLastTimeUsed() != null) {
