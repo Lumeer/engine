@@ -32,8 +32,10 @@ public class CollectionPurposeChangeDetector extends AbstractCollectionChangeDet
          final Collection originalCollection = (Collection) ((UpdateResource) resourceEvent).getOriginalResource();
          final Collection updatedCollection = (Collection) resourceEvent.getResource();
 
-         if (originalCollection.getPurpose() != updatedCollection.getPurpose() && originalCollection.getPurpose() == CollectionPurpose.Tasks) {
-            delayedActionDao.deleteAllScheduledActions(getResourcePath(resourceEvent));
+         if (originalCollection != null && updatedCollection != null) {
+            if (originalCollection.getPurpose() != updatedCollection.getPurpose() && originalCollection.getPurpose() == CollectionPurpose.Tasks) {
+               delayedActionDao.deleteAllScheduledActions(getResourcePath(resourceEvent));
+            }
          }
       }
 

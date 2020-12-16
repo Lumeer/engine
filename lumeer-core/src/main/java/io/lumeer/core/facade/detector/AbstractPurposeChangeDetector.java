@@ -78,18 +78,23 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       if (documentEvent instanceof UpdateDocument) {
          final Document original = ((UpdateDocument) documentEvent).getOriginalDocument();
          final Document document = documentEvent.getDocument();
-         final Object originalAttr = original.getData() != null ? original.getData().get(attributeId) : null;
-         final Object newAttr = document.getData() != null ? document.getData().get(attributeId) : null;
 
-         if (originalAttr == null && newAttr == null) {
+         if (original != null && document != null) {
+            final Object originalAttr = original.getData() != null ? original.getData().get(attributeId) : null;
+            final Object newAttr = document.getData() != null ? document.getData().get(attributeId) : null;
+
+            if (originalAttr == null && newAttr == null) {
+               return false;
+            }
+
+            if (originalAttr == null ^ newAttr == null) {
+               return true;
+            }
+
+            return !originalAttr.equals(newAttr);
+         } else {
             return false;
          }
-
-         if (originalAttr == null ^ newAttr == null) {
-            return true;
-         }
-
-         return !originalAttr.equals(newAttr);
       }
 
       return true;
