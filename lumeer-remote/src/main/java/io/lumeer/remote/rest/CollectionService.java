@@ -160,7 +160,6 @@ public class CollectionService extends AbstractService {
       collectionFacade.runRule(collection, ruleName);
    }
 
-
    @GET
    @Path("{collectionId:[0-9a-fA-F]{24}}/permissions")
    public Permissions getCollectionPermissions(@PathParam("collectionId") String collectionId) {

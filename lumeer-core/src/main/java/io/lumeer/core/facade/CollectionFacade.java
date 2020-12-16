@@ -88,6 +88,9 @@ public class CollectionFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
@@ -547,7 +550,6 @@ public class CollectionFacade extends AbstractFacade {
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Constraint otherConstraint = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
 
-
          if (otherCollection.getDocumentsCount() > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the collection");
          }
@@ -588,7 +590,7 @@ public class CollectionFacade extends AbstractFacade {
                });
 
                if (links.size() > 0) {
-                  linkInstanceDao.createLinkInstances(links);
+                  linkInstanceFacade.createLinkInstances(links, true);
                }
             }
          }
