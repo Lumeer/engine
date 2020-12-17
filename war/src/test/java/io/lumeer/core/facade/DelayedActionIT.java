@@ -44,12 +44,11 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DelayedActionDao;
-import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserNotificationDao;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -62,6 +61,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -77,7 +77,8 @@ public class DelayedActionIT extends IntegrationTestBase {
    private static final String COLLECTION_COLOR = "#00ee00";
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
-   private User user;
+   private static final String USER2 = "rspath@lumeerio.com";
+   private User user, user2;
 
    @Inject
    private DocumentFacade documentFacade;
@@ -98,7 +99,7 @@ public class DelayedActionIT extends IntegrationTestBase {
    private WorkspaceKeeper workspaceKeeper;
 
    @Inject
-   private UserNotificationFacade userNotificationFacade;
+   private UserNotificationDao userNotificationDao;
 
    @Inject
    private DelayedActionDao delayedActionDao;
@@ -112,34 +113,13 @@ public class DelayedActionIT extends IntegrationTestBase {
    public void configureCollection() {
       User user = new User(USER);
       user.setNotificationsLanguage("cs");
-      user.setNotifications(List.of(
-            new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
-
-            new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately)
-      ));
+      setUserNotifications(user);
       this.user = userDao.createUser(user);
+
+      User user2 = new User(USER2);
+      user2.setNotificationsLanguage("cs");
+      setUserNotifications(user2);
+      this.user2 = userDao.createUser(user2);
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
@@ -150,7 +130,8 @@ public class DelayedActionIT extends IntegrationTestBase {
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
-      organizationPermissions.updateUserPermissions(userPermission);
+      Permission user2Permission = Permission.buildWithRoles(this.user2.getId(), Organization.ROLES);
+      organizationPermissions.addUserPermissions(Set.of(userPermission, user2Permission));
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
@@ -158,7 +139,12 @@ public class DelayedActionIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.addUserPermissions(
+            Set.of(
+               new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())),
+               new Permission(this.user2.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()))
+            )
+      );
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -168,7 +154,12 @@ public class DelayedActionIT extends IntegrationTestBase {
       collectionDao.createRepository(storedProject);
 
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      collectionPermissions.addUserPermissions(
+            Set.of(
+                  new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())),
+                  new Permission(this.user2.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()))
+            )
+      );
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       jsonCollection.setDocumentsCount(0);
       jsonCollection.setLastAttributeNum(0);
@@ -200,6 +191,36 @@ public class DelayedActionIT extends IntegrationTestBase {
       collection = collectionDao.createCollection(jsonCollection);
    }
 
+   private void setUserNotifications(final User user) {
+      user.setNotifications(List.of(
+            new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+
+            new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately)
+      ));
+   }
+
    private Document createDocument(final String summary, final List<String> assignees, final Date dueDate, final String state, final List<String> observers, final String something) {
       DataDocument data = new DataDocument()
             .append("a0", summary)
@@ -226,11 +247,11 @@ public class DelayedActionIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testAssignment() throws InterruptedException {
-      List<UserNotification> notifications = userNotificationFacade.getNotifications();
+   public void testAssignment() {
+      List<UserNotification> notifications = userNotificationDao.getRecentNotifications(user2.getId());
       assertThat(notifications.size()).isEqualTo(0);
 
-      Document doc = createDocument("My cool task", List.of("evžen@vystrčil.cz", user.getEmail()), new Date(ZonedDateTime.now().toInstant().toEpochMilli()), "To Do", List.of(), "so just another task");
+      Document doc = createDocument("My cool task", List.of("evžen@vystrčil.cz", user2.getEmail()), new Date(ZonedDateTime.now().toInstant().toEpochMilli()), "To Do", List.of(), "so just another task");
 
       List<DelayedAction> actions = delayedActionDao.getActions();
       var types = countOccurrences(actions, DelayedAction::getNotificationType);
@@ -248,11 +269,11 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(channels.get(NotificationChannel.Internal)).isEqualTo(3);
 
       assertThat(countOccurrences(actions, DelayedAction::getInitiator).get(user.getEmail())).isEqualTo(6);
-      assertThat(countOccurrences(actions, DelayedAction::getReceiver).get(user.getEmail())).isEqualTo(6);
+      assertThat(countOccurrences(actions, DelayedAction::getReceiver).get(user2.getEmail())).isEqualTo(6);
 
       delayedActionProcessor.process();
 
-      notifications = userNotificationFacade.getNotifications();
+      notifications = userNotificationDao.getRecentNotifications(user2.getId());
 
       assertThat(notifications.size()).isEqualTo(3);
       types = countOccurrences(notifications, UserNotification::getType);
@@ -260,7 +281,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(1);
       assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(1);
 
-      // Removing aturing user from assignees
+      // Removing USER2 user from assignees
       Document patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a1", List.of("evžen@vystrčil.cz")));
       actions = delayedActionDao.getActions();
 
@@ -277,8 +298,8 @@ public class DelayedActionIT extends IntegrationTestBase {
 
       delayedActionProcessor.process();
 
-      // Adding aturing user back to assignees
-      patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a1", List.of(user.getEmail())));
+      // Adding USER2 user back to assignees
+      patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a1", List.of(user2.getEmail())));
       actions = delayedActionDao.getActions();
 
       var newActions = actions.stream().filter(action -> action.getStartedProcessing() == null).collect(Collectors.toList());
@@ -286,11 +307,11 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
       assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
 
-      assertThat(countOccurrences(newActions, DelayedAction::getReceiver).get(user.getEmail())).isEqualTo(4);
+      assertThat(countOccurrences(newActions, DelayedAction::getReceiver).get(user2.getEmail())).isEqualTo(4);
 
       delayedActionProcessor.process();
 
-      notifications = userNotificationFacade.getNotifications();
+      notifications = userNotificationDao.getRecentNotifications(user2.getId());
 
       assertThat(notifications.size()).isEqualTo(3 + 3); // there should be three additional notifications
       types = countOccurrences(notifications, UserNotification::getType);

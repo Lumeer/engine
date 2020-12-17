@@ -296,7 +296,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       final List<DelayedAction> actions = new ArrayList<>();
 
       if (assignees != null) {
-         assignees.forEach(assignee -> {
+         assignees.stream().filter(assignee ->
+               notificationType == NotificationType.DUE_DATE_SOON ||
+               notificationType == NotificationType.PAST_DUE_DATE ||
+               !assignee.equals(currentUser.getEmail())
+         ).forEach(assignee -> {
             final List<NotificationSetting> channels = getChannels(documentEvent, collection, notificationType, assignee);
 
             channels.forEach(settings -> {
