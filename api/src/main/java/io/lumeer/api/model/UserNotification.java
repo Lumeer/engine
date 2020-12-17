@@ -190,16 +190,18 @@ public class UserNotification {
       String VIEW_PERSPECTIVE = "viewPerspective";
    }
 
-   public interface TaskAssigned extends CollectionShared {
+   public interface TaskNotification extends CollectionShared {
       String DOCUMENT_ID = "documentId";
       String DOCUMENT_CURSOR = "documentCursor";
    }
 
-   public interface TaskUpdated extends TaskAssigned {}
+   public interface TaskAssigned extends TaskNotification {}
 
-   public interface DueDateSoon extends TaskAssigned {}
+   public interface TaskUpdated extends TaskNotification {}
 
-   public interface PastDueDate extends TaskAssigned {}
+   public interface DueDateSoon extends TaskNotification {}
 
-   public interface TaskUnassigned extends TaskAssigned {}
+   public interface PastDueDate extends TaskNotification {}
+
+   public interface TaskUnassigned extends TaskNotification {}
 }

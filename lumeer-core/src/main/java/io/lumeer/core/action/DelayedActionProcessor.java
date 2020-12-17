@@ -22,8 +22,11 @@ import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
+import io.lumeer.api.model.ViewCursor;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.util.MomentJsParser;
@@ -144,12 +147,15 @@ public class DelayedActionProcessor {
          );
       }
 
-      final String query = "{\"s\":[{\"c\":\"" + originalData.getString(DelayedAction.DATA_COLLECTION_ID) + "\"}]}";
+      final String query = new Query(List.of(new QueryStem(originalData.getString(DelayedAction.DATA_COLLECTION_ID), null, null, null, null)), null, null, null).toQueryString();
       data.put(DelayedAction.DATA_COLLECTION_QUERY, Utils.encodeQueryParam(query));
 
-      final String cursor = "{\"c\":\"" + originalData.getString(DelayedAction.DATA_COLLECTION_ID) + "\",\"d\":\"" +
-            originalData.getString(DelayedAction.DATA_DOCUMENT_ID) + "\",\"a\":\"" +
-            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE) + "\"}";
+      final String cursor = new ViewCursor(
+            originalData.getString(DelayedAction.DATA_COLLECTION_ID),
+            null,
+            originalData.getString(DelayedAction.DATA_DOCUMENT_ID),
+            null,
+            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE)).toQueryString();
       data.put(DelayedAction.DATA_DOCUMENT_CURSOR, Utils.encodeQueryParam(cursor));
 
       return data;

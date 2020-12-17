@@ -102,4 +102,12 @@ public class QueryStem {
             ", linkFilters=" + linkFilters +
             '}';
    }
+
+   /**
+    * Incomplete implementation that needs to be extended for more use cases.
+    * @return partial URL query string representing this stem
+    */
+   public String toQueryString() {
+      return "{\"c\":\"" + collectionId + "\"}";
+   }
 }

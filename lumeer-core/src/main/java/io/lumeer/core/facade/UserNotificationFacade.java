@@ -24,6 +24,8 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -138,7 +140,7 @@ public class UserNotificationFacade extends AbstractFacade {
          data.append(UserNotification.CollectionShared.COLLECTION_ICON, resource.getIcon());
          data.append(UserNotification.CollectionShared.COLLECTION_COLOR, resource.getColor());
 
-         final String query = "{\"s\":[{\"c\":\"" + resource.getId() + "\"}]}";
+         final String query = new Query(List.of(new QueryStem(resource.getId(), null, null, null, null)), null, null, null).toQueryString();
          data.append(UserNotification.CollectionShared.COLLECTION_QUERY, Utils.encodeQueryParam(query));
       }
 
