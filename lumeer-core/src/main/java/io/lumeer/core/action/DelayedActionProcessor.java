@@ -92,7 +92,7 @@ public class DelayedActionProcessor {
 
             emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, additionalData);
          } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
-            UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action);
+            UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
             notification = userNotificationDao.createNotification(notification);
             if (pusherClient != null) {
                pusherClient.trigger(List.of(createUserNotificationEvent(notification, PusherFacade.CREATE_EVENT_SUFFIX, userIds.get(action.getReceiver()))));
@@ -177,8 +177,8 @@ public class DelayedActionProcessor {
    }
 
    // translate action to user notification
-   private UserNotification createUserNotification(final String userId, final DelayedAction action) {
-      return new UserNotification(userId, ZonedDateTime.now(), false, null, action.getNotificationType(), action.getData());
+   private UserNotification createUserNotification(final String userId, final DelayedAction action, final Language language) {
+      return new UserNotification(userId, ZonedDateTime.now(), false, null, action.getNotificationType(), new DataDocument(processData(action.getData(), language)));
    }
 
    public void setPusherClient(final PusherClient pusherClient) {
