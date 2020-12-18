@@ -164,10 +164,6 @@ public class UserNotification {
       return Objects.hash(id, userId, createdAt, read, firstReadAt, type, data);
    }
 
-   public enum NotificationType {
-      ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED
-   }
-
    public interface OrganizationShared {
       String ORGANIZATION_ID = "organizationId";
    }
@@ -185,6 +181,7 @@ public class UserNotification {
       String COLLECTION_ICON = "collectionIcon";
       String COLLECTION_NAME = "collectionName";
       String COLLECTION_COLOR = "collectionColor";
+      String COLLECTION_QUERY = "collectionQuery";
    }
 
    public interface ViewShared extends ProjectShared {
@@ -192,4 +189,19 @@ public class UserNotification {
       String VIEW_NAME = "viewName";
       String VIEW_PERSPECTIVE = "viewPerspective";
    }
+
+   public interface TaskNotification extends CollectionShared {
+      String DOCUMENT_ID = "documentId";
+      String DOCUMENT_CURSOR = "documentCursor";
+   }
+
+   public interface TaskAssigned extends TaskNotification {}
+
+   public interface TaskUpdated extends TaskNotification {}
+
+   public interface DueDateSoon extends TaskNotification {}
+
+   public interface PastDueDate extends TaskNotification {}
+
+   public interface TaskUnassigned extends TaskNotification {}
 }

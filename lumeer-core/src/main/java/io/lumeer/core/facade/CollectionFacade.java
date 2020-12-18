@@ -20,7 +20,9 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -28,13 +30,18 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DefaultViewConfigDao;
@@ -47,6 +54,8 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -78,6 +88,9 @@ public class CollectionFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
+   private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
@@ -97,6 +110,16 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
+
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private ConstraintManager constraintManager;
+
+   @PostConstruct
+   public void init() {
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
+   }
 
    public Collection createCollection(Collection collection) {
       return createCollection(collection, false);
@@ -512,4 +535,65 @@ public class CollectionFacade extends AbstractFacade {
       return CodeGenerator.generate(existingCodes, collectionName);
    }
 
+   public void runRule(final Collection collection, final String ruleName) {
+      if (collection.getDocumentsCount() > 10_000) {
+         throw new UnsuccessfulOperationException("Too many documents in the collection");
+      }
+
+      final Rule rule = collection.getRules().get(ruleName);
+      if (rule != null && rule.getType() == Rule.RuleType.AUTO_LINK) {
+         final AutoLinkRule autoLinkRule = new AutoLinkRule(rule);
+         final String otherCollectionId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getCollection1() : autoLinkRule.getCollection2();
+         final String attributeId = autoLinkRule.getCollection1().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
+         final Constraint constraint = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
+         final Collection otherCollection = getCollection(otherCollectionId);
+         final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
+         final Constraint otherConstraint = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
+
+         if (otherCollection.getDocumentsCount() > 10_000) {
+            throw new UnsuccessfulOperationException("Too many documents in the collection");
+         }
+
+         List<LinkInstance> links = new ArrayList<>();
+
+         Map<String, Set<String>> source = new HashMap<>();
+         dataDao.getDataStream(collection.getId()).forEach(dd -> {
+            final Object o = constraintManager.decode(dd.getObject(attributeId), constraint);
+
+            if (o != null) {
+               source.computeIfAbsent(o.toString(), key -> new HashSet<>()).add(dd.getId());
+            }
+         });
+
+         if (source.size() > 0) {
+            Map<String, Set<String>> target = new HashMap<>();
+            dataDao.getDataStream(otherCollection.getId()).forEach(dd -> {
+               final Object o = constraintManager.decode(dd.getObject(otherAttributeId), otherConstraint);
+
+               if (o != null && source.containsKey(o.toString())) {
+                  target.computeIfAbsent(o.toString(), key -> new HashSet<>()).add(dd.getId());
+               }
+            });
+
+            if (target.size() > 0) {
+               source.keySet().forEach(key -> {
+                  if (target.containsKey(key)) {
+                     final Set<String> sourceIds = source.get(key);
+                     final Set<String> targetIds = target.get(key);
+
+                     sourceIds.forEach(sourceId -> {
+                        targetIds.forEach(targetId -> {
+                           links.add(new LinkInstance(autoLinkRule.getLinkType(), List.of(sourceId, targetId)));
+                        });
+                     });
+                  }
+               });
+
+               if (links.size() > 0) {
+                  linkInstanceFacade.createLinkInstances(links, true);
+               }
+            }
+         }
+      }
+   }
 }

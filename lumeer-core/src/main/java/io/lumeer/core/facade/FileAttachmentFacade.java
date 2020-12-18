@@ -31,6 +31,8 @@ import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.StorageException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
@@ -96,7 +98,7 @@ public class FileAttachmentFacade extends AbstractFacade {
       S3_REGION = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_REGION)).orElse("");
       S3_ENDPOINT = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_ENDPOINT)).orElse("");
 
-      if (S3_KEY != null && !"".equals(S3_KEY)) {
+      if (StringUtils.isNotEmpty(S3_KEY)) {
          region = Region.of(S3_REGION);
          awsCredentials = AwsBasicCredentials.create(S3_KEY, S3_SECRET);
          staticCredentialsProvider = StaticCredentialsProvider.create(awsCredentials);

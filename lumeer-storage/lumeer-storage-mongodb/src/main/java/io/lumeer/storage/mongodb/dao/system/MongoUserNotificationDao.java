@@ -156,6 +156,16 @@ public class MongoUserNotificationDao extends MongoSystemScopedDao implements Us
    }
 
    @Override
+   public UserNotification createNotification(final UserNotification notification) {
+      try {
+         databaseCollection().insertOne(notification);
+         return notification;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot create user notification: " + notification, ex);
+      }
+   }
+
+   @Override
    public void createUserNotificationsRepository() {
       if (!database.listCollectionNames().into(new ArrayList<>()).contains(COLLECTION_NAME)) {
          database.createCollection(COLLECTION_NAME);

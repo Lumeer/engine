@@ -20,6 +20,11 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.DefaultWorkspace;
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.NotificationFrequency;
+import io.lumeer.api.model.NotificationChannel;
+import io.lumeer.api.model.NotificationSetting;
+import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.User;
 
 import org.bson.BsonObjectId;
@@ -36,6 +41,7 @@ import org.bson.types.ObjectId;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -60,6 +66,8 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
    public static final String EMAIL_VERIFIED = "emailVerified";
+   public static final String NOTIFICATIONS = "notifications";
+   public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -125,11 +133,49 @@ public class UserCodec implements CollectibleCodec<User> {
 
       String referral = bson.getString(REFERRAL);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral);
+      List<NotificationSetting> notificationSettings;
+      List<Document> notifications = bson.getList(NOTIFICATIONS, Document.class);
+      if (notifications != null) {
+         notificationSettings = new ArrayList<>(notifications).stream()
+               .map(NotificationSettingCodec::convertFromDocument)
+               .collect(Collectors.toList());
+      } else  {
+         notificationSettings = List.of(
+               new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+
+               new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately)
+         );
+      }
+      final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
+
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notificationSettings, notificationsLanguage);
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
       user.setEmailVerified(emailVerified != null && emailVerified);
+      user.setNotificationsLanguage(notificationsLanguage);
 
       return user;
    }
@@ -143,7 +189,9 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(WISHES, user.getWishes())
           .append(REFERRAL, user.getReferral())
           .append(AFFILIATE_PARTNER, user.isAffiliatePartner())
-          .append(EMAIL_VERIFIED, user.isEmailVerified());
+          .append(EMAIL_VERIFIED, user.isEmailVerified())
+          .append(NOTIFICATIONS, user.getNotifications())
+          .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());

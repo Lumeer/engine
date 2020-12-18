@@ -24,12 +24,8 @@ import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;

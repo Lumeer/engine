@@ -35,6 +35,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.action.DelayedActionProcessor;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -80,6 +81,7 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
@@ -117,6 +119,9 @@ public class PusherFacade extends AbstractFacade {
    private String PUSHER_CLUSTER;
 
    private PusherClient pusherClient = null;
+
+   @Inject
+   private DelayedActionProcessor delayedActionProcessor;
 
    @Inject
    private Logger log;
@@ -171,9 +176,11 @@ public class PusherFacade extends AbstractFacade {
       PUSHER_SECRET = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
       PUSHER_CLUSTER = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
 
-      if (PUSHER_SECRET != null && !"".equals(PUSHER_SECRET)) {
+      if (StringUtils.isNotEmpty(PUSHER_SECRET)) {
          pusherClient = new PusherClient(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER);
       }
+
+      delayedActionProcessor.setPusherClient(pusherClient);
    }
 
    public String getPusherAppId() {
@@ -552,7 +559,7 @@ public class PusherFacade extends AbstractFacade {
       return new BackupDataEvent(eventChannel(userId), objectWithParent.object.getClass().getSimpleName() + event, objectWithParent, resourceId, null);
    }
 
-   private String eventChannel(String userId) {
+   public static String eventChannel(String userId) {
       return PRIVATE_CHANNEL_PREFIX + userId;
    }
 
@@ -675,11 +682,12 @@ public class PusherFacade extends AbstractFacade {
       documentNotification(removeDocument.getDocument(), REMOVE_EVENT_SUFFIX);
    }
 
-   private void documentNotification(final Document document, final String eventSuffix) {
+   private void documentNotification(final Document updatedDocument, final String eventSuffix) {
       if (isEnabled()) {
          try {
-            Collection collection = collectionFacade.getCollection(document.getCollectionId());
-            constraintManager.decodeDataTypes(collection, document.getData());
+            final Document document = new Document(updatedDocument);
+            final Collection collection = collectionFacade.getCollection(document.getCollectionId());
+            document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
             document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
             Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
             sendNotificationsBatch(userIds.stream()
@@ -885,9 +893,10 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
-   private void sendNotificationByLinkType(final LinkInstance linkInstance, final String linkTypeId, final String event) {
+   private void sendNotificationByLinkType(final LinkInstance originalLinkInstance, final String linkTypeId, final String event) {
+      final LinkInstance linkInstance = new LinkInstance(originalLinkInstance);
       LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
-      constraintManager.decodeDataTypes(linkType, linkInstance.getData());
+      linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
       linkInstance.setCommentsCount(linkInstanceFacade.getCommentsCount(linkInstance.getId()));
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);

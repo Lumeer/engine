@@ -20,6 +20,8 @@ package io.lumeer.core.facade;/*
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -58,7 +60,7 @@ public class MailerLiteFacade implements MailerService {
 
    @Override
    public void setUserSubscription(final User user, final boolean enSite) {
-      if (MAILERLITE_APIKEY != null && !"".equals(MAILERLITE_APIKEY) && user != null && user.getEmail() != null) {
+      if (StringUtils.isNotEmpty(MAILERLITE_APIKEY) && user != null && user.getEmail() != null) {
 
          if (userSubscribed(user.getEmail())) {
             updateUser(user.getEmail(), user.hasNewsletter() != null && user.hasNewsletter());
@@ -99,7 +101,7 @@ public class MailerLiteFacade implements MailerService {
                                                .header("Content-Type", "application/json");
       Invocation invocation;
 
-      if (body != null && !"".equals(body)) {
+      if (StringUtils.isNotEmpty(body)) {
          if (put) {
             invocation = builder.build("PUT", Entity.entity(body, MediaType.APPLICATION_JSON_TYPE));
          } else {

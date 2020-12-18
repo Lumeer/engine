@@ -41,6 +41,7 @@ import io.lumeer.storage.mongodb.codecs.providers.CompanyContactCodedProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ConditionValueCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ConstraintCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.DefaultViewConfigCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.DelayedActionCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.DocumentCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.FeedbackCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.FileAttachmentCodecProvider;
@@ -50,6 +51,7 @@ import io.lumeer.storage.mongodb.codecs.providers.GroupCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkAttributeFilterCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkInstanceCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkTypeCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.NotificationSettingCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.OrganizationCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.PaymentCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.PermissionCodecProvider;
@@ -139,7 +141,8 @@ public class MongoDbStorage implements DataStorage {
             new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
             new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
             new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(),
-            new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider()
+            new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider(),
+            new DelayedActionCodecProvider(), new NotificationSettingCodecProvider()
       );
       final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

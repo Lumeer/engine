@@ -50,6 +50,8 @@ public class User {
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
    public static final String EMAIL_VERIFIED = "emailVerified";
+   public static final String NOTIFICATIONS = "notifications";
+   public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -93,6 +95,14 @@ public class User {
    @JsonProperty(EMAIL_VERIFIED)
    private boolean emailVerified = false;
 
+   @JsonView(UserViews.DefaultView.class)
+   @JsonProperty(NOTIFICATIONS)
+   private List<NotificationSetting> notifications;
+
+   @JsonView(UserViews.DefaultView.class)
+   @JsonProperty(NOTIFICATIONS_LANGUAGE)
+   private String notificationsLanguage;
+
    private List<String> wishes;
 
    @JsonView(UserViews.DefaultView.class)
@@ -121,7 +131,9 @@ public class User {
          @JsonProperty(AGREEMENT_DATE) final ZonedDateTime agreementDate,
          @JsonProperty(NEWSLETTER) final Boolean newsletter,
          @JsonProperty(WIZARD_DISMISSED) final Boolean wizardDismissed,
-         @JsonProperty(REFERRAL) final String referral) {
+         @JsonProperty(REFERRAL) final String referral,
+         @JsonProperty(NOTIFICATIONS) final List<NotificationSetting> notifications,
+         @JsonProperty(NOTIFICATIONS_LANGUAGE) final String notificationsLanguage) {
       this.id = id;
       this.name = name;
       this.email = email;
@@ -132,6 +144,8 @@ public class User {
       this.newsletter = newsletter;
       this.wizardDismissed = wizardDismissed;
       this.referral = referral;
+      this.notifications = notifications;
+      this.notificationsLanguage = notificationsLanguage;
    }
 
    public String getId() {
@@ -246,6 +260,22 @@ public class User {
       this.emailVerified = emailVerified;
    }
 
+   public List<NotificationSetting> getNotifications() {
+      return notifications;
+   }
+
+   public void setNotifications(final List<NotificationSetting> notifications) {
+      this.notifications = notifications;
+   }
+
+   public String getNotificationsLanguage() {
+      return notificationsLanguage;
+   }
+
+   public void setNotificationsLanguage(final String notificationsLanguage) {
+      this.notificationsLanguage = notificationsLanguage;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -264,6 +294,8 @@ public class User {
             ", referral=" + referral +
             ", affiliatePartner=" + affiliatePartner +
             ", emailVerified=" + emailVerified +
+            ", notifications=" + notifications +
+            ", notificationsLanguage=" + notificationsLanguage +
             '}';
    }
 

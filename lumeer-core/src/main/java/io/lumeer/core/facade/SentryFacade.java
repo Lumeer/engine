@@ -24,6 +24,8 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.sentry.Sentry;
 import io.sentry.event.UserBuilder;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -53,7 +55,7 @@ public class SentryFacade {
       if (isEnabled() && authenticatedUser != null) {
          final String userEmail = authenticatedUser.getUserEmail();
 
-         if (userEmail != null && !"".equals(userEmail)) {
+         if (StringUtils.isNotEmpty(userEmail)) {
             Sentry.getContext().setUser(new UserBuilder().setEmail(userEmail).build());
          }
 
@@ -62,6 +64,6 @@ public class SentryFacade {
    }
 
    private boolean isEnabled() {
-      return SENTRY_DSN != null && !"".equals(SENTRY_DSN);
+      return StringUtils.isNotEmpty(SENTRY_DSN);
    }
 }

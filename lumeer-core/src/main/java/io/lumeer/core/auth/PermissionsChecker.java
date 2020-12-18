@@ -47,6 +47,8 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -261,7 +263,7 @@ public class PermissionsChecker {
    }
 
    private boolean getResourceRoleViaView(final Collection collection, final Role role, final Role viewRole, final String viewId) {
-      if (viewId != null && !"".equals(viewId)) { // we might have the access through a view
+      if (StringUtils.isNotEmpty(viewId)) { // we might have the access through a view
          final View view = viewDao.getViewById(viewId);
 
          if (view != null) {
@@ -270,7 +272,7 @@ public class PermissionsChecker {
 
                Set<String> collectionIds = QueryUtils.getQueryCollectionIds(view.getQuery(), getLinkTypes());
                if (collectionIds.contains(collection.getId())) { // does the view contain the resource?
-                  if (authorId != null && !"".equals(authorId)) {
+                  if (StringUtils.isNotEmpty(authorId)) {
                      if (hasRoleInResource(collection, role, authorId)) { // has the view author access to the resource?
                         return true; // grant access
                      }
@@ -296,7 +298,7 @@ public class PermissionsChecker {
     * @return The active View when exists, null otherwise.
     */
    public View getActiveView() {
-      if (viewId != null && !"".equals(viewId)) {
+      if (StringUtils.isNotEmpty(viewId)) {
          return viewDao.getViewById(viewId);
       }
 

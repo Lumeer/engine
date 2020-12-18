@@ -32,6 +32,7 @@ import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
+import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
@@ -81,15 +82,15 @@ public class AutoLinkRuleTaskExecutor {
             // the attributes are different
             if ((o1 != null && !o1.equals(o2)) || (o2 != null && !o2.equals(o1))) {
                // it was not null before
-               if (o1 != null) {
+               if (o1 != null && StringUtils.isNotEmpty(o1.toString())) {
                   removeLinks(taskExecutor, ruleTask.getOldDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
                }
                // and it is not null either
-               if (o2 != null) {
+               if (o2 != null && StringUtils.isNotEmpty(o2.toString())) {
                   addLinks(taskExecutor, ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
                }
             }
-         } else { // one of the docs is null (i.e. new document created or old document deleted
+         } else { // one of the docs is null (i.e. new document created or old document deleted)
             // when oldDocument is set and the newDocument isn't, the old one was deleted and all links were automatically removed
 
             // new document was created

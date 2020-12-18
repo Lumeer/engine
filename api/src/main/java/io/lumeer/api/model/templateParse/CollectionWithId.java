@@ -34,7 +34,9 @@ public class CollectionWithId extends Collection {
             collection.getPermissions(),
             collection.getAttributes(),
             collection.getRules(),
-            collection.getDataDescription());
+            collection.getDataDescription(),
+            collection.getPurpose(),
+            collection.getMetaData());
       this.setId(collection.getId());
       this.setDefaultAttributeId(collection.getDefaultAttributeId());
    }

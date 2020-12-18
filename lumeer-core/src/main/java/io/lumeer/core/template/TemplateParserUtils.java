@@ -22,6 +22,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -67,7 +68,7 @@ public class TemplateParserUtils {
    public static String getDate(final DayOfWeek preferredDay, final String relative) {
       LocalDateTime now = LocalDateTime.now();
 
-      if (relative != null && !"".equals(relative)) {
+      if (StringUtils.isNotEmpty(relative)) {
          int offset = Integer.parseInt(relative.substring(1, relative.length() - 1));
          TemporalUnit temporal = getTemporalUnit(relative.substring(relative.length() - 1));
 

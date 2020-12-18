@@ -36,6 +36,7 @@ import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ReferralPaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.util.Lists;
 
 import java.time.LocalDate;
@@ -233,7 +234,7 @@ public class PaymentFacade extends AbstractFacade {
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
       final Payment.PaymentState newState = paymentGateway.getPaymentStatus(payment.getPaymentId());
 
-      if (payment.getState() != Payment.PaymentState.PAID && newState == Payment.PaymentState.PAID && payment.getReferral() != null && !"".equals(payment.getReferral())) {
+      if (payment.getState() != Payment.PaymentState.PAID && newState == Payment.PaymentState.PAID && StringUtils.isNotEmpty(payment.getReferral())) {
          storeReferralPayment(payment);
       }
 

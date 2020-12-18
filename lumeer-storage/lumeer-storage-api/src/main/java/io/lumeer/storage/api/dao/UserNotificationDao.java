@@ -40,5 +40,7 @@ public interface UserNotificationDao {
 
    List<UserNotification> createNotificationsBatch(final List<UserNotification> notifications);
 
+   UserNotification createNotification(final UserNotification notification);
+
    void createUserNotificationsRepository();
 }

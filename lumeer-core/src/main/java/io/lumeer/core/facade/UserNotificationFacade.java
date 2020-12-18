@@ -18,9 +18,17 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.DelayedAction;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.NotificationChannel;
+import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
@@ -28,18 +36,22 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.UpdateResource;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -61,6 +73,12 @@ public class UserNotificationFacade extends AbstractFacade {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private EmailService emailService;
+
+   @Inject
+   private UserDao userDao;
 
    public List<UserNotification> getNotifications() {
       return dao.getRecentNotifications(authenticatedUser.getCurrentUserId());
@@ -91,12 +109,7 @@ public class UserNotificationFacade extends AbstractFacade {
       return null;
    }
 
-   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final java.util.Collection<String> newUsers) {
-      if (!workspaceKeeper.getOrganization().isPresent() && resource.getType() != ResourceType.ORGANIZATION) {
-         return Collections.emptyList();
-      }
-
-      // TODO check that all newUsers are in resource permissions
+   private DataDocument getResourceDescription(final Resource resource) {
       final DataDocument data = new DataDocument();
 
       if (resource.getType() == ResourceType.ORGANIZATION) {
@@ -126,6 +139,9 @@ public class UserNotificationFacade extends AbstractFacade {
          data.append(UserNotification.CollectionShared.COLLECTION_NAME, resource.getName());
          data.append(UserNotification.CollectionShared.COLLECTION_ICON, resource.getIcon());
          data.append(UserNotification.CollectionShared.COLLECTION_COLOR, resource.getColor());
+
+         final String query = new Query(List.of(new QueryStem(resource.getId(), null, null, null, null)), null, null, null).toQueryString();
+         data.append(UserNotification.CollectionShared.COLLECTION_QUERY, Utils.encodeQueryParam(query));
       }
 
       if (resource.getType() == ResourceType.VIEW) {
@@ -143,11 +159,98 @@ public class UserNotificationFacade extends AbstractFacade {
          data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());
       }
 
+      return data;
+   }
+
+   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final java.util.Collection<String> newUsers) {
+      if (workspaceKeeper.getOrganization().isEmpty() && resource.getType() != ResourceType.ORGANIZATION) {
+         return Collections.emptyList();
+      }
+
+      // TODO check that all newUsers are in resource permissions
+      final DataDocument data = getResourceDescription(resource);
+
       final List<UserNotification> notifications = newUsers.stream().filter(userId -> filterNotificationsByManagers(resource, userId)).map(userId ->
             createNotification(userId, getNotificationTypeByResource(resource), data)
       ).collect(Collectors.toList());
 
       return dao.createNotificationsBatch(notifications);
+   }
+
+   private EmailService.EmailTemplate getEmailTemplate(final Resource resource) {
+      if (resource.getType() == ResourceType.ORGANIZATION) {
+         return EmailService.EmailTemplate.ORGANIZATION_SHARED;
+      }
+
+      if (resource.getType() == ResourceType.PROJECT) {
+         return EmailService.EmailTemplate.PROJECT_SHARED;
+      }
+
+      if (resource.getType() == ResourceType.COLLECTION) {
+         return EmailService.EmailTemplate.COLLECTION_SHARED;
+      }
+
+      if (resource.getType() == ResourceType.VIEW) {
+         return EmailService.EmailTemplate.VIEW_SHARED;
+      }
+
+      return null;
+   }
+
+   private boolean hasUserEnabledNotifications(final Resource resource, final User user) {
+      NotificationType type = null;
+      switch (resource.getType()) {
+         case ORGANIZATION:
+            type = NotificationType.ORGANIZATION_SHARED;
+            break;
+         case PROJECT:
+            type = NotificationType.PROJECT_SHARED;
+            break;
+         case COLLECTION:
+            type = NotificationType.COLLECTION_SHARED;
+            break;
+         case VIEW:
+            type = NotificationType.VIEW_SHARED;
+            break;
+      }
+
+      if (type != null) {
+         final NotificationType finalType = type;
+         return user.getNotifications().stream().anyMatch(notification -> notification.getNotificationType() == finalType && notification.getNotificationChannel() == NotificationChannel.Email);
+      }
+
+      return false;
+   }
+
+   private void sendResourceSharedEmails(final Resource resource, final java.util.Collection<String> newUsers) {
+      if (workspaceKeeper.getOrganization().isPresent() || resource.getType() == ResourceType.ORGANIZATION) {
+         final Map<String, User> users = getUsers(newUsers);
+         final Map<String, Language> languages = initializeLanguages(users.values());
+
+         newUsers.stream().filter(user -> hasUserEnabledNotifications(resource, users.get(user))).forEach(user ->
+               emailService.sendEmailFromTemplate(getEmailTemplate(resource), languages.getOrDefault(user, Language.EN), emailService.formatUserReference(authenticatedUser.getCurrentUser()), users.get(user).getEmail(), getResourceDescription(resource))
+         );
+      }
+   }
+
+   // get map of user id -> user
+   private Map<String, User> getUsers(final java.util.Collection<String> userIds) {
+      return userIds.stream()
+                    .distinct()
+                    .map(userDao::getUserById)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(User::getId, Function.identity()));
+   }
+
+   // get map of user email -> user language
+   private Map<String, Language> initializeLanguages(final Collection<User> users) {
+      return users.stream()
+                  .collect(
+                        Collectors.toMap(
+                              User::getEmail,
+                              user -> Language.valueOf((user.getNotificationsLanguage() != null ? user.getNotificationsLanguage() : "en").toUpperCase())
+                        )
+                  );
    }
 
    private boolean filterNotificationsByManagers(final Resource resource, final String userId) {
@@ -167,16 +270,16 @@ public class UserNotificationFacade extends AbstractFacade {
       return !permissionsChecker.isManager(userId);
    }
 
-   private UserNotification.NotificationType getNotificationTypeByResource(final Resource resource) {
+   private NotificationType getNotificationTypeByResource(final Resource resource) {
       switch (resource.getType()) {
          case ORGANIZATION:
-            return UserNotification.NotificationType.ORGANIZATION_SHARED;
+            return NotificationType.ORGANIZATION_SHARED;
          case PROJECT:
-            return UserNotification.NotificationType.PROJECT_SHARED;
+            return NotificationType.PROJECT_SHARED;
          case COLLECTION:
-            return UserNotification.NotificationType.COLLECTION_SHARED;
+            return NotificationType.COLLECTION_SHARED;
          case VIEW:
-            return UserNotification.NotificationType.VIEW_SHARED;
+            return NotificationType.VIEW_SHARED;
          default:
             return null;
       }
@@ -203,6 +306,7 @@ public class UserNotificationFacade extends AbstractFacade {
 
          if (managers.size() > 0) {
             createResourceSharedNotifications(createResource.getResource(), managers);
+            sendResourceSharedEmails(createResource.getResource(), managers);
          }
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to create notification: ", e);
@@ -226,6 +330,7 @@ public class UserNotificationFacade extends AbstractFacade {
 
          if (addedUsers.size() > 0) {
             createResourceSharedNotifications(updateResource.getResource(), addedUsers);
+            sendResourceSharedEmails(updateResource.getResource(), addedUsers);
          }
 
          updateExistingNotifications(updateResource.getOriginalResource(), updateResource.getResource());
@@ -315,7 +420,7 @@ public class UserNotificationFacade extends AbstractFacade {
       return !commonCheck;
    }
 
-   private UserNotification createNotification(final String userId, final UserNotification.NotificationType type, final DataDocument data) {
+   private UserNotification createNotification(final String userId, final NotificationType type, final DataDocument data) {
       return new UserNotification(userId, ZonedDateTime.now(), false, null, type, data);
    }
 }

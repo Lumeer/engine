@@ -120,15 +120,14 @@ public class LinkInstanceFacade extends AbstractFacade {
       linkInstance.setCreationDate(ZonedDateTime.now());
       LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
 
-      var data = linkInstance.getData();
-      constraintManager.encodeDataTypes(linkType, data);
+      var data = constraintManager.encodeDataTypes(linkType, linkInstance.getData());
 
       var storedData = linkDataDao.createData(linkInstance.getLinkTypeId(), createdLinkInstance.getId(), data);
       createdLinkInstance.setData(storedData);
 
       var createdLinkInstanceCopy = new LinkInstance(createdLinkInstance);
 
-      constraintManager.decodeDataTypes(linkType, storedData);
+      createdLinkInstance.setData(constraintManager.decodeDataTypes(linkType, storedData));
 
       return new Tuple<>(createdLinkInstanceCopy, createdLinkInstance);
    }
@@ -155,15 +154,14 @@ public class LinkInstanceFacade extends AbstractFacade {
          storedInstances.forEach(linkInstance -> {
             storedInstancesMap.put(linkInstance.getId(), linkInstance);
 
-            var data = linkInstance.getData();
+            var data = constraintManager.encodeDataTypes(linkType, linkInstance.getData());
             data.setId(linkInstance.getId());
-            constraintManager.encodeDataTypes(linkType, data);
+            linkInstance.setData(data);
          });
 
          final List<DataDocument> storedData = linkDataDao.createData(linkType.getId(), storedInstances.stream().map(LinkInstance::getData).collect(Collectors.toList()));
          storedData.forEach(data -> {
-            storedInstancesMap.get(data.getId()).setData(data);
-            constraintManager.decodeDataTypes(linkType, data);
+            storedInstancesMap.get(data.getId()).setData(constraintManager.decodeDataTypes(linkType, data));
          });
 
          if (importLinkTypeContentEvent != null) {
@@ -191,17 +189,17 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       final LinkInstance updatedLinkInstance = updateLinkInstance(stored, data, originalLinkInstance);
 
-      constraintManager.decodeDataTypes(linkType, data);
+      updatedLinkInstance.setData(constraintManager.decodeDataTypes(linkType, data));
 
       return updatedLinkInstance;
    }
 
-   public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument data) {
+   public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument updateData) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
-      constraintManager.encodeDataTypes(linkType, data);
+      final DataDocument data = constraintManager.encodeDataTypes(linkType, updateData);
 
       final DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
       originalLinkInstance.setData(oldData);
@@ -216,7 +214,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       final LinkInstance updatedLinkInstance = updateLinkInstance(stored, updatedData, originalLinkInstance);
 
-      constraintManager.decodeDataTypes(linkType, updatedData);
+      updatedLinkInstance.setData(constraintManager.decodeDataTypes(linkType, updatedData));
 
       return updatedLinkInstance;
    }
@@ -247,12 +245,12 @@ public class LinkInstanceFacade extends AbstractFacade {
       linkTypeDao.updateLinkType(linkType.getId(), linkType, new LinkType(linkType));
    }
 
-   public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument data) {
+   public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument updateData) {
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
-      constraintManager.encodeDataTypes(linkType, data);
+      final DataDocument data = constraintManager.encodeDataTypes(linkType, updateData);
 
       final DataDocument oldData = linkDataDao.getData(linkType.getId(), linkInstanceId);
       originalLinkInstance.setData(oldData);
@@ -265,7 +263,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       final LinkInstance updatedLinkInstance = updateLinkInstance(stored, updatedData, originalLinkInstance);
 
-      constraintManager.decodeDataTypes(linkType, updatedData);
+      updatedLinkInstance.setData(constraintManager.decodeDataTypes(linkType, updatedData));
 
       return updatedLinkInstance;
    }
@@ -288,8 +286,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       LinkType linkType = checkLinkTypeReadPermissions(stored.getLinkTypeId());
 
-      DataDocument data = linkDataDao.getData(linkTypeId, linkInstanceId);
-      constraintManager.decodeDataTypes(linkType, data);
+      final DataDocument data = constraintManager.decodeDataTypes(linkType, linkDataDao.getData(linkTypeId, linkInstanceId));
       stored.setData(data);
 
       return stored;
@@ -314,8 +311,7 @@ public class LinkInstanceFacade extends AbstractFacade {
             value.forEach(linkInstance -> {
                var data = dataMap.get(linkInstance.getId());
                if (data != null) {
-                  constraintManager.decodeDataTypes(linkType, data);
-                  linkInstance.setData(data);
+                  linkInstance.setData(constraintManager.decodeDataTypes(linkType, data));
                   linkInstance.setCommentsCount((long) linkComments.getOrDefault(linkInstance.getId(), 0));
                }
             });

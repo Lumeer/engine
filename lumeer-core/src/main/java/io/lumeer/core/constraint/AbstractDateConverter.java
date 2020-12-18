@@ -22,6 +22,8 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.core.util.MomentJsParser;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.Map;
 
 public abstract class AbstractDateConverter extends AbstractConstraintConverter {
@@ -42,7 +44,7 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
          var config = (Map<String, Object>) attr.getConstraint().getConfig();
          var format = config.get("format").toString();
 
-         if (format != null && !"".equals(format)) {
+         if (StringUtils.isNotEmpty(format)) {
             this.format = format;
             this.userLocale = userLocale;
             initialized = true;

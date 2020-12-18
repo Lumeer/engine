@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -82,7 +83,7 @@ public class UserNotificationCodec implements CollectibleCodec<UserNotification>
       final String id = bson.getObjectId(ID).toHexString();
       final String userId = bson.getString(USER_ID);
       final boolean read = bson.getBoolean(READ);
-      final UserNotification.NotificationType type = UserNotification.NotificationType.values()[bson.getInteger(TYPE)];
+      final NotificationType type = NotificationType.values()[bson.getInteger(TYPE)];
       final org.bson.Document data = bson.get(DATA, org.bson.Document.class);
 
       ZonedDateTime createdAt = null;

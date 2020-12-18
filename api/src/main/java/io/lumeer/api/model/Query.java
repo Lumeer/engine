@@ -158,4 +158,12 @@ public class Query {
             ", pageSize=" + pageSize +
             '}';
    }
+
+   /**
+    * Incomplete implementation that needs to be extended for more use cases.
+    * @return partial URL query string representing this stem
+    */
+   public String toQueryString() {
+      return "{\"s\":[" + stems.stream().map(QueryStem::toQueryString).collect(Collectors.joining(", ")) + "]}";
+   }
 }
