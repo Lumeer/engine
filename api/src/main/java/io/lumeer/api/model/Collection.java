@@ -47,9 +47,9 @@ public class Collection extends Resource {
    public static String ATTRIBUTE_PREFIX = "a";
 
    private static final String ATTRIBUTES = "attributes";
-   private static final String DATA_DESCRIPTION = "dataDescription";
-   private static final String PURPOSE = "purpose";
-   private static final String META_DATA = "metaData";
+   public static final String DATA_DESCRIPTION = "dataDescription";
+   public static final String PURPOSE = "purpose";
+   public static final String META_DATA = "metaData";
 
    public static final String META_DUE_DATE_ATTRIBUTE_ID = "dueDateAttributeId";
    public static final String META_ASSIGNEE_ATTRIBUTE_ID = "assigneeAttributeId";

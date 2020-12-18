@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.function.Function;
 import java.util.zip.CRC32;
 
 public abstract class Utils {
@@ -95,5 +96,13 @@ public abstract class Utils {
       }
 
       return "";
+   }
+
+   public static <T, R> T computeIfNotNull(final R value, final Function<R, T> function) {
+      if (value != null) {
+         return function.apply(value);
+      }
+
+      return null;
    }
 }
