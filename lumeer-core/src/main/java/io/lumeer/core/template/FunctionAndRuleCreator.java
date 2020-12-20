@@ -129,9 +129,10 @@ public class FunctionAndRuleCreator extends WithIdCreator {
    }
 
    private Rule getRule(final JSONObject o) {
+      var name = (String) o.get(Rule.NAME);
       var type = Rule.RuleType.valueOf(o.get(Rule.TYPE).toString());
       var timing = Rule.RuleTiming.valueOf(o.get(Rule.TIMING).toString());
-      var rule = new Rule(type, timing, new DataDocument((JSONObject) o.get("configuration")));
+      var rule = new Rule(name, type, timing, new DataDocument((JSONObject) o.get("configuration")));
 
       if (type == Rule.RuleType.BLOCKLY) {
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));

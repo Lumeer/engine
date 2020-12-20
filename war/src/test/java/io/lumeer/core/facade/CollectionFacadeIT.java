@@ -426,7 +426,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    }
 
    private Rule createRule(String collectionId, String attributeId) {
-      final AutoLinkRule rule = new AutoLinkRule(new Rule(Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
+      final AutoLinkRule rule = new AutoLinkRule(new Rule("rule1", Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
       rule.setCollection1(collectionId);
       rule.setAttribute1(attributeId);
       rule.setCollection2("some collection to test");

@@ -27,6 +27,7 @@ import java.util.Objects;
 
 public class Rule {
 
+   public static final String NAME = "name";
    public static final String TYPE = "type";
    public static final String TIMING = "timing";
    public static final String CONFIGURATION = "configuration";
@@ -39,21 +40,32 @@ public class Rule {
       CREATE, UPDATE, CREATE_UPDATE, DELETE, CREATE_DELETE, UPDATE_DELETE, ALL;
    }
 
+   private String name;
    private RuleType type;
    private RuleTiming timing;
    protected DataDocument configuration;
 
    @JsonCreator
-   public Rule(@JsonProperty(TYPE) final RuleType type, @JsonProperty(TIMING) final RuleTiming timing, @JsonProperty(CONFIGURATION) final DataDocument configuration) {
+   public Rule(@JsonProperty(NAME) final String name, @JsonProperty(TYPE) final RuleType type, @JsonProperty(TIMING) final RuleTiming timing, @JsonProperty(CONFIGURATION) final DataDocument configuration) {
+      this.name = name;
       this.type = type;
       this.timing = timing;
       this.configuration = configuration;
    }
 
    public Rule(Rule rule) {
+      this.name = rule.name;
       this.type = rule.type;
       this.timing = rule.timing;
       this.configuration = new DataDocument(rule.configuration);
+   }
+
+   public String getName() {
+      return name;
+   }
+
+   public void setName(final String name) {
+      this.name = name;
    }
 
    public RuleType getType() {
@@ -67,7 +79,8 @@ public class Rule {
    @Override
    public String toString() {
       return "Rule{" +
-            "type=" + type +
+            "name=" + name +
+            ", type=" + type +
             ", timing=" + timing +
             ", configuration=" + configuration +
             '}';
@@ -82,14 +95,12 @@ public class Rule {
          return false;
       }
       final Rule rule = (Rule) o;
-      return type == rule.type &&
-            timing == rule.timing &&
-            Objects.equals(configuration, rule.configuration);
+      return Objects.equals(name, rule.name) && type == rule.type && timing == rule.timing && Objects.equals(configuration, rule.configuration);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(type, timing, configuration);
+      return Objects.hash(name, type, timing, configuration);
    }
 
    public RuleTiming getTiming() {

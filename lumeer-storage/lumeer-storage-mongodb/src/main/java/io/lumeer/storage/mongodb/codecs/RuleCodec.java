@@ -31,6 +31,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 public class RuleCodec implements Codec<Rule> {
 
+   public static final String NAME = "name";
    public static final String TYPE = "type";
    public static final String TIMING = "timing";
    public static final String CONFIGURATION = "configuration";
@@ -51,6 +52,7 @@ public class RuleCodec implements Codec<Rule> {
    @Override
    public void encode(final BsonWriter bsonWriter, final Rule rule, final EncoderContext encoderContext) {
       final Document bson = new Document()
+            .append(NAME, rule.getName())
             .append(TYPE, rule.getType().ordinal())
             .append(TIMING, rule.getTiming().ordinal())
             .append(CONFIGURATION, rule.getConfiguration());
@@ -59,6 +61,7 @@ public class RuleCodec implements Codec<Rule> {
    }
 
    public static Rule convertFromDocument(final Document bson) {
+      final String name = bson.getString(NAME);
       final Integer typeInt = bson.getInteger(TYPE);
       final Rule.RuleType type = Rule.RuleType.values()[typeInt != null ? typeInt : 0];
 
@@ -66,7 +69,7 @@ public class RuleCodec implements Codec<Rule> {
       final Rule.RuleTiming timing = Rule.RuleTiming.values()[timingInt != null ? timingInt : 0];
       final Document configuration = bson.get(CONFIGURATION, org.bson.Document.class);
 
-      return new Rule(type, timing, new DataDocument(configuration));
+      return new Rule(name, type, timing, new DataDocument(configuration));
    }
 
    @Override
