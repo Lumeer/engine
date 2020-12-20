@@ -27,6 +27,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
 import io.lumeer.engine.api.data.DataDocument;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
@@ -81,7 +82,13 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
       Map<String, Rule> rules = new HashMap<>();
       Document rulesMap = bson.get(RULES, Document.class);
       if (rulesMap != null) {
-         rulesMap.forEach((k, v) -> rules.put(k, RuleCodec.convertFromDocument(rulesMap.get(k, Document.class))));
+         rulesMap.forEach((k, v) -> {
+            final Rule rule = RuleCodec.convertFromDocument(rulesMap.get(k, Document.class));
+            if (StringUtils.isEmpty(rule.getName())) {
+               rule.setName(k);
+            }
+            rules.put(k, rule);
+         });
       }
 
       Integer documentsCount = bson.getInteger(DOCUMENTS_COUNT);
