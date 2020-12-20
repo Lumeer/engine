@@ -23,7 +23,13 @@ import io.lumeer.api.model.Attribute;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AttributeUtil {
@@ -54,6 +60,56 @@ public class AttributeUtil {
                        .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), text.toLowerCase())))
                        .limit(limit)
                        .collect(Collectors.toList());
+   }
+
+   public static AttributesDiff checkAttributesDiff(java.util.Collection<Attribute> originalAttributes, java.util.Collection<Attribute> currentAttributes) {
+      Map<String, Attribute> originalAttributesMap = convertAttributesToMap(originalAttributes);
+      Map<String, Attribute> currentAttributesMap = convertAttributesToMap(currentAttributes);
+      Set<String> allAttributeIds = new HashSet<>(originalAttributesMap.keySet());
+      allAttributeIds.addAll(currentAttributesMap.keySet());
+
+      List<Attribute> createdFunction = new ArrayList<>();
+      List<Attribute> updatedFunction = new ArrayList<>();
+      List<String> removedFunction = new ArrayList<>();
+      List<String> removedIds = new ArrayList<>();
+
+      for (String attributeId : allAttributeIds) {
+         if (originalAttributesMap.containsKey(attributeId) && !currentAttributesMap.containsKey(attributeId)) {
+            removedIds.add(attributeId);
+         } else if (!originalAttributesMap.containsKey(attributeId) && currentAttributesMap.containsKey(attributeId)) {
+            Attribute attribute = currentAttributesMap.get(attributeId);
+            if (attribute.getFunction() != null && attribute.getFunction().getJs() != null) {
+               createdFunction.add(attribute);
+            }
+         } else {
+            Attribute originalAttribute = originalAttributesMap.get(attributeId);
+            Attribute currentAttribute = currentAttributesMap.get(attributeId);
+
+            if (!functionIsDefined(originalAttribute) && functionIsDefined(currentAttribute)) {
+               createdFunction.add(currentAttribute);
+            } else if (functionIsDefined(originalAttribute) && !functionIsDefined(currentAttribute)) {
+               removedFunction.add(attributeId);
+            } else if (functionIsDefined(originalAttribute) && functionIsDefined(currentAttribute)) {
+               if (!originalAttribute.getFunction().getXml().equals(currentAttribute.getFunction().getXml())) {
+                  updatedFunction.add(currentAttribute);
+               }
+            }
+         }
+
+      }
+
+      return new AttributesDiff(createdFunction, updatedFunction, removedFunction, removedIds);
+   }
+
+   public static boolean functionIsDefined(Attribute attribute) {
+      return attribute.getFunction() != null && attribute.getFunction().getJs() != null && !attribute.getFunction().getJs().isEmpty();
+   }
+
+   private static Map<String, Attribute> convertAttributesToMap(java.util.Collection<Attribute> attributes) {
+      if (attributes == null) {
+         return new HashMap<>();
+      }
+      return new HashMap<>(attributes.stream().collect(Collectors.toMap(Attribute::getId, a -> a)));
    }
 
 }

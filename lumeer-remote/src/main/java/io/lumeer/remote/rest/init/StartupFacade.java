@@ -52,6 +52,8 @@ public class StartupFacade implements Serializable {
       log.info("Checking database for updates...");
       long tm = System.currentTimeMillis();
 
+      workspaceKeeper.push();
+
       organizationDao.getAllOrganizations().forEach(organization -> {
          workspaceKeeper.setOrganization(organization);
          projectDao.switchOrganization();
@@ -60,6 +62,8 @@ public class StartupFacade implements Serializable {
             collectionDao.ensureIndexes(project);
          });
       });
+
+      workspaceKeeper.pop();
 
       log.info("Updates completed in " + (System.currentTimeMillis() - tm) + "ms.");
    }

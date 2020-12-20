@@ -26,6 +26,7 @@ import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.User;
+import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -68,6 +69,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String EMAIL_VERIFIED = "emailVerified";
    public static final String NOTIFICATIONS = "notifications";
    public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
+   public static final String HINTS = "hints";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -169,8 +171,10 @@ public class UserCodec implements CollectibleCodec<User> {
          );
       }
       final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
+      Document hints = bson.get(HINTS, Document.class);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notificationSettings, notificationsLanguage);
+
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notificationSettings, notificationsLanguage, new DataDocument(hints == null ? new Document() : hints));
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
@@ -191,7 +195,8 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(AFFILIATE_PARTNER, user.isAffiliatePartner())
           .append(EMAIL_VERIFIED, user.isEmailVerified())
           .append(NOTIFICATIONS, user.getNotifications())
-          .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage());
+          .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage())
+          .append(HINTS, user.getHints());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());

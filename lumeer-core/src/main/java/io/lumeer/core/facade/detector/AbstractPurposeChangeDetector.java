@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.facade.detector;
 
+import static io.lumeer.api.util.ResourceUtils.findAttribute;
+
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -113,7 +115,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected Set<String> getAssignees(final DocumentEvent documentEvent, final Collection collection) {
       final String assigneeAttributeId = collection.getMetaData() != null ? collection.getMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
 
-      if (StringUtils.isNotEmpty(assigneeAttributeId)) {
+      if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
          return getUsersList(documentEvent.getDocument(), assigneeAttributeId);
       }
 
@@ -125,7 +127,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
          final String assigneeAttributeId = collection.getMetaData() != null ? collection.getMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
 
-         if (StringUtils.isNotEmpty(assigneeAttributeId)) {
+         if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
             final Set<String> originalUsers = new HashSet<>(getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId));
             final Set<String> newUsers = getUsersList(documentEvent.getDocument(), assigneeAttributeId);
 
@@ -142,7 +144,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected Set<String> getObservers(final DocumentEvent documentEvent, final Collection collection) {
       final String observersAttributeId = collection.getMetaData() != null ? collection.getMetaData().getString(Collection.META_OBSERVERS_ATTRIBUTE_ID) : null;
 
-      if (StringUtils.isNotEmpty(observersAttributeId)) {
+      if (StringUtils.isNotEmpty(observersAttributeId) && findAttribute(collection.getAttributes(), observersAttributeId) != null) {
          return getUsersList(documentEvent.getDocument(), observersAttributeId);
       }
 
@@ -154,8 +156,8 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       if (usersObject != null) {
          if (usersObject instanceof String) {
             return Set.of((String) usersObject);
-         } else {
-            return Set.copyOf((List<String>) usersObject);
+         } else if (usersObject instanceof java.util.Collection) {
+            return Set.copyOf((java.util.Collection<String>) usersObject);
          }
       }
 
@@ -165,9 +167,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected ZonedDateTime getDueDate(final DocumentEvent documentEvent, final Collection collection) {
       final String dueDateAttributeId = collection.getMetaData() != null ? collection.getMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID) : null;
 
-      if (StringUtils.isNotEmpty(dueDateAttributeId)) {
-         final Date dueDate = documentEvent.getDocument().getData().getDate(dueDateAttributeId);
-         return ZonedDateTime.from(dueDate.toInstant().atZone(utcZone));
+      if (StringUtils.isNotEmpty(dueDateAttributeId) && findAttribute(collection.getAttributes(), dueDateAttributeId) != null) {
+         if (documentEvent.getDocument().getData().get(dueDateAttributeId) instanceof Date) {
+            final Date dueDate = documentEvent.getDocument().getData().getDate(dueDateAttributeId);
+            return ZonedDateTime.from(dueDate.toInstant().atZone(utcZone));
+         }
       }
 
       return null;
@@ -176,7 +180,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected String getDueDateFormat(final DocumentEvent documentEvent, final Collection collection) {
       final String dueDateAttributeId = collection.getMetaData() != null ? collection.getMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID) : null;
 
-      if (StringUtils.isNotEmpty(dueDateAttributeId)) {
+      if (StringUtils.isNotEmpty(dueDateAttributeId) && findAttribute(collection.getAttributes(), dueDateAttributeId) != null) {
          final Attribute attribute = collection.getAttributes().stream().filter(attr -> dueDateAttributeId.equals(attr.getId())).findFirst().orElse(null);
 
          if (attribute != null && attribute.getConstraint().getType() == ConstraintType.DateTime) {
@@ -190,7 +194,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected String getState(final DocumentEvent documentEvent, final Collection collection) {
       final String stateAttributeId = collection.getMetaData() != null ? collection.getMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
 
-      if (StringUtils.isNotEmpty(stateAttributeId)) {
+      if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
          final Object states = documentEvent.getDocument().getData().getObject(stateAttributeId);
          if (states instanceof String) {
             return states.toString();
@@ -209,7 +213,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
       if (finalStates != null) {
 
-         if (StringUtils.isNotEmpty(stateAttributeId)) {
+         if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
             final Object states = documentEvent.getDocument().getData().getObject(stateAttributeId);
             if (states instanceof String) {
                return finalStates.contains(states);
@@ -231,7 +235,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
          if (finalStates != null) {
 
-            if (StringUtils.isNotEmpty(stateAttributeId)) {
+            if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
                final Object states = ((UpdateDocument) documentEvent).getOriginalDocument().getData().getObject(stateAttributeId);
                if (states instanceof String) {
                   return finalStates.contains(states);
@@ -254,7 +258,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected String getDescription(final DocumentEvent documentEvent, final Collection collection) {
       final String defaultAttributeId = getDescriptionAttribute(documentEvent, collection);
 
-      if (defaultAttributeId != null) {
+      if (defaultAttributeId != null && findAttribute(collection.getAttributes(), defaultAttributeId) != null) {
          final Object value = documentEvent.getDocument().getData().getObject(defaultAttributeId);
 
          if (value != null) {
