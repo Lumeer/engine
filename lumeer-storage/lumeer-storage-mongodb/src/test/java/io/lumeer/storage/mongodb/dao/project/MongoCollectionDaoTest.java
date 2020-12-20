@@ -184,7 +184,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       String id = createCollection(CODE, NAME).getId();
 
       Collection collection = prepareCollection(CODE2, NAME);
-      collection.setRules(Map.of(RULE_NAME, new Rule(Rule.RuleType.AUTO_LINK, Rule.RuleTiming.UPDATE, new DataDocument(CONFIGURATION_KEY, CONFIGURATION_VALUE))));
+      collection.setRules(Map.of(RULE_NAME, new Rule("rule1", Rule.RuleType.AUTO_LINK, Rule.RuleTiming.UPDATE, new DataDocument(CONFIGURATION_KEY, CONFIGURATION_VALUE))));
       Collection updatedCollection = collectionDao.updateCollection(id, collection, null);
       assertThat(updatedCollection).isNotNull();
       assertThat(updatedCollection.getCode()).isEqualTo(CODE2);
