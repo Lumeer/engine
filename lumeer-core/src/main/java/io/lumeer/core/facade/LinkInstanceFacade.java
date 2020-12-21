@@ -360,7 +360,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    @SuppressWarnings("unchecked")
-   public void runRule(final String linkTypeId, String linkInstanceId,String attributeId) {
+   public void runRule(final String linkTypeId, String linkInstanceId, String attributeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       Constraint constraint = ResourceUtils.findConstraint(linkType.getAttributes(), attributeId);
       if (constraint != null) {
