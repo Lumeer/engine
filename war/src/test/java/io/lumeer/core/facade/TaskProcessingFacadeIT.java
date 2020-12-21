@@ -187,7 +187,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       linkInstanceFacade.createLinkInstance(new LinkInstance(l.getId(), List.of(c1d1.getId(), c2d1.getId())));
       linkInstanceFacade.createLinkInstance(new LinkInstance(l.getId(), List.of(c1d1.getId(), c2d2.getId())));
 
-      final BlocklyRule rule = new BlocklyRule(new Rule("rule1", Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
+      final BlocklyRule rule = new BlocklyRule(new Rule(ruleName, Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
       rule.setDryRun(true);
       rule.setJs("var i, newDocument;\n"
             + "\n"
@@ -246,14 +246,14 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSyntaxExceptionBlocklyRules() throws InterruptedException {
-      final String ruleName = "blocklyRule";
+      final String ruleName = "blocklyRule2";
       final String syntaxException = "  syntax exception @#$~@#$~@$";
       final Collection c1 = createCollection("c1", "name1", Map.of("a0", "A", "a1", "B"));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));
 
-      final BlocklyRule rule = new BlocklyRule(new Rule("rule2", Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
+      final BlocklyRule rule = new BlocklyRule(new Rule(ruleName, Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
       rule.setDryRun(false);
       rule.setResultTimestamp(0);
       rule.setJs("var i, newDocument;\n"
@@ -288,7 +288,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));
 
-      final BlocklyRule rule = new BlocklyRule(new Rule("rule3", Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
+      final BlocklyRule rule = new BlocklyRule(new Rule(ruleName, Rule.RuleType.BLOCKLY, Rule.RuleTiming.UPDATE, new DataDocument()));
       rule.setDryRun(false);
       rule.setResultTimestamp(0);
       rule.setJs("var i, newDocument;\n"
@@ -331,7 +331,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       final Document c2d5 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", 30)));
       final Document c2d6 = documentFacade.createDocument(c2.getId(), new Document(new DataDocument("a0", "subline3").append("a1", 30)));
 
-      final AutoLinkRule rule = new AutoLinkRule(new Rule("rule4", Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
+      final AutoLinkRule rule = new AutoLinkRule(new Rule(ruleName, Rule.RuleType.AUTO_LINK, Rule.RuleTiming.ALL, new DataDocument()));
       rule.setCollection1(c1.getId());
       rule.setAttribute1("a1");
       rule.setCollection2(c2.getId());

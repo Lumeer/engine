@@ -20,6 +20,7 @@
 package io.lumeer.api.model;
 
 public enum ConstraintType {
+   Action,
    Address,
    Boolean,
    Coordinates,

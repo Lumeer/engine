@@ -20,6 +20,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
@@ -94,6 +95,9 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    @Inject
    private ResourceCommentFacade resourceCommentFacade;
+
+   @Inject
+   private TaskProcessingFacade taskProcessingFacade;
 
    private ConstraintManager constraintManager;
 
@@ -283,10 +287,13 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance getLinkInstance(String linkTypeId, String linkInstanceId) {
-      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
-      LinkType linkType = checkLinkTypeReadPermissions(stored.getLinkTypeId());
+      LinkType linkType = checkLinkTypeReadPermissions(linkTypeId);
+      return getLinkInstance(linkType, linkInstanceId);
+   }
 
-      final DataDocument data = constraintManager.decodeDataTypes(linkType, linkDataDao.getData(linkTypeId, linkInstanceId));
+   private LinkInstance getLinkInstance(LinkType linkType, String linkInstanceId) {
+      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      final DataDocument data = constraintManager.decodeDataTypes(linkType, linkDataDao.getData(linkType.getId(), linkInstanceId));
       stored.setData(data);
 
       return stored;
@@ -350,6 +357,25 @@ public class LinkInstanceFacade extends AbstractFacade {
       fileAttachmentFacade.duplicateFileAttachments(linkTypeId, linkMap, FileAttachment.AttachmentType.LINK);
 
       return newLinks;
+   }
+
+   @SuppressWarnings("unchecked")
+   public void runRule(final String linkTypeId, String linkInstanceId, String attributeId) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      Constraint constraint = ResourceUtils.findConstraint(linkType.getAttributes(), attributeId);
+      if (constraint != null) {
+         var config = (Map<String, Object>) constraint.getConfig();
+         var rule = config.get("rule").toString();
+         if (!linkType.getRules().containsKey(rule)) {
+            throw new IllegalStateException("Rule not found");
+         }
+         var roleString = config.get("role").toString();
+         var role = Role.fromString(roleString);
+
+         checkLinkTypePermissions(linkType, role);
+         LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
+         taskProcessingFacade.runRule(linkType, rule, linkInstance);
+      }
    }
 
    public long getCommentsCount(final String documentId) {

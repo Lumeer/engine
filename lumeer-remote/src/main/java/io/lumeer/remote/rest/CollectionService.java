@@ -154,10 +154,10 @@ public class CollectionService extends AbstractService {
    }
 
    @POST
-   @Path("{collectionId:[0-9a-fA-F]{24}}/rule/{ruleName}")
-   public void runRule(@PathParam("collectionId") String collectionId, @PathParam("ruleName") final String ruleName) {
+   @Path("{collectionId:[0-9a-fA-F]{24}}/rule/{ruleId}")
+   public void runRule(@PathParam("collectionId") String collectionId, @PathParam("ruleId") final String ruleId) {
       final Collection collection = collectionFacade.getCollection(collectionId);
-      collectionFacade.runRule(collection, ruleName);
+      collectionFacade.runRule(collection, ruleId);
    }
 
    @GET
