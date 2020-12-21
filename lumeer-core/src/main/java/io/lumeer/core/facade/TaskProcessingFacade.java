@@ -85,6 +85,13 @@ public class TaskProcessingFacade {
       }
    }
 
+   public void runRule(final LinkType linkType, final String ruleName, final LinkInstance linkInstance) {
+      if (linkType != null && linkInstance != null) {
+         Optional<RuleTask> task = createRuleTask(linkType, ruleName, null, linkInstance);
+         task.ifPresent(this::processTasks);
+      }
+   }
+
    public void onCreateChain(@Observes final CreateDocumentsAndLinks chain) {
       List<Task> allTasks = new ArrayList<>();
 
@@ -144,7 +151,6 @@ public class TaskProcessingFacade {
       return Collections.emptyList();
    }
 
-
    private Optional<RuleTask> createRuleTask(final Collection collection, final String ruleName, final Document originalDocument, final Document document) {
       if (collection.getRules() == null) {
          return Optional.empty();
@@ -171,17 +177,30 @@ public class TaskProcessingFacade {
                        }).collect(Collectors.toList());
    }
 
+   private Optional<RuleTask> createRuleTask(final LinkType linkType, final String ruleName, final LinkInstance originalLinkInstance, final LinkInstance linkInstance) {
+      if (linkType.getRules() == null) {
+         return Optional.empty();
+      }
+      return linkType.getRules().entrySet().stream()
+                     .filter(entry -> entry.getKey().equals(ruleName))
+                     .map(entry -> {
+                        final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
+                        ruleTask.setRule(entry.getKey(), entry.getValue(), linkType, originalLinkInstance, linkInstance);
+                        return ruleTask;
+                     }).findFirst();
+   }
+
    private List<RuleTask> createRuleTasks(final LinkType linkType, final LinkInstance originalLinkInstance, final LinkInstance linkInstance, final List<Rule.RuleTiming> timings) {
       if (linkType.getRules() == null) {
          return Collections.emptyList();
       }
       return linkType.getRules().entrySet().stream()
-                       .filter(entry -> timings.contains(entry.getValue().getTiming()))
-                       .map(entry -> {
-                          final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
-                          ruleTask.setRule(entry.getKey(), entry.getValue(), linkType, originalLinkInstance, linkInstance);
-                          return ruleTask;
-                       }).collect(Collectors.toList());
+                     .filter(entry -> timings.contains(entry.getValue().getTiming()))
+                     .map(entry -> {
+                        final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
+                        ruleTask.setRule(entry.getKey(), entry.getValue(), linkType, originalLinkInstance, linkInstance);
+                        return ruleTask;
+                     }).collect(Collectors.toList());
    }
 
    private RuleTask createOrderedRuleTask(List<RuleTask> tasks) {

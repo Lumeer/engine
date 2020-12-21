@@ -22,6 +22,7 @@ import io.lumeer.api.model.*;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
@@ -98,6 +99,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
+
+   @Inject
+   private TaskProcessingFacade taskProcessingFacade;
 
    private ConstraintManager constraintManager;
 
@@ -378,7 +382,7 @@ public class DocumentFacade extends AbstractFacade {
       }
 
       return patch.entrySet().stream().anyMatch(entry ->
-         !oldDoc.containsKey(entry.getKey()) || (oldDoc.get(entry.getKey()) == null && entry.getValue() != null) || !oldDoc.get(entry.getKey()).equals(entry.getValue())
+            !oldDoc.containsKey(entry.getKey()) || (oldDoc.get(entry.getKey()) == null && entry.getValue() != null) || !oldDoc.get(entry.getKey()).equals(entry.getValue())
       );
    }
 
@@ -574,6 +578,25 @@ public class DocumentFacade extends AbstractFacade {
       return documentsMap.entrySet().stream()
                          .flatMap(entry -> entry.getValue().stream())
                          .collect(Collectors.toList());
+   }
+
+   @SuppressWarnings("unchecked")
+   public void runRule(final String collectionId, String documentId, String attributeId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      Constraint constraint = ResourceUtils.findConstraint(collection.getAttributes(), attributeId);
+      if (constraint != null) {
+         var config = (Map<String, Object>) constraint.getConfig();
+         var rule = config.get("rule").toString();
+         if (!collection.getRules().containsKey(rule)) {
+            throw new IllegalStateException("Rule not found");
+         }
+         var roleString = config.get("role").toString();
+         var role = Role.fromString(roleString);
+
+         permissionsChecker.checkRoleWithView(collection, role, role);
+         Document document = getDocument(collection, documentId);
+         taskProcessingFacade.runRule(collection, rule, document);
+      }
    }
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {

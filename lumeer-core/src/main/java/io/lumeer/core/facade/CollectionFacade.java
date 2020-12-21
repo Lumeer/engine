@@ -535,12 +535,12 @@ public class CollectionFacade extends AbstractFacade {
       return CodeGenerator.generate(existingCodes, collectionName);
    }
 
-   public void runRule(final Collection collection, final String ruleName) {
+   public void runRule(final Collection collection, final String ruleId) {
       if (collection.getDocumentsCount() > 10_000) {
          throw new UnsuccessfulOperationException("Too many documents in the collection");
       }
 
-      final Rule rule = collection.getRules().get(ruleName);
+      final Rule rule = collection.getRules().get(ruleId);
       if (rule != null && rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRule autoLinkRule = new AutoLinkRule(rule);
          final String otherCollectionId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getCollection1() : autoLinkRule.getCollection2();

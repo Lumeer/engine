@@ -119,4 +119,10 @@ public class LinkInstanceService extends AbstractService {
       return Response.ok().link(getParentUri(id), "parent").build();
    }
 
+   @POST
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}/rule/{attributeId}")
+   public void runRule(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId, @PathParam("attributeId") final String attributeId) {
+      linkInstanceFacade.runRule(linkTypeId, linkInstanceId, attributeId);
+   }
+
 }

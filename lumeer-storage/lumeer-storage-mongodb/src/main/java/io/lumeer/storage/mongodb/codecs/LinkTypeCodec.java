@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonValue;
@@ -73,7 +74,13 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       Map<String, Rule> rules = new HashMap<>();
       Document rulesMap = bson.get(RULES, Document.class);
       if (rulesMap != null) {
-         rulesMap.forEach((k, v) -> rules.put(k, RuleCodec.convertFromDocument(rulesMap.get(k, Document.class))));
+         rulesMap.forEach((k, v) -> {
+            final Rule rule = RuleCodec.convertFromDocument(rulesMap.get(k, Document.class));
+            if (StringUtils.isEmpty(rule.getName())) {
+               rule.setName(k);
+            }
+            rules.put(k, rule);
+         });
       }
 
       LinkType linkType = new LinkType(name, collectionCodes, attributes, rules);

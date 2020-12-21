@@ -198,7 +198,7 @@ public class Collection extends Resource {
    }
 
    public Map<String, Rule> getRules() {
-      return rules;
+      return rules != null ? rules : new HashMap<>();
    }
 
    public void setRules(final Map<String, Rule> rules) {
