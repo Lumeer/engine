@@ -18,19 +18,21 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Attribute;
+import static io.lumeer.api.util.AttributeUtil.checkAttributesDiff;
+
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
+import io.lumeer.api.util.AttributesDiff;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
-import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.LinkInstanceEvent;
@@ -48,13 +50,9 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
@@ -397,83 +395,4 @@ public class TaskProcessingFacade {
       functionFacade.onDeleteLinkType(removeLinkType.getLinkType().getId());
    }
 
-   private AttributesDiff checkAttributesDiff(java.util.Collection<Attribute> originalAttributes, java.util.Collection<Attribute> currentAttributes) {
-      Map<String, Attribute> originalAttributesMap = convertAttributesToMap(originalAttributes);
-      Map<String, Attribute> currentAttributesMap = convertAttributesToMap(currentAttributes);
-      Set<String> allAttributeIds = new HashSet<>(originalAttributesMap.keySet());
-      allAttributeIds.addAll(currentAttributesMap.keySet());
-
-      List<Attribute> createdFunction = new ArrayList<>();
-      List<Attribute> updatedFunction = new ArrayList<>();
-      List<String> removedFunction = new ArrayList<>();
-      List<String> removedIds = new ArrayList<>();
-
-      for (String attributeId : allAttributeIds) {
-         if (originalAttributesMap.containsKey(attributeId) && !currentAttributesMap.containsKey(attributeId)) {
-            removedIds.add(attributeId);
-         } else if (!originalAttributesMap.containsKey(attributeId) && currentAttributesMap.containsKey(attributeId)) {
-            Attribute attribute = currentAttributesMap.get(attributeId);
-            if (attribute.getFunction() != null && attribute.getFunction().getJs() != null) {
-               createdFunction.add(attribute);
-            }
-         } else {
-            Attribute originalAttribute = originalAttributesMap.get(attributeId);
-            Attribute currentAttribute = currentAttributesMap.get(attributeId);
-
-            if (!functionIsDefined(originalAttribute) && functionIsDefined(currentAttribute)) {
-               createdFunction.add(currentAttribute);
-            } else if (functionIsDefined(originalAttribute) && !functionIsDefined(currentAttribute)) {
-               removedFunction.add(attributeId);
-            } else if (functionIsDefined(originalAttribute) && functionIsDefined(currentAttribute)) {
-               if (!originalAttribute.getFunction().getXml().equals(currentAttribute.getFunction().getXml())) {
-                  updatedFunction.add(currentAttribute);
-               }
-            }
-         }
-
-      }
-
-      return new AttributesDiff(createdFunction, updatedFunction, removedFunction, removedIds);
-   }
-
-   private boolean functionIsDefined(Attribute attribute) {
-      return attribute.getFunction() != null && attribute.getFunction().getJs() != null && !attribute.getFunction().getJs().isEmpty();
-   }
-
-   private Map<String, Attribute> convertAttributesToMap(java.util.Collection<Attribute> attributes) {
-      if (attributes == null) {
-         return new HashMap<>();
-      }
-      return new HashMap<>(attributes.stream().collect(Collectors.toMap(Attribute::getId, a -> a)));
-   }
-
-   private static class AttributesDiff {
-      private final List<Attribute> createdFunction;
-      private final List<Attribute> updatedFunction;
-      private final List<String> removedFunction;
-      private final List<String> removedIds;
-
-      public AttributesDiff(final List<Attribute> createdFunction, final List<Attribute> updatedFunction, final List<String> removedFunction, final List<String> removedIds) {
-         this.createdFunction = createdFunction;
-         this.updatedFunction = updatedFunction;
-         this.removedFunction = removedFunction;
-         this.removedIds = removedIds;
-      }
-
-      public List<Attribute> getCreatedFunction() {
-         return createdFunction;
-      }
-
-      public List<Attribute> getUpdatedFunction() {
-         return updatedFunction;
-      }
-
-      public List<String> getRemovedFunction() {
-         return removedFunction;
-      }
-
-      public List<String> getRemovedIds() {
-         return removedIds;
-      }
-   }
 }

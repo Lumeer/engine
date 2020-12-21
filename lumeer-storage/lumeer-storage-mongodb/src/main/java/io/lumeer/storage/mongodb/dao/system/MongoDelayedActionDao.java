@@ -94,6 +94,16 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
    }
 
    @Override
+   public void deleteAllScheduledActions(final String partialResourcePath, final Set<NotificationType> notificationTypes) {
+      databaseCollection().deleteMany(
+            Filters.and(
+                  Filters.regex(DelayedAction.RESOURCE_PATH, "^" + partialResourcePath + ".*"),
+                  Filters.in(DelayedAction.NOTIFICATION_TYPE, notificationTypes.stream().map(Object::toString).collect(Collectors.toList()))
+            )
+      );
+   }
+
+   @Override
    public void deleteProcessedActions() {
       databaseCollection().deleteMany(Filters.lt(DelayedAction.COMPLETED, Date.from(ZonedDateTime.now().toInstant())));
    }

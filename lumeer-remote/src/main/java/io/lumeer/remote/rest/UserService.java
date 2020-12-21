@@ -27,6 +27,7 @@ import io.lumeer.api.view.UserViews;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.UserFacade;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
 
 import com.fasterxml.jackson.annotation.JsonView;
@@ -120,6 +121,12 @@ public class UserService extends AbstractService {
       return userFacade.getCurrentUserWithLastLogin();
    }
 
+   @GET
+   @Path("current/hints")
+   public DataDocument getHints() {
+      return userFacade.getCurrentUser().getHints();
+   }
+
    @PATCH
    @Path("current")
    @JsonView(UserViews.FullView.class)
@@ -151,5 +158,11 @@ public class UserService extends AbstractService {
    @Path("check")
    public Response checkAuthentication() {
       return Response.ok().build();
+   }
+
+   @PUT
+   @Path("current/hints")
+   public DataDocument updateHints(final DataDocument hints) {
+      return userFacade.updateHints(hints);
    }
 }

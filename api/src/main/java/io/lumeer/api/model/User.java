@@ -20,6 +20,7 @@ package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.view.UserViews;
+import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -52,6 +53,7 @@ public class User {
    public static final String EMAIL_VERIFIED = "emailVerified";
    public static final String NOTIFICATIONS = "notifications";
    public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
+   public static final String HINTS = "hints";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -106,6 +108,10 @@ public class User {
    private List<String> wishes;
 
    @JsonView(UserViews.DefaultView.class)
+   @JsonProperty(HINTS)
+   private DataDocument hints;
+
+   @JsonView(UserViews.DefaultView.class)
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
    private ZonedDateTime lastLoggedIn;
 
@@ -133,7 +139,8 @@ public class User {
          @JsonProperty(WIZARD_DISMISSED) final Boolean wizardDismissed,
          @JsonProperty(REFERRAL) final String referral,
          @JsonProperty(NOTIFICATIONS) final List<NotificationSetting> notifications,
-         @JsonProperty(NOTIFICATIONS_LANGUAGE) final String notificationsLanguage) {
+         @JsonProperty(NOTIFICATIONS_LANGUAGE) final String notificationsLanguage,
+         @JsonProperty(HINTS) final DataDocument hints) {
       this.id = id;
       this.name = name;
       this.email = email;
@@ -146,6 +153,7 @@ public class User {
       this.referral = referral;
       this.notifications = notifications;
       this.notificationsLanguage = notificationsLanguage;
+      this.hints = hints;
    }
 
    public String getId() {
@@ -276,6 +284,14 @@ public class User {
       this.notificationsLanguage = notificationsLanguage;
    }
 
+   public DataDocument getHints() {
+      return hints;
+   }
+
+   public void setHints(final DataDocument hints) {
+      this.hints = hints;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -296,6 +312,7 @@ public class User {
             ", emailVerified=" + emailVerified +
             ", notifications=" + notifications +
             ", notificationsLanguage=" + notificationsLanguage +
+            ", hints=" + hints +
             '}';
    }
 

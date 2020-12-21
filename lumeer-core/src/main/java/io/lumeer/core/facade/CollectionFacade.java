@@ -41,6 +41,7 @@ import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -378,6 +379,21 @@ public class CollectionFacade extends AbstractFacade {
       if (collection.getDefaultAttributeId() != null && collection.getDefaultAttributeId().equals(attributeId)) {
          collection.setDefaultAttributeId(null);
       }
+
+      final DataDocument meta = collection.createIfAbsentMetaData();
+      if (attributeId.equals(meta.getString(Collection.META_STATE_ATTRIBUTE_ID))) {
+         collection.getMetaData().remove(Collection.META_STATE_ATTRIBUTE_ID);
+      }
+      if (attributeId.equals(meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID))) {
+         collection.getMetaData().remove(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+      }
+      if (attributeId.equals(meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID))) {
+         collection.getMetaData().remove(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+      }
+      if (attributeId.equals(meta.getString(Collection.META_OBSERVERS_ATTRIBUTE_ID))) {
+         collection.getMetaData().remove(Collection.META_OBSERVERS_ATTRIBUTE_ID);
+      }
+
       collection.setLastTimeUsed(ZonedDateTime.now());
       filterAutoLinkRulesByAttribute(collection, collectionId, attributeId);
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);

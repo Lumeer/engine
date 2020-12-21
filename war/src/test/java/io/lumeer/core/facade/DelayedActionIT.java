@@ -79,6 +79,7 @@ public class DelayedActionIT extends IntegrationTestBase {
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String USER2 = "rspath@lumeerio.com";
    private User user, user2;
+   private String organizationId;
 
    @Inject
    private DocumentFacade documentFacade;
@@ -125,6 +126,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
+      organizationId = storedOrganization.getId();
 
       projectDao.setOrganization(storedOrganization);
 
@@ -368,6 +370,11 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_SOON)).isEqualTo(2);
+
+      delayedActionDao.deleteAllScheduledActions(organizationId);
+      actions = delayedActionDao.getActions();
+
+      assertThat(actions.size()).isEqualTo(0);
    }
 
 }

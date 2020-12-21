@@ -28,6 +28,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.util.Utils;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -72,6 +73,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private WorkspaceCache workspaceCache;
+
+   @Inject
+   private DelayedActionDao delayedActionDao;
 
    public Organization createOrganization(final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
@@ -255,6 +259,8 @@ public class OrganizationFacade extends AbstractFacade {
 
       userDao.deleteUsersGroups(organization.getId());
       userCache.clear();
+
+      delayedActionDao.deleteAllScheduledActions(organization.getId());
    }
 
    private void checkSystemPermission() {

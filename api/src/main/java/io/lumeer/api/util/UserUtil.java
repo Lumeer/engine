@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class UserUtil {
-   
+
    public static User mergeUsers(final User existingUser, final User updatedUser) {
       final var user = new User(existingUser.getEmail());
 
@@ -41,6 +41,9 @@ public class UserUtil {
       user.setNewsletter(updatedUser.hasNewsletter() != null ? updatedUser.hasNewsletter() : existingUser.hasNewsletter());
       user.setWizardDismissed(updatedUser.getWizardDismissed() != null ? updatedUser.getWizardDismissed() : existingUser.getWizardDismissed());
       user.setWishes(updatedUser.getWishes() != null ? updatedUser.getWishes() : existingUser.getWishes());
+      user.setNotifications(updatedUser.getNotifications() != null ? updatedUser.getNotifications() : existingUser.getNotifications());
+      user.setNotificationsLanguage(updatedUser.getNotificationsLanguage() != null ? updatedUser.getNotificationsLanguage() : existingUser.getNotificationsLanguage());
+      user.setHints(updatedUser.getHints() != null ? updatedUser.getHints() : existingUser.getHints());
 
       return user;
    }

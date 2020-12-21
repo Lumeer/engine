@@ -30,6 +30,7 @@ public interface DelayedActionDao {
 
    void deleteScheduledActions(final String resourcePath, final Set<NotificationType> notificationTypes);
    void deleteAllScheduledActions(final String partialResourcePath);
+   void deleteAllScheduledActions(final String partialResourcePath, final Set<NotificationType> notificationTypes);
    void deleteProcessedActions();
    void resetTimeoutedActions();
    List<DelayedAction> getActionsForProcessing();

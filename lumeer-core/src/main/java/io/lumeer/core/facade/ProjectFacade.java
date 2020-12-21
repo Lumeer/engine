@@ -40,6 +40,7 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
@@ -104,6 +105,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private SequenceDao sequenceDao;
+
+   @Inject
+   private DelayedActionDao delayedActionDao;
 
    void init(DaoContextSnapshot daoContextSnapshot) {
       this.collectionDao = daoContextSnapshot.getCollectionDao();
@@ -297,6 +301,10 @@ public class ProjectFacade extends AbstractFacade {
 
       favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
+
+      if (workspaceKeeper.getOrganization().isPresent()) {
+         delayedActionDao.deleteAllScheduledActions(workspaceKeeper.getOrganization().get().getId() + "/" + project.getId());
+      }
    }
 
    private void checkOrganizationRole(Role role) {

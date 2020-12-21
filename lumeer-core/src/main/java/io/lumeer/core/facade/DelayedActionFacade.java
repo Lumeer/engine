@@ -27,6 +27,7 @@ import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.AssigneeChangeDetector;
+import io.lumeer.core.facade.detector.AttributePurposeChangeDetector;
 import io.lumeer.core.facade.detector.CollectionChangeDetector;
 import io.lumeer.core.facade.detector.CollectionPurposeChangeDetector;
 import io.lumeer.core.facade.detector.DueDateChangeDetector;
@@ -83,8 +84,7 @@ public class DelayedActionFacade {
    }
 
    private static final Map<CollectionPurpose, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurpose.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
-   private static final Map<CollectionPurpose, Set<CollectionChangeDetector>> collectionChangeDetectors = Map.of(CollectionPurpose.None, Set.of(new CollectionPurposeChangeDetector()), CollectionPurpose.Tasks, Set.of(new CollectionPurposeChangeDetector()));
-
+   private static final Map<CollectionPurpose, Set<CollectionChangeDetector>> collectionChangeDetectors = Map.of(CollectionPurpose.None, Set.of(new CollectionPurposeChangeDetector()), CollectionPurpose.Tasks, Set.of(new CollectionPurposeChangeDetector(), new AttributePurposeChangeDetector()));
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
       processChanges(createDocument);

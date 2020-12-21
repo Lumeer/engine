@@ -31,6 +31,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.util.Utils;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -241,6 +242,16 @@ public class UserFacade extends AbstractFacade {
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
+   }
+
+   public DataDocument updateHints(final DataDocument hints) {
+      final User currentUser = getCurrentUser();
+      currentUser.setHints(hints);
+
+      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return updatedUser.getHints();
    }
 
    private User updateExistingUser(String organizationId, User storedUser, User user) {
