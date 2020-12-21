@@ -245,17 +245,13 @@ public class UserFacade extends AbstractFacade {
    }
 
    public DataDocument updateHints(final DataDocument hints) {
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final String orgId = workspaceKeeper.getOrganization().get().getId();
+      final User currentUser = getCurrentUser();
+      currentUser.setHints(hints);
 
-         final User user = getCurrentUser();
-         final User updatedUser = new User(user.getEmail());
-         updatedUser.setHints(hints);
+      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
-         return updateExistingUser(orgId, user, updatedUser).getHints();
-      }
-
-      return null;
+      return updatedUser.getHints();
    }
 
    private User updateExistingUser(String organizationId, User storedUser, User user) {
