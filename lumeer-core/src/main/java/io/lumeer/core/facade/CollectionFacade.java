@@ -401,8 +401,6 @@ public class CollectionFacade extends AbstractFacade {
       deleteAutoLinkRulesByAttribute(collectionId, attributeId);
 
       fileAttachmentFacade.removeAllFileAttachments(collectionId, attributeId, FileAttachment.AttachmentType.DOCUMENT);
-
-      // TODO delete delayed actions
    }
 
    private void filterAutoLinkRulesByAttribute(final Collection collection, final String collectionId, final String attributeId) {
