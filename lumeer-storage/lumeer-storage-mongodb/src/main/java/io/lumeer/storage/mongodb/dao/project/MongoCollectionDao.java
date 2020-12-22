@@ -91,6 +91,7 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
    public void ensureIndexes(final Project project) {
       final String dropIndex = "code_text_name_text_attributes.name_text";
       final String attrIndex = "attributes.name_1";
+      final String nameIndex = "name_text";
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
 
       final List<Document> indexes = projectCollection.listIndexes().into(new ArrayList<>());
@@ -101,6 +102,11 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
       final Optional<Document> attr = indexes.stream().filter(index -> attrIndex.equals(index.getString("name"))).findFirst();
       if (attr.isPresent() && attr.get().getBoolean("unique", false)) {
          projectCollection.dropIndex(attrIndex);
+      }
+
+      final Optional<Document> nameIdx = indexes.stream().filter(index -> nameIndex.equals(index.getString("name"))).findFirst();
+      if (nameIdx.isPresent() && nameIdx.get().getBoolean("unique", false)) {
+         projectCollection.dropIndex(nameIndex);
       }
 
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.NAME), new IndexOptions().unique(false));
