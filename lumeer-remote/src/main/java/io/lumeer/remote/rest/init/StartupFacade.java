@@ -24,6 +24,7 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 
 import java.io.Serializable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -59,7 +60,12 @@ public class StartupFacade implements Serializable {
          projectDao.switchOrganization();
          projectDao.getAllProjects().forEach(project -> {
             workspaceKeeper.setProject(project);
-            collectionDao.ensureIndexes(project);
+
+            try {
+               collectionDao.ensureIndexes(project);
+            } catch (Exception e) {
+               log.log(Level.SEVERE, "Unable to update indexes on collections in " + organization.getId() + "/" + project.getId(), e);
+            }
          });
       });
 
