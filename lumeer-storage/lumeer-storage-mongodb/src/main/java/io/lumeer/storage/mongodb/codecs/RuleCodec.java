@@ -54,8 +54,11 @@ public class RuleCodec implements Codec<Rule> {
       final Document bson = new Document()
             .append(NAME, rule.getName())
             .append(TYPE, rule.getType().ordinal())
-            .append(TIMING, rule.getTiming().ordinal())
             .append(CONFIGURATION, rule.getConfiguration());
+
+      if (rule.getTiming() != null) {
+         bson.append(TIMING, rule.getTiming().ordinal());
+      }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }
@@ -66,7 +69,7 @@ public class RuleCodec implements Codec<Rule> {
       final Rule.RuleType type = Rule.RuleType.values()[typeInt != null ? typeInt : 0];
 
       final Integer timingInt = bson.getInteger(TIMING);
-      final Rule.RuleTiming timing = Rule.RuleTiming.values()[timingInt != null ? timingInt : 0];
+      final Rule.RuleTiming timing = timingInt != null ? Rule.RuleTiming.values()[timingInt] : null;
       final Document configuration = bson.get(CONFIGURATION, org.bson.Document.class);
 
       return new Rule(name, type, timing, new DataDocument(configuration));
