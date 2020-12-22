@@ -88,7 +88,12 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
 
    @Override
    public void ensureIndexes(final Project project) {
+      final String dropIndex = "code_text_name_text_attributes.name_text";
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
+
+      if (projectCollection.listIndexes().into(new ArrayList<>()).stream().anyMatch(index -> dropIndex.equals(index.getString("name")))) {
+         projectCollection.dropIndex(dropIndex);
+      }
 
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.NAME), new IndexOptions().unique(false));
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.CODE), new IndexOptions().unique(true));
