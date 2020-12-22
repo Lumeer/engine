@@ -40,6 +40,9 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.conversion.ConversionFacade;
+import io.lumeer.core.task.AutoLinkBatchTask;
+import io.lumeer.core.task.ContextualTaskFactory;
+import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
@@ -114,6 +117,12 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
+
+   @Inject
+   private ContextualTaskFactory taskFactory;
+
+   @Inject
+   private TaskExecutor taskExecutor;
 
    private ConstraintManager constraintManager;
 
@@ -552,7 +561,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public void runRule(final Collection collection, final String ruleId) {
-      if (collection.getDocumentsCount() > 1_000) {
+      if (collection.getDocumentsCount() > 10_000) {
          throw new UnsuccessfulOperationException("Too many documents in the collection");
       }
 
@@ -566,50 +575,16 @@ public class CollectionFacade extends AbstractFacade {
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Constraint otherConstraint = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
 
-         if (otherCollection.getDocumentsCount() > 1_000) {
+         if (otherCollection.getDocumentsCount() > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the collection");
          }
 
-         List<LinkInstance> links = new ArrayList<>();
+         final LinkType linkType = linkTypeDao.getLinkType(autoLinkRule.getLinkType());
 
-         Map<String, Set<String>> source = new HashMap<>();
-         dataDao.getDataStream(collection.getId()).forEach(dd -> {
-            final Object o = constraintManager.decode(dd.getObject(attributeId), constraint);
+         final AutoLinkBatchTask task = taskFactory.getInstance(AutoLinkBatchTask.class);
+         task.setupBatch(linkType, collection, attributeId, constraint, otherCollection, otherAttributeId, otherConstraint);
 
-            if (o != null) {
-               source.computeIfAbsent(o.toString(), key -> new HashSet<>()).add(dd.getId());
-            }
-         });
-
-         if (source.size() > 0) {
-            Map<String, Set<String>> target = new HashMap<>();
-            dataDao.getDataStream(otherCollection.getId()).forEach(dd -> {
-               final Object o = constraintManager.decode(dd.getObject(otherAttributeId), otherConstraint);
-
-               if (o != null && source.containsKey(o.toString())) {
-                  target.computeIfAbsent(o.toString(), key -> new HashSet<>()).add(dd.getId());
-               }
-            });
-
-            if (target.size() > 0) {
-               source.keySet().forEach(key -> {
-                  if (target.containsKey(key)) {
-                     final Set<String> sourceIds = source.get(key);
-                     final Set<String> targetIds = target.get(key);
-
-                     sourceIds.forEach(sourceId -> {
-                        targetIds.forEach(targetId -> {
-                           links.add(new LinkInstance(autoLinkRule.getLinkType(), List.of(sourceId, targetId)));
-                        });
-                     });
-                  }
-               });
-
-               if (links.size() > 0) {
-                  linkInstanceFacade.createLinkInstances(links, true);
-               }
-            }
-         }
+         taskExecutor.submitTask(task);
       }
    }
 }

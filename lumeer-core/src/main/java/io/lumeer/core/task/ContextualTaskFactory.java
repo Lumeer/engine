@@ -20,11 +20,14 @@ package io.lumeer.core.task;
 
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.PusherFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -46,10 +49,20 @@ public class ContextualTaskFactory {
    @Inject
    private Logger log;
 
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   private ConstraintManager constraintManager;
+
+   @PostConstruct
+   public void init() {
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
+   }
+
    public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
       try {
          T t = clazz.getConstructor().newInstance();
-         t.initialize(authenticatedUser.getCurrentUser(), daoContextSnapshotFactory.getInstance(), pusherFacade.getPusherClient(), new RequestDataKeeper(requestDataKeeper));
+         t.initialize(authenticatedUser.getCurrentUser(), daoContextSnapshotFactory.getInstance(), pusherFacade.getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager);
 
          return t;
       } catch (Exception e) {
