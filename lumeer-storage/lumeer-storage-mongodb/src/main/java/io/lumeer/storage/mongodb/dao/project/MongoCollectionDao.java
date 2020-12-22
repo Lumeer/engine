@@ -59,6 +59,7 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -89,10 +90,17 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
    @Override
    public void ensureIndexes(final Project project) {
       final String dropIndex = "code_text_name_text_attributes.name_text";
+      final String attrIndex = "attributes.name_1";
       MongoCollection<Document> projectCollection = database.getCollection(databaseCollectionName(project));
 
-      if (projectCollection.listIndexes().into(new ArrayList<>()).stream().anyMatch(index -> dropIndex.equals(index.getString("name")))) {
+      final List<Document> indexes = projectCollection.listIndexes().into(new ArrayList<>());
+      if (indexes.stream().anyMatch(index -> dropIndex.equals(index.getString("name")))) {
          projectCollection.dropIndex(dropIndex);
+      }
+
+      final Optional<Document> attr = indexes.stream().filter(index -> attrIndex.equals(index.getString("name"))).findFirst();
+      if (attr.isPresent() && attr.get().getBoolean("unique")) {
+         projectCollection.dropIndex(attrIndex);
       }
 
       projectCollection.createIndex(Indexes.ascending(CollectionCodec.NAME), new IndexOptions().unique(false));
