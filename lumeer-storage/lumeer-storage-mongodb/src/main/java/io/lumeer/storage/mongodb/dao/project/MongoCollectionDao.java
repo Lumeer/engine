@@ -99,7 +99,7 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
       }
 
       final Optional<Document> attr = indexes.stream().filter(index -> attrIndex.equals(index.getString("name"))).findFirst();
-      if (attr.isPresent() && attr.get().getBoolean("unique")) {
+      if (attr.isPresent() && attr.get().getBoolean("unique", false)) {
          projectCollection.dropIndex(attrIndex);
       }
 
