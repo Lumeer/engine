@@ -37,7 +37,7 @@ public class Rule {
    }
 
    public enum RuleTiming {
-      CREATE, UPDATE, CREATE_UPDATE, DELETE, CREATE_DELETE, UPDATE_DELETE, ALL;
+      CREATE, UPDATE, CREATE_UPDATE, DELETE, CREATE_DELETE, UPDATE_DELETE, ALL
    }
 
    private String name;
