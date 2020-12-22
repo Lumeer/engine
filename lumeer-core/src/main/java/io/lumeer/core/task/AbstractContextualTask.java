@@ -28,9 +28,9 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.AbstractConstraintConverter;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
-import io.lumeer.core.task.executor.JsExecutor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -53,13 +53,15 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected PusherClient pusherClient;
    protected Task parent;
    protected RequestDataKeeper requestDataKeeper;
+   protected ConstraintManager constraintManager;
 
    @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper) {
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager) {
       this.initiator = initiator;
       this.daoContextSnapshot = daoContextSnapshot;
       this.pusherClient = pusherClient;
       this.requestDataKeeper = requestDataKeeper;
+      this.constraintManager = constraintManager;
 
       return this;
    }
@@ -72,6 +74,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public PusherClient getPusherClient() {
       return pusherClient;
+   }
+
+   @Override
+   public ConstraintManager getConstraintManager() {
+      return constraintManager;
    }
 
    @Override
@@ -228,7 +235,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper));
+            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper), getConstraintManager());
 
             return t;
          } catch (Exception e) {

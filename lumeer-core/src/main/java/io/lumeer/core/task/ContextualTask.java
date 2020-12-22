@@ -24,6 +24,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -33,11 +34,12 @@ import java.util.logging.Level;
 
 public interface ContextualTask extends Task {
 
-   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper);
+   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager);
 
    DaoContextSnapshot getDaoContextSnapshot();
    PusherClient getPusherClient();
    User getInitiator();
+   ConstraintManager getConstraintManager();
 
    /**
     * Send notifications to collection owners (i.e. managers).
