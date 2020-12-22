@@ -552,7 +552,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public void runRule(final Collection collection, final String ruleId) {
-      if (collection.getDocumentsCount() > 10_000) {
+      if (collection.getDocumentsCount() > 1_000) {
          throw new UnsuccessfulOperationException("Too many documents in the collection");
       }
 
@@ -566,7 +566,7 @@ public class CollectionFacade extends AbstractFacade {
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Constraint otherConstraint = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
 
-         if (otherCollection.getDocumentsCount() > 10_000) {
+         if (otherCollection.getDocumentsCount() > 1_000) {
             throw new UnsuccessfulOperationException("Too many documents in the collection");
          }
 
