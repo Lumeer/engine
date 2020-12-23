@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
@@ -182,14 +183,13 @@ public class DelayedActionIT extends IntegrationTestBase {
             new Attribute("a5", "Something", null, null, 0)
       ));
       jsonCollection.setDefaultAttributeId("a0");
-      jsonCollection.setMetaData(
+      jsonCollection.setPurpose(new CollectionPurpose(CollectionPurposeType.Tasks,
             new DataDocument(Collection.META_ASSIGNEE_ATTRIBUTE_ID, "a1")
                .append(Collection.META_DUE_DATE_ATTRIBUTE_ID, "a2")
                .append(Collection.META_STATE_ATTRIBUTE_ID, "a3")
                .append(Collection.META_FINAL_STATES_LIST, List.of("Done", "Won't fix"))
-               .append(Collection.META_OBSERVERS_ATTRIBUTE_ID, "a4")
+               .append(Collection.META_OBSERVERS_ATTRIBUTE_ID, "a4"))
       );
-      jsonCollection.setPurpose(CollectionPurpose.Tasks);
       collection = collectionDao.createCollection(jsonCollection);
    }
 

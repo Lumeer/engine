@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.function.Function;
@@ -140,7 +141,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    }
 
    private Collection prepareCollection(String code, String name) {
-      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>(), "", CollectionPurpose.None, null);
+      Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>(), "", new CollectionPurpose(CollectionPurposeType.None, null));
       collection.setDocumentsCount(DOCUMENTS_COUNT);
       collection.setLastTimeUsed(LAST_TIME_USED);
       return collection;
