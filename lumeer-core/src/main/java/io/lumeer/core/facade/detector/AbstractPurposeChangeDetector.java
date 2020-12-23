@@ -371,6 +371,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected ZonedDateTime nowPlus() {
-      return ZonedDateTime.now().plus(2, ChronoUnit.MINUTES);
+      return ZonedDateTime.now(); // .plus(2, ChronoUnit.MINUTES);
    }
 }

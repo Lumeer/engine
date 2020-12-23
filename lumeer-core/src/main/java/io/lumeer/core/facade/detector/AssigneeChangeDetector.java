@@ -60,7 +60,7 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
             }
 
             if (documentEvent instanceof UpdateDocument) {
-               delayedActionDao.scheduleActions(getDelayDedActions(documentEvent, collection, NotificationType.TASK_UNASSIGNED, nowPlus(), getRemovedAssignees(documentEvent, collection)));
+               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UNASSIGNED, nowPlus(), getRemovedAssignees(documentEvent, collection)));
             }
 
             if (!(documentEvent instanceof RemoveDocument) && !doneState) {
