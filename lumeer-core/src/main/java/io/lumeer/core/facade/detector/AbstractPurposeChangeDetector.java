@@ -45,6 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -137,7 +138,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
       return Set.of();
    }
-
 
    protected Set<String> getObservers(final DocumentEvent documentEvent, final Collection collection) {
       final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_OBSERVERS_ATTRIBUTE_ID) : null;
@@ -297,11 +297,13 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected List<DelayedAction> getDelayedActions(final DocumentEvent documentEvent, final Collection collection, final NotificationType notificationType, final ZonedDateTime when, final Set<String> assignees) {
       final List<DelayedAction> actions = new ArrayList<>();
 
+      System.out.println(notificationType + " /// " + assignees);
+
       if (assignees != null) {
          assignees.stream().filter(assignee ->
                notificationType == NotificationType.DUE_DATE_SOON ||
-               notificationType == NotificationType.PAST_DUE_DATE ||
-               !assignee.equals(currentUser.getEmail())
+                     notificationType == NotificationType.PAST_DUE_DATE ||
+                     !assignee.equals(currentUser.getEmail())
          ).forEach(assignee -> {
             final List<NotificationSetting> channels = getChannels(documentEvent, collection, notificationType, assignee);
 
@@ -350,7 +352,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       data.append(DelayedAction.DATA_TASK_STATE, getState(documentEvent, collection));
       data.append(DelayedAction.DATA_TASK_NAME, getDescription(documentEvent, collection));
       data.append(DelayedAction.DATA_TASK_NAME_ATTRIBUTE, getDescriptionAttribute(documentEvent, collection));
-      data.append(DelayedAction.DATA_TASK_DUE_DATE, new Date(getDueDate(documentEvent, collection).toInstant().toEpochMilli()));
+
+      var dueDate = getDueDate(documentEvent, collection);
+      if (dueDate != null) {
+         data.append(DelayedAction.DATA_TASK_DUE_DATE, new Date(dueDate.toInstant().toEpochMilli()));
+      }
       data.append(DelayedAction.DATA_DUE_DATE_FORMAT, getDueDateFormat(documentEvent, collection));
       data.append(DelayedAction.DATA_ASSIGNEE, String.join(", ", assignees));
 
@@ -365,6 +371,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected ZonedDateTime nowPlus() {
-      return ZonedDateTime.now();//.plus(2, ChronoUnit.MINUTES);
+      return ZonedDateTime.now().plus(2, ChronoUnit.MINUTES);
    }
 }
