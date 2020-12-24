@@ -126,10 +126,14 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForDocument(final Document document, final String userId) {
+      return this.createEventForDocument(document, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
+   }
+
+   private Event createEventForDocument(final Document document, final String userId, final String suffix) {
       document.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.DOCUMENT, document.getId()));
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(document, document.getCollectionId()), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + suffix, message, getResourceId(document, document.getCollectionId()), null);
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId) {
@@ -157,18 +161,24 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    @Override
    public void sendPushNotifications(final Collection collection, final List<Document> documents) {
+      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX);
+   }
+
+   @Override
+   public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix) {
       final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
       final List<Event> collectionEvents = new ArrayList<>();
 
       users.forEach(userId -> {
-         documents.forEach(doc -> events.add(createEventForDocument(doc, userId)));
+         documents.forEach(doc -> events.add(createEventForDocument(doc, userId, suffix)));
          collectionEvents.add(createEventForCollection(collection, userId));
       });
 
       getPusherClient().trigger(events);
       getPusherClient().trigger(collectionEvents);
    }
+
 
    @Override
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances) {

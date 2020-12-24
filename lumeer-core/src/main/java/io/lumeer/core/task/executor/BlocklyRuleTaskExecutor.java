@@ -49,7 +49,9 @@ public class BlocklyRuleTaskExecutor {
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
+         bindings.put("oldRecord", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
          bindings.put("oldDocument", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
+         bindings.put("newRecord", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
          bindings.put("newDocument", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
       } else {
          bindings.put("oldLink", new JsExecutor.LinkBridge(ruleTask.getOldLinkInstance()));

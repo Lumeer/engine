@@ -18,8 +18,7 @@
  */
 package io.lumeer.core.task.executor;
 
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -28,6 +27,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.util.MomentJsParser;
@@ -53,10 +53,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class JsExecutor {
+
+   private static final String CREATE_PREFIX = "CREATE_";
 
    private static Logger log = Logger.getLogger(JsExecutor.class.getName());
 
@@ -100,6 +104,21 @@ public class JsExecutor {
       public String getCurrentUser() {
          final String email = ruleTask.getInitiator().getEmail();
          return email == null ? "" : email;
+      }
+
+      public DocumentBridge createDocument(final String collectionId) {
+         try {
+            final Document d = new Document(collectionId, ZonedDateTime.now(), null, ruleTask.getInitiator().getId(), null, 0, null);
+            d.createIfAbsentMetaData().put(Document.META_CORRELATION_ID, CREATE_PREFIX + UUID.randomUUID().toString());
+            d.setData(new DataDocument());
+
+            changes.add(new DocumentCreation(d));
+
+            return new DocumentBridge(d);
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
       }
 
       public void setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
@@ -174,7 +193,7 @@ public class JsExecutor {
                return links.stream().map(linkInstance -> {
                   linkInstance.setData(linkData.get(linkInstance.getId()));
                   return new LinkBridge(linkInstance);
-               }).collect(Collectors.toList());
+               }).collect(toList());
             } else {
                return Collections.emptyList();
             }
@@ -234,7 +253,7 @@ public class JsExecutor {
                         document.setData(dd);
 
                         return new DocumentBridge(document);
-                     }).collect(Collectors.toList());
+                     }).collect(toList());
             } else {
                return Collections.emptyList();
             }
@@ -298,6 +317,29 @@ public class JsExecutor {
          }
       }
 
+      private List<Document> createDocuments(final List<DocumentCreation> changes) {
+         if (changes.isEmpty()) {
+            return List.of();
+         }
+
+         final List<Document> documents = changes.stream().map(DocumentCreation::getEntity).collect(toList());
+         final List<Document> result = ruleTask.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
+
+         Map<String, List<Document>> documentsByCollection = result.stream()
+             .collect(Collectors.groupingBy(Document::getCollectionId, mapping(d -> d, toList())));
+         final Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentsByCollection.keySet())
+             .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+
+         // send push notification
+         if (ruleTask.getPusherClient() != null) {
+            documentsByCollection.forEach((key, value) ->
+                  ruleTask.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX)
+            );
+         }
+
+         return result;
+      }
+
       private List<Document> commitDocumentChanges(final List<DocumentChange> changes) {
          if (changes.isEmpty()) {
             return List.of();
@@ -352,7 +394,7 @@ public class JsExecutor {
             );
          }
 
-         return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(Collectors.toList());
+         return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
       private List<LinkInstance> commitLinkChanges(final List<LinkChange> changes) {
@@ -405,7 +447,7 @@ public class JsExecutor {
             );
          }
 
-         return updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(Collectors.toList());
+         return updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
       void commitChanges() {
@@ -413,15 +455,27 @@ public class JsExecutor {
             return;
          }
 
-         final List<Change> invalidChanges = changes.stream().filter(change -> !change.isComplete()).collect(Collectors.toList());
+         final List<Change> invalidChanges = changes.stream().filter(change -> !change.isComplete()).collect(toList());
          if (invalidChanges.size() > 0) {
             final StringBuilder sb = new StringBuilder();
             invalidChanges.forEach(change -> sb.append("Invalid update request: " + change.toString() + "\n"));
             throw new IllegalArgumentException(sb.toString());
          }
 
-         final List<Document> changedDocuments = commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(Collectors.toList()));
-         final List<LinkInstance> changedLinkInstances = commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(Collectors.toList()));
+         // first create all new documents
+         final List<Document> createdDocuments = createDocuments(changes.stream().filter(change -> change instanceof DocumentCreation && change.isComplete()).map(change -> (DocumentCreation) change).collect(toList()));
+         final Map<String, String> correlationIdsToIds = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Document::getId));
+
+         // map the newly create document IDs to all other changes so that we use the correct document in updates etc.
+         changes.stream().filter(change -> change instanceof DocumentChange).forEach(change -> {
+            final Document doc = (Document) change.getEntity();
+            if (StringUtils.isEmpty(doc.getId()) && StringUtils.isNotEmpty(doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID))) {
+               doc.setId(correlationIdsToIds.get(doc.getMetaData().getString(Document.META_CORRELATION_ID)));
+            }
+         });
+
+         final List<Document> changedDocuments = commitDocumentChanges(changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(toList()));
+         final List<LinkInstance> changedLinkInstances = commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList()));
 
          ruleTask.propagateChanges(changedDocuments, changedLinkInstances);
       }
@@ -432,7 +486,11 @@ public class JsExecutor {
          final StringBuilder sb = new StringBuilder("");
 
          changes.forEach(change -> {
-            if (change instanceof DocumentChange) {
+            if (change instanceof DocumentCreation) {
+               final DocumentCreation documentCreation = (DocumentCreation) change;
+               final Collection collection = collections.computeIfAbsent(documentCreation.getEntity().getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
+               sb.append("new Document(" + collection.getName() + ")\n");
+            } else if (change instanceof DocumentChange) {
                final DocumentChange documentChange = (DocumentChange) change;
                final Collection collection = collections.computeIfAbsent(documentChange.getEntity().getCollectionId(), id -> ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
                appendChange(sb, collection.getName(), collection.getAttributes(), documentChange);
@@ -496,6 +554,18 @@ public class JsExecutor {
                ", attrId='" + getAttrId() + '\'' +
                ", value=" + getValue() +
                '}';
+      }
+   }
+
+   public static class DocumentCreation extends Change<Document> {
+
+      public DocumentCreation(final Document entity) {
+         super(entity, null, null);
+      }
+
+      @Override
+      public boolean isComplete() {
+         return true;
       }
    }
 
