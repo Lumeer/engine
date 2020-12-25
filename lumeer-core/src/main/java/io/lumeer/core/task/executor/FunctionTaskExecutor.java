@@ -57,7 +57,7 @@ public class FunctionTaskExecutor {
    public void execute() {
       final JsExecutor.DocumentBridge thisDocument = new JsExecutor.DocumentBridge(document);
       final JsExecutor.LinkBridge thisLink = new JsExecutor.LinkBridge(linkInstance);
-      final Map<String, Object> bindings = linkInstance == null ? Map.of("thisDocument", thisDocument) : Map.of("thisLink", thisLink);
+      final Map<String, Object> bindings = linkInstance == null ? Map.of("thisRecord", thisDocument, "thisDocument", thisDocument) : Map.of("thisLink", thisLink);
 
       final JsExecutor jsExecutor = new JsExecutor();
 

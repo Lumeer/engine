@@ -53,7 +53,7 @@ public class RuleCodec implements Codec<Rule> {
    public void encode(final BsonWriter bsonWriter, final Rule rule, final EncoderContext encoderContext) {
       final Document bson = new Document()
             .append(NAME, rule.getName())
-            .append(TYPE, rule.getType().ordinal())
+            .append(TYPE, rule.getType() != null ? rule.getType().ordinal() : null)
             .append(CONFIGURATION, rule.getConfiguration());
 
       if (rule.getTiming() != null) {
@@ -66,7 +66,7 @@ public class RuleCodec implements Codec<Rule> {
    public static Rule convertFromDocument(final Document bson) {
       final String name = bson.getString(NAME);
       final Integer typeInt = bson.getInteger(TYPE);
-      final Rule.RuleType type = Rule.RuleType.values()[typeInt != null ? typeInt : 0];
+      final Rule.RuleType type = typeInt != null ? Rule.RuleType.values()[typeInt] : null;
 
       final Integer timingInt = bson.getInteger(TIMING);
       final Rule.RuleTiming timing = timingInt != null ? Rule.RuleTiming.values()[timingInt] : null;
