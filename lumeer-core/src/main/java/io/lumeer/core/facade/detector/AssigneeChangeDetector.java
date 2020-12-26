@@ -36,7 +36,7 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
 
    @Override
    public void detectChanges(final DocumentEvent documentEvent, final Collection collection) {
-      final DataDocument meta = collection.getMetaData();
+      final DataDocument meta = collection.getPurposeMetaData();
 
       if (meta != null) {
          final String assigneeAttr = meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID);

@@ -19,7 +19,7 @@
 package io.lumeer.core.facade.detector;
 
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.ResourceEvent;
 import io.lumeer.engine.api.event.UpdateResource;
@@ -33,7 +33,7 @@ public class CollectionPurposeChangeDetector extends AbstractCollectionChangeDet
          final Collection updatedCollection = (Collection) resourceEvent.getResource();
 
          if (originalCollection != null && updatedCollection != null) {
-            if (originalCollection.getPurpose() != updatedCollection.getPurpose() && originalCollection.getPurpose() == CollectionPurpose.Tasks) {
+            if (originalCollection.getPurposeType() != updatedCollection.getPurposeType() && originalCollection.getPurposeType() == CollectionPurposeType.Tasks) {
                delayedActionDao.deleteAllScheduledActions(getResourcePath(resourceEvent));
             }
          }

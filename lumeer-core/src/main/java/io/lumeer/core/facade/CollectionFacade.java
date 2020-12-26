@@ -20,9 +20,9 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.FileAttachment;
-import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -58,8 +58,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -178,6 +176,17 @@ public class CollectionFacade extends AbstractFacade {
       collection.setDocumentsCount(storedCollection.getDocumentsCount());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
       collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
+      collection.setPurpose(storedCollection.getPurpose());
+   }
+   public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
+      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = storedCollection.copy();
+      permissionsChecker.checkRole(storedCollection, Role.MANAGE);
+
+      storedCollection.setPurpose(purpose);
+
+      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
+      return mapResource(updatedCollection);
    }
 
    public void deleteCollection(String collectionId) {
@@ -389,18 +398,18 @@ public class CollectionFacade extends AbstractFacade {
          collection.setDefaultAttributeId(null);
       }
 
-      final DataDocument meta = collection.createIfAbsentMetaData();
+      final DataDocument meta = collection.createIfAbsentPurposeMetaData();
       if (attributeId.equals(meta.getString(Collection.META_STATE_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_STATE_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_STATE_ATTRIBUTE_ID);
       }
       if (attributeId.equals(meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_DUE_DATE_ATTRIBUTE_ID);
       }
       if (attributeId.equals(meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
       }
       if (attributeId.equals(meta.getString(Collection.META_OBSERVERS_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_OBSERVERS_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_OBSERVERS_ATTRIBUTE_ID);
       }
 
       collection.setLastTimeUsed(ZonedDateTime.now());

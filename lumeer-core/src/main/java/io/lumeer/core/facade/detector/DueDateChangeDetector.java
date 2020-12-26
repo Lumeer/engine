@@ -35,7 +35,7 @@ public class DueDateChangeDetector extends AbstractPurposeChangeDetector {
 
    @Override
    public void detectChanges(final DocumentEvent documentEvent, final Collection collection) {
-      final DataDocument meta = collection.getMetaData();
+      final DataDocument meta = collection.getPurposeMetaData();
 
       if (meta != null) {
          final String dueDateAttr = meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);

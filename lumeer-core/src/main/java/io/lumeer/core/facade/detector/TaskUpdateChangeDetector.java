@@ -31,7 +31,7 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
 
    @Override
    public void detectChanges(final DocumentEvent documentEvent, final Collection collection) {
-      final DataDocument meta = collection.getMetaData();
+      final DataDocument meta = collection.getPurposeMetaData();
 
       if (meta != null) {
          final boolean doneState = isDoneState(documentEvent, collection);
