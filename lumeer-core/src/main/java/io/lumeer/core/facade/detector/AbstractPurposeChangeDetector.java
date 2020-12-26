@@ -34,6 +34,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -260,7 +261,8 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
          final Object value = documentEvent.getDocument().getData().getObject(defaultAttributeId);
 
          if (value != null) {
-            return constraintManager.decode(value, collection.getAttributes().stream().filter(attribute -> defaultAttributeId.equals(attribute.getId())).map(Attribute::getConstraint).findFirst().orElse(null)).toString();
+            final Attribute attr = collection.getAttributes().stream().filter(attribute -> defaultAttributeId.equals(attribute.getId())).findFirst().orElse(null);
+            return constraintManager.decode(value, Utils.computeIfNotNull(attr, Attribute::getConstraint)).toString();
          }
       }
 

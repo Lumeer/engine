@@ -44,6 +44,7 @@ import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -579,10 +580,12 @@ public class CollectionFacade extends AbstractFacade {
          final AutoLinkRule autoLinkRule = new AutoLinkRule(rule);
          final String otherCollectionId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getCollection1() : autoLinkRule.getCollection2();
          final String attributeId = autoLinkRule.getCollection1().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
-         final Constraint constraint = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
+         final Attribute attribute = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).findFirst().orElse(null);
+         final Constraint constraint = Utils.computeIfNotNull(attribute, Attribute::getConstraint);
          final Collection otherCollection = getCollection(otherCollectionId);
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
-         final Constraint otherConstraint = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
+         final Attribute otherAttribute = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).findFirst().orElse(null);
+         final Constraint otherConstraint = Utils.computeIfNotNull(otherAttribute, Attribute::getConstraint);
 
          if (otherCollection.getDocumentsCount() > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the collection");
