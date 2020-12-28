@@ -74,6 +74,9 @@ public class DelayedActionFacade {
    private RequestDataKeeper requestDataKeeper;
 
    @Inject
+   private ConfigurationFacade configurationFacade;
+
+   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private ConstraintManager constraintManager;
@@ -128,7 +131,7 @@ public class DelayedActionFacade {
 
       if (detectors != null) {
          detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager);
+            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationFacade.getEnvironment());
             detector.detectChanges(documentEvent, collection);
          });
       }

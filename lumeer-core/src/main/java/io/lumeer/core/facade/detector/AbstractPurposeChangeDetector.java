@@ -34,6 +34,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
@@ -46,6 +47,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -64,15 +66,17 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected User currentUser;
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
+   protected ConfigurationFacade.DeployEnvironment environment;
 
    @Override
-   public void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager) {
+   public void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final ConfigurationFacade.DeployEnvironment environment) {
       this.delayedActionDao = delayedActionDao;
       this.userDao = userDao;
       this.selectedWorkspace = selectedWorkspace;
       this.currentUser = currentUser;
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
+      this.environment = environment;
    }
 
    protected boolean isAttributeChanged(final DocumentEvent documentEvent, final String attributeId) {
@@ -372,6 +376,9 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected ZonedDateTime nowPlus() {
-      return ZonedDateTime.now(); // .plus(2, ChronoUnit.MINUTES);
+      if (environment == ConfigurationFacade.DeployEnvironment.PRODUCTION) {
+         return ZonedDateTime.now().plus(2, ChronoUnit.MINUTES);
+      }
+      return ZonedDateTime.now();
    }
 }
