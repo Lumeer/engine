@@ -302,8 +302,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected List<DelayedAction> getDelayedActions(final DocumentEvent documentEvent, final Collection collection, final NotificationType notificationType, final ZonedDateTime when, final Set<String> assignees) {
       final List<DelayedAction> actions = new ArrayList<>();
 
-      System.out.println(notificationType + " /// " + assignees);
-
       if (assignees != null) {
          assignees.stream().filter(assignee ->
                notificationType == NotificationType.DUE_DATE_SOON ||

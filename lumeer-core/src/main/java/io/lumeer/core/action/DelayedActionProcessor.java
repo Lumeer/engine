@@ -155,7 +155,7 @@ public class DelayedActionProcessor {
             null,
             originalData.getString(DelayedAction.DATA_DOCUMENT_ID),
             null,
-            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE)).toQueryString();
+            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE), true).toQueryString();
       data.put(DelayedAction.DATA_DOCUMENT_CURSOR, Utils.encodeQueryParam(cursor));
 
       return data;
