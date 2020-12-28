@@ -155,6 +155,7 @@ public class UserCodec implements CollectibleCodec<User> {
                new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Internal, NotificationFrequency.Immediately),
 
                new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
@@ -167,7 +168,8 @@ public class UserCodec implements CollectibleCodec<User> {
                new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
-               new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately)
+               new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately)
          );
       }
       final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);

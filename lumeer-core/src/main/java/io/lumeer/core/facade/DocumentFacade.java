@@ -22,7 +22,6 @@ import io.lumeer.api.model.*;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
-import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
@@ -441,7 +440,7 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument data = dataDao.getData(collectionId, documentId);
       updateCollectionMetadata(collection, Collections.emptySet(), data.keySet(), -1);
 
-      documentDao.deleteDocument(documentId);
+      documentDao.deleteDocument(documentId, data);
       dataDao.deleteData(collection.getId(), documentId);
 
       deleteDocumentBasedData(collectionId, documentId);

@@ -70,10 +70,9 @@ public class Collection extends Resource {
    private Map<String, Rule> rules;
    private String dataDescription;
    private CollectionPurpose purpose;
-   private DataDocument metaData;
 
    public Collection(final String code, final String name, final String icon, final String color, final Permissions permissions) {
-      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>(), "", CollectionPurpose.None, null);
+      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>(), "", new CollectionPurpose(CollectionPurposeType.None, null));
    }
 
    @JsonCreator
@@ -87,8 +86,7 @@ public class Collection extends Resource {
          @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
          @JsonProperty(RULES) final Map<String, Rule> rules,
          @JsonProperty(DATA_DESCRIPTION) final String dataDescription,
-         @JsonProperty(PURPOSE) final CollectionPurpose purpose,
-         @JsonProperty(META_DATA) final DataDocument metaData) {
+         @JsonProperty(PURPOSE) final CollectionPurpose purpose) {
       super(code, name, icon, color, description, permissions);
 
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
@@ -97,7 +95,6 @@ public class Collection extends Resource {
       this.rules = rules;
       this.dataDescription = dataDescription;
       this.purpose = purpose;
-      this.metaData = metaData;
    }
 
    @Override
@@ -116,8 +113,7 @@ public class Collection extends Resource {
       o.version = this.version;
       o.rules = this.rules != null ? new HashMap<>(this.rules) : Collections.emptyMap();
       o.dataDescription = this.dataDescription;
-      o.purpose = this.purpose;
-      o.metaData = new DataDocument(this.metaData);
+      o.purpose = this.purpose != null ? new CollectionPurpose(this.purpose.getType(), new DataDocument(this.purpose.createIfAbsentMetaData())) : null;
 
       return o;
    }
@@ -213,28 +209,31 @@ public class Collection extends Resource {
       this.dataDescription = dataDescription;
    }
 
-   public DataDocument getMetaData() {
-      return metaData;
+   public DataDocument getPurposeMetaData() {
+      if (this.purpose != null) {
+         return this.purpose.getMetaData();
+      }
+      return new DataDocument();
    }
 
-   public DataDocument createIfAbsentMetaData() {
-      if (metaData == null) {
-         this.metaData = new DataDocument();
+   public DataDocument createIfAbsentPurposeMetaData() {
+      if (this.purpose == null) {
+         this.purpose = new CollectionPurpose(CollectionPurposeType.None, new DataDocument());
       }
 
-      return metaData;
+      return this.purpose.getMetaData();
    }
 
-   public void setMetaData(final DataDocument metaData) {
-      this.metaData = metaData;
+   public void setPurpose(final CollectionPurpose purpose) {
+      this.purpose = purpose;
    }
 
    public CollectionPurpose getPurpose() {
       return purpose;
    }
 
-   public void setPurpose(final CollectionPurpose purpose) {
-      this.purpose = purpose;
+   public CollectionPurposeType getPurposeType() {
+      return purpose != null ? purpose.getType() : CollectionPurposeType.None;
    }
 
    @Override
@@ -252,8 +251,7 @@ public class Collection extends Resource {
             ", lastTimeUsed=" + lastTimeUsed +
             ", rules=" + rules +
             ", dataDescription=" + dataDescription +
-            ", tasks=" + purpose +
-            ", metaData=" + metaData +
+            ", purpose=" + purpose +
             '}';
    }
 

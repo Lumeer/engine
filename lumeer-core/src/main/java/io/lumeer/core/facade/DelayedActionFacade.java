@@ -20,7 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -74,6 +74,9 @@ public class DelayedActionFacade {
    private RequestDataKeeper requestDataKeeper;
 
    @Inject
+   private ConfigurationFacade configurationFacade;
+
+   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private ConstraintManager constraintManager;
@@ -83,8 +86,8 @@ public class DelayedActionFacade {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
-   private static final Map<CollectionPurpose, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurpose.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
-   private static final Map<CollectionPurpose, Set<CollectionChangeDetector>> collectionChangeDetectors = Map.of(CollectionPurpose.None, Set.of(new CollectionPurposeChangeDetector()), CollectionPurpose.Tasks, Set.of(new CollectionPurposeChangeDetector(), new AttributePurposeChangeDetector()));
+   private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
+   private static final Map<CollectionPurposeType, Set<CollectionChangeDetector>> collectionChangeDetectors = Map.of(CollectionPurposeType.None, Set.of(new CollectionPurposeChangeDetector()), CollectionPurposeType.Tasks, Set.of(new CollectionPurposeChangeDetector(), new AttributePurposeChangeDetector()));
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
       processChanges(createDocument);
@@ -111,7 +114,7 @@ public class DelayedActionFacade {
    }
 
    private void processChanges(final ResourceEvent resourceEvent) {
-      final Set<CollectionChangeDetector> detectors = collectionChangeDetectors.get(((Collection) resourceEvent.getResource()).getPurpose());
+      final Set<CollectionChangeDetector> detectors = collectionChangeDetectors.get(((Collection) resourceEvent.getResource()).getPurposeType());
 
       if (detectors != null) {
          detectors.forEach(detector -> {
@@ -124,11 +127,11 @@ public class DelayedActionFacade {
    private void processChanges(final DocumentEvent documentEvent) {
       final Collection collection = getCollection(documentEvent);
 
-      final Set<PurposeChangeDetector> detectors = changeDetectors.get(collection.getPurpose());
+      final Set<PurposeChangeDetector> detectors = changeDetectors.get(collection.getPurposeType());
 
       if (detectors != null) {
          detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager);
+            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationFacade.getEnvironment());
             detector.detectChanges(documentEvent, collection);
          });
       }

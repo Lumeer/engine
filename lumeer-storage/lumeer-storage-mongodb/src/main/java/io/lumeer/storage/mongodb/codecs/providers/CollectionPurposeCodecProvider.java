@@ -16,8 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-public enum NotificationType {
-   ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, BULK_ACTION, DUE_DATE_CHANGED
+package io.lumeer.storage.mongodb.codecs.providers;
+
+import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.storage.mongodb.codecs.CollectionPurposeCodec;
+
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+
+public class CollectionPurposeCodecProvider implements CodecProvider {
+
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == CollectionPurpose.class) {
+         return (Codec<T>) new CollectionPurposeCodec(registry);
+      }
+
+      return null;
+   }
+
 }

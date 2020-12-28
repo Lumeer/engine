@@ -72,7 +72,7 @@ public class DelayedActionProcessor {
 
    private PusherClient pusherClient;
 
-   @Schedule(hour = "*", minute = "*/2")
+   @Schedule(hour = "*", minute = "*", second = "*/10")
    public void process() {
       delayedActionDao.deleteProcessedActions();
       delayedActionDao.resetTimeoutedActions();
@@ -155,7 +155,7 @@ public class DelayedActionProcessor {
             null,
             originalData.getString(DelayedAction.DATA_DOCUMENT_ID),
             null,
-            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE)).toQueryString();
+            originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE), true).toQueryString();
       data.put(DelayedAction.DATA_DOCUMENT_CURSOR, Utils.encodeQueryParam(cursor));
 
       return data;
@@ -177,6 +177,8 @@ public class DelayedActionProcessor {
             return EmailService.EmailTemplate.TASK_REMOVED;
          case TASK_UNASSIGNED:
             return EmailService.EmailTemplate.TASK_UNASSIGNED;
+         case DUE_DATE_CHANGED:
+            return EmailService.EmailTemplate.DUE_DATE_CHANGED;
          default:
             return null;
       }

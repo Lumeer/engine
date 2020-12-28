@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +32,7 @@ public interface DocumentDao extends ProjectScopedDao {
 
    Document updateDocument(String id, Document document);
 
-   void deleteDocument(String id);
+   void deleteDocument(String id, DataDocument data);
 
    void deleteDocuments(String collectionId);
 

@@ -20,6 +20,7 @@ package io.lumeer.core.template;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -104,7 +105,7 @@ public class CollectionCreator extends WithIdCreator {
    }
 
    private Collection getCollection(final JSONObject o) {
-      final Collection c =  new Collection(
+      final Collection c = new Collection(
             (String) o.get(Collection.CODE),
             (String) o.get(Collection.NAME),
             (String) o.get(Collection.ICON),
@@ -113,15 +114,16 @@ public class CollectionCreator extends WithIdCreator {
       );
 
       c.setDataDescription((String) o.get(Collection.DATA_DESCRIPTION));
-      c.setPurpose(Utils.computeIfNotNull((String) o.get(Collection.PURPOSE), CollectionPurpose::valueOf));
+
+      var purposeType = Utils.computeIfNotNull((String) o.get(Collection.PURPOSE), CollectionPurposeType::valueOf);
 
       final JSONObject metaData = (JSONObject) o.get(Collection.META_DATA);
+      final DataDocument dataDocument = new DataDocument();
       if (metaData != null) {
-         final DataDocument dataDocument = new DataDocument();
          metaData.forEach((k, v) -> dataDocument.append(k.toString(), v));
-
-         c.setMetaData(dataDocument);
       }
+
+      c.setPurpose(new CollectionPurpose(purposeType, dataDocument));
 
       return c;
    }

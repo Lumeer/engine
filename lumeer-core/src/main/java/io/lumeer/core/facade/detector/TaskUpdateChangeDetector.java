@@ -31,7 +31,7 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
 
    @Override
    public void detectChanges(final DocumentEvent documentEvent, final Collection collection) {
-      final DataDocument meta = collection.getMetaData();
+      final DataDocument meta = collection.getPurposeMetaData();
 
       if (meta != null) {
          final boolean doneState = isDoneState(documentEvent, collection);
@@ -40,7 +40,17 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
             // delete previous due date and assignee events on the document
             delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.TASK_UPDATED));
             if (!doneState) {
-               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), getObservers(documentEvent, collection)));
+               final Set<String> observers = getObservers(documentEvent, collection);
+               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), observers));
+
+               // assignee != initiator, initiator != observer, no change in due date, state, nor assignee => send task update
+               final String assigneeAttr = meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+               final String dueDateAttr = meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+               final String stateAttr = meta.getString(Collection.META_STATE_ATTRIBUTE_ID);
+
+               if ((observers != null && !observers.contains(currentUser.getEmail())) && !isAttributeChanged(documentEvent, assigneeAttr) && !isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, stateAttr)) {
+                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
+               }
             }
          }
 

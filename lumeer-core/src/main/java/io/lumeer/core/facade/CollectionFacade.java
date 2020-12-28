@@ -20,9 +20,9 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.FileAttachment;
-import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -44,6 +44,7 @@ import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -58,8 +59,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -178,6 +177,17 @@ public class CollectionFacade extends AbstractFacade {
       collection.setDocumentsCount(storedCollection.getDocumentsCount());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
       collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
+      collection.setPurpose(storedCollection.getPurpose());
+   }
+   public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
+      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+      final Collection originalCollection = storedCollection.copy();
+      permissionsChecker.checkRole(storedCollection, Role.MANAGE);
+
+      storedCollection.setPurpose(purpose);
+
+      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
+      return mapResource(updatedCollection);
    }
 
    public void deleteCollection(String collectionId) {
@@ -389,18 +399,18 @@ public class CollectionFacade extends AbstractFacade {
          collection.setDefaultAttributeId(null);
       }
 
-      final DataDocument meta = collection.createIfAbsentMetaData();
+      final DataDocument meta = collection.createIfAbsentPurposeMetaData();
       if (attributeId.equals(meta.getString(Collection.META_STATE_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_STATE_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_STATE_ATTRIBUTE_ID);
       }
       if (attributeId.equals(meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_DUE_DATE_ATTRIBUTE_ID);
       }
       if (attributeId.equals(meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
       }
       if (attributeId.equals(meta.getString(Collection.META_OBSERVERS_ATTRIBUTE_ID))) {
-         collection.getMetaData().remove(Collection.META_OBSERVERS_ATTRIBUTE_ID);
+         collection.getPurposeMetaData().remove(Collection.META_OBSERVERS_ATTRIBUTE_ID);
       }
 
       collection.setLastTimeUsed(ZonedDateTime.now());
@@ -570,10 +580,12 @@ public class CollectionFacade extends AbstractFacade {
          final AutoLinkRule autoLinkRule = new AutoLinkRule(rule);
          final String otherCollectionId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getCollection1() : autoLinkRule.getCollection2();
          final String attributeId = autoLinkRule.getCollection1().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
-         final Constraint constraint = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
+         final Attribute attribute = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).findFirst().orElse(null);
+         final Constraint constraint = Utils.computeIfNotNull(attribute, Attribute::getConstraint);
          final Collection otherCollection = getCollection(otherCollectionId);
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
-         final Constraint otherConstraint = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).map(Attribute::getConstraint).findFirst().orElse(null);
+         final Attribute otherAttribute = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).findFirst().orElse(null);
+         final Constraint otherConstraint = Utils.computeIfNotNull(otherAttribute, Attribute::getConstraint);
 
          if (otherCollection.getDocumentsCount() > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the collection");

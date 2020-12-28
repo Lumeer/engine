@@ -20,7 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -158,6 +157,12 @@ public class CollectionService extends AbstractService {
    public void runRule(@PathParam("collectionId") String collectionId, @PathParam("ruleId") final String ruleId) {
       final Collection collection = collectionFacade.getCollection(collectionId);
       collectionFacade.runRule(collection, ruleId);
+   }
+
+   @PUT
+   @Path("{collectionId:[0-9a-fA-F]{24}}/purpose")
+   public Collection updatePurpose(@PathParam("collectionId") String collectionId, CollectionPurpose purpose) {
+      return collectionFacade.updatePurpose(collectionId, purpose);
    }
 
    @GET

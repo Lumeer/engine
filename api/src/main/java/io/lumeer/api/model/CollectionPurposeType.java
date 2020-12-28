@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
-public enum NotificationType {
-   ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, BULK_ACTION, DUE_DATE_CHANGED
+public enum CollectionPurposeType {
+   None,
+   Tasks
 }

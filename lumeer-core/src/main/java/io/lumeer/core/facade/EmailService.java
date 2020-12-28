@@ -69,7 +69,7 @@ public class EmailService {
    private Engine templateEngine = Engine.createEngine();
 
    public enum EmailTemplate {
-      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED
+      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, DUE_DATE_CHANGED
    }
 
    @PostConstruct
@@ -94,7 +94,7 @@ public class EmailService {
          props.setProperty("mail.smtp.starttls.enable", "true");
          props.setProperty("mail.smtp.starttls.required", "true");
 
-         this.session = Session.getDefaultInstance(props, new Authenticator() {
+         this.session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                return new PasswordAuthentication(SMTP_USER, SMTP_PASSWORD);

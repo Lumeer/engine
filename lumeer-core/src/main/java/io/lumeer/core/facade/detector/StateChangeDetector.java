@@ -30,14 +30,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Set;
 
 public class StateChangeDetector extends AbstractPurposeChangeDetector {
 
    @Override
    public void detectChanges(final DocumentEvent documentEvent, final Collection collection) {
-      final DataDocument meta = collection.getMetaData();
+      final DataDocument meta = collection.getPurposeMetaData();
 
       if (meta != null) {
          final String stateAttr = meta.getString(Collection.META_STATE_ATTRIBUTE_ID);
@@ -47,8 +46,8 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
 
             if (!(documentEvent instanceof CreateDocument)) {
                // delete previous due date and assignee events on the document
-               if (doneState) {
-                  delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.STATE_UPDATE));
+               if (documentEvent instanceof RemoveDocument || doneState) {
+                  delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.STATE_UPDATE, NotificationType.DUE_DATE_CHANGED));
                }
             }
 
@@ -57,6 +56,9 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
                if (wasDoneState(documentEvent, collection) && !doneState) {
                   // create new due date events on the document
                   final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
+
+                  // no need to send DUE_DATE_CHANGED because due date is part of assigned message
+
                   if (dueDate != null) {
                      delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
 

@@ -23,6 +23,7 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -115,12 +116,15 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
-   public void deleteDocument(final String id) {
+   public void deleteDocument(final String id, final DataDocument data) {
       Document document = databaseCollection().findOneAndDelete(idFilter(id));
       if (document == null) {
          throw new StorageException("Document '" + id + "' has not been deleted.");
       }
       if (removeDocumentEvent != null) {
+         if (data != null) {
+            document.setData(data);
+         }
          removeDocumentEvent.fire(new RemoveDocument(document));
       }
    }

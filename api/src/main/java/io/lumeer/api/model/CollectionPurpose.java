@@ -18,7 +18,44 @@
  */
 package io.lumeer.api.model;
 
-public enum CollectionPurpose {
-   None,
-   Tasks
+import io.lumeer.engine.api.data.DataDocument;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+public class CollectionPurpose {
+
+   private final CollectionPurposeType type;
+   private DataDocument metaData;
+
+   @JsonCreator
+   public CollectionPurpose(@JsonProperty("type") final CollectionPurposeType type,
+         @JsonProperty("metaData") final DataDocument metaData) {
+      this.type = type;
+      this.metaData = metaData;
+   }
+
+   public CollectionPurposeType getType() {
+      return type;
+   }
+
+   public DataDocument getMetaData() {
+      return metaData;
+   }
+
+   public DataDocument createIfAbsentMetaData() {
+      if (metaData == null) {
+         this.metaData = new DataDocument();
+      }
+
+      return metaData;
+   }
+
+   @Override
+   public String toString() {
+      return "CollectionPurpose{" +
+            "type=" + type +
+            ", metaData=" + metaData +
+            '}';
+   }
 }
