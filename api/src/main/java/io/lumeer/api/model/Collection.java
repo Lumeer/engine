@@ -113,7 +113,7 @@ public class Collection extends Resource {
       o.version = this.version;
       o.rules = this.rules != null ? new HashMap<>(this.rules) : Collections.emptyMap();
       o.dataDescription = this.dataDescription;
-      o.purpose = this.purpose != null ? new CollectionPurpose(this.purpose.getType(), new DataDocument(this.purpose.getMetaData())) : null;
+      o.purpose = this.purpose != null ? new CollectionPurpose(this.purpose.getType(), new DataDocument(this.purpose.createIfAbsentMetaData())) : null;
 
       return o;
    }
