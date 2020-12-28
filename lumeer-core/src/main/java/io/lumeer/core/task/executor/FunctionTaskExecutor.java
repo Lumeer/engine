@@ -23,6 +23,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.task.FunctionTask;
+import io.lumeer.core.task.TaskExecutor;
 
 import java.util.Map;
 import java.util.logging.Level;
@@ -54,7 +55,7 @@ public class FunctionTaskExecutor {
       this.linkType = linkType;
    }
 
-   public void execute() {
+   public void execute(final TaskExecutor taskExecutor) {
       final JsExecutor.DocumentBridge thisDocument = new JsExecutor.DocumentBridge(document);
       final JsExecutor.LinkBridge thisLink = new JsExecutor.LinkBridge(linkInstance);
       final Map<String, Object> bindings = linkInstance == null ? Map.of("thisRecord", thisDocument, "thisDocument", thisDocument) : Map.of("thisLink", thisLink);
@@ -63,12 +64,12 @@ public class FunctionTaskExecutor {
 
       try {
          jsExecutor.execute(bindings, task, collection, task.getFunction().getJs());
-         jsExecutor.commitChanges();
+         jsExecutor.commitChanges(taskExecutor);
          checkErrorErasure();
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute function: ", e);
          writeTaskError(e, jsExecutor.getCause());
-         jsExecutor.setErrorInAttribute(document, task.getAttribute().getId());
+         jsExecutor.setErrorInAttribute(document, task.getAttribute().getId(), taskExecutor);
       }
    }
 

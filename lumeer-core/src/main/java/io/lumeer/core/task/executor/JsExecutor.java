@@ -27,9 +27,11 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
+import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -317,7 +319,7 @@ public class JsExecutor {
          }
       }
 
-      private List<Document> createDocuments(final List<DocumentCreation> changes) {
+      private List<Document> createDocuments(final List<DocumentCreation> changes, final TaskExecutor taskExecutor) {
          if (changes.isEmpty()) {
             return List.of();
          }
@@ -336,6 +338,9 @@ public class JsExecutor {
                   ruleTask.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX)
             );
          }
+
+         final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
+         result.forEach(doc -> taskExecutor.submitTask(functionFacade.createTaskForCreatedDocument(collectionsMap.get(doc.getCollectionId()), doc)));
 
          return result;
       }
@@ -450,7 +455,7 @@ public class JsExecutor {
          return updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
-      void commitChanges() {
+      void commitChanges(final TaskExecutor taskExecutor) {
          if (changes.isEmpty()) {
             return;
          }
@@ -463,7 +468,7 @@ public class JsExecutor {
          }
 
          // first create all new documents
-         final List<Document> createdDocuments = createDocuments(changes.stream().filter(change -> change instanceof DocumentCreation && change.isComplete()).map(change -> (DocumentCreation) change).collect(toList()));
+         final List<Document> createdDocuments = createDocuments(changes.stream().filter(change -> change instanceof DocumentCreation && change.isComplete()).map(change -> (DocumentCreation) change).collect(toList()), taskExecutor);
          final Map<String, String> correlationIdsToIds = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Document::getId));
 
          // map the newly create document IDs to all other changes so that we use the correct document in updates etc.
@@ -640,17 +645,17 @@ public class JsExecutor {
       context.eval("js", jsCode);
    }
 
-   public void commitChanges() {
-      lumeerBridge.commitChanges();
+   public void commitChanges(final TaskExecutor taskExecutor) {
+      lumeerBridge.commitChanges(taskExecutor);
    }
 
    public String getChanges() {
       return lumeerBridge.getChanges();
    }
 
-   public void setErrorInAttribute(final Document document, final String attributeId) {
+   public void setErrorInAttribute(final Document document, final String attributeId, final TaskExecutor taskExecutor) {
       lumeerBridge.changes = Set.of(new DocumentChange(document, attributeId, "ERR!"));
-      lumeerBridge.commitChanges();
+      lumeerBridge.commitChanges(taskExecutor);
    }
 
    public Exception getCause() {

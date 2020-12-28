@@ -94,12 +94,12 @@ public class FunctionTask extends AbstractContextualTask {
       if (documents != null && collection != null) {
          getDocumentsWithData(collection, documents).forEach(document -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
-            executor.execute();
+            executor.execute(taskExecutor);
          });
       } else if (linkType != null && linkInstances != null) {
          getLinkInstancesWithData(linkType, linkInstances).forEach(linkInstance -> {
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, linkType, linkInstance);
-            executor.execute();
+            executor.execute(taskExecutor);
          });
       }
 

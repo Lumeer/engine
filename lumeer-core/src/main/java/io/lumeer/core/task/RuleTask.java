@@ -70,7 +70,7 @@ public class RuleTask extends AbstractContextualTask {
    public void process(final TaskExecutor taskExecutor) {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
-         executor.execute();
+         executor.execute(taskExecutor);
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
          executor.execute(taskExecutor);
