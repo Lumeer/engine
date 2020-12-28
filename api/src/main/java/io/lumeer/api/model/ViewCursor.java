@@ -18,7 +18,15 @@
  */
 package io.lumeer.api.model;
 
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ViewCursor {
    private final String collectionId;
@@ -26,13 +34,15 @@ public class ViewCursor {
    private final String documentId;
    private final String linkInstanceId;
    private final String attributeId;
+   private final Boolean sidebar;
 
-   public ViewCursor(final String collectionId, final String linkTypeId, final String documentId, final String linkInstanceId, final String attributeId) {
+   public ViewCursor(final String collectionId, final String linkTypeId, final String documentId, final String linkInstanceId, final String attributeId, final Boolean sidebar) {
       this.collectionId = collectionId;
       this.linkTypeId = linkTypeId;
       this.documentId = documentId;
       this.linkInstanceId = linkInstanceId;
       this.attributeId = attributeId;
+      this.sidebar = sidebar;
    }
 
    public String getCollectionId() {
@@ -55,6 +65,10 @@ public class ViewCursor {
       return attributeId;
    }
 
+   public Boolean getSidebar() {
+      return sidebar;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -64,12 +78,12 @@ public class ViewCursor {
          return false;
       }
       final ViewCursor that = (ViewCursor) o;
-      return Objects.equals(collectionId, that.collectionId) && Objects.equals(linkTypeId, that.linkTypeId) && Objects.equals(documentId, that.documentId) && Objects.equals(linkInstanceId, that.linkInstanceId) && Objects.equals(attributeId, that.attributeId);
+      return Objects.equals(collectionId, that.collectionId) && Objects.equals(linkTypeId, that.linkTypeId) && Objects.equals(documentId, that.documentId) && Objects.equals(linkInstanceId, that.linkInstanceId) && Objects.equals(attributeId, that.attributeId) && Objects.equals(sidebar, that.sidebar);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(collectionId, linkTypeId, documentId, linkInstanceId, attributeId);
+      return Objects.hash(collectionId, linkTypeId, documentId, linkInstanceId, attributeId, sidebar);
    }
 
    @Override
@@ -80,15 +94,37 @@ public class ViewCursor {
             ", documentId='" + documentId + '\'' +
             ", linkInstanceId='" + linkInstanceId + '\'' +
             ", attributeId='" + attributeId + '\'' +
+            ", sidebar=" + sidebar +
             '}';
    }
 
-
    /**
     * Incomplete implementation that needs to be extended for more use cases.
+    *
     * @return partial URL query string representing this stem
     */
    public String toQueryString() {
-      return "{\"c\":\"" + collectionId + "\",\"d\":\"" + documentId + "\",\"a\":\"" + attributeId + "\"}";
+      Map<String, Object> elements = new HashMap<>();
+      if (StringUtils.isNotEmpty(collectionId)) {
+         elements.put("c", collectionId);
+      }
+      if (StringUtils.isNotEmpty(linkTypeId)) {
+         elements.put("t", linkTypeId);
+      }
+      if (StringUtils.isNotEmpty(documentId)) {
+         elements.put("d", documentId);
+      }
+      if (StringUtils.isNotEmpty(linkInstanceId)) {
+         elements.put("l", linkInstanceId);
+      }
+      if (StringUtils.isNotEmpty(attributeId)) {
+         elements.put("a", attributeId);
+      }
+      if (BooleanUtils.isTrue(sidebar)) {
+         elements.put("s", sidebar);
+      }
+
+      return new JSONObject(elements).toString();
    }
+
 }
