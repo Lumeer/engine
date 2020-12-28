@@ -177,6 +177,8 @@ public class DelayedActionProcessor {
             return EmailService.EmailTemplate.TASK_REMOVED;
          case TASK_UNASSIGNED:
             return EmailService.EmailTemplate.TASK_UNASSIGNED;
+         case DUE_DATE_CHANGED:
+            return EmailService.EmailTemplate.DUE_DATE_CHANGED;
          default:
             return null;
       }

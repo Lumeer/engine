@@ -43,12 +43,20 @@ public class DueDateChangeDetector extends AbstractPurposeChangeDetector {
          if (StringUtils.isNotEmpty(dueDateAttr) && isAttributeChanged(documentEvent, dueDateAttr)) {
             if (!(documentEvent instanceof CreateDocument)) {
                // delete previous due date events on the document
-               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE));
+               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.DUE_DATE_CHANGED));
             }
 
             if (!(documentEvent instanceof RemoveDocument) && !isDoneState(documentEvent, collection)) {
                // create new due date events on the document
                final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
+               final String assigneeAttr = meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+
+               // due date has changed - but it goes with the assignee change message, so send it only if the assignee did not change
+               if (isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, assigneeAttr)) {
+                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_CHANGED, nowPlus()));
+               }
+
+               // if it is not unset, then schedule past due and due date soon
                if (dueDate != null) {
                   delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
 

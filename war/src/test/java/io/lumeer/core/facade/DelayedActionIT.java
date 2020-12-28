@@ -207,6 +207,7 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Internal, NotificationFrequency.Immediately),
 
             new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
@@ -219,7 +220,8 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately)
+            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately)
       ));
    }
 
@@ -364,12 +366,13 @@ public class DelayedActionIT extends IntegrationTestBase {
 
       actions = delayedActionDao.getActions();
 
-      assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(8); // we can even have due soon
-      assertThat(actions.size()).isEqualTo(8);
+      assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(10); // we can even have due soon + due date changed
+      assertThat(actions.size()).isEqualTo(10);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_SOON)).isEqualTo(2);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_CHANGED)).isEqualTo(2);
 
       delayedActionDao.deleteAllScheduledActions(organizationId);
       actions = delayedActionDao.getActions();

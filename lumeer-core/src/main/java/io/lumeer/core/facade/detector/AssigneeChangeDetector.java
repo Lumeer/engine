@@ -45,10 +45,13 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
          if (StringUtils.isNotEmpty(assigneeAttr) && isAttributeChanged(documentEvent, assigneeAttr)) {
             if (!(documentEvent instanceof CreateDocument)) {
                // delete previous due date and assignee events on the document
-               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED));
+               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.DUE_DATE_CHANGED));
 
                if (!(documentEvent instanceof RemoveDocument) && !doneState) {
                   final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
+
+                  // no need to send DUE_DATE_CHANGED because due date is part of assigned message
+
                   if (dueDate != null) {
                      delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
 
