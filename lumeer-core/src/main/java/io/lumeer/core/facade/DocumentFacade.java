@@ -441,7 +441,7 @@ public class DocumentFacade extends AbstractFacade {
       DataDocument data = dataDao.getData(collectionId, documentId);
       updateCollectionMetadata(collection, Collections.emptySet(), data.keySet(), -1);
 
-      documentDao.deleteDocument(documentId);
+      documentDao.deleteDocument(documentId, data);
       dataDao.deleteData(collection.getId(), documentId);
 
       deleteDocumentBasedData(collectionId, documentId);

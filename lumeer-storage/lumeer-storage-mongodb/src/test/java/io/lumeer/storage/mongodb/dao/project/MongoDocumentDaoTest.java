@@ -166,7 +166,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
    public void testDeleteDocument() {
       String id = createDocument().getId();
 
-      documentDao.deleteDocument(id);
+      documentDao.deleteDocument(id, null);
 
       Document storedDocument = documentDao.databaseCollection().find(MongoFilters.idFilter(id)).first();
       assertThat(storedDocument).isNull();
@@ -174,7 +174,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteDocumentNotExisting() {
-      assertThatThrownBy(() -> documentDao.deleteDocument(DOCUMENT_ID))
+      assertThatThrownBy(() -> documentDao.deleteDocument(DOCUMENT_ID, null))
             .isInstanceOf(StorageException.class);
    }
 

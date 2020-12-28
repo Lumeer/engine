@@ -72,7 +72,7 @@ public class DelayedActionProcessor {
 
    private PusherClient pusherClient;
 
-   @Schedule(hour = "*", minute = "*/2")
+   @Schedule(hour = "*", minute = "*", second = "*/10")
    public void process() {
       delayedActionDao.deleteProcessedActions();
       delayedActionDao.resetTimeoutedActions();
