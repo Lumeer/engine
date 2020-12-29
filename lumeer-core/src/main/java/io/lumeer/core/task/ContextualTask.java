@@ -26,6 +26,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
+import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -40,6 +41,8 @@ public interface ContextualTask extends Task {
    PusherClient getPusherClient();
    User getInitiator();
    ConstraintManager getConstraintManager();
+   String getCurrentLocale();
+   String getCorrelationId();
 
    /**
     * Send notifications to collection owners (i.e. managers).
@@ -81,5 +84,14 @@ public interface ContextualTask extends Task {
     */
    void sendPushNotifications(final String sequenceName);
 
+   /**
+    * Send push notifications with messages from a rule execution.
+    * @param userMessages The messages to display.
+    */
+   void sendPushNotifications(final List<UserMessage> userMessages);
+
    FunctionFacade getFunctionFacade();
+
+   TaskProcessingFacade getTaskProcessingFacade(final TaskExecutor taskExecutor, final FunctionFacade functionFacade);
+
 }

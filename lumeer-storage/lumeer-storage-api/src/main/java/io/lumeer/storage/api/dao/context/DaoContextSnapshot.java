@@ -104,4 +104,7 @@ public interface DaoContextSnapshot {
    Set<String> getCollectionReaders(final Collection collection);
 
    Set<String> getProjectManagers();
+
+   long increaseCreationCounter();
+   long increaseMessageCounter();
 }

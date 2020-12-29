@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.task.RuleTask;
+import io.lumeer.core.task.TaskExecutor;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -45,7 +46,7 @@ public class BlocklyRuleTaskExecutor {
       this.ruleTask = ruleTask;
    }
 
-   public void execute() {
+   public void execute(final TaskExecutor taskExecutor) {
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
@@ -65,7 +66,7 @@ public class BlocklyRuleTaskExecutor {
          jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
 
          if (!rule.isDryRun()) {
-            jsExecutor.commitChanges();
+            jsExecutor.commitChanges(taskExecutor);
          } else {
             writeDryRunResults(jsExecutor.getChanges());
          }

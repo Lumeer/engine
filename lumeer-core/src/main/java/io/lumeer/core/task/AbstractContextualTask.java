@@ -31,9 +31,11 @@ import io.lumeer.core.constraint.AbstractConstraintConverter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
+import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
+import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
@@ -155,8 +157,18 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence, null), null);
    }
 
+   private Event createEventForUserMessage(final UserMessage userMessage, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(userMessage, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, UserMessage.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX, message, getResourceId(), null);
+   }
+
    private PusherFacade.ResourceId getResourceId(final WithId idObject, final String extraId) {
       return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
+   }
+
+   private PusherFacade.ResourceId getResourceId() {
+      return new PusherFacade.ResourceId(null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
    }
 
    @Override
@@ -178,7 +190,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(events);
       getPusherClient().trigger(collectionEvents);
    }
-
 
    @Override
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances) {
@@ -215,6 +226,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(events);
    }
 
+   public void sendPushNotifications(final List<UserMessage> userMessages) {
+      final List<Event> events = new ArrayList<>();
+
+      userMessages.stream().filter(m -> StringUtils.isNotEmpty(m.getMessage())).forEach(m ->
+         events.add(createEventForUserMessage(m, initiator.getId()))
+      );
+
+      getPusherClient().trigger(events);
+   }
+
    @Override
    public void propagateChanges(final List<Document> documents, final List<LinkInstance> links) {
       if (parent != null) {
@@ -237,7 +258,32 @@ public abstract class AbstractContextualTask implements ContextualTask {
             getDaoContextSnapshot().getLinkInstanceDao(),
             getDaoContextSnapshot().getLinkTypeDao(),
             new LocalContextualTaskFactory()
-            );
+      );
+   }
+
+   @Override
+   public TaskProcessingFacade getTaskProcessingFacade(final TaskExecutor taskExecutor, final FunctionFacade functionFacade) {
+      return TaskProcessingFacade.getInstance(
+            taskExecutor,
+            new LocalContextualTaskFactory(),
+            getDaoContextSnapshot().getCollectionDao(),
+            getDaoContextSnapshot().getLinkTypeDao(),
+            functionFacade
+      );
+   }
+
+   @Override
+   public String getCurrentLocale() {
+      if (StringUtils.isEmpty(requestDataKeeper.getUserLocale())) {
+         return initiator.getNotificationsLanguage();
+      }
+
+      return requestDataKeeper.getUserLocale();
+   }
+
+   @Override
+   public String getCorrelationId() {
+      return requestDataKeeper.getCorrelationId();
    }
 
    class LocalContextualTaskFactory extends ContextualTaskFactory {
