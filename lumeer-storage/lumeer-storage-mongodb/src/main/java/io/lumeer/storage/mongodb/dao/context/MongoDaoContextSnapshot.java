@@ -74,6 +74,7 @@ import com.mongodb.client.MongoDatabase;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.LongAdder;
 
 public class MongoDaoContextSnapshot implements DaoContextSnapshot {
 
@@ -81,6 +82,8 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    final private MongoDatabase userDatabase;
    final private Organization organization;
    final private Project project;
+   final private LongAdder createdDocumentsCounter = new LongAdder();
+   final private LongAdder messageCounter = new LongAdder();
 
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
       this.systemDatabase = (MongoDatabase) systemDataStorage.getDatabase();
@@ -274,5 +277,17 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       userIds.addAll(ResourceUtils.getManagers(project));
 
       return userIds;
+   }
+
+   @Override
+   public long increaseCreationCounter() {
+      createdDocumentsCounter.increment();
+      return createdDocumentsCounter.longValue();
+   }
+
+   @Override
+   public long increaseMessageCounter() {
+      messageCounter.increment();
+      return messageCounter.longValue();
    }
 }

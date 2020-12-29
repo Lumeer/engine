@@ -18,25 +18,29 @@
  */
 package io.lumeer.core.task;
 
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkInstance;
+public class UserMessage {
 
-import java.io.Serializable;
-import java.util.List;
+   private final String type;
+   private final String message;
 
-/**
- * A task that can be processed.
- */
-public interface Task extends Serializable {
+   public UserMessage(final String type, final String message) {
+      this.type = type;
+      this.message = message;
+   }
 
-   long MAX_CREATED_DOCUMENTS = 25L;
-   long MAX_MESSAGES = 5L;
+   public String getType() {
+      return type;
+   }
 
-   void setParent(Task task);
+   public String getMessage() {
+      return message;
+   }
 
-   Task getParent();
-
-   void process(TaskExecutor executor);
-
-   void propagateChanges(List<Document> documents, List<LinkInstance> links);
+   @Override
+   public String toString() {
+      return "UserMessage{" +
+            "type='" + type + '\'' +
+            ", message='" + message + '\'' +
+            '}';
+   }
 }

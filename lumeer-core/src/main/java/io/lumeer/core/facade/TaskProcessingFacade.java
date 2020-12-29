@@ -76,6 +76,18 @@ public class TaskProcessingFacade {
    @Inject
    private FunctionFacade functionFacade;
 
+   public static TaskProcessingFacade getInstance(final TaskExecutor taskExecutor, final ContextualTaskFactory contextualTaskFactory, final CollectionDao collectionDao, final LinkTypeDao linkTypeDao, final FunctionFacade functionFacade) {
+      final TaskProcessingFacade taskProcessingFacade = new TaskProcessingFacade();
+
+      taskProcessingFacade.taskExecutor = taskExecutor;
+      taskProcessingFacade.contextualTaskFactory = contextualTaskFactory;
+      taskProcessingFacade.collectionDao = collectionDao;
+      taskProcessingFacade.linkTypeDao = linkTypeDao;
+      taskProcessingFacade.functionFacade = functionFacade;
+
+      return taskProcessingFacade;
+   }
+
    public void runRule(final Collection collection, final String ruleName, final Document document) {
       if (collection != null && document != null) {
          Optional<RuleTask> task = createRuleTask(collection, ruleName, null, document);

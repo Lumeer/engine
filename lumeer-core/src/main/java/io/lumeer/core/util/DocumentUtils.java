@@ -18,14 +18,21 @@
  */
 package io.lumeer.core.util;
 
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
+import io.lumeer.storage.api.dao.CollectionDao;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DocumentUtils {
 
@@ -93,7 +100,22 @@ public class DocumentUtils {
       return attributeName.equals("_id") || !(attributeName.startsWith("$") || attributeName.startsWith("_") || attributeName.contains("."));
    }
 
-   private static Set<String> getDocumentAttributes(DataDocument dataDocument, String prefix) {
+   public static Map<String, List<Document>> getDocumentsByCollection(final List<Document> documents) {
+      return documents.stream().collect(Collectors.groupingBy(Document::getCollectionId, mapping(d -> d, toList())));
+   }
+
+   public static Map<String, Collection> getCollectionsMap(final CollectionDao collectionDao, final List<Document> documents) {
+      Map<String, List<Document>> documentsByCollection = getDocumentsByCollection(documents);
+      return collectionDao.getCollectionsByIds(documentsByCollection.keySet())
+                     .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+   }
+
+   public static Map<String, Collection> getCollectionsMap(final CollectionDao collectionDao, final Map<String, List<Document>> documentsByCollection) {
+      return collectionDao.getCollectionsByIds(documentsByCollection.keySet())
+                     .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+   }
+
+   public static Set<String> getDocumentAttributes(DataDocument dataDocument, String prefix) {
       Set<String> attrs = new HashSet<>();
       for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
          String attributeName = prefix + entry.getKey().trim();
@@ -112,4 +134,5 @@ public class DocumentUtils {
    private static boolean isList(Object obj) {
       return obj != null && obj instanceof List;
    }
+
 }
