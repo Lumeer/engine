@@ -42,7 +42,6 @@ public class UserUtil {
       user.setWizardDismissed(updatedUser.getWizardDismissed() != null ? updatedUser.getWizardDismissed() : existingUser.getWizardDismissed());
       user.setWishes(updatedUser.getWishes() != null ? updatedUser.getWishes() : existingUser.getWishes());
       user.setNotifications(updatedUser.getNotifications() != null ? updatedUser.getNotifications() : existingUser.getNotifications());
-      user.setNotificationsLanguage(updatedUser.getNotificationsLanguage() != null ? updatedUser.getNotificationsLanguage() : existingUser.getNotificationsLanguage());
       user.setHints(updatedUser.getHints() != null ? updatedUser.getHints() : existingUser.getHints());
 
       return user;
