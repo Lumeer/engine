@@ -279,7 +279,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
          notifications = currentUser.getNotificationsSettingsList();
       } else {
          final User user = userDao.getUserByEmail(assignee);
-         notifications = Utils.computeIfNotNull(user, User::getNotificationsSettingsList);
+         notifications = user != null ? user.getNotificationsSettingsList() : List.of();
       }
 
       return notifications.stream().filter(notification -> notification.getNotificationType() == notificationType).collect(Collectors.toList());
