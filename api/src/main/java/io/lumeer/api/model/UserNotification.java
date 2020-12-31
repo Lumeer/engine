@@ -166,6 +166,10 @@ public class UserNotification {
 
    public interface OrganizationShared {
       String ORGANIZATION_ID = "organizationId";
+      String ORGANIZATION_CODE = "organizationCode";
+      String ORGANIZATION_ICON = "organizationIcon";
+      String ORGANIZATION_COLOR = "organizationColor";
+      String ORGANIZATION_NAME = "organizationName";
    }
 
    public interface ProjectShared extends OrganizationShared {

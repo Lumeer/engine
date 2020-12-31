@@ -18,6 +18,9 @@
  */
 package io.lumeer.core.auth;
 
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
+
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkType;
@@ -38,10 +41,12 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.util.FunctionRuleJsParser;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -56,7 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -80,6 +85,9 @@ public class PermissionsChecker {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private CollectionDao collectionDao;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -380,14 +388,34 @@ public class PermissionsChecker {
       return userRoles.stream()
                       .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
                       .flatMap(entity -> entity.getRoles().stream())
-                      .collect(Collectors.toSet());
+                      .collect(toSet());
    }
 
    private Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
       return groupRoles.stream()
                        .filter(entity -> groupIds.contains(entity.getId()))
                        .flatMap(entity -> entity.getRoles().stream())
-                       .collect(Collectors.toSet());
+                       .collect(toSet());
+   }
+
+   public void checkFunctionRuleAccess(final Collection collection, final String js, final Role role) {
+      final Map<String, Collection> collections = collectionDao.getAllCollections().stream().collect(toMap(Resource::getId, Function.identity()));
+      final Set<String> collectionIds = collections.keySet();
+      final Map<String, LinkType> linkTypes = linkTypeDao.getAllLinkTypes().stream().collect(toMap(LinkType::getId, Function.identity()));
+      final Set<String> linkTypeIds = linkTypes.keySet();
+
+      final List<FunctionRuleJsParser.ResourceReference> references = FunctionRuleJsParser.parseRuleFunctionJs(js, collectionIds, linkTypeIds);
+
+      references.forEach(reference -> {
+         if (reference.getResourceType() == ResourceType.COLLECTION) {
+            checkRole(collections.get(reference.getId()), role);
+         } else if (reference.getResourceType() == ResourceType.LINK) {
+            final LinkType linkType = linkTypes.get(reference.getId());
+            linkType.getCollectionIds().forEach(c -> checkRole(collections.get(c), role));
+         } else {
+            throw new NoPermissionException(collection);
+         }
+      });
    }
 
    /**

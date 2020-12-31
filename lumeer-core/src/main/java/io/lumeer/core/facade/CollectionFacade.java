@@ -34,6 +34,7 @@ import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.rule.AutoLinkRule;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -163,6 +164,10 @@ public class CollectionFacade extends AbstractFacade {
          permissionsChecker.checkRulesLimit(collection);
          permissionsChecker.checkFunctionsLimit(collection);
       }
+
+      collection.getRules().values().stream().filter(r -> r.getType() == Rule.RuleType.BLOCKLY).forEach(rule ->
+            permissionsChecker.checkFunctionRuleAccess(storedCollection, new BlocklyRule(rule).getJs(), Role.WRITE)
+      );
 
       keepUnmodifiableFields(collection, storedCollection);
       collection.setLastTimeUsed(ZonedDateTime.now());
@@ -374,10 +379,12 @@ public class CollectionFacade extends AbstractFacade {
          attribute.setFunction(null);
       }
 
-      if (!skipFceLimits) {
-         if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
+      if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
+        if (!skipFceLimits) {
             permissionsChecker.checkFunctionsLimit(collection);
          }
+
+         permissionsChecker.checkFunctionRuleAccess(collection, attribute.getFunction().getJs(), Role.READ);
       }
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
