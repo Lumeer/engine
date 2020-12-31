@@ -32,6 +32,7 @@ import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
+import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -114,12 +115,10 @@ public class DelayedActionIT extends IntegrationTestBase {
    @Before
    public void configureCollection() {
       User user = new User(USER);
-      user.setNotificationsLanguage("cs");
       setUserNotifications(user);
       this.user = userDao.createUser(user);
 
       User user2 = new User(USER2);
-      user2.setNotificationsLanguage("cs");
       setUserNotifications(user2);
       this.user2 = userDao.createUser(user2);
 
@@ -194,7 +193,7 @@ public class DelayedActionIT extends IntegrationTestBase {
    }
 
    private void setUserNotifications(final User user) {
-      user.setNotifications(List.of(
+      user.setNotifications(new NotificationsSettings(List.of(
             new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.COLLECTION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
@@ -222,7 +221,7 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately)
-      ));
+      ), "cs"));
    }
 
    private Document createDocument(final String summary, final List<String> assignees, final Date dueDate, final String state, final List<String> observers, final String something) {

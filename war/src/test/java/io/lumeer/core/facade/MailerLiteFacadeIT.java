@@ -36,7 +36,7 @@ public class MailerLiteFacadeIT extends IntegrationTestBase {
    @Test
    @Ignore("It does not make sense to communicate with MailerLite API once it was verified")
    public void testMailerLite() {
-      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null, null, "en", null);
+      final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null, null, null);
       mailerService.setUserSubscription(u, false);
    }
 }

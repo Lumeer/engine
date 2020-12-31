@@ -21,6 +21,8 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
+import io.lumeer.api.model.NotificationSetting;
+import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
@@ -164,5 +166,11 @@ public class UserService extends AbstractService {
    @Path("current/hints")
    public DataDocument updateHints(final DataDocument hints) {
       return userFacade.updateHints(hints);
+   }
+
+   @PUT
+   @Path("current/notifications")
+   public User updateSettings(final NotificationsSettings settings) {
+      return userFacade.updateSettings(settings);
    }
 }

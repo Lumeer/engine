@@ -22,6 +22,9 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.NotificationSetting;
+import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -252,6 +255,16 @@ public class UserFacade extends AbstractFacade {
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return updatedUser.getHints();
+   }
+
+   public User updateSettings(final NotificationsSettings notifications) {
+      final User currentUser = getCurrentUser();
+      currentUser.setNotifications(notifications);
+
+      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return updatedUser;
    }
 
    private User updateExistingUser(String organizationId, User storedUser, User user) {

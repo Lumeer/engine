@@ -18,8 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.DelayedAction;
-import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
@@ -216,7 +214,7 @@ public class UserNotificationFacade extends AbstractFacade {
 
       if (type != null) {
          final NotificationType finalType = type;
-         return user.getNotifications().stream().anyMatch(notification -> notification.getNotificationType() == finalType && notification.getNotificationChannel() == NotificationChannel.Email);
+         return user.getNotificationsSettingsList().stream().anyMatch(notification -> notification.getNotificationType() == finalType && notification.getNotificationChannel() == NotificationChannel.Email);
       }
 
       return false;

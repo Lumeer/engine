@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +52,7 @@ public class User {
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
    public static final String EMAIL_VERIFIED = "emailVerified";
-   public static final String NOTIFICATIONS = "notifications";
-   public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
+   public static final String NOTIFICATIONS_SETTINGS = "notifications";
    public static final String HINTS = "hints";
 
    @JsonView(UserViews.DefaultView.class)
@@ -98,12 +98,8 @@ public class User {
    private boolean emailVerified = false;
 
    @JsonView(UserViews.DefaultView.class)
-   @JsonProperty(NOTIFICATIONS)
-   private List<NotificationSetting> notifications;
-
-   @JsonView(UserViews.DefaultView.class)
-   @JsonProperty(NOTIFICATIONS_LANGUAGE)
-   private String notificationsLanguage;
+   @JsonProperty(NOTIFICATIONS_SETTINGS)
+   private NotificationsSettings notifications;
 
    private List<String> wishes;
 
@@ -138,8 +134,7 @@ public class User {
          @JsonProperty(NEWSLETTER) final Boolean newsletter,
          @JsonProperty(WIZARD_DISMISSED) final Boolean wizardDismissed,
          @JsonProperty(REFERRAL) final String referral,
-         @JsonProperty(NOTIFICATIONS) final List<NotificationSetting> notifications,
-         @JsonProperty(NOTIFICATIONS_LANGUAGE) final String notificationsLanguage,
+         @JsonProperty(NOTIFICATIONS_SETTINGS) final NotificationsSettings notifications,
          @JsonProperty(HINTS) final DataDocument hints) {
       this.id = id;
       this.name = name;
@@ -152,7 +147,6 @@ public class User {
       this.wizardDismissed = wizardDismissed;
       this.referral = referral;
       this.notifications = notifications;
-      this.notificationsLanguage = notificationsLanguage;
       this.hints = hints;
    }
 
@@ -268,20 +262,22 @@ public class User {
       this.emailVerified = emailVerified;
    }
 
-   public List<NotificationSetting> getNotifications() {
+   public NotificationsSettings getNotifications() {
       return notifications;
    }
 
-   public void setNotifications(final List<NotificationSetting> notifications) {
+   @JsonIgnore
+   public List<NotificationSetting> getNotificationsSettingsList() {
+      return notifications != null ? notifications.getSettings() : Collections.emptyList();
+   }
+
+   public void setNotifications(final NotificationsSettings notifications) {
       this.notifications = notifications;
    }
 
+   @JsonIgnore
    public String getNotificationsLanguage() {
-      return notificationsLanguage;
-   }
-
-   public void setNotificationsLanguage(final String notificationsLanguage) {
-      this.notificationsLanguage = notificationsLanguage;
+      return notifications != null ? notifications.getLanguage() : null;
    }
 
    public DataDocument getHints() {
@@ -311,7 +307,6 @@ public class User {
             ", affiliatePartner=" + affiliatePartner +
             ", emailVerified=" + emailVerified +
             ", notifications=" + notifications +
-            ", notificationsLanguage=" + notificationsLanguage +
             ", hints=" + hints +
             '}';
    }

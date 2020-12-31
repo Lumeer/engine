@@ -20,11 +20,11 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.DefaultWorkspace;
-import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
+import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.User;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -136,6 +136,7 @@ public class UserCodec implements CollectibleCodec<User> {
       String referral = bson.getString(REFERRAL);
 
       List<NotificationSetting> notificationSettings;
+      final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
       List<Document> notifications = bson.getList(NOTIFICATIONS, Document.class);
       if (notifications != null) {
          notificationSettings = new ArrayList<>(notifications).stream()
@@ -172,16 +173,15 @@ public class UserCodec implements CollectibleCodec<User> {
                new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately)
          );
       }
-      final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
+
       Document hints = bson.get(HINTS, Document.class);
+      NotificationsSettings settings = new NotificationsSettings(notificationSettings, notificationsLanguage);
 
-
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, notificationSettings, notificationsLanguage, new DataDocument(hints == null ? new Document() : hints));
+      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, settings, new DataDocument(hints == null ? new Document() : hints));
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
       user.setEmailVerified(emailVerified != null && emailVerified);
-      user.setNotificationsLanguage(notificationsLanguage);
 
       return user;
    }
@@ -196,7 +196,7 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(REFERRAL, user.getReferral())
           .append(AFFILIATE_PARTNER, user.isAffiliatePartner())
           .append(EMAIL_VERIFIED, user.isEmailVerified())
-          .append(NOTIFICATIONS, user.getNotifications())
+          .append(NOTIFICATIONS, user.getNotificationsSettingsList())
           .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage())
           .append(HINTS, user.getHints());
 
