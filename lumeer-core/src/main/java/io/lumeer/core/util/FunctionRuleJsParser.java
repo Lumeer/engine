@@ -43,8 +43,6 @@ public class FunctionRuleJsParser {
             ids.add(matcher.group(1));
          }
 
-         System.out.println(ids);
-
          ids.forEach(id -> {
             if (collectionIds.contains(id)) {
                result.add(new ResourceReference(ResourceType.COLLECTION, id));
@@ -53,8 +51,6 @@ public class FunctionRuleJsParser {
             }
          });
       }
-
-      System.out.println(result);
 
       return result;
    }
