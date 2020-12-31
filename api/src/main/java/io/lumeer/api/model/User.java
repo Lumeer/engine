@@ -52,7 +52,7 @@ public class User {
    public static final String REFERRAL = "referral";
    public static final String AFFILIATE_PARTNER = "affiliatePartner";
    public static final String EMAIL_VERIFIED = "emailVerified";
-   public static final String NOTIFICATIONS_SETTINGS = "notificationsSettings";
+   public static final String NOTIFICATIONS_SETTINGS = "notifications";
    public static final String HINTS = "hints";
 
    @JsonView(UserViews.DefaultView.class)
@@ -266,14 +266,16 @@ public class User {
       return notifications;
    }
 
+   @JsonIgnore
    public List<NotificationSetting> getNotificationsSettingsList() {
-      return notifications != null ? notifications.getNotifications() : Collections.emptyList();
+      return notifications != null ? notifications.getSettings() : Collections.emptyList();
    }
 
    public void setNotifications(final NotificationsSettings notifications) {
       this.notifications = notifications;
    }
 
+   @JsonIgnore
    public String getNotificationsLanguage() {
       return notifications != null ? notifications.getLanguage() : null;
    }

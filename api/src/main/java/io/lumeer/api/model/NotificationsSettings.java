@@ -29,17 +29,17 @@ public class NotificationsSettings {
    public static final String SETTINGS = "settings";
    public static final String LANGUAGE = "language";
 
-   private final List<NotificationSetting> notifications;
+   private final List<NotificationSetting> settings;
    private final String language;
 
    @JsonCreator
-   public NotificationsSettings(@JsonProperty(SETTINGS) final List<NotificationSetting> notifications, @JsonProperty(LANGUAGE) final String language) {
-      this.notifications = notifications;
+   public NotificationsSettings(@JsonProperty(SETTINGS) final List<NotificationSetting> settings, @JsonProperty(LANGUAGE) final String language) {
+      this.settings = settings;
       this.language = language;
    }
 
-   public List<NotificationSetting> getNotifications() {
-      return notifications;
+   public List<NotificationSetting> getSettings() {
+      return settings;
    }
 
    public String getLanguage() {
@@ -55,18 +55,18 @@ public class NotificationsSettings {
          return false;
       }
       final NotificationsSettings that = (NotificationsSettings) o;
-      return Objects.equals(notifications, that.notifications) && Objects.equals(language, that.language);
+      return Objects.equals(settings, that.settings) && Objects.equals(language, that.language);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(notifications, language);
+      return Objects.hash(settings, language);
    }
 
    @Override
    public String toString() {
       return "NotificationsSettings{" +
-            "notifications=" + notifications +
+            "settings=" + settings +
             ", language='" + language + '\'' +
             '}';
    }
