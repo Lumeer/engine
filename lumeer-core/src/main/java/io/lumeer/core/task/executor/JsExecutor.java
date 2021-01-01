@@ -78,6 +78,7 @@ public class JsExecutor {
          .newBuilder()
          .allowExperimentalOptions(true)
          .option("js.experimental-foreign-object-prototype", "true")
+         .option("js.foreign-object-prototype", "true")
          .build();
    private static String momentJsCode = MomentJsParser.getMomentJsCode();
 
