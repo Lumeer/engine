@@ -374,7 +374,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected ZonedDateTime nowPlus() {
-      if (environment == ConfigurationFacade.DeployEnvironment.PRODUCTION) {
+      if (environment == ConfigurationFacade.DeployEnvironment.PRODUCTION || environment == ConfigurationFacade.DeployEnvironment.STAGING) {
          return ZonedDateTime.now().plus(2, ChronoUnit.MINUTES);
       }
       return ZonedDateTime.now();
