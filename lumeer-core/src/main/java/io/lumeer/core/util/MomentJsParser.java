@@ -38,6 +38,7 @@ public class MomentJsParser implements AutoCloseable {
          .newBuilder()
          .allowExperimentalOptions(true)
          .option("js.experimental-foreign-object-prototype", "true")
+         .option("js.foreign-object-prototype", "true")
          .build();
 
 
