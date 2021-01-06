@@ -39,7 +39,7 @@ public class BlocklyRuleTaskExecutor {
 
    private String ruleName;
    private BlocklyRule rule;
-   private RuleTask ruleTask;
+   protected RuleTask ruleTask;
    private ChangesTracker tracker;
 
    public BlocklyRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
@@ -48,8 +48,7 @@ public class BlocklyRuleTaskExecutor {
       this.ruleTask = ruleTask;
    }
 
-   public ChangesTracker execute(final TaskExecutor taskExecutor) {
-      tracker = new ChangesTracker();
+   protected Map<String, Object> getBindings() {
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
@@ -62,6 +61,12 @@ public class BlocklyRuleTaskExecutor {
          bindings.put("newLink", new JsExecutor.LinkBridge(ruleTask.getNewLinkInstance()));
       }
 
+      return bindings;
+   }
+
+   public ChangesTracker execute(final TaskExecutor taskExecutor) {
+      tracker = new ChangesTracker();
+      final Map<String, Object> bindings = getBindings();
       final JsExecutor jsExecutor = new JsExecutor();
       jsExecutor.setDryRun(rule.isDryRun());
 

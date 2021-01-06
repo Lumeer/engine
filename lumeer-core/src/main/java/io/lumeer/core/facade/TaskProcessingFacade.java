@@ -47,6 +47,8 @@ import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -169,7 +171,7 @@ public class TaskProcessingFacade {
                        .filter(entry -> entry.getKey().equals(ruleName))
                        .map(entry -> {
                           final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
-                          ruleTask.setRule(entry.getKey(), entry.getValue(), collection, originalDocument, document);
+                          ruleTask.setRule(StringUtils.isNotEmpty(entry.getValue().getName()) ? entry.getValue().getName() : entry.getKey(), entry.getValue(), collection, originalDocument, document);
                           return ruleTask;
                        }).findFirst();
    }
@@ -182,7 +184,7 @@ public class TaskProcessingFacade {
                        .filter(entry -> timings == null || timings.contains(entry.getValue().getTiming()))
                        .map(entry -> {
                           final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
-                          ruleTask.setRule(entry.getKey(), entry.getValue(), collection, originalDocument, document);
+                          ruleTask.setRule(StringUtils.isNotEmpty(entry.getValue().getName()) ? entry.getValue().getName() : entry.getKey(), entry.getValue(), collection, originalDocument, document);
                           return ruleTask;
                        }).collect(Collectors.toList());
    }

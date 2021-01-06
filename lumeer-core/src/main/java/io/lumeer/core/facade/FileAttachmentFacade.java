@@ -278,7 +278,7 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private String getFileAttachmentLocation(final String organizationId, final String projectId, final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
-      final StringBuilder sb = new StringBuilder(configurationFacade.getEnvironment().name() + "/" + organizationId + "/" + projectId + "/" + type.name());
+      final StringBuilder sb = new StringBuilder(configurationProducer.getEnvironment().name() + "/" + organizationId + "/" + projectId + "/" + type.name());
 
       if (collectionId != null) {
          sb.append("/").append(collectionId);

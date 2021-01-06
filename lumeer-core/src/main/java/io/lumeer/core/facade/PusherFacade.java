@@ -81,7 +81,6 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
@@ -92,7 +91,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -112,11 +110,6 @@ public class PusherFacade extends AbstractFacade {
    public static final String REMOVE_EVENT_SUFFIX = ":remove";
    public static final String IMPORT_EVENT_SUFFIX = ":import";
    public static final String RELOAD_EVENT_SUFFIX = ":reload";
-
-   private String PUSHER_APP_ID;
-   private String PUSHER_KEY;
-   private String PUSHER_SECRET;
-   private String PUSHER_CLUSTER;
 
    private PusherClient pusherClient = null;
 
@@ -170,33 +163,16 @@ public class PusherFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-
-      PUSHER_APP_ID = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_APP_ID)).orElse("");
-      PUSHER_KEY = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_KEY)).orElse("");
-      PUSHER_SECRET = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_SECRET)).orElse("");
-      PUSHER_CLUSTER = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
-
-      if (StringUtils.isNotEmpty(PUSHER_SECRET)) {
-         pusherClient = new PusherClient(PUSHER_APP_ID, PUSHER_KEY, PUSHER_SECRET, PUSHER_CLUSTER);
-      }
-
+      pusherClient = PusherClient.getInstance(configurationProducer);
       delayedActionProcessor.setPusherClient(pusherClient);
    }
 
-   public String getPusherAppId() {
-      return PUSHER_APP_ID;
-   }
-
    public String getPusherKey() {
-      return PUSHER_KEY;
+      return pusherClient != null ? pusherClient.getKey() : null;
    }
 
    public String getPusherSecret() {
-      return PUSHER_SECRET;
-   }
-
-   public String getPusherCluster() {
-      return PUSHER_CLUSTER;
+      return pusherClient != null ? pusherClient.getSecret() : null;
    }
 
    public PusherClient getPusherClient() {

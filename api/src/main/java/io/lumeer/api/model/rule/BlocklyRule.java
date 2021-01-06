@@ -29,14 +29,18 @@ public class BlocklyRule {
    public static final String BLOCKLY_DRY_RUN = "blocklyDryRun";
    public static final String BLOCKLY_DRY_RUN_RESULT = "blocklyDryRunResult";
 
-   private final Rule rule;
+   protected final Rule rule;
 
-   public BlocklyRule(final Rule rule) {
+   BlocklyRule(final Rule rule, Rule.RuleType type) {
       this.rule = rule;
 
-      if (rule.getType() != Rule.RuleType.BLOCKLY) {
+      if (rule.getType() != type) {
          throw new IllegalArgumentException("Cannot create Blockly Rule from a rule of type " + rule.getType());
       }
+   }
+
+   public BlocklyRule(final Rule rule) {
+      this(rule, Rule.RuleType.BLOCKLY);
    }
 
    public Rule getRule() {

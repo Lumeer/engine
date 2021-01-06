@@ -174,6 +174,21 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
       }
    }
 
+   public Collection updateCollectionRules(final Collection collection) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.BEFORE);
+
+      try {
+         Bson update = new Document("$set", new Document(CollectionCodec.RULES, collection.getRules()));
+         final Collection originalCollection = databaseCollection().findOneAndUpdate(idFilter(collection.getId()), update, options);
+         if (originalCollection == null) {
+            throw new StorageException("Collection '" + collection.getId() + "' has not been updated.");
+         }
+         return originalCollection;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update collection: " + collection, ex);
+      }
+   }
+
    @Override
    public void deleteCollection(final String id) {
       final Collection collection = databaseCollection().findOneAndDelete(idFilter(id));

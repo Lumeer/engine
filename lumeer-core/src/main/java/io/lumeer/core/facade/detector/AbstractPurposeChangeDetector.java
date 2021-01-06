@@ -34,7 +34,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
-import io.lumeer.core.facade.ConfigurationFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
@@ -66,10 +66,10 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected User currentUser;
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
-   protected ConfigurationFacade.DeployEnvironment environment;
+   protected DefaultConfigurationProducer.DeployEnvironment environment;
 
    @Override
-   public void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final ConfigurationFacade.DeployEnvironment environment) {
+   public void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final DefaultConfigurationProducer.DeployEnvironment environment) {
       this.delayedActionDao = delayedActionDao;
       this.userDao = userDao;
       this.selectedWorkspace = selectedWorkspace;
@@ -374,7 +374,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected ZonedDateTime nowPlus() {
-      if (environment == ConfigurationFacade.DeployEnvironment.PRODUCTION || environment == ConfigurationFacade.DeployEnvironment.STAGING) {
+      if (environment == DefaultConfigurationProducer.DeployEnvironment.PRODUCTION || environment == DefaultConfigurationProducer.DeployEnvironment.STAGING) {
          return ZonedDateTime.now().plus(2, ChronoUnit.MINUTES);
       }
       return ZonedDateTime.now();

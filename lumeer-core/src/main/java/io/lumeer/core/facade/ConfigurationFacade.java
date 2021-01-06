@@ -43,20 +43,14 @@ import javax.inject.Inject;
 @SessionScoped
 public class ConfigurationFacade implements Serializable {
 
-   private static final String DB_HOSTS_PROPERTY = "db_hosts";
-   private static final String DB_NAME_PROPERTY = "db_name";
-   private static final String DB_USER_PROPERTY = "db_user";
-   private static final String DB_PASSWORD_PROPERTY = "db_passwd";
-   private static final String DB_USE_SSL = "db_ssl";
-
-   private static final String ENVIRONMENT = "environment";
+   protected static final String DB_HOSTS_PROPERTY = "db_hosts";
+   protected static final String DB_NAME_PROPERTY = "db_name";
+   protected static final String DB_USER_PROPERTY = "db_user";
+   protected static final String DB_PASSWORD_PROPERTY = "db_passwd";
+   protected static final String DB_USE_SSL = "db_ssl";
 
    public enum ConfigurationLevel {
       USER_GLOBAL, USER_PROJECT, USER_ORGANIZATION, PROJECT, ORGANIZATION
-   }
-
-   public enum DeployEnvironment {
-      DEVEL, STAGING, PRODUCTION;
    }
 
    private static Logger log = Resources.produceLog(ConfigurationLevel.class.getName());
@@ -72,7 +66,10 @@ public class ConfigurationFacade implements Serializable {
    private ConfigurationManipulator configurationManipulator;
 
    @Inject
-   private DefaultConfigurationProducer defaultConfigurationProducer;
+   private SystemDatabaseConfigurationFacade systemConfigurationFacade;
+
+   @Inject
+   public DefaultConfigurationProducer defaultConfigurationProducer;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -83,19 +80,21 @@ public class ConfigurationFacade implements Serializable {
     * @return Pre-configured data storage.
     */
    public List<StorageConnection> getDataStorage() {
-      final String hosts = getSystemConfigurationString(DB_HOSTS_PROPERTY).orElse("localhost:27017");
-      final String db = getSystemConfigurationString(DB_USER_PROPERTY).orElse("pepa");
-      final String pwd = getSystemConfigurationString(DB_PASSWORD_PROPERTY).orElse("");
+      final String organizationId = getOrganizationId();
 
-      return getStorageConnections(hosts, db, pwd);
+      return systemConfigurationFacade.getDataStorage(organizationId);
    }
 
    public String getDataStorageDatabase() {
-      return getSystemConfigurationString(DB_NAME_PROPERTY).orElse("lumeer");
+      final String organizationId = getOrganizationId();
+
+      return systemConfigurationFacade.getDataStorageDatabase(organizationId);
    }
 
    public Boolean getDataStorageUseSsl() {
-      return Boolean.valueOf(getSystemConfigurationString(DB_USE_SSL).orElse("false"));
+      final String organizationId = getOrganizationId();
+
+      return systemConfigurationFacade.getDataStorageUseSsl(organizationId);
    }
 
    static List<StorageConnection> getStorageConnections(final String hosts, final String db, final String pwd) {
@@ -115,18 +114,6 @@ public class ConfigurationFacade implements Serializable {
       });
 
       return result;
-   }
-
-   public DeployEnvironment getEnvironment() {
-      final String value = defaultConfigurationProducer.get(ENVIRONMENT);
-
-      if (value != null) {
-         final DeployEnvironment env = DeployEnvironment.valueOf(value.toUpperCase());
-
-         return env != null ? env : DeployEnvironment.DEVEL;
-      }
-
-      return DeployEnvironment.DEVEL;
    }
 
    /**
@@ -684,15 +671,15 @@ public class ConfigurationFacade implements Serializable {
       return val;
    }
 
-   private static Optional<DataDocument> createOptionalDataDocument(Config config) {
+   protected static Optional<DataDocument> createOptionalDataDocument(Config config) {
       return config != null && config.getValue() instanceof DataDocument ? Optional.of((DataDocument) config.getValue()) : Optional.empty();
    }
 
-   private static Optional<String> createOptionalString(Config config) {
+   protected static Optional<String> createOptionalString(Config config) {
       return config != null && config.getValue() != null ? Optional.of(config.getValue().toString()) : Optional.empty();
    }
 
-   private static Optional<Integer> createOptionalInteger(Config config) {
+   protected static Optional<Integer> createOptionalInteger(Config config) {
       if (config == null || config.getValue() == null) {
          return Optional.empty();
       }

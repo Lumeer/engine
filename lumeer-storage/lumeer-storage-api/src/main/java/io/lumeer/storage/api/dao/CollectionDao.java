@@ -34,6 +34,8 @@ public interface CollectionDao extends ProjectScopedDao {
 
    Collection updateCollection(String id, Collection collection, Collection originalCollection, boolean pushNotification);
 
+   Collection updateCollectionRules(final Collection collection);
+
    void deleteCollection(String id);
 
    Collection getCollectionByCode(String code);

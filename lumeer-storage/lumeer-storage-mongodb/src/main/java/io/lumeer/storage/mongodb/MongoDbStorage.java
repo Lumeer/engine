@@ -102,7 +102,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class MongoDbStorage implements DataStorage {
@@ -112,46 +115,53 @@ public class MongoDbStorage implements DataStorage {
 
    private static final String DOCUMENT_ID = "_id";
 
+   private static final Map<Integer, MongoClient> clientCache = new ConcurrentHashMap<>();
+
    private MongoDatabase database;
    private MongoClient mongoClient = null;
+   private int cacheKey;
 
    @Override
    public void connect(final List<StorageConnection> connections, final String database, final Boolean useSsl) {
-      final List<ServerAddress> addresses = new ArrayList<>();
+      cacheKey = Objects.hash(connections, database, useSsl);
 
-      connections.forEach(c -> addresses.add(new ServerAddress(c.getHost(), c.getPort())));
+      this.mongoClient = clientCache.computeIfAbsent(cacheKey, cacheKey -> {
+         final List<ServerAddress> addresses = new ArrayList<>();
 
-      MongoCredential credential = null;
-      if (connections.size() > 0 && connections.get(0).getUserName() != null && !connections.get(0).getUserName().isEmpty()) {
-         credential = MongoCredential.createScramSha1Credential(connections.get(0).getUserName(), database, connections.get(0).getPassword());
-      }
+         connections.forEach(c -> addresses.add(new ServerAddress(c.getHost(), c.getPort())));
 
-      final MongoClientOptions.Builder optionsBuilder = (new MongoClientOptions.Builder()).connectTimeout(30000);
+         MongoCredential credential = null;
+         if (connections.size() > 0 && connections.get(0).getUserName() != null && !connections.get(0).getUserName().isEmpty()) {
+            credential = MongoCredential.createScramSha1Credential(connections.get(0).getUserName(), database, connections.get(0).getPassword());
+         }
 
-      if (useSsl) {
-         optionsBuilder.sslEnabled(true).sslContext(NaiveTrustManager.getSslContext()).sslInvalidHostNameAllowed(true);
-      }
+         final MongoClientOptions.Builder optionsBuilder = (new MongoClientOptions.Builder()).connectTimeout(30000);
 
-      final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
-      final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleCodec());
-      final CodecRegistry providersRegistry = CodecRegistries.fromProviders(
-            new PermissionsCodecProvider(), new PermissionCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider(),
-            new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider(), new UserCodecProvider(),
-            new GroupCodecProvider(), new PaymentCodecProvider(), new CompanyContactCodedProvider(), new UserLoginEventCodecProvider(),
-            new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),
-            new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
-            new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
-            new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(),
-            new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider(),
-            new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider()
-      );
-      final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
+         if (useSsl) {
+            optionsBuilder.sslEnabled(true).sslContext(NaiveTrustManager.getSslContext()).sslInvalidHostNameAllowed(true);
+         }
 
-      if (credential != null) {
-         this.mongoClient = new MongoClient(addresses, credential, optionsBuilder.codecRegistry(registry).build());
-      } else {
-         this.mongoClient = new MongoClient(addresses, optionsBuilder.codecRegistry(registry).build());
-      }
+         final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
+         final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleCodec());
+         final CodecRegistry providersRegistry = CodecRegistries.fromProviders(
+               new PermissionsCodecProvider(), new PermissionCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider(),
+               new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider(), new UserCodecProvider(),
+               new GroupCodecProvider(), new PaymentCodecProvider(), new CompanyContactCodedProvider(), new UserLoginEventCodecProvider(),
+               new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),
+               new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
+               new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
+               new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(),
+               new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider(),
+               new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider()
+         );
+         final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
+
+         if (credential != null) {
+            return new MongoClient(addresses, credential, optionsBuilder.codecRegistry(registry).build());
+         } else {
+            return new MongoClient(addresses, optionsBuilder.codecRegistry(registry).build());
+         }
+      });
 
       this.database = mongoClient.getDatabase(database);
    }
@@ -159,6 +169,7 @@ public class MongoDbStorage implements DataStorage {
    @Override
    public void disconnect() {
       if (mongoClient != null) {
+         clientCache.remove(cacheKey);
          mongoClient.close();
       }
    }

@@ -22,7 +22,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.facade.SystemConfigurationFacade;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.DataStorageFactory;
+import io.lumeer.storage.api.DataStorageFactory;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
