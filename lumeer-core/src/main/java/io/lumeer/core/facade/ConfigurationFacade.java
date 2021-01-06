@@ -48,6 +48,7 @@ public class ConfigurationFacade implements Serializable {
    protected static final String DB_USER_PROPERTY = "db_user";
    protected static final String DB_PASSWORD_PROPERTY = "db_passwd";
    protected static final String DB_USE_SSL = "db_ssl";
+   private static final String ENVIRONMENT = "environment";
 
    public enum ConfigurationLevel {
       USER_GLOBAL, USER_PROJECT, USER_ORGANIZATION, PROJECT, ORGANIZATION
@@ -69,7 +70,7 @@ public class ConfigurationFacade implements Serializable {
    private SystemDatabaseConfigurationFacade systemConfigurationFacade;
 
    @Inject
-   public DefaultConfigurationProducer defaultConfigurationProducer;
+   private DefaultConfigurationProducer defaultConfigurationProducer;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
