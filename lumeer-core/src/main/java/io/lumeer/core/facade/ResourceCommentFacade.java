@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
@@ -136,8 +137,10 @@ public class ResourceCommentFacade extends AbstractFacade {
          final List<String> collectionIds = linkType.getCollectionIds();
 
          if (collectionIds != null) {
-            collectionIds.forEach(id -> permissionsChecker.checkRole(getResource(ResourceType.COLLECTION, resourceId), Role.READ));
+            collectionIds.forEach(id -> permissionsChecker.checkRoleWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), Role.READ, Role.READ));
          }
+      } else if (resourceType == ResourceType.COLLECTION) {
+         permissionsChecker.checkRoleWithView((Collection) getResource(resourceType, resourceId), Role.READ, Role.READ);
       } else {
          permissionsChecker.checkRole(getResource(resourceType, resourceId), Role.READ);
       }
