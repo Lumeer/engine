@@ -85,7 +85,7 @@ public class ResourceCommentService extends AbstractService {
    }
 
    @GET
-   public List<ResourceComment> getComments(@QueryParam("pageStart") Integer pageStart, @QueryParam("pageLenght") Integer pageLength) {
+   public List<ResourceComment> getComments(@QueryParam("pageStart") Integer pageStart, @QueryParam("pageLength") Integer pageLength) {
       return resourceCommentFacade.getComments(type, resourceId, pageStart != null ? pageStart : 0, pageLength != null ? pageLength : 0);
    }
 
