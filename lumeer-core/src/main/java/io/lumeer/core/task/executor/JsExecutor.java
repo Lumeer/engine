@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 public class JsExecutor {
 
    private static final String CREATE_PREFIX = "CREATE_";
+   private static final String MOMENT_JS_SIGNATURE = "/** MomentJs **/";
 
    private static Logger log = Logger.getLogger(JsExecutor.class.getName());
 
@@ -732,7 +733,7 @@ public class JsExecutor {
          }
       }, 3000);
 
-      final String jsCode = (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) ? momentJsCode + ";\n" : "") + js;
+      final String jsCode = (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) || js.contains(MOMENT_JS_SIGNATURE) ? momentJsCode + ";\n" : "") + js;
 
       context.eval("js", jsCode);
    }
