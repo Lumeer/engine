@@ -139,7 +139,7 @@ public class ResourceCommentFacade extends AbstractFacade {
          if (collectionIds != null) {
             collectionIds.forEach(id -> permissionsChecker.checkRoleWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), Role.READ, Role.READ));
          }
-      } else if (resourceType == ResourceType.COLLECTION) {
+      } else if (resourceType == ResourceType.COLLECTION || resourceType == ResourceType.DOCUMENT) {
          permissionsChecker.checkRoleWithView((Collection) getResource(resourceType, resourceId), Role.READ, Role.READ);
       } else {
          permissionsChecker.checkRole(getResource(resourceType, resourceId), Role.READ);
