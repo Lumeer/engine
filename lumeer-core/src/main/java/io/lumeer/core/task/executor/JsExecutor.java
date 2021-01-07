@@ -375,11 +375,12 @@ public class JsExecutor {
          }
       }
 
-      private List<Document> commitDocumentChanges(final List<DocumentChange> changes, final List<Document> createdDocuments) {
+      private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes, final List<Document> createdDocuments) {
          if (changes.isEmpty()) {
             return List.of();
          }
 
+         final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
          Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.getEntity())
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
@@ -421,6 +422,9 @@ public class JsExecutor {
                if (doc != null) {
                   doc.setData(patchedData);
                }
+            } else { // existing document
+               updatedDocument.setData(patchedData);
+               taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, documentChange.getOriginalDocument(), updatedDocument));
             }
 
             patchedData = constraintManager.decodeDataTypes(collection, patchedData);
@@ -528,6 +532,7 @@ public class JsExecutor {
 
          // commit document and link changes
          final List<Document> changedDocuments = commitDocumentChanges(
+               taskExecutor,
                changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(toList()),
                createdDocuments
          );
@@ -669,8 +674,15 @@ public class JsExecutor {
 
    public static class DocumentChange extends ResourceChange<Document> {
 
+      private Document originalDocument;
+
       public DocumentChange(final Document entity, final String attrId, final Object value) {
          super(entity, attrId, value);
+         originalDocument = new Document(entity);
+      }
+
+      public Document getOriginalDocument() {
+         return originalDocument;
       }
    }
 
