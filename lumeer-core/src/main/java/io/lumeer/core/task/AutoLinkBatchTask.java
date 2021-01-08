@@ -91,7 +91,7 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
 
             if (links.size() > 0) {
                final List<LinkInstance> newLinks = daoContextSnapshot.getLinkInstanceDao().createLinkInstances(links, false);
-               sendPushNotifications(linkType, newLinks);
+               sendPushNotifications(linkType, newLinks, true);
             }
          }
       }

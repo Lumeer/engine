@@ -172,19 +172,21 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    @Override
-   public void sendPushNotifications(final Collection collection, final List<Document> documents) {
-      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX);
+   public void sendPushNotifications(final Collection collection, final List<Document> documents, final boolean collectionChanged) {
+      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX, collectionChanged);
    }
 
    @Override
-   public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix) {
+   public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
       final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
       final List<Event> collectionEvents = new ArrayList<>();
 
       users.forEach(userId -> {
          documents.forEach(doc -> events.add(createEventForDocument(doc, userId, suffix)));
-         collectionEvents.add(createEventForCollection(collection, userId));
+         if (collectionChanged) {
+            collectionEvents.add(createEventForCollection(collection, userId));
+         }
       });
 
       getPusherClient().trigger(events);
@@ -192,7 +194,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    @Override
-   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances) {
+   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
@@ -204,7 +206,9 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          users.forEach(userId -> {
             linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId)));
-            linkInstanceEvents.add(createEventForLinkType(linkType, userId));
+            if (linkTypeChanged) {
+               linkInstanceEvents.add(createEventForLinkType(linkType, userId));
+            }
          });
 
          getPusherClient().trigger(events);

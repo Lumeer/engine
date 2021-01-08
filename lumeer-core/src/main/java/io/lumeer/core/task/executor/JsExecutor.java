@@ -362,7 +362,7 @@ public class JsExecutor {
          // send push notification
          if (ruleTask.getPusherClient() != null) {
             documentsByCollection.forEach((key, value) ->
-                  ruleTask.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX)
+                  ruleTask.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX, true)
             );
          }
       }
@@ -390,27 +390,43 @@ public class JsExecutor {
 
          Map<String, Document> documentsByCorrelationId = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Function.identity()));
 
-         changes.forEach(documentChange -> {
-            final Document document = documentChange.getEntity();
+         final Map<String, List<DocumentChange>> changesByDocumentId = changes.stream().reduce(
+               new HashMap<>(),
+               (map, change) -> {
+                  map.computeIfAbsent(change.getEntity().getId(), key ->new ArrayList<>()).add(change);
+                  return map;
+               },
+               (map1, map2) -> {
+                  map2.forEach((key1, value) -> map1.computeIfAbsent(key1, key -> new ArrayList<>()).addAll(value));
+                  return map1;
+               }
+         );
+
+         changesByDocumentId.entrySet().forEach(entry -> {
+            final Document document = entry.getValue().get(0).getEntity();
+            final Document originalDocument = entry.getValue().get(0).getOriginalDocument();
             final Collection collection = collectionsMap.get(document.getCollectionId());
-            final DataDocument newData = constraintManager.encodeDataTypes(collection, new DataDocument(documentChange.getAttrId(), documentChange.getValue()));
-            final DataDocument oldData = new DataDocument(document.getData());
+            final DataDocument aggregatedUpdate = new DataDocument();
+            entry.getValue().forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
+            final DataDocument newData = constraintManager.encodeDataTypes(collection, aggregatedUpdate);
+            final DataDocument oldData = new DataDocument(originalDocument.getData());
 
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
 
             if (attributesIdsToAdd.size() > 0) {
-               Optional<Attribute> attribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(documentChange.getAttrId())).findFirst();
-               attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
-               collection.setLastTimeUsed(ZonedDateTime.now());
-               collectionsChanged.add(collection.getId());
+               collection.getAttributes().stream().filter(attr -> attributesIdsToAdd.contains(attr.getId())).forEach(attr -> {
+                  attr.setUsageCount(attr.getUsageCount() + 1);
+                  collection.setLastTimeUsed(ZonedDateTime.now());
+                  collectionsChanged.add(collection.getId());
+               });
             }
 
             document.setUpdatedBy(ruleTask.getInitiator().getId());
             document.setUpdateDate(ZonedDateTime.now());
 
             DataDocument patchedData = ruleTask.getDaoContextSnapshot().getDataDao()
-                                               .patchData(documentChange.getEntity().getCollectionId(), documentChange.getEntity().getId(), newData);
+                                               .patchData(document.getCollectionId(), document.getId(), newData);
 
             Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
                                                .updateDocument(document.getId(), document);
@@ -424,13 +440,13 @@ public class JsExecutor {
                }
             } else { // existing document
                updatedDocument.setData(patchedData);
-               taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, documentChange.getOriginalDocument(), updatedDocument));
+               taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, originalDocument, updatedDocument));
             }
 
             patchedData = constraintManager.decodeDataTypes(collection, patchedData);
             updatedDocument.setData(patchedData);
 
-            updatedDocuments.computeIfAbsent(documentChange.getEntity().getCollectionId(), key -> new ArrayList<>())
+            updatedDocuments.computeIfAbsent(document.getCollectionId(), key -> new ArrayList<>())
                             .add(updatedDocument);
          });
 
@@ -440,50 +456,69 @@ public class JsExecutor {
          // send push notification
          if (ruleTask.getPusherClient() != null) {
             updatedDocuments.keySet().forEach(collectionId ->
-                  ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId))
+                  ruleTask.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId), collectionsChanged.contains(collectionId))
             );
          }
 
          return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
-      private List<LinkInstance> commitLinkChanges(final List<LinkChange> changes) {
+      private List<LinkInstance> commitLinkChanges(final TaskExecutor taskExecutor, final List<LinkChange> changes) {
          if (changes.isEmpty()) {
             return List.of();
          }
 
+         final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
          final Map<String, List<LinkInstance>> updatedLinks = new HashMap<>(); // LinkType -> [LinkInstance]
          final Map<String, LinkType> linkTypesMap = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes()
                                                             .stream().collect(Collectors.toMap(LinkType::getId, linkType -> linkType));
          Set<String> linkTypesChanged = new HashSet<>();
+         final Map<String, List<LinkChange>> changesByLinkTypeId = changes.stream().reduce(
+               new HashMap<>(),
+               (map, change) -> {
+                  map.computeIfAbsent(change.getEntity().getId(), key ->new ArrayList<>()).add(change);
+                  return map;
+               },
+               (map1, map2) -> {
+                  map2.forEach((key1, value) -> map1.computeIfAbsent(key1, key -> new ArrayList<>()).addAll(value));
+                  return map1;
+               }
+         );
 
-         changes.forEach(linkChange -> {
-            final LinkInstance linkInstance = linkChange.getEntity();
+         changesByLinkTypeId.entrySet().forEach(entry -> {
+            final LinkInstance linkInstance = entry.getValue().get(0).getEntity();
+            final LinkInstance originalLinkInstance = entry.getValue().get(0).getOriginalLinkInstance();
             final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
-            final DataDocument newData = constraintManager.encodeDataTypes(linkType, new DataDocument(linkChange.getAttrId(), linkChange.getValue()));
+            final DataDocument aggregatedUpdate = new DataDocument();
+            entry.getValue().forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
+            final DataDocument newData = constraintManager.encodeDataTypes(linkType, aggregatedUpdate);
             final DataDocument oldData = new DataDocument(linkInstance.getData() == null ? new DataDocument() : linkInstance.getData());
 
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
 
             if (attributesIdsToAdd.size() > 0) {
-               Optional<Attribute> attribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(linkChange.getAttrId())).findFirst();
-               attribute.ifPresent(attr -> attr.setUsageCount(attr.getUsageCount() + 1));
-               linkTypesChanged.add(linkType.getId());
+               linkType.getAttributes().stream().filter(attr -> attributesIdsToAdd.contains(attr.getId())).forEach(attr -> {
+                  attr.setUsageCount(attr.getUsageCount() + 1);
+                  linkTypesChanged.add(linkType.getId());
+               });
             }
 
             linkInstance.setUpdatedBy(ruleTask.getInitiator().getId());
             linkInstance.setUpdateDate(ZonedDateTime.now());
 
             DataDocument patchedData = ruleTask.getDaoContextSnapshot().getLinkDataDao()
-                                               .patchData(linkChange.getEntity().getLinkTypeId(), linkChange.getEntity().getId(), newData);
+                                               .patchData(linkInstance.getLinkTypeId(), linkInstance.getId(), newData);
 
             LinkInstance updatedLink = ruleTask.getDaoContextSnapshot().getLinkInstanceDao()
                                                .updateLinkInstance(linkInstance.getId(), linkInstance);
 
+            updatedLink.setData(patchedData);
+            taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink));
+
             updatedLink.setData(constraintManager.decodeDataTypes(linkType, patchedData));
 
-            updatedLinks.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), key -> new ArrayList<>())
+            updatedLinks.computeIfAbsent(linkInstance.getLinkTypeId(), key -> new ArrayList<>())
                         .add(updatedLink);
          });
 
@@ -493,7 +528,7 @@ public class JsExecutor {
          // send push notification
          if (ruleTask.getPusherClient() != null) {
             updatedLinks.keySet().forEach(linkTypeId ->
-                  ruleTask.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId))
+                  ruleTask.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId), linkTypesChanged.contains(linkTypeId))
             );
          }
 
@@ -536,7 +571,7 @@ public class JsExecutor {
                changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(toList()),
                createdDocuments
          );
-         final List<LinkInstance> changedLinkInstances = commitLinkChanges(changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList()));
+         final List<LinkInstance> changedLinkInstances = commitLinkChanges(taskExecutor, changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList()));
 
          // call functions and rules on new documents once they are filled with data from document changes
          callFunctionsAndRulesOnNewDocuments(taskExecutor, createdDocuments, collectionsMap);
@@ -688,8 +723,15 @@ public class JsExecutor {
 
    public static class LinkChange extends ResourceChange<LinkInstance> {
 
+      private LinkInstance originalLinkInstance;
+
       public LinkChange(final LinkInstance entity, final String attrId, final Object value) {
          super(entity, attrId, value);
+         originalLinkInstance = new LinkInstance(entity);
+      }
+
+      public LinkInstance getOriginalLinkInstance() {
+         return originalLinkInstance;
       }
    }
 
