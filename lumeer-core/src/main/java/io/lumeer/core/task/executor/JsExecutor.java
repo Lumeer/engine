@@ -22,6 +22,8 @@ import static java.util.stream.Collectors.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
@@ -31,6 +33,7 @@ import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
@@ -40,6 +43,7 @@ import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
@@ -65,6 +69,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import javax.xml.crypto.KeySelector;
 
 public class JsExecutor {
 
@@ -121,7 +126,7 @@ public class JsExecutor {
       }
 
       public void showMessage(final String type, final String message) {
-         if (ruleTask.getDaoContextSnapshot().increaseCreationCounter() <= Task.MAX_MESSAGES) {
+         if (ruleTask.getDaoContextSnapshot().increaseMessageCounter() <= Task.MAX_MESSAGES) {
             changes.add(new UserMessageChange(new UserMessage(type, message)));
          }
       }
@@ -381,12 +386,13 @@ public class JsExecutor {
          }
 
          final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
+         final PurposeChangeProcessor purposeChangeProcessor = ruleTask.getPurposeChangeProcessor();
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
          Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.getEntity())
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
          final Map<String, Collection> collectionsMap = ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
                                                                 .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
-         Set<String> collectionsChanged = new HashSet<>();
+         final Set<String> collectionsChanged = new HashSet<>();
 
          Map<String, Document> documentsByCorrelationId = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Function.identity()));
 
@@ -431,6 +437,13 @@ public class JsExecutor {
             Document updatedDocument = ruleTask.getDaoContextSnapshot().getDocumentDao()
                                                .updateDocument(document.getId(), document);
 
+            updatedDocument.setData(patchedData);
+
+            // notify delayed actions about data change
+            if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
+               purposeChangeProcessor.processChanges(new UpdateDocument(updatedDocument, originalDocument), collection);
+            }
+
             // add patched data to new documents
             if (StringUtils.isNotEmpty(document.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID))) {
                final Document doc = documentsByCorrelationId.get(document.getMetaData().getString(Document.META_CORRELATION_ID));
@@ -439,7 +452,6 @@ public class JsExecutor {
                   doc.setData(patchedData);
                }
             } else { // existing document
-               updatedDocument.setData(patchedData);
                taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, originalDocument, updatedDocument));
             }
 
@@ -456,6 +468,8 @@ public class JsExecutor {
             final Collection collection = collectionsMap.computeIfAbsent(id, i -> col);
             collection.setDocumentsCount(collection.getDocumentsCount() + (createdDocumentsByCollectionId.get(id) != null ? createdDocumentsByCollectionId.get(id).size() : 0));
          });
+
+         System.out.println(collectionsChanged);
 
          collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
                                                             .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));

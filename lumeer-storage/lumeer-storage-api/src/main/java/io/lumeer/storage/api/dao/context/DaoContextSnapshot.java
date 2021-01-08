@@ -18,10 +18,12 @@
  */
 package io.lumeer.storage.api.dao.context;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -97,6 +99,8 @@ public interface DaoContextSnapshot {
 
    ResourceCommentDao getResourceCommentDao();
 
+   DelayedActionDao getDelayedActionDao();
+
    Set<String> getCollectionManagers(final String collectionId);
 
    Set<String> getCollectionReaders(final String collectionId);
@@ -104,6 +108,8 @@ public interface DaoContextSnapshot {
    Set<String> getCollectionReaders(final Collection collection);
 
    Set<String> getProjectManagers();
+
+   SelectedWorkspace getSelectedWorkspace();
 
    long increaseCreationCounter();
    long increaseMessageCounter();

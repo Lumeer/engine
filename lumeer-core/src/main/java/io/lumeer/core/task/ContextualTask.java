@@ -25,8 +25,10 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
+import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -35,7 +37,7 @@ import java.util.logging.Level;
 
 public interface ContextualTask extends Task {
 
-   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager);
+   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, ConfigurationFacade.DeployEnvironment environment);
 
    DaoContextSnapshot getDaoContextSnapshot();
    PusherClient getPusherClient();
@@ -43,6 +45,7 @@ public interface ContextualTask extends Task {
    ConstraintManager getConstraintManager();
    String getCurrentLocale();
    String getCorrelationId();
+   PurposeChangeProcessor getPurposeChangeProcessor();
 
    /**
     * Send notifications to collection owners (i.e. managers).

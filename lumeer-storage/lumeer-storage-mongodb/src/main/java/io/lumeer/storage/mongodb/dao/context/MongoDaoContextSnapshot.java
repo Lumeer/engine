@@ -27,6 +27,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -61,6 +62,7 @@ import io.lumeer.storage.mongodb.dao.project.MongoResourceCommentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoSequenceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoViewDao;
 import io.lumeer.storage.mongodb.dao.project.MongoProjectScopedDao;
+import io.lumeer.storage.mongodb.dao.system.MongoDelayedActionDao;
 import io.lumeer.storage.mongodb.dao.system.MongoFeedbackDao;
 import io.lumeer.storage.mongodb.dao.system.MongoGroupDao;
 import io.lumeer.storage.mongodb.dao.system.MongoOrganizationDao;
@@ -84,10 +86,12 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    final private Project project;
    final private LongAdder createdDocumentsCounter = new LongAdder();
    final private LongAdder messageCounter = new LongAdder();
+   final private SelectedWorkspace selectedWorkspace;
 
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
       this.systemDatabase = (MongoDatabase) systemDataStorage.getDatabase();
       this.userDatabase = (MongoDatabase) userDataStorage.getDatabase();
+      this.selectedWorkspace = selectedWorkspace;
 
       if (selectedWorkspace.getOrganization().isPresent()) {
          this.organization = selectedWorkspace.getOrganization().get();
@@ -229,6 +233,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    }
 
    @Override
+   public DelayedActionDao getDelayedActionDao() {
+      return initSystemScopedDao(new MongoDelayedActionDao());
+   }
+
+   @Override
    public Set<String> getCollectionManagers(final String collectionId) {
       if (organization == null || project == null) {
          return Collections.emptySet();
@@ -277,6 +286,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       userIds.addAll(ResourceUtils.getManagers(project));
 
       return userIds;
+   }
+
+   @Override
+   public SelectedWorkspace getSelectedWorkspace() {
+      return selectedWorkspace;
    }
 
    @Override
