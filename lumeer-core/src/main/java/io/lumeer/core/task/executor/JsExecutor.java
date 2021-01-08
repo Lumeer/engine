@@ -358,11 +358,11 @@ public class JsExecutor {
          return ruleTask.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
       }
 
-      private void sendNotificationsForCreatedDocuments(final Map<String, List<Document>> documentsByCollection, final Map<String, Collection> collectionsMap) {
+      private void sendNotificationsForCreatedDocuments(final Map<String, List<Document>> documentsByCollection, final Map<String, Collection> collectionsMap, final long documentChanges) {
          // send push notification
          if (ruleTask.getPusherClient() != null) {
             documentsByCollection.forEach((key, value) ->
-                  ruleTask.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX, true)
+                  ruleTask.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX, documentChanges == 0) // send collection notification only when document changes do not do so
             );
          }
       }
@@ -375,7 +375,7 @@ public class JsExecutor {
          }
       }
 
-      private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes, final List<Document> createdDocuments) {
+      private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes, final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId, final Map<String, Collection> collectionsMapForCreatedDocuments) {
          if (changes.isEmpty()) {
             return List.of();
          }
@@ -448,6 +448,13 @@ public class JsExecutor {
 
             updatedDocuments.computeIfAbsent(document.getCollectionId(), key -> new ArrayList<>())
                             .add(updatedDocument);
+         });
+
+         // update collections with the new document counts
+         collectionsMapForCreatedDocuments.forEach((id, col) -> {
+            collectionsChanged.add(id);
+            final Collection collection = collectionsMap.computeIfAbsent(id, i -> col);
+            collection.setDocumentsCount(collection.getDocumentsCount() + (createdDocumentsByCollectionId.get(id) != null ? createdDocumentsByCollectionId.get(id).size() : 0));
          });
 
          collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
@@ -555,7 +562,7 @@ public class JsExecutor {
          final Map<String, String> correlationIdsToIds = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Document::getId));
 
          // send notifications for new empty documents, later updates are sent separately
-         sendNotificationsForCreatedDocuments(documentsByCollection, collectionsMap);
+         sendNotificationsForCreatedDocuments(documentsByCollection, collectionsMap, changes.stream().filter(change -> change instanceof DocumentChange).count());
 
          // map the newly create document IDs to all other changes so that we use the correct document in updates etc.
          changes.stream().filter(change -> change instanceof DocumentChange).forEach(change -> {
@@ -569,7 +576,9 @@ public class JsExecutor {
          final List<Document> changedDocuments = commitDocumentChanges(
                taskExecutor,
                changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(toList()),
-               createdDocuments
+               createdDocuments,
+               documentsByCollection,
+               collectionsMap
          );
          final List<LinkInstance> changedLinkInstances = commitLinkChanges(taskExecutor, changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList()));
 
