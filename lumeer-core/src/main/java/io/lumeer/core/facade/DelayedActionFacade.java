@@ -29,9 +29,11 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.AssigneeChangeDetector;
 import io.lumeer.core.facade.detector.AttributePurposeChangeDetector;
 import io.lumeer.core.facade.detector.CollectionChangeDetector;
+import io.lumeer.core.facade.detector.CollectionChangeProcessor;
 import io.lumeer.core.facade.detector.CollectionPurposeChangeDetector;
 import io.lumeer.core.facade.detector.DueDateChangeDetector;
 import io.lumeer.core.facade.detector.PurposeChangeDetector;
+import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.facade.detector.StateChangeDetector;
 import io.lumeer.core.facade.detector.TaskUpdateChangeDetector;
 import io.lumeer.engine.api.event.CreateDocument;
@@ -80,14 +82,15 @@ public class DelayedActionFacade {
    private DefaultConfigurationProducer configurationProducer;
 
    private ConstraintManager constraintManager;
+   private CollectionChangeProcessor collectionChangeProcessor;
+   private PurposeChangeProcessor purposeChangeProcessor;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
+      collectionChangeProcessor = new CollectionChangeProcessor(delayedActionDao, collectionDao, selectedWorkspace);
+      purposeChangeProcessor = new PurposeChangeProcessor(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationFacade.getEnvironment());
    }
-
-   private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
-   private static final Map<CollectionPurposeType, Set<CollectionChangeDetector>> collectionChangeDetectors = Map.of(CollectionPurposeType.None, Set.of(new CollectionPurposeChangeDetector()), CollectionPurposeType.Tasks, Set.of(new CollectionPurposeChangeDetector(), new AttributePurposeChangeDetector()));
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
       processChanges(createDocument);
@@ -103,38 +106,19 @@ public class DelayedActionFacade {
 
    public void collectionUpdated(@Observes final UpdateResource collectionUpdated) {
       if (collectionUpdated.getResource().getType().equals(ResourceType.COLLECTION)) {
-         processChanges(collectionUpdated);
+         collectionChangeProcessor.processChanges(collectionUpdated);
       }
    }
 
    public void collectionRemoved(@Observes final RemoveResource collectionRemoved) {
       if (collectionRemoved.getResource().getType().equals(ResourceType.COLLECTION)) {
-         processChanges(collectionRemoved);
-      }
-   }
-
-   private void processChanges(final ResourceEvent resourceEvent) {
-      final Set<CollectionChangeDetector> detectors = collectionChangeDetectors.get(((Collection) resourceEvent.getResource()).getPurposeType());
-
-      if (detectors != null) {
-         detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, collectionDao, selectedWorkspace);
-            detector.detectChanges(resourceEvent);
-         });
+         collectionChangeProcessor.processChanges(collectionRemoved);
       }
    }
 
    private void processChanges(final DocumentEvent documentEvent) {
       final Collection collection = getCollection(documentEvent);
-
-      final Set<PurposeChangeDetector> detectors = changeDetectors.get(collection.getPurposeType());
-
-      if (detectors != null) {
-         detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationFacade.getEnvironment());
-            detector.detectChanges(documentEvent, collection);
-         });
-      }
+      purposeChangeProcessor.processChanges(documentEvent, collection);
    }
 
    private Collection getCollection(final DocumentEvent event) {

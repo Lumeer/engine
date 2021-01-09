@@ -20,8 +20,8 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.DefaultWorkspace;
-import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationChannel;
+import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.NotificationsSettings;

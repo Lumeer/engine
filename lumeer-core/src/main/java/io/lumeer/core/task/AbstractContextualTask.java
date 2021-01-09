@@ -29,9 +29,11 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.AbstractConstraintConverter;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
+import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -56,14 +58,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected Task parent;
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
+   protected ConfigurationFacade.DeployEnvironment environment;
 
    @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager) {
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, ConfigurationFacade.DeployEnvironment environment) {
       this.initiator = initiator;
       this.daoContextSnapshot = daoContextSnapshot;
       this.pusherClient = pusherClient;
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
+      this.environment = environment;
 
       return this;
    }
@@ -172,19 +176,21 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    @Override
-   public void sendPushNotifications(final Collection collection, final List<Document> documents) {
-      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX);
+   public void sendPushNotifications(final Collection collection, final List<Document> documents, final boolean collectionChanged) {
+      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX, collectionChanged);
    }
 
    @Override
-   public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix) {
+   public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
       final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
       final List<Event> collectionEvents = new ArrayList<>();
 
       users.forEach(userId -> {
          documents.forEach(doc -> events.add(createEventForDocument(doc, userId, suffix)));
-         collectionEvents.add(createEventForCollection(collection, userId));
+         if (collectionChanged) {
+            collectionEvents.add(createEventForCollection(collection, userId));
+         }
       });
 
       getPusherClient().trigger(events);
@@ -192,7 +198,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    @Override
-   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances) {
+   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
@@ -204,7 +210,9 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          users.forEach(userId -> {
             linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId)));
-            linkInstanceEvents.add(createEventForLinkType(linkType, userId));
+            if (linkTypeChanged) {
+               linkInstanceEvents.add(createEventForLinkType(linkType, userId));
+            }
          });
 
          getPusherClient().trigger(events);
@@ -273,6 +281,13 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    @Override
+   public PurposeChangeProcessor getPurposeChangeProcessor() {
+      return new PurposeChangeProcessor(
+            getDaoContextSnapshot().getDelayedActionDao(), getDaoContextSnapshot().getUserDao(), getDaoContextSnapshot().getSelectedWorkspace(),
+            initiator, new RequestDataKeeper(requestDataKeeper), constraintManager, environment);
+   }
+
+   @Override
    public String getCurrentLocale() {
       if (StringUtils.isEmpty(requestDataKeeper.getUserLocale())) {
          return initiator.getNotificationsLanguage();
@@ -291,7 +306,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper), getConstraintManager());
+            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, environment);
 
             return t;
          } catch (Exception e) {

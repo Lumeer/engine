@@ -27,6 +27,7 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -45,29 +46,31 @@ import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+import io.lumeer.storage.api.dao.context.WorkspaceSnapshot;
 import io.lumeer.storage.mongodb.dao.collection.MongoDataDao;
 import io.lumeer.storage.mongodb.dao.collection.MongoLinkDataDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoCompanyContactDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoFavoriteItemDao;
+import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoPaymentDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoProjectDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 import io.lumeer.storage.mongodb.dao.project.MongoCollectionDao;
 import io.lumeer.storage.mongodb.dao.project.MongoDocumentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoFunctionDao;
 import io.lumeer.storage.mongodb.dao.project.MongoLinkInstanceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoLinkTypeDao;
+import io.lumeer.storage.mongodb.dao.project.MongoProjectScopedDao;
 import io.lumeer.storage.mongodb.dao.project.MongoResourceCommentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoSequenceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoViewDao;
-import io.lumeer.storage.mongodb.dao.project.MongoProjectScopedDao;
+import io.lumeer.storage.mongodb.dao.system.MongoDelayedActionDao;
 import io.lumeer.storage.mongodb.dao.system.MongoFeedbackDao;
 import io.lumeer.storage.mongodb.dao.system.MongoGroupDao;
 import io.lumeer.storage.mongodb.dao.system.MongoOrganizationDao;
+import io.lumeer.storage.mongodb.dao.system.MongoSystemScopedDao;
 import io.lumeer.storage.mongodb.dao.system.MongoUserDao;
 import io.lumeer.storage.mongodb.dao.system.MongoUserLoginDao;
 import io.lumeer.storage.mongodb.dao.system.MongoUserNotificationDao;
-import io.lumeer.storage.mongodb.dao.system.MongoSystemScopedDao;
 
 import com.mongodb.client.MongoDatabase;
 
@@ -84,6 +87,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    final private Project project;
    final private LongAdder createdDocumentsCounter = new LongAdder();
    final private LongAdder messageCounter = new LongAdder();
+   final private WorkspaceSnapshot workspaceSnapshot;
 
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
       this.systemDatabase = (MongoDatabase) systemDataStorage.getDatabase();
@@ -100,6 +104,8 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       } else {
          this.project = null;
       }
+
+      workspaceSnapshot = new WorkspaceSnapshot(organization, project);
    }
 
    private <T extends MongoSystemScopedDao> T initSystemScopedDao(T dao) {
@@ -229,6 +235,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    }
 
    @Override
+   public DelayedActionDao getDelayedActionDao() {
+      return initSystemScopedDao(new MongoDelayedActionDao());
+   }
+
+   @Override
    public Set<String> getCollectionManagers(final String collectionId) {
       if (organization == null || project == null) {
          return Collections.emptySet();
@@ -277,6 +288,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       userIds.addAll(ResourceUtils.getManagers(project));
 
       return userIds;
+   }
+
+   @Override
+   public SelectedWorkspace getSelectedWorkspace() {
+      return workspaceSnapshot;
    }
 
    @Override
