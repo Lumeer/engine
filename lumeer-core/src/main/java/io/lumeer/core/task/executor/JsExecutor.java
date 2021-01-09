@@ -22,7 +22,6 @@ import static java.util.stream.Collectors.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
@@ -35,12 +34,12 @@ import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.ContextualTask;
+import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.UserMessage;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.MomentJsParser;
-import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -61,7 +60,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -69,7 +67,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.xml.crypto.KeySelector;
 
 public class JsExecutor {
 
@@ -445,15 +442,24 @@ public class JsExecutor {
             }
 
             // add patched data to new documents
+            boolean created = false;
             if (StringUtils.isNotEmpty(document.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID))) {
                final Document doc = documentsByCorrelationId.get(document.getMetaData().getString(Document.META_CORRELATION_ID));
 
                if (doc != null) {
                   doc.setData(patchedData);
+                  created = true;
                }
-            } else { // existing document
-               taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, originalDocument, updatedDocument));
             }
+
+            if (ruleTask instanceof RuleTask) {
+               if (created) {
+                  taskExecutor.submitTask(functionFacade.createTaskForCreatedDocument(collection, updatedDocument));
+               } else {
+                  taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, originalDocument, updatedDocument));
+               }
+            }
+
 
             patchedData = constraintManager.decodeDataTypes(collection, patchedData);
             updatedDocument.setData(patchedData);
@@ -468,8 +474,6 @@ public class JsExecutor {
             final Collection collection = collectionsMap.computeIfAbsent(id, i -> col);
             collection.setDocumentsCount(collection.getDocumentsCount() + (createdDocumentsByCollectionId.get(id) != null ? createdDocumentsByCollectionId.get(id).size() : 0));
          });
-
-         System.out.println(collectionsChanged);
 
          collectionsChanged.forEach(collectionId -> ruleTask.getDaoContextSnapshot()
                                                             .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
@@ -741,6 +745,16 @@ public class JsExecutor {
 
       public Document getOriginalDocument() {
          return originalDocument;
+      }
+
+      @Override
+      public String toString() {
+         return "DocumentChange{" +
+               "entity=" + entity +
+               ", attrId='" + getAttrId() + '\'' +
+               ", value=" + getValue() +
+               ", originalDocument=" + originalDocument +
+               '}';
       }
    }
 
