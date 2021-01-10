@@ -802,6 +802,12 @@ public class JsExecutor {
       }
    }
 
+   private String getJsLib() {
+      return "function lumeer_isEmpty(v) {\n"
+            + "  return (v === null || v === undefined || v === '' || (Array.isArray(v) && (v.length === 0 || (v.length === 1 && lumeer_isEmpty(v[0])))) || (typeof v === 'object' && !!v && Object.keys(v).length === 0 && v.constructor === Object));\n"
+            + "}\n";
+   }
+
    public void execute(final Map<String, Object> bindings, final ContextualTask task, final Collection collection, final String js) {
       lumeerBridge = new LumeerBridge(task, collection);
       lumeerBridge.dryRun = dryRun;
@@ -824,7 +830,8 @@ public class JsExecutor {
          }
       }, 3000);
 
-      final String jsCode = (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) || js.contains(MOMENT_JS_SIGNATURE) ? momentJsCode + ";\n" : "") + js;
+      final String jsCode = getJsLib() +
+            (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) || js.contains(MOMENT_JS_SIGNATURE) ? momentJsCode + ";\n" : "") + js;
 
       context.eval("js", jsCode);
    }
