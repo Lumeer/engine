@@ -33,9 +33,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 public class CollectionPurposeCodec implements Codec<CollectionPurpose> {
 
-   public static final String TYPE = "type";
-   public static final String META_DATA = "metaData";
-
    private final Codec<Document> documentCodec;
 
    public CollectionPurposeCodec(final CodecRegistry registry) {
@@ -54,9 +51,9 @@ public class CollectionPurposeCodec implements Codec<CollectionPurpose> {
          return new CollectionPurpose(CollectionPurposeType.None, new DataDocument());
       }
 
-      String typeString = bson.getString(TYPE);
+      String typeString = bson.getString(CollectionPurpose.TYPE);
       CollectionPurposeType purposeType = typeString != null ? CollectionPurposeType.valueOf(typeString) : CollectionPurposeType.None;
-      Document metaData = bson.get(META_DATA, Document.class);
+      Document metaData = bson.get(CollectionPurpose.META_DATA, Document.class);
 
       return new CollectionPurpose(purposeType, new DataDocument(metaData == null ? new Document() : metaData));
    }
@@ -64,8 +61,8 @@ public class CollectionPurposeCodec implements Codec<CollectionPurpose> {
    @Override
    public void encode(final BsonWriter writer, final CollectionPurpose value, final EncoderContext encoderContext) {
       Document document = new Document()
-            .append(TYPE, value.getType() != null ? value.getType().toString() : null)
-            .append(META_DATA, value.getMetaData());
+            .append(CollectionPurpose.TYPE, value.getType() != null ? value.getType().toString() : null)
+            .append(CollectionPurpose.META_DATA, value.getMetaData());
 
       documentCodec.encode(writer, document, encoderContext);
    }

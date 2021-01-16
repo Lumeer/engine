@@ -25,6 +25,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CollectionPurpose {
 
+   public static final String TYPE = "type";
+   public static final String META_DATA = "metaData";
+
    private final CollectionPurposeType type;
    private DataDocument metaData;
 
