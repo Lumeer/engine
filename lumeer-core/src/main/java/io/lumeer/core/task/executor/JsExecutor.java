@@ -27,7 +27,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;

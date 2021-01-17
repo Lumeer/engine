@@ -16,26 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.ConstraintType;
 
-public abstract class AbstractConstraintConverter implements ConstraintConverter {
+import java.util.Set;
 
-   protected ConstraintManager constraintManager;
-   protected String userLocale;
-   Attribute fromAttribute;
-   Attribute toAttribute;
+public class UserToNoneConverter extends AbstractTranslatingConverter { ;
 
    @Override
-   public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.constraintManager = cm;
-      this.userLocale = userLocale;
-      this.fromAttribute = fromAttribute;
-      this.toAttribute = toAttribute;
+   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
+      if (isConstraintWithConfig(fromAttribute)) {
+         this.translateFromArray = true;
+      }
    }
 
-   protected boolean isConstraintWithConfig(final Attribute attribute) {
-      return attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getConfig() != null;
+   @Override
+   public Set<ConstraintType> getFromTypes() {
+      return Set.of(ConstraintType.User);
+   }
+
+   @Override
+   public Set<ConstraintType> getToTypes() {
+      return Set.of(ConstraintType.None);
    }
 }

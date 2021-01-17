@@ -27,7 +27,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
-import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;

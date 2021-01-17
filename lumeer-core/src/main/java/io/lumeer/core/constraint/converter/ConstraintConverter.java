@@ -16,33 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.Arrays;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-public class AnyToFilesConverter extends AbstractTranslatingConverter {
+public interface ConstraintConverter extends AutoCloseable {
 
-   @Override
-   @SuppressWarnings("unchecked")
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.ignoreMissing = false;
+   void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
 
-      // at least one value is needed to make converter work
-      translations.put("xxx", "");
-   }
+   Set<ConstraintType> getFromTypes();
 
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Arrays.stream(ConstraintType.class.getEnumConstants()).collect(Collectors.toSet());
-   }
+   Set<ConstraintType> getToTypes();
 
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.FileAttachment);
-   }
+   DataDocument getPatchDocument(final DataDocument document);
+
+   default void close() {}
 }

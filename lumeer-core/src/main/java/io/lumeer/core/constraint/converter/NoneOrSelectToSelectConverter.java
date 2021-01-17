@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
@@ -32,7 +32,7 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       this.ignoreMissing = true;
-      
+
       if (isConstraintWithConfig(toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
          this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))

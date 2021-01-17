@@ -16,23 +16,33 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.engine.api.data.DataDocument;
 
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-public interface ConstraintConverter extends AutoCloseable {
+public class NoneToUserConverter extends AbstractTranslatingConverter {
 
-   void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
+   @Override
+   @SuppressWarnings("unchecked")
+   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
+      if (isConstraintWithConfig(toAttribute)) {
+         Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
+         this.translateToArray = (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
+      }
+   }
 
-   Set<ConstraintType> getFromTypes();
+   @Override
+   public Set<ConstraintType> getFromTypes() {
+      return Set.of(ConstraintType.None);
+   }
 
-   Set<ConstraintType> getToTypes();
-
-   DataDocument getPatchDocument(final DataDocument document);
-
-   default void close() {}
+   @Override
+   public Set<ConstraintType> getToTypes() {
+      return Set.of(ConstraintType.User);
+   }
 }

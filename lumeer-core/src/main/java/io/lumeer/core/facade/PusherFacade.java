@@ -37,7 +37,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.action.DelayedActionProcessor;
 import io.lumeer.core.auth.RequestDataKeeper;
-import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.QueryUtils;

@@ -16,16 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.Date;
 import java.util.Set;
 
-public class NoneToDateConverter extends AbstractDateConverter {
+public class NoneToPercentageConverter extends AbstractConstraintConverter {
 
    @Override
    public Set<ConstraintType> getFromTypes() {
@@ -34,35 +32,18 @@ public class NoneToDateConverter extends AbstractDateConverter {
 
    @Override
    public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.DateTime);
+      return Set.of(ConstraintType.Percentage);
    }
 
    @Override
    public DataDocument getPatchDocument(DataDocument document) {
-      if (initialized && document.containsKey(toAttribute.getId())) {
+      if (document.containsKey(toAttribute.getId())) {
          var originalValue = document.get(fromAttribute.getId());
 
-         if (originalValue != null) {
+         var newValue = constraintManager.encode(originalValue, toAttribute.getConstraint());
 
-            if (originalValue instanceof Number) {
-               return null;
-            }
-
-            var originalValueStr = originalValue.toString();
-
-            if (constraintManager.isNumber(originalValueStr)) {
-               return null;
-            }
-
-            try {
-               var instant = MomentJsParser.parseMomentJsDate(originalValueStr, format, userLocale);
-
-               if (instant != null) {
-                  return new DataDocument(toAttribute.getId(), new Date(instant));
-               }
-            } catch (RuntimeException e) {
-               return null;
-            }
+         if (newValue != null && !newValue.equals(originalValue)) {
+            return new DataDocument(toAttribute.getId(), newValue);
          }
       }
       return null;

@@ -27,6 +27,8 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.function.FunctionParameter;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
+import io.lumeer.core.constraint.Constraint;
+import io.lumeer.core.constraint.NumberConstraint;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.util.FunctionOrder;
@@ -231,6 +233,9 @@ public class FunctionFacade extends AbstractFacade {
       if (task == null) {
          return null;
       }
+
+      Constraint constraint = new NumberConstraint(3);
+
 
       FunctionTask functionTask = contextualTaskFactory.getInstance(FunctionTask.class);
       if (task.getCollection() != null) {

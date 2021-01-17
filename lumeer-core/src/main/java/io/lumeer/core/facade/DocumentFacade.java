@@ -21,7 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.*;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;

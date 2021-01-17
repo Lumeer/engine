@@ -37,7 +37,7 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.conversion.ConversionFacade;

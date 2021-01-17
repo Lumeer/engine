@@ -16,43 +16,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-public class SelectToNoneConverter extends AbstractTranslatingConverter { ;
+public class NoneToBooleanConverter extends AbstractTranslatingConverter {
 
    @Override
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      if (isConstraintWithConfig(fromAttribute)) {
-         this.translateFromArray = true;
-         Map<String, Object> config = (Map<String, Object>) fromAttribute.getConstraint().getConfig();
-         List<Map<String, Object>> options = (List<Map<String, Object>>) config.get("options");
+      this.ignoreMissing = true;
 
-         if (options != null) {
-            options.forEach(opt -> {
-               var displayValue = opt.get("displayValue");
-               if (displayValue != null && !"".equals(displayValue)) {
-                  translations.put(opt.get("value").toString(), displayValue.toString());
-               }
-            });
-         }
+      if (isConstraintWithConfig(toAttribute)) {
+         translations.put("true", Boolean.TRUE);
+         translations.put("yes", Boolean.TRUE);
+         translations.put("ja", Boolean.TRUE);
+         translations.put("ano", Boolean.TRUE);
+         translations.put("áno", Boolean.TRUE);
+         translations.put("sí", Boolean.TRUE);
+         translations.put("si", Boolean.TRUE);
+         translations.put("sim", Boolean.TRUE);
+         translations.put("да", Boolean.TRUE);
+         translations.put("是", Boolean.TRUE);
+         translations.put("はい", Boolean.TRUE);
+         translations.put("vâng", Boolean.TRUE);
+         translations.put("כן", Boolean.TRUE);
+         translations.put("1", Boolean.TRUE);
+         translations.put("false", Boolean.FALSE);
+         translations.put("0", Boolean.FALSE);
       }
    }
 
    @Override
    public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.Select);
+      return Set.of(ConstraintType.None);
    }
 
    @Override
    public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.None);
+      return Set.of(ConstraintType.Boolean);
    }
 }

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 
 import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.Point;

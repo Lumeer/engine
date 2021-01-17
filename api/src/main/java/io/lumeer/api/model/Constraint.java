@@ -31,8 +31,8 @@ public class Constraint {
    public static final String TYPE = "type";
    public static final String CONFIG = "config";
 
-   private ConstraintType type;
-   private Object config;
+   private final ConstraintType type;
+   private final Object config;
 
    @JsonCreator
    public Constraint(

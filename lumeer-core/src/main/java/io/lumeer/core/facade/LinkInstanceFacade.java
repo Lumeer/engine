@@ -30,7 +30,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.constraint.converter.ConstraintManager;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;

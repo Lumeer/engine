@@ -16,29 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.util;
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
+public abstract class ArrayUtils {
 
-import java.util.Set;
-
-public class UserToNoneConverter extends AbstractTranslatingConverter { ;
-
-   @Override
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      if (isConstraintWithConfig(fromAttribute)) {
-         this.translateFromArray = true;
+   public static <T> T get(final T[] array, final int index) {
+      if (array == null || index >= array.length) {
+         return null;
       }
-   }
 
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.User);
-   }
-
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.None);
+      return array[index];
    }
 }

@@ -16,49 +16,65 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.Date;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class DateToNoneConverter extends AbstractDateConverter {
+public class NoneToDurationConverter extends AbstractDurationConverter {
 
    @Override
    public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.DateTime);
-   }
-
-   @Override
-   public Set<ConstraintType> getToTypes() {
       return Set.of(ConstraintType.None);
    }
 
    @Override
+   public Set<ConstraintType> getToTypes() {
+      return Set.of(ConstraintType.Duration);
+   }
+
+   @Override
    public DataDocument getPatchDocument(DataDocument document) {
-      if (initialized && document.containsKey(toAttribute.getId())) {
+      if (document.containsKey(toAttribute.getId())) {
          var originalValue = document.get(fromAttribute.getId());
 
          if (originalValue != null) {
 
-            long originalValueLong;
-
             if (originalValue instanceof Number) {
-               originalValueLong = ((Number) originalValue).longValue();
-            } else if (originalValue instanceof Date) {
-               originalValueLong = ((Date) originalValue).getTime();
-            } else {
                return null;
             }
 
-            try {
-               var instant = MomentJsParser.formatMomentJsDate(originalValueLong, format, userLocale);
-               return new DataDocument(toAttribute.getId(), instant);
-            } catch (RuntimeException e) {
+            var originalValueStr = originalValue.toString();
+
+            if (constraintManager.isNumber(originalValueStr)) {
                return null;
+            }
+
+            var accum = new AtomicLong(0);
+
+            conversions.forEach((k, v) -> {
+               final Pattern p = Pattern.compile("[0-9]+" + k);
+               final Matcher m = p.matcher(originalValueStr);
+
+               int lastEnd = 0;
+               while (m.find()) {
+                  var num = originalValueStr.substring(m.start(), m.end() - 1);
+
+                  try {
+                     accum.addAndGet(Long.parseLong(num) * v);
+                  } catch (NumberFormatException nfe) {
+                     // nps
+                  }
+               }
+            });
+
+            if (!originalValue.equals(Long.valueOf(accum.get()).toString())) {
+               return new DataDocument(toAttribute.getId(), accum.get());
             }
          }
       }

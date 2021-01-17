@@ -16,40 +16,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.data;
 
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.core.constraint.config.NumberConstraintConfig;
 
 import java.math.BigDecimal;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class NoneToPercentageConverter extends AbstractConstraintConverter {
+public class NumberDataValue extends NumericDataValue {
 
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
+   private final Object decodedValue;
+
+   public NumberDataValue(Object value, NumberConstraintConfig config) {
+      this.decodedValue = value;
    }
 
    @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.Percentage);
-   }
-
-   @Override
-   public DataDocument getPatchDocument(DataDocument document) {
-      if (document.containsKey(toAttribute.getId())) {
-         var originalValue = document.get(fromAttribute.getId());
-
-         var newValue = constraintManager.encode(originalValue, toAttribute.getConstraint());
-
-         if (newValue != null && !newValue.equals(originalValue)) {
-            return new DataDocument(toAttribute.getId(), newValue);
-         }
-      }
+   public BigDecimal getNumber() {
       return null;
    }
+
+   @Override
+   public ConstraintType getType() {
+      return ConstraintType.Number;
+   }
+
+   @Override
+   public Object decodedValue() {
+      return null;
+   }
+
+   @Override
+   public Boolean intersects(final DataValue dataValue) {
+      return false;
+   }
+
 }

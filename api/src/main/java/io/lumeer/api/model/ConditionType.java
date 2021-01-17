@@ -18,40 +18,41 @@
  */
 package io.lumeer.api.model;
 
-import java.util.Arrays;
-import java.util.List;
-
 public enum ConditionType {
 
-   EQUALS,
-   NOT_EQUALS,
-   LOWER_THAN,
-   LOWER_THAN_EQUALS,
-   GREATER_THAN,
-   GREATER_THAN_EQUALS;
+   EQUALS("en"),
+   NOT_EQUALS("neq"),
+   LOWER_THAN("lt"),
+   LOWER_THAN_EQUALS("lte"),
+   GREATER_THAN("gt"),
+   GREATER_THAN_EQUALS("gte"),
+   IN("in"),
+   HAS_SOME("hasSome"),
+   HAS_ALL("hasAll"),
+   HAS_NONE_OF("nin"),
+   BETWEEN("between"),
+   NOT_BETWEEN("notBetween"),
+   CONTAINS("contains"),
+   NOT_CONTAINS("notContains"),
+   STARTS_WITH("startsWith"),
+   ENDS_WITH("endsWith"),
+   IS_EMPTY("empty"),
+   NOT_EMPTY("notEmpty"),
+   ENABLED("enabled"),
+   DISABLED("disabled");
 
-   private static final List<String> EQ_VARIANTS = Arrays.asList("=", "==", "eq", "equals");
-   private static final List<String> NEQ_VARIANTS = Arrays.asList("!=", "!==", "<>", "ne", "neq", "nequals");
-   private static final List<String> LT_VARIANTS = Arrays.asList("<", "lt");
-   private static final List<String> LTE_VARIANTS = Arrays.asList("<=", "lte");
-   private static final List<String> GT_VARIANTS = Arrays.asList(">", "gt");
-   private static final List<String> GTE_VARIANTS = Arrays.asList(">=", "gte");
+   private final String value;
+
+   ConditionType(String value){
+      this.value = value;
+   }
+
+   public String getValue() {
+      return value;
+   }
 
    public static ConditionType fromString(String condition) {
-      if (EQ_VARIANTS.contains(condition)) {
-         return EQUALS;
-      } else if (NEQ_VARIANTS.contains(condition)) {
-         return NOT_EQUALS;
-      } else if (LT_VARIANTS.contains(condition)) {
-         return LOWER_THAN;
-      } else if (LTE_VARIANTS.contains(condition)) {
-         return LOWER_THAN_EQUALS;
-      } else if (GT_VARIANTS.contains(condition)) {
-         return GREATER_THAN;
-      } else if (GTE_VARIANTS.contains(condition)) {
-         return GREATER_THAN_EQUALS;
-      }
-      return null;
+      return ConditionType.valueOf(condition);
    }
 
 }
