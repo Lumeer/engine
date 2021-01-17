@@ -26,10 +26,12 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.FunctionTaskExecutor;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +45,8 @@ public class FunctionTask extends AbstractContextualTask {
    private Set<Document> documents;
    private LinkType linkType;
    private Set<LinkInstance> linkInstances;
+   private Map<String, Document> originalDocuments;
+   private Map<String, LinkInstance> originalLinkInstances;
 
    private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
@@ -54,6 +58,8 @@ public class FunctionTask extends AbstractContextualTask {
       this.parent = parent;
       this.linkType = null;
       this.linkInstances = null;
+      this.originalLinkInstances = null;
+      this.originalDocuments = new HashMap<>();
    }
 
    public void setFunctionTask(final Attribute attribute, final LinkType linkType, final Set<LinkInstance> linkInstances, Task parent) {
@@ -63,6 +69,8 @@ public class FunctionTask extends AbstractContextualTask {
       this.parent = parent;
       this.collection = null;
       this.documents = null;
+      this.originalDocuments = null;
+      this.originalLinkInstances = new HashMap<>();
    }
 
    public Function getFunction() {
@@ -89,22 +97,43 @@ public class FunctionTask extends AbstractContextualTask {
       return linkInstances;
    }
 
+   public Document getOriginalDocument(final String id) {
+      return originalDocuments.get(id);
+   }
+
+   public Document getOriginalDocumentOrDefault(final String id, final Document document) {
+      return originalDocuments.getOrDefault(id, document);
+   }
+
+   public LinkInstance getOriginalLinkInstance(final String id) {
+      return originalLinkInstances.get(id);
+   }
+
+   public LinkInstance getOriginalLinkInstanceOrDefault(final String id, final LinkInstance linkInstance) {
+      return originalLinkInstances.getOrDefault(id, linkInstance);
+   }
+
    @Override
    public void process(final TaskExecutor taskExecutor) {
+      final ChangesTracker tracker = new ChangesTracker();
       if (documents != null && collection != null) {
          getDocumentsWithData(collection, documents).forEach(document -> {
+            originalDocuments.put(document.getId(), new Document(document));
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
-            executor.execute(taskExecutor);
+            tracker.merge(executor.execute(taskExecutor));
          });
       } else if (linkType != null && linkInstances != null) {
          getLinkInstancesWithData(linkType, linkInstances).forEach(linkInstance -> {
+            originalLinkInstances.put(linkInstance.getId(), new LinkInstance(linkInstance));
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, linkType, linkInstance);
-            executor.execute(taskExecutor);
+            tracker.merge(executor.execute(taskExecutor));
          });
       }
 
       if (parent != null) {
          parent.process(taskExecutor);
+      } else {
+         //sendPushNotifications(tracker);
       }
    }
 
@@ -155,5 +184,16 @@ public class FunctionTask extends AbstractContextualTask {
       }
 
       super.propagateChanges(documents, links);
+   }
+
+   @Override
+   public String toString() {
+      return "FunctionTask{" +
+            "attribute=" + (attribute != null ? attribute.getId() : null) +
+            ", collection=" + (collection != null ? collection.getId() : null) +
+            ", linkType=" + (linkType != null ? linkType.getId() : null) +
+            ", documents=" + (documents != null ? documents.stream().map(Document::getId).collect(Collectors.joining(", ")) : null) +
+            ", parent=" + parent +
+            '}';
    }
 }

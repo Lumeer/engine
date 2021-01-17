@@ -55,7 +55,7 @@ public class FunctionTaskExecutor {
       this.linkType = linkType;
    }
 
-   public void execute(final TaskExecutor taskExecutor) {
+   public ChangesTracker execute(final TaskExecutor taskExecutor) {
       final JsExecutor.DocumentBridge thisDocument = new JsExecutor.DocumentBridge(document);
       final JsExecutor.LinkBridge thisLink = new JsExecutor.LinkBridge(linkInstance);
       final Map<String, Object> bindings = linkInstance == null ? Map.of("thisRecord", thisDocument, "thisDocument", thisDocument) : Map.of("thisLink", thisLink);
@@ -64,13 +64,17 @@ public class FunctionTaskExecutor {
 
       try {
          jsExecutor.execute(bindings, task, collection, task.getFunction().getJs());
-         jsExecutor.commitChanges(taskExecutor);
+         final ChangesTracker tracker = jsExecutor.commitChanges(taskExecutor);
          checkErrorErasure();
+
+         return tracker;
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to execute function: ", e);
          writeTaskError(e, jsExecutor.getCause());
          jsExecutor.setErrorInAttribute(document, task.getAttribute().getId(), taskExecutor);
       }
+
+      return null;
    }
 
    private void checkErrorErasure() {

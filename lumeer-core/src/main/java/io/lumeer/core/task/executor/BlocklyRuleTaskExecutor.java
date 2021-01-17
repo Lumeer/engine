@@ -46,7 +46,7 @@ public class BlocklyRuleTaskExecutor {
       this.ruleTask = ruleTask;
    }
 
-   public void execute(final TaskExecutor taskExecutor) {
+   public ChangesTracker execute(final TaskExecutor taskExecutor) {
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
@@ -60,13 +60,14 @@ public class BlocklyRuleTaskExecutor {
       }
 
       final JsExecutor jsExecutor = new JsExecutor();
+      ChangesTracker tracker = null;
       jsExecutor.setDryRun(rule.isDryRun());
 
       try {
          jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
 
          if (!rule.isDryRun()) {
-            jsExecutor.commitChanges(taskExecutor);
+            tracker = jsExecutor.commitChanges(taskExecutor);
          } else {
             writeDryRunResults(jsExecutor.getChanges());
          }
@@ -76,6 +77,8 @@ public class BlocklyRuleTaskExecutor {
          log.log(Level.WARNING, "Unable to execute Blockly Rule on document change: ", e);
          writeTaskError(e);
       }
+
+      return tracker;
    }
 
    private void checkErrorErasure() {

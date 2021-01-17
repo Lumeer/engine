@@ -85,6 +85,15 @@ public interface ContextualTask extends Task {
    void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged);
 
    /**
+    * Send push notifications to link instance readers.
+    * @param linkType Parent link type.
+    * @param linkInstances List of link instances.
+    * @param suffix push notification suffix.
+    * @param linkTypeChanged When true, send updated link type.
+    */
+   void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged);
+
+   /**
     * Send push notifications to project managers.
     * @param sequenceName Name of updated sequence.
     */

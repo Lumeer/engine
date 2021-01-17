@@ -82,7 +82,7 @@ public class Rule {
             "name=" + name +
             ", type=" + type +
             ", timing=" + timing +
-            ", configuration=" + configuration +
+          //  ", configuration=" + configuration +
             '}';
    }
 

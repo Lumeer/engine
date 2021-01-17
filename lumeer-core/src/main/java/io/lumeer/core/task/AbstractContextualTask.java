@@ -34,7 +34,9 @@ import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
+import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.util.PusherClient;
+import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +44,10 @@ import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -148,11 +153,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkType, null), null);
    }
 
-   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId) {
+   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId, final String suffix) {
       linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
    }
 
    private Event createEventForSequence(final Sequence sequence, final String userId) {
@@ -199,6 +204,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    @Override
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged) {
+      sendPushNotifications(linkType, linkInstances, PusherFacade.UPDATE_EVENT_SUFFIX, linkTypeChanged);
+   }
+
+   @Override
+   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
@@ -209,7 +219,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
          final List<Event> linkInstanceEvents = new ArrayList<>();
 
          users.forEach(userId -> {
-            linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId)));
+            linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId, suffix)));
             if (linkTypeChanged) {
                linkInstanceEvents.add(createEventForLinkType(linkType, userId));
             }
@@ -242,6 +252,87 @@ public abstract class AbstractContextualTask implements ContextualTask {
       );
 
       getPusherClient().trigger(events);
+   }
+
+   private void sendPushNotificationsForDocuments(final ChangesTracker changesTracker) {
+      // keep track of collections without updated documents
+      final Set<String> remainingIds = new HashSet<>(changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
+      final Set<String> updatedIds = changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet());
+      remainingIds.removeAll(updatedIds);
+
+      if (changesTracker.getCreatedDocuments().size() > 0) {
+         final Map<String, List<Document>> documentsByCollectionId =
+               Utils.categorize(changesTracker.getCreatedDocuments().stream(), Document::getCollectionId);
+
+         documentsByCollectionId.forEach((collectionId, documents) -> {
+            if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
+               sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.CREATE_EVENT_SUFFIX, updatedIds.contains(collectionId));
+            }
+         });
+      }
+
+      if (changesTracker.getUpdatedDocuments().size() > 0) {
+         final Map<String, List<Document>> documentsByCollectionId =
+               Utils.categorize(changesTracker.getUpdatedDocuments().stream(), Document::getCollectionId);
+
+         documentsByCollectionId.forEach((collectionId, documents) -> {
+            if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
+               sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.UPDATE_EVENT_SUFFIX, updatedIds.contains(collectionId));
+            }
+         });
+      }
+
+      if (remainingIds.size() > 0) {
+         remainingIds.forEach(id -> sendPushNotifications(changesTracker.getCollectionsMap().get(id)));
+      }
+   }
+
+   private void sendPushNotificationsForLinks(final ChangesTracker changesTracker) {
+      // keep track of collections without updated documents
+      final Set<String> remainingIds = new HashSet<>(changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet()));
+      final Set<String> updatedIds = changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet());
+      remainingIds.removeAll(updatedIds);
+
+      if (changesTracker.getCreatedLinkInstances().size() > 0) {
+         final Map<String, List<LinkInstance>> linksByLinkTypeId =
+               Utils.categorize(changesTracker.getCreatedLinkInstances().stream(), LinkInstance::getLinkTypeId);
+
+         linksByLinkTypeId.forEach((linkTypeId, links) -> {
+            if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
+               sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.CREATE_EVENT_SUFFIX, updatedIds.contains(linkTypeId));
+            }
+         });
+      }
+
+      if (changesTracker.getUpdatedLinkInstances().size() > 0) {
+         final Map<String, List<LinkInstance>> linksByLinkTypeId =
+               Utils.categorize(changesTracker.getUpdatedLinkInstances().stream(), LinkInstance::getLinkTypeId);
+
+         linksByLinkTypeId.forEach((linkTypeId, links) -> {
+            if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
+               sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.UPDATE_EVENT_SUFFIX, updatedIds.contains(linkTypeId));
+            }
+         });
+      }
+
+      if (remainingIds.size() > 0) {
+         remainingIds.forEach(id -> sendPushNotifications(changesTracker.getLinkTypesMap().get(id)));
+      }
+   }
+
+   public void sendPushNotifications(final ChangesTracker changesTracker) {
+      if (getPusherClient() != null) {
+         sendPushNotificationsForDocuments(changesTracker);
+         sendPushNotificationsForLinks(changesTracker);
+
+         if (changesTracker.getSequences().size() > 0) {
+            changesTracker.getSequences().forEach(this::sendPushNotifications);
+         }
+
+         if (changesTracker.getUserMessages().size() > 0) {
+            sendPushNotifications(changesTracker.getUserMessages());
+         }
+      }
    }
 
    @Override
