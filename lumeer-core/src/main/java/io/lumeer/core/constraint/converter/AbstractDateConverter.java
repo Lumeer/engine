@@ -20,6 +20,7 @@ package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 
 import org.apache.commons.lang3.StringUtils;
 

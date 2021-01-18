@@ -1,10 +1,9 @@
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.constraint.converter.ConstraintManager;
 
 import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.Point;
@@ -52,23 +51,23 @@ public class ConstraintManagerTest {
       final String valid3 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSx", l).format(dt);
       final String valid4 = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX", l).format(dt);
 
-      Object encoded = cm.encode(valid1, new Constraint(ConstraintType.DateTime, null));
+      Object encoded = cm.encode(valid1, new ConstraintObject(ConstraintType.DateTime, null));
       assertThat(encoded).isInstanceOf(Date.class);
       assertThat(((Date) encoded).toInstant()).isEqualTo(d.toInstant());
 
-      encoded = cm.encode(valid2, new Constraint(ConstraintType.DateTime, null));
+      encoded = cm.encode(valid2, new ConstraintObject(ConstraintType.DateTime, null));
       assertThat(((Date) encoded).toInstant()).isEqualTo(d.toInstant());
 
-      encoded = cm.encode(valid3, new Constraint(ConstraintType.DateTime, null));
+      encoded = cm.encode(valid3, new ConstraintObject(ConstraintType.DateTime, null));
       assertThat(encoded).isEqualTo(d);
 
-      encoded = cm.encode(valid4, new Constraint(ConstraintType.DateTime, null));
+      encoded = cm.encode(valid4, new ConstraintObject(ConstraintType.DateTime, null));
       assertThat(encoded).isEqualTo(d);
    }
 
    @Test
    public void testNumberConstraint() {
-      final Constraint numberConstraint = new Constraint(ConstraintType.Number, null);
+      final ConstraintObject numberConstraint = new ConstraintObject(ConstraintType.Number, null);
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
 
@@ -99,7 +98,7 @@ public class ConstraintManagerTest {
 
    @Test
    public void testBooleanConstraint() {
-      final Constraint booleanConstraint = new Constraint(ConstraintType.Boolean, null);
+      final ConstraintObject booleanConstraint = new ConstraintObject(ConstraintType.Boolean, null);
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
 
@@ -115,7 +114,7 @@ public class ConstraintManagerTest {
 
    @Test
    public void testPercentageConstraint() {
-      final Constraint percentageConstraint = new Constraint(ConstraintType.Percentage, null);
+      final ConstraintObject percentageConstraint = new ConstraintObject(ConstraintType.Percentage, null);
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
 
@@ -134,7 +133,7 @@ public class ConstraintManagerTest {
 
    @Test
    public void testCoordinatesConstraint() {
-      final Constraint coordinatesConstraint = new Constraint(ConstraintType.Coordinates, null);
+      final ConstraintObject coordinatesConstraint = new ConstraintObject(ConstraintType.Coordinates, null);
       final ConstraintManager cm = new ConstraintManager();
       cm.setLocale(l);
 

@@ -18,11 +18,92 @@
  */
 package io.lumeer.core.constraint.data;
 
+import io.lumeer.api.model.constraint.DataValue;
+
+import org.bson.types.Decimal128;
+
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Locale;
+import java.util.regex.Pattern;
 
 public abstract class NumericDataValue extends DataValue {
 
    public abstract BigDecimal getNumber();
+
+   private final Pattern numberMatch = Pattern.compile("^[-+]?\\d+([.,]\\d+)?([Ee][+-]?\\d+)?$");
+
+   /**
+    * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
+    *
+    * @param value
+    *       The value to try to convert to number.
+    * @return The value converted to a number data type or null when the conversion was not possible.
+    */
+   protected Number encodeNumber(final Locale locale, final Object value) {
+      Object numberValue = value;
+      if (value instanceof String && numberMatch.matcher((String) value).matches()) {
+         numberValue = ((String) value).replaceFirst(",", ".").replace("e", "E");
+      }
+      final DecimalFormat df = (DecimalFormat) DecimalFormat.getNumberInstance(locale);
+      df.setParseBigDecimal(true);
+      final NumberFormat nf = NumberFormat.getNumberInstance(locale);
+
+      return encodeNumber(nf, df, numberValue);
+   }
+
+   /**
+    * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
+    *
+    * @param numberFormat
+    *       Number format to parse to double or integer.
+    * @param bigNumberFormat
+    *       Number format to parse to big decimal.
+    * @param value
+    *       The value to try to convert to number.
+    * @return The value converted to a number data type or null when the conversion was not possible.
+    */
+   protected Number encodeNumber(final NumberFormat numberFormat, final NumberFormat bigNumberFormat, Object value) {
+      if (value instanceof Number) {
+         return (Number) value;
+      } else if (value instanceof String) {
+         final String trimmed = ((String) value).trim();
+
+         if (trimmed.matches("^0[^\\.].*")) { // we need to keep leading and trailing zeros, so no conversion to number
+            return null;
+         }
+
+         try {
+            // figure out whether we need to use BigDecimal
+            final Number n2 = numberFormat.parse(trimmed);
+
+            if (bigNumberFormat == null) {
+               return n2;
+            }
+
+            final Number n1 = bigNumberFormat.parse(trimmed);
+
+            if (n1 instanceof BigDecimal) {
+               try {
+                  new Decimal128((BigDecimal) n1); // are we able to fit into Decimal128?
+               } catch (NumberFormatException nfe) {
+                  if (n2 instanceof Double && Double.isInfinite((Double) n2)) {
+                     return null;
+                  }
+                  return n2;
+               }
+            }
+
+            return n1.toString().equals(n2.toString()) && !(n2 instanceof Double) ? n2 : n1;
+         } catch (final ParseException pe) {
+            return null;
+         }
+      }
+
+      return null;
+   }
 
    public Boolean isEqual(final NumericDataValue dataValue) {
       if (isEmpty() || dataValue.isEmpty()) {
@@ -37,28 +118,28 @@ public abstract class NumericDataValue extends DataValue {
 
    public Boolean greaterThan(final NumericDataValue dataValue) {
       if (isEmpty() || dataValue.isEmpty()) {
-         return false;
+         return !isEmpty() && dataValue.isEmpty();
       }
       return getNumber().compareTo(dataValue.getNumber()) > 0;
    }
 
    public Boolean greaterThanEquals(final NumericDataValue dataValue) {
       if (isEmpty() || dataValue.isEmpty()) {
-         return false;
+         return !isEmpty() && dataValue.isEmpty();
       }
       return getNumber().compareTo(dataValue.getNumber()) >= 0;
    }
 
    public Boolean lowerThan(final NumericDataValue dataValue) {
       if (isEmpty() || dataValue.isEmpty()) {
-         return false;
+         return isEmpty() && !dataValue.isEmpty();
       }
       return getNumber().compareTo(dataValue.getNumber()) < 0;
    }
 
    public Boolean lowerThanEquals(final NumericDataValue dataValue) {
       if (isEmpty() || dataValue.isEmpty()) {
-         return false;
+         return isEmpty() && !dataValue.isEmpty();
       }
       return getNumber().compareTo(dataValue.getNumber()) <= 0;
    }

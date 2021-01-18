@@ -19,7 +19,7 @@
 package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
@@ -104,7 +104,7 @@ public class ResourceUtils {
    }
 
 
-   public static Constraint findConstraint(java.util.Collection<Attribute> attributes, String attributeId) {
+   public static ConstraintObject findConstraint(java.util.Collection<Attribute> attributes, String attributeId) {
       Attribute attribute = findAttribute(attributes, attributeId);
       if (attribute != null) {
          return attribute.getConstraint();

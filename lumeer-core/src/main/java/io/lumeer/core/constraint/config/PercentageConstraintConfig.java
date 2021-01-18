@@ -16,23 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.constraint.config;
 
-import io.lumeer.api.model.ConditionType;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.constraint.config.ConstraintConfig;
-import io.lumeer.core.constraint.data.DataValue;
+import io.lumeer.api.model.constraint.ConstraintConfig;
 
-import java.util.function.BiFunction;
+public class PercentageConstraintConfig extends ConstraintConfig {
 
-public abstract class Constraint {
+   public final Integer decimals;
 
-   public abstract ConstraintType getType();
-
-   public abstract ConstraintConfig getConfig();
-
-   public abstract DataValue createDataValue(Object value);
-
-   public abstract BiFunction<? extends DataValue, ? extends DataValue[], Boolean> getDataValueEvaluator(ConditionType condition);
+   public PercentageConstraintConfig(Object config) {
+      var configMap = parseConfig(config);
+      this.decimals = parseInt(configMap, "decimals");
+   }
 
 }

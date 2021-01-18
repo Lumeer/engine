@@ -33,7 +33,7 @@ public class Attribute {
 
    private String id;
    private String name;
-   private Constraint constraint;
+   private ConstraintObject constraint;
    private Function function;
    private Integer usageCount;
 
@@ -47,7 +47,7 @@ public class Attribute {
    public Attribute(
          @JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
-         @JsonProperty(CONSTRAINT) final Constraint constraint,
+         @JsonProperty(CONSTRAINT) final ConstraintObject constraint,
          @JsonProperty(FUNCTION) final Function function,
          @JsonProperty(USAGE_COUNT) final Integer usageCount) {
       this.name = name;
@@ -73,11 +73,11 @@ public class Attribute {
       this.id = id;
    }
 
-   public Constraint getConstraint() {
+   public ConstraintObject getConstraint() {
       return constraint;
    }
 
-   public void setConstraint(final Constraint constraint) {
+   public void setConstraint(final ConstraintObject constraint) {
       this.constraint = constraint;
    }
 

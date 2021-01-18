@@ -16,17 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint.data;
+package io.lumeer.api.model.constraint;
 
-import io.lumeer.api.model.ConditionType;
-import io.lumeer.api.model.ConstraintType;
+import java.util.HashMap;
+import java.util.Map;
 
-public abstract class DataValue {
+public abstract class ConstraintConfig {
 
-   public abstract ConstraintType getType();
+   public Map<String, Object> parseConfig(Object config) {
+      try {
+         return (Map<String, Object>) config;
+      } catch (ClassCastException exception) {
+         return new HashMap<>();
+      }
+   }
 
-   public abstract Object decodedValue();
-
-   public abstract Boolean intersects(DataValue dataValue);
-
+   public Integer parseInt(Map<String, Object> config, String key) {
+      if (config != null && config.containsKey(key)) {
+         try {
+            return Integer.valueOf(config.get(key).toString());
+         } catch (NumberFormatException exception) {
+            return null;
+         }
+      }
+      return null;
+   }
 }

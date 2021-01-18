@@ -20,7 +20,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
@@ -30,7 +30,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.constraint.converter.ConstraintManager;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;
@@ -362,7 +362,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    @SuppressWarnings("unchecked")
    public void runRule(final String linkTypeId, String linkInstanceId, String attributeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      Constraint constraint = ResourceUtils.findConstraint(linkType.getAttributes(), attributeId);
+      ConstraintObject constraint = ResourceUtils.findConstraint(linkType.getAttributes(), attributeId);
       if (constraint != null) {
          var config = (Map<String, Object>) constraint.getConfig();
          var rule = config.get("rule").toString();

@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint.converter;
+package io.lumeer.core.constraint.manager;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
@@ -240,15 +240,15 @@ public class ConstraintManager {
       return value;
    }
 
-   public Object encode(final Object value, final Constraint constraint) {
+   public Object encode(final Object value, final ConstraintObject constraint) {
       return encode(value, constraint, false);
    }
 
-   public Object encodeForFce(final Object value, final Constraint constraint) {
+   public Object encodeForFce(final Object value, final ConstraintObject constraint) {
       return encode(value, constraint, true);
    }
 
-   private Object encode(final Object value, final Constraint constraint, final boolean tryHard) {
+   private Object encode(final Object value, final ConstraintObject constraint, final boolean tryHard) {
       if (locale == null) {
          throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
       }
@@ -338,7 +338,7 @@ public class ConstraintManager {
       return tryHard ? encode(value) : value;
    }
 
-   public Object decode(final Object value, final Constraint constraint) {
+   public Object decode(final Object value, final ConstraintObject constraint) {
       if (value != null) {
          if (value instanceof Date) {
             final ZonedDateTime dt = ZonedDateTime.from(((Date) value).toInstant().atZone(utcZone));
@@ -371,7 +371,7 @@ public class ConstraintManager {
       return value;
    }
 
-   private Map<String, Constraint> getConstraints(final Collection collection) {
+   private Map<String, ConstraintObject> getConstraints(final Collection collection) {
       if (collection == null) {
          return Collections.emptyMap();
       }
@@ -393,7 +393,7 @@ public class ConstraintManager {
       return queryCopy;
    }
 
-   private void processQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes, final BiFunction<Object, Constraint, Object> processor) {
+   private void processQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes, final BiFunction<Object, ConstraintObject, Object> processor) {
       Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Resource::getId, c -> c));
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> c));
 
@@ -426,7 +426,7 @@ public class ConstraintManager {
       return processData(data, getConstraints(collection), this::decode);
    }
 
-   private Map<String, Constraint> getConstraints(final LinkType linkType) {
+   private Map<String, ConstraintObject> getConstraints(final LinkType linkType) {
       if (linkType == null) {
          return Collections.emptyMap();
       }
@@ -448,7 +448,7 @@ public class ConstraintManager {
       return processData(data, getConstraints(linkType), this::decode);
    }
 
-   private DataDocument processData(final DataDocument data, final Map<String, Constraint> constraints, final BiFunction<Object, Constraint, Object> processor) {
+   private DataDocument processData(final DataDocument data, final Map<String, ConstraintObject> constraints, final BiFunction<Object, ConstraintObject, Object> processor) {
       if (data == null) {
          return null;
       }

@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionAttributeFilter;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
@@ -38,7 +38,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.constraint.converter.ConstraintManager;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
@@ -273,7 +273,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchDocumentsByNumberConstraint() {
-      Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument());
+      ConstraintObject constraint = new ConstraintObject(ConstraintType.Number, new DataDocument());
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
       String collectionId = createCollection("numberCollection", attribute).getId();
 
@@ -312,7 +312,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchDocumentsDateConstraint(){
-      Constraint constraint = new Constraint(ConstraintType.DateTime, new DataDocument());
+      ConstraintObject constraint = new ConstraintObject(ConstraintType.DateTime, new DataDocument());
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
       String collectionId = createCollection("dateCollection", attribute).getId();
 
@@ -346,7 +346,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchDocumentsCoordinatesConstraint(){
-      Constraint constraint = new Constraint(ConstraintType.Coordinates, new DataDocument());
+      ConstraintObject constraint = new ConstraintObject(ConstraintType.Coordinates, new DataDocument());
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
       String collectionId = createCollection("coordinatesCollection", attribute).getId();
 

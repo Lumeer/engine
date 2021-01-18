@@ -18,10 +18,15 @@
  */
 package io.lumeer.core.constraint.config;
 
+import io.lumeer.api.model.constraint.ConstraintConfig;
+
 public class NumberConstraintConfig extends ConstraintConfig {
 
-   public NumberConstraintConfig(Object config) {
+   public final Integer decimals;
 
+   public NumberConstraintConfig(Object config) {
+      var configMap = parseConfig(config);
+      this.decimals = parseInt(configMap, "decimals");
    }
 
 }

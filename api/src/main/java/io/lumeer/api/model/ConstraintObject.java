@@ -26,7 +26,7 @@ import net.jcip.annotations.Immutable;
 import java.util.Objects;
 
 @Immutable
-public class Constraint {
+public class ConstraintObject {
 
    public static final String TYPE = "type";
    public static final String CONFIG = "config";
@@ -35,7 +35,7 @@ public class Constraint {
    private final Object config;
 
    @JsonCreator
-   public Constraint(
+   public ConstraintObject(
          @JsonProperty(TYPE) final ConstraintType type,
          @JsonProperty(CONFIG) final Object config) {
       this.type = type;
@@ -58,7 +58,7 @@ public class Constraint {
       if (o == null || getClass() != o.getClass()) {
          return false;
       }
-      final Constraint that = (Constraint) o;
+      final ConstraintObject that = (ConstraintObject) o;
       return type == that.type &&
             Objects.equals(config, that.config);
    }

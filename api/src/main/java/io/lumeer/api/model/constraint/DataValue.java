@@ -16,24 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint.converter;
+package io.lumeer.api.model.constraint;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.constraint.manager.ConstraintManager;
-import io.lumeer.engine.api.data.DataDocument;
 
-import java.util.Set;
+import java.util.Locale;
 
-public interface ConstraintConverter extends AutoCloseable {
+public abstract class DataValue {
 
-   void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
+   public abstract ConstraintType getType();
 
-   Set<ConstraintType> getFromTypes();
+   public abstract Object decodeValue();
 
-   Set<ConstraintType> getToTypes();
+   public abstract Object encodeValue(Locale locale);
 
-   DataDocument getPatchDocument(final DataDocument document);
+   public abstract Boolean intersects(DataValue dataValue);
 
-   default void close() {}
 }

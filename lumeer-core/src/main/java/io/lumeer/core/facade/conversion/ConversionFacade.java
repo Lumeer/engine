@@ -26,7 +26,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.converter.ConstraintConverter;
 import io.lumeer.core.constraint.converter.ConstraintConverterFactory;
-import io.lumeer.core.constraint.converter.ConstraintManager;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.ReloadResourceContent;

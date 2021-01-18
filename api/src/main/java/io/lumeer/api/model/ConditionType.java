@@ -20,7 +20,7 @@ package io.lumeer.api.model;
 
 public enum ConditionType {
 
-   EQUALS("en"),
+   EQUALS("eq"),
    NOT_EQUALS("neq"),
    LOWER_THAN("lt"),
    LOWER_THAN_EQUALS("lte"),

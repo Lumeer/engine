@@ -24,7 +24,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
@@ -166,10 +166,10 @@ public class DelayedActionIT extends IntegrationTestBase {
       jsonCollection.setDocumentsCount(0);
       jsonCollection.setLastAttributeNum(0);
       jsonCollection.setAttributes(List.of(
-            new Attribute("a0", "Summary", new Constraint(ConstraintType.Text, null), null, 0),
-            new Attribute("a1", "Assignee", new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
-            new Attribute("a2", "Due date", new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")), null, 0),
-            new Attribute("a3", "State", new Constraint(ConstraintType.Select, new org.bson.Document("options",
+            new Attribute("a0", "Summary", new ConstraintObject(ConstraintType.Text, null), null, 0),
+            new Attribute("a1", "Assignee", new ConstraintObject(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
+            new Attribute("a2", "Due date", new ConstraintObject(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")), null, 0),
+            new Attribute("a3", "State", new ConstraintObject(ConstraintType.Select, new org.bson.Document("options",
                   List.of(
                         new org.bson.Document("value", "New").append("displayValue", ""),
                         new org.bson.Document("value", "In Progress").append("displayValue", ""),
@@ -178,7 +178,7 @@ public class DelayedActionIT extends IntegrationTestBase {
                         new org.bson.Document("value", "Won't fix").append("displayValue", "")
                   )
             )), null, 0),
-            new Attribute("a4", "Observers", new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
+            new Attribute("a4", "Observers", new ConstraintObject(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
             new Attribute("a5", "Something", null, null, 0)
       ));
       jsonCollection.setDefaultAttributeId("a0");

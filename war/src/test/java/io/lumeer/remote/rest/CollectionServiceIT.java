@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Organization;
@@ -91,7 +91,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ATTRIBUTE_ID = "a1";
    private static final String ATTRIBUTE_NAME = "fullname";
-   private static final Constraint ATTRIBUTE_CONSTRAINT = new Constraint(ConstraintType.Boolean, null);
+   private static final ConstraintObject ATTRIBUTE_CONSTRAINT = new ConstraintObject(ConstraintType.Boolean, null);
    private static final Function ATTRIBUTE_FUNCTION = new Function("js", "xml", "error", 123456L, false);
    private static final Integer ATTRIBUTE_COUNT = 0;
 

@@ -33,7 +33,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
-import io.lumeer.core.constraint.converter.ConstraintManager;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;

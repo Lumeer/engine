@@ -21,7 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -37,7 +37,7 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.constraint.converter.ConstraintManager;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.conversion.ConversionFacade;
@@ -588,11 +588,11 @@ public class CollectionFacade extends AbstractFacade {
          final String otherCollectionId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getCollection1() : autoLinkRule.getCollection2();
          final String attributeId = autoLinkRule.getCollection1().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Attribute attribute = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).findFirst().orElse(null);
-         final Constraint constraint = Utils.computeIfNotNull(attribute, Attribute::getConstraint);
+         final ConstraintObject constraint = Utils.computeIfNotNull(attribute, Attribute::getConstraint);
          final Collection otherCollection = getCollection(otherCollectionId);
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Attribute otherAttribute = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).findFirst().orElse(null);
-         final Constraint otherConstraint = Utils.computeIfNotNull(otherAttribute, Attribute::getConstraint);
+         final ConstraintObject otherConstraint = Utils.computeIfNotNull(otherAttribute, Attribute::getConstraint);
 
          if (otherCollection.getDocumentsCount() > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the collection");

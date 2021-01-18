@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
@@ -106,7 +106,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    private static final String ATTRIBUTE_ID = "a1";
    private static final String ATTRIBUTE_NAME = "fullname";
-   private static final Constraint ATTRIBUTE_CONSTRAINT = new Constraint(ConstraintType.Boolean, null);
+   private static final ConstraintObject ATTRIBUTE_CONSTRAINT = new ConstraintObject(ConstraintType.Boolean, null);
    private static final Function ATTRIBUTE_FUNCTION = new Function("", "xml", "error", 123456L, false);
    private static final Integer ATTRIBUTE_COUNT = 0;
 
@@ -653,7 +653,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
       var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr.setConstraint(new Constraint(ConstraintType.Select, new org.bson.Document("options",
+      attr.setConstraint(new ConstraintObject(ConstraintType.Select, new org.bson.Document("options",
             List.of(
                   new org.bson.Document("value", "New").append("displayValue", ""),
                   new org.bson.Document("value", "In Progress").append("displayValue", ""),
@@ -675,7 +675,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       // now add display value
       var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr2.setConstraint(new Constraint(ConstraintType.Select, new org.bson.Document("options",
+      attr2.setConstraint(new ConstraintObject(ConstraintType.Select, new org.bson.Document("options",
             List.of(
                   new org.bson.Document("value", 0).append("displayValue", "New"),
                   new org.bson.Document("value", 1).append("displayValue", "In Progress"),
@@ -732,7 +732,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
       var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr.setConstraint(new Constraint(ConstraintType.Duration, new org.bson.Document("type", "Work").append("conversions",
+      attr.setConstraint(new ConstraintObject(ConstraintType.Duration, new org.bson.Document("type", "Work").append("conversions",
               new org.bson.Document("w", 5).append("d", 8).append("h", 60).append("m", 60).append("s", 1000)
       )));
 
@@ -758,7 +758,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       // now back to no constraint
       var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr2.setConstraint(new Constraint(ConstraintType.None, null));
+      attr2.setConstraint(new ConstraintObject(ConstraintType.None, null));
       collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
 
       documents = documentDao.getDocumentsByCollection(collection.getId());
@@ -781,7 +781,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       // custom unit lengths
       var attr3 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr3.setConstraint(new Constraint(ConstraintType.Duration, new org.bson.Document("type", "Custom").append("conversions",
+      attr3.setConstraint(new ConstraintObject(ConstraintType.Duration, new org.bson.Document("type", "Custom").append("conversions",
               new org.bson.Document("w", 5).append("d", 5).append("h", 30).append("m", 60).append("s", 1000)
       )));
 
@@ -836,7 +836,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
       var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr.setConstraint(new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")));
+      attr.setConstraint(new ConstraintObject(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")));
 
       collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
 
@@ -857,7 +857,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       // now back to no constraint
       var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr2.setConstraint(new Constraint(ConstraintType.None, null));
+      attr2.setConstraint(new ConstraintObject(ConstraintType.None, null));
       collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
 
       documents = documentDao.getDocumentsByCollection(collection.getId());
@@ -896,7 +896,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
       var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr.setConstraint(new Constraint(ConstraintType.Percentage, null));
+      attr.setConstraint(new ConstraintObject(ConstraintType.Percentage, null));
 
       collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
 
@@ -917,7 +917,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       // now back to no constraint
       var attr2 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
-      attr2.setConstraint(new Constraint(ConstraintType.None, null));
+      attr2.setConstraint(new ConstraintObject(ConstraintType.None, null));
       collectionFacade.updateCollectionAttribute(collection.getId(), attr2.getId(), attr2);
 
       documents = documentDao.getDocumentsByCollection(collection.getId());

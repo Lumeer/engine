@@ -23,7 +23,7 @@ import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.View;
-import io.lumeer.core.constraint.converter.ConstraintManager;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;

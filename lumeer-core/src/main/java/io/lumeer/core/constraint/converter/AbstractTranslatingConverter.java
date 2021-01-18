@@ -19,6 +19,7 @@
 package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.HashMap;

@@ -19,12 +19,13 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.ConditionType;
-import io.lumeer.core.constraint.data.NumberDataValue;
+import io.lumeer.api.model.constraint.Constraint;
+import io.lumeer.core.constraint.data.NumericDataValue;
 import io.lumeer.core.util.ArrayUtils;
 
 import java.util.function.BiFunction;
 
-public abstract class NumericConstraint<T extends NumberDataValue> extends Constraint {
+public abstract class NumericConstraint<T extends NumericDataValue> extends Constraint {
 
    @Override
    public BiFunction<T, T[], Boolean> getDataValueEvaluator(final ConditionType condition) {

@@ -20,40 +20,39 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.constraint.config.NumberConstraintConfig;
-import io.lumeer.core.constraint.data.NumberDataValue;
+import io.lumeer.core.constraint.config.PercentageConstraintConfig;
 
 import java.util.function.BiFunction;
 
-public class NumberConstraint extends NumericConstraint<NumberDataValue> {
+public class PercentageConstraint extends NumericConstraint<PercentageDataValue> {
 
-   private final NumberConstraintConfig config;
+   private final PercentageConstraintConfig config;
 
-   public NumberConstraint(Object config) {
-      if (config instanceof NumberConstraintConfig) {
-         this.config = (NumberConstraintConfig) config;
+   public PercentageConstraint(Object config) {
+      if (config instanceof PercentageConstraintConfig) {
+         this.config = (PercentageConstraintConfig) config;
       } else {
-         this.config = new NumberConstraintConfig(config);
+         this.config = new PercentageConstraintConfig(config);
       }
    }
 
    @Override
    public ConstraintType getType() {
-      return ConstraintType.Number;
+      return ConstraintType.Percentage;
    }
 
    @Override
-   public NumberConstraintConfig getConfig() {
+   public PercentageConstraintConfig getConfig() {
       return config;
    }
 
    @Override
-   public NumberDataValue createDataValue(final Object value) {
-      return new NumberDataValue(value, this.config);
+   public PercentageDataValue createDataValue(final Object value) {
+      return new PercentageDataValue(value, this.config);
    }
 
    @Override
-   public BiFunction<NumberDataValue, NumberDataValue[], Boolean> getDataValueEvaluator(final ConditionType condition) {
+   public BiFunction<PercentageDataValue, PercentageDataValue[], Boolean> getDataValueEvaluator(final ConditionType condition) {
       return (x, y) -> super.getDataValueEvaluator(condition).apply(x, y);
    }
 }

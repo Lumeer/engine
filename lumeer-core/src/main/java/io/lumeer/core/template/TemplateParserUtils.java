@@ -19,7 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 
 import org.apache.commons.lang3.StringUtils;
@@ -57,8 +57,8 @@ public class TemplateParserUtils {
       return attr;
    }
 
-   private static Constraint getAttributeConstraint(final JSONObject o) {
-      return new Constraint(ConstraintType.valueOf((String) o.get("type")), o.get("config"));
+   private static ConstraintObject getAttributeConstraint(final JSONObject o) {
+      return new ConstraintObject(ConstraintType.valueOf((String) o.get("type")), o.get("config"));
    }
 
    public static String getId(final JSONObject o) {

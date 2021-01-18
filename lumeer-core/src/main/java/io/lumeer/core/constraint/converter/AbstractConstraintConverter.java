@@ -19,6 +19,7 @@
 package io.lumeer.core.constraint.converter;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.core.constraint.manager.ConstraintManager;
 
 public abstract class AbstractConstraintConverter implements ConstraintConverter {
 

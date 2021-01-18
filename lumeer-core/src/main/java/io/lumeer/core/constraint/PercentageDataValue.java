@@ -16,23 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint.data;
+package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.constraint.DataValue;
-import io.lumeer.core.constraint.config.NumberConstraintConfig;
+import io.lumeer.core.constraint.config.PercentageConstraintConfig;
+import io.lumeer.core.constraint.data.NumericDataValue;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Locale;
 
-public class NumberDataValue extends NumericDataValue {
+public class PercentageDataValue extends NumericDataValue {
 
    private final BigDecimal number;
    private final Object value;
 
-   public NumberDataValue(Object value, NumberConstraintConfig config) {
-      Number number = encodeNumber(Locale.getDefault(), value);
+   public PercentageDataValue(Object value, PercentageConstraintConfig config) {
+      Number number = encodePercentage(Locale.getDefault(), value);
       if (number != null) {
          BigDecimal bigDecimal = new BigDecimal(number.toString());
          if (config.decimals != null && config.decimals >= 0) {
@@ -46,6 +47,23 @@ public class NumberDataValue extends NumericDataValue {
       this.value = value;
    }
 
+   private Number encodePercentage(Locale locale, Object value) {
+      if (value instanceof String) {
+         final String strValue = ((String) value).replace(" ", "").trim();
+
+         if (strValue.endsWith("%") && strValue.indexOf("%") == strValue.length() - 1) {
+            final Object result = encodeNumber(locale, strValue.substring(0, strValue.length() - 1));
+
+            if (result instanceof BigDecimal) {
+               return ((BigDecimal) result).movePointLeft(2);
+            } else if (result instanceof Long) {
+               return BigDecimal.valueOf((Long) result).movePointLeft(2);
+            }
+         }
+      }
+      return encodeNumber(locale, value);
+   }
+
    @Override
    public BigDecimal getNumber() {
       return number;
@@ -53,7 +71,7 @@ public class NumberDataValue extends NumericDataValue {
 
    @Override
    public ConstraintType getType() {
-      return ConstraintType.Number;
+      return ConstraintType.Percentage;
    }
 
    @Override
@@ -63,7 +81,7 @@ public class NumberDataValue extends NumericDataValue {
 
    @Override
    public Object encodeValue(final Locale locale) {
-      return encodeNumber(locale, value);
+      return encodePercentage(locale, this.value);
    }
 
    @Override

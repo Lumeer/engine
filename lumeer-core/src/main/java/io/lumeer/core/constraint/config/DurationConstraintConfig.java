@@ -16,24 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint.converter;
+package io.lumeer.core.constraint.config;
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.constraint.manager.ConstraintManager;
-import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.api.model.constraint.ConstraintConfig;
 
-import java.util.Set;
+public class DurationConstraintConfig extends ConstraintConfig {
 
-public interface ConstraintConverter extends AutoCloseable {
+   public DurationConstraintConfig(Object config) {
 
-   void init(final ConstraintManager cm, final String userLocale, final Attribute fromAttribute, final Attribute toAttribute);
+   }
 
-   Set<ConstraintType> getFromTypes();
-
-   Set<ConstraintType> getToTypes();
-
-   DataDocument getPatchDocument(final DataDocument document);
-
-   default void close() {}
 }

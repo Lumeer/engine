@@ -19,7 +19,7 @@
 package io.lumeer.core.task;
 
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 
@@ -35,14 +35,14 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
    private LinkType linkType;
    private Collection collection;
    private String attributeId;
-   private Constraint constraint;
+   private ConstraintObject constraint;
    private Collection otherCollection;
    private String otherAttributeId;
-   private Constraint otherConstraint;
+   private ConstraintObject otherConstraint;
 
    public void setupBatch(final LinkType linkType,
-         final Collection collection, final String attributeId, final Constraint constraint,
-         final Collection otherCollection, final String otherAttributeId, final Constraint otherConstraint) {
+         final Collection collection, final String attributeId, final ConstraintObject constraint,
+         final Collection otherCollection, final String otherAttributeId, final ConstraintObject otherConstraint) {
       this.linkType = linkType;
       this.collection = collection;
       this.attributeId = attributeId;

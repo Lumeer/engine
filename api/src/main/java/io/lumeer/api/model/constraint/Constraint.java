@@ -16,7 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint.config;
+package io.lumeer.api.model.constraint;
 
-public abstract class ConstraintConfig {
+import io.lumeer.api.model.ConditionType;
+import io.lumeer.api.model.ConstraintType;
+
+import java.util.function.BiFunction;
+
+public abstract class Constraint {
+
+   public abstract ConstraintType getType();
+
+   public abstract ConstraintConfig getConfig();
+
+   public abstract DataValue createDataValue(Object value);
+
+   public abstract BiFunction<? extends DataValue, ? extends DataValue[], Boolean> getDataValueEvaluator(ConditionType condition);
+
 }

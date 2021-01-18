@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 
 import org.bson.BsonReader;
@@ -30,7 +30,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class ConstraintCodec implements Codec<Constraint> {
+public class ConstraintCodec implements Codec<ConstraintObject> {
 
    public static final String TYPE = "type";
    public static final String CONFIG = "config";
@@ -42,13 +42,13 @@ public class ConstraintCodec implements Codec<Constraint> {
    }
 
    @Override
-   public Constraint decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
+   public ConstraintObject decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(bsonReader, decoderContext);
 
       return ConstraintCodec.convertFromDocument(bson);
    }
 
-   public static Constraint convertFromDocument(final Document document) {
+   public static ConstraintObject convertFromDocument(final Document document) {
       if (document == null) {
          return null;
       }
@@ -56,11 +56,11 @@ public class ConstraintCodec implements Codec<Constraint> {
       ConstraintType type = ConstraintType.valueOf(document.getString(TYPE));
       Object config = document.get(CONFIG);
 
-      return new Constraint(type, config);
+      return new ConstraintObject(type, config);
    }
 
    @Override
-   public void encode(final BsonWriter bsonWriter, final Constraint constraint, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter bsonWriter, final ConstraintObject constraint, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(TYPE, constraint.getType().toString())
             .append(CONFIG, constraint.getConfig());
@@ -69,7 +69,7 @@ public class ConstraintCodec implements Codec<Constraint> {
    }
 
    @Override
-   public Class<Constraint> getEncoderClass() {
-      return Constraint.class;
+   public Class<ConstraintObject> getEncoderClass() {
+      return ConstraintObject.class;
    }
 }

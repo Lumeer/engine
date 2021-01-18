@@ -25,7 +25,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintObject;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Permission;
@@ -101,7 +101,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String CONFIGURATION_VALUE = "testValue";
 
    static {
-      Constraint constraint = new Constraint(ConstraintType.Boolean, new DataDocument());
+      ConstraintObject constraint = new ConstraintObject(ConstraintType.Boolean, new DataDocument());
       Function function = new Function("js", "xml", "error", 12345L, false);
       Attribute attribute = new Attribute("a1", ATTRIBUTE1_NAME, constraint, function, 0);
       ATTRIBUTES = Collections.singleton(attribute);
