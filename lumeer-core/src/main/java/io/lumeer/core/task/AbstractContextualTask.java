@@ -44,7 +44,6 @@ import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +53,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class AbstractContextualTask implements ContextualTask {
+
+   private static final int RELOAD_EVENT_THRESHOLD = 50;
 
    private static Logger log = Logger.getLogger(AbstractConstraintConverter.class.getName());
 
@@ -117,6 +118,15 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
+   public void sendPushNotifications(final Collection collection, final String suffix) {
+      if (getPusherClient() != null) {
+         final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
+         final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user, suffix)).collect(Collectors.toList());
+
+         getPusherClient().trigger(events);
+      }
+   }
+
    @Override
    public void sendPushNotifications(final LinkType linkType) {
       if (getPusherClient() != null) {
@@ -130,10 +140,26 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
+   public void sendPushNotifications(final LinkType linkType, final String suffix) {
+      if (getPusherClient() != null) {
+         linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
+         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
+         final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user, suffix)).collect(Collectors.toList());
+
+         getPusherClient().trigger(events);
+      }
+   }
+
    private Event createEventForCollection(final Collection collection, final String userId) {
+      return createEventForCollection(collection, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
+   }
+
+   private Event createEventForCollection(final Collection collection, final String userId, final String suffix) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(collection, null), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(collection, null), null);
    }
 
    private Event createEventForDocument(final Document document, final String userId) {
@@ -148,9 +174,13 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId) {
+      return createEventForLinkType(linkType, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
+   }
+
+   private Event createEventForLinkType(final LinkType linkType, final String userId, final String suffix) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkType, null), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + suffix, message, getResourceId(linkType, null), null);
    }
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId, final String suffix) {
@@ -256,9 +286,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private void sendPushNotificationsForDocuments(final ChangesTracker changesTracker) {
       // keep track of collections without updated documents
-      final Set<String> remainingIds = new HashSet<>(changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
-      final Set<String> updatedIds = changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet());
-      remainingIds.removeAll(updatedIds);
+      final Set<String> collectionIds = new HashSet<>(changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
+      final Set<String> updatedIds = new HashSet<>();
 
       if (changesTracker.getCreatedDocuments().size() > 0) {
          final Map<String, List<Document>> documentsByCollectionId =
@@ -266,10 +295,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          documentsByCollectionId.forEach((collectionId, documents) -> {
             if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
-               sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.CREATE_EVENT_SUFFIX, updatedIds.contains(collectionId));
+               if (documents.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.CREATE_EVENT_SUFFIX, collectionIds.contains(collectionId));
+               }
+               updatedIds.add(collectionId);
             }
          });
       }
+      collectionIds.removeAll(updatedIds);
 
       if (changesTracker.getUpdatedDocuments().size() > 0) {
          final Map<String, List<Document>> documentsByCollectionId =
@@ -277,21 +312,30 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          documentsByCollectionId.forEach((collectionId, documents) -> {
             if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
-               sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.UPDATE_EVENT_SUFFIX, updatedIds.contains(collectionId));
+               if (documents.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.UPDATE_EVENT_SUFFIX, collectionIds.contains(collectionId));
+               }
+               updatedIds.add(collectionId);
             }
          });
       }
+      collectionIds.removeAll(updatedIds);
 
-      if (remainingIds.size() > 0) {
-         remainingIds.forEach(id -> sendPushNotifications(changesTracker.getCollectionsMap().get(id)));
+      if (collectionIds.size() > 0) {
+         collectionIds.forEach(id -> {
+            if (changesTracker.getCollectionsMap().containsKey(id)) {
+               sendPushNotifications(changesTracker.getCollectionsMap().get(id));
+            }
+         });
       }
    }
 
    private void sendPushNotificationsForLinks(final ChangesTracker changesTracker) {
       // keep track of collections without updated documents
-      final Set<String> remainingIds = new HashSet<>(changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet()));
+      final Set<String> linkTypeIds = new HashSet<>(changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet()));
       final Set<String> updatedIds = changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet());
-      remainingIds.removeAll(updatedIds);
 
       if (changesTracker.getCreatedLinkInstances().size() > 0) {
          final Map<String, List<LinkInstance>> linksByLinkTypeId =
@@ -299,10 +343,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          linksByLinkTypeId.forEach((linkTypeId, links) -> {
             if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
-               sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.CREATE_EVENT_SUFFIX, updatedIds.contains(linkTypeId));
+               if (links.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.CREATE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
+               }
+               updatedIds.add(linkTypeId);
             }
          });
       }
+      linkTypeIds.removeAll(updatedIds);
 
       if (changesTracker.getUpdatedLinkInstances().size() > 0) {
          final Map<String, List<LinkInstance>> linksByLinkTypeId =
@@ -310,17 +360,28 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          linksByLinkTypeId.forEach((linkTypeId, links) -> {
             if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
-               sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.UPDATE_EVENT_SUFFIX, updatedIds.contains(linkTypeId));
+               if (links.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.UPDATE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
+               }
+               updatedIds.add(linkTypeId);
             }
          });
       }
+      linkTypeIds.removeAll(updatedIds);
 
-      if (remainingIds.size() > 0) {
-         remainingIds.forEach(id -> sendPushNotifications(changesTracker.getLinkTypesMap().get(id)));
+      if (linkTypeIds.size() > 0) {
+         linkTypeIds.forEach(id -> {
+            if (changesTracker.getLinkTypesMap().containsKey(id)) {
+               sendPushNotifications(changesTracker.getLinkTypesMap().get(id));
+            }
+         });
       }
    }
 
-   public void sendPushNotifications(final ChangesTracker changesTracker) {
+   @Override
+   public void processChanges(final ChangesTracker changesTracker) {
       if (getPusherClient() != null) {
          sendPushNotificationsForDocuments(changesTracker);
          sendPushNotificationsForLinks(changesTracker);

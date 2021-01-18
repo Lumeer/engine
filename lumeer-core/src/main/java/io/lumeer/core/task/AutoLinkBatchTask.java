@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.core.task.executor.ChangesTracker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
    }
 
    @Override
-   public void process(final TaskExecutor executor) {
+   public void process(final TaskExecutor executor, final ChangesTracker changesTracker) {
       List<LinkInstance> links = new ArrayList<>();
 
       Map<String, Set<String>> source = new HashMap<>();

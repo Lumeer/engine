@@ -68,12 +68,10 @@ public class RuleTask extends AbstractContextualTask {
    }
 
    @Override
-   public void process(final TaskExecutor taskExecutor) {
-      final ChangesTracker tracker = new ChangesTracker();
-
+   public void process(final TaskExecutor taskExecutor, final ChangesTracker changesTracker) {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
-         tracker.merge(executor.execute(taskExecutor));
+         changesTracker.merge(executor.execute(taskExecutor));
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
          executor.execute(taskExecutor);
@@ -83,9 +81,7 @@ public class RuleTask extends AbstractContextualTask {
       }
 
       if (parent != null) {
-         parent.process(taskExecutor);
-      } else {
-         //sendPushNotifications(tracker);
+         parent.process(taskExecutor, changesTracker);
       }
    }
 

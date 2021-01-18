@@ -18,12 +18,14 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.core.task.executor.ChangesTracker;
+
 public class ListCollectionsIn10SecondsTask extends AbstractContextualTask {
 
    private AbstractContextualTask parent;
 
    @Override
-   public void process(final TaskExecutor executor) {
+   public void process(final TaskExecutor executor, final ChangesTracker changesTracker) {
       try {
          Thread.sleep(10_000);
       } catch (InterruptedException e) {

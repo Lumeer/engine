@@ -111,7 +111,7 @@ public class JsExecutor {
          } else {
             final int sequenceValue = task.getDaoContextSnapshot().getSequenceDao().getNextSequenceNo(sequenceName);
             changesTracker.addSequence(sequenceName);
-            task.sendPushNotifications(sequenceName);
+            //task.sendPushNotifications(sequenceName);
 
             return String.format(format, sequenceValue);
          }
@@ -366,11 +366,11 @@ public class JsExecutor {
 
       private void sendNotificationsForCreatedDocuments(final Map<String, List<Document>> documentsByCollection, final Map<String, Collection> collectionsMap, final long documentChanges) {
          // send push notification
-         if (task.getPusherClient() != null) {
+         /*if (task.getPusherClient() != null) {
             documentsByCollection.forEach((key, value) ->
                   task.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX, documentChanges == 0) // send collection notification only when document changes do not do so
             );
-         }
+         }*/
       }
 
       private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes, final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId, final Map<String, Collection> collectionsMapForCreatedDocuments) {
@@ -467,17 +467,18 @@ public class JsExecutor {
 
          changesTracker.addCollections(collectionsChanged.stream().map(collectionsMap::get).collect(toSet()));
          changesTracker.addUpdatedDocuments(updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toSet()));
+         changesTracker.updateCollectionsMap(collectionsMapForCreatedDocuments);
          changesTracker.updateCollectionsMap(collectionsMap);
 
          collectionsChanged.forEach(collectionId -> task.getDaoContextSnapshot()
                                                         .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
 
          // send push notification
-         if (task.getPusherClient() != null) {
+         /*if (task.getPusherClient() != null) {
             updatedDocuments.keySet().forEach(collectionId ->
                   task.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId), collectionsChanged.contains(collectionId))
             );
-         }
+         }*/
 
          return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
@@ -541,11 +542,11 @@ public class JsExecutor {
                                                     .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId), null));
 
          // send push notification
-         if (task.getPusherClient() != null) {
+         /*if (task.getPusherClient() != null) {
             updatedLinks.keySet().forEach(linkTypeId ->
                   task.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId), linkTypesChanged.contains(linkTypeId))
             );
-         }
+         }*/
 
          return updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
@@ -572,7 +573,7 @@ public class JsExecutor {
          // send notifications for new empty documents, later updates are sent separately
          changesTracker.addCreatedDocuments(createdDocuments);
          changesTracker.addCollections(collectionsMap.values().stream().filter(c -> documentsByCollection.containsKey(c.getId())).collect(toSet()));
-         sendNotificationsForCreatedDocuments(documentsByCollection, collectionsMap, changes.stream().filter(change -> change instanceof DocumentChange).count());
+         //sendNotificationsForCreatedDocuments(documentsByCollection, collectionsMap, changes.stream().filter(change -> change instanceof DocumentChange).count());
 
          // map the newly create document IDs to all other changes so that we use the correct document in updates etc.
          changes.stream().filter(change -> change instanceof DocumentChange).forEach(change -> {
@@ -600,7 +601,7 @@ public class JsExecutor {
          if (StringUtils.isNotEmpty(correlationId)) {
             final List<UserMessage> userMessages = changes.stream().filter(change -> change instanceof UserMessageChange).map(change -> ((UserMessageChange) change).getEntity()).collect(toList());
             changesTracker.addUserMessages(userMessages);
-            task.sendPushNotifications(userMessages);
+            //task.sendPushNotifications(userMessages);
          }
 
          // propagate changes in existing documents and links that has been loaded prior to calling this rule

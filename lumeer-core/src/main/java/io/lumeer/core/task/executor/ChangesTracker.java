@@ -51,32 +51,38 @@ public class ChangesTracker {
    public ChangesTracker() {
    }
 
-   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages) {
-      merge(collections, createdDocuments, updatedDocuments, linkTypes, createdLinkInstances, updatedLinkInstances, sequences, userMessages);
+   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+      merge(collections, createdDocuments, updatedDocuments, linkTypes, createdLinkInstances, updatedLinkInstances, sequences, userMessages, collectionsMap, linkTypesMap);
    }
 
-   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages) {
+   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
+         this.collections.removeAll(collections);
          this.collections.addAll(collections);
       }
 
       if (createdDocuments != null) {
+         this.createdDocuments.removeAll(createdDocuments);
          this.createdDocuments.addAll(createdDocuments);
       }
 
       if (updatedDocuments != null) {
+         this.updatedDocuments.removeAll(updatedDocuments);
          this.updatedDocuments.addAll(updatedDocuments);
       }
 
       if (linkTypes != null) {
+         this.linkTypes.removeAll(linkTypes);
          this.linkTypes.addAll(linkTypes);
       }
 
       if (createdLinkInstances != null) {
+         this.createdLinkInstances.removeAll(createdLinkInstances);
          this.createdLinkInstances.addAll(createdLinkInstances);
       }
 
       if (updatedLinkInstances != null) {
+         this.updatedLinkInstances.removeAll(updatedLinkInstances);
          this.updatedLinkInstances.addAll(updatedLinkInstances);
       }
 
@@ -88,6 +94,14 @@ public class ChangesTracker {
          this.userMessages.addAll(userMessages);
       }
 
+      if (collectionsMap != null) {
+         this.collectionsMap.putAll(collectionsMap);
+      }
+
+      if (linkTypesMap != null) {
+         this.linkTypesMap.putAll(linkTypesMap);
+      }
+
       return this;
    }
 
@@ -96,7 +110,7 @@ public class ChangesTracker {
          return this;
       }
 
-      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.sequences, other.userMessages);
+      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.sequences, other.userMessages, other.collectionsMap, other.linkTypesMap);
    }
 
    public Set<Document> getCreatedDocuments() {
@@ -183,8 +197,8 @@ public class ChangesTracker {
    public String toString() {
       return "ChangesTracker{" +
             "collections=" + computeIfNotNull(collections, c -> c.stream().map(Collection::getId).collect(Collectors.joining(", "))) +
-            ", createdDocuments=" + computeIfNotNull(createdDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
-            ", updatedDocuments=" + computeIfNotNull(updatedDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
+            ", createdDocuments=" + createdDocuments + //computeIfNotNull(createdDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
+            ", updatedDocuments=" + updatedDocuments + //computeIfNotNull(updatedDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
             ", linkTypes=" + computeIfNotNull(linkTypes, t -> t.stream().map(LinkType::getId).collect(Collectors.joining(", "))) +
             ", createdLinkInstances=" + computeIfNotNull(createdLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", updatedLinkInstances=" + computeIfNotNull(updatedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +

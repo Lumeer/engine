@@ -114,26 +114,23 @@ public class FunctionTask extends AbstractContextualTask {
    }
 
    @Override
-   public void process(final TaskExecutor taskExecutor) {
-      final ChangesTracker tracker = new ChangesTracker();
+   public void process(final TaskExecutor taskExecutor, final ChangesTracker changesTracker) {
       if (documents != null && collection != null) {
          getDocumentsWithData(collection, documents).forEach(document -> {
             originalDocuments.put(document.getId(), new Document(document));
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, collection, document);
-            tracker.merge(executor.execute(taskExecutor));
+            changesTracker.merge(executor.execute(taskExecutor));
          });
       } else if (linkType != null && linkInstances != null) {
          getLinkInstancesWithData(linkType, linkInstances).forEach(linkInstance -> {
             originalLinkInstances.put(linkInstance.getId(), new LinkInstance(linkInstance));
             final FunctionTaskExecutor executor = new FunctionTaskExecutor(this, linkType, linkInstance);
-            tracker.merge(executor.execute(taskExecutor));
+            changesTracker.merge(executor.execute(taskExecutor));
          });
       }
 
       if (parent != null) {
-         parent.process(taskExecutor);
-      } else {
-         //sendPushNotifications(tracker);
+         parent.process(taskExecutor, changesTracker);
       }
    }
 

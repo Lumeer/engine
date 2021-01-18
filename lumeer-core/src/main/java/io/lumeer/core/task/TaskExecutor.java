@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.core.task.executor.ChangesTracker;
+
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -32,6 +34,10 @@ public class TaskExecutor {
    private ManagedExecutorService executorService;
 
    public void submitTask(final Task task) {
-      executorService.submit(() -> task.process(this));
+      executorService.submit(() -> {
+         final ChangesTracker changesTracker = new ChangesTracker();
+         task.process(this, changesTracker);
+         task.processChanges(changesTracker);
+      });
    }
 }
