@@ -29,7 +29,6 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
-import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
@@ -67,7 +66,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class JsExecutor {
@@ -75,25 +73,24 @@ public class JsExecutor {
    private static final String CREATE_PREFIX = "CREATE_";
    private static final String MOMENT_JS_SIGNATURE = "/** MomentJs **/";
 
-   private static Logger log = Logger.getLogger(JsExecutor.class.getName());
-
    private LumeerBridge lumeerBridge;
    private boolean dryRun = false;
-   private static Engine engine = Engine
+   private static final Engine engine = Engine
          .newBuilder()
          .allowExperimentalOptions(true)
          .option("js.experimental-foreign-object-prototype", "true")
          .option("js.foreign-object-prototype", "true")
          .build();
-   private static String momentJsCode = MomentJsParser.getMomentJsCode();
+   private static final String momentJsCode = MomentJsParser.getMomentJsCode();
 
    public static class LumeerBridge {
 
-      private static DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
-      private static ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
-      private ContextualTask task;
-      private Collection collection;
-      private ChangesTracker changesTracker = new ChangesTracker();
+      private static final DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
+      private static final ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
+      private final ContextualTask task;
+      private final Collection collection;
+      private final ChangesTracker changesTracker = new ChangesTracker();
+      @SuppressWarnings("rawtypes")
       private Set<Change> changes = new HashSet<>();
       private Exception cause = null;
       private boolean dryRun = false;
@@ -103,6 +100,7 @@ public class JsExecutor {
          this.collection = collection;
       }
 
+      @SuppressWarnings("unused")
       public String getSequenceNumber(final String sequenceName, final int digits) {
          final String format = "%" + (digits <= 1 ? "" : "0" + digits) + "d";
 
@@ -111,7 +109,6 @@ public class JsExecutor {
          } else {
             final int sequenceValue = task.getDaoContextSnapshot().getSequenceDao().getNextSequenceNo(sequenceName);
             changesTracker.addSequence(sequenceName);
-            //task.sendPushNotifications(sequenceName);
 
             return String.format(format, sequenceValue);
          }
@@ -122,10 +119,12 @@ public class JsExecutor {
          return email == null ? "" : email;
       }
 
+      @SuppressWarnings("unused")
       public String getCurrentLocale() {
          return task.getCurrentLocale();
       }
 
+      @SuppressWarnings("unused")
       public void showMessage(final String type, final String message) {
          if (task.getDaoContextSnapshot().increaseMessageCounter() <= Task.MAX_MESSAGES) {
             changes.add(new UserMessageChange(new UserMessage(type, message)));
@@ -151,6 +150,7 @@ public class JsExecutor {
          }
       }
 
+      @SuppressWarnings("unused")
       public void setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
          try {
             changes.add(new LinkChange(l.link, attrId, convertValue(value)));
@@ -176,6 +176,7 @@ public class JsExecutor {
          }
       }
 
+      @SuppressWarnings({ "rawtypes", "unchecked" })
       Object convertValue(final Value value) {
          if (value.isNumber()) {
             return value.fitsInLong() ? value.asLong() : value.asDouble();
@@ -209,7 +210,7 @@ public class JsExecutor {
 
          final List<LinkInstance> result = task.getDaoContextSnapshot().getLinkInstanceDao()
                                                .searchLinkInstances(query);
-         result.stream().forEach(linkInstance ->
+         result.forEach(linkInstance ->
                linkInstance.setData(constraintManager.encodeDataTypesForFce(task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId), linkInstance.getData()))
          );
 
@@ -218,7 +219,6 @@ public class JsExecutor {
 
       public List<LinkBridge> getLinks(DocumentBridge d, String linkTypeId) {
          try {
-            final LinkType linkType = task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
             final List<LinkInstance> links = getLinkInstances(d.document.getId(), linkTypeId);
 
             // load link data
@@ -240,6 +240,7 @@ public class JsExecutor {
          }
       }
 
+      @SuppressWarnings("unused")
       public DocumentBridge getLinkDocument(final LinkBridge l, final String collectionId) {
          try {
             List<Document> documents = task.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(l.link.getDocumentIds().toArray(new String[0]));
@@ -308,8 +309,13 @@ public class JsExecutor {
          return Value.asValue(o);
       }
 
+      @SuppressWarnings("unused")
       public Value getLinkAttribute(final LinkBridge l, final String attrId) {
          try {
+            if (l.link == null || l.link.getData() == null) {
+               return Value.asValue(null);
+            }
+
             return filterValue(l.link.getData().get(attrId));
          } catch (Exception e) {
             cause = e;
@@ -330,10 +336,11 @@ public class JsExecutor {
          }
       }
 
+      @SuppressWarnings("unused")
       public List<Value> getLinkAttribute(final List<LinkBridge> links, final String attrId) {
          try {
             final List<Value> result = new ArrayList<>();
-            links.forEach(link -> result.add(filterValue(link.link.getData().get(attrId))));
+            links.forEach(link -> result.add(filterValue(link.link != null && link.link.getData() != null ? link.link.getData().get(attrId) : Value.asValue(null))));
 
             return result;
          } catch (Exception e) {
@@ -345,7 +352,7 @@ public class JsExecutor {
       public List<Value> getDocumentAttribute(List<DocumentBridge> docs, String attrId) {
          try {
             final List<Value> result = new ArrayList<>();
-            docs.forEach(doc -> result.add(filterValue(doc.document.getData().get(attrId))));
+            docs.forEach(doc -> result.add(filterValue(doc.document != null && doc.document.getData() != null ? doc.document.getData().get(attrId) : Value.asValue(null))));
 
             return result;
          } catch (Exception e) {
@@ -364,15 +371,6 @@ public class JsExecutor {
          return task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
       }
 
-      private void sendNotificationsForCreatedDocuments(final Map<String, List<Document>> documentsByCollection, final Map<String, Collection> collectionsMap, final long documentChanges) {
-         // send push notification
-         /*if (task.getPusherClient() != null) {
-            documentsByCollection.forEach((key, value) ->
-                  task.sendPushNotifications(collectionsMap.get(key), value, PusherFacade.CREATE_EVENT_SUFFIX, documentChanges == 0) // send collection notification only when document changes do not do so
-            );
-         }*/
-      }
-
       private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes, final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId, final Map<String, Collection> collectionsMapForCreatedDocuments) {
          if (changes.isEmpty()) {
             return List.of();
@@ -382,7 +380,7 @@ public class JsExecutor {
          final TaskProcessingFacade taskProcessingFacade = task.getTaskProcessingFacade(taskExecutor, functionFacade);
          final PurposeChangeProcessor purposeChangeProcessor = task.getPurposeChangeProcessor();
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
-         Map<String, Set<String>> documentIdsByCollection = changes.stream().map(change -> change.getEntity())
+         Map<String, Set<String>> documentIdsByCollection = changes.stream().map(Change::getEntity)
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
          final Map<String, Collection> collectionsMap = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
                                                             .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
@@ -393,15 +391,15 @@ public class JsExecutor {
          // aggregate all changes to individual documents
          final Map<String, List<DocumentChange>> changesByDocumentId = Utils.categorize(changes.stream(), change -> change.getEntity().getId());
 
-         changesByDocumentId.entrySet().forEach(entry -> {
-            final Document document = entry.getValue().get(0).getEntity();
+         changesByDocumentId.forEach((id, changeList) -> {
+            final Document document = changeList.get(0).getEntity();
             final Document originalDocument =
                   (task instanceof RuleTask) ? ((RuleTask) task).getOldDocument() :
-                        ((task instanceof FunctionTask) ? ((FunctionTask) task).getOriginalDocumentOrDefault(entry.getKey(), entry.getValue().get(0).getOriginalDocument()) :
-                              entry.getValue().get(0).getOriginalDocument());
+                        ((task instanceof FunctionTask) ? ((FunctionTask) task).getOriginalDocumentOrDefault(id, changeList.get(0).getOriginalDocument()) :
+                              changeList.get(0).getOriginalDocument());
             final Collection collection = collectionsMap.get(document.getCollectionId());
             final DataDocument aggregatedUpdate = new DataDocument();
-            entry.getValue().forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
+            changeList.forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
             final DataDocument newData = constraintManager.encodeDataTypes(collection, aggregatedUpdate);
             final DataDocument oldData = originalDocument != null ? new DataDocument(originalDocument.getData()) : new DataDocument();
 
@@ -473,13 +471,6 @@ public class JsExecutor {
          collectionsChanged.forEach(collectionId -> task.getDaoContextSnapshot()
                                                         .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
 
-         // send push notification
-         /*if (task.getPusherClient() != null) {
-            updatedDocuments.keySet().forEach(collectionId ->
-                  task.sendPushNotifications(collectionsMap.get(collectionId), updatedDocuments.get(collectionId), collectionsChanged.contains(collectionId))
-            );
-         }*/
-
          return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
@@ -495,14 +486,14 @@ public class JsExecutor {
          Set<String> linkTypesChanged = new HashSet<>();
          final Map<String, List<LinkChange>> changesByLinkTypeId = Utils.categorize(changes.stream(), change -> change.getEntity().getId());
 
-         changesByLinkTypeId.entrySet().forEach(entry -> {
-            final LinkInstance linkInstance = entry.getValue().get(0).getEntity();
+         changesByLinkTypeId.forEach((id, changeList) -> {
+            final LinkInstance linkInstance = changeList.get(0).getEntity();
             final LinkInstance originalLinkInstance = (task instanceof RuleTask) ? ((RuleTask) task).getOldLinkInstance() :
-                  ((task instanceof FunctionTask) ? ((FunctionTask) task).getOriginalLinkInstanceOrDefault(entry.getKey(), entry.getValue().get(0).getOriginalLinkInstance()) :
-                        entry.getValue().get(0).getOriginalLinkInstance());
+                  ((task instanceof FunctionTask) ? ((FunctionTask) task).getOriginalLinkInstanceOrDefault(id, changeList.get(0).getOriginalLinkInstance()) :
+                        changeList.get(0).getOriginalLinkInstance());
             final LinkType linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
             final DataDocument aggregatedUpdate = new DataDocument();
-            entry.getValue().forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
+            changeList.forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
             final DataDocument newData = constraintManager.encodeDataTypes(linkType, aggregatedUpdate);
             final DataDocument oldData = new DataDocument(linkInstance.getData() == null ? new DataDocument() : linkInstance.getData());
 
@@ -541,13 +532,6 @@ public class JsExecutor {
          linkTypesChanged.forEach(linkTypeId -> task.getDaoContextSnapshot()
                                                     .getLinkTypeDao().updateLinkType(linkTypeId, linkTypesMap.get(linkTypeId), null));
 
-         // send push notification
-         /*if (task.getPusherClient() != null) {
-            updatedLinks.keySet().forEach(linkTypeId ->
-                  task.sendPushNotifications(linkTypesMap.get(linkTypeId), updatedLinks.get(linkTypeId), linkTypesChanged.contains(linkTypeId))
-            );
-         }*/
-
          return updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
@@ -556,10 +540,11 @@ public class JsExecutor {
             return null;
          }
 
+         @SuppressWarnings("rawtypes")
          final List<Change> invalidChanges = changes.stream().filter(change -> !change.isComplete()).collect(toList());
          if (invalidChanges.size() > 0) {
             final StringBuilder sb = new StringBuilder();
-            invalidChanges.forEach(change -> sb.append("Invalid update request: " + change.toString() + "\n"));
+            invalidChanges.forEach(change -> sb.append("Invalid update request: ").append(change.toString()).append("\n"));
             throw new IllegalArgumentException(sb.toString());
          }
 
@@ -570,10 +555,9 @@ public class JsExecutor {
          final Map<String, Collection> collectionsMap = DocumentUtils.getCollectionsMap(task.getDaoContextSnapshot().getCollectionDao(), documentsByCollection);
          final Map<String, String> correlationIdsToIds = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Document::getId));
 
-         // send notifications for new empty documents, later updates are sent separately
+         // report new empty documents, later updates are sent separately
          changesTracker.addCreatedDocuments(createdDocuments);
          changesTracker.addCollections(collectionsMap.values().stream().filter(c -> documentsByCollection.containsKey(c.getId())).collect(toSet()));
-         //sendNotificationsForCreatedDocuments(documentsByCollection, collectionsMap, changes.stream().filter(change -> change instanceof DocumentChange).count());
 
          // map the newly create document IDs to all other changes so that we use the correct document in updates etc.
          changes.stream().filter(change -> change instanceof DocumentChange).forEach(change -> {
@@ -596,12 +580,11 @@ public class JsExecutor {
                changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList())
          );
 
-         // send push notifications with user messages for rules triggered via an Action button
+         // report user messages for rules triggered via an Action button
          final String correlationId = task.getCorrelationId();
          if (StringUtils.isNotEmpty(correlationId)) {
             final List<UserMessage> userMessages = changes.stream().filter(change -> change instanceof UserMessageChange).map(change -> ((UserMessageChange) change).getEntity()).collect(toList());
             changesTracker.addUserMessages(userMessages);
-            //task.sendPushNotifications(userMessages);
          }
 
          // propagate changes in existing documents and links that has been loaded prior to calling this rule
@@ -613,7 +596,7 @@ public class JsExecutor {
       String getChanges() {
          final Map<String, Collection> collections = new HashMap<>();
          final Map<String, LinkType> linkTypes = new HashMap<>();
-         final StringBuilder sb = new StringBuilder("");
+         final StringBuilder sb = new StringBuilder();
 
          changes.forEach(change -> {
             if (change instanceof DocumentCreation) {
@@ -636,10 +619,11 @@ public class JsExecutor {
          return sb.toString();
       }
 
+      @SuppressWarnings("rawtypes")
       private void appendChange(final StringBuilder sb, final String name, final java.util.Collection<Attribute> attributes, final Change change) {
          if (change instanceof ResourceChange) {
             final ResourceChange resourceChange = (ResourceChange) change;
-            sb.append(name + "(" + last4(((WithId) resourceChange.getEntity()).getId()) + "): ");
+            sb.append(name).append("(").append(last4(((WithId) resourceChange.getEntity()).getId())).append("): ");
             sb.append(attributes.stream().filter(a -> a.getId().equals(resourceChange.getAttrId())).map(Attribute::getName).findFirst().orElse(""));
             sb.append(" = ");
             sb.append(resourceChange.getValue());
@@ -732,7 +716,7 @@ public class JsExecutor {
 
    public static class DocumentChange extends ResourceChange<Document> {
 
-      private Document originalDocument;
+      private final Document originalDocument;
 
       public DocumentChange(final Document entity, final String attrId, final Object value) {
          super(entity, attrId, value);
@@ -756,7 +740,7 @@ public class JsExecutor {
 
    public static class LinkChange extends ResourceChange<LinkInstance> {
 
-      private LinkInstance originalLinkInstance;
+      private final LinkInstance originalLinkInstance;
 
       public LinkChange(final LinkInstance entity, final String attrId, final Object value) {
          super(entity, attrId, value);
@@ -769,7 +753,7 @@ public class JsExecutor {
    }
 
    public static class DocumentBridge {
-      private Document document;
+      private final Document document;
 
       DocumentBridge(final Document document) {
          this.document = document;
@@ -784,7 +768,7 @@ public class JsExecutor {
    }
 
    public static class LinkBridge {
-      private LinkInstance link;
+      private final LinkInstance link;
 
       LinkBridge(final LinkInstance link) {
          this.link = link;
@@ -847,10 +831,6 @@ public class JsExecutor {
 
    public Exception getCause() {
       return lumeerBridge.cause;
-   }
-
-   public boolean isDryRun() {
-      return dryRun;
    }
 
    public void setDryRun(final boolean dryRun) {

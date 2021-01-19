@@ -185,9 +185,15 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId, final String suffix) {
       linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-      injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
+
+      if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
+         final PusherFacade.ResourceId message = new PusherFacade.ResourceId(linkInstance.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+         return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message);
+      } else {
+         final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+         injectCorrelationId(message);
+         return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
+      }
    }
 
    private Event createEventForSequence(final Sequence sequence, final String userId) {
@@ -364,6 +370,23 @@ public abstract class AbstractContextualTask implements ContextualTask {
                   sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
                } else {
                   sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.UPDATE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
+               }
+               updatedIds.add(linkTypeId);
+            }
+         });
+      }
+      linkTypeIds.removeAll(updatedIds);
+
+      if (changesTracker.getRemovedLinkInstances().size() > 0) {
+         final Map<String, List<LinkInstance>> linksByLinkTypeId =
+               Utils.categorize(changesTracker.getRemovedLinkInstances().stream(), LinkInstance::getLinkTypeId);
+
+         linksByLinkTypeId.forEach((linkTypeId, links) -> {
+            if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
+               if (links.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.REMOVE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
                }
                updatedIds.add(linkTypeId);
             }

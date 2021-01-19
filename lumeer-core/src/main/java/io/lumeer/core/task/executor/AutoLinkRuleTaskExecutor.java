@@ -39,17 +39,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class AutoLinkRuleTaskExecutor {
 
-   private static Logger log = Logger.getLogger(AutoLinkRuleTaskExecutor.class.getName());
-
+   private final ChangesTracker changesTracker = new ChangesTracker();
    private String ruleName;
-   private AutoLinkRule rule;
-   private RuleTask ruleTask;
+   private final AutoLinkRule rule;
+   private final RuleTask ruleTask;
 
    public AutoLinkRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
       this.ruleName = ruleName;
@@ -57,7 +56,7 @@ public class AutoLinkRuleTaskExecutor {
       this.ruleTask = ruleTask;
    }
 
-   public void execute(final TaskExecutor taskExecutor) {
+   public ChangesTracker execute(final TaskExecutor taskExecutor) {
       final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(rule.getLinkType());
 
       if (linkType != null) {
@@ -99,6 +98,8 @@ public class AutoLinkRuleTaskExecutor {
             }
          }
       }
+
+      return changesTracker;
    }
 
    private void removeLinks(final TaskExecutor taskExecutor, final Document oldDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
@@ -119,7 +120,8 @@ public class AutoLinkRuleTaskExecutor {
          ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(query);
          ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(linkType.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
 
-         sendPushNotifications(thisCollection, thatCollection, links, true);
+         changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
+         changesTracker.addRemovedLinkInstances(links);
 
          final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
          final List<String> skipCollectionIds = List.of(thisCollection);
@@ -158,7 +160,8 @@ public class AutoLinkRuleTaskExecutor {
 
          if (!linkInstances.isEmpty()) {
             ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
-            sendPushNotifications(thisCollection, thatCollection, linkInstances, false);
+            changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
+            changesTracker.addCreatedLinkInstances(linkInstances);
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);

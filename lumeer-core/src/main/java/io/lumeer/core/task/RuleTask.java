@@ -74,7 +74,7 @@ public class RuleTask extends AbstractContextualTask {
          changesTracker.merge(executor.execute(taskExecutor));
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
-         executor.execute(taskExecutor);
+         changesTracker.merge(executor.execute(taskExecutor));
       } else if (rule.getType() == Rule.RuleType.ZAPIER) {
          final ZapierRuleTaskExecutor executor = new ZapierRuleTaskExecutor(ruleName, this);
          executor.execute();

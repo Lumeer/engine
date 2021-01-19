@@ -40,6 +40,7 @@ public class ChangesTracker {
    private final Set<LinkInstance> createdLinkInstances = new HashSet<>();
    private final Set<Document> updatedDocuments = new HashSet<>();
    private final Set<LinkInstance> updatedLinkInstances = new HashSet<>();
+   private final Set<LinkInstance> removedLinkInstances = new HashSet<>();
    private final Set<Collection> collections = new HashSet<>();
    private final Set<LinkType> linkTypes = new HashSet<>();
    private final Set<String> sequences = new HashSet<>();
@@ -51,11 +52,11 @@ public class ChangesTracker {
    public ChangesTracker() {
    }
 
-   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
-      merge(collections, createdDocuments, updatedDocuments, linkTypes, createdLinkInstances, updatedLinkInstances, sequences, userMessages, collectionsMap, linkTypesMap);
+   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+      merge(collections, createdDocuments, updatedDocuments, linkTypes, createdLinkInstances, updatedLinkInstances, removedLinkInstances, sequences, userMessages, collectionsMap, linkTypesMap);
    }
 
-   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
          this.collections.removeAll(collections);
          this.collections.addAll(collections);
@@ -86,6 +87,11 @@ public class ChangesTracker {
          this.updatedLinkInstances.addAll(updatedLinkInstances);
       }
 
+      if (removedLinkInstances != null) {
+         this.removedLinkInstances.removeAll(removedLinkInstances);
+         this.removedLinkInstances.addAll(removedLinkInstances);
+      }
+
       if (sequences != null) {
          this.sequences.addAll(sequences);
       }
@@ -110,7 +116,7 @@ public class ChangesTracker {
          return this;
       }
 
-      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.sequences, other.userMessages, other.collectionsMap, other.linkTypesMap);
+      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.removedLinkInstances, other.sequences, other.userMessages, other.collectionsMap, other.linkTypesMap);
    }
 
    public Set<Document> getCreatedDocuments() {
@@ -127,6 +133,10 @@ public class ChangesTracker {
 
    public Set<LinkInstance> getUpdatedLinkInstances() {
       return updatedLinkInstances;
+   }
+
+   public Set<LinkInstance> getRemovedLinkInstances() {
+      return removedLinkInstances;
    }
 
    public Set<Collection> getCollections() {
@@ -169,6 +179,10 @@ public class ChangesTracker {
       this.updatedLinkInstances.addAll(updatedLinkInstances);
    }
 
+   public void addRemovedLinkInstances(final java.util.Collection<LinkInstance> removedLinkInstances) {
+      this.removedLinkInstances.addAll(removedLinkInstances);
+   }
+
    public void addCollections(final java.util.Collection<Collection> collections) {
       this.collections.addAll(collections);
    }
@@ -202,6 +216,7 @@ public class ChangesTracker {
             ", linkTypes=" + computeIfNotNull(linkTypes, t -> t.stream().map(LinkType::getId).collect(Collectors.joining(", "))) +
             ", createdLinkInstances=" + computeIfNotNull(createdLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", updatedLinkInstances=" + computeIfNotNull(updatedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
+            ", removedLinkInstances=" + computeIfNotNull(removedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", sequences=" + sequences +
             ", userMessages=" + userMessages +
             '}';
