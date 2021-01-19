@@ -21,6 +21,11 @@ package io.lumeer.core.constraint.data;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.constraint.DataValue;
 import io.lumeer.core.constraint.config.NumberConstraintConfig;
+import io.lumeer.core.util.NumbroJsParser;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nonnull;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,6 +35,7 @@ public class NumberDataValue extends NumericDataValue {
 
    private final BigDecimal number;
    private final Object value;
+   private final NumberConstraintConfig config;
 
    public NumberDataValue(Object value, NumberConstraintConfig config) {
       Number number = encodeNumber(Locale.getDefault(), value);
@@ -44,6 +50,7 @@ public class NumberDataValue extends NumericDataValue {
          this.number = null;
       }
       this.value = value;
+      this.config = config;
    }
 
    @Override
@@ -64,6 +71,23 @@ public class NumberDataValue extends NumericDataValue {
    @Override
    public Object encodeValue(final Locale locale) {
       return encodeNumber(locale, value);
+   }
+
+   @Override
+   @Nonnull
+   public String format() {
+      if (this.number != null) {
+         String formatted;
+         if (StringUtils.isNotEmpty(this.config.currency)) {
+            formatted = NumbroJsParser.formatCurrency(this.number, this.config);
+         } else {
+            formatted = NumbroJsParser.formatNumber(this.number, this.config);
+         }
+         if (formatted != null) {
+            return formatted;
+         }
+      }
+      return this.value != null ? this.value.toString().trim() : "";
    }
 
    @Override

@@ -21,6 +21,7 @@ package io.lumeer.api.model.constraint;
 import io.lumeer.api.model.ConstraintType;
 
 import java.util.Locale;
+import javax.annotation.Nonnull;
 
 public abstract class DataValue {
 
@@ -30,6 +31,11 @@ public abstract class DataValue {
 
    public abstract Object encodeValue(Locale locale);
 
+   @Nonnull
+   public abstract String format();
+
    public abstract Boolean intersects(DataValue dataValue);
+
+   public abstract Boolean isValid();
 
 }

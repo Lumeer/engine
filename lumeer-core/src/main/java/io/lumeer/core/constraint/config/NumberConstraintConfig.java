@@ -23,10 +23,20 @@ import io.lumeer.api.model.constraint.ConstraintConfig;
 public class NumberConstraintConfig extends ConstraintConfig {
 
    public final Integer decimals;
+   public final Boolean compact;
+   public final Boolean separated;
+   public final Boolean forceSign;
+   public final Boolean negative;
+   public final String currency;
 
    public NumberConstraintConfig(Object config) {
       var configMap = parseConfig(config);
       this.decimals = parseInt(configMap, "decimals");
+      this.compact = parseBoolean(configMap, "compact");
+      this.separated = parseBoolean(configMap, "separated");
+      this.forceSign = parseBoolean(configMap, "forceSign");
+      this.negative = parseBoolean(configMap, "negative");
+      this.currency = parseString(configMap, "currency");
    }
 
 }

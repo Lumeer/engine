@@ -79,6 +79,7 @@ public class NumberConstraintTest {
       assertThat(constraint.createDataValue("1333").lowerThan(constraint.createDataValue(null))).isFalse();
       assertThat(constraint.createDataValue("3").lowerThan(constraint.createDataValue("25"))).isTrue();
       assertThat(constraint.createDataValue("3").lowerThanEquals(constraint.createDataValue("25"))).isTrue();
+      assertThat(constraint.createDataValue("xx").lowerThanEquals(constraint.createDataValue("xy"))).isFalse();
    }
 
    @Test
@@ -89,7 +90,7 @@ public class NumberConstraintTest {
       assertThat(constraint.createDataValue("  ").isEmpty()).isTrue();
       assertThat(constraint.createDataValue("").isEmpty()).isTrue();
       assertThat(constraint.createDataValue(null).isEmpty()).isTrue();
-      assertThat(constraint.createDataValue("xx").isEmpty()).isTrue();
+      assertThat(constraint.createDataValue("xx").isEmpty()).isFalse();
    }
 
    @Test
@@ -101,7 +102,19 @@ public class NumberConstraintTest {
       assertThat(constraint.createDataValue("  ").isNotEmpty()).isFalse();
       assertThat(constraint.createDataValue("").isNotEmpty()).isFalse();
       assertThat(constraint.createDataValue(null).isNotEmpty()).isFalse();
-      assertThat(constraint.createDataValue("xx").isNotEmpty()).isFalse();
+      assertThat(constraint.createDataValue("xx").isNotEmpty()).isTrue();
+   }
+
+   @Test
+   public void testFormat() {
+      assertThat(new NumberConstraint(emptyConfig).createDataValue("3").format()).isEqualTo("3");
+      assertThat(new NumberConstraint(emptyConfig).createDataValue("  ").format()).isEqualTo("");
+      assertThat(new NumberConstraint(emptyConfig).createDataValue("").format()).isEqualTo("");
+      assertThat(new NumberConstraint(emptyConfig).createDataValue(null).format()).isEqualTo("");
+      assertThat(new NumberConstraint(emptyConfig).createDataValue("xx").format()).isEqualTo("xx");
+
+      assertThat(new NumberConstraint(Collections.singletonMap("forceSign", true)).createDataValue("20").format()).isEqualTo("+20");
+      assertThat(new NumberConstraint(Collections.singletonMap("forceSign", true)).createDataValue(-23).format()).isEqualTo("-23");
    }
 
 }

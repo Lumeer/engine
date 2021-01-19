@@ -41,4 +41,26 @@ public abstract class ConstraintConfig {
       }
       return null;
    }
+
+   public Boolean parseBoolean(Map<String, Object> config, String key) {
+      if (config != null && config.containsKey(key)) {
+         try {
+            return Boolean.valueOf(config.get(key).toString());
+         } catch (Exception exception) {
+            return null;
+         }
+      }
+      return null;
+   }
+
+   public String parseString(Map<String, Object> config, String key) {
+      if (config != null && config.containsKey(key)) {
+         try {
+            return config.get(key).toString();
+         } catch (Exception exception) {
+            return null;
+         }
+      }
+      return null;
+   }
 }

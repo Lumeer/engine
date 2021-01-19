@@ -26,9 +26,11 @@ import io.lumeer.core.constraint.data.NumericDataValue;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Locale;
+import javax.annotation.Nonnull;
 
 public class PercentageDataValue extends NumericDataValue {
 
+   private final Integer SHIFT_BY_DECIMALS = 2;
    private final BigDecimal number;
    private final Object value;
 
@@ -37,7 +39,7 @@ public class PercentageDataValue extends NumericDataValue {
       if (number != null) {
          BigDecimal bigDecimal = new BigDecimal(number.toString());
          if (config.decimals != null && config.decimals >= 0) {
-            this.number = bigDecimal.setScale(config.decimals, RoundingMode.HALF_DOWN);
+            this.number = bigDecimal.setScale(config.decimals + SHIFT_BY_DECIMALS, RoundingMode.HALF_DOWN);
          } else {
             this.number = bigDecimal;
          }
@@ -52,12 +54,12 @@ public class PercentageDataValue extends NumericDataValue {
          final String strValue = ((String) value).replace(" ", "").trim();
 
          if (strValue.endsWith("%") && strValue.indexOf("%") == strValue.length() - 1) {
-            final Object result = encodeNumber(locale, strValue.substring(0, strValue.length() - 1));
+            final Number result = encodeNumber(locale, strValue.substring(0, strValue.length() - 1));
 
             if (result instanceof BigDecimal) {
-               return ((BigDecimal) result).movePointLeft(2);
+               return ((BigDecimal) result).movePointLeft(SHIFT_BY_DECIMALS);
             } else if (result instanceof Long) {
-               return BigDecimal.valueOf((Long) result).movePointLeft(2);
+               return BigDecimal.valueOf((Long) result).movePointLeft(SHIFT_BY_DECIMALS);
             }
          }
       }
@@ -82,6 +84,15 @@ public class PercentageDataValue extends NumericDataValue {
    @Override
    public Object encodeValue(final Locale locale) {
       return encodePercentage(locale, this.value);
+   }
+
+   @Override
+   @Nonnull
+   public String format() {
+      if (this.number != null) {
+         return this.number.movePointRight(SHIFT_BY_DECIMALS).toString() + "%";
+      }
+      return this.value != null ? this.value.toString().trim() : "";
    }
 
    @Override

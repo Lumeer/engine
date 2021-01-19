@@ -2,7 +2,6 @@ package io.lumeer.core.constraint;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigDecimal;
@@ -24,15 +23,17 @@ public class PercentageConstraintTest {
       assertThat(constraint.createDataValue(null).isEqual(constraint.createDataValue(""))).isTrue();
       assertThat(constraint.createDataValue(null).isEqual(constraint.createDataValue(null))).isTrue();
       assertThat(constraint.createDataValue(null).isEqual(constraint.createDataValue("1"))).isFalse();
+      assertThat(constraint.createDataValue("xx").isEqual(constraint.createDataValue("xx"))).isTrue();
+      assertThat(constraint.createDataValue("xx").isEqual(constraint.createDataValue("xx "))).isTrue();
 
       var decimalsConstraint = new PercentageConstraint(decimalsConfig);
-      assertThat(decimalsConstraint.createDataValue("1.111").isEqual(decimalsConstraint.createDataValue(1.111234))).isTrue();
-      assertThat(decimalsConstraint.createDataValue("111.1111%").isEqual(decimalsConstraint.createDataValue(1.111234))).isTrue();
+      assertThat(decimalsConstraint.createDataValue("1.111234123").isEqual(decimalsConstraint.createDataValue(1.111234))).isTrue();
+      assertThat(decimalsConstraint.createDataValue("111.1111%").isEqual(decimalsConstraint.createDataValue(1.11111234))).isTrue();
       assertThat(decimalsConstraint.createDataValue("1.111").isEqual(decimalsConstraint.createDataValue(1.111634))).isFalse();
 
       var zeroDecimalsConstraint = new PercentageConstraint(Collections.singletonMap("decimals", 0));
-      assertThat(zeroDecimalsConstraint.createDataValue("1.234").isEqual(zeroDecimalsConstraint.createDataValue(1.2031))).isTrue();
-      assertThat(zeroDecimalsConstraint.createDataValue("1.567").isEqual(zeroDecimalsConstraint.createDataValue(2.2031))).isTrue();
+      assertThat(zeroDecimalsConstraint.createDataValue("1.234").isEqual(zeroDecimalsConstraint.createDataValue(1.2251))).isTrue();
+      assertThat(zeroDecimalsConstraint.createDataValue("1.5409").isEqual(zeroDecimalsConstraint.createDataValue(1.5444))).isTrue();
    }
 
    @Test
@@ -90,7 +91,7 @@ public class PercentageConstraintTest {
       assertThat(constraint.createDataValue("  ").isEmpty()).isTrue();
       assertThat(constraint.createDataValue("").isEmpty()).isTrue();
       assertThat(constraint.createDataValue(null).isEmpty()).isTrue();
-      assertThat(constraint.createDataValue("xx%").isEmpty()).isTrue();
+      assertThat(constraint.createDataValue("xx%").isEmpty()).isFalse();
    }
 
    @Test
@@ -102,7 +103,52 @@ public class PercentageConstraintTest {
       assertThat(constraint.createDataValue("  ").isNotEmpty()).isFalse();
       assertThat(constraint.createDataValue("").isNotEmpty()).isFalse();
       assertThat(constraint.createDataValue(null).isNotEmpty()).isFalse();
-      assertThat(constraint.createDataValue("xx").isNotEmpty()).isFalse();
+      assertThat(constraint.createDataValue("xx").isNotEmpty()).isTrue();
+   }
+
+   @Test
+   public void testIsValid() {
+      var constraint = new PercentageConstraint(emptyConfig);
+
+      assertThat(constraint.createDataValue("3%").isValid()).isTrue();
+      assertThat(constraint.createDataValue(30).isValid()).isTrue();
+      assertThat(constraint.createDataValue(1e5).isValid()).isTrue();
+      assertThat(constraint.createDataValue("1e5").isValid()).isTrue();
+      assertThat(constraint.createDataValue("1E5").isValid()).isTrue();
+      assertThat(constraint.createDataValue(1e-5).isValid()).isTrue();
+      assertThat(constraint.createDataValue(1E5).isValid()).isTrue();
+      assertThat(constraint.createDataValue(1E-5).isValid()).isTrue();
+      assertThat(constraint.createDataValue("  ").isValid()).isFalse();
+      assertThat(constraint.createDataValue("").isValid()).isFalse();
+      assertThat(constraint.createDataValue(null).isValid()).isFalse();
+      assertThat(constraint.createDataValue("xx").isValid()).isFalse();
+   }
+
+   @Test
+   public void testFormat() {
+      var constraint = new PercentageConstraint(emptyConfig);
+
+      assertThat(constraint.createDataValue("3%").format()).isEqualTo("3%");
+      assertThat(constraint.createDataValue(30).format()).isEqualTo("3000%");
+      assertThat(constraint.createDataValue(1e2).format()).isEqualTo("10000%");
+      assertThat(constraint.createDataValue("1e2").format()).isEqualTo("10000%");
+      assertThat(constraint.createDataValue(1E2).format()).isEqualTo("10000%");
+      assertThat(constraint.createDataValue("1E2").format()).isEqualTo("10000%");
+      assertThat(constraint.createDataValue(1e-2).format()).isEqualTo("1%");
+      assertThat(constraint.createDataValue(1E-2).format()).isEqualTo("1%");
+      assertThat(constraint.createDataValue("  ").format()).isEqualTo("");
+      assertThat(constraint.createDataValue("").format()).isEqualTo("");
+      assertThat(constraint.createDataValue(null).format()).isEqualTo("");
+      assertThat(constraint.createDataValue("xx").format()).isEqualTo("xx");
+
+      var decimalsConstraint = new PercentageConstraint(decimalsConfig);
+      assertThat(decimalsConstraint.createDataValue("1.111").format()).isEqualTo("111.100%");
+      assertThat(decimalsConstraint.createDataValue(1.111234).format()).isEqualTo("111.123%");
+
+      var zeroDecimalsConstraint = new PercentageConstraint(Collections.singletonMap("decimals", 0));
+      assertThat(zeroDecimalsConstraint.createDataValue("1.111").format()).isEqualTo("111%");
+      assertThat(zeroDecimalsConstraint.createDataValue("1.2345").format()).isEqualTo("123%");
+      assertThat(zeroDecimalsConstraint.createDataValue("1.2468").format()).isEqualTo("125%");
    }
 
 }

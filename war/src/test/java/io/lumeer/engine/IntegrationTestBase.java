@@ -82,6 +82,7 @@ public abstract class IntegrationTestBase {
                        .addAsResource("templates/okr.en.json")
                        .addAsResource("templates/hr.en.json")
                        .addAsResource("moment-with-locales.min.js")
+                       .addAsResource("numbro.min.js")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",

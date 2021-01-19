@@ -33,13 +33,17 @@ public abstract class NumericDataValue extends DataValue {
 
    public abstract BigDecimal getNumber();
 
+   @Override
+   public Boolean isValid() {
+      return getNumber() != null;
+   }
+
    private final Pattern numberMatch = Pattern.compile("^[-+]?\\d+([.,]\\d+)?([Ee][+-]?\\d+)?$");
 
    /**
     * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
     *
-    * @param value
-    *       The value to try to convert to number.
+    * @param value The value to try to convert to number.
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    protected Number encodeNumber(final Locale locale, final Object value) {
@@ -57,12 +61,9 @@ public abstract class NumericDataValue extends DataValue {
    /**
     * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
     *
-    * @param numberFormat
-    *       Number format to parse to double or integer.
-    * @param bigNumberFormat
-    *       Number format to parse to big decimal.
-    * @param value
-    *       The value to try to convert to number.
+    * @param numberFormat    Number format to parse to double or integer.
+    * @param bigNumberFormat Number format to parse to big decimal.
+    * @param value           The value to try to convert to number.
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    protected Number encodeNumber(final NumberFormat numberFormat, final NumberFormat bigNumberFormat, Object value) {
@@ -106,10 +107,10 @@ public abstract class NumericDataValue extends DataValue {
    }
 
    public Boolean isEqual(final NumericDataValue dataValue) {
-      if (isEmpty() || dataValue.isEmpty()) {
-         return isEmpty() && dataValue.isEmpty();
+      if (isValid() && dataValue.isValid()) {
+         return getNumber().compareTo(dataValue.getNumber()) == 0;
       }
-      return getNumber().compareTo(dataValue.getNumber()) == 0;
+      return format().equals(dataValue.format());
    }
 
    public Boolean isNotEqual(final NumericDataValue dataValue) {
@@ -117,35 +118,35 @@ public abstract class NumericDataValue extends DataValue {
    }
 
    public Boolean greaterThan(final NumericDataValue dataValue) {
-      if (isEmpty() || dataValue.isEmpty()) {
-         return !isEmpty() && dataValue.isEmpty();
+      if (isValid() && dataValue.isValid()) {
+         return getNumber().compareTo(dataValue.getNumber()) > 0;
       }
-      return getNumber().compareTo(dataValue.getNumber()) > 0;
+      return isValid() && !dataValue.isValid();
    }
 
    public Boolean greaterThanEquals(final NumericDataValue dataValue) {
-      if (isEmpty() || dataValue.isEmpty()) {
-         return !isEmpty() && dataValue.isEmpty();
+      if (isValid() && dataValue.isValid()) {
+         return getNumber().compareTo(dataValue.getNumber()) >= 0;
       }
-      return getNumber().compareTo(dataValue.getNumber()) >= 0;
+      return isValid() && !dataValue.isValid();
    }
 
    public Boolean lowerThan(final NumericDataValue dataValue) {
-      if (isEmpty() || dataValue.isEmpty()) {
-         return isEmpty() && !dataValue.isEmpty();
+      if (isValid() && dataValue.isValid()) {
+         return getNumber().compareTo(dataValue.getNumber()) < 0;
       }
-      return getNumber().compareTo(dataValue.getNumber()) < 0;
+      return !isValid() && dataValue.isValid();
    }
 
    public Boolean lowerThanEquals(final NumericDataValue dataValue) {
-      if (isEmpty() || dataValue.isEmpty()) {
-         return isEmpty() && !dataValue.isEmpty();
+      if (isValid() && dataValue.isValid()) {
+         return getNumber().compareTo(dataValue.getNumber()) <= 0;
       }
-      return getNumber().compareTo(dataValue.getNumber()) <= 0;
+      return !isValid() && dataValue.isValid();
    }
 
    public Boolean isEmpty() {
-      return getNumber() == null;
+      return !isValid() && format().isEmpty();
    }
 
    public Boolean isNotEmpty() {
