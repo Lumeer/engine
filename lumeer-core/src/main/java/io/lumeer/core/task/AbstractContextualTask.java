@@ -34,7 +34,9 @@ import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
+import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.util.PusherClient;
+import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,13 +44,17 @@ import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public abstract class AbstractContextualTask implements ContextualTask {
+
+   private static final int RELOAD_EVENT_THRESHOLD = 50;
 
    private static Logger log = Logger.getLogger(AbstractConstraintConverter.class.getName());
 
@@ -102,7 +108,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.parent = parent;
    }
 
-   @Override
    public void sendPushNotifications(final Collection collection) {
       if (getPusherClient() != null) {
          final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
@@ -112,7 +117,15 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   @Override
+   public void sendPushNotifications(final Collection collection, final String suffix) {
+      if (getPusherClient() != null) {
+         final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
+         final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user, suffix)).collect(Collectors.toList());
+
+         getPusherClient().trigger(events);
+      }
+   }
+
    public void sendPushNotifications(final LinkType linkType) {
       if (getPusherClient() != null) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
@@ -125,14 +138,26 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   private Event createEventForCollection(final Collection collection, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-      injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(collection, null), null);
+   public void sendPushNotifications(final LinkType linkType, final String suffix) {
+      if (getPusherClient() != null) {
+         linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
+         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
+         final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user, suffix)).collect(Collectors.toList());
+
+         getPusherClient().trigger(events);
+      }
    }
 
-   private Event createEventForDocument(final Document document, final String userId) {
-      return this.createEventForDocument(document, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
+   private Event createEventForCollection(final Collection collection, final String userId) {
+      return createEventForCollection(collection, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
+   }
+
+   private Event createEventForCollection(final Collection collection, final String userId, final String suffix) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(collection, null), null);
    }
 
    private Event createEventForDocument(final Document document, final String userId, final String suffix) {
@@ -143,16 +168,26 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-      injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkType, null), null);
+      return createEventForLinkType(linkType, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
    }
 
-   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId) {
-      linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+   private Event createEventForLinkType(final LinkType linkType, final String userId, final String suffix) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + suffix, message, getResourceId(linkType, null), null);
+   }
+
+   private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId, final String suffix) {
+      linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
+
+      if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
+         final PusherFacade.ResourceId message = new PusherFacade.ResourceId(linkInstance.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+         return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message);
+      } else {
+         final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+         injectCorrelationId(message);
+         return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
+      }
    }
 
    private Event createEventForSequence(final Sequence sequence, final String userId) {
@@ -175,12 +210,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new PusherFacade.ResourceId(null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
    }
 
-   @Override
-   public void sendPushNotifications(final Collection collection, final List<Document> documents, final boolean collectionChanged) {
-      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX, collectionChanged);
-   }
-
-   @Override
    public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
       final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
@@ -197,8 +226,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(collectionEvents);
    }
 
-   @Override
-   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged) {
+   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
          final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
@@ -209,7 +237,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
          final List<Event> linkInstanceEvents = new ArrayList<>();
 
          users.forEach(userId -> {
-            linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId)));
+            linkInstances.forEach(link -> events.add(createEventForLinkInstance(link, userId, suffix)));
             if (linkTypeChanged) {
                linkInstanceEvents.add(createEventForLinkType(linkType, userId));
             }
@@ -220,7 +248,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   @Override
    public void sendPushNotifications(final String sequenceName) {
       final Sequence sequence = getDaoContextSnapshot().getSequenceDao().getSequence(sequenceName);
 
@@ -242,6 +269,135 @@ public abstract class AbstractContextualTask implements ContextualTask {
       );
 
       getPusherClient().trigger(events);
+   }
+
+   private void sendPushNotificationsForDocuments(final ChangesTracker changesTracker) {
+      // keep track of collections without updated documents
+      final Set<String> collectionIds = new HashSet<>(changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
+      final Set<String> updatedIds = new HashSet<>();
+
+      if (changesTracker.getCreatedDocuments().size() > 0) {
+         final Map<String, List<Document>> documentsByCollectionId =
+               Utils.categorize(changesTracker.getCreatedDocuments().stream(), Document::getCollectionId);
+
+         documentsByCollectionId.forEach((collectionId, documents) -> {
+            if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
+               if (documents.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.CREATE_EVENT_SUFFIX, collectionIds.contains(collectionId));
+               }
+               updatedIds.add(collectionId);
+            }
+         });
+      }
+      collectionIds.removeAll(updatedIds);
+
+      if (changesTracker.getUpdatedDocuments().size() > 0) {
+         final Map<String, List<Document>> documentsByCollectionId =
+               Utils.categorize(changesTracker.getUpdatedDocuments().stream(), Document::getCollectionId);
+
+         documentsByCollectionId.forEach((collectionId, documents) -> {
+            if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
+               if (documents.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.UPDATE_EVENT_SUFFIX, collectionIds.contains(collectionId));
+               }
+               updatedIds.add(collectionId);
+            }
+         });
+      }
+      collectionIds.removeAll(updatedIds);
+
+      if (collectionIds.size() > 0) {
+         collectionIds.forEach(id -> {
+            if (changesTracker.getCollectionsMap().containsKey(id)) {
+               sendPushNotifications(changesTracker.getCollectionsMap().get(id));
+            }
+         });
+      }
+   }
+
+   private void sendPushNotificationsForLinks(final ChangesTracker changesTracker) {
+      // keep track of collections without updated documents
+      final Set<String> linkTypeIds = new HashSet<>(changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet()));
+      final Set<String> updatedIds = changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet());
+
+      if (changesTracker.getCreatedLinkInstances().size() > 0) {
+         final Map<String, List<LinkInstance>> linksByLinkTypeId =
+               Utils.categorize(changesTracker.getCreatedLinkInstances().stream(), LinkInstance::getLinkTypeId);
+
+         linksByLinkTypeId.forEach((linkTypeId, links) -> {
+            if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
+               if (links.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.CREATE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
+               }
+               updatedIds.add(linkTypeId);
+            }
+         });
+      }
+      linkTypeIds.removeAll(updatedIds);
+
+      if (changesTracker.getUpdatedLinkInstances().size() > 0) {
+         final Map<String, List<LinkInstance>> linksByLinkTypeId =
+               Utils.categorize(changesTracker.getUpdatedLinkInstances().stream(), LinkInstance::getLinkTypeId);
+
+         linksByLinkTypeId.forEach((linkTypeId, links) -> {
+            if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
+               if (links.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.UPDATE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
+               }
+               updatedIds.add(linkTypeId);
+            }
+         });
+      }
+      linkTypeIds.removeAll(updatedIds);
+
+      if (changesTracker.getRemovedLinkInstances().size() > 0) {
+         final Map<String, List<LinkInstance>> linksByLinkTypeId =
+               Utils.categorize(changesTracker.getRemovedLinkInstances().stream(), LinkInstance::getLinkTypeId);
+
+         linksByLinkTypeId.forEach((linkTypeId, links) -> {
+            if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) {
+               if (links.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getLinkTypesMap().get(linkTypeId), links, PusherFacade.REMOVE_EVENT_SUFFIX, linkTypeIds.contains(linkTypeId));
+               }
+               updatedIds.add(linkTypeId);
+            }
+         });
+      }
+      linkTypeIds.removeAll(updatedIds);
+
+      if (linkTypeIds.size() > 0) {
+         linkTypeIds.forEach(id -> {
+            if (changesTracker.getLinkTypesMap().containsKey(id)) {
+               sendPushNotifications(changesTracker.getLinkTypesMap().get(id));
+            }
+         });
+      }
+   }
+
+   @Override
+   public void processChanges(final ChangesTracker changesTracker) {
+      if (getPusherClient() != null) {
+         sendPushNotificationsForDocuments(changesTracker);
+         sendPushNotificationsForLinks(changesTracker);
+
+         if (changesTracker.getSequences().size() > 0) {
+            changesTracker.getSequences().forEach(this::sendPushNotifications);
+         }
+
+         if (changesTracker.getUserMessages().size() > 0) {
+            sendPushNotifications(changesTracker.getUserMessages());
+         }
+      }
    }
 
    @Override

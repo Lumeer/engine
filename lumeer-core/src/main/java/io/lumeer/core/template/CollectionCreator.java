@@ -117,15 +117,17 @@ public class CollectionCreator extends WithIdCreator {
 
       final JSONObject purpose = (JSONObject) o.get(Collection.PURPOSE);
 
-      var purposeType = Utils.computeIfNotNull((String) purpose.get(CollectionPurpose.TYPE), CollectionPurposeType::valueOf);
+      if (purpose != null) {
+         var purposeType = Utils.computeIfNotNull((String) purpose.get(CollectionPurpose.TYPE), CollectionPurposeType::valueOf);
 
-      final JSONObject metaData = (JSONObject) purpose.get(CollectionPurpose.META_DATA);
-      final DataDocument dataDocument = new DataDocument();
-      if (metaData != null) {
-         metaData.forEach((k, v) -> dataDocument.append(k.toString(), v));
+         final JSONObject metaData = (JSONObject) purpose.get(CollectionPurpose.META_DATA);
+         final DataDocument dataDocument = new DataDocument();
+         if (metaData != null) {
+            metaData.forEach((k, v) -> dataDocument.append(k.toString(), v));
+         }
+
+         c.setPurpose(new CollectionPurpose(purposeType, dataDocument));
       }
-
-      c.setPurpose(new CollectionPurpose(purposeType, dataDocument));
 
       return c;
    }

@@ -20,6 +20,7 @@ package io.lumeer.core.task;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.core.task.executor.ChangesTracker;
 
 import java.io.Serializable;
 import java.util.List;
@@ -32,11 +33,13 @@ public interface Task extends Serializable {
    long MAX_CREATED_DOCUMENTS = 25L;
    long MAX_MESSAGES = 5L;
 
-   void setParent(Task task);
+   void setParent(final Task task);
 
    Task getParent();
 
-   void process(TaskExecutor executor);
+   void process(final TaskExecutor executor, final ChangesTracker changesTracker);
 
-   void propagateChanges(List<Document> documents, List<LinkInstance> links);
+   void propagateChanges(final List<Document> documents, final List<LinkInstance> links);
+
+   void processChanges(final ChangesTracker changesTracker);
 }

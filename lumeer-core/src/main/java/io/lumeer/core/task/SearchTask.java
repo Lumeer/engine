@@ -20,6 +20,7 @@ package io.lumeer.core.task;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.core.task.executor.ChangesTracker;
 
 import java.util.List;
 
@@ -42,11 +43,16 @@ public class SearchTask implements Task {
    }
 
    @Override
-   public void process(final TaskExecutor executor) {
+   public void process(final TaskExecutor executor, final ChangesTracker changesTracker) {
       // TBD
    }
 
    @Override
    public void propagateChanges(final List<Document> documents, final List<LinkInstance> links) {
+   }
+
+   @Override
+   public void processChanges(final ChangesTracker changesTracker) {
+      // TBD
    }
 }

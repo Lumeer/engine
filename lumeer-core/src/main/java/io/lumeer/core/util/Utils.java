@@ -22,9 +22,13 @@ import io.lumeer.core.exception.BadFormatException;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public abstract class Utils {
@@ -104,5 +108,19 @@ public abstract class Utils {
       }
 
       return null;
+   }
+
+   public static <T> Map<String, List<T>> categorize(final Stream<T> stream, final Function<T, String> mapper) {
+      return stream.reduce(
+            new HashMap<>(),
+            (map, t) -> {
+               map.computeIfAbsent(mapper.apply(t), id -> new ArrayList<>()).add(t);
+               return map;
+            },
+            (map1, map2) -> {
+               map2.forEach((key1, value) -> map1.computeIfAbsent(key1, key -> new ArrayList<>()).addAll(value));
+               return map1;
+            }
+      );
    }
 }

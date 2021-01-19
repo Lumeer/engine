@@ -208,7 +208,7 @@ public class FunctionFacade extends AbstractFacade {
 
             if (collection != null && attribute != null) {
                FunctionTask functionTask = contextualTaskFactory.getInstance(FunctionTask.class);
-               functionTask.setFunctionTask(attribute, collection, parameter.getDocuments(), createParentTasks(task));
+               functionTask.setFunctionTask(attribute, collection, parameter.getDocuments(), task);
                task = functionTask;
             }
          } else if (parameter.getType() == FunctionResourceType.LINK) {
@@ -217,7 +217,7 @@ public class FunctionFacade extends AbstractFacade {
 
             if (linkType != null && attribute != null) {
                FunctionTask functionTask = contextualTaskFactory.getInstance(FunctionTask.class);
-               functionTask.setFunctionTask(attribute, linkType, parameter.getLinkInstances(), createParentTasks(task));
+               functionTask.setFunctionTask(attribute, linkType, parameter.getLinkInstances(), task);
                task = functionTask;
             }
          }
@@ -225,24 +225,6 @@ public class FunctionFacade extends AbstractFacade {
       }
 
       return task;
-   }
-
-   private FunctionTask createParentTasks(FunctionTask task) {
-      if (task == null) {
-         return null;
-      }
-
-      FunctionTask functionTask = contextualTaskFactory.getInstance(FunctionTask.class);
-      if (task.getCollection() != null) {
-         functionTask.setFunctionTask(task.getAttribute(), task.getCollection(), task.getDocuments(), task.getParent());
-         return functionTask;
-
-      } else if (task.getLinkType() != null) {
-         functionTask.setFunctionTask(task.getAttribute(), task.getLinkType(), task.getLinkInstances(), task.getParent());
-         return functionTask;
-      }
-
-      return null;
    }
 
    private Attribute findAttributeInCollection(Collection collection, String attributeId) {
@@ -359,6 +341,15 @@ public class FunctionFacade extends AbstractFacade {
       return attribute.getFunction() != null && attribute.getFunction().getJs() != null && !attribute.getFunction().getJs().isEmpty();
    }
 
+   public FunctionTask createTaskForUpdateDocument(final Collection collection, final Document originalDocument, final Document newDocument, final java.util.Collection<String> changedAttributeIds) {
+      if (originalDocument == null || newDocument == null || changedAttributeIds.isEmpty()) {
+         return null;
+      }
+      String documentId = originalDocument.getId();
+
+      return convertQueueToTask(createQueueForDocumentChanged(collection.getId(), changedAttributeIds, documentId));
+   }
+
    public FunctionTask createTaskForUpdateDocument(Collection collection, Document originalDocument, Document newDocument) {
       if (originalDocument == null || newDocument == null) {
          return null;
@@ -367,6 +358,7 @@ public class FunctionFacade extends AbstractFacade {
       DataDocument oldData = originalDocument.getData();
       DataDocument newData = newDocument.getData();
       List<String> changedAttributeIds = getChangedAttributesIds(collection.getAttributes(), oldData, newData);
+
       if (changedAttributeIds.isEmpty()) {
          return null;
       }
@@ -386,7 +378,7 @@ public class FunctionFacade extends AbstractFacade {
       }).map(Attribute::getId).collect(Collectors.toList());
    }
 
-   public Deque<FunctionParameterDocuments> createQueueForDocumentChanged(String collectionId, List<String> attributeIds, String documentId) {
+   public Deque<FunctionParameterDocuments> createQueueForDocumentChanged(String collectionId, java.util.Collection<String> attributeIds, String documentId) {
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
 
       attributeIds.forEach(attributeId -> {
@@ -491,6 +483,16 @@ public class FunctionFacade extends AbstractFacade {
       });
    }
 
+   public FunctionTask creatTaskForChangedLink(LinkType linkType, LinkInstance oldLinkInstance, LinkInstance newLinkInstance, java.util.Collection<String> changedAttributeIds) {
+      if (oldLinkInstance == null || newLinkInstance == null || changedAttributeIds.isEmpty()) {
+         return null;
+      }
+
+      String linkInstanceId = oldLinkInstance.getId();
+
+      return convertQueueToTask(createQueueForLinkChanged(linkType.getId(), changedAttributeIds, linkInstanceId));
+   }
+
    public FunctionTask creatTaskForChangedLink(LinkType linkType, LinkInstance oldLinkInstance, LinkInstance newLinkInstance) {
       if (oldLinkInstance == null || newLinkInstance == null) {
          return null;
@@ -504,13 +506,13 @@ public class FunctionFacade extends AbstractFacade {
       return convertQueueToTask(createQueueForLinkChanged(linkType.getId(), changedAttributeIds, linkInstanceId));
    }
 
-   public Deque<FunctionParameterDocuments> createQueueForLinkChanged(String linkTypeId, List<String> attributeIds, String linkInstanceId) {
+   public Deque<FunctionParameterDocuments> createQueueForLinkChanged(String linkTypeId, java.util.Collection<String> attributeIds, String linkInstanceId) {
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
       fillParametersMapForLinkChanged(parametersMap, linkTypeId, attributeIds, linkInstanceId);
       return orderFunctions(parametersMap);
    }
 
-   private void fillParametersMapForLinkChanged(Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap, String linkTypeId, List<String> attributeIds, String linkInstanceId) {
+   private void fillParametersMapForLinkChanged(Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap, String linkTypeId, java.util.Collection<String> attributeIds, String linkInstanceId) {
       attributeIds.forEach(attributeId -> {
          List<FunctionRow> functionRows = functionDao.searchByDependentLinkType(linkTypeId, attributeId);
 

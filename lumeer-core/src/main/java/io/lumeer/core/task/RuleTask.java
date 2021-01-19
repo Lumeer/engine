@@ -25,6 +25,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
+import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.ZapierRuleTaskExecutor;
 
 import java.util.List;
@@ -67,20 +68,20 @@ public class RuleTask extends AbstractContextualTask {
    }
 
    @Override
-   public void process(final TaskExecutor taskExecutor) {
+   public void process(final TaskExecutor taskExecutor, final ChangesTracker changesTracker) {
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
-         executor.execute(taskExecutor);
+         changesTracker.merge(executor.execute(taskExecutor));
       } else if (rule.getType() == Rule.RuleType.AUTO_LINK) {
          final AutoLinkRuleTaskExecutor executor = new AutoLinkRuleTaskExecutor(ruleName, this);
-         executor.execute(taskExecutor);
+         changesTracker.merge(executor.execute(taskExecutor));
       } else if (rule.getType() == Rule.RuleType.ZAPIER) {
          final ZapierRuleTaskExecutor executor = new ZapierRuleTaskExecutor(ruleName, this);
          executor.execute();
       }
 
       if (parent != null) {
-         parent.process(taskExecutor);
+         parent.process(taskExecutor, changesTracker);
       }
    }
 
@@ -117,8 +118,8 @@ public class RuleTask extends AbstractContextualTask {
       return "RuleTask{" +
             "ruleName='" + ruleName + '\'' +
             ", rule=" + rule +
-            ", collection=" + collection +
-            ", linkType=" + linkType +
+            ", collection=" + (collection != null ? collection.getId() : null) +
+            ", linkType=" + (linkType != null ? linkType.getId() : null) +
             ", oldDocument=" + oldDocument +
             ", newDocument=" + newDocument +
             ", oldLinkInstance=" + oldLinkInstance +
