@@ -171,33 +171,4 @@ public class AutoLinkRuleTaskExecutor {
          }
       }
    }
-
-   private void sendPushNotifications(final String thisCollection, final String thatCollection, final List<LinkInstance> links, final boolean removeOperation) {
-      if (ruleTask.getPusherClient() != null) {
-         final Set<String> users1 = ruleTask.getDaoContextSnapshot().getCollectionReaders(thisCollection);
-         final Set<String> users2 = ruleTask.getDaoContextSnapshot().getCollectionReaders(thatCollection);
-         final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
-
-         final List<Event> events = new ArrayList<>();
-         users.forEach(user -> {
-            links.forEach(link -> {
-               if (removeOperation) {
-                  events.add(
-                        new Event(
-                              PusherFacade.PRIVATE_CHANNEL_PREFIX + user,
-                              LinkInstance.class.getSimpleName() + PusherFacade.REMOVE_EVENT_SUFFIX,
-                              new PusherFacade.ResourceId(link.getId(), ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId())));
-               } else {
-                  events.add(
-                        new Event(
-                              PusherFacade.PRIVATE_CHANNEL_PREFIX + user,
-                              LinkInstance.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX,
-                              new PusherFacade.ObjectWithParent(link, ruleTask.getDaoContextSnapshot().getOrganizationId(), ruleTask.getDaoContextSnapshot().getProjectId())));
-               }
-            });
-         });
-
-         ruleTask.getPusherClient().trigger(events);
-      }
-   }
 }

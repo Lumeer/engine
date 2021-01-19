@@ -18,10 +18,6 @@
  */
 package io.lumeer.core.task;
 
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -31,9 +27,6 @@ import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
-
-import java.util.List;
-import java.util.logging.Level;
 
 public interface ContextualTask extends Task {
 
@@ -46,64 +39,6 @@ public interface ContextualTask extends Task {
    String getCurrentLocale();
    String getCorrelationId();
    PurposeChangeProcessor getPurposeChangeProcessor();
-
-   /**
-    * Send notifications to collection owners (i.e. managers).
-    * @param collection Collection that has been updated.
-    */
-   void sendPushNotifications(final Collection collection);
-
-   /**
-    * Send notifications to link type's collection owners (i.e. managers).
-    * @param linkType Collection that has been updated.
-    */
-   void sendPushNotifications(final LinkType linkType);
-
-   /**
-    * Send push notifications to document readers.
-    * @param collection Parent collection.
-    * @param documents List of documents.
-    * @param collectionChanged When true, send updated collection.
-    */
-   void sendPushNotifications(final Collection collection, final List<Document> documents, final boolean collectionChanged);
-
-   /**
-    * Send push notifications to document readers.
-    * @param collection Parent collection.
-    * @param documents List of documents.
-    * @param suffix push notification suffix.
-    * @param collectionChanged When true, send updated collection.
-    */
-   void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged);
-
-   /**
-    * Send push notifications to link instance readers.
-    * @param linkType Parent link type.
-    * @param linkInstances List of link instances.
-    * @param linkTypeChanged When true, send updated link type.
-    */
-   void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged);
-
-   /**
-    * Send push notifications to link instance readers.
-    * @param linkType Parent link type.
-    * @param linkInstances List of link instances.
-    * @param suffix push notification suffix.
-    * @param linkTypeChanged When true, send updated link type.
-    */
-   void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged);
-
-   /**
-    * Send push notifications to project managers.
-    * @param sequenceName Name of updated sequence.
-    */
-   void sendPushNotifications(final String sequenceName);
-
-   /**
-    * Send push notifications with messages from a rule execution.
-    * @param userMessages The messages to display.
-    */
-   void sendPushNotifications(final List<UserMessage> userMessages);
 
    FunctionFacade getFunctionFacade();
 

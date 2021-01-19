@@ -108,7 +108,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.parent = parent;
    }
 
-   @Override
    public void sendPushNotifications(final Collection collection) {
       if (getPusherClient() != null) {
          final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
@@ -127,7 +126,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   @Override
    public void sendPushNotifications(final LinkType linkType) {
       if (getPusherClient() != null) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
@@ -160,10 +158,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(collection, null), null);
-   }
-
-   private Event createEventForDocument(final Document document, final String userId) {
-      return this.createEventForDocument(document, userId, PusherFacade.UPDATE_EVENT_SUFFIX);
    }
 
    private Event createEventForDocument(final Document document, final String userId, final String suffix) {
@@ -216,12 +210,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new PusherFacade.ResourceId(null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
    }
 
-   @Override
-   public void sendPushNotifications(final Collection collection, final List<Document> documents, final boolean collectionChanged) {
-      this.sendPushNotifications(collection, documents, PusherFacade.UPDATE_EVENT_SUFFIX, collectionChanged);
-   }
-
-   @Override
    public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
       final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
@@ -238,12 +226,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(collectionEvents);
    }
 
-   @Override
-   public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final boolean linkTypeChanged) {
-      sendPushNotifications(linkType, linkInstances, PusherFacade.UPDATE_EVENT_SUFFIX, linkTypeChanged);
-   }
-
-   @Override
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
@@ -266,7 +248,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
    }
 
-   @Override
    public void sendPushNotifications(final String sequenceName) {
       final Sequence sequence = getDaoContextSnapshot().getSequenceDao().getSequence(sequenceName);
 

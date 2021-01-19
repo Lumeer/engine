@@ -29,6 +29,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,6 +40,7 @@ public class BlocklyRuleTaskExecutor {
    private String ruleName;
    private BlocklyRule rule;
    private RuleTask ruleTask;
+   private ChangesTracker tracker;
 
    public BlocklyRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
       this.ruleName = ruleName;
@@ -47,6 +49,7 @@ public class BlocklyRuleTaskExecutor {
    }
 
    public ChangesTracker execute(final TaskExecutor taskExecutor) {
+      tracker = new ChangesTracker();
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
@@ -60,7 +63,6 @@ public class BlocklyRuleTaskExecutor {
       }
 
       final JsExecutor jsExecutor = new JsExecutor();
-      ChangesTracker tracker = null;
       jsExecutor.setDryRun(rule.isDryRun());
 
       try {
@@ -96,9 +98,11 @@ public class BlocklyRuleTaskExecutor {
          updateRule();
 
          if (ruleTask.isCollectionBased()) {
-            ruleTask.sendPushNotifications(ruleTask.getCollection());
+            tracker.updateCollectionsMap(Map.of(ruleTask.getCollection().getId(), ruleTask.getCollection()));
+            tracker.addCollections(Set.of(ruleTask.getCollection()));
          } else {
-            ruleTask.sendPushNotifications(ruleTask.getLinkType());
+            tracker.updateLinkTypesMap(Map.of(ruleTask.getLinkType().getId(), ruleTask.getLinkType()));
+            tracker.addLinkTypes(Set.of(ruleTask.getLinkType()));
          }
       } catch (IOException ioe) {
          // we tried, cannot do more
@@ -110,9 +114,11 @@ public class BlocklyRuleTaskExecutor {
       updateRule();
 
       if (ruleTask.isCollectionBased()) {
-         ruleTask.sendPushNotifications(ruleTask.getCollection());
+         tracker.updateCollectionsMap(Map.of(ruleTask.getCollection().getId(), ruleTask.getCollection()));
+         tracker.addCollections(Set.of(ruleTask.getCollection()));
       } else {
-         ruleTask.sendPushNotifications(ruleTask.getLinkType());
+         tracker.updateLinkTypesMap(Map.of(ruleTask.getLinkType().getId(), ruleTask.getLinkType()));
+         tracker.addLinkTypes(Set.of(ruleTask.getLinkType()));
       }
    }
 

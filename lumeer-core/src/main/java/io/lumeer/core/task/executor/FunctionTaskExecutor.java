@@ -26,6 +26,7 @@ import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.TaskExecutor;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +39,7 @@ public class FunctionTaskExecutor {
    private final Collection collection;
    private final LinkType linkType;
    private final LinkInstance linkInstance;
+   private ChangesTracker changesTracker;
 
    public FunctionTaskExecutor(final FunctionTask functionTask, final Collection collection, final Document document) {
       this.task = functionTask;
@@ -56,6 +58,7 @@ public class FunctionTaskExecutor {
    }
 
    public ChangesTracker execute(final TaskExecutor taskExecutor) {
+      changesTracker = new ChangesTracker();
       final JsExecutor.DocumentBridge thisDocument = new JsExecutor.DocumentBridge(document);
       final JsExecutor.LinkBridge thisLink = new JsExecutor.LinkBridge(linkInstance);
       final Map<String, Object> bindings = linkInstance == null ? Map.of("thisRecord", thisDocument, "thisDocument", thisDocument) : Map.of("thisLink", thisLink);
@@ -105,10 +108,12 @@ public class FunctionTaskExecutor {
 
       if (collection != null) {
          task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null);
-         task.sendPushNotifications(collection);
+         changesTracker.updateCollectionsMap(Map.of(collection.getId(), collection));
+         changesTracker.addCollections(Set.of(collection));
       } else if (linkType != null) {
          task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(linkType.getId(), linkType, null);
-         task.sendPushNotifications(linkType);
+         changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
+         changesTracker.addLinkTypes(Set.of(linkType));
       }
    }
 
