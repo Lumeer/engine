@@ -30,7 +30,7 @@ import org.graalvm.polyglot.Value
 import org.junit.Test
 
 class JvmObjectProxyTest {
-    private var context: Context? = null
+    private lateinit var context: Context
     private var fce: Value? = null
     private var jsCode: String? = null
     private val engine = Engine
@@ -41,17 +41,15 @@ class JvmObjectProxyTest {
             .build()
 
     private fun initContext() {
-        if (context == null) {
-            jsCode = "function fce(documents) { return documents[0].creationDate.minute }"
-            context = Context
-                    .newBuilder("js")
-                    .engine(engine)
-                    .allowAllAccess(true)
-                    .build()
-            context?.initialize("js")
-            val result = context?.eval("js", jsCode)
-            fce = context?.getBindings("js")?.getMember("fce")
-        }
+        jsCode = "function fce(documents) { return documents[0].creationDate.minute }"
+        context = Context
+                .newBuilder("js")
+                .engine(engine)
+                .allowAllAccess(true)
+                .build()
+        context.initialize("js")
+        val result = context.eval("js", jsCode)
+        fce = context.getBindings("js")?.getMember("fce")
     }
 
     @Test
@@ -66,6 +64,6 @@ class JvmObjectProxyTest {
         initContext()
         val res = fce!!.execute(listOf(JvmObjectProxy(d, Document::class.java)))
         Assertions.assertThat(res.asInt()).isEqualTo(d.creationDate.minute)
-        context!!.close()
+        context.close()
     }
 }
