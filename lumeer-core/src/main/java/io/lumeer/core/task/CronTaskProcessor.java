@@ -88,8 +88,8 @@ public class CronTaskProcessor {
 
    private void processRules(final DaoContextSnapshot dao, final Collection collection, final ContextualTaskFactory taskFactory) {
       collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).forEach(entry -> {
-         if (shouldExecute(entry.getValue())) {
-            final CronRule rule = new CronRule(entry.getValue());
+         final CronRule rule = new CronRule(entry.getValue());
+         if (shouldExecute(rule)) {
             final String signature = UUID.randomUUID().toString();
             rule.setLastRun(ZonedDateTime.now());
             rule.setExecuting(signature);
@@ -104,13 +104,13 @@ public class CronTaskProcessor {
                final List<Document> documents = List.of();
 
                taskExecutor.submitTask(
-                  getTask(
-                        taskFactory,
-                        entry.getValue().getName() != null ? entry.getValue().getName() : entry.getKey(),
-                        entry.getValue(),
-                        collection,
-                        documents
-                        )
+                     getTask(
+                           taskFactory,
+                           entry.getValue().getName() != null ? entry.getValue().getName() : entry.getKey(),
+                           entry.getValue(),
+                           collection,
+                           documents
+                     )
                );
 
                rule.setExecuting(null);
@@ -120,8 +120,18 @@ public class CronTaskProcessor {
       });
    }
 
-   private boolean shouldExecute(final Rule rule) {
-      // TODO - judge rule execution
+   private boolean shouldExecute(final CronRule rule) {
+      final ZonedDateTime lastRun = rule.getLastRun();
+      final ZonedDateTime since = rule.getSince();
+      final ZonedDateTime start = lastRun != null && lastRun.isAfter(since) ? lastRun : since;
+
+      if (start != null) {
+         final ZonedDateTime now = ZonedDateTime.now();
+         start.plus(rule.getFrequency(), rule.getUnit());
+
+         return start.isBefore(now) && now.getHour() >= rule.getWhen();
+      }
+
       return false;
    }
 

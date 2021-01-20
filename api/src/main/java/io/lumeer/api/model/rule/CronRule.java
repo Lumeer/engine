@@ -57,11 +57,11 @@ public class CronRule extends BlocklyRule {
       rule.getConfiguration().put(CRON_UNTIL, new Date(until.toInstant().toEpochMilli()));
    }
 
-   public long getWhen() {
-      return rule.getConfiguration().getLong(CRON_WHEN);
+   public int getWhen() {
+      return rule.getConfiguration().getInteger(CRON_WHEN);
    }
 
-   public void setWhen(final long when) {
+   public void setWhen(final int when) {
       rule.getConfiguration().put(CRON_WHEN, when);
    }
 
