@@ -124,6 +124,7 @@
       <version.awssdk>2.13.23</version.awssdk>
 
       <java.level>12</java.level>
+      <kotlin.version>1.4.21</kotlin.version>
    </properties>
    <dependencyManagement>
       <dependencies>
@@ -184,6 +185,12 @@
             <artifactId>lumeer-storage-mongodb</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
+         </dependency>
+
+         <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
          </dependency>
 
          <dependency>
