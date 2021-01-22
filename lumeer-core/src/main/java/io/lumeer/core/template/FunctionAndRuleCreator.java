@@ -25,6 +25,7 @@ import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
+import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.LinkTypeFacade;
@@ -137,6 +138,17 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       if (type == Rule.RuleType.BLOCKLY) {
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_XML, cureXml(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML)));
+      }
+
+      if (type == Rule.RuleType.CRON) {
+         rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
+         rule.getConfiguration().put(BlocklyRule.BLOCKLY_XML, cureXml(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML)));
+         rule.getConfiguration().put(CronRule.CRON_SINCE, rule.getConfiguration().getDate(CronRule.CRON_SINCE));
+         rule.getConfiguration().put(CronRule.CRON_UNTIL, rule.getConfiguration().getDate(CronRule.CRON_UNTIL));
+         rule.getConfiguration().put(CronRule.CRON_LAST_RUN, rule.getConfiguration().getDate(CronRule.CRON_LAST_RUN));
+         rule.getConfiguration().put(CronRule.CRON_WHEN, rule.getConfiguration().getLong(CronRule.CRON_WHEN));
+         rule.getConfiguration().put(CronRule.CRON_FREQUENCY, rule.getConfiguration().getInteger(CronRule.CRON_FREQUENCY));
+         rule.getConfiguration().put(CronRule.CRON_UNIT, rule.getConfiguration().getString(CronRule.CRON_UNIT));
       }
 
       if (type == Rule.RuleType.AUTO_LINK) {

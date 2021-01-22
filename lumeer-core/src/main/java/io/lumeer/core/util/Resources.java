@@ -23,7 +23,7 @@ import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.DataStorageFactory;
+import io.lumeer.storage.api.DataStorageFactory;
 
 import java.util.logging.Logger;
 import javax.annotation.Resource;

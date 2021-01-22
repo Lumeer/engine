@@ -20,35 +20,23 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
-import io.lumeer.core.facade.detector.AssigneeChangeDetector;
-import io.lumeer.core.facade.detector.AttributePurposeChangeDetector;
-import io.lumeer.core.facade.detector.CollectionChangeDetector;
 import io.lumeer.core.facade.detector.CollectionChangeProcessor;
-import io.lumeer.core.facade.detector.CollectionPurposeChangeDetector;
-import io.lumeer.core.facade.detector.DueDateChangeDetector;
-import io.lumeer.core.facade.detector.PurposeChangeDetector;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
-import io.lumeer.core.facade.detector.StateChangeDetector;
-import io.lumeer.core.facade.detector.TaskUpdateChangeDetector;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
-import io.lumeer.engine.api.event.ResourceEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import java.util.Map;
-import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
@@ -89,7 +77,7 @@ public class DelayedActionFacade {
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       collectionChangeProcessor = new CollectionChangeProcessor(delayedActionDao, collectionDao, selectedWorkspace);
-      purposeChangeProcessor = new PurposeChangeProcessor(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationFacade.getEnvironment());
+      purposeChangeProcessor = new PurposeChangeProcessor(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationProducer.getEnvironment());
    }
 
    public void documentCreated(@Observes final CreateDocument createDocument) {

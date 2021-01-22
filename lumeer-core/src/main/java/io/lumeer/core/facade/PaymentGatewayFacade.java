@@ -83,7 +83,7 @@ public class PaymentGatewayFacade {
       CLIENT_ID = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_CLIENT_ID)).orElse("");
       CLIENT_CREDENTIALS = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.GOPAY_CLIENT_CREDENTIALS)).orElse("");
 
-      if (!configurationFacade.getEnvironment().equals(ConfigurationFacade.DeployEnvironment.DEVEL)) {
+      if (!defaultConfigurationProducer.getEnvironment().equals(DefaultConfigurationProducer.DeployEnvironment.DEVEL)) {
          setDryRun(false);
       }
    }

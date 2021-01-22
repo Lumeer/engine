@@ -18,9 +18,12 @@
  */
 package io.lumeer.storage.mongodb;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.DataStorageFactory;
+import io.lumeer.storage.api.DataStorageFactory;
 import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+import io.lumeer.storage.mongodb.dao.context.MongoDaoContextSnapshotFactory;
 
 import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
@@ -33,5 +36,10 @@ public class MongoDbStorageFactory implements DataStorageFactory {
       final DataStorage storage = new MongoDbStorage();
       storage.connect(connections, database, useSsl);
       return storage;
+   }
+
+   @Override
+   public DaoContextSnapshot getDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
+      return (new MongoDaoContextSnapshotFactory()).getInstance(systemDataStorage, userDataStorage, selectedWorkspace);
    }
 }

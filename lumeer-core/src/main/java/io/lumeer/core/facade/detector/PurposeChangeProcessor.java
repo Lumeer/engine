@@ -24,7 +24,7 @@ import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
-import io.lumeer.core.facade.ConfigurationFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -40,14 +40,14 @@ public class PurposeChangeProcessor {
    private final User initiator;
    private final RequestDataKeeper requestDataKeeper;
    private final ConstraintManager constraintManager;
-   private final ConfigurationFacade.DeployEnvironment environment;
+   private final DefaultConfigurationProducer.DeployEnvironment environment;
 
    private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
 
    public PurposeChangeProcessor(
          final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace,
          final User initiator, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager,
-         final ConfigurationFacade.DeployEnvironment environment) {
+         final DefaultConfigurationProducer.DeployEnvironment environment) {
       this.delayedActionDao = delayedActionDao;
       this.userDao = userDao;
       this.selectedWorkspace = selectedWorkspace;

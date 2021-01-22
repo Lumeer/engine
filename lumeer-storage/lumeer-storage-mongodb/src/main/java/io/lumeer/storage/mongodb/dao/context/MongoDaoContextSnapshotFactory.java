@@ -51,4 +51,10 @@ public class MongoDaoContextSnapshotFactory implements DaoContextSnapshotFactory
    public DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace) {
       return new MongoDaoContextSnapshot(systemDataStorage, userDataStorage, selectedWorkspace);
    }
+
+   @Override
+   public DaoContextSnapshot getInstance(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
+      return new MongoDaoContextSnapshot(systemDataStorage, userDataStorage, selectedWorkspace);
+   }
+
 }

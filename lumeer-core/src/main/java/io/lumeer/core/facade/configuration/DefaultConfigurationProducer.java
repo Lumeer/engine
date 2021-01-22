@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.facade.configuration;
 
+import io.lumeer.core.facade.ConfigurationFacade;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,6 +41,8 @@ public class DefaultConfigurationProducer implements Serializable {
    private static final Logger log = Logger.getLogger(DefaultConfigurationProducer.class.getName());
 
    private Map<String, String> defaultConfiguration = null;
+
+   private static final String ENVIRONMENT = "environment";
 
    public static final String GOPAY_API = "gopay_api";
    public static final String GOPAY_ID = "gopay_id";
@@ -109,5 +113,21 @@ public class DefaultConfigurationProducer implements Serializable {
 
    public String get(final String key) {
       return defaultConfiguration.get(key);
+   }
+
+   public DeployEnvironment getEnvironment() {
+      final String value = get(ENVIRONMENT);
+
+      if (value != null) {
+         final DeployEnvironment env = DeployEnvironment.valueOf(value.toUpperCase());
+
+         return env != null ? env : DeployEnvironment.DEVEL;
+      }
+
+      return DeployEnvironment.DEVEL;
+   }
+
+   public enum DeployEnvironment {
+      DEVEL, STAGING, PRODUCTION;
    }
 }

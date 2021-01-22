@@ -16,18 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao.context;
+package io.lumeer.core.task.executor;
 
-import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.core.task.RuleTask;
 
-/**
- * Gets a {@link DaoContextSnapshot} based on provided information.
- */
-public interface DaoContextSnapshotFactory {
-   DaoContextSnapshot getInstance();
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-   DaoContextSnapshot getInstance(DataStorage userDataStorage, SelectedWorkspace selectedWorkspace);
+public class CronRuleTaskExecutor extends BlocklyRuleTaskExecutor {
 
-   DaoContextSnapshot getInstance(DataStorage systemDataStorage, DataStorage userDataStorage, SelectedWorkspace selectedWorkspace);
+   public CronRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
+      super(ruleName, ruleTask);
+   }
+
+   @Override
+   protected Map<String, Object> getBindings() {
+      final Map<String, Object> bindings = new HashMap<>();
+
+      bindings.put("records", ruleTask.getDocuments().stream().map(JsExecutor.DocumentBridge::new).collect(Collectors.toList()));
+
+      return bindings;
+   }
 }

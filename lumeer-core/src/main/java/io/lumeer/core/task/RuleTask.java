@@ -26,6 +26,7 @@ import io.lumeer.api.model.Rule;
 import io.lumeer.core.task.executor.AutoLinkRuleTaskExecutor;
 import io.lumeer.core.task.executor.BlocklyRuleTaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.CronRuleTaskExecutor;
 import io.lumeer.core.task.executor.ZapierRuleTaskExecutor;
 
 import java.util.List;
@@ -40,6 +41,7 @@ public class RuleTask extends AbstractContextualTask {
    private Document newDocument;
    private LinkInstance oldLinkInstance;
    private LinkInstance newLinkInstance;
+   private List<Document> documents;
 
    public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
       this.ruleName = ruleName;
@@ -50,6 +52,7 @@ public class RuleTask extends AbstractContextualTask {
       this.newDocument = newDocument;
       this.oldLinkInstance = null;
       this.newLinkInstance = null;
+      this.documents = null;
    }
 
    public void setRule(final String ruleName, final Rule rule, final LinkType linkType, final LinkInstance oldLinkInstance, final LinkInstance newLinkInstance) {
@@ -61,6 +64,19 @@ public class RuleTask extends AbstractContextualTask {
       this.newDocument = null;
       this.oldLinkInstance = oldLinkInstance;
       this.newLinkInstance = newLinkInstance;
+      this.documents = null;
+   }
+
+   public void setRule(final String ruleName, final Rule rule, final Collection collection, final List<Document> documents) {
+      this.ruleName = ruleName;
+      this.rule = rule;
+      this.collection = collection;
+      this.linkType = null;
+      this.oldDocument = null;
+      this.newDocument = null;
+      this.oldLinkInstance = null;
+      this.newLinkInstance = null;
+      this.documents = documents;
    }
 
    public boolean isCollectionBased() {
@@ -78,6 +94,9 @@ public class RuleTask extends AbstractContextualTask {
       } else if (rule.getType() == Rule.RuleType.ZAPIER) {
          final ZapierRuleTaskExecutor executor = new ZapierRuleTaskExecutor(ruleName, this);
          executor.execute();
+      } else if (rule.getType() == Rule.RuleType.CRON) {
+         final CronRuleTaskExecutor executor = new CronRuleTaskExecutor(ruleName, this);
+         executor.execute(taskExecutor);
       }
 
       if (parent != null) {
@@ -113,6 +132,10 @@ public class RuleTask extends AbstractContextualTask {
       return newLinkInstance;
    }
 
+   public List<Document> getDocuments() {
+      return documents;
+   }
+
    @Override
    public String toString() {
       return "RuleTask{" +
@@ -124,6 +147,7 @@ public class RuleTask extends AbstractContextualTask {
             ", newDocument=" + newDocument +
             ", oldLinkInstance=" + oldLinkInstance +
             ", newLinkInstance=" + newLinkInstance +
+            ", documents=" + documents +
             '}';
    }
 

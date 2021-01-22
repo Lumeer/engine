@@ -29,10 +29,10 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.AbstractConstraintConverter;
 import io.lumeer.core.constraint.ConstraintManager;
-import io.lumeer.core.facade.ConfigurationFacade;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.util.PusherClient;
@@ -64,10 +64,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected Task parent;
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
-   protected ConfigurationFacade.DeployEnvironment environment;
+   protected DefaultConfigurationProducer.DeployEnvironment environment;
 
    @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, ConfigurationFacade.DeployEnvironment environment) {
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment) {
       this.initiator = initiator;
       this.daoContextSnapshot = daoContextSnapshot;
       this.pusherClient = pusherClient;
@@ -471,5 +471,35 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          return null;
       }
+   }
+
+   public static class SyntheticContextualTaskFactory extends ContextualTaskFactory {
+      private final ConstraintManager constraintManager;
+      private final User initiator;
+      private final DaoContextSnapshot contextSnapshot;
+      private final PusherClient pusherClient;
+      private final DefaultConfigurationProducer.DeployEnvironment environment;
+
+      public SyntheticContextualTaskFactory(final DefaultConfigurationProducer configurationProducer, final DaoContextSnapshot daoContextSnapshot) {
+         this.contextSnapshot = daoContextSnapshot;
+         constraintManager = ConstraintManager.getInstance(configurationProducer);
+         pusherClient = PusherClient.getInstance(configurationProducer);
+         initiator = new User("", "Alan Turing", "alan.turing@lumeer.com", Map.of());
+         environment = configurationProducer.getEnvironment();
+      }
+
+      public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
+         try {
+            T t = clazz.getConstructor().newInstance();
+            t.initialize(initiator, contextSnapshot, pusherClient, new RequestDataKeeper(), constraintManager, environment);
+
+            return t;
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to instantiate a task: ", e);
+         }
+
+         return null;
+      }
+
    }
 }

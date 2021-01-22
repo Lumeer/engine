@@ -16,7 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.engine.api.data;
+package io.lumeer.storage.api;
+
+import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.engine.api.data.StorageConnection;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,4 +37,5 @@ public interface DataStorageFactory {
       return getStorage(Collections.singletonList(connection), database, useSsl);
    }
 
+   DaoContextSnapshot getDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace);
 }
