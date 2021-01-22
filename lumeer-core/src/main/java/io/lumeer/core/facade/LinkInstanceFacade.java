@@ -179,6 +179,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance updateLinkInstance(final String linkInstanceId, final LinkInstance linkInstance) {
+      checkDocumentsExists(linkInstance.getDocumentIds());
       final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final String linkTypeId = Objects.requireNonNullElse(linkInstance.getLinkTypeId(), stored.getLinkTypeId());
