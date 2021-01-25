@@ -31,7 +31,7 @@ import org.junit.Test
 
 class JvmObjectProxyTest {
     private lateinit var context: Context
-    private var fce: Value? = null
+    private lateinit var fce: Value
     private var jsCode: String? = null
     private val engine = Engine
             .newBuilder()
@@ -49,20 +49,21 @@ class JvmObjectProxyTest {
                 .build()
         context.initialize("js")
         val result = context.eval("js", jsCode)
-        fce = context.getBindings("js")?.getMember("fce")
+        fce = context.getBindings("js").getMember("fce")
     }
 
     @Test
     @Throws(JsonProcessingException::class)
     fun test() {
-        val l = listOf("user1@lumeerio.com", "user2@lumeerio.com")
-        val d = Document(DataDocument("useři", l).append("další", arrayOf("user1", "user2")))
-        d.id = "abc123"
-        d.isFavorite = true
-        d.collectionId = "myCollId"
-        d.creationDate = ZonedDateTime.now()
+        val d = Document(DataDocument("useři", listOf("user1@lumeerio.com", "user2@lumeerio.com")).append("další", arrayOf("user1", "user2")))
+                .apply {
+                    id = "abc123"
+                    isFavorite = true
+                    collectionId = "myCollId"
+                    creationDate = ZonedDateTime.now()
+                }
         initContext()
-        val res = fce!!.execute(listOf(JvmObjectProxy(d, Document::class.java)))
+        val res = fce.execute(listOf(JvmObjectProxy(d, Document::class.java)))
         Assertions.assertThat(res.asInt()).isEqualTo(d.creationDate.minute)
         context.close()
     }

@@ -1,15 +1,3 @@
-package io.lumeer.core.util.js
-
-import org.graalvm.polyglot.Value
-import org.graalvm.polyglot.proxy.ProxyArray
-import org.graalvm.polyglot.proxy.ProxyObject
-import java.lang.Exception
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.util.*
-import java.util.function.Predicate
-import java.util.stream.Collectors
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -29,10 +17,22 @@ import java.util.stream.Collectors
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+package io.lumeer.core.util.js
+
+import org.graalvm.polyglot.Value
+import org.graalvm.polyglot.proxy.ProxyArray
+import org.graalvm.polyglot.proxy.ProxyObject
+import java.lang.Exception
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.util.*
+import java.util.function.Predicate
+import java.util.stream.Collectors
+
 class JvmObjectProxy<T>(val d: T, clazz: Class<T>) : ProxyObject {
-    val fields: List<Field>
-    val methods: List<Method>
-    val members: MutableList<Any>
+    private val fields: List<Field> = listOf(*clazz.fields)
+    private val methods: List<Method> = listOf(*clazz.methods)
+    private val members: MutableList<Any>
 
     @Suppress("UNCHECKED_CAST")
     private fun encodeObject(o: Any): Any {
@@ -83,8 +83,6 @@ class JvmObjectProxy<T>(val d: T, clazz: Class<T>) : ProxyObject {
     }
 
     init {
-        fields = Arrays.asList(*clazz.fields)
-        methods = Arrays.asList(*clazz.methods)
         members = ArrayList()
         members.addAll(fields.stream().map { obj: Field -> obj.name }.collect(Collectors.toList()))
         members.addAll(methods.stream().filter(methodFilter { m: Method -> m.name.startsWith("get") }).map { obj: Method -> obj.name }.map { s: String -> s.substring(3, 4).toLowerCase() + s.substring(4) }.collect(Collectors.toList()))

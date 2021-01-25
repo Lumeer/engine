@@ -18,41 +18,23 @@
  */
 package io.lumeer.api.model;
 
-public enum ConditionType {
+import java.util.List;
 
-   EQUALS("eq"),
-   NOT_EQUALS("neq"),
-   LOWER_THAN("lt"),
-   LOWER_THAN_EQUALS("lte"),
-   GREATER_THAN("gt"),
-   GREATER_THAN_EQUALS("gte"),
-   IN("in"),
-   HAS_SOME("hasSome"),
-   HAS_ALL("hasAll"),
-   HAS_NONE_OF("nin"),
-   BETWEEN("between"),
-   NOT_BETWEEN("notBetween"),
-   CONTAINS("contains"),
-   NOT_CONTAINS("notContains"),
-   STARTS_WITH("startsWith"),
-   ENDS_WITH("endsWith"),
-   IS_EMPTY("empty"),
-   NOT_EMPTY("notEmpty"),
-   ENABLED("enabled"),
-   DISABLED("disabled");
+public class CurrencyData {
 
-   private final String value;
+   private final List<String> abbreviations;
+   private final List<String> ordinals;
 
-   ConditionType(String value){
-      this.value = value;
+   public CurrencyData(final List<String> abbreviations, final List<String> ordinals) {
+      this.abbreviations = abbreviations;
+      this.ordinals = ordinals;
    }
 
-   public String getValue() {
-      return value;
+   public List<String> getAbbreviations() {
+      return abbreviations;
    }
 
-   public static ConditionType fromString(String condition) {
-      return ConditionType.valueOf(condition);
+   public List<String> getOrdinals() {
+      return ordinals;
    }
-
 }

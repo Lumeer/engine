@@ -20,7 +20,6 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.util.MomentJsParser;
 
 import org.apache.commons.lang3.StringUtils;
 

@@ -18,41 +18,36 @@
  */
 package io.lumeer.api.model;
 
-public enum ConditionType {
+import java.util.List;
+import java.util.Map;
 
-   EQUALS("eq"),
-   NOT_EQUALS("neq"),
-   LOWER_THAN("lt"),
-   LOWER_THAN_EQUALS("lte"),
-   GREATER_THAN("gt"),
-   GREATER_THAN_EQUALS("gte"),
-   IN("in"),
-   HAS_SOME("hasSome"),
-   HAS_ALL("hasAll"),
-   HAS_NONE_OF("nin"),
-   BETWEEN("between"),
-   NOT_BETWEEN("notBetween"),
-   CONTAINS("contains"),
-   NOT_CONTAINS("notContains"),
-   STARTS_WITH("startsWith"),
-   ENDS_WITH("endsWith"),
-   IS_EMPTY("empty"),
-   NOT_EMPTY("notEmpty"),
-   ENABLED("enabled"),
-   DISABLED("disabled");
+public class ConstraintData {
 
-   private final String value;
+   private final List<User> users;
+   private final User currentUser;
+   private final Map<String,String> durationUnitsMap;
+   private final CurrencyData currencyData;
 
-   ConditionType(String value){
-      this.value = value;
+   public ConstraintData(final List<User> users, final User currentUser, final Map<String, String> durationUnitsMap, final CurrencyData currencyData) {
+      this.users = users;
+      this.currentUser = currentUser;
+      this.durationUnitsMap = durationUnitsMap;
+      this.currencyData = currencyData;
    }
 
-   public String getValue() {
-      return value;
+   public List<User> getUsers() {
+      return users;
    }
 
-   public static ConditionType fromString(String condition) {
-      return ConditionType.valueOf(condition);
+   public User getCurrentUser() {
+      return currentUser;
    }
 
+   public Map<String, String> getDurationUnitsMap() {
+      return durationUnitsMap;
+   }
+
+   public CurrencyData getCurrencyData() {
+      return currencyData;
+   }
 }
