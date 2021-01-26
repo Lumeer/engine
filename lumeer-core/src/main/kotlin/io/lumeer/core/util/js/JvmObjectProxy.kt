@@ -25,66 +25,79 @@ import org.graalvm.polyglot.proxy.ProxyObject
 import java.lang.Exception
 import java.lang.reflect.Field
 import java.lang.reflect.Method
-import java.util.*
-import java.util.function.Predicate
-import java.util.stream.Collectors
 
-class JvmObjectProxy<T>(val d: T, clazz: Class<T>) : ProxyObject {
+class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
     private val fields: List<Field> = listOf(*clazz.fields)
     private val methods: List<Method> = listOf(*clazz.methods)
-    private val members: MutableList<Any>
+    private val members: MutableList<String>
+
+    init {
+        members = ArrayList()
+        if (proxyObject is List<*> || proxyObject is Map<*, *> || clazz.isArray) {
+            members.add("")
+        } else {
+            members.addAll(fields.map { it.name })
+            members.addAll(methods.filter { methodAllowed(it) && it.name.startsWith("get") }
+                    .map { it.name }
+                    .map { it.substring(3, 4).toLowerCase() + it.substring(4) }
+                    .filter { it.isNotEmpty() }
+            )
+        }
+
+    }
+
+    override fun getMember(key: String) = try {
+        println("get member $key $proxyObject")
+        val lala = if (key.isEmpty()) {
+            encodeObject(proxyObject as Any)
+        } else if (key == "length") {
+            encodeObject(1)
+        } else {
+            val field = fields.firstOrNull { f: Field -> f.name == key }
+            println(field)
+            if (field != null) {
+                encodeObject(field[proxyObject])
+            }
+            val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
+            val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
+            if (method != null) {
+                encodeObject(method.invoke(proxyObject))
+            } else {
+                null
+            }
+        }
+        println(key)
+        println(lala)
+        lala
+
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun methodAllowed(m: Method): Boolean = m.parameterCount == 0 && m.returnType != Void.TYPE
+
+    override fun getMemberKeys(): Any {
+        return members
+    }
+
+    override fun hasMember(key: String): Boolean = true
+
+    override fun putMember(key: String, value: Value) = throw UnsupportedOperationException()
 
     @Suppress("UNCHECKED_CAST")
     private fun encodeObject(o: Any): Any {
+        println("encoding $o")
         if (o is Map<*, *>) {
             if (o.size > 0 && o.keys.iterator().next() is String) {
-                return ProxyObject.fromMap(o as Map<String, Any>)
+                return JvmObjectProxy(o, o.javaClass)
             }
         } else if (o is List<*>) {
-            return ProxyArray.fromList(o)
+            return JvmObjectProxy(o, o.javaClass)
         } else if (o.javaClass.isArray) {
-            return ProxyArray.fromArray(o)
+            return JvmObjectProxy(o, o.javaClass)
         } else if (o !is Number && !o.javaClass.isPrimitive && !o.javaClass.isEnum && !o.javaClass.isSynthetic) {
             return JvmObjectProxy(o, o.javaClass)
         }
         return o
-    }
-
-    override fun getMember(key: String): Any? {
-        try {
-            val field = fields.stream().filter { f: Field -> f.name == key }.findFirst()
-            if (field.isPresent) {
-                return encodeObject(field.get()[d])
-            }
-            val method = methods.stream().filter(methodFilter { m: Method -> m.name == "get" + key.substring(0, 1).toUpperCase() + key.substring(1) }).findFirst()
-            if (method.isPresent) {
-                return encodeObject(method.get().invoke(d))
-            }
-        } catch (e: Exception) {
-            return null
-        }
-        return null
-    }
-
-    private fun methodFilter(nameFilter: Predicate<Method>): Predicate<Method> {
-        return Predicate { m: Method -> nameFilter.test(m) && m.parameterCount == 0 && m.returnType != Void.TYPE }
-    }
-
-    override fun getMemberKeys(): Any {
-        return ProxyArray.fromList(members)
-    }
-
-    override fun hasMember(key: String): Boolean {
-        return members.contains(key)
-    }
-
-    override fun putMember(key: String, value: Value) {
-        throw UnsupportedOperationException()
-    }
-
-    init {
-        members = ArrayList()
-        members.addAll(fields.stream().map { obj: Field -> obj.name }.collect(Collectors.toList()))
-        members.addAll(methods.stream().filter(methodFilter { m: Method -> m.name.startsWith("get") }).map { obj: Method -> obj.name }.map { s: String -> s.substring(3, 4).toLowerCase() + s.substring(4) }.collect(Collectors.toList()))
     }
 }
