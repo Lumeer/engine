@@ -87,7 +87,9 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
     @Suppress("UNCHECKED_CAST")
     private fun encodeObject(o: Any): Any {
         println("encoding $o")
-        if (o is Map<*, *>) {
+        if (o is String) {
+            return o
+        } else if (o is Map<*, *>) {
             if (o.size > 0 && o.keys.iterator().next() is String) {
                 return JvmObjectProxy(o, o.javaClass)
             }
