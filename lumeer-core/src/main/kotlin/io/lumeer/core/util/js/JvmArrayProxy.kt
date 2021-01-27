@@ -28,8 +28,8 @@ class JvmArrayProxy(var values: Array<Any?>) : ProxyArray {
     override fun get(index: Long): Any? {
         checkIndex(index)
         val idx = index.toInt()
-        if (values[idx] != null) JvmObjectProxy.encodeObject(values[idx]!!)
-        return null
+        return if (values[idx] != null) JvmObjectProxy.encodeObject(values[idx]!!)
+        else null
     }
 
     override fun set(index: Long, value: Value) {
@@ -43,8 +43,6 @@ class JvmArrayProxy(var values: Array<Any?>) : ProxyArray {
         }
     }
 
-    override fun getSize(): Long {
-        return values.size.toLong()
-    }
+    override fun getSize(): Long = values.size.toLong()
 }
 

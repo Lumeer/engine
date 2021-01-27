@@ -21,12 +21,10 @@ package io.lumeer.core.util.js
 import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
 import io.lumeer.core.util.Tuple
-import java.lang.AutoCloseable
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import java.io.IOException
-import java.lang.Exception
 import java.nio.charset.StandardCharsets
 
 class DataFiltersJsParser : AutoCloseable {
@@ -43,6 +41,7 @@ class DataFiltersJsParser : AutoCloseable {
                 .option("js.foreign-object-prototype", "true")
                 .build()
 
+        @JvmStatic
         fun filterDocumentsAndLinksByQuery(documents: List<Document>,
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
@@ -73,6 +72,7 @@ class DataFiltersJsParser : AutoCloseable {
 
                 Tuple(resultDocumentsList, resultLinksList)
             } catch (e: Exception) {
+                println(e.message)
                 emptyTuple
             }
         }

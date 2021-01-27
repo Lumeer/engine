@@ -173,9 +173,10 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
-   public List<Document> getDocumentsByParentIds(final Collection<String> parentIds) {
-      Bson filter = parentIdsFilter(parentIds);
-      return databaseCollection().find(filter).into(new ArrayList<>());
+   public List<Document> getDocumentsByCollectionIds(final Collection<String> collectionIds) {
+      return databaseCollection()
+            .find(Filters.in(DocumentCodec.COLLECTION_ID, collectionIds))
+            .into(new ArrayList<>());
    }
 
    @Override
@@ -201,7 +202,7 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    String databaseCollectionName() {
-      if (!getProject().isPresent()) {
+      if (getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return databaseCollectionName(getProject().get());

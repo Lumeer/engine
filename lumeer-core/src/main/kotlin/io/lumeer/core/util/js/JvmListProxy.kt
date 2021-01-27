@@ -27,8 +27,8 @@ class JvmListProxy(val values: MutableList<Any?>) : ProxyArray {
 
     override fun get(index: Long): Any? {
         checkIndex(index)
-        if (values[index.toInt()] != null) JvmObjectProxy.encodeObject(values[index.toInt()]!!)
-        return null
+        return if (values[index.toInt()] != null) JvmObjectProxy.encodeObject(values[index.toInt()]!!)
+        else null
     }
 
     override fun set(index: Long, value: Value) {
@@ -48,7 +48,5 @@ class JvmListProxy(val values: MutableList<Any?>) : ProxyArray {
         }
     }
 
-    override fun getSize(): Long {
-        return values.size.toLong()
-    }
+    override fun getSize(): Long = values.size.toLong()
 }

@@ -21,7 +21,6 @@ package io.lumeer.core.util.js
 
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.Proxy
-import org.graalvm.polyglot.proxy.ProxyArray
 import org.graalvm.polyglot.proxy.ProxyObject
 import java.lang.Exception
 import java.lang.reflect.Field
@@ -71,13 +70,13 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
     @Suppress("UNCHECKED_CAST")
     companion object {
         fun decodeValue(value: Value): Any? {
-            return if (value.isNumber()) {
+            return if (value.isNumber) {
                 if (value.fitsInLong()) value.asLong() else value.asDouble()
-            } else if (value.isBoolean()) {
+            } else if (value.isBoolean) {
                 value.asBoolean()
-            } else if (value.isHostObject() && value.asHostObject<Any>() is Date) {
+            } else if (value.isHostObject && value.asHostObject<Any>() is Date) {
                 value.asHostObject<Any>()
-            } else if (value.isNull()) {
+            } else if (value.isNull) {
                 null
             } else if (value.hasArrayElements()) {
                 val list = mutableListOf<Any?>()
@@ -85,7 +84,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
                     list.add(decodeValue(value.getArrayElement(i)))
                 }
                 list
-            }// else if (value.ke)
+            }
             else {
                 value.asString()
             }
@@ -126,7 +125,6 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
             return JvmArrayProxy(array as Array<Any?>)
         }
     }
-
 
     fun String.isUpperCase(): Boolean = !toCharArray().asList().any { it.isLowerCase() }
 }

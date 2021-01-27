@@ -27,8 +27,8 @@ class JvmSetProxy(val values: MutableSet<Any?>) : ProxyArray {
 
     override fun get(index: Long): Any? {
         checkIndex(index)
-        if (values.elementAt(index.toInt()) != null) JvmObjectProxy.encodeObject(values.elementAt(index.toInt())!!)
-        return null
+        return if (values.elementAt(index.toInt()) != null) JvmObjectProxy.encodeObject(values.elementAt(index.toInt())!!)
+        else null
     }
 
     override fun set(index: Long, value: Value) {

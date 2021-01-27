@@ -1,9 +1,3 @@
-package io.lumeer.core.util.js
-
-import org.graalvm.polyglot.Value
-import org.graalvm.polyglot.proxy.ProxyArray
-import org.graalvm.polyglot.proxy.ProxyObject
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -22,6 +16,12 @@ import org.graalvm.polyglot.proxy.ProxyObject
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.util.js
+
+import org.graalvm.polyglot.Value
+import org.graalvm.polyglot.proxy.ProxyArray
+import org.graalvm.polyglot.proxy.ProxyObject
+
 class JvmMapProxy(val values: MutableMap<String, Any>) : ProxyObject {
 
     fun proxyMap() = values
@@ -30,43 +30,35 @@ class JvmMapProxy(val values: MutableMap<String, Any>) : ProxyObject {
         if (key != null) values[key] = (if (value.isHostObject) value.asHostObject<Any>() else value)
     }
 
-    override fun hasMember(key: String?): Boolean {
-        return values.containsKey(key)
-    }
+    override fun hasMember(key: String?): Boolean = values.containsKey(key)
 
-    override fun getMemberKeys(): Any? {
-        return object : ProxyArray {
-            private val keys: Array<Any> = values.keys.toTypedArray()
+    override fun getMemberKeys(): Any = object : ProxyArray {
+        private val keys: Array<Any> = values.keys.toTypedArray()
 
-            override fun set(index: Long, value: Value) {
-                throw UnsupportedOperationException()
-            }
+        override fun set(index: Long, value: Value) {
+            throw UnsupportedOperationException()
+        }
 
-            override fun getSize(): Long {
-                return keys.size.toLong()
-            }
+        override fun getSize(): Long {
+            return keys.size.toLong()
+        }
 
-            override fun get(index: Long): Any {
-                return if (index >= 0L && index <= 2147483647L) {
-                    keys[index.toInt()]
-                } else {
-                    throw ArrayIndexOutOfBoundsException()
-                }
+        override fun get(index: Long): Any {
+            return if (index in 0L..2147483647L) {
+                keys[index.toInt()]
+            } else {
+                throw ArrayIndexOutOfBoundsException()
             }
         }
     }
 
-    override fun getMember(key: String?): Any? {
-        if (values[key] != null) JvmObjectProxy.encodeObject(values[key]!!)
-        return null
-    }
+    override fun getMember(key: String?): Any? = if (values[key] != null) JvmObjectProxy.encodeObject(values[key]!!)
+    else null
 
-    override fun removeMember(key: String?): Boolean {
-        return if (values.containsKey(key)) {
-            values.remove(key)
-            true
-        } else {
-            false
-        }
+    override fun removeMember(key: String?): Boolean = if (values.containsKey(key)) {
+        values.remove(key)
+        true
+    } else {
+        false
     }
 }
