@@ -26,6 +26,8 @@ import org.graalvm.polyglot.proxy.ProxyObject
 import java.lang.Exception
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.util.*
+import kotlin.collections.ArrayList
 
 class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
     private val fields: List<Field> = listOf(*clazz.fields)
@@ -68,6 +70,27 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
 
     @Suppress("UNCHECKED_CAST")
     companion object {
+        fun decodeValue(value: Value): Any? {
+            return if (value.isNumber()) {
+                if (value.fitsInLong()) value.asLong() else value.asDouble()
+            } else if (value.isBoolean()) {
+                value.asBoolean()
+            } else if (value.isHostObject() && value.asHostObject<Any>() is Date) {
+                value.asHostObject<Any>()
+            } else if (value.isNull()) {
+                null
+            } else if (value.hasArrayElements()) {
+                val list = mutableListOf<Any?>()
+                for (i in 0 until value.arraySize) {
+                    list.add(decodeValue(value.getArrayElement(i)))
+                }
+                list
+            }// else if (value.ke)
+            else {
+                value.asString()
+            }
+        }
+
         fun encodeObject(o: Any): Any {
             if (o is String) {
                 return o
@@ -88,19 +111,19 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
         }
 
         fun fromMap(values: Map<String, Any>): Proxy {
-            return ProxyObject.fromMap(values.mapValues { encodeObject(it.value) })
+            return JvmMapProxy(values.toMutableMap())
         }
 
         fun fromList(list: List<*>): Proxy {
-            return ProxyArray.fromList(list.map { encodeObject(it!!) })
+            return JvmListProxy(list.toMutableList())
         }
 
         fun fromSet(set: Set<*>): Proxy {
-            return ProxyArray.fromList(set.map { encodeObject(it!!) })
+            return JvmSetProxy((set as Set<Any?>).toMutableSet())
         }
 
         fun fromArray(array: Array<*>): Proxy {
-            return ProxyArray.fromArray(array.map { encodeObject(it!!) })
+            return JvmArrayProxy(array as Array<Any?>)
         }
     }
 
