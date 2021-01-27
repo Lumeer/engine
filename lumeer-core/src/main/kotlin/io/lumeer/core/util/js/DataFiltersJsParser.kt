@@ -52,17 +52,18 @@ class DataFiltersJsParser : AutoCloseable {
             }
             val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
             return try {
-                val result = filterJsValue.execute(JvmObjectProxy(documents, List::class.java),
-                        JvmObjectProxy(collections, List::class.java),
-                        JvmObjectProxy(linkTypes, List::class.java),
-                        JvmObjectProxy(linkInstances, List::class.java),
+                val result = filterJsValue.execute(JvmObjectProxy.fromList(documents),
+                        JvmObjectProxy.fromList(collections),
+                        JvmObjectProxy.fromList(linkTypes),
+                        JvmObjectProxy.fromList(linkInstances),
                         JvmObjectProxy(query, Query::class.java),
-                        JvmObjectProxy(collectionsPermissions, Map::class.java),
-                        JvmObjectProxy(linkTypesPermissions, Map::class.java),
+                        JvmObjectProxy.fromMap(collectionsPermissions),
+                        JvmObjectProxy.fromMap(linkTypesPermissions),
                         JvmObjectProxy(constraintData, ConstraintData::class.java),
                         includeChildren)
 
-                val resultDocuments = result.getMember("documents").`as`(List::class.java)
+                val resultDocumentsList = result.getMember("documents").`as`(List::class.java)
+                val resultDocuments = resultDocumentsList
                         .map { (it as JvmObjectProxy<*>).proxyObject as Document }
                 val resultLinkInstances = result.getMember("linkInstances").`as`(List::class.java)
                         .map { (it as JvmObjectProxy<*>).proxyObject as LinkInstance }
