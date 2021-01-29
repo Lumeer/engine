@@ -14,13 +14,13 @@ public class CollectionAttributeFilter extends AttributeFilter {
    @JsonCreator
    public CollectionAttributeFilter(@JsonProperty("collectionId") final String collectionId,
          @JsonProperty("attributeId") final String attributeId,
-         @JsonProperty("condition") final String condition,
+         @JsonProperty("condition") final ConditionType condition,
          @JsonProperty("conditionValues") final List<ConditionValue> conditionValues) {
       super(attributeId, condition, conditionValues);
       this.collectionId = collectionId;
    }
 
-   public static CollectionAttributeFilter createFromValue(final String collectionId, final String attributeId, final String condition, final Object value) {
+   public static CollectionAttributeFilter createFromValue(final String collectionId, final String attributeId, final ConditionType condition, final Object value) {
       return new CollectionAttributeFilter(collectionId, attributeId, condition, Collections.singletonList(new ConditionValue(value)));
    }
 

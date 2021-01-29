@@ -27,7 +27,7 @@ class JvmListProxy(val values: MutableList<Any?>) : ProxyArray {
 
     override fun get(index: Long): Any? {
         checkIndex(index)
-        return if (values[index.toInt()] != null) JvmObjectProxy.encodeObject(values[index.toInt()]!!)
+        return if (values.getOrNull(index.toInt()) != null) JvmObjectProxy.encodeObject(values[index.toInt()]!!)
         else null
     }
 

@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValue;
 
 import org.bson.BsonReader;
@@ -57,7 +58,8 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
    public static CollectionAttributeFilter convertFromDocument(final Document document) {
       String collectionId = document.getString(COLLECTION_ID);
       String attributeId = document.getString(ATTRIBUTE_ID);
-      String operator = document.getString(CONDITION);
+      String conditionString = document.getString(CONDITION);
+      ConditionType operator = ConditionType.fromString(conditionString);
 
       List<ConditionValue> values;
       Object value = document.get(VALUE);

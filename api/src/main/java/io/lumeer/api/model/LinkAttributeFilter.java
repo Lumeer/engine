@@ -32,13 +32,13 @@ public class LinkAttributeFilter extends AttributeFilter {
    @JsonCreator
    public LinkAttributeFilter(@JsonProperty("linkTypeId") final String linkTypeId,
          @JsonProperty("attributeId") final String attributeId,
-         @JsonProperty("condition") final String condition,
+         @JsonProperty("condition") final ConditionType condition,
          @JsonProperty("conditionValues") final List<ConditionValue> conditionValues) {
       super(attributeId, condition, conditionValues);
       this.linkTypeId = linkTypeId;
    }
 
-   public static LinkAttributeFilter createFromValue(final String linkTypeId, final String attributeId, final String condition, final Object value) {
+   public static LinkAttributeFilter createFromValue(final String linkTypeId, final String attributeId, final ConditionType condition, final Object value) {
       return new LinkAttributeFilter(linkTypeId, attributeId, condition, Collections.singletonList(new ConditionValue(value)));
    }
 

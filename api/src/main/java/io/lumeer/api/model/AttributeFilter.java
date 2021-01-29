@@ -28,10 +28,10 @@ import java.util.Objects;
 public class AttributeFilter {
 
    private final String attributeId;
-   private final String condition;
+   private final ConditionType condition;
    private List<ConditionValue> conditionValues;
 
-   public AttributeFilter(final String attributeId, final String condition, final List<ConditionValue> value) {
+   public AttributeFilter(final String attributeId, final ConditionType condition, final List<ConditionValue> value) {
       this.attributeId = attributeId;
       this.condition = condition;
       this.conditionValues = value;
@@ -41,7 +41,7 @@ public class AttributeFilter {
       return attributeId;
    }
 
-   public String getCondition() {
+   public ConditionType getCondition() {
       return condition;
    }
 

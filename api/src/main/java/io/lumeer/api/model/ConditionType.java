@@ -43,7 +43,7 @@ public enum ConditionType {
 
    private final String value;
 
-   ConditionType(String value){
+   ConditionType(String value) {
       this.value = value;
    }
 
@@ -52,7 +52,15 @@ public enum ConditionType {
    }
 
    public static ConditionType fromString(String condition) {
-      return ConditionType.valueOf(condition);
+      try {
+         return ConditionType.valueOf(condition);
+      } catch (IllegalArgumentException exception) {
+         return null;
+      }
    }
 
+   @Override
+   public String toString() {
+      return value;
+   }
 }

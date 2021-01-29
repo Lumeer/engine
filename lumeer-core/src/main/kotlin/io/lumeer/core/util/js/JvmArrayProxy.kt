@@ -28,7 +28,7 @@ class JvmArrayProxy(var values: Array<Any?>) : ProxyArray {
     override fun get(index: Long): Any? {
         checkIndex(index)
         val idx = index.toInt()
-        return if (values[idx] != null) JvmObjectProxy.encodeObject(values[idx]!!)
+        return if (values.getOrNull(idx) != null) JvmObjectProxy.encodeObject(values[idx]!!)
         else null
     }
 

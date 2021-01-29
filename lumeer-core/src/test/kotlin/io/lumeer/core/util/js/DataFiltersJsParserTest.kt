@@ -75,7 +75,7 @@ class DataFiltersJsParserTest {
 
         Assertions.assertThat(simpleResult.first).containsOnly(document1, document2)
 
-        val throughLinkFilter = CollectionAttributeFilter.createFromValue(collection2.id, c2AttributeId, ConditionType.EQUALS.value, "lumeer")
+        val throughLinkFilter = CollectionAttributeFilter.createFromValue(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
         val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), setOf(throughLinkFilter), setOf())), setOf(), 0 , 10)
 
         val linkResult = DataFiltersJsParser.filterDocumentsAndLinksByQuery(

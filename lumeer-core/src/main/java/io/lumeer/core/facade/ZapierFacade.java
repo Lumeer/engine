@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Query;
@@ -275,7 +276,7 @@ public class ZapierFacade extends AbstractFacade {
                            collectionId,
                            null,
                            null,
-                           Set.of(CollectionAttributeFilter.createFromValue(collectionId, key, "=", data.get(key))),
+                           Set.of(CollectionAttributeFilter.createFromValue(collectionId, key, ConditionType.EQUALS, data.get(key))),
                            null)
                )
          );

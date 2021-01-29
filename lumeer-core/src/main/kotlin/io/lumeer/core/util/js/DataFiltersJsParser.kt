@@ -64,7 +64,6 @@ class DataFiltersJsParser : AutoCloseable {
                 val resultDocumentsList = mutableListOf<Document>()
                 val resultDocuments = result.getMember("documents")
                 for (i in 0 until resultDocuments.arraySize) resultDocumentsList.add(resultDocuments.getArrayElement(i).asProxyObject<JvmObjectProxy<Document>>().proxyObject)
-                println(resultDocumentsList)
 
                 val resultLinksList = mutableListOf<LinkInstance>()
                 val resultLinks = result.getMember("linkInstances")
@@ -72,7 +71,6 @@ class DataFiltersJsParser : AutoCloseable {
 
                 Tuple(resultDocumentsList, resultLinksList)
             } catch (e: Exception) {
-                println(e.message)
                 emptyTuple
             }
         }
@@ -94,7 +92,7 @@ class DataFiltersJsParser : AutoCloseable {
         init {
             try {
                 DataFiltersJsParser::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
-                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function $FILTER_JS(documents,collections,linkTypes,linkInstances,query,constraintData,children) { return Filter.filterDocumentsAndLinksByQuery(documents,collections,linkTypes,linkInstances,query,constraintData,children); }")
+                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function $FILTER_JS(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections), Filter.createConstraintsInLinkTypes(linkTypes), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren); }")
                 }
             } catch (ioe: IOException) {
                 filterJsCode = null

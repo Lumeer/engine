@@ -19,6 +19,8 @@
 
 package io.lumeer.core.util.js
 
+import com.mongodb.client.model.geojson.Point
+import io.lumeer.core.util.DataUtils
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.Proxy
 import org.graalvm.polyglot.proxy.ProxyObject
@@ -84,29 +86,46 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
                     list.add(decodeValue(value.getArrayElement(i)))
                 }
                 list
-            }
-            else {
+            } else {
                 value.asString()
             }
         }
 
         fun encodeObject(o: Any): Any {
-            if (o is String) {
-                return o
-            } else if (o is List<*>) {
-                return fromList(o)
-            } else if (o is Array<*>) {
-                return fromArray(o)
-            } else if (o is Set<*>) {
-                return fromSet(o)
-            } else if (o is Map<*, *>) {
-                if (o.size > 0 && o.keys.iterator().next() is String) {
-                    return fromMap(o as Map<String, Any>)
+            when {
+                o is String -> {
+                    return o
                 }
-            } else if (o !is Number && !o.javaClass.isPrimitive && !o.javaClass.isEnum && !o.javaClass.isSynthetic) {
-                return JvmObjectProxy(o, o.javaClass)
+                o is List<*> -> {
+                    return fromList(o)
+                }
+                o is Array<*> -> {
+                    return fromArray(o)
+                }
+                o is Set<*> -> {
+                    return fromSet(o)
+                }
+                o.javaClass.isEnum -> {
+                    return o.toString()
+                }
+                else -> {
+                    val pointString = DataUtils.convertPointToString(o)
+                    if (pointString != null) {
+                        return pointString
+                    }
+
+                    // needs to be checked after point, because point is instance of map
+                    if (o is Map<*, *> && o.size > 0 && o.keys.iterator().next() is String) {
+                        return fromMap(o as Map<String, Any>)
+                    }
+
+                    if (o !is Number && !o.javaClass.isPrimitive && !o.javaClass.isEnum && !o.javaClass.isSynthetic) {
+                        return JvmObjectProxy(o, o.javaClass)
+                    }
+                    return o
+                }
             }
-            return o
+
         }
 
         fun fromMap(values: Map<String, Any>): Proxy {
