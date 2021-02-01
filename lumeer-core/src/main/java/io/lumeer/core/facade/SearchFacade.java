@@ -44,6 +44,8 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -148,19 +150,20 @@ public class SearchFacade extends AbstractFacade {
       return searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes);
    }
 
-   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes) {
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes) {
       final Query encodedQuery = checkQuery(query, isPublic);
       final List<Document> documents = getDocumentsByCollections(collections);
       final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
       final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
       final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
+      System.out.println(documents + " /// " + linkInstances);
       final ConstraintData constraintData = new ConstraintData(
             userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
             authenticatedUser.getCurrentUser(),
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
       );
-      return DataFiltersJsParser.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true, language);
+      return DataFiltersJsParser.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
    }
 
    private Query checkQuery(final Query query, boolean isPublic) {

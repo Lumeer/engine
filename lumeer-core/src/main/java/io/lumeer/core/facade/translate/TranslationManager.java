@@ -21,6 +21,8 @@ package io.lumeer.core.facade.translate;
 import io.lumeer.api.model.DurationUnit;
 import io.lumeer.api.model.Language;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +32,8 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class TranslationManager {
 
-   public Map<String, String> translateDurationUnitsMap(Language language) {
-      switch (language) {
+   public Map<String, String> translateDurationUnitsMap(@Nullable  Language language) {
+      switch (language != null ? language : Language.EN) {
          case CS:
             return translateDurationUnitsMapCs();
          default:
@@ -62,8 +64,8 @@ public class TranslationManager {
       }));
    }
 
-   public List<String> translateAbbreviations(Language language) {
-      switch (language) {
+   public List<String> translateAbbreviations(@Nullable Language language) {
+      switch (language != null ? language : Language.EN) {
          case CS:
             return translateAbbreviationsCs();
          default:
@@ -79,8 +81,8 @@ public class TranslationManager {
       return Arrays.asList("tis.", "mil.", "mld.", "bil.");
    }
 
-   public List<String> translateOrdinals(Language language) {
-      switch (language) {
+   public List<String> translateOrdinals(@Nullable Language language) {
+      switch (language != null ? language : Language.EN) {
          case CS:
             return translateOrdinalsCs();
          default:
