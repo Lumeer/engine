@@ -99,7 +99,7 @@
 
       <version.interceptor>1.2.2</version.interceptor>
       <version.pusher>1.0.2</version.pusher>
-      <version.sentry>1.7.30</version.sentry>
+      <version.sentry>4.0.0</version.sentry>
 
       <version.maven.plugin.api>3.5.4</version.maven.plugin.api>
       <version.maven.core>3.5.4</version.maven.core>
