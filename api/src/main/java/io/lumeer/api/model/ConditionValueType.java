@@ -18,43 +18,30 @@
  */
 package io.lumeer.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+public enum ConditionValueType {
 
-import java.util.Locale;
+   CURRENT_USER("currentUser");
 
-public enum Language {
-   EN,
-   CS;
+   private final String value;
 
-   @JsonCreator
-   public static Language fromString(String language) {
-      if (language == null || language.isEmpty()) {
-         return Language.EN;
-      }
+   ConditionValueType(String value) {
+      this.value = value;
+   }
 
+   public String getValue() {
+      return value;
+   }
+
+   public static ConditionValueType fromString(String condition) {
       try {
-         return Language.valueOf(language.toUpperCase());
+         return ConditionValueType.valueOf(condition);
       } catch (IllegalArgumentException exception) {
-         return Language.EN;
+         return null;
       }
    }
 
-   public Locale toLocale() {
-      switch (this) {
-         case CS:
-            return Locale.forLanguageTag("cs_CZ");
-         default:
-            return Locale.ENGLISH;
-      }
+   @Override
+   public String toString() {
+      return value;
    }
-
-   public String toLanguageTag() {
-      switch (this) {
-         case CS:
-            return "cs-CZ";
-         default:
-            return "en-US";
-      }
-   }
-
 }

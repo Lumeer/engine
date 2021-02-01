@@ -23,6 +23,7 @@ import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Rule;
@@ -42,7 +43,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -276,9 +276,10 @@ public class ZapierFacade extends AbstractFacade {
                            collectionId,
                            null,
                            null,
-                           Set.of(CollectionAttributeFilter.createFromValue(collectionId, key, ConditionType.EQUALS, data.get(key))),
+                           Set.of(CollectionAttributeFilter.createFromValues(collectionId, key, ConditionType.EQUALS, data.get(key))),
                            null)
-               )
+               ),
+               Language.EN
          );
       }
 
@@ -339,7 +340,7 @@ public class ZapierFacade extends AbstractFacade {
    public List<DataDocument> findDocuments(final String collectionId, final Set<CollectionAttributeFilter> collectionAttributeFilters) {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
-      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20))
+      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20), Language.EN)
              .stream()
              .map(Document::getData)
              .map(data -> addMissingAttributes(data, collection))

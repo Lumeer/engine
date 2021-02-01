@@ -19,7 +19,9 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConditionValue;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.LinkType;
@@ -376,7 +378,7 @@ public class ConstraintManager {
          var collection = collectionsMap.get(filter.getCollectionId());
          if (collection != null) {
             var constraint = ResourceUtils.findConstraint(collection.getAttributes(), filter.getAttributeId());
-            filter.setValue(processor.apply(filter.getValue(), constraint));
+            processAttributeFilter(constraint, filter, processor);
          }
       });
 
@@ -384,9 +386,20 @@ public class ConstraintManager {
          var linkType = linkTypesMap.get(filter.getLinkTypeId());
          if (linkType != null) {
             var constraint = ResourceUtils.findConstraint(linkType.getAttributes(), filter.getAttributeId());
-            filter.setValue(processor.apply(filter.getValue(), constraint));
+            processAttributeFilter(constraint, filter, processor);
          }
       });
+   }
+
+   private void processAttributeFilter(final Constraint constraint, final AttributeFilter filter, final BiFunction<Object, Constraint, Object> processor) {
+      var conditionValues = filter.getConditionValues().stream().map(f -> {
+         if (f.getValue() != null) {
+            return new ConditionValue(processor.apply(f.getValue(), constraint));
+         }
+         return f;
+      }).collect(Collectors.toList());
+
+      filter.setConditionValues(conditionValues);
    }
 
    public DataDocument encodeDataTypes(final Collection collection, final DataDocument data) {

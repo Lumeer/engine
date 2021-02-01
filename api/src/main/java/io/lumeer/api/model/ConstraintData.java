@@ -25,7 +25,7 @@ public class ConstraintData {
 
    private final List<User> users;
    private final User currentUser;
-   private final Map<String,String> durationUnitsMap;
+   private final Map<String, String> durationUnitsMap;
    private final CurrencyData currencyData;
 
    public ConstraintData(final List<User> users, final User currentUser, final Map<String, String> durationUnitsMap, final CurrencyData currencyData) {

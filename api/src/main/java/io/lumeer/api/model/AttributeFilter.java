@@ -46,7 +46,11 @@ public class AttributeFilter {
    }
 
    public List<ConditionValue> getConditionValues() {
-      return conditionValues;
+      return conditionValues != null ? conditionValues : Collections.emptyList();
+   }
+
+   public void setConditionValues(final List<ConditionValue> conditionValues) {
+      this.conditionValues = conditionValues;
    }
 
    public Object getValue() {

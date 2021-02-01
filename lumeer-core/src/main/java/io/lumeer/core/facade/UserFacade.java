@@ -22,8 +22,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
-import io.lumeer.api.model.Language;
-import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;

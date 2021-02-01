@@ -20,15 +20,14 @@ package io.lumeer.core.util.js
 
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
+import java.util.*
 
-class JvmArrayProxy(var values: Array<Any?>) : ProxyArray {
-
-    fun proxyArray() = values
+class JvmArrayProxy(var values: Array<Any?>, val locale: Locale = Locale.getDefault()) : ProxyArray {
 
     override fun get(index: Long): Any? {
         checkIndex(index)
         val idx = index.toInt()
-        return if (values.getOrNull(idx) != null) JvmObjectProxy.encodeObject(values[idx]!!)
+        return if (values.getOrNull(idx) != null) JvmObjectProxy.encodeObject(values[idx]!!, locale)
         else null
     }
 

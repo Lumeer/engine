@@ -21,9 +21,10 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class LinkAttributeFilter extends AttributeFilter {
 
@@ -38,8 +39,12 @@ public class LinkAttributeFilter extends AttributeFilter {
       this.linkTypeId = linkTypeId;
    }
 
-   public static LinkAttributeFilter createFromValue(final String linkTypeId, final String attributeId, final ConditionType condition, final Object value) {
-      return new LinkAttributeFilter(linkTypeId, attributeId, condition, Collections.singletonList(new ConditionValue(value)));
+   public LinkAttributeFilter(LinkAttributeFilter filter) {
+      this(filter.getLinkTypeId(), filter.getAttributeId(), filter.getCondition(), filter.getConditionValues());
+   }
+
+   public static LinkAttributeFilter createFromValues(final String linkTypeId, final String attributeId, final ConditionType condition, final Object... values) {
+      return new LinkAttributeFilter(linkTypeId, attributeId, condition, Arrays.stream(values).map(ConditionValue::new).collect(Collectors.toList()));
    }
 
    public String getLinkTypeId() {
@@ -60,13 +65,13 @@ public class LinkAttributeFilter extends AttributeFilter {
       final LinkAttributeFilter that = (LinkAttributeFilter) o;
       return Objects.equals(getAttributeId(), that.getAttributeId()) &&
             Objects.equals(getCondition(), that.getCondition()) &&
-            Objects.equals(getValue(), that.getValue()) &&
+            Objects.equals(getConditionValues(), that.getConditionValues()) &&
             Objects.equals(getLinkTypeId(), that.getLinkTypeId());
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(super.hashCode(), getAttributeId(), getCondition(), getValue(), getLinkTypeId());
+      return Objects.hash(super.hashCode(), getAttributeId(), getCondition(), getConditionValues(), getLinkTypeId());
    }
 
    @Override

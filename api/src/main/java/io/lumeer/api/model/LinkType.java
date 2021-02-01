@@ -23,6 +23,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.AttributeUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -100,6 +101,16 @@ public class LinkType implements WithId {
 
    public List<String> getCollectionIds() {
       return Collections.unmodifiableList(collectionIds);
+   }
+
+   @JsonIgnore
+   public String getFirstCollectionId() {
+      return collectionIds != null ? collectionIds.get(0) : null;
+   }
+
+   @JsonIgnore
+   public String getSecondCollectionId() {
+      return collectionIds != null ? collectionIds.get(1) : null;
    }
 
    public void setCollectionIds(List<String> collectionIds) {

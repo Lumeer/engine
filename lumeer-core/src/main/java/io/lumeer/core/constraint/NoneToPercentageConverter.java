@@ -21,11 +21,7 @@ package io.lumeer.core.constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
-import java.math.BigDecimal;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class NoneToPercentageConverter extends AbstractConstraintConverter {
 

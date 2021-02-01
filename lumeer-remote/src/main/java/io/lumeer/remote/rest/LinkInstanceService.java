@@ -79,36 +79,28 @@ public class LinkInstanceService extends AbstractService {
    @Path("{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}")
    public LinkInstance updateLinkInstanceData(@PathParam("linkTypeId") String linkTypeId, @PathParam("linkInstanceId") String linkInstanceId) {
       final LinkInstance link = linkInstanceFacade.getLinkInstance(linkTypeId, linkInstanceId);
-      link.setCommentsCount(linkInstanceFacade.getCommentsCount(link.getId()));
-
-      return link;
+      return linkInstanceFacade.mapLinkInstanceData(link);
    }
 
    @PUT
    @Path("{linkInstanceId:[0-9a-fA-F]{24}}")
    public LinkInstance updateLinkInstance(@PathParam("linkInstanceId") String id, LinkInstance linkInstance) {
       final LinkInstance link = linkInstanceFacade.updateLinkInstance(id, linkInstance);
-      link.setCommentsCount(linkInstanceFacade.getCommentsCount(link.getId()));
-
-      return link;
+      return linkInstanceFacade.mapLinkInstanceData(link);
    }
 
    @PUT
    @Path("{linkInstanceId:[0-9a-fA-F]{24}}/data")
    public LinkInstance updateLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
       final LinkInstance link = linkInstanceFacade.updateLinkInstanceData(id, data);
-      link.setCommentsCount(linkInstanceFacade.getCommentsCount(link.getId()));
-
-      return link;
+      return linkInstanceFacade.mapLinkInstanceData(link);
    }
 
    @PATCH
    @Path("{linkInstanceId:[0-9a-fA-F]{24}}/data")
    public LinkInstance patchLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
       final LinkInstance link = linkInstanceFacade.patchLinkInstanceData(id, data);
-      link.setCommentsCount(linkInstanceFacade.getCommentsCount(link.getId()));
-
-      return link;
+      return linkInstanceFacade.mapLinkInstanceData(link);
    }
 
    @DELETE

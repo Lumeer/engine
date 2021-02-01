@@ -23,14 +23,16 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ConstraintData;
 import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.js.DataFiltersJsParser;
 import io.lumeer.engine.api.data.DataDocument;
@@ -40,8 +42,8 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.UserDao;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +64,9 @@ public class SearchFacade extends AbstractFacade {
    private DataDao dataDao;
 
    @Inject
+   private UserDao userDao;
+
+   @Inject
    private DocumentDao documentDao;
 
    @Inject
@@ -74,7 +79,7 @@ public class SearchFacade extends AbstractFacade {
    private LinkDataDao linkDataDao;
 
    @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
+   private TranslationManager translationManager;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -86,20 +91,20 @@ public class SearchFacade extends AbstractFacade {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
-   public List<LinkInstance> getLinkInstancesPublic(Query query) {
-      return getLinkInstances(query, true);
+   public List<LinkInstance> getLinkInstancesPublic(Query query, Language language) {
+      return getLinkInstances(query, language, true);
    }
 
-   public List<LinkInstance> getLinkInstances(Query query) {
-      return getLinkInstances(query, false);
+   public List<LinkInstance> getLinkInstances(Query query, Language language) {
+      return getLinkInstances(query, language, false);
    }
 
-   public List<LinkInstance> getLinkInstances(Query query, boolean isPublic) {
-      // TODO improve performance
-      final List<LinkType> linkTypes = getReadLinkTypes(isPublic);
+   private List<LinkInstance> getLinkInstances(Query query, Language language, boolean isPublic) {
+      final List<Collection> collections = getReadCollections(isPublic);
+      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes).getSecond();
+
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
-
-      final List<LinkInstance> result = searchDocumentsAndLinks(query, isPublic).getSecond();
 
       result.forEach(linkInstance ->
             linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
@@ -108,20 +113,20 @@ public class SearchFacade extends AbstractFacade {
       return result;
    }
 
-   public List<Document> searchDocumentsPublic(final Query query) {
-      return searchDocuments(query, true);
+   public List<Document> searchDocumentsPublic(final Query query, Language language) {
+      return searchDocuments(query, language,true);
    }
 
-   public List<Document> searchDocuments(final Query query) {
-      return searchDocuments(query, false);
+   public List<Document> searchDocuments(final Query query, Language language) {
+      return searchDocuments(query, language,false);
    }
 
-   public List<Document> searchDocuments(final Query query, boolean isPublic) {
-      // TODO improve performance
+   private List<Document> searchDocuments(final Query query, Language language, boolean isPublic) {
       final List<Collection> collections = getReadCollections(isPublic);
-      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
-      final List<Document> result = searchDocumentsAndLinks(query, isPublic).getFirst();
+      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      final List<Document> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes).getFirst();
 
+      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       result.forEach(document ->
             document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
       );
@@ -129,16 +134,41 @@ public class SearchFacade extends AbstractFacade {
       return result;
    }
 
-   public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, boolean isPublic) {
-      final Query encodedQuery = encodeQuery(query);
+   public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language) {
+      return searchDocumentsAndLinks(query, language,false);
+   }
+
+   public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinksPublic(final Query query, Language language) {
+      return searchDocumentsAndLinks(query, language,true);
+   }
+
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
       final List<Collection> collections = getReadCollections(isPublic);
-      final List<Document> documents = getDocumentsByCollections(collections);
       final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      return searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes);
+   }
+
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes) {
+      final Query encodedQuery = checkQuery(query, isPublic);
+      final List<Document> documents = getDocumentsByCollections(collections);
       final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
-      final Map<String, AllowedPermissions> collectionsPermissions = collections.stream().collect(Collectors.toMap(Resource::getId, c -> new AllowedPermissions(true, true, true)));
-      final Map<String, AllowedPermissions> linkTypesPermissions = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> new AllowedPermissions(true, true, true)));
-      final ConstraintData constraintData = new ConstraintData(Collections.emptyList(), null, Collections.emptyMap(), new CurrencyData(Collections.emptyList(), Collections.emptyList()));
-      return DataFiltersJsParser.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true);
+      final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
+      final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
+      final ConstraintData constraintData = new ConstraintData(
+            userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
+            authenticatedUser.getCurrentUser(),
+            translationManager.translateDurationUnitsMap(language),
+            new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
+      );
+      return DataFiltersJsParser.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true, language);
+   }
+
+   private Query checkQuery(final Query query, boolean isPublic) {
+      final View view = permissionsChecker.getActiveView();
+      if (!isPublic && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
+         return view.getQuery();
+      }
+      return encodeQuery(query);
    }
 
    private Query encodeQuery(Query query) {
@@ -160,16 +190,9 @@ public class SearchFacade extends AbstractFacade {
                           .collect(Collectors.toList());
    }
 
-   private List<LinkType> getReadLinkTypes(boolean isPublic) {
-      if (isPublic && this.permissionsChecker.isPublic()) {
-         return linkTypeDao.getAllLinkTypes();
-      }// TODO improve performance
-      return getLinkTypesByCollections(getReadCollections(isPublic));
-   }
-
    private List<LinkType> getLinkTypesByCollections(java.util.Collection<Collection> collections) {
       final Set<String> allowedCollectionIds = collections.stream().map(Resource::getId)
-                                                                           .collect(Collectors.toSet());
+                                                          .collect(Collectors.toSet());
       return linkTypeDao.getAllLinkTypes().stream()
                         .filter(lt -> allowedCollectionIds.containsAll(lt.getCollectionIds()))
                         .collect(Collectors.toList());

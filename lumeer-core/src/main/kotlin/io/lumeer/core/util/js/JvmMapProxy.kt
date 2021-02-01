@@ -21,8 +21,9 @@ package io.lumeer.core.util.js
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
 import org.graalvm.polyglot.proxy.ProxyObject
+import java.util.*
 
-class JvmMapProxy(val values: MutableMap<String, Any>) : ProxyObject {
+class JvmMapProxy(val values: MutableMap<String, Any>, val locale: Locale = Locale.getDefault()) : ProxyObject {
 
     fun proxyMap() = values
 
@@ -52,7 +53,7 @@ class JvmMapProxy(val values: MutableMap<String, Any>) : ProxyObject {
         }
     }
 
-    override fun getMember(key: String?): Any? = if (values[key] != null) JvmObjectProxy.encodeObject(values[key]!!)
+    override fun getMember(key: String?): Any? = if (values[key] != null) JvmObjectProxy.encodeObject(values[key]!!, locale)
     else null
 
     override fun removeMember(key: String?): Boolean = if (values.containsKey(key)) {

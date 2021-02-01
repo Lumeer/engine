@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.SuggestionQuery;
@@ -27,12 +28,11 @@ import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
+import io.lumeer.core.util.Tuple;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -41,6 +41,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @RequestScoped
@@ -85,32 +86,29 @@ public class SearchService extends AbstractService {
    @POST
    @Path("documents")
    @QueryProcessor
-   public List<Document> searchDocuments(Query query) {
-      Set<String> favoriteDocumentIds = documentFacade.getFavoriteDocumentsIds();
-      List<Document> documents = searchFacade.searchDocuments(query);
-      Set<String> documentIds = documents.stream().map(Document::getId).collect(Collectors.toSet());
-      Map<String, Integer> commentCounts = documentFacade.getCommentsCounts(documentIds);
-      documents.forEach(document -> {
-         document.setFavorite(favoriteDocumentIds.contains(document.getId()));
-         document.setCommentsCount((long) commentCounts.getOrDefault(document.getId(), 0));
-      });
-
-      return documents;
+   public List<Document> searchDocuments(Query query, @QueryParam("l") Language language) {
+      List<Document> documents = searchFacade.searchDocuments(query, language);
+      return new ArrayList<>(documentFacade.mapDocumentsData(documents));
    }
 
    @POST
    @Path("linkInstances")
    @QueryProcessor
-   public List<LinkInstance> getLinkInstances(Query query) {
-      final List<LinkInstance> links = searchFacade.getLinkInstances(query);
+   public List<LinkInstance> getLinkInstances(Query query, @QueryParam("l") Language language) {
+      final List<LinkInstance> links = searchFacade.getLinkInstances(query, language);
+      return new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(links));
+   }
 
-      Set<String> linkIds = links.stream().map(l -> l.getId()).collect(Collectors.toSet());
-      Map<String, Integer> commentCounts = linkInstanceFacade.getCommentsCounts(linkIds);
-      links.forEach(linkInstance -> {
-         linkInstance.setCommentsCount((long) commentCounts.getOrDefault(linkInstance.getId(), 0));
-      });
+   @POST
+   @Path("documentsAndLinks")
+   @QueryProcessor
+   public Tuple<List<Document>, List<LinkInstance>> getDocumentsAndLinkInstances(Query query, @QueryParam("l") Language language) {
+      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, language);
 
-      return links;
+      return new Tuple<>(
+            new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
+            new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(documentsAndLinks.getSecond()))
+      );
    }
 
 }

@@ -19,7 +19,6 @@
 
 package io.lumeer.core.util.js
 
-import com.mongodb.client.model.geojson.Point
 import io.lumeer.core.util.DataUtils
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.Proxy
@@ -27,10 +26,16 @@ import org.graalvm.polyglot.proxy.ProxyObject
 import java.lang.Exception
 import java.lang.reflect.Field
 import java.lang.reflect.Method
+import java.math.BigDecimal
+import java.time.DateTimeException
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 
-class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
+class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale = Locale.getDefault()) : ProxyObject {
     private val fields: List<Field> = listOf(*clazz.fields)
     private val methods: List<Method> = listOf(*clazz.methods)
     private val members: MutableList<String>
@@ -48,12 +53,12 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
     override fun getMember(key: String) = try {
         val field = fields.firstOrNull { f: Field -> f.name == key }
         if (field != null) {
-            encodeObject(field[proxyObject])
+            encodeObject(field[proxyObject], locale)
         }
         val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
         val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
         if (method != null) {
-            encodeObject(method.invoke(proxyObject))
+            encodeObject(method.invoke(proxyObject), locale)
         } else {
             null
         }
@@ -71,6 +76,8 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
 
     @Suppress("UNCHECKED_CAST")
     companion object {
+        private val utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC)
+
         fun decodeValue(value: Value): Any? {
             return if (value.isNumber) {
                 if (value.fitsInLong()) value.asLong() else value.asDouble()
@@ -91,7 +98,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
             }
         }
 
-        fun encodeObject(o: Any): Any {
+        fun encodeObject(o: Any, locale: Locale = Locale.getDefault()): Any {
             when {
                 o is String -> {
                     return o
@@ -107,6 +114,17 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
                 }
                 o.javaClass.isEnum -> {
                     return o.toString()
+                }
+                o is BigDecimal -> {
+                    return o.toString()
+                }
+                o is Date -> {
+                    val dt = ZonedDateTime.from(o.toInstant().atZone(utcZone))
+                    return try {
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale).format(dt)
+                    } catch (dte: DateTimeException) {
+                        o
+                    }
                 }
                 else -> {
                     val pointString = DataUtils.convertPointToString(o)
@@ -128,20 +146,20 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>) : ProxyObject {
 
         }
 
-        fun fromMap(values: Map<String, Any>): Proxy {
-            return JvmMapProxy(values.toMutableMap())
+        fun fromMap(values: Map<String, Any>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmMapProxy(values.toMutableMap(), locale)
         }
 
-        fun fromList(list: List<*>): Proxy {
-            return JvmListProxy(list.toMutableList())
+        fun fromList(list: List<*>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmListProxy(list.toMutableList(), locale)
         }
 
-        fun fromSet(set: Set<*>): Proxy {
-            return JvmSetProxy((set as Set<Any?>).toMutableSet())
+        fun fromSet(set: Set<*>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmSetProxy((set as Set<Any?>).toMutableSet(), locale)
         }
 
-        fun fromArray(array: Array<*>): Proxy {
-            return JvmArrayProxy(array as Array<Any?>)
+        fun fromArray(array: Array<*>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmArrayProxy(array as Array<Any?>, locale)
         }
     }
 

@@ -26,6 +26,7 @@ import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.util.*
 
 class DataFiltersJsParser : AutoCloseable {
 
@@ -45,21 +46,23 @@ class DataFiltersJsParser : AutoCloseable {
         fun filterDocumentsAndLinksByQuery(documents: List<Document>,
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
-                                           constraintData: ConstraintData, includeChildren: Boolean): Tuple<List<Document>, List<LinkInstance>> {
+                                           constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
             if (!this::context.isInitialized) {
                 initContext()
             }
+            val locale = language.toLocale()
             val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
             return try {
-                val result = filterJsValue.execute(JvmObjectProxy.fromList(documents),
-                        JvmObjectProxy.fromList(collections),
-                        JvmObjectProxy.fromList(linkTypes),
-                        JvmObjectProxy.fromList(linkInstances),
-                        JvmObjectProxy(query, Query::class.java),
-                        JvmObjectProxy.fromMap(collectionsPermissions),
-                        JvmObjectProxy.fromMap(linkTypesPermissions),
+                val result = filterJsValue.execute(JvmObjectProxy.fromList(documents, locale),
+                        JvmObjectProxy.fromList(collections, locale),
+                        JvmObjectProxy.fromList(linkTypes, locale),
+                        JvmObjectProxy.fromList(linkInstances, locale),
+                        JvmObjectProxy(query, Query::class.java, locale),
+                        JvmObjectProxy.fromMap(collectionsPermissions, locale),
+                        JvmObjectProxy.fromMap(linkTypesPermissions, locale),
                         JvmObjectProxy(constraintData, ConstraintData::class.java),
-                        includeChildren)
+                        includeChildren,
+                        language.toLanguageTag())
 
                 val resultDocumentsList = mutableListOf<Document>()
                 val resultDocuments = result.getMember("documents")
@@ -92,7 +95,7 @@ class DataFiltersJsParser : AutoCloseable {
         init {
             try {
                 DataFiltersJsParser::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
-                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function $FILTER_JS(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections), Filter.createConstraintsInLinkTypes(linkTypes), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren); }")
+                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function $FILTER_JS(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren, language) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections, language), Filter.createConstraintsInLinkTypes(linkTypes, language), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren); }")
                 }
             } catch (ioe: IOException) {
                 filterJsCode = null

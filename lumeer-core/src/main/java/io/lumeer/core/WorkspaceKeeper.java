@@ -70,6 +70,10 @@ public class WorkspaceKeeper implements SelectedWorkspace {
 
    }
 
+   public String getOrganizationId() {
+      return organizationId;
+   }
+
    public void setOrganizationId(String organizationId) {
       this.organizationId = organizationId;
    }
@@ -77,6 +81,10 @@ public class WorkspaceKeeper implements SelectedWorkspace {
    public void setOrganization(Organization organization) {
       this.organizationId = organization.getId();
       this.workspaceCache.updateOrganization(organization.getId(), organization);
+   }
+
+   public String getProjectId() {
+      return projectId;
    }
 
    public void setProjectId(String projectId) {

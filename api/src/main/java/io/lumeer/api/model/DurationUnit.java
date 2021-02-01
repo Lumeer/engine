@@ -16,45 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package io.lumeer.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
+public enum DurationUnit {
+   Weeks("w"),
+   Days("d"),
+   Hours("h"),
+   Minutes("m"),
+   Seconds("s");
 
-import java.util.Locale;
+   private final String value;
 
-public enum Language {
-   EN,
-   CS;
-
-   @JsonCreator
-   public static Language fromString(String language) {
-      if (language == null || language.isEmpty()) {
-         return Language.EN;
-      }
-
-      try {
-         return Language.valueOf(language.toUpperCase());
-      } catch (IllegalArgumentException exception) {
-         return Language.EN;
-      }
+   DurationUnit(String value) {
+      this.value = value;
    }
 
-   public Locale toLocale() {
-      switch (this) {
-         case CS:
-            return Locale.forLanguageTag("cs_CZ");
-         default:
-            return Locale.ENGLISH;
-      }
+   public String getValue() {
+      return value;
    }
 
-   public String toLanguageTag() {
-      switch (this) {
-         case CS:
-            return "cs-CZ";
-         default:
-            return "en-US";
-      }
+   @Override
+   public String toString() {
+      return value;
    }
-
 }
