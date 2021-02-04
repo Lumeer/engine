@@ -79,7 +79,7 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
    public void encode(final BsonWriter writer, final CollectionAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(COLLECTION_ID, value.getCollectionId())
-            .append(CONDITION, value.getCondition())
+            .append(CONDITION, value.getCondition() != null ? value.getCondition().getValue() : null)
             .append(VALUE, value.getConditionValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 

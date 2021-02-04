@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.DocumentsAndLinks;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
@@ -102,10 +103,10 @@ public class SearchService extends AbstractService {
    @POST
    @Path("documentsAndLinks")
    @QueryProcessor
-   public Tuple<List<Document>, List<LinkInstance>> getDocumentsAndLinkInstances(Query query, @QueryParam("l") Language language) {
+   public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("l") Language language) {
       final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, language);
 
-      return new Tuple<>(
+      return new DocumentsAndLinks(
             new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
             new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(documentsAndLinks.getSecond()))
       );

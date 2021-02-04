@@ -18,36 +18,23 @@
  */
 package io.lumeer.api.model;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.List;
 
-public enum ConditionValueType {
+public class DocumentsAndLinks  {
 
-   CURRENT_USER("currentUser");
+  private final List<Document> documents;
+  private final List<LinkInstance> linkInstances;
 
-   private final String value;
-
-   ConditionValueType(String value) {
-      this.value = value;
+   public DocumentsAndLinks(final List<Document> documents, final List<LinkInstance> linkInstances) {
+      this.documents = documents;
+      this.linkInstances = linkInstances;
    }
 
-   @JsonValue
-   public String getValue() {
-      return value;
+   public List<Document> getDocuments() {
+      return documents;
    }
 
-   public static ConditionValueType fromString(String condition) {
-      if (condition == null) {
-         return null;
-      }
-      try {
-         return ConditionValueType.valueOf(condition);
-      } catch (IllegalArgumentException exception) {
-         return null;
-      }
-   }
-
-   @Override
-   public String toString() {
-      return value;
+   public List<LinkInstance> getLinkInstances() {
+      return linkInstances;
    }
 }

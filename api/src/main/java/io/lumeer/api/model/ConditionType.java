@@ -18,6 +18,11 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.util.Arrays;
+import java.util.List;
+
 public enum ConditionType {
 
    EQUALS("eq"),
@@ -47,16 +52,42 @@ public enum ConditionType {
       this.value = value;
    }
 
+   @JsonValue
    public String getValue() {
       return value;
    }
 
+   private static final List<String> EQ_VARIANTS = Arrays.asList("=", "==", "eq", "equals");
+   private static final List<String> NEQ_VARIANTS = Arrays.asList("!=", "!==", "<>", "ne", "neq", "nequals");
+   private static final List<String> LT_VARIANTS = Arrays.asList("<", "lt");
+   private static final List<String> LTE_VARIANTS = Arrays.asList("<=", "lte");
+   private static final List<String> GT_VARIANTS = Arrays.asList(">", "gt");
+   private static final List<String> GTE_VARIANTS = Arrays.asList(">=", "gte");
+
    public static ConditionType fromString(String condition) {
-      try {
-         return ConditionType.valueOf(condition);
-      } catch (IllegalArgumentException exception) {
+      if (condition == null) {
          return null;
       }
+      if (EQ_VARIANTS.contains(condition)) {
+         return EQUALS;
+      } else if (NEQ_VARIANTS.contains(condition)) {
+         return NOT_EQUALS;
+      } else if (LT_VARIANTS.contains(condition)) {
+         return LOWER_THAN;
+      } else if (LTE_VARIANTS.contains(condition)) {
+         return LOWER_THAN_EQUALS;
+      } else if (GT_VARIANTS.contains(condition)) {
+         return GREATER_THAN;
+      } else if (GTE_VARIANTS.contains(condition)) {
+         return GREATER_THAN_EQUALS;
+      }
+      
+      for (ConditionType type : values()) {
+         if (type.getValue().equals(condition)) {
+            return type;
+         }
+      }
+      return null;
    }
 
    @Override

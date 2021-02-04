@@ -79,7 +79,7 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
    public void encode(final BsonWriter writer, final LinkAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(LINK_TYPE_ID, value.getLinkTypeId())
-            .append(CONDITION, value.getCondition())
+            .append(CONDITION, value.getCondition() != null ? value.getCondition().getValue() : null)
             .append(VALUE, value.getConditionValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 

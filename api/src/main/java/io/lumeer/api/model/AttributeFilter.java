@@ -57,6 +57,10 @@ public class AttributeFilter {
       return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getValue() : null;
    }
 
+   public String getType() {
+      return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getType() : null;
+   }
+
    @JsonIgnore
    public void setValue(final Object value) {
       this.conditionValues = Collections.singletonList(new ConditionValue(value));

@@ -107,7 +107,6 @@ public class SearchFacade extends AbstractFacade {
       final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes).getSecond();
 
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
-
       result.forEach(linkInstance ->
             linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
       );
@@ -147,7 +146,19 @@ public class SearchFacade extends AbstractFacade {
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
       final List<Collection> collections = getReadCollections(isPublic);
       final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
-      return searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes);
+      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes);
+
+      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
+      result.getFirst().forEach(document ->
+            document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
+      );
+
+      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
+      result.getSecond().forEach(linkInstance ->
+            linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
+      );
+
+      return result;
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes) {
@@ -156,7 +167,6 @@ public class SearchFacade extends AbstractFacade {
       final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
       final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
       final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
-      System.out.println(documents + " /// " + linkInstances);
       final ConstraintData constraintData = new ConstraintData(
             userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
             authenticatedUser.getCurrentUser(),

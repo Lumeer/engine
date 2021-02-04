@@ -72,10 +72,10 @@ public class QueryProcessorInterceptor {
    }
 
    private void transformValue(AttributeFilter filter) {
-      if (filter.getValue() == null) {
+      var conditionValue = fromString(filter.getType());
+      if (conditionValue == null) {
          return;
       }
-      var conditionValue = valueOf(filter.getValue().toString());
       switch (conditionValue) {
          case CURRENT_USER:
             filter.setValue(authenticatedUser.getUserEmail());
