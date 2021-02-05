@@ -37,6 +37,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.DocumentCommentedEvent;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.DelayedActionDao;
@@ -370,6 +371,10 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       data.append(DelayedAction.DATA_COLLECTION_COLOR, collection.getColor());
 
       data.append(DelayedAction.DATA_DOCUMENT_ID, documentEvent.getDocument().getId());
+
+      if (documentEvent instanceof DocumentCommentedEvent) {
+         data.append(DelayedAction.DATA_TASK_COMMENT, ((DocumentCommentedEvent) documentEvent).getComment().getComment());
+      }
 
       return data;
    }

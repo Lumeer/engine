@@ -207,6 +207,8 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Internal, NotificationFrequency.Immediately),
 
             new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
@@ -220,7 +222,9 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately)
+            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Email, NotificationFrequency.Immediately)
       ), "cs"));
    }
 

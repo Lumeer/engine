@@ -16,29 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.facade;
+package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Language;
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ResourceComment;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+public class DocumentCommentedEvent extends DocumentEvent {
 
-@ApplicationScoped
-public class EmailFacade {
+   private final ResourceComment comment;
 
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
+   public DocumentCommentedEvent(final Document document, final ResourceComment comment) {
+      super(document);
+      this.comment = comment;
+   }
 
-   @Inject
-   private AuthenticatedUser user;
-
-   @Inject
-   private EmailService emailService;
-
-   public void sendInvitation(final String invitedEmail) {
-      final Language language = "cs".equals(requestDataKeeper.getUserLocale()) ? Language.CS : Language.EN;
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, language, emailService.formatUserReference(user.getCurrentUser()), invitedEmail, "");
+   public ResourceComment getComment() {
+      return comment;
    }
 }

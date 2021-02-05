@@ -44,6 +44,8 @@ import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -146,7 +148,11 @@ public class UserNotificationFacade extends AbstractFacade {
 
       if (resource.getType() == ResourceType.PROJECT) {
          appendOrganization(data);
-         appendProject(data);
+         data.append(UserNotification.ProjectShared.PROJECT_ID, resource.getId());
+         data.append(UserNotification.ProjectShared.PROJECT_CODE, resource.getCode());
+         data.append(UserNotification.ProjectShared.PROJECT_ICON, resource.getIcon());
+         data.append(UserNotification.ProjectShared.PROJECT_COLOR, resource.getColor());
+         data.append(UserNotification.ProjectShared.PROJECT_NAME, resource.getName());
       }
 
       if (resource.getType() == ResourceType.COLLECTION) {
@@ -238,8 +244,16 @@ public class UserNotificationFacade extends AbstractFacade {
          final Map<String, User> users = getUsers(newUsers);
          final Map<String, Language> languages = initializeLanguages(users.values());
 
-         newUsers.stream().filter(user -> hasUserEnabledNotifications(resource, users.get(user))).forEach(user ->
-               emailService.sendEmailFromTemplate(getEmailTemplate(resource), languages.getOrDefault(user, Language.EN), emailService.formatUserReference(authenticatedUser.getCurrentUser()), users.get(user).getEmail(), getResourceDescription(resource))
+         newUsers.stream()
+                 .filter(user -> hasUserEnabledNotifications(resource, users.get(user)) && permissionsChecker.hasRole(resource, Role.READ, user) && filterNotificationsByManagers(resource, user))
+                 .forEach(user ->
+                       emailService.sendEmailFromTemplate(
+                             getEmailTemplate(resource),
+                             languages.getOrDefault(user, Language.EN),
+                             emailService.formatUserReference(authenticatedUser.getCurrentUser()),
+                             users.get(user).getEmail(),
+                             StringUtils.isNotEmpty(resource.getName()) ? resource.getName() : resource.getCode(),
+                             getResourceDescription(resource))
          );
       }
    }

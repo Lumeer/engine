@@ -72,7 +72,7 @@ public class DelayedActionProcessor {
 
    private PusherClient pusherClient;
 
-   @Schedule(hour = "*", minute = "*", second = "*/15")
+   @Schedule(hour = "*", minute = "*/2")
    public void process() {
       delayedActionDao.deleteProcessedActions();
       delayedActionDao.resetTimeoutedActions();
@@ -93,7 +93,7 @@ public class DelayedActionProcessor {
             final String recipient = action.getReceiver();
             final Map<String, Object> additionalData = processData(action.getData(), lang);
 
-            emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, additionalData);
+            emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, getEmailSubjectPart(action, additionalData), additionalData);
          } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
             UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
             notification = userNotificationDao.createNotification(notification);
@@ -161,6 +161,23 @@ public class DelayedActionProcessor {
       return data;
    }
 
+   private String getEmailSubjectPart(final DelayedAction action, final Map<String, Object> additionalData) {
+      switch (action.getNotificationType()) {
+         case TASK_ASSIGNED:
+         case DUE_DATE_SOON:
+         case PAST_DUE_DATE:
+         case STATE_UPDATE:
+         case TASK_UPDATED:
+         case TASK_REMOVED:
+         case TASK_UNASSIGNED:
+         case DUE_DATE_CHANGED:
+         case TASK_COMMENTED:
+         case TASK_MENTIONED:
+         default:
+            return additionalData.get(DelayedAction.DATA_TASK_NAME) != null ? additionalData.get(DelayedAction.DATA_TASK_NAME).toString() : "";
+      }
+   }
+
    private EmailService.EmailTemplate getEmailTemplate(final DelayedAction action) {
       switch (action.getNotificationType()) {
          case TASK_ASSIGNED:
@@ -179,6 +196,10 @@ public class DelayedActionProcessor {
             return EmailService.EmailTemplate.TASK_UNASSIGNED;
          case DUE_DATE_CHANGED:
             return EmailService.EmailTemplate.DUE_DATE_CHANGED;
+         case TASK_COMMENTED:
+            return EmailService.EmailTemplate.TASK_COMMENTED;
+         case TASK_MENTIONED:
+            return EmailService.EmailTemplate.TASK_MENTIONED;
          default:
             return null;
       }

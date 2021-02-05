@@ -21,6 +21,8 @@ package io.lumeer.core.facade.detector;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -43,6 +45,7 @@ public class PurposeChangeProcessor {
    private final DefaultConfigurationProducer.DeployEnvironment environment;
 
    private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
+   private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> commentChangeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new CommentChangeDetector()));
 
    public PurposeChangeProcessor(
          final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace,
@@ -64,6 +67,17 @@ public class PurposeChangeProcessor {
          detectors.forEach(detector -> {
             detector.setContext(delayedActionDao, userDao, selectedWorkspace, initiator, requestDataKeeper, constraintManager, environment);
             detector.detectChanges(documentEvent, collection);
+         });
+      }
+   }
+
+   public void processChanges(final ResourceComment comment, final Document document, final Collection collection) {
+      final Set<PurposeChangeDetector> detectors = commentChangeDetectors.get(collection.getPurposeType());
+
+      if (detectors != null) {
+         detectors.forEach(detector -> {
+            detector.setContext(delayedActionDao, userDao, selectedWorkspace, initiator, requestDataKeeper, constraintManager, environment);
+            detector.detectChanges(comment, document, collection);
          });
       }
    }
