@@ -33,6 +33,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.util.Utils;
@@ -176,11 +177,12 @@ public class UserNotificationFacade extends AbstractFacade {
          return Collections.emptyList();
       }
 
-      // TODO check that all newUsers are in resource permissions
       final DataDocument data = getResourceDescription(resource);
 
-      final List<UserNotification> notifications = newUsers.stream().filter(userId -> filterNotificationsByManagers(resource, userId)).map(userId ->
-            createNotification(userId, getNotificationTypeByResource(resource), data)
+      final List<UserNotification> notifications =
+            newUsers.stream()
+                    .filter(userId -> permissionsChecker.hasRole(resource, Role.READ, userId) && filterNotificationsByManagers(resource, userId))
+                    .map(userId -> createNotification(userId, getNotificationTypeByResource(resource), data)
       ).collect(Collectors.toList());
 
       return dao.createNotificationsBatch(notifications);
