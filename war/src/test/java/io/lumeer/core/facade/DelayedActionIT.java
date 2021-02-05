@@ -364,7 +364,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
 
       // Setting due date in the future again so expecting new notifications
-      patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a2", new Date(ZonedDateTime.now().plus(3, ChronoUnit.DAYS).toInstant().toEpochMilli())));
+      patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a2", new Date(ZonedDateTime.now().plus(4, ChronoUnit.DAYS).toInstant().toEpochMilli())));
 
       actions = delayedActionDao.getActions();
 
