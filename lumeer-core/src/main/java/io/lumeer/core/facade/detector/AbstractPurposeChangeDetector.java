@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractPurposeChangeDetector implements PurposeChangeDetector {
 
+   protected static final int DUE_DATE_SOON_DAYS = 3;
    protected static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
    protected DelayedActionDao delayedActionDao;
