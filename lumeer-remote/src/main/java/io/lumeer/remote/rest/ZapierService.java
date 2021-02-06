@@ -18,6 +18,7 @@ package io.lumeer.remote.rest;/*
  */
 
 import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValue;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.facade.ZapierFacade;
@@ -67,11 +68,11 @@ public class ZapierService extends AbstractService {
 
    public static class Condition {
       private final String attributeId;
-      private final String condition;
+      private final ConditionType condition;
       private final Object value;
 
       @JsonCreator
-      public Condition(@JsonProperty("attributeId") final String attributeId, @JsonProperty("condition") final String condition, @JsonProperty("value") final Object value) {
+      public Condition(@JsonProperty("attributeId") final String attributeId, @JsonProperty("condition") final ConditionType condition, @JsonProperty("value") final Object value) {
          this.attributeId = attributeId;
          this.condition = condition;
          this.value = value;
@@ -81,7 +82,7 @@ public class ZapierService extends AbstractService {
          return attributeId;
       }
 
-      public String getCondition() {
+      public ConditionType getCondition() {
          return condition;
       }
 

@@ -76,36 +76,28 @@ public class DocumentService extends AbstractService {
    @Path("{documentId:[0-9a-fA-F]{24}}/data")
    public Document updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
-      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
-      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
-      return storedDocument;
+      return documentFacade.mapDocumentData(storedDocument);
    }
 
    @PATCH
    @Path("{documentId:[0-9a-fA-F]{24}}/data")
    public Document patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
       Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
-      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
-      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
-      return storedDocument;
+      return documentFacade.mapDocumentData(storedDocument);
    }
 
    @PUT
    @Path("{documentId:[0-9a-fA-F]{24}}/meta")
    public Document updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
-      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
-      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
-      return storedDocument;
+      return documentFacade.mapDocumentData(storedDocument);
    }
 
    @PATCH
    @Path("{documentId:[0-9a-fA-F]{24}}/meta")
    public Document patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
-      storedDocument.setFavorite(documentFacade.isFavorite(storedDocument.getId()));
-      storedDocument.setCommentsCount(documentFacade.getCommentsCount(storedDocument.getId()));
-      return storedDocument;
+      return documentFacade.mapDocumentData(storedDocument);
    }
 
    @DELETE
@@ -120,9 +112,7 @@ public class DocumentService extends AbstractService {
    @Path("{documentId:[0-9a-fA-F]{24}}")
    public Document getDocument(@PathParam("documentId") String documentId) {
       Document document = documentFacade.getDocument(collectionId, documentId);
-      document.setFavorite(documentFacade.isFavorite(document.getId()));
-      document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
-      return document;
+      return documentFacade.mapDocumentData(document);
    }
 
    @POST

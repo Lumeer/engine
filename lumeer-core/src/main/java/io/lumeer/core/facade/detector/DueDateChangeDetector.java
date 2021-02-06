@@ -60,8 +60,8 @@ public class DueDateChangeDetector extends AbstractPurposeChangeDetector {
                if (dueDate != null) {
                   delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
 
-                  if (dueDate.minus(1, ChronoUnit.DAYS).isAfter(ZonedDateTime.now())) {
-                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(1, ChronoUnit.DAYS)));
+                  if (dueDate.minus(DUE_DATE_SOON_DAYS, ChronoUnit.DAYS).isAfter(ZonedDateTime.now())) {
+                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(DUE_DATE_SOON_DAYS, ChronoUnit.DAYS)));
                   }
                }
             }

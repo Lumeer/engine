@@ -22,13 +22,7 @@ import io.lumeer.api.model.ConstraintType;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DurationToNoneConverter extends AbstractDurationConverter {
 
@@ -75,16 +69,16 @@ public class DurationToNoneConverter extends AbstractDurationConverter {
             var units = new ArrayList<DurationUnit>(conversions.size());
 
             conversions.forEach((k, v) -> units.add(new DurationUnit(v, k)));
-            Collections.sort(units, new DurationUnitComparator());
+            units.sort(new DurationUnitComparator());
 
             final StringBuilder sb = new StringBuilder();
             var rem = originalValueLong;
-            for (int i = 0; i < units.size(); i++) {
-               var m = rem / units.get(i).value;
-               rem = rem % units.get(i).value;
+            for (DurationUnit unit : units) {
+               var m = rem / unit.value;
+               rem = rem % unit.value;
 
                if (m > 0) {
-                  sb.append(m).append(translations.get(units.get(i).name));
+                  sb.append(m).append(translations.get(unit.name));
                }
             }
 

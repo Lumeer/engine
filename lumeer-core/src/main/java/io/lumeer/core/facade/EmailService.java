@@ -69,7 +69,7 @@ public class EmailService {
    private Engine templateEngine = Engine.createEngine();
 
    public enum EmailTemplate {
-      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, DUE_DATE_CHANGED
+      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, DUE_DATE_CHANGED, TASK_COMMENTED, TASK_MENTIONED
    }
 
    @PostConstruct
@@ -131,13 +131,13 @@ public class EmailService {
       }
    }
 
-   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String recipient) {
-      sendEmailFromTemplate(emailTemplate, language, sender, recipient, null);
+   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String recipient, final String subjectPart) {
+      sendEmailFromTemplate(emailTemplate, language, sender, recipient, subjectPart, null);
    }
 
-   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String recipient, final Map<String, Object> additionalData) {
+   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String recipient, final String subjectPart, final Map<String, Object> additionalData) {
       if (session != null) {
-         final String subject = subjectLines.getOrDefault(emailTemplate.toString().toLowerCase() + "_" + language.toString().toLowerCase(), language == Language.EN ? "Hi" : "Dobrý den");
+         final String subject = String.format(subjectLines.getOrDefault(emailTemplate.toString().toLowerCase() + "_" + language.toString().toLowerCase(), language == Language.EN ? "Hi" : "Dobrý den"), subjectPart);
          final String template = loadTemplate(emailTemplate, language);
 
          if (StringUtils.isNotEmpty(template)) {

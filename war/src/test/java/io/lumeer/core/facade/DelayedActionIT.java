@@ -207,6 +207,8 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Internal, NotificationFrequency.Immediately),
 
             new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
@@ -220,7 +222,9 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.STATE_UPDATE, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Email, NotificationFrequency.Immediately),
-            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately)
+            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Email, NotificationFrequency.Immediately)
       ), "cs"));
    }
 
@@ -360,7 +364,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
 
       // Setting due date in the future again so expecting new notifications
-      patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a2", new Date(ZonedDateTime.now().plus(3, ChronoUnit.DAYS).toInstant().toEpochMilli())));
+      patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a2", new Date(ZonedDateTime.now().plus(4, ChronoUnit.DAYS).toInstant().toEpochMilli())));
 
       actions = delayedActionDao.getActions();
 

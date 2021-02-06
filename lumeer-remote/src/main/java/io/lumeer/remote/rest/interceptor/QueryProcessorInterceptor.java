@@ -18,6 +18,8 @@
  */
 package io.lumeer.remote.rest.interceptor;
 
+import static io.lumeer.api.model.ConditionValueType.*;
+
 import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.LinkAttributeFilter;
@@ -36,8 +38,6 @@ import javax.interceptor.InvocationContext;
 @Interceptor
 @QueryProcessor
 public class QueryProcessorInterceptor {
-
-   private static final String USER_EMAIL = "userEmail()";
 
    @Inject
    private AuthenticatedUser authenticatedUser;
@@ -60,24 +60,25 @@ public class QueryProcessorInterceptor {
    }
 
    private CollectionAttributeFilter processFilter(final CollectionAttributeFilter filter) {
-      Object transformed = transformValue(filter);
-      return CollectionAttributeFilter.createFromValue(filter.getCollectionId(), filter.getAttributeId(), filter.getCondition(), transformed);
+      var filterCopy = new CollectionAttributeFilter(filter);
+      transformValue(filter);
+      return filterCopy;
    }
 
    private LinkAttributeFilter processFilter(final LinkAttributeFilter filter) {
-      Object transformed = transformValue(filter);
-      return LinkAttributeFilter.createFromValue(filter.getLinkTypeId(), filter.getAttributeId(), filter.getCondition(), transformed);
+      var filterCopy = new LinkAttributeFilter(filter);
+      transformValue(filter);
+      return filterCopy;
    }
 
-   private Object transformValue(AttributeFilter filter) {
-      if (filter.getValue() == null) {
-         return null;
+   private void transformValue(AttributeFilter filter) {
+      var conditionValue = fromString(filter.getType());
+      if (conditionValue == null) {
+         return;
       }
-      switch (filter.getValue().toString()) {
-         case USER_EMAIL:
-            return authenticatedUser.getUserEmail();
-         default:
-            return filter.getValue();
+      switch (conditionValue) {
+         case CURRENT_USER:
+            filter.setValue(authenticatedUser.getUserEmail());
       }
    }
 

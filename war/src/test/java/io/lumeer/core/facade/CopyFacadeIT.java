@@ -188,7 +188,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       var employeesCollection = collections.stream().filter(collection -> collection.getName().equals("Employees")).findFirst().orElse(null);
       assertThat(employeesCollection).isNotNull();
 
-      var allEmployees = searchFacade.searchDocuments(new Query(new QueryStem(employeesCollection.getId())));
+      var allEmployees = searchFacade.searchDocuments(new Query(new QueryStem(employeesCollection.getId())), Language.EN);
 
       // verify documents hierarchy
       var natosha = allEmployees.stream().filter(doc -> doc.getData().getString("a1").equals("Natosha")).findFirst().orElse(null);
@@ -215,8 +215,8 @@ public class CopyFacadeIT extends IntegrationTestBase {
       assertThat(initiativesCollection).isNotNull();
       assertThat(objectiveKeyResultsLinkType.getCollectionIds()).containsExactly(objectivesCollection.getId(), keyResultsCollection.getId());
 
-      var allKeyResults = searchFacade.searchDocuments(new Query(new QueryStem(keyResultsCollection.getId())));
-      var allInitiatives = searchFacade.searchDocuments(new Query(new QueryStem(initiativesCollection.getId())));
+      var allKeyResults = searchFacade.searchDocuments(new Query(new QueryStem(keyResultsCollection.getId())), Language.EN);
+      var allInitiatives = searchFacade.searchDocuments(new Query(new QueryStem(initiativesCollection.getId())), Language.EN);
 
       var conversionDoc = allKeyResults.stream().filter(doc -> doc.getData().getString("a1").equals("15% conversion")).findFirst().orElse(null);
       var abTestingDoc = allInitiatives.stream().filter(doc -> doc.getData().getString("a1").equals("A/B testing the CTA")).findFirst().orElse(null);
@@ -226,10 +226,10 @@ public class CopyFacadeIT extends IntegrationTestBase {
       var keyResultsInitiativesLinkType = linkTypes.stream().filter(linkType -> linkType.getName().equals("Key Results Initiatives")).findFirst().orElse(null);
       assertThat(keyResultsInitiativesLinkType).isNotNull();
 
-      var links = searchFacade.getLinkInstances(new Query(new QueryStem(keyResultsCollection.getId(), List.of(keyResultsInitiativesLinkType.getId()), Set.of(conversionDoc.getId()), Collections.emptySet(), Collections.emptySet())));
+      var links = searchFacade.getLinkInstances(new Query(new QueryStem(keyResultsCollection.getId(), List.of(keyResultsInitiativesLinkType.getId()), Set.of(conversionDoc.getId()), Collections.emptySet(), Collections.emptySet())), Language.EN);
       assertThat(links).isNotNull();
 
-      var allDocuments = searchFacade.searchDocuments(new Query());
+      var allDocuments = searchFacade.searchDocuments(new Query(), Language.EN);
       assertThat(allDocuments).hasSize(78);
 
       var views = viewFacade.getViews();

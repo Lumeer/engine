@@ -1,15 +1,3 @@
-package io.lumeer.core.util.js
-
-import org.graalvm.polyglot.Value
-import org.graalvm.polyglot.proxy.ProxyArray
-import org.graalvm.polyglot.proxy.ProxyObject
-import java.lang.Exception
-import java.lang.reflect.Field
-import java.lang.reflect.Method
-import java.util.*
-import java.util.function.Predicate
-import java.util.stream.Collectors
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -29,64 +17,152 @@ import java.util.stream.Collectors
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class JvmObjectProxy<T>(val d: T, clazz: Class<T>) : ProxyObject {
-    val fields: List<Field>
-    val methods: List<Method>
-    val members: MutableList<Any>
+package io.lumeer.core.util.js
 
-    @Suppress("UNCHECKED_CAST")
-    private fun encodeObject(o: Any): Any {
-        if (o is Map<*, *>) {
-            if (o.size > 0 && o.keys.iterator().next() is String) {
-                return ProxyObject.fromMap(o as Map<String, Any>)
-            }
-        } else if (o is List<*>) {
-            return ProxyArray.fromList(o)
-        } else if (o.javaClass.isArray) {
-            return ProxyArray.fromArray(o)
-        } else if (o !is Number && !o.javaClass.isPrimitive && !o.javaClass.isEnum && !o.javaClass.isSynthetic) {
-            return JvmObjectProxy(o, o.javaClass)
-        }
-        return o
-    }
+import io.lumeer.core.util.DataUtils
+import org.graalvm.polyglot.Value
+import org.graalvm.polyglot.proxy.Proxy
+import org.graalvm.polyglot.proxy.ProxyObject
+import java.lang.Exception
+import java.lang.reflect.Field
+import java.lang.reflect.Method
+import java.math.BigDecimal
+import java.time.DateTimeException
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
+import kotlin.collections.ArrayList
 
-    override fun getMember(key: String): Any? {
-        try {
-            val field = fields.stream().filter { f: Field -> f.name == key }.findFirst()
-            if (field.isPresent) {
-                return encodeObject(field.get()[d])
-            }
-            val method = methods.stream().filter(methodFilter { m: Method -> m.name == "get" + key.substring(0, 1).toUpperCase() + key.substring(1) }).findFirst()
-            if (method.isPresent) {
-                return encodeObject(method.get().invoke(d))
-            }
-        } catch (e: Exception) {
-            return null
-        }
-        return null
-    }
-
-    private fun methodFilter(nameFilter: Predicate<Method>): Predicate<Method> {
-        return Predicate { m: Method -> nameFilter.test(m) && m.parameterCount == 0 && m.returnType != Void.TYPE }
-    }
-
-    override fun getMemberKeys(): Any {
-        return ProxyArray.fromList(members)
-    }
-
-    override fun hasMember(key: String): Boolean {
-        return members.contains(key)
-    }
-
-    override fun putMember(key: String, value: Value) {
-        throw UnsupportedOperationException()
-    }
+class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale = Locale.getDefault()) : ProxyObject {
+    private val fields: List<Field> = listOf(*clazz.fields)
+    private val methods: List<Method> = listOf(*clazz.methods)
+    private val members: MutableList<String>
 
     init {
-        fields = Arrays.asList(*clazz.fields)
-        methods = Arrays.asList(*clazz.methods)
         members = ArrayList()
-        members.addAll(fields.stream().map { obj: Field -> obj.name }.collect(Collectors.toList()))
-        members.addAll(methods.stream().filter(methodFilter { m: Method -> m.name.startsWith("get") }).map { obj: Method -> obj.name }.map { s: String -> s.substring(3, 4).toLowerCase() + s.substring(4) }.collect(Collectors.toList()))
+        members.addAll(fields.filter { !it.name.isUpperCase() }.map { it.name })
+        members.addAll(methods.filter { methodAllowed(it) && it.name.startsWith("get") }
+                .map { it.name }
+                .map { it.substring(3, 4).toLowerCase() + it.substring(4) }
+                .filter { it.isNotEmpty() }
+        )
     }
+
+    override fun getMember(key: String) = try {
+        val field = fields.firstOrNull { f: Field -> f.name == key }
+        if (field != null) {
+            encodeObject(field[proxyObject], locale)
+        }
+        val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
+        val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
+        if (method != null) {
+            encodeObject(method.invoke(proxyObject), locale)
+        } else {
+            null
+        }
+    } catch (e: Exception) {
+        null
+    }
+
+    private fun methodAllowed(m: Method): Boolean = m.parameterCount == 0 && m.returnType != Void.TYPE
+
+    override fun getMemberKeys(): Any = members
+
+    override fun hasMember(key: String): Boolean = members.contains(key)
+
+    override fun putMember(key: String, value: Value) = throw UnsupportedOperationException()
+
+    @Suppress("UNCHECKED_CAST")
+    companion object {
+        private val utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC)
+
+        fun decodeValue(value: Value): Any? {
+            return if (value.isNumber) {
+                if (value.fitsInLong()) value.asLong() else value.asDouble()
+            } else if (value.isBoolean) {
+                value.asBoolean()
+            } else if (value.isHostObject && value.asHostObject<Any>() is Date) {
+                value.asHostObject<Any>()
+            } else if (value.isNull) {
+                null
+            } else if (value.hasArrayElements()) {
+                val list = mutableListOf<Any?>()
+                for (i in 0 until value.arraySize) {
+                    list.add(decodeValue(value.getArrayElement(i)))
+                }
+                list
+            } else {
+                value.asString()
+            }
+        }
+
+        fun encodeObject(o: Any, locale: Locale = Locale.getDefault()): Any {
+            when {
+                o is String -> {
+                    return o
+                }
+                o is List<*> -> {
+                    return fromList(o)
+                }
+                o is Array<*> -> {
+                    return fromArray(o)
+                }
+                o is Set<*> -> {
+                    return fromSet(o)
+                }
+                o.javaClass.isEnum -> {
+                    return o.toString()
+                }
+                o is BigDecimal -> {
+                    return o.toString()
+                }
+                o is Date -> {
+                    val dt = ZonedDateTime.from(o.toInstant().atZone(utcZone))
+                    return try {
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ", locale).format(dt)
+                    } catch (dte: DateTimeException) {
+                        o
+                    }
+                }
+                else -> {
+                    val pointString = DataUtils.convertPointToString(o)
+                    if (pointString != null) {
+                        return pointString
+                    }
+
+                    // needs to be checked after point, because point is instance of map
+                    if (o is Map<*, *> && o.size > 0 && o.keys.iterator().next() is String) {
+                        return fromMap(o as Map<String, Any>)
+                    }
+
+                    if (o !is Number && !o.javaClass.isPrimitive && !o.javaClass.isEnum && !o.javaClass.isSynthetic) {
+                        return JvmObjectProxy(o, o.javaClass)
+                    }
+                    return o
+                }
+            }
+
+        }
+
+        fun fromMap(values: Map<String, Any>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmMapProxy(values.toMutableMap(), locale)
+        }
+
+        fun fromList(list: List<*>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmListProxy(list.toMutableList(), locale)
+        }
+
+        fun fromSet(set: Set<*>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmSetProxy((set as Set<Any?>).toMutableSet(), locale)
+        }
+
+        fun fromArray(array: Array<*>, locale: Locale = Locale.getDefault()): Proxy {
+            return JvmArrayProxy(array as Array<Any?>, locale)
+        }
+    }
+
+    fun String.isUpperCase(): Boolean = !toCharArray().asList().any { it.isLowerCase() }
 }
+

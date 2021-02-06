@@ -21,6 +21,7 @@ package io.lumeer.core.auth;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
+import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkType;
@@ -62,6 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -109,6 +111,7 @@ public class PermissionsChecker {
    private DataStorage dataStorage;
 
    private Map<String, Boolean> hasRoleCache = new HashMap<>();
+   private Map<String, View> viewCache = new HashMap<>();
 
    public PermissionsChecker() {
    }
@@ -122,12 +125,9 @@ public class PermissionsChecker {
    /**
     * Checks if the user has the given role on the given resource (either directly or through group membership).
     *
-    * @param resource
-    *       any resource with defined permissions.
-    * @param role
-    *       role to be checked.
-    * @throws NoPermissionException
-    *       when the user does not have the permission.
+    * @param resource any resource with defined permissions.
+    * @param role     role to be checked.
+    * @throws NoPermissionException when the user does not have the permission.
     */
    public void checkRole(Resource resource, Role role) {
       if (isManager()) {
@@ -143,6 +143,7 @@ public class PermissionsChecker {
 
    /**
     * Checks if user is manager in organization or project
+    *
     * @return whether the current user is a manager.
     */
    public boolean isManager() {
@@ -175,14 +176,10 @@ public class PermissionsChecker {
    /**
     * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
     *
-    * @param collection
-    *       collection resource
-    * @param role
-    *       role to be checked.
-    * @param viewRole
-    *       role needed at the view.
-    * @throws NoPermissionException
-    *       when the user does not have the permission.
+    * @param collection collection resource
+    * @param role       role to be checked.
+    * @param viewRole   role needed at the view.
+    * @throws NoPermissionException when the user does not have the permission.
     */
    public void checkRoleWithView(final Collection collection, final Role role, final Role viewRole) {
       if (isManager()) {
@@ -212,10 +209,8 @@ public class PermissionsChecker {
    /**
     * Checks whether the current user has the given role on the resource.
     *
-    * @param resource
-    *       The resource to be checked.
-    * @param role
-    *       The required role.
+    * @param resource The resource to be checked.
+    * @param role     The required role.
     * @return True if and only if the user has the given role ont he resource.
     */
    public boolean hasRole(Resource resource, Role role) {
@@ -230,8 +225,8 @@ public class PermissionsChecker {
       return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
    }
 
-   public boolean hasAnyRoleInResource(Resource resouce, Set<Role> roles) {
-      return roles.stream().anyMatch(role -> hasRoleInResource(resouce, role));
+   public boolean hasAnyRoleInResource(Resource resource, Set<Role> roles) {
+      return roles.stream().anyMatch(role -> hasRoleInResource(resource, role));
    }
 
    private boolean hasRoleInResource(Resource resource, Role role, String userId) {
@@ -241,8 +236,7 @@ public class PermissionsChecker {
    /**
     * Invalidates a bit of cache when the information changes.
     *
-    * @param resource
-    *       Resource being updated.
+    * @param resource Resource being updated.
     */
    public void invalidateCache(final Resource resource) {
       for (final Role role : Role.values()) {
@@ -251,15 +245,11 @@ public class PermissionsChecker {
    }
 
    /**
-    * Checks whether the current user has the given role on the given resource
-    * or the user has access to a view whose author has the given role.
+    * Checks whether the current user has the given role on the given resource or the user has access to a view whose author has the given role.
     *
-    * @param collection
-    *       collection resource
-    * @param role
-    *       role to be checked.
-    * @param viewRole
-    *       role needed at the view.
+    * @param collection collection resource
+    * @param role       role to be checked.
+    * @param viewRole   role needed at the view.
     * @return true if and only if the user has the given role ont he resource.
     */
    public boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole) {
@@ -272,7 +262,7 @@ public class PermissionsChecker {
 
    private boolean getResourceRoleViaView(final Collection collection, final Role role, final Role viewRole, final String viewId) {
       if (StringUtils.isNotEmpty(viewId)) { // we might have the access through a view
-         final View view = viewDao.getViewById(viewId);
+         final View view = viewCache.computeIfAbsent(viewId, id -> viewDao.getViewById(viewId));
 
          if (view != null) {
             if (hasRoleInResource(view, viewRole)) { // do we have access to the view?
@@ -307,7 +297,7 @@ public class PermissionsChecker {
     */
    public View getActiveView() {
       if (StringUtils.isNotEmpty(viewId)) {
-         return viewDao.getViewById(viewId);
+         return viewCache.computeIfAbsent(viewId, id -> viewDao.getViewById(viewId));
       }
 
       return null;
@@ -316,8 +306,7 @@ public class PermissionsChecker {
    /**
     * Returns all roles assigned to the authenticated user (whether direct or gained through group membership).
     *
-    * @param resource
-    *       any resource with defined permissions
+    * @param resource any resource with defined permissions
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(Resource resource) {
@@ -328,10 +317,8 @@ public class PermissionsChecker {
    /**
     * Returns all roles assigned to the specified user (whether direct or gained through group membership).
     *
-    * @param resource
-    *       any resource with defined permissions
-    * @param userId
-    *       user ID to get the roles of.
+    * @param resource any resource with defined permissions
+    * @param userId   user ID to get the roles of.
     * @return set of actual roles
     */
    public Set<Role> getActualRoles(final Resource resource, final String userId) {
@@ -398,6 +385,40 @@ public class PermissionsChecker {
                        .collect(toSet());
    }
 
+   public Map<String, AllowedPermissions> getCollectionsPermissions(final List<Collection> collection) {
+      return collection.stream().collect(Collectors.toMap(Resource::getId, this::getCollectionPermissions));
+   }
+
+   public AllowedPermissions getCollectionPermissions(final Collection collection) {
+      return new AllowedPermissions(
+            hasRoleInResource(collection, Role.READ),
+            hasRoleInResource(collection, Role.WRITE),
+            hasRoleInResource(collection, Role.MANAGE),
+            hasRoleWithView(collection, Role.READ, Role.READ),
+            hasRoleWithView(collection, Role.WRITE, Role.WRITE),
+            hasRoleWithView(collection, Role.MANAGE, Role.MANAGE)
+      );
+   }
+
+   public Map<String, AllowedPermissions> getLinkTypesPermissions(final List<LinkType> linkTypes, final Map<String, AllowedPermissions> collectionsPermissions) {
+      return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, linkType ->
+            mergePermissions(collectionsPermissions.get(linkType.getFirstCollectionId()), collectionsPermissions.get(linkType.getSecondCollectionId()))));
+   }
+
+   private AllowedPermissions mergePermissions(AllowedPermissions a1, AllowedPermissions a2) {
+      if (a1 == null || a2 == null) {
+         return a1 != null ? a1 : a2;
+      }
+      return new AllowedPermissions(
+            a1.getRead() && a2.getRead(),
+            a1.getWrite() && a2.getWrite(),
+            a1.getManage() && a2.getManage(),
+            a1.getReadWithView() && a2.getReadWithView(),
+            a1.getWriteWithView() && a2.getWriteWithView(),
+            a1.getManageWithView() && a2.getManageWithView()
+      );
+   }
+
    public void checkFunctionRuleAccess(final Collection collection, final String js, final Role role) {
       final Map<String, Collection> collections = collectionDao.getAllCollections().stream().collect(toMap(Resource::getId, Function.identity()));
       final Set<String> collectionIds = collections.keySet();
@@ -421,10 +442,8 @@ public class PermissionsChecker {
    /**
     * Checks whether it is possible to create more resources of the given type.
     *
-    * @param resource
-    *       Resource to be created.
-    * @param currentCount
-    *       Current no of resources of the given type.
+    * @param resource     Resource to be created.
+    * @param currentCount Current no of resources of the given type.
     */
    public void checkCreationLimits(final Resource resource, final long currentCount) {
       if (skipLimits()) {
@@ -453,8 +472,7 @@ public class PermissionsChecker {
    /**
     * Checks whether it is possible to create more documents.
     *
-    * @param document
-    *       The document that is about to be created.
+    * @param document The document that is about to be created.
     */
    public void checkDocumentLimits(final Document document) {
       if (skipLimits()) {
@@ -474,8 +492,7 @@ public class PermissionsChecker {
    /**
     * Checks whether it is possible to create more documents.
     *
-    * @param documents
-    *       The list of documents that are about to be created.
+    * @param documents The list of documents that are about to be created.
     */
    public void checkDocumentLimits(final List<Document> documents) {
       checkDocumentLimits(documents.size());
@@ -495,7 +512,6 @@ public class PermissionsChecker {
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
       }
    }
-
 
    public void checkRulesLimit(final Collection collection) {
       if (skipLimits()) {
@@ -559,10 +575,8 @@ public class PermissionsChecker {
    /**
     * Checks whether it is possible to create more users in the current organization.
     *
-    * @param organizationId
-    *       Organization ID where the user is being added.
-    * @param newCount
-    *       New no of users.
+    * @param organizationId Organization ID where the user is being added.
+    * @param newCount       New no of users.
     */
    public void checkUserCreationLimits(final String organizationId, final long newCount) {
       if (skipLimits()) {
@@ -583,12 +597,9 @@ public class PermissionsChecker {
    }
 
    /**
-    * Sets the view id that is being worked with. This allows us to execute queries under a different user supposing
-    * we have access to the view and the owner of the view can still execute it. For security reasons, the view id
-    * cannot be changed along the way.
+    * Sets the view id that is being worked with. This allows us to execute queries under a different user supposing we have access to the view and the owner of the view can still execute it. For security reasons, the view id cannot be changed along the way.
     *
-    * @param viewId
-    *       id of the view
+    * @param viewId id of the view
     */
    void setViewId(final String viewId) {
       if (this.viewId == null) {
@@ -612,10 +623,8 @@ public class PermissionsChecker {
    /**
     * Checks whether it is possible to delete the given resource.
     *
-    * @param resource
-    *       Resource to check.
-    * @throws NoPermissionException
-    *       When it is not possible to delete the resource.
+    * @param resource Resource to check.
+    * @throws NoPermissionException When it is not possible to delete the resource.
     */
    public void checkCanDelete(Resource resource) {
       if (resource.isNonRemovable()) {

@@ -39,6 +39,6 @@ public class EmailFacade {
 
    public void sendInvitation(final String invitedEmail) {
       final Language language = "cs".equals(requestDataKeeper.getUserLocale()) ? Language.CS : Language.EN;
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, language, emailService.formatUserReference(user.getCurrentUser()), invitedEmail);
+      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, language, emailService.formatUserReference(user.getCurrentUser()), invitedEmail, "");
    }
 }

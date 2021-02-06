@@ -19,7 +19,9 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConditionValue;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.LinkType;
@@ -27,11 +29,11 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.DataUtils;
 import io.lumeer.core.util.coordinates.CoordinatesParser;
 import io.lumeer.core.util.coordinates.LatLng;
 import io.lumeer.engine.api.data.DataDocument;
 
-import com.mongodb.client.model.geojson.GeoJsonObjectType;
 import com.mongodb.client.model.geojson.NamedCoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
@@ -40,7 +42,6 @@ import org.bson.types.Decimal128;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.time.DateTimeException;
@@ -73,8 +74,7 @@ public class ConstraintManager {
    private Locale locale;
 
    /**
-    * Pattern used to determine whether the input value is a number.
-    * Initialized upon setting a specific locale.
+    * Pattern used to determine whether the input value is a number. Initialized upon setting a specific locale.
     */
    private Pattern numberMatch;
 
@@ -84,17 +84,10 @@ public class ConstraintManager {
 
    private static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
-   private static final DecimalFormat dfFullFraction = new DecimalFormat("0", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
-
-   static {
-      dfFullFraction.setMaximumFractionDigits(340); // 340 = DecimalFormat.DOUBLE_FRACTION_DIGITS
-   }
-
    /**
     * Obtains a default instance of ConstraintManager configured according to system properties.
     *
-    * @param configurationProducer
-    *       A provider of configuration.
+    * @param configurationProducer A provider of configuration.
     * @return The default ConstraintManager
     */
    public static ConstraintManager getInstance(final DefaultConfigurationProducer configurationProducer) {
@@ -122,8 +115,7 @@ public class ConstraintManager {
    /**
     * Gets the currently used locale.
     *
-    * @param locale
-    *       The currently used locale.
+    * @param locale The currently used locale.
     */
    public void setLocale(final Locale locale) {
       this.locale = locale;
@@ -134,8 +126,7 @@ public class ConstraintManager {
    /**
     * Initialize a pattern to determine whether a given input value is a number.
     *
-    * @param locale
-    *       The currently used locale.
+    * @param locale The currently used locale.
     */
    private void initNumberMatchPatten(final Locale locale) {
       final DecimalFormat df = (DecimalFormat) DecimalFormat.getNumberInstance(locale);
@@ -157,8 +148,7 @@ public class ConstraintManager {
    /**
     * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
     *
-    * @param value
-    *       The value to try to convert to number.
+    * @param value The value to try to convert to number.
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    private Number encodeNumber(final Locale locale, final Object value) {
@@ -172,12 +162,9 @@ public class ConstraintManager {
    /**
     * Tries to convert the parameter to a number (either integer, double or big decimal) and return it.
     *
-    * @param numberFormat
-    *       Number format to parse to double or integer.
-    * @param bigNumberFormat
-    *       Number format to parse to big decimal.
-    * @param value
-    *       The value to try to convert to number.
+    * @param numberFormat    Number format to parse to double or integer.
+    * @param bigNumberFormat Number format to parse to big decimal.
+    * @param value           The value to try to convert to number.
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    private Number encodeNumber(final NumberFormat numberFormat, final NumberFormat bigNumberFormat, Object value) {
@@ -223,8 +210,7 @@ public class ConstraintManager {
    /**
     * Encodes the given value to a data type suitable for database storage based on current constraints configuration.
     *
-    * @param value
-    *       The value to convert.
+    * @param value The value to convert.
     * @return The same value with changed data type.
     */
    public Object encode(final Object value) {
@@ -353,18 +339,9 @@ public class ConstraintManager {
             return value.toString();
          }
 
-         if (value instanceof DataDocument) { // Point
-            final String type = ((DataDocument) value).getString("type");
-            if (type != null && type.equals("Point") && ((DataDocument) value).containsKey("coordinates")) {
-               List<Double> values = ((DataDocument) value).getArrayList("coordinates", Double.class);
-               return values.get(0) + ", " + values.get(1);
-            }
-         } else if (value instanceof Point) {
-            final Point p = (Point) value;
-            if (p.getType() == GeoJsonObjectType.POINT) {
-               List<Double> values = p.getCoordinates().getValues();
-               return doubleToString(values.get(0)) + ", " + doubleToString(values.get(1));
-            }
+         final String pointString = DataUtils.convertPointToString(value);
+         if (pointString != null) {
+            return pointString;
          }
       }
 
@@ -401,7 +378,7 @@ public class ConstraintManager {
          var collection = collectionsMap.get(filter.getCollectionId());
          if (collection != null) {
             var constraint = ResourceUtils.findConstraint(collection.getAttributes(), filter.getAttributeId());
-            filter.setValue(processor.apply(filter.getValue(), constraint));
+            processAttributeFilter(constraint, filter, processor);
          }
       });
 
@@ -409,9 +386,20 @@ public class ConstraintManager {
          var linkType = linkTypesMap.get(filter.getLinkTypeId());
          if (linkType != null) {
             var constraint = ResourceUtils.findConstraint(linkType.getAttributes(), filter.getAttributeId());
-            filter.setValue(processor.apply(filter.getValue(), constraint));
+            processAttributeFilter(constraint, filter, processor);
          }
       });
+   }
+
+   private void processAttributeFilter(final Constraint constraint, final AttributeFilter filter, final BiFunction<Object, Constraint, Object> processor) {
+      var conditionValues = filter.getConditionValues().stream().map(f -> {
+         if (f.getValue() != null) {
+            return new ConditionValue(processor.apply(f.getValue(), constraint));
+         }
+         return f;
+      }).collect(Collectors.toList());
+
+      filter.setConditionValues(conditionValues);
    }
 
    public DataDocument encodeDataTypes(final Collection collection, final DataDocument data) {
@@ -474,7 +462,4 @@ public class ConstraintManager {
       return numberMatch.matcher(value).matches();
    }
 
-   private String doubleToString(final Double d) {
-      return d != null ? dfFullFraction.format(d) : null;
-   }
 }

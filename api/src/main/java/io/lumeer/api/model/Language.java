@@ -20,6 +20,8 @@ package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+import java.util.Locale;
+
 public enum Language {
    EN,
    CS;
@@ -37,5 +39,22 @@ public enum Language {
       }
    }
 
+   public Locale toLocale() {
+      switch (this) {
+         case CS:
+            return Locale.forLanguageTag("cs_CZ");
+         default:
+            return Locale.ENGLISH;
+      }
+   }
+
+   public String toLanguageTag() {
+      switch (this) {
+         case CS:
+            return "cs-CZ";
+         default:
+            return "en-US";
+      }
+   }
 
 }

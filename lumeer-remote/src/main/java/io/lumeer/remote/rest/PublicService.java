@@ -1,4 +1,4 @@
-package io.lumeer.remote.rest;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,10 +16,13 @@ package io.lumeer.remote.rest;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.DocumentsAndLinks;
 import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
@@ -31,6 +34,7 @@ import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.ViewFacade;
+import io.lumeer.core.util.Tuple;
 
 import java.util.List;
 import java.util.Set;
@@ -43,6 +47,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @RequestScoped
@@ -112,14 +117,21 @@ public class PublicService extends AbstractService {
 
    @GET
    @Path("link-instances")
-   public List<LinkInstance> getLinkInstances() {
-      return searchFacade.getLinkInstancesPublic(new Query());
+   public List<LinkInstance> getLinkInstances(@QueryParam("l") Language language) {
+      return searchFacade.getLinkInstancesPublic(new Query(), language);
    }
 
    @GET
    @Path("documents")
-   public List<Document> getDocuments() {
-      return searchFacade.searchDocumentsPublic(new Query());
+   public List<Document> getDocuments(@QueryParam("l") Language language) {
+      return searchFacade.searchDocumentsPublic(new Query(), language);
+   }
+
+   @GET
+   @Path("documentsAndLinks")
+   public DocumentsAndLinks getDocumentsAndLinks(@QueryParam("l") Language language) {
+      final Tuple<List<Document>, List<LinkInstance>> tuple = searchFacade.searchDocumentsAndLinksPublic(new Query(), language);
+      return new DocumentsAndLinks(tuple.getFirst(), tuple.getSecond());
    }
 
    @GET

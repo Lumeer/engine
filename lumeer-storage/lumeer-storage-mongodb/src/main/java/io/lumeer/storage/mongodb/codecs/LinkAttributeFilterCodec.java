@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValue;
 import io.lumeer.api.model.LinkAttributeFilter;
 
@@ -57,7 +58,8 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
    public static LinkAttributeFilter convertFromDocument(final Document document) {
       String linkTypeId = document.getString(LINK_TYPE_ID);
       String attributeId = document.getString(ATTRIBUTE_ID);
-      String operator = document.getString(CONDITION);
+      String conditionString = document.getString(CONDITION);
+      ConditionType operator = ConditionType.fromString(conditionString);
 
       List<ConditionValue> values;
       Object value = document.get(VALUE);
@@ -77,7 +79,7 @@ public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
    public void encode(final BsonWriter writer, final LinkAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = new Document()
             .append(LINK_TYPE_ID, value.getLinkTypeId())
-            .append(CONDITION, value.getCondition())
+            .append(CONDITION, value.getCondition() != null ? value.getCondition().getValue() : null)
             .append(VALUE, value.getConditionValues())
             .append(ATTRIBUTE_ID, value.getAttributeId());
 

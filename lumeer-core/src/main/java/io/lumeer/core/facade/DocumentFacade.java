@@ -53,6 +53,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.print.Doc;
 
 @RequestScoped
 public class DocumentFacade extends AbstractFacade {
@@ -596,6 +597,23 @@ public class DocumentFacade extends AbstractFacade {
          Document document = getDocument(collection, documentId);
          taskProcessingFacade.runRule(collection, rule, document);
       }
+   }
+
+   public Document mapDocumentData(final Document document) {
+      document.setFavorite(isFavorite(document.getId()));
+      document.setCommentsCount(getCommentsCount(document.getId()));
+      return document;
+   }
+
+   public java.util.Collection<Document> mapDocumentsData(final java.util.Collection<Document> documents) {
+      Set<String> favoriteDocumentIds = getFavoriteDocumentsIds();
+      Set<String> documentIds = documents.stream().map(Document::getId).collect(Collectors.toSet());
+      Map<String, Integer> commentCounts = getCommentsCounts(documentIds);
+      documents.forEach(document -> {
+         document.setFavorite(favoriteDocumentIds.contains(document.getId()));
+         document.setCommentsCount((long) commentCounts.getOrDefault(document.getId(), 0));
+      });
+      return documents;
    }
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {

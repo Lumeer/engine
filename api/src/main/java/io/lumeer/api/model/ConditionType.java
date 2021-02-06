@@ -18,17 +18,44 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Arrays;
 import java.util.List;
 
 public enum ConditionType {
 
-   EQUALS,
-   NOT_EQUALS,
-   LOWER_THAN,
-   LOWER_THAN_EQUALS,
-   GREATER_THAN,
-   GREATER_THAN_EQUALS;
+   EQUALS("eq"),
+   NOT_EQUALS("neq"),
+   LOWER_THAN("lt"),
+   LOWER_THAN_EQUALS("lte"),
+   GREATER_THAN("gt"),
+   GREATER_THAN_EQUALS("gte"),
+   IN("in"),
+   HAS_SOME("hasSome"),
+   HAS_ALL("hasAll"),
+   HAS_NONE_OF("nin"),
+   BETWEEN("between"),
+   NOT_BETWEEN("notBetween"),
+   CONTAINS("contains"),
+   NOT_CONTAINS("notContains"),
+   STARTS_WITH("startsWith"),
+   ENDS_WITH("endsWith"),
+   IS_EMPTY("empty"),
+   NOT_EMPTY("notEmpty"),
+   ENABLED("enabled"),
+   DISABLED("disabled");
+
+   private final String value;
+
+   ConditionType(String value) {
+      this.value = value;
+   }
+
+   @JsonValue
+   public String getValue() {
+      return value;
+   }
 
    private static final List<String> EQ_VARIANTS = Arrays.asList("=", "==", "eq", "equals");
    private static final List<String> NEQ_VARIANTS = Arrays.asList("!=", "!==", "<>", "ne", "neq", "nequals");
@@ -38,6 +65,9 @@ public enum ConditionType {
    private static final List<String> GTE_VARIANTS = Arrays.asList(">=", "gte");
 
    public static ConditionType fromString(String condition) {
+      if (condition == null) {
+         return null;
+      }
       if (EQ_VARIANTS.contains(condition)) {
          return EQUALS;
       } else if (NEQ_VARIANTS.contains(condition)) {
@@ -51,7 +81,17 @@ public enum ConditionType {
       } else if (GTE_VARIANTS.contains(condition)) {
          return GREATER_THAN_EQUALS;
       }
+      
+      for (ConditionType type : values()) {
+         if (type.getValue().equals(condition)) {
+            return type;
+         }
+      }
       return null;
    }
 
+   @Override
+   public String toString() {
+      return value;
+   }
 }

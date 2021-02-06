@@ -379,6 +379,20 @@ public class LinkInstanceFacade extends AbstractFacade {
       }
    }
 
+   public LinkInstance mapLinkInstanceData(final LinkInstance linkInstance) {
+      linkInstance.setCommentsCount(getCommentsCount(linkInstance.getId()));
+      return linkInstance;
+   }
+
+   public java.util.Collection<LinkInstance> mapLinkInstancesData(final java.util.Collection<LinkInstance> linkInstances) {
+      Set<String> linkInstanceIds = linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet());
+      Map<String, Integer> commentCounts = getCommentsCounts(linkInstanceIds);
+      linkInstances.forEach(document -> {
+         document.setCommentsCount((long) commentCounts.getOrDefault(document.getId(), 0));
+      });
+      return linkInstances;
+   }
+
    public long getCommentsCount(final String documentId) {
       return resourceCommentFacade.getCommentsCount(ResourceType.LINK, documentId);
    }

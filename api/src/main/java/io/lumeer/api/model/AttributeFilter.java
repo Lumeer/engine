@@ -28,10 +28,10 @@ import java.util.Objects;
 public class AttributeFilter {
 
    private final String attributeId;
-   private final String condition;
+   private final ConditionType condition;
    private List<ConditionValue> conditionValues;
 
-   public AttributeFilter(final String attributeId, final String condition, final List<ConditionValue> value) {
+   public AttributeFilter(final String attributeId, final ConditionType condition, final List<ConditionValue> value) {
       this.attributeId = attributeId;
       this.condition = condition;
       this.conditionValues = value;
@@ -41,16 +41,24 @@ public class AttributeFilter {
       return attributeId;
    }
 
-   public String getCondition() {
+   public ConditionType getCondition() {
       return condition;
    }
 
    public List<ConditionValue> getConditionValues() {
-      return conditionValues;
+      return conditionValues != null ? conditionValues : Collections.emptyList();
+   }
+
+   public void setConditionValues(final List<ConditionValue> conditionValues) {
+      this.conditionValues = conditionValues;
    }
 
    public Object getValue() {
       return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getValue() : null;
+   }
+
+   public String getType() {
+      return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getType() : null;
    }
 
    @JsonIgnore

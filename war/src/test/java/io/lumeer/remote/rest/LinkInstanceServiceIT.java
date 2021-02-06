@@ -40,6 +40,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -107,6 +108,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -231,24 +235,12 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetLinkInstancesByDocumentIds() {
-      String id1 = linkInstanceDao.createLinkInstance(prepareLinkInstance()).getId();
+      String id1 = createLinkInstance(linkTypeId1, documentIdsColl1.get(0), documentIdsColl2.get(0)).getId();
+      String id2 = createLinkInstance(linkTypeId1, documentIdsColl1.get(0), documentIdsColl2.get(2)).getId();
+      String id3 = createLinkInstance(linkTypeId1, documentIdsColl1.get(1), documentIdsColl2.get(1)).getId();
+      String id4 = createLinkInstance(linkTypeId2, documentIdsColl1.get(0), documentIdsColl2.get(0)).getId();
 
-      LinkInstance linkInstance2 = prepareLinkInstance();
-      linkInstance2.setLinkTypeId(linkTypeId1);
-      linkInstance2.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(2)));
-      String id2 = linkInstanceDao.createLinkInstance(linkInstance2).getId();
-
-      LinkInstance linkInstance3 = prepareLinkInstance();
-      linkInstance3.setLinkTypeId(linkTypeId1);
-      linkInstance3.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      String id3 = linkInstanceDao.createLinkInstance(linkInstance3).getId();
-
-      LinkInstance linkInstance4 = prepareLinkInstance();
-      linkInstance4.setLinkTypeId(linkTypeId2);
-      linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
-
-      QueryStem stem = new QueryStem(collection1Id, null, Collections.singleton(documentIdsColl1.get(0)), null, null);
+      QueryStem stem = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), Collections.singleton(documentIdsColl1.get(0)), null, null);
       Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
       Response response = client.target(searchUrl).path("linkInstances")
@@ -260,9 +252,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       List<LinkInstance> linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id4);
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2);
 
-      QueryStem stem2 = new QueryStem(collection2Id, null, Collections.singleton(documentIdsColl2.get(1)), null, null);
+      QueryStem stem2 = new QueryStem(collection2Id, Collections.singletonList(linkTypeId1), Collections.singleton(documentIdsColl2.get(1)), null, null);
       Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
       response = client.target(searchUrl).path("linkInstances")
@@ -279,24 +271,12 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetLinkInstancesByLinkTypeIds() {
-      String id1 = linkInstanceDao.createLinkInstance(prepareLinkInstance()).getId();
+      String id1 = createLinkInstance(linkTypeId1, documentIdsColl1.get(0), documentIdsColl2.get(0)).getId();
+      String id2 = createLinkInstance(linkTypeId1, documentIdsColl1.get(0), documentIdsColl2.get(2)).getId();
+      String id3 = createLinkInstance(linkTypeId1, documentIdsColl1.get(1), documentIdsColl2.get(1)).getId();
+      String id4 = createLinkInstance(linkTypeId2, documentIdsColl1.get(0), documentIdsColl2.get(0)).getId();
 
-      LinkInstance linkInstance2 = prepareLinkInstance();
-      linkInstance2.setLinkTypeId(linkTypeId1);
-      linkInstance2.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(2)));
-      String id2 = linkInstanceDao.createLinkInstance(linkInstance2).getId();
-
-      LinkInstance linkInstance3 = prepareLinkInstance();
-      linkInstance3.setLinkTypeId(linkTypeId1);
-      linkInstance3.setDocumentIds(Arrays.asList(documentIdsColl1.get(1), documentIdsColl2.get(1)));
-      String id3 = linkInstanceDao.createLinkInstance(linkInstance3).getId();
-
-      LinkInstance linkInstance4 = prepareLinkInstance();
-      linkInstance4.setLinkTypeId(linkTypeId2);
-      linkInstance4.setDocumentIds(Arrays.asList(documentIdsColl1.get(0), documentIdsColl2.get(0)));
-      String id4 = linkInstanceDao.createLinkInstance(linkInstance4).getId();
-
-      QueryStem stem = new QueryStem(collection1Id, Arrays.asList(linkTypeId1, linkTypeId2), null, null, null);
+      QueryStem stem = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null, null);
       Query query = new Query(stem);
       Entity entity1 = Entity.json(query);
       Response response = client.target(searchUrl).path("linkInstances")
@@ -308,9 +288,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       List<LinkInstance> linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id3, id4);
+      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id3);
 
-      QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId1), null, null, null);
+      QueryStem stem2 = new QueryStem(collection1Id, Collections.singletonList(linkTypeId2), null, null, null);
       Query query2 = new Query(stem2);
       Entity entity2 = Entity.json(query2);
       response = client.target(searchUrl).path("linkInstances")
@@ -322,7 +302,14 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
 
       linkInstances = response.readEntity(new GenericType<List<LinkInstance>>() {
       });
-      assertThat(linkInstances).extracting("id").containsOnly(id1, id2, id3);
+      assertThat(linkInstances).extracting("id").containsOnly(id4);
+   }
+
+   private LinkInstance createLinkInstance(String linkTypeId, String doc1Id, String doc2Id) {
+      var linkInstance = new LinkInstance(linkTypeId, Arrays.asList(doc1Id, doc2Id));
+      var storedLinkInstance =  linkInstanceDao.createLinkInstance(linkInstance);
+      linkDataDao.createData(linkTypeId, storedLinkInstance.getId(), new DataDocument());
+      return storedLinkInstance;
    }
 
    private LinkInstance prepareLinkInstance() {

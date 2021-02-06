@@ -62,6 +62,7 @@ public class DelayedAction {
    public static final String DATA_DUE_DATE_FORMAT = "dueDateFormat";
    public static final String DATA_TASK_STATE = "taskState";
    public static final String DATA_TASK_COMPLETED = "taskCompleted";
+   public static final String DATA_TASK_COMMENT = "taskComment";
    public static final String DATA_ASSIGNEE = "assignee";
    public static final String DATA_COLLECTION_QUERY = "collectionQuery";
    public static final String DATA_DOCUMENT_CURSOR = "documentCursor";
