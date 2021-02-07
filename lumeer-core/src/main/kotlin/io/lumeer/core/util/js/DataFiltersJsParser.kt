@@ -26,7 +26,6 @@ import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import java.io.IOException
 import java.nio.charset.StandardCharsets
-import java.util.*
 
 class DataFiltersJsParser : AutoCloseable {
 

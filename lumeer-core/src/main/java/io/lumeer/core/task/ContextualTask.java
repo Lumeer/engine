@@ -28,6 +28,8 @@ import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
+import java.util.Map;
+
 public interface ContextualTask extends Task {
 
    ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment);
@@ -43,5 +45,4 @@ public interface ContextualTask extends Task {
    FunctionFacade getFunctionFacade();
 
    TaskProcessingFacade getTaskProcessingFacade(final TaskExecutor taskExecutor, final FunctionFacade functionFacade);
-
 }

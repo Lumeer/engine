@@ -37,6 +37,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
@@ -47,14 +48,15 @@ import javax.servlet.http.HttpServletRequest;
 public class AuthenticatedUser implements Serializable {
 
    static class AuthUserInfo {
+
       User user = null;
       long lastUpdated = 0;
       String accessToken = "";
    }
+   public static final String DEFAULT_USER_FULL_NAME = "Alan Turing";
 
    public static final String DEFAULT_USERNAME = "aturing";
    public static final String DEFAULT_EMAIL = "aturing@lumeer.io";
-
    @Inject
    private HttpServletRequest request;
 
@@ -298,5 +300,9 @@ public class AuthenticatedUser implements Serializable {
 
    public String getUserSessionId() {
       return request.getSession().getId();
+   }
+
+   public static User getMachineUser() {
+      return new User("", DEFAULT_USER_FULL_NAME, DEFAULT_EMAIL, Map.of());
    }
 }

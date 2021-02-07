@@ -147,7 +147,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          rule.getConfiguration().put(CronRule.CRON_UNTIL, rule.getConfiguration().getDate(CronRule.CRON_UNTIL));
          rule.getConfiguration().put(CronRule.CRON_LAST_RUN, rule.getConfiguration().getDate(CronRule.CRON_LAST_RUN));
          rule.getConfiguration().put(CronRule.CRON_WHEN, rule.getConfiguration().getLong(CronRule.CRON_WHEN));
-         rule.getConfiguration().put(CronRule.CRON_FREQUENCY, rule.getConfiguration().getInteger(CronRule.CRON_FREQUENCY));
+         rule.getConfiguration().put(CronRule.CRON_INTERVAL, rule.getConfiguration().getInteger(CronRule.CRON_INTERVAL));
          rule.getConfiguration().put(CronRule.CRON_UNIT, rule.getConfiguration().getString(CronRule.CRON_UNIT));
       }
 

@@ -26,6 +26,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.AbstractConstraintConverter;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -484,7 +485,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
          this.contextSnapshot = daoContextSnapshot;
          constraintManager = ConstraintManager.getInstance(configurationProducer);
          pusherClient = PusherClient.getInstance(configurationProducer);
-         initiator = new User("", "Alan Turing", "alan.turing@lumeer.com", Map.of());
+         initiator = AuthenticatedUser.getMachineUser();
          environment = configurationProducer.getEnvironment();
       }
 

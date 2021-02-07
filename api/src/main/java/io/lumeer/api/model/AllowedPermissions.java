@@ -45,6 +45,10 @@ public class AllowedPermissions {
       this.manageWithView = manage;
    }
 
+   public static AllowedPermissions getAllAllowed() {
+      return new AllowedPermissions(true, true, true);
+   }
+
    public Boolean getRead() {
       return read;
    }
