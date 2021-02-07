@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -26,6 +27,7 @@ import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;

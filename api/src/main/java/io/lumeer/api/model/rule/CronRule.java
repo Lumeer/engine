@@ -18,6 +18,8 @@
  */
 package io.lumeer.api.model.rule;
 
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
 
 import java.time.ZoneOffset;
@@ -34,6 +36,8 @@ public class CronRule extends BlocklyRule {
    public static final String CRON_LAST_RUN = "lastRun";
    public static final String CRON_UNIT = "unit";
    public static final String CRON_EXECUTING = "executing";
+   public static final String CRON_QUERY = "query";
+   public static final String CRON_LANGUAGE = "language";
 
    public CronRule(final Rule rule) {
       super(rule, Rule.RuleType.CRON);
@@ -97,5 +101,21 @@ public class CronRule extends BlocklyRule {
 
    public void setExecuting(final String executing) {
       rule.getConfiguration().put(CRON_EXECUTING, executing);
+   }
+
+   public Query getQuery() {
+      return (Query) rule.getConfiguration().get(CRON_QUERY);
+   }
+
+   public void setQuery(final Query query) {
+      rule.getConfiguration().put(CRON_QUERY, query);
+   }
+
+   public Language getLanguage() {
+      return Language.fromString(rule.getConfiguration().getString(CRON_LANGUAGE));
+   }
+
+   public void setLanguage(final Language language) {
+      rule.getConfiguration().put(CRON_LANGUAGE, language.toString());
    }
 }
