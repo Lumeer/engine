@@ -171,7 +171,7 @@ public class CronTaskProcessor {
 
       if (start != null) {
          final ZonedDateTime now = ZonedDateTime.now();
-         start.plus(rule.getFrequency(), rule.getUnit());
+         start.plus(rule.getInterval(), rule.getUnit());
 
          return start.isBefore(now) && now.getHour() >= rule.getWhen();
       }

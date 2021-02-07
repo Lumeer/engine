@@ -32,12 +32,13 @@ public class CronRule extends BlocklyRule {
    public static final String CRON_SINCE = "since";
    public static final String CRON_UNTIL = "until";
    public static final String CRON_WHEN = "when";
-   public static final String CRON_FREQUENCY = "frequency";
+   public static final String CRON_INTERVAL = "interval";
    public static final String CRON_LAST_RUN = "lastRun";
    public static final String CRON_UNIT = "unit";
    public static final String CRON_EXECUTING = "executing";
    public static final String CRON_QUERY = "query";
    public static final String CRON_LANGUAGE = "language";
+   public static final String CRON_DOW = "dow"; // days of week - stored as binary number starting with Monday as the least significant bit
 
    public CronRule(final Rule rule) {
       super(rule, Rule.RuleType.CRON);
@@ -69,12 +70,12 @@ public class CronRule extends BlocklyRule {
       rule.getConfiguration().put(CRON_WHEN, when);
    }
 
-   public int getFrequency() {
-      return rule.getConfiguration().getInteger(CRON_FREQUENCY);
+   public int getInterval() {
+      return rule.getConfiguration().getInteger(CRON_INTERVAL);
    }
 
-   public void setFreqency(final int freqency) {
-      rule.getConfiguration().put(CRON_FREQUENCY, freqency);
+   public void setInterval(final int interval) {
+      rule.getConfiguration().put(CRON_INTERVAL, interval);
    }
 
    public ZonedDateTime getLastRun() {
@@ -117,5 +118,13 @@ public class CronRule extends BlocklyRule {
 
    public void setLanguage(final Language language) {
       rule.getConfiguration().put(CRON_LANGUAGE, language.toString());
+   }
+
+   public int getDow() {
+      return rule.getConfiguration().getInteger(CRON_DOW);
+   }
+
+   public void setDow(final int dow) {
+      rule.getConfiguration().put(CRON_DOW, dow);
    }
 }
