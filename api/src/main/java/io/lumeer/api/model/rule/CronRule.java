@@ -39,6 +39,7 @@ public class CronRule extends BlocklyRule {
    public static final String CRON_QUERY = "query";
    public static final String CRON_LANGUAGE = "language";
    public static final String CRON_DOW = "dow"; // days of week - stored as binary number starting with Monday as the least significant bit
+   public static final String CRON_OCCURENCE = "occurence";
 
    public CronRule(final Rule rule) {
       super(rule, Rule.RuleType.CRON);
@@ -126,5 +127,13 @@ public class CronRule extends BlocklyRule {
 
    public void setDow(final int dow) {
       rule.getConfiguration().put(CRON_DOW, dow);
+   }
+
+   public int getOccurence() {
+      return rule.getConfiguration().getInteger(CRON_OCCURENCE);
+   }
+
+   public void setOccurence(final int occurence) {
+      rule.getConfiguration().put(CRON_OCCURENCE, occurence);
    }
 }
