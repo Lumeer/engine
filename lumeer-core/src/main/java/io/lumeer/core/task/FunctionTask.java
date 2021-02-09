@@ -36,9 +36,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class FunctionTask extends AbstractContextualTask {
+
+   private Logger log = Logger.getLogger(FunctionTask.class.getName());
 
    private Attribute attribute;
    private Collection collection;
@@ -115,6 +118,17 @@ public class FunctionTask extends AbstractContextualTask {
 
    @Override
    public void process(final TaskExecutor taskExecutor, final ChangesTracker changesTracker) {
+      if (daoContextSnapshot.getSelectedWorkspace() != null && daoContextSnapshot.getSelectedWorkspace().getOrganization().isPresent() && daoContextSnapshot.getSelectedWorkspace().getProject().isPresent()) {
+         log.info(
+               String.format(
+                     "Running function task on %s/%s > Resource '%s', Attribute '%s'.",
+                     daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getCode(),
+                     daoContextSnapshot.getSelectedWorkspace().getProject().get().getCode(),
+                     collection != null ? collection.getName() : linkType.getName(),
+                     attribute.getName()
+               )
+         );
+      }
       if (documents != null && collection != null) {
          getDocumentsWithData(collection, documents).forEach(document -> {
             originalDocuments.put(document.getId(), new Document(document));
