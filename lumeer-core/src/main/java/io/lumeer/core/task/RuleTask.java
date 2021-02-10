@@ -30,8 +30,11 @@ import io.lumeer.core.task.executor.CronRuleTaskExecutor;
 import io.lumeer.core.task.executor.ZapierRuleTaskExecutor;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 public class RuleTask extends AbstractContextualTask {
+
+   private Logger log = Logger.getLogger(RuleTask.class.getName());
 
    private String ruleName;
    private Rule rule;
@@ -85,6 +88,17 @@ public class RuleTask extends AbstractContextualTask {
 
    @Override
    public void process(final TaskExecutor taskExecutor, final ChangesTracker changesTracker) {
+      if (daoContextSnapshot.getSelectedWorkspace() != null && daoContextSnapshot.getSelectedWorkspace().getOrganization().isPresent() && daoContextSnapshot.getSelectedWorkspace().getProject().isPresent()) {
+         log.info(
+               String.format(
+                     "Running rule task on %s/%s > Rule '%s', Resource '%s'.",
+                     daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getCode(),
+                     daoContextSnapshot.getSelectedWorkspace().getProject().get().getCode(),
+                     rule.getName(),
+                     collection != null ? collection.getName() : linkType.getName()
+               )
+         );
+      }
       if (rule.getType() == Rule.RuleType.BLOCKLY) {
          final BlocklyRuleTaskExecutor executor = new BlocklyRuleTaskExecutor(ruleName, this);
          changesTracker.merge(executor.execute(taskExecutor));
