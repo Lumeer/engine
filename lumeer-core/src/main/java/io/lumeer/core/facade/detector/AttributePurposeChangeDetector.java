@@ -35,11 +35,13 @@ public class AttributePurposeChangeDetector extends AbstractCollectionChangeDete
          final Collection originalCollection = (Collection) ((UpdateResource) resourceEvent).getOriginalResource();
          final Collection updatedCollection = (Collection) resourceEvent.getResource();
 
-         final List<String> removedIds = AttributeUtil.checkAttributesDiff(originalCollection.getAttributes(), updatedCollection.getAttributes()).getRemovedIds();
+         if (originalCollection != null) {
+            final List<String> removedIds = AttributeUtil.checkAttributesDiff(originalCollection.getAttributes(), updatedCollection.getAttributes()).getRemovedIds();
 
-         final String dueDateAttributeId = originalCollection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
-         if (removedIds.contains(dueDateAttributeId)) {
-            delayedActionDao.deleteAllScheduledActions(getResourcePath(resourceEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE));
+            final String dueDateAttributeId = originalCollection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+            if (removedIds.contains(dueDateAttributeId)) {
+               delayedActionDao.deleteAllScheduledActions(getResourcePath(resourceEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE));
+            }
          }
 
          // other types are sent immediately and we do not want to eradicate history just because someone deleted an attribute

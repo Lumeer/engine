@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ConstraintData;
 import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
@@ -33,6 +34,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
+import io.lumeer.core.util.CollectionPurposeUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.js.DataFiltersJsParser;
 import io.lumeer.engine.api.data.DataDocument;
@@ -104,7 +106,7 @@ public class SearchFacade extends AbstractFacade {
    private List<LinkInstance> getLinkInstances(Query query, Language language, boolean isPublic) {
       final List<Collection> collections = getReadCollections(isPublic);
       final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
-      final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes).getSecond();
+      final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true).getSecond();
 
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
       result.forEach(linkInstance ->
@@ -115,17 +117,17 @@ public class SearchFacade extends AbstractFacade {
    }
 
    public List<Document> searchDocumentsPublic(final Query query, Language language) {
-      return searchDocuments(query, language,true);
+      return searchDocuments(query, language, true);
    }
 
    public List<Document> searchDocuments(final Query query, Language language) {
-      return searchDocuments(query, language,false);
+      return searchDocuments(query, language, false);
    }
 
    private List<Document> searchDocuments(final Query query, Language language, boolean isPublic) {
       final List<Collection> collections = getReadCollections(isPublic);
       final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
-      final List<Document> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes).getFirst();
+      final List<Document> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true).getFirst();
 
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       result.forEach(document ->
@@ -135,18 +137,44 @@ public class SearchFacade extends AbstractFacade {
       return result;
    }
 
+   public Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinks(final Query query, Language language) {
+      return searchTasksDocumentsAndLinks(query, language, false);
+   }
+
+   public Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinksPublic(final Query query, Language language) {
+      return searchTasksDocumentsAndLinks(query, language, true);
+   }
+
+   private Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
+      final List<Collection> collections = getReadCollections(isPublic).stream().filter(collection -> collection.getPurposeType() == CollectionPurposeType.Tasks).collect(Collectors.toList());
+      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
+      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> !CollectionPurposeUtils.isDoneState(document, collectionMap.get(document.getCollectionId())));
+
+      result.getFirst().forEach(document ->
+            document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
+      );
+
+      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
+      result.getSecond().forEach(linkInstance ->
+            linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
+      );
+
+      return result;
+   }
+
    public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language) {
-      return searchDocumentsAndLinks(query, language,false);
+      return searchDocumentsAndLinks(query, language, false);
    }
 
    public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinksPublic(final Query query, Language language) {
-      return searchDocumentsAndLinks(query, language,true);
+      return searchDocumentsAndLinks(query, language, true);
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
       final List<Collection> collections = getReadCollections(isPublic);
       final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
-      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes);
+      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true);
 
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       result.getFirst().forEach(document ->
@@ -161,9 +189,9 @@ public class SearchFacade extends AbstractFacade {
       return result;
    }
 
-   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes) {
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes, final Function<Document, Boolean> documentFilter) {
       final Query encodedQuery = checkQuery(query, isPublic);
-      final List<Document> documents = getDocumentsByCollections(collections);
+      final List<Document> documents = getDocumentsByCollections(collections).stream().filter(documentFilter::apply).collect(Collectors.toList());
       final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
       final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
       final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);

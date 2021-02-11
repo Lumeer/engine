@@ -135,6 +135,13 @@ public class PublicService extends AbstractService {
    }
 
    @GET
+   @Path("tasks")
+   public DocumentsAndLinks getTaskDocumentsAndLinks(@QueryParam("l") Language language) {
+      final Tuple<List<Document>, List<LinkInstance>> tuple = searchFacade.searchTasksDocumentsAndLinksPublic(new Query(), language);
+      return new DocumentsAndLinks(tuple.getFirst(), tuple.getSecond());
+   }
+
+   @GET
    @Path("files/collection/{collectionId:[0-9a-fA-F]{24}}")
    public List<FileAttachment> getFileAttachmentsCollection(@PathParam("collectionId") final String collectionId) {
       return fileAttachmentFacade.getAllFileAttachments(collectionId, FileAttachment.AttachmentType.DOCUMENT);
