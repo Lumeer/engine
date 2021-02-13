@@ -52,31 +52,37 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
                 .filter { it.isNotEmpty() }
         )
         membersCheck.addAll(members)
-        fields.forEach {
-            objects.put(it.name, encodeObject(it[proxyObject], locale))
-        }
     }
 
-    override fun getMember(key: String) = try {
-        if (objects[key] != null) {
-            objects[key]
-        } else {
-            if (methodObjects[key] != null) {
-                methodObjects[key]
+    override fun getMember(key: String): Any? {
+        try {
+            if (objects[key] != null) {
+                return objects[key]
             } else {
-                val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
-                val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
-                if (method != null) {
-                    val obj = encodeObject(method.invoke(proxyObject), locale)
-                    methodObjects[key] = obj
-                    obj
+                if (methodObjects[key] != null) {
+                    return methodObjects[key]
                 } else {
-                    null
+                    val field = fields.firstOrNull { f: Field -> f.name == key }
+                    if (field != null) {
+                        val enc = encodeObject(field[proxyObject], locale)
+                        objects[key] = enc
+                        return enc
+                    }
+
+                    val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
+                    val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
+                    if (method != null) {
+                        val obj = encodeObject(method.invoke(proxyObject), locale)
+                        methodObjects[key] = obj
+                        return obj
+                    }
                 }
             }
+        } catch (e: Exception) {
+            return null
         }
-    } catch (e: Exception) {
-        null
+
+        return null
     }
 
     private fun methodAllowed(m: Method): Boolean = m.parameterCount == 0 && m.returnType != Void.TYPE
