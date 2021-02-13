@@ -57,6 +57,8 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String MAILERLITE_APIKEY = "mailerlite_apikey";
    public static final String MAILERLITE_GROUP_CS = "mailerlite_group_cs";
    public static final String MAILERLITE_GROUP_EN = "mailerlite_group_en";
+   public static final String MAILERLITE_SEQUENCE_CS = "mailerlite_sequence_cs";
+   public static final String MAILERLITE_SEQUENCE_EN = "mailerlite_sequence_en";
 
    public static final String FRESHDESK_DOMAIN = "freshdesk_domain";
    public static final String FRESHDESK_APIKEY = "freshdesk_apikey";
