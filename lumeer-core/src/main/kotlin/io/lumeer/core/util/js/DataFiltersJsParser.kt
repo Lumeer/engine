@@ -26,10 +26,14 @@ import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import java.io.IOException
 import java.nio.charset.StandardCharsets
+import java.util.logging.Level
+import java.util.logging.Logger
+import javax.inject.Inject
 
 class DataFiltersJsParser : AutoCloseable {
 
     companion object {
+        private val logger: Logger = Logger.getLogger(DataFiltersJsParser::class.simpleName)
         private const val FILTER_JS = "filterDocumentsAndLinksByQuery"
         private lateinit var context: Context
         private lateinit var filterJsValue: Value
@@ -73,6 +77,7 @@ class DataFiltersJsParser : AutoCloseable {
 
                 Tuple(resultDocumentsList, resultLinksList)
             } catch (e: Exception) {
+                logger.log(Level.SEVERE, "Error filtering data: ", e)
                 emptyTuple
             }
         }
