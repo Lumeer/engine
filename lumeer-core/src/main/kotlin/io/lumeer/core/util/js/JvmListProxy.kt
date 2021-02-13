@@ -24,25 +24,30 @@ import java.util.*
 
 class JvmListProxy(val values: MutableList<Any?>, val locale: Locale = Locale.getDefault()) : ProxyArray {
 
-    private val objects: Array<Any?> = Array(values.size) { index -> if (values[index] != null) JvmObjectProxy.encodeObject(values[index]!!, locale) else null }
+    private val objects: Array<Any?> = Array(values.size) { null }
 
     override fun get(index: Long): Any? {
         checkIndex(index)
-        return objects[index.toInt()]
-        //return if (values.getOrNull(index.toInt()) != null) objects[index.toInt()] // JvmObjectProxy.encodeObject(values[index.toInt()]!!, locale)
-        //else null
+        val i = index.toInt()
+
+        val o = objects[i]
+        if (o != null) {
+            return o
+        }
+
+        val v = values[i]
+        if (v != null) {
+            val enc = JvmObjectProxy.encodeObject(v, locale)
+            objects[i] = enc
+            return enc
+        }
+
+        return null
     }
 
-    override fun set(index: Long, value: Value) = throw UnsupportedOperationException() /*{
-        checkIndex(index)
-        values[index.toInt()] = if (value.isHostObject) value.asHostObject<Any>() else value
-    }*/
+    override fun set(index: Long, value: Value) = throw UnsupportedOperationException()
 
-    override fun remove(index: Long): Boolean = throw UnsupportedOperationException() /* {
-        checkIndex(index)
-        values.removeAt(index.toInt())
-        return true
-    }*/
+    override fun remove(index: Long): Boolean = throw UnsupportedOperationException()
 
     private fun checkIndex(index: Long) {
         if (index > 2147483647L || index < 0L) {
