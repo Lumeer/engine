@@ -29,6 +29,7 @@ import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -63,6 +64,7 @@ public class ViewCreator extends WithIdCreator {
       AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
       AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
       mapper.setAnnotationIntrospector(pair);
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
    }
 
    public static void createViews(final TemplateParser templateParser, final ViewFacade viewFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {

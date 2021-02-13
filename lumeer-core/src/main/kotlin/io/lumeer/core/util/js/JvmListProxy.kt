@@ -24,22 +24,25 @@ import java.util.*
 
 class JvmListProxy(val values: MutableList<Any?>, val locale: Locale = Locale.getDefault()) : ProxyArray {
 
+    private val objects: Array<Any?> = Array(values.size) { index -> if (values[index] != null) JvmObjectProxy.encodeObject(values[index]!!, locale) else null }
+
     override fun get(index: Long): Any? {
         checkIndex(index)
-        return if (values.getOrNull(index.toInt()) != null) JvmObjectProxy.encodeObject(values[index.toInt()]!!, locale)
-        else null
+        return objects[index.toInt()]
+        //return if (values.getOrNull(index.toInt()) != null) objects[index.toInt()] // JvmObjectProxy.encodeObject(values[index.toInt()]!!, locale)
+        //else null
     }
 
-    override fun set(index: Long, value: Value) {
+    override fun set(index: Long, value: Value) = throw UnsupportedOperationException() /*{
         checkIndex(index)
         values[index.toInt()] = if (value.isHostObject) value.asHostObject<Any>() else value
-    }
+    }*/
 
-    override fun remove(index: Long): Boolean {
+    override fun remove(index: Long): Boolean = throw UnsupportedOperationException() /* {
         checkIndex(index)
         values.removeAt(index.toInt())
         return true
-    }
+    }*/
 
     private fun checkIndex(index: Long) {
         if (index > 2147483647L || index < 0L) {

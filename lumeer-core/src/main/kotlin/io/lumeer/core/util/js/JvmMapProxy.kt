@@ -23,13 +23,13 @@ import org.graalvm.polyglot.proxy.ProxyArray
 import org.graalvm.polyglot.proxy.ProxyObject
 import java.util.*
 
-class JvmMapProxy(val values: MutableMap<String, Any>, val locale: Locale = Locale.getDefault()) : ProxyObject {
+class JvmMapProxy(val values: MutableMap<String, Any?>, val locale: Locale = Locale.getDefault()) : ProxyObject {
+
+    private val objects: MutableMap<String, Any?> = mutableMapOf()
 
     fun proxyMap() = values
 
-    override fun putMember(key: String?, value: Value) {
-        if (key != null) values[key] = (if (value.isHostObject) value.asHostObject<Any>() else value)
-    }
+    override fun putMember(key: String?, value: Value) = throw UnsupportedOperationException()
 
     override fun hasMember(key: String?): Boolean = values.containsKey(key)
 
@@ -53,13 +53,23 @@ class JvmMapProxy(val values: MutableMap<String, Any>, val locale: Locale = Loca
         }
     }
 
-    override fun getMember(key: String?): Any? = if (values[key] != null) JvmObjectProxy.encodeObject(values[key]!!, locale)
-    else null
+    override fun getMember(key: String?): Any? {
+        if (key != null) {
+            val o = objects[key]
+            if (o != null) {
+                return o
+            }
 
-    override fun removeMember(key: String?): Boolean = if (values.containsKey(key)) {
-        values.remove(key)
-        true
-    } else {
-        false
+            val v = values[key]
+            if (v != null) {
+                val enc = JvmObjectProxy.encodeObject(v!!, locale)
+                objects[key] = enc
+                return enc
+            }
+        }
+
+        return null
     }
+
+    override fun removeMember(key: String?): Boolean = throw UnsupportedOperationException()
 }

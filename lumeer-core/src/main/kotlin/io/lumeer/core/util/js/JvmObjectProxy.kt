@@ -37,8 +37,11 @@ import kotlin.collections.ArrayList
 
 class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale = Locale.getDefault()) : ProxyObject {
     private val fields: List<Field> = listOf(*clazz.fields)
+    private val objects: MutableMap<String, Any> = mutableMapOf()
+    private val methodObjects: MutableMap<String, Any> = mutableMapOf()
     private val methods: List<Method> = listOf(*clazz.methods)
     private val members: MutableList<String>
+    private val membersCheck: MutableSet<String> = mutableSetOf()
 
     init {
         members = ArrayList()
@@ -48,19 +51,29 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
                 .map { it.substring(3, 4).toLowerCase() + it.substring(4) }
                 .filter { it.isNotEmpty() }
         )
+        membersCheck.addAll(members)
+        fields.forEach {
+            objects.put(it.name, encodeObject(it[proxyObject], locale))
+        }
     }
 
     override fun getMember(key: String) = try {
-        val field = fields.firstOrNull { f: Field -> f.name == key }
-        if (field != null) {
-            encodeObject(field[proxyObject], locale)
-        }
-        val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
-        val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
-        if (method != null) {
-            encodeObject(method.invoke(proxyObject), locale)
+        if (objects[key] != null) {
+            objects[key]
         } else {
-            null
+            if (methodObjects[key] != null) {
+                methodObjects[key]
+            } else {
+                val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
+                val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
+                if (method != null) {
+                    val obj = encodeObject(method.invoke(proxyObject), locale)
+                    methodObjects[key] = obj
+                    obj
+                } else {
+                    null
+                }
+            }
         }
     } catch (e: Exception) {
         null
@@ -70,7 +83,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
 
     override fun getMemberKeys(): Any = members
 
-    override fun hasMember(key: String): Boolean = members.contains(key)
+    override fun hasMember(key: String): Boolean = membersCheck.contains(key)
 
     override fun putMember(key: String, value: Value) = throw UnsupportedOperationException()
 
@@ -104,13 +117,13 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
                     return o
                 }
                 o is List<*> -> {
-                    return fromList(o)
+                    return fromList(o, locale)
                 }
                 o is Array<*> -> {
-                    return fromArray(o)
+                    return fromArray(o, locale)
                 }
                 o is Set<*> -> {
-                    return fromSet(o)
+                    return fromSet(o, locale)
                 }
                 o.javaClass.isEnum -> {
                     return o.toString()
@@ -134,11 +147,11 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
 
                     // needs to be checked after point, because point is instance of map
                     if (o is Map<*, *> && o.size > 0 && o.keys.iterator().next() is String) {
-                        return fromMap(o as Map<String, Any>)
+                        return fromMap(o as Map<String, Any>, locale)
                     }
 
                     if (o !is Number && !o.javaClass.isPrimitive && !o.javaClass.isEnum && !o.javaClass.isSynthetic) {
-                        return JvmObjectProxy(o, o.javaClass)
+                        return JvmObjectProxy(o, o.javaClass, locale)
                     }
                     return o
                 }
