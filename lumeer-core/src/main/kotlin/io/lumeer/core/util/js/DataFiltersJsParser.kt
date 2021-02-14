@@ -28,16 +28,16 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.logging.Level
 import java.util.logging.Logger
-import javax.inject.Inject
 
 class DataFiltersJsParser : AutoCloseable {
 
     companion object {
         private val logger: Logger = Logger.getLogger(DataFiltersJsParser::class.simpleName)
         private const val FILTER_JS = "filterDocumentsAndLinksByQuery"
-        private lateinit var context: Context
-        private lateinit var filterJsValue: Value
+        private val filterJsFunction: ThreadLocal<Value> = ThreadLocal()
+        private val contexts: MutableList<Context> = mutableListOf()
         private var filterJsCode: String? = null
+        private var counter = 1
         private val engine = Engine
                 .newBuilder()
                 .allowExperimentalOptions(true)
@@ -50,12 +50,12 @@ class DataFiltersJsParser : AutoCloseable {
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                            constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            if (!this::context.isInitialized) {
-                initContext()
-            }
+
             val locale = language.toLocale()
             val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
             return try {
+                val filterJsValue: Value = if (filterJsFunction.get() == null) { filterJsFunction.set(initContext()); filterJsFunction.get() } else filterJsFunction.get()
+
                 val result = filterJsValue.execute(JvmObjectProxy.fromList(documents, locale),
                         JvmObjectProxy.fromList(collections, locale),
                         JvmObjectProxy.fromList(linkTypes, locale),
@@ -83,17 +83,21 @@ class DataFiltersJsParser : AutoCloseable {
         }
 
         @Synchronized
-        private fun initContext() {
+        private fun initContext(): Value {
             if (filterJsCode != null) {
-                context = Context
+                logger.log(Level.INFO, "Creating filter context no. ${counter++}")
+                val context = Context
                         .newBuilder("js")
                         .engine(engine)
                         .allowAllAccess(true)
                         .build()
                 context.initialize("js")
+                contexts.add(context)
                 val result = context.eval("js", filterJsCode)
-                filterJsValue = context.getBindings("js").getMember(FILTER_JS)
+                return context.getBindings("js").getMember(FILTER_JS)
             }
+
+            throw IOException("Filters JS code not present.")
         }
 
         init {
@@ -108,6 +112,6 @@ class DataFiltersJsParser : AutoCloseable {
     }
 
     override fun close() {
-        context.close()
+        contexts.forEach { it.close() }
     }
 }
