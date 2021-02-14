@@ -200,7 +200,7 @@ public class SearchFacade extends AbstractFacade {
       final List<Document> documents = getDocumentsByCollections(collections).stream().filter(documentFilter::apply).collect(Collectors.toList());
       final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
 
-      if (encodedQuery.containsAnyFilter()) {
+      if (encodedQuery.containsAnyFilter() || encodedQuery.getLinkTypeIds().size() > 0) {
          final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
          final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
          final ConstraintData constraintData = new ConstraintData(
