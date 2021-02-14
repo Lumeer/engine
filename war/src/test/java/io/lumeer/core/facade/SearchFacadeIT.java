@@ -379,16 +379,16 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       String id1 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "a")).getId();
       String id2 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "b")).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "c")).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "d")).getId();
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "c"));
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "d"));
       String id5  = createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("a", "b"))).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("b", "c"))).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("c", "d"))).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("d", "a"))).getId();
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "a")).getId();
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "b")).getId();
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "c")).getId();
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "d")).getId();
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("b", "c")));
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("c", "d")));
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("d", "a")));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "a"));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "b"));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "c"));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "d"));
 
       Query query = new Query();
       List<Document> documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
