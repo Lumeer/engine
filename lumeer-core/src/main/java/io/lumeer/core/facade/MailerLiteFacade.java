@@ -50,22 +50,29 @@ public class MailerLiteFacade implements MailerService {
    private static String MAILERLITE_APIKEY;
    private static String MAILERLITE_GROUP_CS;
    private static String MAILERLITE_GROUP_EN;
+   private static String MAILERLITE_SEQUENCE_CS;
+   private static String MAILERLITE_SEQUENCE_EN;
 
    @PostConstruct
    public void init() {
       MAILERLITE_APIKEY = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILERLITE_APIKEY)).orElse("");
       MAILERLITE_GROUP_CS = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILERLITE_GROUP_CS)).orElse("");
       MAILERLITE_GROUP_EN = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILERLITE_GROUP_EN)).orElse("");
+      MAILERLITE_SEQUENCE_CS = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILERLITE_SEQUENCE_CS)).orElse("");
+      MAILERLITE_SEQUENCE_EN = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.MAILERLITE_SEQUENCE_EN)).orElse("");
    }
 
    @Override
    public void setUserSubscription(final User user, final boolean enSite) {
       if (StringUtils.isNotEmpty(MAILERLITE_APIKEY) && user != null && user.getEmail() != null) {
 
-         if (userSubscribed(user.getEmail())) {
-            updateUser(user.getEmail(), user.hasNewsletter() != null && user.hasNewsletter());
+         if (!userSubscribed(user.getEmail())) {
+            updateUser(user.getEmail(), true);
+
+            subscribeUser(enSite ? MAILERLITE_SEQUENCE_EN : MAILERLITE_SEQUENCE_CS, user);
+            subscribeUser(enSite ? MAILERLITE_GROUP_EN : MAILERLITE_GROUP_CS, user.getName(), user.getEmail(), true);
          } else {
-            subscribeUser(enSite ? MAILERLITE_GROUP_EN : MAILERLITE_GROUP_CS, user);
+            updateUser(user.getEmail(), user.hasNewsletter() != null && user.hasNewsletter());
          }
       }
    }
@@ -85,7 +92,11 @@ public class MailerLiteFacade implements MailerService {
    }
 
    private void subscribeUser(final String groupId, final User user) {
-      mailerLiteClient("groups/" + groupId + "/subscribers", "{\"email\": \"" + user.getEmail() + "\", \"name\":\"" + user.getName() + "\", \"type\": \"" + (user.hasNewsletter() ? "active" : "unsubscribed") +
+      subscribeUser(groupId, user.getName(), user.getEmail(), user.hasNewsletter());
+   }
+
+   private void subscribeUser(final String groupId, final String name, final String email, final boolean active) {
+      mailerLiteClient("groups/" + groupId + "/subscribers", "{\"email\": \"" + email + "\", \"name\":\"" + name + "\", \"type\": \"" + (active ? "active" : "unsubscribed") +
             "\"}", false);
    }
 
