@@ -381,7 +381,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id2 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "b")).getId();
       createDocument(taskCollectionId, Collections.singletonMap(attributeId, "c"));
       createDocument(taskCollectionId, Collections.singletonMap(attributeId, "d"));
-      String id5  = createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("a", "b"))).getId();
+      String id5 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("a", "b"))).getId();
       createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("b", "c")));
       createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("c", "d")));
       createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("d", "a")));
