@@ -21,8 +21,11 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import java.util.Date;
@@ -44,27 +47,53 @@ public class CopyFacade extends AbstractFacade {
    @Inject
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
+   public void deepCopySampleData(Project project, SampleDataType sampleType, Language language) {
+      permissionsChecker.checkRole(project, Role.WRITE);
+
+      var organizationId = templateFacade.getSampleDataOrganizationId(language);
+      this.copyProjectByCode(project, organizationId, sampleType.toString(), false);
+   }
+
    public void deepCopyTemplate(Project project, String templateId, Language language) {
+      permissionsChecker.checkRole(project, Role.WRITE);
+
       var organizationId = templateFacade.getTemplateOrganizationId(language);
-      this.copyProject(project, organizationId, templateId);
+      this.copyProjectById(project, organizationId, templateId, false);
    }
 
    public void deepCopyProject(Project project, String organizationId, String projectId) {
-      this.copyProject(project, organizationId, projectId);
+      permissionsChecker.checkRole(project, Role.WRITE);
+
+      this.copyProjectById(project, organizationId, projectId, true);
    }
 
-   private void copyProject(Project project, String organizationId, String projectId) {
+   private void copyProjectById(Project project, String organizationId, String projectId, boolean checkPermissions) {
+      copyProject(project, organizationId, dao -> dao.getProjectById(projectId), checkPermissions);
+   }
+
+   private void copyProjectByCode(Project project, String organizationId, String projectCode, boolean checkPermissions) {
+      copyProject(project, organizationId, dao -> dao.getProjectByCode(projectCode), checkPermissions);
+   }
+
+   private void copyProject(Project project, String organizationId, java.util.function.Function<ProjectDao, Project> projectFunction, boolean checkPermissions) {
       var fromOrganization = organizationDao.getOrganizationById(organizationId);
+      if (checkPermissions) {
+         permissionsChecker.checkRole(fromOrganization, Role.READ);
+      }
 
       workspaceKeeper.push();
       workspaceKeeper.setOrganization(fromOrganization);
 
       var storage = dataStorageProvider.getUserStorage();
       var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
-      var fromProject = contextSnapshot.getProjectDao().getProjectById(projectId);
+      var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
+      if (checkPermissions) {
+         permissionsChecker.checkRole(fromProject, Role.READ);
+      }
 
       workspaceKeeper.setWorkspace(fromOrganization, fromProject);
 
+      storage = dataStorageProvider.getUserStorage();
       contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var facade = new ProjectFacade();
       facade.init(contextSnapshot);
@@ -75,7 +104,7 @@ public class CopyFacade extends AbstractFacade {
       var relativeDateMillis = fromProject.getTemplateMetadata() != null ? fromProject.getTemplateMetadata().getRelativeDate() : null;
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
 
-      templateFacade.installTemplate(project, organizationId, content, relativeDate);
+      templateFacade.installTemplate(project, fromOrganization.getId(), content, relativeDate);
    }
 
 }

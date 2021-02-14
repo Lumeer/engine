@@ -321,7 +321,9 @@ public class PusherFacade extends AbstractFacade {
                                                        .flatMap(java.util.Collection::stream)
                                                        .collect(Collectors.toSet());
 
-         if (!collectionIdsInViews.contains(collection.getId())) {
+         if (collectionIdsInViews.contains(collection.getId())) {
+            notifications.add(createEventForResource(collection, UPDATE_EVENT_SUFFIX, user));
+         } else {
             notifications.add(createEventForResource(collection, REMOVE_EVENT_SUFFIX, user));
          }
       }

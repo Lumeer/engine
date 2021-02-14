@@ -169,8 +169,12 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public Project getProjectById(final String projectId) {
+      return getProject(projectId, Role.READ);
+   }
+
+   private Project getProject(final String projectId, final Role role) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, Role.READ);
+      permissionsChecker.checkRole(project, role);
 
       return mapResource(project);
    }

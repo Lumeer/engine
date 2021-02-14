@@ -87,6 +87,9 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String TEMPLATE_ORG_EN = "template_org_en";
    public static final String TEMPLATE_ORG_CS = "template_org_cs";
 
+   public static final String SAMPLE_DATA_ORG_EN = "sample_data_org_en";
+   public static final String SAMPLE_DATA_ORG_CS = "sample_data_org_cs";
+
    public DefaultConfigurationProducer() {
       defaultConfiguration = new HashMap<>();
 
