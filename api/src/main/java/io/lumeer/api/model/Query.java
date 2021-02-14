@@ -69,6 +69,14 @@ public class Query {
       return !stems.isEmpty();
    }
 
+   @JsonIgnore
+   public boolean containsAnyFilter() {
+      if (getFulltexts() != null && getFulltexts().size() > 0) {
+         return true;
+      }
+      return getStems().stream().anyMatch(QueryStem::containsAnyFilter);
+   }
+
    public List<QueryStem> getStems() {
       return stems != null ? stems : new ArrayList<>();
    }
@@ -161,6 +169,7 @@ public class Query {
 
    /**
     * Incomplete implementation that needs to be extended for more use cases.
+    *
     * @return partial URL query string representing this stem
     */
    public String toQueryString() {

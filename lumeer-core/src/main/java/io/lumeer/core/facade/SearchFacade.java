@@ -35,6 +35,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.CollectionPurposeUtils;
+import io.lumeer.core.util.QueryUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.js.DataFiltersJsParser;
 import io.lumeer.engine.api.data.DataDocument;
@@ -104,8 +105,9 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<LinkInstance> getLinkInstances(Query query, Language language, boolean isPublic) {
-      final List<Collection> collections = getReadCollections(isPublic);
-      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      var resources = getReadResources(isPublic, query);
+      final List<Collection> collections = resources.getFirst();
+      final List<LinkType> linkTypes = resources.getSecond();
       final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true).getSecond();
 
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
@@ -125,8 +127,9 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Document> searchDocuments(final Query query, Language language, boolean isPublic) {
-      final List<Collection> collections = getReadCollections(isPublic);
-      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      var resources = getReadResources(isPublic, query);
+      final List<Collection> collections = resources.getFirst();
+      final List<LinkType> linkTypes = resources.getSecond();
       final List<Document> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true).getFirst();
 
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
@@ -146,8 +149,10 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
-      final List<Collection> collections = getReadCollections(isPublic).stream().filter(collection -> collection.getPurposeType() == CollectionPurposeType.Tasks).collect(Collectors.toList());
-      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      var resources = getReadResources(isPublic, query);
+      final List<Collection> collections = resources.getFirst().stream().filter(collection -> collection.getPurposeType() == CollectionPurposeType.Tasks).collect(Collectors.toList());
+      ;
+      final List<LinkType> linkTypes = filterLinkTypesByCollections(resources.getSecond(), collections);
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> !CollectionPurposeUtils.isDoneState(document, collectionMap.get(document.getCollectionId())));
 
@@ -172,8 +177,9 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
-      final List<Collection> collections = getReadCollections(isPublic);
-      final List<LinkType> linkTypes = getLinkTypesByCollections(collections);
+      var resources = getReadResources(isPublic, query);
+      final List<Collection> collections = resources.getFirst();
+      final List<LinkType> linkTypes = resources.getSecond();
       final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true);
 
       final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
@@ -190,53 +196,71 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes, final Function<Document, Boolean> documentFilter) {
-      final Query encodedQuery = checkQuery(query, isPublic);
+      final Query encodedQuery = checkQuery(query, collections, linkTypes, isPublic);
       final List<Document> documents = getDocumentsByCollections(collections).stream().filter(documentFilter::apply).collect(Collectors.toList());
       final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
-      final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
-      final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
-      final ConstraintData constraintData = new ConstraintData(
-            userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
-            authenticatedUser.getCurrentUser(),
-            translationManager.translateDurationUnitsMap(language),
-            new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
-      );
-      return DataFiltersJsParser.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+
+      if (encodedQuery.containsAnyFilter()) {
+         final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
+         final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
+         final ConstraintData constraintData = new ConstraintData(
+               userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
+               authenticatedUser.getCurrentUser(),
+               translationManager.translateDurationUnitsMap(language),
+               new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
+         );
+         return DataFiltersJsParser.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+      }
+
+      return new Tuple<>(documents, linkInstances);
    }
 
-   private Query checkQuery(final Query query, boolean isPublic) {
+   private Query checkQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes, boolean isPublic) {
       final View view = permissionsChecker.getActiveView();
       if (!isPublic && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
          return view.getQuery();
       }
-      return encodeQuery(query);
-   }
-
-   private Query encodeQuery(Query query) {
-      Set<String> filterCollectionIds = query.getAttributeFilters().stream().map(io.lumeer.api.model.CollectionAttributeFilter::getCollectionId).collect(Collectors.toSet());
-      List<Collection> collections = collectionDao.getCollectionsByIds(filterCollectionIds);
-      Set<String> filterLinkTypeIds = query.getLinkAttributeFilters().stream().map(io.lumeer.api.model.LinkAttributeFilter::getLinkTypeId).collect(Collectors.toSet());
-      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(filterLinkTypeIds);
 
       return constraintManager.encodeQuery(query, collections, linkTypes);
    }
 
-   private List<Collection> getReadCollections(boolean isPublic) {
+   private Tuple<List<Collection>, List<LinkType>> getReadResources(boolean isPublic, Query query) {
       if (isPublic && this.permissionsChecker.isPublic()) {
-         return collectionDao.getAllCollections();
+         var collections = collectionDao.getAllCollections();
+         var linkTypes = getLinkTypesByCollections(collections);
+         return new Tuple<>(collections, linkTypes);
       }
 
-      return collectionDao.getAllCollections().stream()
-                          .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
-                          .collect(Collectors.toList());
+      List<Collection> collections;
+      List<LinkType> linkTypes;
+      if (query.containsStems()) {
+         var linkTypeIds = query.getLinkTypeIds();
+         linkTypes = linkTypeDao.getLinkTypesByIds(linkTypeIds);
+         var collectionIds = QueryUtils.getQueryCollectionIds(query, linkTypes);
+         collections = collectionDao.getCollectionsByIds(collectionIds);
+      } else {
+         linkTypes = linkTypeDao.getAllLinkTypes();
+         collections = collectionDao.getAllCollections();
+      }
+
+      var filteredCollections = collections.stream()
+                                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
+                                           .collect(Collectors.toList());
+      var filteredLinkTypes = filterLinkTypesByCollections(linkTypes, filteredCollections);
+      return new Tuple<>(filteredCollections, filteredLinkTypes);
    }
 
    private List<LinkType> getLinkTypesByCollections(java.util.Collection<Collection> collections) {
+      return filterLinkTypesByCollections(linkTypeDao.getAllLinkTypes(), collections);
+   }
+
+   private List<LinkType> filterLinkTypesByCollections(java.util.Collection<LinkType> linkTypes, java.util.Collection<Collection> collections) {
       final Set<String> allowedCollectionIds = collections.stream().map(Resource::getId)
                                                           .collect(Collectors.toSet());
-      return linkTypeDao.getAllLinkTypes().stream()
-                        .filter(lt -> allowedCollectionIds.containsAll(lt.getCollectionIds()))
-                        .collect(Collectors.toList());
+
+      return linkTypes.stream()
+                      .filter(lt -> allowedCollectionIds.containsAll(lt.getCollectionIds()))
+                      .collect(Collectors.toList());
    }
 
    private List<Document> getDocumentsByCollections(java.util.Collection<Collection> collections) {
