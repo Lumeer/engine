@@ -25,6 +25,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.ProjectDescription;
+import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.core.facade.OrganizationFacade;
@@ -106,6 +107,20 @@ public class ProjectService extends AbstractService {
       if (workspaceKeeper.getOrganization().isPresent() && copyOrganizationId != null && copyProjectId != null) {
          final Project project = projectFacade.getProjectById(projectId);
          copyFacade.deepCopyProject(project, copyOrganizationId, copyProjectId);
+         return Response.ok().build();
+      }
+
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+   }
+
+   @POST
+   @Path("{projectId:[0-9a-fA-F]{24}}/sample/{type}")
+   public Response copySampleData(@PathParam("projectId") final String projectId, @PathParam("type") final SampleDataType sampleDataType, @QueryParam("l") final Language language) {
+      workspaceKeeper.setProjectId(projectId);
+
+      if (workspaceKeeper.getOrganization().isPresent() && sampleDataType != null) {
+         final Project project = projectFacade.getProjectById(projectId);
+         copyFacade.deepCopySampleData(project, sampleDataType, language);
          return Response.ok().build();
       }
 

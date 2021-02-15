@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
@@ -71,6 +72,17 @@ public class QueryStem {
       return linkFilters;
    }
 
+   @JsonIgnore
+   public boolean containsAnyFilter() {
+      if (getFilters() != null && getFilters().size() > 0) {
+         return true;
+      }
+      if (getLinkFilters() != null && getLinkFilters().size() > 0) {
+         return true;
+      }
+      return getDocumentIds() != null && getDocumentIds().size() > 0;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -105,6 +117,7 @@ public class QueryStem {
 
    /**
     * Incomplete implementation that needs to be extended for more use cases.
+    *
     * @return partial URL query string representing this stem
     */
    public String toQueryString() {

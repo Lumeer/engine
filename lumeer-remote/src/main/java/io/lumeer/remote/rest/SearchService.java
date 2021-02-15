@@ -112,4 +112,16 @@ public class SearchService extends AbstractService {
       );
    }
 
+   @POST
+   @Path("tasks")
+   @QueryProcessor
+   public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("l") Language language) {
+      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, language);
+
+      return new DocumentsAndLinks(
+            new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
+            new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(documentsAndLinks.getSecond()))
+      );
+   }
+
 }

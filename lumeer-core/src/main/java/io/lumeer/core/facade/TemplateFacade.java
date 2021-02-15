@@ -78,6 +78,15 @@ public class TemplateFacade extends AbstractFacade {
       }
    }
 
+   public String getSampleDataOrganizationId(final Language language) {
+      switch (language) {
+         case CS:
+            return Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SAMPLE_DATA_ORG_CS)).orElse("");
+         default:
+            return Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SAMPLE_DATA_ORG_EN)).orElse("");
+      }
+   }
+
    public List<String> getAllTemplateOrganizationIds() {
       final List<String> result = new ArrayList<>();
 

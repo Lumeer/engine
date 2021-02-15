@@ -23,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValueType;
 import io.lumeer.api.model.Constraint;
@@ -68,6 +70,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -180,22 +183,22 @@ public class SearchFacadeIT extends IntegrationTestBase {
       return userDao.updateUser(userId, user);
    }
 
-   private Collection createCollection(String name) {
-      return createCollection(name, null);
-   }
-
-   private Collection createCollection(String name, Attribute attribute) {
+   private Collection createCollection(String name, Attribute... attributes) {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(userId, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection.setDocumentsCount(0);
-      if (attribute != null) {
-         collection.setAttributes(Collections.singleton(attribute));
-      }
+      collection.setAttributes(Arrays.asList(attributes));
 
       Collection createdCollection = collectionDao.createCollection(collection);
       dataDao.createDataRepository(createdCollection.getId());
       return createdCollection;
+   }
+
+   private Collection createTaskCollection(String name, CollectionPurpose purpose, Attribute... attributes) {
+      Collection collection = createCollection(name, attributes);
+      collection.setPurpose(purpose);
+      return collectionDao.updateCollection(collection.getId(), collection, null, false);
    }
 
    @Test
@@ -364,6 +367,43 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testSearchTasks() {
+      var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
+      Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
+      Attribute stateAttribute = new Attribute("a1", "a1", stateConstraint, null, 1);
+      var attributeId = stateAttribute.getId();
+      var purposeMetadata = new DataDocument("stateAttributeId", attributeId).append("finalStatesList", Arrays.asList("c", "d"));
+      CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
+      String taskCollectionId = createTaskCollection("taskCollection", purpose, stateAttribute).getId();
+      String otherCollectionId = createCollection("otherCollection", stateAttribute).getId();
+
+      String id1 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "a")).getId();
+      String id2 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "b")).getId();
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "c"));
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "d"));
+      String id5 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("a", "b"))).getId();
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("b", "c")));
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("c", "d")));
+      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("d", "a")));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "a"));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "b"));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "c"));
+      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "d"));
+
+      Query query = new Query();
+      List<Document> documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id5);
+
+      query = createSimpleQueryWithAttributeFilter(taskCollectionId, CollectionAttributeFilter.createFromValues(taskCollectionId, attributeId, ConditionType.IN, Arrays.asList("a", "c", "d")));
+      documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1);
+
+      query = createSimpleQueryWithAttributeFilter(otherCollectionId, CollectionAttributeFilter.createFromValues(otherCollectionId, attributeId, ConditionType.IN, Arrays.asList("a", "c", "d")));
+      documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
+      assertThat(documents).extracting(Document::getId).isEmpty();
+   }
+
+   @Test
    public void testSearchDocumentsDateConstraint() {
       Constraint constraint = new Constraint(ConstraintType.DateTime, new DataDocument());
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
@@ -464,11 +504,11 @@ public class SearchFacadeIT extends IntegrationTestBase {
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
       String collectionId = createCollection("durationCollection", attribute).getId();
 
-      String id1 = createDocument(collectionId,"5w3d").getId();
-      String id2 = createDocument(collectionId,"3d4h").getId();
-      String id3 = createDocument(collectionId,"2d12h").getId();
-      String id4 = createDocument(collectionId,"3d2h5s").getId();
-      String id5 = createDocument(collectionId,"ddhmms").getId();
+      String id1 = createDocument(collectionId, "5w3d").getId();
+      String id2 = createDocument(collectionId, "3d4h").getId();
+      String id3 = createDocument(collectionId, "2d12h").getId();
+      String id4 = createDocument(collectionId, "3d2h5s").getId();
+      String id5 = createDocument(collectionId, "ddhmms").getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.EQUALS, "28h"));
       List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
@@ -616,18 +656,23 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    private Document createDocument(String collectionId, Object value) {
+      return createDocument(collectionId, Collections.singletonMap(DOCUMENT_KEY, value));
+   }
+
+   private Document createDocument(String collectionId, Map<String, Object> values) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      final String id = DOCUMENT_KEY; // use the same document id for simplicity in tests
-      if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(DOCUMENT_KEY))) {
-         collection.createAttribute(new Attribute(id, DOCUMENT_KEY, null, null, 1));
-         collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
-      } else {
-         Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(DOCUMENT_KEY)).findFirst().get();
-         attr.setUsageCount(attr.getUsageCount() + 1);
-      }
+      values.forEach((attributeId, value) -> {
+         if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(attributeId))) {
+            collection.createAttribute(new Attribute(attributeId, attributeId, null, null, 1));
+            collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
+         } else {
+            Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(attributeId)).findFirst().get();
+            attr.setUsageCount(attr.getUsageCount() + 1);
+         }
+      });
       collectionDao.updateCollection(collectionId, collection, null);
 
-      Document document = new Document(new DataDocument(id, value));
+      Document document = new Document(new DataDocument(values));
       document.setCollectionId(collectionId);
       document.setCreatedBy(USER);
       document.setCreationDate(ZonedDateTime.now());

@@ -35,6 +35,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.CollectionPurposeUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.DocumentCommentedEvent;
@@ -169,16 +170,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected ZonedDateTime getDueDate(final DocumentEvent documentEvent, final Collection collection) {
-      final String dueDateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID) : null;
-
-      if (StringUtils.isNotEmpty(dueDateAttributeId) && findAttribute(collection.getAttributes(), dueDateAttributeId) != null) {
-         if (documentEvent.getDocument().getData().get(dueDateAttributeId) instanceof Date) {
-            final Date dueDate = documentEvent.getDocument().getData().getDate(dueDateAttributeId);
-            return ZonedDateTime.from(dueDate.toInstant().atZone(utcZone));
-         }
-      }
-
-      return null;
+      return CollectionPurposeUtils.getDueDate(documentEvent.getDocument(), collection);
    }
 
    protected String getDueDateFormat(final DocumentEvent documentEvent, final Collection collection) {
@@ -212,44 +204,12 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected boolean isDoneState(final DocumentEvent documentEvent, final Collection collection) {
-      final String stateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
-      final List<String> finalStates = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getArrayList(Collection.META_FINAL_STATES_LIST, String.class) : null;
-
-      if (finalStates != null) {
-
-         if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
-            final Object states = documentEvent.getDocument().getData().getObject(stateAttributeId);
-            if (states instanceof String) {
-               return finalStates.contains(states);
-            } else if (states instanceof List) {
-               final List<String> stringStates = documentEvent.getDocument().getData().getArrayList(stateAttributeId, String.class);
-
-               return stringStates.stream().anyMatch(stringStates::contains);
-            }
-         }
-      }
-
-      return false;
+      return CollectionPurposeUtils.isDoneState(documentEvent.getDocument(), collection);
    }
 
    protected Boolean wasDoneState(final DocumentEvent documentEvent, final Collection collection) {
       if (documentEvent instanceof UpdateDocument) {
-         final String stateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
-         final List<String> finalStates = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getArrayList(Collection.META_FINAL_STATES_LIST, String.class) : null;
-
-         if (finalStates != null) {
-
-            if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
-               final Object states = ((UpdateDocument) documentEvent).getOriginalDocument().getData().getObject(stateAttributeId);
-               if (states instanceof String) {
-                  return finalStates.contains(states);
-               } else if (states instanceof List) {
-                  final List<String> stringStates = ((UpdateDocument) documentEvent).getOriginalDocument().getData().getArrayList(stateAttributeId, String.class);
-
-                  return stringStates.stream().anyMatch(stringStates::contains);
-               }
-            }
-         }
+         return CollectionPurposeUtils.isDoneState(((UpdateDocument) documentEvent).getOriginalDocument(), collection);
       }
 
       return Boolean.FALSE;
