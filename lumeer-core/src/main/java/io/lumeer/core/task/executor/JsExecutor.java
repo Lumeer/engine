@@ -26,6 +26,7 @@ import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
@@ -34,6 +35,7 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.FunctionTask;
+import io.lumeer.core.task.PrintRequest;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
@@ -94,6 +96,7 @@ public class JsExecutor {
       private Set<Change> changes = new HashSet<>();
       private Exception cause = null;
       private boolean dryRun = false;
+      private boolean printed = false;
 
       private LumeerBridge(final ContextualTask task, final Collection collection) {
          this.task = task;
@@ -173,6 +176,36 @@ public class JsExecutor {
          } catch (Exception e) {
             cause = e;
             throw e;
+         }
+      }
+
+      public void printAttribute(final DocumentBridge d, final String attrId) {
+         if (!printed) {
+            final PrintRequest pq = new PrintRequest(
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().get().getCode(),
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getProject().get().getCode(),
+                  d.document.getCollectionId(),
+                  d.document.getId(),
+                  attrId,
+                  ResourceType.COLLECTION
+            );
+            changes.add(new PrintAttributeChange(pq));
+            printed = true; // we can trigger this only once per rule/function
+         }
+      }
+
+      public void printAttribute(final LinkBridge l, final String attrId) {
+         if (!printed) {
+            final PrintRequest pq = new PrintRequest(
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().get().getCode(),
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getProject().get().getCode(),
+                  l.link.getLinkTypeId(),
+                  l.link.getId(),
+                  attrId,
+                  ResourceType.LINK
+            );
+            changes.add(new PrintAttributeChange(pq));
+            printed = true; // we can trigger this only once per rule/function
          }
       }
 
@@ -580,11 +613,14 @@ public class JsExecutor {
                changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList())
          );
 
-         // report user messages for rules triggered via an Action button
+         // report user messages and print requests for rules triggered via an Action button
          final String correlationId = task.getCorrelationId();
          if (StringUtils.isNotEmpty(correlationId)) {
             final List<UserMessage> userMessages = changes.stream().filter(change -> change instanceof UserMessageChange).map(change -> ((UserMessageChange) change).getEntity()).collect(toList());
             changesTracker.addUserMessages(userMessages);
+
+            final List<PrintRequest> printRequests = changes.stream().filter(change -> change instanceof PrintAttributeChange).map(change -> ((PrintAttributeChange) change).getEntity()).collect(toList());
+            changesTracker.addPrintRequests(printRequests);
          }
 
          // propagate changes in existing documents and links that has been loaded prior to calling this rule
@@ -675,7 +711,14 @@ public class JsExecutor {
       }
    }
 
+   public static class PrintAttributeChange extends Change<PrintRequest> {
+      public PrintAttributeChange(final PrintRequest entity) {
+         super(entity);
+      }
+   }
+
    public static abstract class ResourceChange<T extends WithId> extends Change<T> {
+
       private final String attrId;
       private final Object value;
 

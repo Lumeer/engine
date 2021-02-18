@@ -24,6 +24,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.core.task.PrintRequest;
 import io.lumeer.core.task.UserMessage;
 
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ public class ChangesTracker {
    private final Set<LinkType> linkTypes = new HashSet<>();
    private final Set<String> sequences = new HashSet<>();
    private final List<UserMessage> userMessages = new ArrayList<>();
+   private final List<PrintRequest> printRequests = new ArrayList<>();
 
    final Map<String, Collection> collectionsMap = new HashMap<>();
    final Map<String, LinkType> linkTypesMap = new HashMap<>();
@@ -52,11 +54,11 @@ public class ChangesTracker {
    public ChangesTracker() {
    }
 
-   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
-      merge(collections, createdDocuments, updatedDocuments, linkTypes, createdLinkInstances, updatedLinkInstances, removedLinkInstances, sequences, userMessages, collectionsMap, linkTypesMap);
+   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final List<PrintRequest> printRequests, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+      merge(collections, createdDocuments, updatedDocuments, linkTypes, createdLinkInstances, updatedLinkInstances, removedLinkInstances, sequences, userMessages, printRequests, collectionsMap, linkTypesMap);
    }
 
-   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final List<PrintRequest> printRequests, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
          this.collections.removeAll(collections);
          this.collections.addAll(collections);
@@ -108,6 +110,10 @@ public class ChangesTracker {
          this.linkTypesMap.putAll(linkTypesMap);
       }
 
+      if (printRequests != null) {
+         this.printRequests.addAll(printRequests);
+      }
+
       return this;
    }
 
@@ -116,7 +122,7 @@ public class ChangesTracker {
          return this;
       }
 
-      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.removedLinkInstances, other.sequences, other.userMessages, other.collectionsMap, other.linkTypesMap);
+      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.removedLinkInstances, other.sequences, other.userMessages, other.printRequests, other.collectionsMap, other.linkTypesMap);
    }
 
    public Set<Document> getCreatedDocuments() {
@@ -163,6 +169,10 @@ public class ChangesTracker {
       return linkTypesMap;
    }
 
+   public List<PrintRequest> getPrintRequests() {
+      return printRequests;
+   }
+
    public void addCreatedDocuments(final java.util.Collection<Document> createdDocuments) {
       this.createdDocuments.addAll(createdDocuments);
    }
@@ -199,6 +209,10 @@ public class ChangesTracker {
       this.userMessages.addAll(userMessages);
    }
 
+   public void addPrintRequests(final List<PrintRequest> printRequests) {
+      this.printRequests.addAll(printRequests);
+   }
+
    public void updateCollectionsMap(final Map<String, Collection> collectionsMap) {
       this.collectionsMap.putAll(collectionsMap);
    }
@@ -219,6 +233,7 @@ public class ChangesTracker {
             ", removedLinkInstances=" + computeIfNotNull(removedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", sequences=" + sequences +
             ", userMessages=" + userMessages +
+            ", printRequests=" + printRequests +
             '}';
    }
 }

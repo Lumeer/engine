@@ -203,6 +203,12 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, UserMessage.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX, message, getResourceId(), null);
    }
 
+   private Event createEventForPrintRequest(final PrintRequest printRequest, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(printRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, PrintRequest.class.getSimpleName(), message, null);
+   }
+
    private PusherFacade.ResourceId getResourceId(final WithId idObject, final String extraId) {
       return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
    }
@@ -267,6 +273,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
       userMessages.stream().filter(m -> StringUtils.isNotEmpty(m.getMessage())).forEach(m ->
          events.add(createEventForUserMessage(m, initiator.getId()))
+      );
+
+      getPusherClient().trigger(events);
+   }
+
+   public void sendPrintRequestPushNotifications(final List<PrintRequest> printRequests) {
+      final List<Event> events = new ArrayList<>();
+
+      printRequests.forEach(m ->
+            events.add(createEventForPrintRequest(m, initiator.getId()))
       );
 
       getPusherClient().trigger(events);
@@ -397,6 +413,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          if (changesTracker.getUserMessages().size() > 0) {
             sendPushNotifications(changesTracker.getUserMessages());
+         }
+
+         if (changesTracker.getPrintRequests().size() > 0) {
+            sendPrintRequestPushNotifications(changesTracker.getPrintRequests());
          }
       }
    }
