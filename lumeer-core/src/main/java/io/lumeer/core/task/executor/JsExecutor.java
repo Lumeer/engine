@@ -26,6 +26,7 @@ import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
@@ -94,6 +95,7 @@ public class JsExecutor {
       private Set<Change> changes = new HashSet<>();
       private Exception cause = null;
       private boolean dryRun = false;
+      private boolean printed = false;
 
       private LumeerBridge(final ContextualTask task, final Collection collection) {
          this.task = task;
@@ -173,6 +175,36 @@ public class JsExecutor {
          } catch (Exception e) {
             cause = e;
             throw e;
+         }
+      }
+
+      public void printAttribute(final DocumentBridge d, final String attrId) {
+         if (!printed) {
+            final PrintRequest pq = new PrintRequest(
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().get().getCode(),
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getProject().get().getCode(),
+                  d.document.getCollectionId(),
+                  d.document.getId(),
+                  attrId,
+                  ResourceType.COLLECTION
+            );
+            changes.add(new PrintAttributeChange(pq));
+            printed = true; // we can trigger this only once per rule/function
+         }
+      }
+
+      public void printAttribute(final LinkBridge l, final String attrId) {
+         if (!printed) {
+            final PrintRequest pq = new PrintRequest(
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().get().getCode(),
+                  task.getDaoContextSnapshot().getSelectedWorkspace().getProject().get().getCode(),
+                  l.link.getLinkTypeId(),
+                  l.link.getId(),
+                  attrId,
+                  ResourceType.LINK
+            );
+            changes.add(new PrintAttributeChange(pq));
+            printed = true; // we can trigger this only once per rule/function
          }
       }
 
@@ -675,7 +707,14 @@ public class JsExecutor {
       }
    }
 
+   public static class PrintAttributeChange extends Change<PrintRequest> {
+      public PrintAttributeChange(final PrintRequest entity) {
+         super(entity);
+      }
+   }
+
    public static abstract class ResourceChange<T extends WithId> extends Change<T> {
+
       private final String attrId;
       private final Object value;
 
@@ -749,6 +788,48 @@ public class JsExecutor {
 
       public LinkInstance getOriginalLinkInstance() {
          return originalLinkInstance;
+      }
+   }
+
+   public static class PrintRequest {
+      private final String organizationCode;
+      private final String projectCode;
+      private final String collectionId;
+      private final String documentId;
+      private final String attributeId;
+      private final ResourceType type;
+
+      public PrintRequest(final String organizationCode, final String projectCode, final String collectionId, final String documentId, final String attributeId, final ResourceType type) {
+         this.organizationCode = organizationCode;
+         this.projectCode = projectCode;
+         this.collectionId = collectionId;
+         this.documentId = documentId;
+         this.attributeId = attributeId;
+         this.type = type;
+      }
+
+      public String getOrganizationCode() {
+         return organizationCode;
+      }
+
+      public String getProjectCode() {
+         return projectCode;
+      }
+
+      public String getCollectionId() {
+         return collectionId;
+      }
+
+      public String getDocumentId() {
+         return documentId;
+      }
+
+      public String getAttributeId() {
+         return attributeId;
+      }
+
+      public ResourceType getType() {
+         return type;
       }
    }
 
