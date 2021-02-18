@@ -35,6 +35,7 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.FunctionTask;
+import io.lumeer.core.task.PrintRequest;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
@@ -612,11 +613,14 @@ public class JsExecutor {
                changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList())
          );
 
-         // report user messages for rules triggered via an Action button
+         // report user messages and print requests for rules triggered via an Action button
          final String correlationId = task.getCorrelationId();
          if (StringUtils.isNotEmpty(correlationId)) {
             final List<UserMessage> userMessages = changes.stream().filter(change -> change instanceof UserMessageChange).map(change -> ((UserMessageChange) change).getEntity()).collect(toList());
             changesTracker.addUserMessages(userMessages);
+
+            final List<PrintRequest> printRequests = changes.stream().filter(change -> change instanceof PrintAttributeChange).map(change -> ((PrintAttributeChange) change).getEntity()).collect(toList());
+            changesTracker.addPrintRequests(printRequests);
          }
 
          // propagate changes in existing documents and links that has been loaded prior to calling this rule
@@ -788,48 +792,6 @@ public class JsExecutor {
 
       public LinkInstance getOriginalLinkInstance() {
          return originalLinkInstance;
-      }
-   }
-
-   public static class PrintRequest {
-      private final String organizationCode;
-      private final String projectCode;
-      private final String collectionId;
-      private final String documentId;
-      private final String attributeId;
-      private final ResourceType type;
-
-      public PrintRequest(final String organizationCode, final String projectCode, final String collectionId, final String documentId, final String attributeId, final ResourceType type) {
-         this.organizationCode = organizationCode;
-         this.projectCode = projectCode;
-         this.collectionId = collectionId;
-         this.documentId = documentId;
-         this.attributeId = attributeId;
-         this.type = type;
-      }
-
-      public String getOrganizationCode() {
-         return organizationCode;
-      }
-
-      public String getProjectCode() {
-         return projectCode;
-      }
-
-      public String getCollectionId() {
-         return collectionId;
-      }
-
-      public String getDocumentId() {
-         return documentId;
-      }
-
-      public String getAttributeId() {
-         return attributeId;
-      }
-
-      public ResourceType getType() {
-         return type;
       }
    }
 

@@ -34,7 +34,7 @@ import io.lumeer.core.facade.SystemDatabaseConfigurationFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.Tuple;
-import io.lumeer.core.util.js.DataFiltersJsParser;
+import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.StorageConnection;
@@ -149,7 +149,7 @@ public class CronTaskProcessor {
                new CurrencyData(translationManager.translateAbbreviations(rule.getLanguage()), translationManager.translateOrdinals(rule.getLanguage()))
          );
 
-         final Tuple<List<Document>, List<LinkInstance>> result = DataFiltersJsParser.filterDocumentsAndLinksByQuery(
+         final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQuery(
                documents, List.of(collection), List.of(), List.of(), rule.getQuery(),
                Map.of(collection.getId(), AllowedPermissions.getAllAllowed()),
                Map.of(),
