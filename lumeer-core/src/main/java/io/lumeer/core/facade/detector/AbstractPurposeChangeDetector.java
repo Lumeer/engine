@@ -204,12 +204,12 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected boolean isDoneState(final DocumentEvent documentEvent, final Collection collection) {
-      return CollectionPurposeUtils.isDoneState(documentEvent.getDocument(), collection);
+      return CollectionPurposeUtils.isDoneState(Utils.computeIfNotNull(documentEvent.getDocument(), Document::getData), collection);
    }
 
    protected Boolean wasDoneState(final DocumentEvent documentEvent, final Collection collection) {
       if (documentEvent instanceof UpdateDocument) {
-         return CollectionPurposeUtils.isDoneState(((UpdateDocument) documentEvent).getOriginalDocument(), collection);
+         return CollectionPurposeUtils.isDoneState(Utils.computeIfNotNull(((UpdateDocument) documentEvent).getOriginalDocument(), Document::getData), collection);
       }
 
       return Boolean.FALSE;

@@ -165,6 +165,11 @@ public class MongoLinkDataDao extends MongoCollectionScopedDao implements LinkDa
    }
 
    @Override
+   public List<DataDocument> getData(final String linkTypeId, final Integer skip, final Integer limit) {
+      return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find().skip(skip).limit(limit));
+   }
+
+   @Override
    public Stream<DataDocument> getDataStream(final String linkTypeId) {
       return StreamSupport.stream(linkDataCollection(linkTypeId).find().map(MongoUtils::convertDocument).spliterator(), false);
    }

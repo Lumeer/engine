@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -66,7 +67,7 @@ public class Query {
 
    @JsonIgnore
    public boolean containsStems() {
-      return !stems.isEmpty();
+      return !getStems().isEmpty();
    }
 
    @JsonIgnore
@@ -78,11 +79,11 @@ public class Query {
    }
 
    public List<QueryStem> getStems() {
-      return stems != null ? stems : new ArrayList<>();
+      return stems != null ? stems.stream().filter(stem -> stem.getCollectionId() != null).collect(Collectors.toList()) : new ArrayList<>();
    }
 
    public Set<String> getFulltexts() {
-      return fulltexts;
+      return fulltexts != null ? fulltexts : new HashSet<>();
    }
 
    public Integer getPage() {
