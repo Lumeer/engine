@@ -24,4 +24,14 @@ public class QueryUtils {
       collectionIds.addAll(collectionIdsInLinks);
       return collectionIds;
    }
+
+   public static String getOtherCollectionId(LinkType linkType, String collectionId) {
+      if (linkType != null && collectionId != null) {
+         var collectionIds = linkType.getCollectionIds().stream().filter(id -> !collectionId.equals(id)).findFirst();
+         if (collectionIds.isPresent()) {
+            return collectionIds.get();
+         }
+      }
+      return null;
+   }
 }

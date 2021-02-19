@@ -171,6 +171,11 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    }
 
    @Override
+   public List<DataDocument> getData(final String collectionId, final Integer skip, final Integer limit) {
+      return MongoUtils.convertIterableToList(dataCollection(collectionId).find().skip(skip).limit(limit));
+   }
+
+   @Override
    public List<DataDocument> searchData(final SearchQueryStem stem, final Pagination pagination, final Collection collection) {
       Bson filter = createFilterForStem(stem, collection);
       FindIterable<Document> iterable = dataCollection(collection.getId()).find(filter);

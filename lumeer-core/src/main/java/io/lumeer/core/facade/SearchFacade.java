@@ -28,6 +28,7 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
@@ -37,6 +38,7 @@ import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.CollectionPurposeUtils;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.core.util.Tuple;
+import io.lumeer.core.util.Utils;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -49,6 +51,9 @@ import io.lumeer.storage.api.dao.UserDao;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -96,6 +101,8 @@ public class SearchFacade extends AbstractFacade {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
    }
 
+   private static final Integer FETCH_SIZE = 200;
+
    public List<LinkInstance> getLinkInstancesPublic(Query query, Language language) {
       return getLinkInstances(query, language, true);
    }
@@ -106,11 +113,10 @@ public class SearchFacade extends AbstractFacade {
 
    private List<LinkInstance> getLinkInstances(Query query, Language language, boolean isPublic) {
       var resources = getReadResources(isPublic, query);
-      final List<Collection> collections = resources.getFirst();
-      final List<LinkType> linkTypes = resources.getSecond();
-      final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true).getSecond();
+      final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
+      final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
+      final List<LinkInstance> result = searchDocumentsAndLinks(query, language, isPublic, collectionsMap, linkTypesMap, document -> true).getSecond();
 
-      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
       result.forEach(linkInstance ->
             linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
       );
@@ -128,16 +134,23 @@ public class SearchFacade extends AbstractFacade {
 
    private List<Document> searchDocuments(final Query query, Language language, boolean isPublic) {
       var resources = getReadResources(isPublic, query);
-      final List<Collection> collections = resources.getFirst();
-      final List<LinkType> linkTypes = resources.getSecond();
-      final List<Document> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true).getFirst();
+      final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
+      final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
+      final List<Document> result = searchDocumentsAndLinks(query, language, isPublic, collectionsMap, linkTypesMap, document -> true).getFirst();
 
-      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       result.forEach(document ->
-            document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
+            document.setData(constraintManager.decodeDataTypes(collectionsMap.get(document.getCollectionId()), document.getData()))
       );
 
       return result;
+   }
+
+   private Map<String, Collection> getCollectionsMap(java.util.Collection<Collection> collections) {
+      return collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
+   }
+
+   private Map<String, LinkType> getLinkTypeMap(java.util.Collection<LinkType> linkTypes) {
+      return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, linkType -> linkType));
    }
 
    public Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinks(final Query query, Language language) {
@@ -151,16 +164,15 @@ public class SearchFacade extends AbstractFacade {
    private Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
       var resources = getReadResources(isPublic, query);
       final List<Collection> collections = resources.getFirst().stream().filter(collection -> collection.getPurposeType() == CollectionPurposeType.Tasks).collect(Collectors.toList());
-      ;
       final List<LinkType> linkTypes = filterLinkTypesByCollections(resources.getSecond(), collections);
-      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
-      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> !CollectionPurposeUtils.isDoneState(document, collectionMap.get(document.getCollectionId())));
+      final Map<String, Collection> collectionsMap = getCollectionsMap(collections);
+      Map<String, LinkType> linkTypesMap = getLinkTypeMap(linkTypes);
+      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collectionsMap, linkTypesMap, document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())));
 
       result.getFirst().forEach(document ->
-            document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
+            document.setData(constraintManager.decodeDataTypes(collectionsMap.get(document.getCollectionId()), document.getData()))
       );
 
-      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
       result.getSecond().forEach(linkInstance ->
             linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
       );
@@ -178,16 +190,14 @@ public class SearchFacade extends AbstractFacade {
 
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean isPublic) {
       var resources = getReadResources(isPublic, query);
-      final List<Collection> collections = resources.getFirst();
-      final List<LinkType> linkTypes = resources.getSecond();
-      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collections, linkTypes, document -> true);
+      final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
+      Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
+      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, isPublic, collectionsMap, linkTypesMap, document -> true);
 
-      final Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Resource::getId, collection -> collection));
       result.getFirst().forEach(document ->
-            document.setData(constraintManager.decodeDataTypes(collectionMap.get(document.getCollectionId()), document.getData()))
+            document.setData(constraintManager.decodeDataTypes(collectionsMap.get(document.getCollectionId()), document.getData()))
       );
 
-      Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, l -> l));
       result.getSecond().forEach(linkInstance ->
             linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
       );
@@ -195,33 +205,210 @@ public class SearchFacade extends AbstractFacade {
       return result;
    }
 
-   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final List<Collection> collections, final List<LinkType> linkTypes, final Function<Document, Boolean> documentFilter) {
-      final Query encodedQuery = checkQuery(query, collections, linkTypes, isPublic);
-      final List<Document> documents = getDocumentsByCollections(collections).stream().filter(documentFilter::apply).collect(Collectors.toList());
-      final List<LinkInstance> linkInstances = getLinkInstancesByLinkTypes(linkTypes);
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean isPublic, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
+      final Query encodedQuery = checkQuery(query, collectionsMap, linkTypesMap, isPublic);
 
-      if (encodedQuery.containsAnyFilter() || encodedQuery.getLinkTypeIds().size() > 0) {
-         final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
-         final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
-         final ConstraintData constraintData = new ConstraintData(
-               userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
-               authenticatedUser.getCurrentUser(),
-               translationManager.translateDurationUnitsMap(language),
-               new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
-         );
-         return DataFilter.filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, encodedQuery, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+      final Set<Document> allDocuments = new HashSet<>();
+      final Set<LinkInstance> allLinkInstances = new HashSet<>();
+
+      final ConstraintData constraintData = new ConstraintData(
+            userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
+            authenticatedUser.getCurrentUser(),
+            translationManager.translateDurationUnitsMap(language),
+            new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
+      );
+
+      if (encodedQuery.containsStems()) {
+         encodedQuery.getStems().forEach(stem -> {
+            var result = stem.containsAnyFilter() || encodedQuery.getFulltexts().size() > 0
+                  ? searchDocumentsAndLinksInStem(stem, encodedQuery.getFulltexts(), language, collectionsMap, linkTypesMap, documentFilter, constraintData)
+                  : searchDocumentsAndLinksInStemWithoutFilters(stem, collectionsMap, linkTypesMap, documentFilter);
+            allDocuments.addAll(result.getFirst());
+            allLinkInstances.addAll(result.getSecond());
+         });
+      } else {
+         var result = searchDocumentsAndLinksByFulltexts(encodedQuery.getFulltexts(), language, collectionsMap, linkTypesMap, documentFilter, constraintData);
+         allDocuments.addAll(result.getFirst());
+         allLinkInstances.addAll(result.getSecond());
       }
 
-      return new Tuple<>(documents, linkInstances);
+      return new Tuple<>(new ArrayList<>(allDocuments), new ArrayList<>(allLinkInstances));
    }
 
-   private Query checkQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes, boolean isPublic) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStem(final QueryStem stem, final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter, final ConstraintData constraintData) {
+      final Set<Document> allDocuments = new HashSet<>();
+      final Set<LinkInstance> allLinkInstances = new HashSet<>();
+
+      var resources = getResourcesFromStem(stem, collectionsMap, linkTypesMap);
+      final List<Collection> allCollections = resources.getFirst();
+      final List<LinkType> allLinkTypes = resources.getSecond();
+
+      if (allCollections.isEmpty()) {
+         return new Tuple<>(allDocuments, allLinkInstances);
+      }
+
+      final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(allCollections);
+      final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(allLinkTypes, collectionsPermissions);
+      final Query query = new Query(Collections.singletonList(stem), fulltexts, null, null);
+
+      var hasMoreDocuments = true;
+      var page = 0;
+
+      while (hasMoreDocuments) {
+         var previousCollection = allCollections.get(0);
+         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE, document -> true);
+         var previousDocuments = firstCollectionDocuments.stream().filter(documentFilter::apply).collect(Collectors.toList());
+         final Set<Document> currentDocuments = new HashSet<>(previousDocuments);
+         final Set<LinkInstance> currentLinkInstances = new HashSet<>();
+
+         for (String linkTypeId : stem.getLinkTypeIds()) {
+            var linkType = linkTypesMap.get(linkTypeId);
+            var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
+            if (linkType != null && previousCollection != null) {
+               var links = getLinkInstancesByLinkType(linkType, getDocumentsIds(previousDocuments));
+               var documents = getDocumentsByCollection(collection, getLinkDocumentsIds(links), documentFilter);
+
+               currentDocuments.addAll(documents);
+               currentLinkInstances.addAll(links);
+
+               previousCollection = collection;
+               previousDocuments = documents;
+            }
+         }
+
+         var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+         allDocuments.addAll(result.getFirst());
+         allLinkInstances.addAll(result.getSecond());
+
+         page++;
+         hasMoreDocuments = !firstCollectionDocuments.isEmpty();
+      }
+
+      return new Tuple<>(allDocuments, allLinkInstances);
+   }
+
+   private Tuple<List<Collection>, List<LinkType>> getResourcesFromStem(final QueryStem stem, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap) {
+      var previousCollection = collectionsMap.get(stem.getCollectionId());
+      if (previousCollection == null) {
+         return new Tuple<>(new ArrayList<>(), new ArrayList<>());
+      }
+
+      final Set<Collection> allCollections = new HashSet<>(Collections.singleton(previousCollection));
+      final Set<LinkType> allLinkTypes = new HashSet<>();
+      for (String linkTypeId : stem.getLinkTypeIds()) {
+         var linkType = linkTypesMap.get(linkTypeId);
+         var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
+         if (linkType != null && collection != null) {
+            allCollections.add(collection);
+            allLinkTypes.add(linkType);
+
+            previousCollection = collection;
+         }
+
+      }
+      return new Tuple<>(new ArrayList<>(allCollections), new ArrayList<>(allLinkTypes));
+   }
+
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStemWithoutFilters(final QueryStem stem, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
+      var previousCollection = collectionsMap.get(stem.getCollectionId());
+      if (previousCollection == null) {
+         return new Tuple<>(new HashSet<>(), new HashSet<>());
+      }
+
+      var previousDocuments = getDocumentsByCollection(previousCollection, null, documentFilter);
+      final Set<Document> allDocuments = new HashSet<>(previousDocuments);
+      final Set<LinkInstance> allLinkInstances = new HashSet<>();
+
+      for (String linkTypeId : stem.getLinkTypeIds()) {
+         var linkType = linkTypesMap.get(linkTypeId);
+         var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
+         if (linkType != null && collection != null) {
+            var links = getLinkInstancesByLinkType(linkType, getDocumentsIds(previousDocuments));
+            var documents = getDocumentsByCollection(collection, getLinkDocumentsIds(links), documentFilter);
+
+            allDocuments.addAll(documents);
+            allLinkInstances.addAll(links);
+
+            previousCollection = collection;
+            previousDocuments = documents;
+         }
+      }
+
+      return new Tuple<>(allDocuments, allLinkInstances);
+   }
+
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByFulltexts(final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter, final ConstraintData constraintData) {
+      final Set<Document> allDocuments = new HashSet<>();
+      final Set<LinkInstance> allLinkInstances = new HashSet<>();
+
+      // because we are filtering documents (or links) without linked documents, so it is safe to fetch more
+      var fetchSizeMultiplier = 3;
+      var fetchSize = FETCH_SIZE * fetchSizeMultiplier;
+
+      collectionsMap.values().forEach(collection -> {
+         final List<Collection> collections = Collections.singletonList(collection);
+         final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
+         final Map<String, AllowedPermissions> linkTypesPermissions = Collections.emptyMap();
+         final Query query = new Query(Collections.emptyList(), fulltexts, null, null);
+         var hasMoreDocuments = true;
+         var page = 0;
+         while (hasMoreDocuments) {
+            final List<Document> documents = getDocumentsByCollection(collection, page * fetchSize, fetchSize, documentFilter);
+            var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(documents), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+            allDocuments.addAll(result.getFirst());
+
+            hasMoreDocuments = !documents.isEmpty();
+            page++;
+         }
+      });
+
+      linkTypesMap.values().forEach(linkType -> {
+         final List<LinkType> linkTypes = Collections.singletonList(linkType);
+         final List<Collection> collections = linkType.getCollectionIds().stream().map(collectionsMap::get).filter(Objects::nonNull).collect(Collectors.toList());
+         final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
+         final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
+         final Query query = new Query(Collections.emptyList(), fulltexts, null, null);
+         var hasMoreLinks = true;
+         var page = 0;
+         while (hasMoreLinks) {
+            final List<LinkInstance> linkInstances = getLinkInstancesByLinkType(linkType, page * fetchSize, fetchSize);
+            var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+            allLinkInstances.addAll(result.getSecond());
+            
+            hasMoreLinks = !linkInstances.isEmpty();
+            page++;
+         }
+      });
+
+      return new Tuple<>(allDocuments, allLinkInstances);
+   }
+
+   private Collection getOtherCollection(final LinkType linkType, final Map<String, Collection> collectionMap, final String collectionId) {
+      var otherCollectionId = QueryUtils.getOtherCollectionId(linkType, collectionId);
+      if (otherCollectionId != null) {
+         return collectionMap.get(otherCollectionId);
+      }
+      return null;
+   }
+
+   private Set<String> getDocumentsIds(final java.util.Collection<Document> documents) {
+      return documents.stream().map(Document::getId).collect(Collectors.toSet());
+   }
+
+   private Set<String> getLinkDocumentsIds(final java.util.Collection<LinkInstance> linkInstances) {
+      return linkInstances.stream()
+                          .map(LinkInstance::getDocumentIds)
+                          .flatMap(List::stream)
+                          .collect(Collectors.toSet());
+   }
+
+   private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, boolean isPublic) {
       final View view = permissionsChecker.getActiveView();
       if (!isPublic && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
          return view.getQuery();
       }
 
-      return constraintManager.encodeQuery(query, collections, linkTypes);
+      return constraintManager.encodeQuery(query, collectionsMap, linkTypesMap);
    }
 
    private Tuple<List<Collection>, List<LinkType>> getReadResources(boolean isPublic, Query query) {
@@ -263,8 +450,18 @@ public class SearchFacade extends AbstractFacade {
                       .collect(Collectors.toList());
    }
 
-   private List<Document> getDocumentsByCollections(java.util.Collection<Collection> collections) {
-      return convertDataDocumentsToDocuments(collections.stream().flatMap(collection -> dataDao.getData(collection.getId()).stream()).collect(Collectors.toList()));
+   private List<Document> getDocumentsByCollection(Collection collection, @Nullable Set<String> documentIds, final Function<Document, Boolean> documentFilter) {
+      if (documentIds != null) {
+         return convertDataDocumentsToDocuments(dataDao.getData(collection.getId(), documentIds))
+               .stream().filter(documentFilter::apply).collect(Collectors.toList());
+      }
+      return convertDataDocumentsToDocuments(dataDao.getData(collection.getId()))
+            .stream().filter(documentFilter::apply).collect(Collectors.toList());
+   }
+
+   private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit, final Function<Document, Boolean> documentFilter) {
+      return convertDataDocumentsToDocuments(dataDao.getData(collection.getId(), skip, limit))
+            .stream().filter(documentFilter::apply).collect(Collectors.toList());
    }
 
    private List<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data) {
@@ -275,12 +472,27 @@ public class SearchFacade extends AbstractFacade {
                       .collect(Collectors.toList());
    }
 
-   private List<LinkInstance> getLinkInstancesByLinkTypes(java.util.Collection<LinkType> linkTypes) {
-      return convertDataDocumentsToLinkInstances(linkTypes.stream().flatMap(linkType -> linkDataDao.getData(linkType.getId()).stream()).collect(Collectors.toList()));
+   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, @Nullable Set<String> documentIds) {
+      if (documentIds != null) {
+         return assignDataDocumentsLinkInstances(linkInstanceDao.getLinkInstancesByDocumentIds(documentIds, linkType.getId()), linkType.getId());
+      }
+      return convertDataDocumentsToLinkInstances(linkDataDao.getData(linkType.getId()));
+   }
+
+   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, Integer skip, Integer limit) {
+      return convertDataDocumentsToLinkInstances(linkDataDao.getData(linkType.getId(), skip, limit));
    }
 
    private List<LinkInstance> convertDataDocumentsToLinkInstances(java.util.Collection<DataDocument> data) {
       List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(data.stream().map(DataDocument::getId).collect(Collectors.toSet()));
+      Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
+      return linkInstances.stream()
+                          .peek(linkInstance -> linkInstance.setData(Objects.requireNonNullElse(dataMap.get(linkInstance.getId()), new DataDocument())))
+                          .collect(Collectors.toList());
+   }
+
+   private List<LinkInstance> assignDataDocumentsLinkInstances(java.util.Collection<LinkInstance> linkInstances, String linkTypeId) {
+      List<DataDocument> data = linkDataDao.getData(linkTypeId, linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
       Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
       return linkInstances.stream()
                           .peek(linkInstance -> linkInstance.setData(Objects.requireNonNullElse(dataMap.get(linkInstance.getId()), new DataDocument())))

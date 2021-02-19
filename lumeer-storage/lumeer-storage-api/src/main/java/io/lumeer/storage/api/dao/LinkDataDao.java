@@ -52,6 +52,8 @@ public interface LinkDataDao {
 
    List<DataDocument> getData(String linkTypeId);
 
+   List<DataDocument> getData(String linkTypeId, Integer skip, Integer limit);
+
    Stream<DataDocument> getDataStream(String linkTypeId);
 
    List<DataDocument> getData(String linkTypeId, Set<String> linkInstanceIds);
