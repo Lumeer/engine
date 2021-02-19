@@ -82,6 +82,7 @@ public class ViewCreator extends WithIdCreator {
             viewJson.put("_id", templateId);
             view.setQuery(translateQuery(view.getQuery()));
             view.setConfig(translateConfig(view.getConfig()));
+            view.setSettings(translateConfig(view.getSettings()));
             view = viewFacade.createView(view);
             templateParser.getDict().addView(templateId, view);
          } catch (IOException e) {
