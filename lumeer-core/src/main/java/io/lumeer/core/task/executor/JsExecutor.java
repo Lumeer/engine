@@ -20,6 +20,7 @@ package io.lumeer.core.task.executor;
 
 import static java.util.stream.Collectors.*;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
@@ -179,11 +180,13 @@ public class JsExecutor {
          }
       }
 
+      @SuppressWarnings("unused")
       public void printAttribute(final DocumentBridge d, final String attrId) {
-         if (!printed) {
+         final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
+         if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
             final PrintRequest pq = new PrintRequest(
-                  task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().get().getCode(),
-                  task.getDaoContextSnapshot().getSelectedWorkspace().getProject().get().getCode(),
+                  workspace.getOrganization().get().getCode(),
+                  workspace.getProject().get().getCode(),
                   d.document.getCollectionId(),
                   d.document.getId(),
                   attrId,
@@ -194,11 +197,13 @@ public class JsExecutor {
          }
       }
 
+      @SuppressWarnings("unused")
       public void printAttribute(final LinkBridge l, final String attrId) {
-         if (!printed) {
+         final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
+         if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
             final PrintRequest pq = new PrintRequest(
-                  task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().get().getCode(),
-                  task.getDaoContextSnapshot().getSelectedWorkspace().getProject().get().getCode(),
+                  workspace.getOrganization().get().getCode(),
+                  workspace.getProject().get().getCode(),
                   l.link.getLinkTypeId(),
                   l.link.getId(),
                   attrId,
@@ -528,7 +533,7 @@ public class JsExecutor {
             final DataDocument aggregatedUpdate = new DataDocument();
             changeList.forEach(change -> aggregatedUpdate.put(change.getAttrId(), change.getValue()));
             final DataDocument newData = constraintManager.encodeDataTypes(linkType, aggregatedUpdate);
-            final DataDocument oldData = new DataDocument(linkInstance.getData() == null ? new DataDocument() : linkInstance.getData());
+            final DataDocument oldData = originalLinkInstance != null ? new DataDocument(originalLinkInstance.getData()) : new DataDocument();
 
             Set<String> attributesIdsToAdd = new HashSet<>(newData.keySet());
             attributesIdsToAdd.removeAll(oldData.keySet());
@@ -550,7 +555,10 @@ public class JsExecutor {
                                            .updateLinkInstance(linkInstance.getId(), linkInstance);
 
             updatedLink.setData(patchedData);
-            taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+
+            if (task instanceof RuleTask) {
+               taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+            }
 
             updatedLink.setData(constraintManager.decodeDataTypes(linkType, patchedData));
 
