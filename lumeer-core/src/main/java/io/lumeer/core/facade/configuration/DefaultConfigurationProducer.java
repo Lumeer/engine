@@ -40,7 +40,7 @@ public class DefaultConfigurationProducer implements Serializable {
 
    private static final Logger log = Logger.getLogger(DefaultConfigurationProducer.class.getName());
 
-   private Map<String, String> defaultConfiguration = null;
+   private static Map<String, String> defaultConfiguration = null;
 
    private static final String ENVIRONMENT = "environment";
 
@@ -91,28 +91,32 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String SAMPLE_DATA_ORG_CS = "sample_data_org_cs";
 
    public DefaultConfigurationProducer() {
-      defaultConfiguration = new HashMap<>();
+      synchronized (this) {
+         if (defaultConfiguration == null) {
+            defaultConfiguration = new HashMap<>();
 
-      String envDefaults = System.getProperty("lumeer.defaults", System.getenv("LUMEER_DEFAULTS"));
-      if (envDefaults == null) {
-         envDefaults = DEFAULT_PROPERTY_FILE;
-      }
+            String envDefaults = System.getProperty("lumeer.defaults", System.getenv("LUMEER_DEFAULTS"));
+            if (envDefaults == null) {
+               envDefaults = DEFAULT_PROPERTY_FILE;
+            }
 
-      log.info("Loading default properties from: " + envDefaults);
+            log.info("Loading default properties from: " + envDefaults);
 
-      final Properties properties = new Properties();
-      try {
-         final InputStream input = DefaultConfigurationProducer.class.getResourceAsStream("/" + envDefaults);
-         if (input != null) {
-            properties.load(new InputStreamReader(input));
-            properties.forEach((key, value) -> {
-               defaultConfiguration.put(key.toString(), value.toString());
-            });
-         } else {
-            log.log(Level.WARNING, String.format("Default property file %s not found.", envDefaults));
+            final Properties properties = new Properties();
+            try {
+               final InputStream input = DefaultConfigurationProducer.class.getResourceAsStream("/" + envDefaults);
+               if (input != null) {
+                  properties.load(new InputStreamReader(input));
+                  properties.forEach((key, value) -> {
+                     defaultConfiguration.put(key.toString(), value.toString());
+                  });
+               } else {
+                  log.log(Level.WARNING, String.format("Default property file %s not found.", envDefaults));
+               }
+            } catch (IOException e) {
+               log.log(Level.SEVERE, "Unable to load default property values: ", e);
+            }
          }
-      } catch (IOException e) {
-         log.log(Level.SEVERE, "Unable to load default property values: ", e);
       }
    }
 
