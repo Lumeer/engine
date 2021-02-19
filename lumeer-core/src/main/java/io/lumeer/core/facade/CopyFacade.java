@@ -68,6 +68,8 @@ public class CopyFacade extends AbstractFacade {
    }
 
    private void copyProjectById(Project project, String organizationId, String projectId, boolean checkPermissions) {
+      //uncomment to use predefined templates in JSON files
+      //templateFacade.installTemplate(project, "MARKT", Language.EN);
       copyProject(project, organizationId, dao -> dao.getProjectById(projectId), checkPermissions);
    }
 
