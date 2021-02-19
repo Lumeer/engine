@@ -556,7 +556,6 @@ public class JsExecutor {
 
             updatedLink.setData(patchedData);
 
-            //only when task
             if (task instanceof RuleTask) {
                taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
             }
