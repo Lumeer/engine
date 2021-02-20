@@ -38,38 +38,16 @@ class DataFilter : AutoCloseable {
         private val logger: Logger = Logger.getLogger(DataFilter::class.simpleName)
         private val threads = min(max((Runtime.getRuntime().availableProcessors() / 2), 8), 1)
         private val executor = Executors.newFixedThreadPool(threads) as ThreadPoolExecutor
-        private val completionService = ExecutorCompletionService<Value?>(executor)
+        private val completionService = ExecutorCompletionService<Tuple<List<Document>, List<LinkInstance>>>(executor)
 
         @JvmStatic
         fun filterDocumentsAndLinksByQuery(documents: List<Document>,
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                            constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
-            return try {
-
-                val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren)
-                val future = completionService.submit(task)
-                val result = future.get()
-
-                if (result != null) {
-                    val resultDocumentsList = mutableListOf<Document>()
-                    val resultDocuments = result.getMember("documents")
-                    for (i in 0 until resultDocuments.arraySize) resultDocumentsList.add(resultDocuments.getArrayElement(i).asProxyObject<JvmObjectProxy<Document>>().proxyObject)
-
-                    val resultLinksList = mutableListOf<LinkInstance>()
-                    val resultLinks = result.getMember("linkInstances")
-                    for (i in 0 until resultLinks.arraySize) resultLinksList.add(resultLinks.getArrayElement(i).asProxyObject<JvmObjectProxy<LinkInstance>>().proxyObject)
-
-                    Tuple(resultDocumentsList, resultLinksList)
-                } else {
-                    logger.log(Level.SEVERE, "Error filtering data - null result.")
-                    emptyTuple
-                }
-            } catch (e: Exception) {
-                logger.log(Level.SEVERE, "Error filtering data: ", e)
-                emptyTuple
-            }
+            val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren)
+            val future = completionService.submit(task)
+            return future.get()
         }
     }
 

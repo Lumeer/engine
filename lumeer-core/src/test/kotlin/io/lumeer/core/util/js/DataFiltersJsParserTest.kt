@@ -24,6 +24,9 @@ import io.lumeer.engine.api.data.DataDocument
 import org.assertj.core.api.Assertions
 
 import org.junit.Test
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 class DataFiltersJsParserTest {
 
@@ -88,5 +91,81 @@ class DataFiltersJsParserTest {
 
         Assertions.assertThat(linkResult.first).containsOnly(document1, document3)
         Assertions.assertThat(linkResult.second).containsOnly(link1)
+    }
+
+    @Test
+    fun performanceTest() {
+        Task(1, 100).run()
+    }
+
+    @Test
+    fun multiThreadingTest() {
+        val executor = Executors.newFixedThreadPool(4) as ThreadPoolExecutor
+
+        println("Running")
+        for (i in 1..16) {
+            executor.submit(Task(i, 10))
+        }
+
+        executor.shutdown()
+        executor.awaitTermination(30, TimeUnit.SECONDS)
+    }
+
+    class Task(val id: Int, val tasks: Int) : Runnable {
+        private val collection1 = Collection("c1", "c1", "", "", "", Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
+            id = "c1"
+        }
+        private val collection2 = Collection("c2", "c2", "", "", "", Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
+            id = "c2"
+        }
+        private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf()).apply { id = "lt1" }
+
+        override fun run() {
+            val c1AttributeId = collection1.attributes.first().id
+            val document1 = Document(DataDocument(c1AttributeId, "abc")).apply {
+                id = "d1"
+                collectionId = collection1.id
+            }
+            val document2 = Document(DataDocument(c1AttributeId, "abcd")).apply {
+                id = "d2"
+                collectionId = collection1.id
+            }
+            val c2AttributeId = collection2.attributes.first().id
+            val document3 = Document(DataDocument(c2AttributeId, "lumeer")).apply {
+                id = "d3"
+                collectionId = collection2.id
+            }
+            val document4 = Document(DataDocument(c2AttributeId, "nolumeer")).apply {
+                id = "d4"
+                collectionId = collection2.id
+            }
+
+            val permissions = AllowedPermissions(true, true, true)
+            val collectionsPermissions = mapOf(collection1.id to permissions, collection2.id to permissions)
+            val linkTypPermissions = mapOf(linkType.id to permissions)
+            val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()))
+
+            val documents = mutableListOf<Document>()
+            val links = mutableListOf<LinkInstance>()
+
+            for (i in 1..tasks) {
+                val d = Document(document1).apply { id = "doc${i}" }
+                documents.add(d)
+                val l = LinkInstance(linkType.id, listOf(d.id, document3.id)).apply { id = "li${i}" }
+                links.add(l)
+            }
+
+            val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
+            val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), setOf(throughLinkFilter), setOf())), setOf(), 0 , 10)
+
+            val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
+                documents,
+                listOf(collection1, collection2),
+                listOf(linkType),
+                links,
+                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+            )
+        }
+
     }
 }

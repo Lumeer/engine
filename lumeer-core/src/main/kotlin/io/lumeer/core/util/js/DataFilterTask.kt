@@ -20,6 +20,7 @@ package io.lumeer.core.util.js
 
 import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
+import io.lumeer.core.util.Tuple
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
@@ -38,14 +39,16 @@ data class DataFilterTask(val documents: List<Document>,
                           val linkTypesPermissions: Map<String, AllowedPermissions>,
                           val constraintData: ConstraintData,
                           val includeChildren: Boolean,
-                          val language: Language = Language.EN) : Callable<Value?> {
+                          val language: Language = Language.EN) : Callable<Tuple<List<Document>, List<LinkInstance>>> {
 
-    override fun call(): Value? {
+    override fun call(): Tuple<List<Document>, List<LinkInstance>> {
         val locale = language.toLocale()
+        val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
+
         return try {
             val filterJsValue: Value = if (filterJsFunction.get() == null) { filterJsFunction.set(initContext()); filterJsFunction.get() } else filterJsFunction.get()
 
-            filterJsValue.execute(JvmObjectProxy.fromList(documents, locale),
+            val result = filterJsValue.execute(JvmObjectProxy.fromList(documents, locale),
                 JvmObjectProxy.fromList(collections, locale),
                 JvmObjectProxy.fromList(linkTypes, locale),
                 JvmObjectProxy.fromList(linkInstances, locale),
@@ -55,9 +58,24 @@ data class DataFilterTask(val documents: List<Document>,
                 JvmObjectProxy(constraintData, ConstraintData::class.java),
                 includeChildren,
                 language.toLanguageTag())
+
+            if (result != null) {
+                val resultDocumentsList = mutableListOf<Document>()
+                val resultDocuments = result.getMember("documents")
+                for (i in 0 until resultDocuments.arraySize) resultDocumentsList.add(resultDocuments.getArrayElement(i).asProxyObject<JvmObjectProxy<Document>>().proxyObject)
+
+                val resultLinksList = mutableListOf<LinkInstance>()
+                val resultLinks = result.getMember("linkInstances")
+                for (i in 0 until resultLinks.arraySize) resultLinksList.add(resultLinks.getArrayElement(i).asProxyObject<JvmObjectProxy<LinkInstance>>().proxyObject)
+
+                Tuple(resultDocumentsList, resultLinksList)
+            } else {
+                logger.log(Level.SEVERE, "Error filtering data - null result.")
+                emptyTuple
+            }
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Error filtering data: ", e)
-            null
+            emptyTuple
         }
     }
 
@@ -86,7 +104,7 @@ data class DataFilterTask(val documents: List<Document>,
                     .build()
                 context.initialize("js")
                 contexts.add(context)
-                val result = context.eval("js", filterJsCode)
+                context.eval("js", filterJsCode)
                 return context.getBindings("js").getMember(FILTER_JS)
             }
 
