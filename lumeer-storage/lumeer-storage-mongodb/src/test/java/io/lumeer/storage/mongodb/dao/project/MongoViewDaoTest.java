@@ -380,8 +380,8 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       LinkType l3 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId7", "otherId4"), Collections.emptyList(), null));
       LinkType l4 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId8", "otherId5"), Collections.emptyList(), null));
 
-      QueryStem stem1 = new QueryStem(id, Arrays.asList(l2.getId(), l3.getId()), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
-      QueryStem stem2 = new QueryStem("otherId", Arrays.asList(l3.getId(), l4.getId()), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+      QueryStem stem1 = new QueryStem(id, Arrays.asList(l2.getId(), l3.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
+      QueryStem stem2 = new QueryStem("otherId", Arrays.asList(l3.getId(), l4.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Arrays.asList(stem1, stem2));
       view.setQuery(query);
 
@@ -397,8 +397,8 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       LinkType l3 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId7", "otherId4"), Collections.emptyList(), null));
       LinkType l4 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId8", "otherId5"), Collections.emptyList(), null));
 
-      QueryStem stem1 = new QueryStem("cl1", Arrays.asList(l2.getId(), l3.getId()), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
-      QueryStem stem2 = new QueryStem("cl2", Arrays.asList(lt.getId(), l4.getId()), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+      QueryStem stem1 = new QueryStem("cl1", Arrays.asList(l2.getId(), l3.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
+      QueryStem stem2 = new QueryStem("cl2", Arrays.asList(lt.getId(), l4.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Arrays.asList(stem1, stem2));
       view.setQuery(query);
 

@@ -126,7 +126,7 @@ public class Query {
    public Set<CollectionAttributeFilter> getAttributeFilters() {
       return getStems().stream()
                        .map(QueryStem::getFilters)
-                       .flatMap(Set::stream)
+                       .flatMap(List::stream)
                        .collect(Collectors.toSet());
    }
 
@@ -134,7 +134,7 @@ public class Query {
    public Set<LinkAttributeFilter> getLinkAttributeFilters() {
       return getStems().stream()
                        .map(QueryStem::getLinkFilters)
-                       .flatMap(Set::stream)
+                       .flatMap(List::stream)
                        .collect(Collectors.toSet());
    }
 

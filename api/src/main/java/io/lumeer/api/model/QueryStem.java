@@ -32,20 +32,20 @@ public class QueryStem {
    private final String collectionId;
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
-   private final Set<CollectionAttributeFilter> filters;
-   private final Set<LinkAttributeFilter> linkFilters;
+   private final List<CollectionAttributeFilter> filters;
+   private final List<LinkAttributeFilter> linkFilters;
 
    @JsonCreator
    public QueryStem(@JsonProperty("collectionId") final String collectionId,
          @JsonProperty("linkTypeIds") final List<String> linkTypeIds,
          @JsonProperty("documentIds") final Set<String> documentIds,
-         @JsonProperty("filters") final Set<CollectionAttributeFilter> filters,
-         @JsonProperty("linkFilters") final Set<LinkAttributeFilter> linkFilters) {
+         @JsonProperty("filters") final List<CollectionAttributeFilter> filters,
+         @JsonProperty("linkFilters") final List<LinkAttributeFilter> linkFilters) {
       this.collectionId = collectionId;
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptyList();
       this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
-      this.filters = filters != null ? filters : Collections.emptySet();
-      this.linkFilters = linkFilters != null ? linkFilters : Collections.emptySet();
+      this.filters = filters != null ? filters : Collections.emptyList();
+      this.linkFilters = linkFilters != null ? linkFilters : Collections.emptyList();
    }
 
    public QueryStem(final String collectionId) {
@@ -64,11 +64,11 @@ public class QueryStem {
       return documentIds;
    }
 
-   public Set<CollectionAttributeFilter> getFilters() {
+   public List<CollectionAttributeFilter> getFilters() {
       return filters;
    }
 
-   public Set<LinkAttributeFilter> getLinkFilters() {
+   public List<LinkAttributeFilter> getLinkFilters() {
       return linkFilters;
    }
 
