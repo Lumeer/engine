@@ -100,11 +100,11 @@ class DataFiltersJsParserTest {
 
     @Test
     fun multiThreadingTest() {
-        val executor = Executors.newFixedThreadPool(8) as ThreadPoolExecutor
+        val executor = Executors.newFixedThreadPool(4) as ThreadPoolExecutor
 
         println("Running")
-        for (i in 1..32) {
-            executor.submit(Task(i, 1000))
+        for (i in 1..8) {
+            executor.submit(Task(i, 10))
         }
 
         executor.awaitTermination(5, TimeUnit.MINUTES)
@@ -155,11 +155,10 @@ class DataFiltersJsParserTest {
                 links.add(l)
             }
 
-            println("created documents ${id}")
-
             val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
             val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), setOf(throughLinkFilter), setOf())), setOf(), 0 , 10)
 
+            println("Filtruju ${id}")
             val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
                 documents,
                 listOf(collection1, collection2),
@@ -168,7 +167,7 @@ class DataFiltersJsParserTest {
                 linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
             )
 
-            println("finished ${id}")
+            println("Completed ${id}")
         }
 
     }
