@@ -156,7 +156,7 @@ class DataFiltersJsParserTest {
             }
 
             val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
-            val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), setOf(throughLinkFilter), setOf())), setOf(), 0 , 10)
+            val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0 , 10)
 
             val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
                 documents,
