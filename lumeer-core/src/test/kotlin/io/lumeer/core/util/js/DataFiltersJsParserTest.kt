@@ -95,7 +95,7 @@ class DataFiltersJsParserTest {
 
     @Test
     fun performanceTest() {
-        Task(1, 10_000).run()
+        Task(1, 100).run()
     }
 
     @Test
@@ -103,12 +103,12 @@ class DataFiltersJsParserTest {
         val executor = Executors.newFixedThreadPool(4) as ThreadPoolExecutor
 
         println("Running")
-        for (i in 1..8) {
+        for (i in 1..16) {
             executor.submit(Task(i, 10))
         }
 
-        executor.awaitTermination(5, TimeUnit.MINUTES)
         executor.shutdown()
+        executor.awaitTermination(30, TimeUnit.SECONDS)
     }
 
     class Task(val id: Int, val tasks: Int) : Runnable {
@@ -158,7 +158,6 @@ class DataFiltersJsParserTest {
             val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
             val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), setOf(throughLinkFilter), setOf())), setOf(), 0 , 10)
 
-            println("Filtruju ${id}")
             val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
                 documents,
                 listOf(collection1, collection2),
@@ -166,8 +165,6 @@ class DataFiltersJsParserTest {
                 links,
                 linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
             )
-
-            println("Completed ${id}")
         }
 
     }
