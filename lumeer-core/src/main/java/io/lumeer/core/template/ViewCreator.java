@@ -80,6 +80,7 @@ public class ViewCreator extends WithIdCreator {
             viewJson.remove("_id");
             var view = mapper.readValue(viewJson.toJSONString(), View.class);
             viewJson.put("_id", templateId);
+            view.setCode(null);
             view.setQuery(translateQuery(view.getQuery()));
             view.setConfig(translateConfig(view.getConfig()));
             view.setSettings(translateConfig(view.getSettings()));

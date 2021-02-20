@@ -29,6 +29,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.util.Utils;
@@ -140,13 +141,14 @@ public class UserFacade extends AbstractFacade {
          checkUsersCreate(organizationId, users.size());
 
          newUsers = createUsersInOrganization(organizationId, users);
-         addUsersToOrganization(organizationId, newUsers);
+         addUsersToOrganization(organization, newUsers);
       } else { // we will just amend the rights at the project level
          organization = organizationFacade.getOrganizationById(organizationId);
          newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
+         addUsersToOrganization(organization, newUsers);
       }
 
-      addUsersToProject(organizationId, projectId, newUsers, invitationType);
+      addUsersToProject(organization, projectId, newUsers, invitationType);
 
       // in case of manage rights, we add them at the project level only
       if (invitationType != null && invitationType != InvitationType.JOIN_ONLY && invitationType != InvitationType.MANAGE) {
@@ -207,20 +209,27 @@ public class UserFacade extends AbstractFacade {
       }).collect(Collectors.toList());
    }
 
-   private void addUsersToOrganization(String organizationId, List<User> users) {
-      var newPermissions = users.stream()
-                                .map(user -> Permission.buildWithRoles(user.getId(), Collections.singleton(Role.READ)))
-                                .collect(Collectors.toSet());
-      organizationFacade.addUserPermissions(organizationId, newPermissions);
-
+   private void addUsersToOrganization(Organization organization, List<User> users) {
+      var newPermissions = buildUserPermission(organization, users, InvitationType.JOIN_ONLY);
+      organizationFacade.updateUserPermissions(organization.getId(), newPermissions);
    }
 
-   private void addUsersToProject(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
-      workspaceKeeper.setOrganizationId(organizationId);
-      var newPermissions = users.stream()
-                                .map(user -> Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, Set.of(Role.READ))))
-                                .collect(Collectors.toSet());
-      projectFacade.addUserPermissions(projectId, newPermissions);
+   private Set<Permission> buildUserPermission(final Resource resource, final List<User> users, final InvitationType invitationType) {
+      return users.stream()
+                  .map(user -> {
+                     var existingPermissions = resource.getPermissions().getUserPermissions().stream().filter(permission -> permission.getId().equals(user.getId())).findFirst();
+                     var minimalSet = new HashSet<>(Set.of(Role.READ));
+                     existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
+                     return Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, minimalSet));
+                  })
+                  .collect(Collectors.toSet());
+   }
+
+   private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final InvitationType invitationType) {
+      workspaceKeeper.setOrganizationId(organization.getId());
+      var project = projectDao.getProjectById(projectId);
+      var newPermissions = buildUserPermission(project, users, invitationType);
+      projectFacade.updateUserPermissions(projectId, newPermissions);
    }
 
    private User createUserAndSendNotification(String organizationId, User user) {
