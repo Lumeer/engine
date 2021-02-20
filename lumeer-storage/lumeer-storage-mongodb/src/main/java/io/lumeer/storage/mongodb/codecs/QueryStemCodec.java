@@ -64,17 +64,17 @@ public class QueryStemCodec implements Codec<QueryStem> {
       List<String> linkTypeIds = bson.get(LINK_TYPE_IDS, List.class);
       Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
 
-      Set<CollectionAttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
+      List<CollectionAttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
                                                                                                         .map(AttributeFilterCodec::convertFromDocument)
-                                                                                                        .collect(Collectors.toSet());
+                                                                                                        .collect(Collectors.toList());
 
-      Set<LinkAttributeFilter> linkAttributes;
+      List<LinkAttributeFilter> linkAttributes;
       if (bson.containsKey(LINK_FILTERS)) {
          linkAttributes = new ArrayList<Document>(bson.get(LINK_FILTERS, List.class)).stream()
                                                                                      .map(LinkAttributeFilterCodec::convertFromDocument)
-                                                                                     .collect(Collectors.toSet());
+                                                                                     .collect(Collectors.toList());
       } else {
-         linkAttributes = new HashSet<>();
+         linkAttributes = new ArrayList<>();
       }
 
       return new QueryStem(collectionId, linkTypeIds, documentIds, attributes, linkAttributes);
@@ -90,8 +90,8 @@ public class QueryStemCodec implements Codec<QueryStem> {
             .append(COLLECTION_ID, value.getCollectionId())
             .append(LINK_TYPE_IDS, value.getLinkTypeIds())
             .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
-            .append(FILTERS, new ArrayList<>(value.getFilters()))
-            .append(LINK_FILTERS, new ArrayList<>(value.getLinkFilters()));
+            .append(FILTERS, value.getFilters())
+            .append(LINK_FILTERS, value.getLinkFilters());
 
       documentCodec.encode(writer, document, encoderContext);
    }

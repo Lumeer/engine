@@ -67,7 +67,7 @@ class DataFiltersJsParserTest {
         val link1 = LinkInstance(linkType.id, listOf(document1.id, document3.id)).apply { id = "li1" }
         val link2 = LinkInstance(linkType.id, listOf(document2.id, document4.id)).apply { id = "li2" }
 
-        val simpleQuery = Query(listOf(QueryStem(collection1.id, listOf(), setOf(), setOf(), setOf())), setOf(), 0, 10)
+        val simpleQuery = Query(listOf(QueryStem(collection1.id, listOf(), setOf(), listOf(), listOf())), setOf(), 0, 10)
         val simpleResult = DataFilter.filterDocumentsAndLinksByQuery(
                 listOf(document1, document2),
                 listOf(collection1),
@@ -79,7 +79,7 @@ class DataFiltersJsParserTest {
         Assertions.assertThat(simpleResult.first).containsOnly(document1, document2)
 
         val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
-        val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), setOf(throughLinkFilter), setOf())), setOf(), 0 , 10)
+        val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0 , 10)
 
         val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
                 listOf(document1, document2, document3, document4),

@@ -208,7 +208,7 @@ public class ZapierService extends AbstractService {
          }
       }
 
-      return zapierFacade.findDocuments(collectionId, conditions != null ? conditions.stream().map(c -> translateCondition(c, collectionId)).collect(Collectors.toSet()) : null);
+      return zapierFacade.findDocuments(collectionId, conditions != null ? conditions.stream().map(c -> translateCondition(c, collectionId)).collect(Collectors.toList()) : null);
    }
 
    private CollectionAttributeFilter translateCondition(final Condition condition, final String collectionId) {

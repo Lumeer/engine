@@ -150,7 +150,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       linkType.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(1)));
       linkTypeIdFromView = linkTypeDao.createLinkType(linkType).getId();
 
-      QueryStem stem = new QueryStem(collectionIdNoPerm, Collections.singletonList(linkTypeIdFromView), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+      QueryStem stem = new QueryStem(collectionIdNoPerm, Collections.singletonList(linkTypeIdFromView), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(stem);
 
       View view = new View("code", "name", "", "", "", userPermissions, query, "perspective", "", null, createdUser.getId());

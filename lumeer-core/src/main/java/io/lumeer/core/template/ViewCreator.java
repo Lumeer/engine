@@ -112,7 +112,7 @@ public class ViewCreator extends WithIdCreator {
             stem.getDocumentIds().forEach(documentId -> documentIds.add(templateParser.getDict().getDocumentId(documentId)));
          }
 
-         Set<CollectionAttributeFilter> collectionAttributeFilters = new HashSet<>();
+         List<CollectionAttributeFilter> collectionAttributeFilters = new ArrayList<>();
          var filtersUsed = false;
          if (stem.getFilters() != null) {
             filtersUsed = true;
@@ -124,7 +124,7 @@ public class ViewCreator extends WithIdCreator {
             )));
          }
 
-         Set<LinkAttributeFilter> linkAttributeFilters = new HashSet<>();
+         List<LinkAttributeFilter> linkAttributeFilters = new ArrayList<>();
          var linkFiltersUsed = false;
          if (stem.getCollectionId() != null) {
             linkFiltersUsed = true;
