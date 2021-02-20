@@ -330,6 +330,9 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public ProjectContent getRawProjectContent(final String projectId) {
+      final Project storedProject = projectDao.getProjectById(projectId);
+      permissionsChecker.checkRole(storedProject, Role.MANAGE);
+
       final ProjectContent content = new ProjectContent();
 
       content.setCollections(collectionDao.getAllCollections().stream().map(CollectionWithId::new).collect(Collectors.toList()));
@@ -359,7 +362,7 @@ public class ProjectFacade extends AbstractFacade {
 
       content.setTemplateMeta(
             new ProjectMeta(
-                  projectDao.getProjectById(projectId).getCode(),
+                  storedProject.getCode(),
                   content.getCollections().size(),
                   content.getLinkTypes().size(),
                   content.getViews().size(),

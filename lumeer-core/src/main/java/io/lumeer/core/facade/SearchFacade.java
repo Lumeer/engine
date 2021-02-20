@@ -293,8 +293,8 @@ public class SearchFacade extends AbstractFacade {
          return new Tuple<>(new ArrayList<>(), new ArrayList<>());
       }
 
-      final Set<Collection> allCollections = new HashSet<>(Collections.singleton(previousCollection));
-      final Set<LinkType> allLinkTypes = new HashSet<>();
+      final List<Collection> allCollections = new ArrayList<>(Collections.singleton(previousCollection));
+      final List<LinkType> allLinkTypes = new ArrayList<>();
       for (String linkTypeId : stem.getLinkTypeIds()) {
          var linkType = linkTypesMap.get(linkTypeId);
          var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
@@ -306,7 +306,7 @@ public class SearchFacade extends AbstractFacade {
          }
 
       }
-      return new Tuple<>(new ArrayList<>(allCollections), new ArrayList<>(allLinkTypes));
+      return new Tuple<>(allCollections, allLinkTypes);
    }
 
    private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStemWithoutFilters(final QueryStem stem, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
@@ -374,7 +374,7 @@ public class SearchFacade extends AbstractFacade {
             final List<LinkInstance> linkInstances = getLinkInstancesByLinkType(linkType, page * fetchSize, fetchSize);
             var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
             allLinkInstances.addAll(result.getSecond());
-            
+
             hasMoreLinks = !linkInstances.isEmpty();
             page++;
          }
