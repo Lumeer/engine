@@ -240,9 +240,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       createDocument(collectionIds.get(2), "doc5");
       String id6 = createDocument(collectionIds.get(2), "doc6").getId();
 
-      QueryStem stem1 = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(id1), Collections.emptySet(), Collections.emptySet());
-      QueryStem stem2 = new QueryStem(collectionIds.get(1), Collections.emptyList(), new HashSet<>(Arrays.asList(id3, id4)), Collections.emptySet(), Collections.emptySet());
-      QueryStem stem3 = new QueryStem(collectionIds.get(2), Collections.emptyList(), Collections.singleton(id6), Collections.emptySet(), Collections.emptySet());
+      QueryStem stem1 = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(id1), Collections.emptyList(), Collections.emptyList());
+      QueryStem stem2 = new QueryStem(collectionIds.get(1), Collections.emptyList(), new HashSet<>(Arrays.asList(id3, id4)), Collections.emptyList(), Collections.emptyList());
+      QueryStem stem3 = new QueryStem(collectionIds.get(2), Collections.emptyList(), Collections.singleton(id6), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Arrays.asList(stem1, stem2, stem3));
 
       List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
@@ -281,16 +281,16 @@ public class SearchFacadeIT extends IntegrationTestBase {
       List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
       assertThat(documents).extracting(Document::getId).containsOnly(id2, id3, id4, id6, id7, id8);
 
-      Set<CollectionAttributeFilter> filters = Collections.singleton(CollectionAttributeFilter.createFromValues(collectionIds.get(0), DOCUMENT_KEY, ConditionType.EQUALS, "lmr"));
-      QueryStem stem = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptySet());
+      List<CollectionAttributeFilter> filters = Collections.singletonList(CollectionAttributeFilter.createFromValues(collectionIds.get(0), DOCUMENT_KEY, ConditionType.EQUALS, "lmr"));
+      QueryStem stem = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptyList());
       query = new Query(Collections.singletonList(stem), new HashSet<>(Collections.singletonList("mr")), null, null);
       documents = searchFacade.searchDocuments(query, Language.EN);
       assertThat(documents).extracting(Document::getId).containsOnly(id2);
 
-      filters = new HashSet<>(Arrays.asList(CollectionAttributeFilter.createFromValues(collectionIds.get(0), DOCUMENT_KEY, ConditionType.EQUALS, "lmr"),
-            CollectionAttributeFilter.createFromValues(collectionIds.get(1), DOCUMENT_KEY, ConditionType.EQUALS, "other lmr")));
-      List<QueryStem> stems = Arrays.asList(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptySet()),
-            new QueryStem(collectionIds.get(1), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptySet()));
+      filters = Arrays.asList(CollectionAttributeFilter.createFromValues(collectionIds.get(0), DOCUMENT_KEY, ConditionType.EQUALS, "lmr"),
+            CollectionAttributeFilter.createFromValues(collectionIds.get(1), DOCUMENT_KEY, ConditionType.EQUALS, "other lmr"));
+      List<QueryStem> stems = Arrays.asList(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptyList()),
+            new QueryStem(collectionIds.get(1), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptyList()));
       query = new Query(stems, new HashSet<>(Collections.singletonList("mr")), null, null);
       documents = searchFacade.searchDocuments(query, Language.EN);
       assertThat(documents).extracting(Document::getId).containsOnly(id2, id7);
@@ -358,7 +358,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    private Query createSimpleQueryWithAttributeFilter(String collectionId, CollectionAttributeFilter filter) {
-      List<QueryStem> stems = Collections.singletonList(new QueryStem(collectionId, Collections.emptyList(), Collections.emptySet(), Collections.singleton(filter), Collections.emptySet()));
+      List<QueryStem> stems = Collections.singletonList(new QueryStem(collectionId, Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList()));
       return new Query(stems, Collections.emptySet(), null, null);
    }
 
@@ -570,17 +570,17 @@ public class SearchFacadeIT extends IntegrationTestBase {
       createLinkInstance(linkType12Id, Arrays.asList(id6, id11));
       createLinkInstance(linkType12Id, Arrays.asList(id7, id12));
 
-      QueryStem stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+      QueryStem stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Collections.singletonList(stem), Collections.emptySet(), null, null);
       List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8, id10, id11, id12);
 
-      stem = new QueryStem(collectionIds.get(0), Collections.singletonList(linkType01Id), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+      stem = new QueryStem(collectionIds.get(0), Collections.singletonList(linkType01Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       query = new Query(Collections.singletonList(stem), Collections.singleton("lol"), null, null);
       documents = searchFacade.searchDocuments(query, Language.EN);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id6, id7, id8);
 
-      stem = new QueryStem(collectionIds.get(1), Collections.singletonList(linkType12Id), Collections.emptySet(), Collections.emptySet(), Collections.emptySet());
+      stem = new QueryStem(collectionIds.get(1), Collections.singletonList(linkType12Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       query = new Query(Collections.singletonList(stem), Collections.singleton("lumr"), null, null);
       documents = searchFacade.searchDocuments(query, Language.EN);
       assertThat(documents).extracting(Document::getId).containsOnly(id11, id6);
@@ -606,7 +606,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       createDocument(collectionIds.get(0), "e1", c2.getId());
       createDocument(collectionIds.get(0), "e2", c2.getId());
 
-      Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptySet(), Collections.emptySet()));
+      Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptyList(), Collections.emptyList()));
       List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
 
       SoftAssertions assertions = new SoftAssertions();
@@ -618,7 +618,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
                 .containsExactlyInAnyOrder("a0", "b1", "b2", "c1", "c2", "c3", "d1", "d2", "d3", "e1", "e2");
       assertions.assertAll();
 
-      query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b2.getId()), Collections.emptySet(), Collections.emptySet()));
+      query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b2.getId()), Collections.emptyList(), Collections.emptyList()));
       documents = searchFacade.searchDocuments(query, Language.EN);
       assertions = new SoftAssertions();
       assertions.assertThat(documents).hasSize(4);
@@ -626,7 +626,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
                 .containsExactlyInAnyOrder("b2", "d1", "d2", "d3");
       assertions.assertAll();
 
-      query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b1.getId()), Collections.emptySet(), Collections.emptySet()));
+      query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b1.getId()), Collections.emptyList(), Collections.emptyList()));
       documents = searchFacade.searchDocuments(query, Language.EN);
       assertions = new SoftAssertions();
       assertions.assertThat(documents).hasSize(6);
@@ -643,7 +643,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       a0.setMetaData(new DataDocument(Document.META_PARENT_ID, a2.getId()));
       documentDao.updateDocument(a0.getId(), a0);
 
-      Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptySet(), Collections.emptySet()));
+      Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptyList(), Collections.emptyList()));
       List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
 
       assertThat(documents).hasSize(3);

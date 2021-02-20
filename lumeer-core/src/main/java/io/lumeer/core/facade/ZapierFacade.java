@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -276,7 +277,7 @@ public class ZapierFacade extends AbstractFacade {
                            collectionId,
                            null,
                            null,
-                           Set.of(CollectionAttributeFilter.createFromValues(collectionId, key, ConditionType.EQUALS, data.get(key))),
+                           Collections.singletonList(CollectionAttributeFilter.createFromValues(collectionId, key, ConditionType.EQUALS, data.get(key))),
                            null)
                ),
                Language.EN
@@ -337,7 +338,7 @@ public class ZapierFacade extends AbstractFacade {
             .collect(Collectors.toList());
    }
 
-   public List<DataDocument> findDocuments(final String collectionId, final Set<CollectionAttributeFilter> collectionAttributeFilters) {
+   public List<DataDocument> findDocuments(final String collectionId, final List<CollectionAttributeFilter> collectionAttributeFilters) {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
       return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20), Language.EN)
