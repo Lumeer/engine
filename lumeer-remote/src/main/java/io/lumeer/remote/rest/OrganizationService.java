@@ -29,6 +29,7 @@ import io.lumeer.core.facade.CompanyContactFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.ProjectFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.HashMap;
 import java.util.List;
@@ -74,6 +75,7 @@ public class OrganizationService extends AbstractService {
 
    @PUT
    @Path("{organizationId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public Organization updateOrganization(@PathParam("organizationId") String organizationId, Organization organization) {
       return organizationFacade.updateOrganization(organizationId, organization);
    }
@@ -222,6 +224,7 @@ public class OrganizationService extends AbstractService {
 
    @PUT
    @Path("{organizationId:[0-9a-fA-F]{24}}/contact")
+   @HealthCheck
    public CompanyContact setCompanyContact(@PathParam("organizationId") final String organizationId, final CompanyContact companyContact) {
       return companyContactFacade.setCompanyContact(organizationFacade.getOrganizationById(organizationId), companyContact);
    }

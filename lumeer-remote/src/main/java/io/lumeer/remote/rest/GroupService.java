@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Group;
 import io.lumeer.core.facade.GroupFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -59,12 +60,14 @@ public class GroupService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public Group createGroup(Group group) {
       return groupFacade.createGroup(group);
    }
 
    @PUT
    @Path("{groupId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public Group updateGroup(@PathParam("groupId") String groupId, Group group) {
       return groupFacade.updateGroup(groupId, group);
    }

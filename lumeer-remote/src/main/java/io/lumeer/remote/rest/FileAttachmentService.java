@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.core.facade.FileAttachmentFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -58,6 +59,7 @@ public class FileAttachmentService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public FileAttachment createFileAttachment(final FileAttachment fileAttachment) {
       return fileAttachmentFacade.createFileAttachment(fileAttachment);
    }
@@ -78,6 +80,7 @@ public class FileAttachmentService extends AbstractService {
    }
 
    @PUT
+   @HealthCheck
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
       return fileAttachmentFacade.renameFileAttachment(fileAttachment);
    }

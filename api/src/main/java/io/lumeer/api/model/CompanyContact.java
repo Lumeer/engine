@@ -18,12 +18,14 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class CompanyContact {
+public class CompanyContact implements HealthChecking {
 
    public static final String ID = "id";
    public static final String ORGANIZATION_ID = "organizationId";
@@ -262,5 +264,22 @@ public class CompanyContact {
    @Override
    public int hashCode() {
       return Objects.hash(id, organizationId, company, firstName, lastName, address1, address2, city, zip, state, country, email, phone, ic, dic);
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("company", company, MAX_STRING_LENGTH);
+      checkStringLength("firstName", firstName, MAX_STRING_LENGTH);
+      checkStringLength("lastName", lastName, MAX_STRING_LENGTH);
+      checkStringLength("address1", address1, MAX_STRING_LENGTH);
+      checkStringLength("address2", address2, MAX_STRING_LENGTH);
+      checkStringLength("city", city, MAX_STRING_LENGTH);
+      checkStringLength("zip", zip, MAX_STRING_LENGTH);
+      checkStringLength("state", state, MAX_STRING_LENGTH);
+      checkStringLength("country", country, MAX_STRING_LENGTH);
+      checkStringLength("email", email, MAX_STRING_LENGTH);
+      checkStringLength("phone", phone, MAX_STRING_LENGTH);
+      checkStringLength("ic", ic, MAX_STRING_LENGTH);
+      checkStringLength("dic", dic, MAX_STRING_LENGTH);
    }
 }

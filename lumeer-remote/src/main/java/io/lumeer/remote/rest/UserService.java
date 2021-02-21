@@ -30,6 +30,7 @@ import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.UserFacade;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.PATCH;
 
 import com.fasterxml.jackson.annotation.JsonView;
@@ -74,6 +75,7 @@ public class UserService extends AbstractService {
    @POST
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users")
    @JsonView(UserViews.DefaultView.class)
+   @HealthCheck
    public User createUserInOrganization(@PathParam("organizationId") String organizationId, User user) {
       return userFacade.createUser(organizationId, user);
    }
@@ -81,6 +83,7 @@ public class UserService extends AbstractService {
    @POST
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/users/{invitationType}")
    @JsonView(UserViews.DefaultView.class)
+   @HealthCheck
    public List<User> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, @PathParam("invitationType") final InvitationType invitationType, final List<User> users) {
       return userFacade.createUsersInWorkspace(organizationId, projectId, users, invitationType != null ? invitationType : InvitationType.JOIN_ONLY);
    }
@@ -88,6 +91,7 @@ public class UserService extends AbstractService {
    @PUT
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    @JsonView(UserViews.DefaultView.class)
+   @HealthCheck
    public User updateUserInOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId, User user) {
       return userFacade.updateUser(organizationId, userId, user);
@@ -132,6 +136,7 @@ public class UserService extends AbstractService {
    @PATCH
    @Path("current")
    @JsonView(UserViews.FullView.class)
+   @HealthCheck
    public User patchCurrentUser(User user) {
       return userFacade.patchCurrentUser(user, getFirstUrlPathPart());
    }
@@ -150,6 +155,7 @@ public class UserService extends AbstractService {
 
    @POST
    @Path("feedback")
+   @HealthCheck
    public Response createFeedback(Feedback feedback) {
       userFacade.createFeedback(feedback);
 

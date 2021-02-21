@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Sequence;
 import io.lumeer.core.facade.SequenceFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -57,6 +58,7 @@ public class SequenceService extends AbstractService {
 
    @PUT
    @Path("{sequenceId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public Sequence updateSequence(@PathParam("sequenceId") final String sequenceId, final Sequence sequence) {
       Sequence storedSequence = sequenceFacade.updateSequence(sequenceId, sequence);
       return storedSequence;

@@ -18,12 +18,14 @@
  */
 package io.lumeer.api.model.common;
 
+import io.lumeer.api.exception.InsaneObjectException;
+import io.lumeer.api.model.HealthChecking;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.ResourceType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public abstract class Resource implements WithId {
+public abstract class Resource implements WithId, HealthChecking {
 
    public static final String CODE = "code";
    public static final String NAME = "name";
@@ -163,5 +165,12 @@ public abstract class Resource implements WithId {
    @Override
    public int hashCode() {
       return getCode() != null ? getCode().hashCode() : 0;
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("code", code, MAX_STRING_LENGTH);
+      checkStringLength("name", name, MAX_STRING_LENGTH);
+      checkStringLength("description", description, MAX_LONG_STRING_LENGTH);
    }
 }

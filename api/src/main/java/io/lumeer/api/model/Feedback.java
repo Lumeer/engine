@@ -20,6 +20,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.exception.InsaneObjectException;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -27,7 +28,7 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class Feedback {
+public class Feedback implements HealthChecking {
 
    public static final String ID = "id";
    public static final String USER_ID = "userId";
@@ -120,5 +121,10 @@ public class Feedback {
             ", creationTime=" + creationTime +
             ", message='" + message + '\'' +
             '}';
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("message", message, MAX_LONG_STRING_LENGTH);
    }
 }

@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.facade.ResourceCommentFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -69,6 +70,7 @@ public class ResourceCommentService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public ResourceComment createComment(final ResourceComment comment) {
       comment.setResourceType(type);
       comment.setResourceId(resourceId);
@@ -77,6 +79,7 @@ public class ResourceCommentService extends AbstractService {
    }
 
    @PUT
+   @HealthCheck
    public ResourceComment updateComment(final ResourceComment comment) {
       comment.setResourceType(type);
       comment.setResourceId(resourceId);

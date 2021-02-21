@@ -19,6 +19,7 @@
 
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.AttributeUtil;
 
@@ -38,7 +39,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LinkType implements WithId {
+public class LinkType implements WithId, HealthChecking {
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -213,5 +214,13 @@ public class LinkType implements WithId {
             ", linksCount=" + linksCount +
             ", rules=" + rules +
             '}';
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("name", name, MAX_STRING_LENGTH);
+
+      if (attributes != null) attributes.forEach(Attribute::checkHealth);
+      if (rules != null) rules.forEach((k, v) -> v.checkHealth());
    }
 }

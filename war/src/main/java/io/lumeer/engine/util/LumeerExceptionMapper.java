@@ -18,6 +18,7 @@
  */
 package io.lumeer.engine.util;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.exception.LumeerException;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.exception.BadFormatException;
@@ -89,6 +90,11 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
             e instanceof CollectionMetadataDocumentNotFoundException || e instanceof DocumentNotFoundException ||
             e instanceof ViewMetadataNotFoundException || e instanceof ResourceNotFoundException) {
          return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
+      }
+
+      // 422 - UNPROCESSABLE ENTITY
+      if (e instanceof InsaneObjectException) {
+         return Response.status(422).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 500 - INTERNAL SERVER ERROR

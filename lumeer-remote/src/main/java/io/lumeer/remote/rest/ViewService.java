@@ -25,6 +25,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.View;
 import io.lumeer.core.facade.ViewFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.List;
 import java.util.Set;
@@ -63,12 +64,14 @@ public class ViewService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public View createView(View view) {
       return viewFacade.createView(view);
    }
 
    @PUT
    @Path("{viewId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public View updateView(@PathParam("viewId") String id, View view) {
       final View updatedView = viewFacade.updateView(id, view);
       updatedView.setFavorite(viewFacade.isFavorite(id));

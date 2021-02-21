@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.core.facade.ViewFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,12 +67,14 @@ public class LinkTypeService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public LinkType createLinkType(LinkType linkType) {
       return linkTypeFacade.createLinkType(linkType);
    }
 
    @PUT
    @Path("{linkTypeId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public LinkType updateLinkType(@PathParam("linkTypeId") String id, LinkType linkType) {
       return linkTypeFacade.updateLinkType(id, linkType);
    }
@@ -103,12 +106,14 @@ public class LinkTypeService extends AbstractService {
 
    @POST
    @Path("{linkTypeId:[0-9a-fA-F]{24}}/attributes")
+   @HealthCheck
    public List<Attribute> createLinkTypeAttributes(@PathParam("linkTypeId") String linkTypeId, List<Attribute> attributes) {
       return new ArrayList<>(linkTypeFacade.createLinkTypeAttributes(linkTypeId, attributes));
    }
 
    @PUT
    @Path("{linkTypeId:[0-9a-fA-F]{24}}/attributes/{attributeId}")
+   @HealthCheck
    public Attribute updateLinkTypeAttribute(@PathParam("linkTypeId") String linkTypeId, @PathParam("attributeId") String attributeId, Attribute attribute) {
       return linkTypeFacade.updateLinkTypeAttribute(linkTypeId, attributeId, attribute);
    }

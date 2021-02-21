@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Document;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.PATCH;
 
 import java.util.List;
@@ -62,6 +63,7 @@ public class DocumentService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public Document createDocument(Document document) {
       return documentFacade.createDocument(collectionId, document);
    }
