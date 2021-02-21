@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -33,7 +34,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ResourceComment implements WithId {
+public class ResourceComment implements WithId, HealthChecking {
 
    private String id;
 
@@ -182,5 +183,10 @@ public class ResourceComment implements WithId {
             ", comment='" + comment + '\'' +
             ", metaData=" + metaData +
             '}';
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("comment", comment, MAX_LONG_STRING_LENGTH);
    }
 }

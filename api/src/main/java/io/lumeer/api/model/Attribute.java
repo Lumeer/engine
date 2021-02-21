@@ -18,12 +18,13 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Attribute {
+public class Attribute implements HealthChecking {
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -127,4 +128,8 @@ public class Attribute {
             '}';
    }
 
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("name", name, MAX_STRING_LENGTH);
+   }
 }

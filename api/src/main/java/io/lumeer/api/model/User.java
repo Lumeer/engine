@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -38,7 +39,7 @@ import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class User {
+public class User implements HealthChecking {
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -334,5 +335,11 @@ public class User {
 
    public ZonedDateTime getLastLoggedIn() {
       return lastLoggedIn;
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("name", name, MAX_STRING_LENGTH);
+      checkStringLength("email", email, MAX_STRING_LENGTH);
    }
 }

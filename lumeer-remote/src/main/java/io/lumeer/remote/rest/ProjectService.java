@@ -31,6 +31,7 @@ import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.List;
 import java.util.Set;
@@ -79,6 +80,7 @@ public class ProjectService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public Project createProject(Project project) {
       Project storedProject = projectFacade.createProject(project);
       storedProject.setCollectionsCount(0);
@@ -129,6 +131,7 @@ public class ProjectService extends AbstractService {
 
    @PUT
    @Path("{projectId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public Project updateProject(@PathParam("projectId") String projectId, Project project) {
       Project storedProject = projectFacade.updateProject(projectId, project);
       storedProject.setCollectionsCount(projectFacade.getCollectionsCount(storedProject));

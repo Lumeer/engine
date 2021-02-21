@@ -5,5 +5,6 @@
         http://java.sun.com/xml/ns/javaee/beans_1_0.xsd">
    <interceptors>
       <class>io.lumeer.remote.rest.interceptor.QueryProcessorInterceptor</class>
+      <class>io.lumeer.remote.rest.interceptor.HealthCheckInterceptor</class>
    </interceptors>
 </beans>

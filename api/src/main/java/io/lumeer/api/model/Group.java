@@ -18,12 +18,14 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class Group {
+public class Group implements HealthChecking {
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -82,5 +84,10 @@ public class Group {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             '}';
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("name", name, MAX_STRING_LENGTH);
    }
 }

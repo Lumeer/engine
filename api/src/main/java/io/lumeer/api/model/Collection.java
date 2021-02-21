@@ -19,6 +19,7 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.engine.api.data.DataDocument;
@@ -40,7 +41,7 @@ import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Collection extends Resource {
+public class Collection extends Resource implements HealthChecking {
 
    public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
 
@@ -255,4 +256,11 @@ public class Collection extends Resource {
             '}';
    }
 
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      super.checkHealth();
+
+      if (attributes != null) attributes.forEach(Attribute::checkHealth);
+      if (rules != null) rules.forEach((k, v) -> v.checkHealth());
+   }
 }

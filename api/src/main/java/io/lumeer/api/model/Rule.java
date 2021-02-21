@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class Rule {
+public class Rule implements HealthChecking {
 
    public static final String NAME = "name";
    public static final String TYPE = "type";
@@ -119,4 +120,8 @@ public class Rule {
       this.configuration = configuration;
    }
 
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("name", name, MAX_STRING_LENGTH);
+   }
 }

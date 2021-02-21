@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class FileAttachment implements WithId {
+public class FileAttachment implements WithId, HealthChecking {
 
    public enum AttachmentType {
       DOCUMENT, LINK;
@@ -168,5 +169,10 @@ public class FileAttachment implements WithId {
             ", presignedUrl='" + presignedUrl + '\'' +
             ", size='" + size + '\'' +
             '}';
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      checkStringLength("fileName", fileName, MAX_LONG_STRING_LENGTH);
    }
 }

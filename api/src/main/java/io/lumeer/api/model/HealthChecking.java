@@ -18,20 +18,26 @@
  */
 package io.lumeer.api.model;
 
-public enum Perspective {
+import io.lumeer.api.exception.InsaneObjectException;
 
-   POSTIT,
-   SEARCH,
-   SMARTDOC,
-   TABLE;
+/**
+ * Classes with this interface can automatically check their correctness
+ * (attribute lengths, content etc.)
+ */
+public interface HealthChecking {
 
-   @Override
-   public String toString() {
-      return name().toLowerCase();
+   int MAX_STRING_LENGTH = 512;
+   int MAX_LONG_STRING_LENGTH = 10240;
+
+   /**
+    * Checks object health.
+    * @throws InsaneObjectException When thee object is not healthy.
+    */
+   void checkHealth() throws InsaneObjectException;
+
+   default void checkStringLength(final String name, final String value, final int maxLength) throws InsaneObjectException {
+      if (value != null && value.length() > maxLength) {
+         throw new InsaneObjectException(String.format("Value of %s is longer than %d.", name, maxLength));
+      }
    }
-
-   public static Perspective fromString(String perspective) {
-      return Perspective.valueOf(perspective.toUpperCase());
-   }
-
 }

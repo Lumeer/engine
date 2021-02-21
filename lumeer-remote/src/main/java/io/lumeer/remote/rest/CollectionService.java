@@ -25,6 +25,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.ViewFacade;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -70,7 +71,9 @@ public class CollectionService extends AbstractService {
    }
 
    @POST
+   @HealthCheck
    public Collection createCollection(Collection collection) {
+      System.out.println("je to tato");
       Collection storedCollection = collectionFacade.createCollection(collection);
       storedCollection.setFavorite(false);
       return storedCollection;
@@ -78,6 +81,7 @@ public class CollectionService extends AbstractService {
 
    @PUT
    @Path("{collectionId:[0-9a-fA-F]{24}}")
+   @HealthCheck
    public Collection updateCollection(@PathParam("collectionId") String collectionId, Collection collection) {
       Collection storedCollection = collectionFacade.updateCollection(collectionId, collection);
       storedCollection.setFavorite(collectionFacade.isFavorite(storedCollection.getId()));
@@ -130,12 +134,14 @@ public class CollectionService extends AbstractService {
 
    @POST
    @Path("{collectionId:[0-9a-fA-F]{24}}/attributes")
+   @HealthCheck
    public Set<Attribute> createCollectionAttributes(@PathParam("collectionId") String collectionId, List<Attribute> attributes) {
       return new HashSet<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
    @PUT
    @Path("{collectionId:[0-9a-fA-F]{24}}/attributes/{attributeId}")
+   @HealthCheck
    public Attribute updateCollectionAttribute(@PathParam("collectionId") String collectionId, @PathParam("attributeId") String attributeId, Attribute attribute) {
       return collectionFacade.updateCollectionAttribute(collectionId, attributeId, attribute);
    }
