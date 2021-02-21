@@ -45,7 +45,7 @@ public class PurposeChangeProcessor {
    private final DefaultConfigurationProducer.DeployEnvironment environment;
 
    private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> changeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new AssigneeChangeDetector(), new DueDateChangeDetector(), new StateChangeDetector(), new TaskUpdateChangeDetector()));
-   private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> commentChangeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new CommentChangeDetector()));
+   private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> commentChangeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new CommentChangeDetector()), CollectionPurposeType.None, Set.of(new CommentChangeDetector()));
 
    public PurposeChangeProcessor(
          final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace,

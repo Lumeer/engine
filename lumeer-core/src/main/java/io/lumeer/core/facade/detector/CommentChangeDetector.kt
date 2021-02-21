@@ -42,11 +42,11 @@ class CommentChangeDetector : AbstractPurposeChangeDetector() {
     }
 
     private fun getMentionedUsers(commentText: String): Set<String> {
-        val regEx = Regex("@([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})")
+        val regEx = Regex("data-value=\"([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})")
         val res = HashSet<String>()
 
         for (match in regEx.findAll(commentText).iterator()) {
-            res.add(match.value.substring(1))
+            res.add(match.value.substring(12))
         }
 
         return res
