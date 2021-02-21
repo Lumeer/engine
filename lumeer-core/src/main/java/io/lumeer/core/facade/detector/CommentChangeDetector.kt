@@ -1,9 +1,7 @@
 package io.lumeer.core.facade.detector
 
+import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
-import io.lumeer.api.model.Document
-import io.lumeer.api.model.NotificationType
-import io.lumeer.api.model.ResourceComment
 import io.lumeer.engine.api.event.DocumentCommentedEvent
 import io.lumeer.engine.api.event.DocumentEvent
 
@@ -33,7 +31,9 @@ class CommentChangeDetector : AbstractPurposeChangeDetector() {
     override fun detectChanges(comment: ResourceComment, document: Document, collection: Collection) {
         super.detectChanges(comment, document, collection)
 
-        delayedActionDao.scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_COMMENTED, nowPlus()))
+        if (collection.purpose?.type == CollectionPurposeType.Tasks) {
+            delayedActionDao.scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_COMMENTED, nowPlus()))
+        }
 
         val mentionedUsers = getMentionedUsers(comment.comment)
         if (mentionedUsers.size > 0) {
