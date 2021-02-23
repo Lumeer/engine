@@ -36,7 +36,7 @@ class CommentChangeDetector : AbstractPurposeChangeDetector() {
         }
 
         val mentionedUsers = getMentionedUsers(comment.comment)
-        if (mentionedUsers.size > 0) {
+        if (mentionedUsers.isNotEmpty()) {
             delayedActionDao.scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_MENTIONED, nowPlus(), mentionedUsers))
         }
     }

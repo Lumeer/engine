@@ -73,7 +73,6 @@ public class CollectionService extends AbstractService {
    @POST
    @HealthCheck
    public Collection createCollection(Collection collection) {
-      System.out.println("je to tato");
       Collection storedCollection = collectionFacade.createCollection(collection);
       storedCollection.setFavorite(false);
       return storedCollection;

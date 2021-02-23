@@ -266,9 +266,9 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
       if (assignees != null) {
          assignees.stream().filter(assignee ->
-               notificationType == NotificationType.DUE_DATE_SOON ||
+               (notificationType == NotificationType.DUE_DATE_SOON ||
                      notificationType == NotificationType.PAST_DUE_DATE ||
-                     !assignee.equals(currentUser.getEmail())
+                     !assignee.equals(currentUser.getEmail()) && StringUtils.isNotEmpty(assignee))
          ).forEach(assignee -> {
             final List<NotificationSetting> channels = getChannels(documentEvent, collection, notificationType, assignee);
 
