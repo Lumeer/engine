@@ -31,11 +31,10 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.AccessForbiddenException;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateResource;
@@ -47,6 +46,7 @@ import io.lumeer.storage.api.dao.UserNotificationDao;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -81,6 +81,8 @@ public class UserNotificationFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   private List<String> mutedUsers = new ArrayList<>();
 
    public List<UserNotification> getNotifications() {
       return dao.getRecentNotifications(authenticatedUser.getCurrentUserId());
@@ -344,14 +346,18 @@ public class UserNotificationFacade extends AbstractFacade {
          final Set<String> removedUsers = ResourceUtils.getRemovedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
          removedUsers.removeAll(managers);
          removedUsers.remove(authenticatedUser.getCurrentUserId());
+         removedUsers.removeAll(mutedUsers);
 
          if (removedUsers.size() > 0) {
             removeNotifications(updateResource.getResource(), removedUsers);
          }
 
          final Set<String> addedUsers = ResourceUtils.getAddedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
-         addedUsers.removeAll(managers);
+         if (updateResource.getResource().getType() != ResourceType.ORGANIZATION && updateResource.getResource().getType() != ResourceType.PROJECT) {
+            addedUsers.removeAll(managers);
+         }
          addedUsers.remove(authenticatedUser.getCurrentUserId());
+         addedUsers.removeAll(mutedUsers);
 
          if (addedUsers.size() > 0) {
             createResourceSharedNotifications(updateResource.getResource(), addedUsers);
@@ -366,6 +372,10 @@ public class UserNotificationFacade extends AbstractFacade {
 
    public void removeResource(@Observes final RemoveResource removedResource) {
       removeNotifications(removedResource.getResource());
+   }
+
+   public void muteUpdateResourceNotifications(final String userId) {
+      mutedUsers.add(userId);
    }
 
    private void removeNotifications(Resource resource) {

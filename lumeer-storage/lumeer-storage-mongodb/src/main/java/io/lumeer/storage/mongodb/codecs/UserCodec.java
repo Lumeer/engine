@@ -138,7 +138,7 @@ public class UserCodec implements CollectibleCodec<User> {
       List<NotificationSetting> notificationSettings;
       final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
       List<Document> notifications = bson.getList(NOTIFICATIONS, Document.class);
-      if (notifications != null) {
+      if (notifications != null && notifications.size() != 2 && notifications.size() != 0) { // it is not empty and it does not contain just the following 2 settings
          notificationSettings = new ArrayList<>(notifications).stream()
                .map(NotificationSettingCodec::convertFromDocument)
                .collect(Collectors.toList());

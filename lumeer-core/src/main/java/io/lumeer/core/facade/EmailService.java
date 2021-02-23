@@ -127,7 +127,7 @@ public class EmailService {
          transport.sendMessage(message, message.getAllRecipients());
          transport.close();
       } catch (Exception e) {
-         log.log(Level.SEVERE, "Unable to send email.", e);
+         log.log(Level.SEVERE, String.format("Unable to send email '%s'.", subject), e);
       }
    }
 

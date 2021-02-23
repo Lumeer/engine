@@ -100,6 +100,9 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private EmailFacade emailFacade;
 
+   @Inject
+   private UserNotificationFacade userNotificationFacade;
+
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, Role.MANAGE);
@@ -239,6 +242,7 @@ public class UserFacade extends AbstractFacade {
       }
       if (authenticatedUser.getUserEmail() == null || !authenticatedUser.getUserEmail().equals(user.getEmail())) {
          emailFacade.sendInvitation(user.getEmail());
+         userNotificationFacade.muteUpdateResourceNotifications(created.getId()); // do not send further org/proj shared notifications for this HTTP request
       }
 
       return created;

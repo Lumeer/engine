@@ -21,11 +21,11 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
-import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.UserFacade;
@@ -65,6 +65,9 @@ public class UserService extends AbstractService {
    @Inject
    private OrganizationFacade organizationFacade;
 
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
+
    @GET
    @JsonView(UserViews.DefaultView.class)
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users")
@@ -101,6 +104,7 @@ public class UserService extends AbstractService {
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    public Response deleteUserFromOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId) {
+      workspaceKeeper.setOrganizationId(organizationId);
       organizationFacade.removeUserPermission(organizationId, userId);
       userFacade.deleteUser(organizationId, userId);
 

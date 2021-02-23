@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
@@ -188,6 +189,13 @@ public class OrganizationFacade extends AbstractFacade {
       final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
       final Organization organization = storedOrganization.copy();
 
+      projectDao.getAllProjects().forEach(project -> {
+         final Project originalProject = project.copy();
+         project.getPermissions().removeUserPermission(userId);
+         final Project updatedProject = projectDao.updateProject(project.getId(), project, originalProject);
+         workspaceCache.updateProject(project.getId(), updatedProject);
+      });
+
       organization.getPermissions().removeUserPermission(userId);
       organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
@@ -207,6 +215,13 @@ public class OrganizationFacade extends AbstractFacade {
    public void removeGroupPermission(final String organizationId, final String groupId) {
       final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
       final Organization organization = storedOrganization.copy();
+
+      projectDao.getAllProjects().forEach(project -> {
+         final Project originalProject = project.copy();
+         project.getPermissions().removeGroupPermission(groupId);
+         final Project updatedProject = projectDao.updateProject(project.getId(), project, originalProject);
+         workspaceCache.updateProject(project.getId(), updatedProject);
+      });
 
       organization.getPermissions().removeGroupPermission(groupId);
       organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
