@@ -61,7 +61,7 @@ public abstract class IntegrationTestBase {
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb",
                              "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson", "org.graalvm",
                              "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text",
-                             "org.apache.commons.io", "com.floreysoft.jmte", "kotlin")
+                             "org.apache.commons.io", "com.floreysoft.jmte", "kotlin", "com.google.gson")
                        .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
