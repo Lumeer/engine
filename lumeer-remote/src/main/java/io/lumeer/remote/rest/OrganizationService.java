@@ -25,6 +25,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.CompanyContactFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
@@ -67,6 +68,9 @@ public class OrganizationService extends AbstractService {
 
    @Inject
    private ProjectFacade projectFacade;
+
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
 
    @POST
    public Organization createOrganization(Organization organization) {
@@ -126,6 +130,7 @@ public class OrganizationService extends AbstractService {
    @DELETE
    @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/users/{userId:[0-9a-fA-F]{24}}")
    public Response removeUserPermission(@PathParam("organizationId") String organizationId, @PathParam("userId") String userId) {
+      workspaceKeeper.setOrganizationId(organizationId);
       organizationFacade.removeUserPermission(organizationId, userId);
 
       return Response.ok().link(getParentUri("users", userId), "parent").build();
@@ -140,6 +145,7 @@ public class OrganizationService extends AbstractService {
    @DELETE
    @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
    public Response removeGroupPermission(@PathParam("organizationId") String organizationId, @PathParam("groupId") String groupId) {
+      workspaceKeeper.setOrganizationId(organizationId);
       organizationFacade.removeGroupPermission(organizationId, groupId);
 
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
