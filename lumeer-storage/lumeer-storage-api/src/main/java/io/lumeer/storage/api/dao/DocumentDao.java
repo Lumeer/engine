@@ -48,4 +48,6 @@ public interface DocumentDao extends ProjectScopedDao {
 
    List<Document> duplicateDocuments(List<String> documentIds);
 
+   List<Document> getDocumentsByParentIds(final Collection<String> parentIds);
+
 }

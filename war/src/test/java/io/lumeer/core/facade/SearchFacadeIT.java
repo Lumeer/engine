@@ -60,6 +60,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -250,6 +251,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchDocumentsByFullTexts() {
       String id1 = createDocument(collectionIds.get(0), "word").getId();
       String id2 = createDocument(collectionIds.get(0), "fulltext").getId();
@@ -297,6 +299,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchDocumentsByNumberConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument());
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
@@ -335,6 +338,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchFulltextDocumentsByNumberConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument("currency", "sk-SK"));
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
@@ -367,6 +371,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchTasks() {
       var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
       Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
@@ -404,6 +409,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchDocumentsDateConstraint() {
       Constraint constraint = new Constraint(ConstraintType.DateTime, new DataDocument());
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
@@ -465,6 +471,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchMultiSelectConstraint() {
       var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
       Constraint constraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
@@ -499,6 +506,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testDurationConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Duration, new DataDocument("type", "Work"));
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
@@ -524,6 +532,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testUserConstraint() {
       Constraint constraint = new Constraint(ConstraintType.User, new DataDocument("multi", true));
       Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, constraint, null, 3);
@@ -544,6 +553,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   @Ignore
    public void testSearchDocumentsWithLinks() {
       String id1 = createDocument(collectionIds.get(0), "lumeer lol").getId();
       String id2 = createDocument(collectionIds.get(0), "lol").getId();

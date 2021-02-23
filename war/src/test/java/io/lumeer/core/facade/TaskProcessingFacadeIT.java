@@ -305,7 +305,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       Collection updatedCollection;
       BlocklyRule updatedRule;
 
-      Thread.sleep(5000);
+      Thread.sleep(7000);
       updatedCollection = collectionFacade.getCollection(c1.getId());
       updatedRule = new BlocklyRule(updatedCollection.getRules().get(ruleName));
 
