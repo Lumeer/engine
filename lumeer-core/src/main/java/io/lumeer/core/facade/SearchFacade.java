@@ -276,7 +276,7 @@ public class SearchFacade extends AbstractFacade {
             }
          }
 
-         var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+         var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
          allDocuments.addAll(result.getFirst());
          allLinkInstances.addAll(result.getSecond());
 
@@ -354,7 +354,7 @@ public class SearchFacade extends AbstractFacade {
          var page = 0;
          while (hasMoreDocuments) {
             final List<Document> documents = getDocumentsByCollection(collection, page * fetchSize, fetchSize, documentFilter);
-            var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(documents), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+             var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(documents), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
             allDocuments.addAll(result.getFirst());
 
             hasMoreDocuments = !documents.isEmpty();
@@ -372,7 +372,7 @@ public class SearchFacade extends AbstractFacade {
          var page = 0;
          while (hasMoreLinks) {
             final List<LinkInstance> linkInstances = getLinkInstancesByLinkType(linkType, page * fetchSize, fetchSize);
-            var result = DataFilter.filterDocumentsAndLinksByQuery(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
+            var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
             allLinkInstances.addAll(result.getSecond());
 
             hasMoreLinks = !linkInstances.isEmpty();
