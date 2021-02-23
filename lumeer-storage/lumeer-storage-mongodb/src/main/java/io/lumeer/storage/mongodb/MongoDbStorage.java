@@ -106,9 +106,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class MongoDbStorage implements DataStorage {
+
+   private static final Logger log = Logger.getLogger(MongoDbStorage.class.getName());
 
    private static final String CURSOR_KEY = "cursor";
    private static final String FIRST_BATCH_KEY = "firstBatch";
@@ -155,6 +159,8 @@ public class MongoDbStorage implements DataStorage {
                new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider()
          );
          final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
+
+         log.log(Level.INFO, "Opening connection to " + connections.stream().map(StorageConnection::getHost).collect(Collectors.joining(", ")));
 
          if (credential != null) {
             return new MongoClient(addresses, credential, optionsBuilder.codecRegistry(registry).build());
