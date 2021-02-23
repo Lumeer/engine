@@ -340,8 +340,8 @@ public class ProjectFacade extends AbstractFacade {
       content.setCollections(collectionDao.getAllCollections().stream().map(CollectionWithId::new).collect(Collectors.toList()));
       content.setViews(viewDao.getAllViews().stream().map(ViewWithId::new).collect(Collectors.toList()));
       content.setLinkTypes(linkTypeDao.getAllLinkTypes().stream().map(LinkTypeWithId::new).collect(Collectors.toList()));
-      content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(projectId));
-      content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(projectId));
+      content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(authenticatedUser.getCurrentUserId(), projectId));
+      content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(authenticatedUser.getCurrentUserId(), projectId));
       content.setSequences(sequenceDao.getAllSequences());
 
       final List<LinkInstanceWithId> linkInstances = new ArrayList<>();

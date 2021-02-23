@@ -45,7 +45,7 @@ class DataFilter : AutoCloseable {
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                            constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren)
+            val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
             val future = completionService.submit(task)
             return future.get()
         }

@@ -286,6 +286,18 @@ public class DataDocument extends LinkedHashMap<String, Object> {
       return new ArrayList<T>();
    }
 
+   public ArrayList<Object> getArrayList(final String key) {
+      List l = (List) getObject(key);
+      if (l != null) {
+         if (l.isEmpty()) {
+            return new ArrayList<>();
+         } else  {
+            return (ArrayList<Object>) l;
+         }
+      }
+      return new ArrayList<Object>();
+   }
+
    /**
     * Gets the value of the given key as a DataDocument
     *
