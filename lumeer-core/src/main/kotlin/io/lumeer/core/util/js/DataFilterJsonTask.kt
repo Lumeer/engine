@@ -18,7 +18,7 @@
  */
 package io.lumeer.core.util.js
 
-import com.google.gson.Gson
+import com.google.gson.*
 import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
 import io.lumeer.core.util.Tuple
@@ -30,6 +30,11 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.Callable
 import java.util.logging.Level
 import java.util.logging.Logger
+import com.google.gson.FieldAttributes
+
+import com.google.gson.ExclusionStrategy
+import io.lumeer.api.model.common.Resource
+
 
 data class DataFilterJsonTask(val documents: List<Document>,
                               val collections: List<Collection>,
@@ -48,9 +53,8 @@ data class DataFilterJsonTask(val documents: List<Document>,
         return try {
             val filterJsValue: Value = if (filterJsFunction.get() == null) { filterJsFunction.set(initContext()); filterJsFunction.get() } else filterJsFunction.get()
 
-            val json = Gson().toJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language.toLanguageTag()))
-
-            print(json)
+            val json = convertToJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language.toLanguageTag()))
+            println(json)
 
             val result = filterJsValue.execute(json)
 
@@ -74,6 +78,45 @@ data class DataFilterJsonTask(val documents: List<Document>,
             logger.log(Level.SEVERE, "Error filtering data: ", e)
             emptyTuple
         }
+    }
+
+    private fun convertToJson(dataFilterJson: DataFilterJson): String {
+        val strategy: ExclusionStrategy = object : ExclusionStrategy {
+            override fun shouldSkipField(field: FieldAttributes): Boolean {
+                if (field.declaringClass == Document::class.java && !listOf("id", "data", "metaData", "collectionId").contains(field.name)) {
+                    return true
+                }
+                if (field.declaringClass == Collection::class.java && !listOf("id", "attributes").contains(field.name)) {
+                    return true
+                }
+                if (field.declaringClass == Resource::class.java && !listOf("id").contains(field.name)) {
+                    return true
+                }
+                if (field.declaringClass == LinkType::class.java && !listOf("id", "attributes", "collectionIds").contains(field.name)) {
+                    return true
+                }
+                if (field.declaringClass == LinkInstance::class.java && !listOf("id", "data", "linkTypeId", "documentIds").contains(field.name)) {
+                    return true
+                }
+                if (field.declaringClass == User::class.java && !listOf("id", "name", "email").contains(field.name)) {
+                    return true
+                }
+                return false
+            }
+
+            override fun shouldSkipClass(clazz: Class<*>?): Boolean {
+                return false
+            }
+        }
+
+        val conditionTypeSerializer: JsonSerializer<ConditionType> = JsonSerializer<ConditionType> { condition, _, _  ->
+            JsonPrimitive(condition.value)
+        }
+        return GsonBuilder()
+                .addSerializationExclusionStrategy(strategy)
+                .registerTypeAdapter(ConditionType::class.java, conditionTypeSerializer)
+                .create()
+                .toJson(dataFilterJson)
     }
 
     companion object {
