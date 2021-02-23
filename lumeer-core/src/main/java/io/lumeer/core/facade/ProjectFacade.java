@@ -331,7 +331,9 @@ public class ProjectFacade extends AbstractFacade {
 
    public ProjectContent getRawProjectContent(final String projectId) {
       final Project storedProject = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(storedProject, Role.MANAGE);
+      if (!storedProject.isPublic()) {
+         permissionsChecker.checkRole(storedProject, Role.MANAGE);
+      }
 
       final ProjectContent content = new ProjectContent();
 
