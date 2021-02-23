@@ -248,7 +248,6 @@ public class SearchFacade extends AbstractFacade {
             var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, true, language != null ? language : Language.EN);
             allDocuments.addAll(result.getFirst());
             allLinkInstances.addAll(result.getSecond());
-
          }
          page++;
          hasMoreDocuments = !firstCollectionDocuments.isEmpty();
@@ -483,8 +482,8 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<DataDocument> getLinkInstanceData(LinkType linkType, @Nullable Set<String> linkInstanceIds) {
-      List<DataDocument> data = linkInstanceIds != null ? dataDao.getData(linkType.getId(), linkInstanceIds) : dataDao.getData(linkType.getId());
-      return data.stream().map(d -> constraintManager.decodeDataTypes(linkType, d)).collect(Collectors.toList());
+      List<DataDocument> data = linkInstanceIds != null ? linkDataDao.getData(linkType.getId(), linkInstanceIds) : linkDataDao.getData(linkType.getId());
+      return decodeData(linkType, data);
    }
 
 }

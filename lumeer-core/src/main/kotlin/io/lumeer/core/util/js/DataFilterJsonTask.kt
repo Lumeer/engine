@@ -54,7 +54,6 @@ data class DataFilterJsonTask(val documents: List<Document>,
             val filterJsValue: Value = if (filterJsFunction.get() == null) { filterJsFunction.set(initContext()); filterJsFunction.get() } else filterJsFunction.get()
 
             val json = convertToJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language.toLanguageTag()))
-            println(json)
 
             val result = filterJsValue.execute(json)
 
@@ -99,6 +98,9 @@ data class DataFilterJsonTask(val documents: List<Document>,
                     return true
                 }
                 if (field.declaringClass == User::class.java && !listOf("id", "name", "email").contains(field.name)) {
+                    return true
+                }
+                if (field.declaringClass == Attribute::class.java && !listOf("id", "name", "constraint").contains(field.name)) {
                     return true
                 }
                 return false
