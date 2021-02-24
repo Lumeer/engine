@@ -28,6 +28,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -54,6 +55,9 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Inject
    private OrganizationFacade organizationFacade;
+
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
 
    @Inject
    private UserDao userDao;
@@ -234,6 +238,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    @Test
    public void testRemoveUserPermission() {
       final String organizationId = createOrganization(CODE1);
+      workspaceKeeper.setOrganizationId(organizationId);
 
       organizationFacade.removeUserPermission(organizationId, user.getId());
 
@@ -259,6 +264,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    @Test
    public void testRemoveGroupPermission() {
       final String organizationId = createOrganization(CODE1);
+      workspaceKeeper.setOrganizationId(organizationId);
 
       organizationFacade.removeGroupPermission(organizationId, GROUP);
 

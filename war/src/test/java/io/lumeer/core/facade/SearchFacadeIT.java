@@ -142,7 +142,6 @@ public class SearchFacadeIT extends IntegrationTestBase {
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
-
       updateOrganizationInUser(userId, USER, organization.getId());
       createUser(USER1, organization.getId());
       createUser(USER2, organization.getId());
