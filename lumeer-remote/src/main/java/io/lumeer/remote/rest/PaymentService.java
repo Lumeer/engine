@@ -56,7 +56,7 @@ public class PaymentService extends AbstractService {
 
    /* Callback method for the payment gateway. */
    @GET
-   @Path("{organizationId:[0-9a-fA-F]{24}}/{id}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/{id:[0-9a-fA-F]{1,16}}")
    public Response updatePaymentState(@PathParam("organizationId") final String organizationId, @PathParam("id") final String id) {
       final String ip = request.getRemoteAddr();
       log.log(Level.INFO, String.format("Update payment status for organization '%s' and payment id '%s' from IP '%s'.", organizationId, id, ip));
