@@ -209,7 +209,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id5 = createDocument(collectionIds.get(2), "doc5").getId();
       String id6 = createDocument(collectionIds.get(2), "doc6").getId();
 
-      List<Document> documents = searchFacade.searchDocuments(new Query(), Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(new Query(), Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6);
    }
 
@@ -226,7 +226,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       QueryStem stem2 = new QueryStem(collectionIds.get(2));
       Query query = new Query(Arrays.asList(stem1, stem2));
 
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id5, id6);
    }
 
@@ -244,7 +244,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       QueryStem stem3 = new QueryStem(collectionIds.get(2), Collections.emptyList(), Collections.singleton(id6), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Arrays.asList(stem1, stem2, stem3));
 
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4, id6);
    }
 
@@ -257,11 +257,11 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id5 = createDocument(collectionIds.get(2), "full word").getId();
 
       Query query = new Query(Collections.emptyList(), new HashSet<>(Collections.singletonList("some")), null, null);
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id3, id4);
 
       query = new Query(Collections.emptyList(), new HashSet<>(Arrays.asList("full", "word")), null, null);
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5);
    }
 
@@ -277,13 +277,13 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id8 = createDocument(collectionIds.get(2), "full wordmr").getId();
 
       Query query = new Query(Collections.emptyList(), new HashSet<>(Collections.singletonList("mr")), null, null);
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2, id3, id4, id6, id7, id8);
 
       List<CollectionAttributeFilter> filters = Collections.singletonList(CollectionAttributeFilter.createFromValues(collectionIds.get(0), DOCUMENT_KEY, ConditionType.EQUALS, "lmr"));
       QueryStem stem = new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptyList());
       query = new Query(Collections.singletonList(stem), new HashSet<>(Collections.singletonList("mr")), null, null);
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2);
 
       filters = Arrays.asList(CollectionAttributeFilter.createFromValues(collectionIds.get(0), DOCUMENT_KEY, ConditionType.EQUALS, "lmr"),
@@ -291,7 +291,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       List<QueryStem> stems = Arrays.asList(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptyList()),
             new QueryStem(collectionIds.get(1), Collections.emptyList(), Collections.emptySet(), filters, Collections.emptyList()));
       query = new Query(stems, new HashSet<>(Collections.singletonList("mr")), null, null);
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2, id7);
    }
 
@@ -309,27 +309,27 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id6 = createDocument(collectionId, "-30.123").getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.EQUALS, 40.1));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.NOT_EQUALS, "60"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id4, id5, id6);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.LOWER_THAN, "40.1"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id6);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.LOWER_THAN_EQUALS, "40.1"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id6);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.BETWEEN, "20", 41));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.NOT_BETWEEN, "20", 41));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id3, id4, id5, id6);
    }
 
@@ -344,15 +344,15 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id3 = createDocument(collectionId, "60").getId();
 
       Query query = createSimpleQueryWithFulltext("20");
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1);
 
       query = createSimpleQueryWithFulltext("€");
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3);
 
       query = createSimpleQueryWithFulltext("60 €");
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id3);
    }
 
@@ -390,15 +390,15 @@ public class SearchFacadeIT extends IntegrationTestBase {
       createDocument(otherCollectionId, Collections.singletonMap(attributeId, "d"));
 
       Query query = new Query();
-      List<Document> documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
+      List<Document> documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN, true).getFirst();
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id5);
 
       query = createSimpleQueryWithAttributeFilter(taskCollectionId, CollectionAttributeFilter.createFromValues(taskCollectionId, attributeId, ConditionType.IN, Arrays.asList("a", "c", "d")));
-      documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
+      documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN, true).getFirst();
       assertThat(documents).extracting(Document::getId).containsOnly(id1);
 
       query = createSimpleQueryWithAttributeFilter(otherCollectionId, CollectionAttributeFilter.createFromValues(otherCollectionId, attributeId, ConditionType.IN, Arrays.asList("a", "c", "d")));
-      documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN).getFirst();
+      documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN, true).getFirst();
       assertThat(documents).extracting(Document::getId).isEmpty();
    }
 
@@ -416,35 +416,35 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id6 = createDocument(collectionId, "2019-04-05T00:00:00.000Z").getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.EQUALS, "2019-04-04T00:00:00.000Z"));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id4, id5);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.NOT_EQUALS, "2019-04-04T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id6);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.GREATER_THAN, "2019-04-04T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id6);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.LOWER_THAN, "2019-04-04T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.LOWER_THAN_EQUALS, "2019-04-04T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.LOWER_THAN_EQUALS, "2019-04-04T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.BETWEEN, "2019-04-02T00:00:00.000Z", "2019-04-08T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2, id3, id4, id5, id6);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.NOT_BETWEEN, "2019-04-02T00:00:00.000Z", "2019-04-08T00:00:00.000Z"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1);
    }
 
@@ -459,7 +459,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id3 = createDocument(collectionId, "60.123°N 74.123°W").getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.EQUALS, "40.123, -74.123"));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1);
    }
 
@@ -477,23 +477,23 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id5 = createDocument(collectionId, Collections.singletonList("d")).getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.IN, Arrays.asList("a", "b")));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.HAS_SOME, Arrays.asList("a", "c")));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.HAS_ALL, Arrays.asList("a", "b")));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.HAS_NONE_OF, Arrays.asList("a", "b")));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id4, id5);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.NOT_EMPTY));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5);
    }
 
@@ -510,15 +510,15 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id5 = createDocument(collectionId, "ddhmms").getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.EQUALS, "28h"));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id2, id3);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.NOT_EQUALS, "dh19h"));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id4, id5);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.EQUALS, "5tddd"));
-      documents = searchFacade.searchDocuments(query, Language.CS);
+      documents = searchFacade.searchDocuments(query, Language.CS, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1);
    }
 
@@ -534,11 +534,11 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id4 = createDocument(collectionId, Collections.singletonList(USER1)).getId();
 
       Query query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromTypes(collectionId, DOCUMENT_KEY, ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue()));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id3);
 
       query = createSimpleQueryWithAttributeFilter(collectionId, CollectionAttributeFilter.createFromValues(collectionId, DOCUMENT_KEY, ConditionType.HAS_NONE_OF, USER2));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4);
    }
 
@@ -571,17 +571,17 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       QueryStem stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Collections.singletonList(stem), Collections.emptySet(), null, null);
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8, id10, id11, id12);
 
       stem = new QueryStem(collectionIds.get(0), Collections.singletonList(linkType01Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       query = new Query(Collections.singletonList(stem), Collections.singleton("lol"), null, null);
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id6, id7, id8);
 
       stem = new QueryStem(collectionIds.get(1), Collections.singletonList(linkType12Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       query = new Query(Collections.singletonList(stem), Collections.singleton("lumr"), null, null);
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertThat(documents).extracting(Document::getId).containsOnly(id11, id6);
    }
 
@@ -606,7 +606,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       createDocument(collectionIds.get(0), "e2", c2.getId());
 
       Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptyList(), Collections.emptyList()));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(
@@ -618,7 +618,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       assertions.assertAll();
 
       query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b2.getId()), Collections.emptyList(), Collections.emptyList()));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertions = new SoftAssertions();
       assertions.assertThat(documents).hasSize(4);
       assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
@@ -626,7 +626,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       assertions.assertAll();
 
       query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(b1.getId()), Collections.emptyList(), Collections.emptyList()));
-      documents = searchFacade.searchDocuments(query, Language.EN);
+      documents = searchFacade.searchDocuments(query, Language.EN, true);
       assertions = new SoftAssertions();
       assertions.assertThat(documents).hasSize(6);
       assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
@@ -643,7 +643,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       documentDao.updateDocument(a0.getId(), a0);
 
       Query query = new Query(new QueryStem(collectionIds.get(0), Collections.emptyList(), Collections.singleton(a0.getId()), Collections.emptyList(), Collections.emptyList()));
-      List<Document> documents = searchFacade.searchDocuments(query, Language.EN);
+      List<Document> documents = searchFacade.searchDocuments(query, Language.EN, true);
 
       assertThat(documents).hasSize(3);
       var parents = documents.stream().map(d -> d.getMetaData().getString(Document.META_PARENT_ID)).collect(Collectors.toList());
@@ -712,27 +712,27 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       QueryStem stem1 = new QueryStem(collectionIds.get(0), Collections.singletonList(linkTypeId1), Collections.singleton(id10), null, null);
       Query query1 = new Query(stem1);
-      List<LinkInstance> linkInstances = searchFacade.getLinkInstances(query1, Language.EN);
+      List<LinkInstance> linkInstances = searchFacade.getLinkInstances(query1, Language.EN, true);
       assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id1, id2);
 
       QueryStem stem2 = new QueryStem(collectionIds.get(1), Collections.singletonList(linkTypeId1), Collections.singleton(id21), null, null);
       Query query = new Query(stem2);
-      linkInstances = searchFacade.getLinkInstances(query, Language.EN);
+      linkInstances = searchFacade.getLinkInstances(query, Language.EN, true);
       assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id3);
 
       QueryStem stem3 = new QueryStem(collectionIds.get(0), Collections.singletonList(linkTypeId2), null, null, null);
       Query query3 = new Query(stem3);
-      linkInstances = searchFacade.getLinkInstances(query3, Language.EN);
+      linkInstances = searchFacade.getLinkInstances(query3, Language.EN, true);
       assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id4);
 
       QueryStem stem4 = new QueryStem(collectionIds.get(0), Collections.singletonList(linkTypeId1), null, null, null);
       Query query4 = new Query(stem4);
-      linkInstances = searchFacade.getLinkInstances(query4, Language.EN);
+      linkInstances = searchFacade.getLinkInstances(query4, Language.EN, true);
       assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id1, id2, id3);
 
       QueryStem stem5 = new QueryStem(collectionIds.get(0), Collections.singletonList(linkTypeId2), Collections.singleton(id20), null, null);
       Query query5 = new Query(stem5);
-      linkInstances = searchFacade.getLinkInstances(query5, Language.EN);
+      linkInstances = searchFacade.getLinkInstances(query5, Language.EN, true);
       assertThat(linkInstances).extracting(LinkInstance::getId).containsOnly(id4);
    }
 }

@@ -32,6 +32,7 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.MongoException;
@@ -47,14 +48,12 @@ import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -153,8 +152,10 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
 
    @Override
    public List<LinkType> getLinkTypesByIds(final Set<String> ids) {
-      List<ObjectId> objectIds = ids.stream().map(ObjectId::new).collect(Collectors.toList());
-      Bson filter = Filters.in(LinkTypeCodec.ID, objectIds);
+      Bson filter = MongoFilters.idsFilter(ids);
+      if (filter == null) {
+         return Collections.emptyList();
+      }
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 

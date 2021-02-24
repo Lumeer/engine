@@ -31,6 +31,7 @@ import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.codecs.LinkInstanceCodec;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
@@ -160,7 +161,10 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
 
    @Override
    public List<LinkInstance> getLinkInstances(final Set<String> ids) {
-      Bson filter = Filters.in(LinkInstanceCodec.ID, ids.stream().map(ObjectId::new).collect(Collectors.toSet()));
+      Bson filter = MongoFilters.idsFilter(ids);
+      if (filter == null) {
+         return Collections.emptyList();
+      }
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
@@ -204,7 +208,7 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
    public LinkInstance duplicateLinkInstance(final LinkInstance linkInstance, final String replaceDocumentId, final String newDocumentId, final Map<String, String> documentMap) {
       var link = new LinkInstance(linkInstance);
 
-      if (link.getDocumentIds().indexOf(replaceDocumentId) >= 0) {
+      if (link.getDocumentIds().contains(replaceDocumentId)) {
          link.setId(null);
          link.getDocumentIds().replaceAll(id -> id.equals(replaceDocumentId) ? newDocumentId : documentMap.getOrDefault(id, id));
 
@@ -258,7 +262,7 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
    }
 
    String databaseCollectionName() {
-      if (!getProject().isPresent()) {
+      if (getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return databaseCollectionName(getProject().get());

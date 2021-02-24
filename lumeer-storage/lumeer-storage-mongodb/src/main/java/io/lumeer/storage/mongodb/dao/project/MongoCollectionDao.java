@@ -58,6 +58,7 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -220,7 +221,10 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
 
    @Override
    public List<Collection> getCollectionsByIds(final java.util.Collection<String> ids) {
-      Bson filter = Filters.in(CollectionCodec.ID, ids.stream().map(ObjectId::new).collect(Collectors.toSet()));
+      Bson filter = MongoFilters.idsFilter(ids);
+      if (filter == null) {
+         return Collections.emptyList();
+      }
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
@@ -333,7 +337,7 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
    }
 
    String databaseCollectionName() {
-      if (!getProject().isPresent()) {
+      if (getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return databaseCollectionName(getProject().get());

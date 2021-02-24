@@ -87,24 +87,24 @@ public class SearchService extends AbstractService {
    @POST
    @Path("documents")
    @QueryProcessor
-   public List<Document> searchDocuments(Query query, @QueryParam("l") Language language) {
-      List<Document> documents = searchFacade.searchDocuments(query, language);
+   public List<Document> searchDocuments(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
+      List<Document> documents = searchFacade.searchDocuments(query, language, includeSubItems);
       return new ArrayList<>(documentFacade.mapDocumentsData(documents));
    }
 
    @POST
    @Path("linkInstances")
    @QueryProcessor
-   public List<LinkInstance> getLinkInstances(Query query, @QueryParam("l") Language language) {
-      final List<LinkInstance> links = searchFacade.getLinkInstances(query, language);
+   public List<LinkInstance> getLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
+      final List<LinkInstance> links = searchFacade.getLinkInstances(query, language, includeSubItems);
       return new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(links));
    }
 
    @POST
    @Path("documentsAndLinks")
    @QueryProcessor
-   public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("l") Language language) {
-      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, language);
+   public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
+      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, language, includeSubItems);
 
       return new DocumentsAndLinks(
             new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
@@ -115,8 +115,8 @@ public class SearchService extends AbstractService {
    @POST
    @Path("tasks")
    @QueryProcessor
-   public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("l") Language language) {
-      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, language);
+   public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
+      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, language, includeSubItems);
 
       return new DocumentsAndLinks(
             new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),

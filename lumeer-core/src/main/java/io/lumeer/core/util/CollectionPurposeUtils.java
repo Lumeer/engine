@@ -23,7 +23,6 @@ import static io.lumeer.api.util.ResourceUtils.findAttribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.event.DocumentEvent;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,18 +38,17 @@ public abstract class CollectionPurposeUtils {
 
    public static boolean isDoneState(final DataDocument data, final Collection collection) {
       final String stateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
-      final List<String> finalStates = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getArrayList(Collection.META_FINAL_STATES_LIST, String.class) : null;
+      final List<Object> finalStates = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getArrayList(Collection.META_FINAL_STATES_LIST) : null;
 
       if (finalStates != null && data != null) {
 
          if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
             final Object states = data.getObject(stateAttributeId);
-            if (states instanceof String) {
-               return finalStates.contains(states);
-            } else if (states instanceof List) {
-               final List<String> stringStates = data.getArrayList(stateAttributeId, String.class);
-
+            if (states instanceof List) {
+               final List<Object> stringStates = data.getArrayList(stateAttributeId);
                return stringStates.stream().anyMatch(finalStates::contains);
+            } else {
+               return finalStates.contains(states);
             }
          }
       }

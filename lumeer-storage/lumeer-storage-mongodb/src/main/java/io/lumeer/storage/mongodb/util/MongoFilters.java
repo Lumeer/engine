@@ -48,7 +48,7 @@ public class MongoFilters {
       return Filters.eq(ID, new ObjectId(id));
    }
 
-   public static Bson idsFilter(Set<String> ids) {
+   public static Bson idsFilter(java.util.Collection<String> ids) {
       List<ObjectId> objectIds = ids.stream().filter(key -> key != null && ObjectId.isValid(key)).map(ObjectId::new).collect(Collectors.toList());
       if (!objectIds.isEmpty()) {
          return Filters.in(ID, objectIds);
