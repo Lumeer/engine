@@ -1,19 +1,3 @@
-package io.lumeer.core.util.js
-
-import io.lumeer.api.model.*
-import io.lumeer.api.model.Collection
-import io.lumeer.core.util.Tuple
-import org.graalvm.polyglot.Value
-import java.util.concurrent.ExecutorCompletionService
-import java.util.logging.Level
-import java.util.logging.Logger
-import java.util.concurrent.Executors
-
-import java.util.concurrent.ThreadPoolExecutor
-import kotlin.math.max
-import kotlin.math.min
-
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -32,6 +16,20 @@ import kotlin.math.min
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+package io.lumeer.core.util.js
+
+import io.lumeer.api.model.*
+import io.lumeer.api.model.Collection
+import io.lumeer.core.util.Tuple
+import java.util.concurrent.ExecutorCompletionService
+import java.util.logging.Logger
+import java.util.concurrent.Executors
+
+import java.util.concurrent.ThreadPoolExecutor
+import kotlin.math.max
+import kotlin.math.min
+
 class DataFilter : AutoCloseable {
 
     companion object {
@@ -46,6 +44,16 @@ class DataFilter : AutoCloseable {
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                            constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
             val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren)
+            val future = completionService.submit(task)
+            return future.get()
+        }
+
+        @JvmStatic
+        fun filterDocumentsAndLinksByQueryFromJson(documents: List<Document>,
+                                                   collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
+                                                   query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
+                                                   constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
+            val task = DataFilterJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
             val future = completionService.submit(task)
             return future.get()
         }

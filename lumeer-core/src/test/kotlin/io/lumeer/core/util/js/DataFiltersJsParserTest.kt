@@ -95,7 +95,7 @@ class DataFiltersJsParserTest {
 
     @Test
     fun performanceTest() {
-        Task(1, 100).run()
+        Task(1, 10000).run()
     }
 
     @Test
@@ -158,7 +158,7 @@ class DataFiltersJsParserTest {
             val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
             val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0 , 10)
 
-            val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
+            val linkResult = DataFilter.filterDocumentsAndLinksByQueryFromJson(
                 documents,
                 listOf(collection1, collection2),
                 listOf(linkType),

@@ -376,6 +376,12 @@ public class ConstraintManager {
       return queryCopy;
    }
 
+   public Query decodeQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+      var queryCopy = new Query(new ArrayList<>(query.getStems()), query.getFulltexts(), query.getPage(), query.getPageSize());
+      this.processQuery(queryCopy, collectionsMap, linkTypesMap, this::decode);
+      return queryCopy;
+   }
+
    private void processQuery(final Query query, final List<Collection> collections, final List<LinkType> linkTypes, final BiFunction<Object, Constraint, Object> processor) {
       Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Resource::getId, c -> c));
       Map<String, LinkType> linkTypesMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> c));
