@@ -140,6 +140,8 @@ public class Auth0Filter implements Filter {
       final HttpServletRequest req = (HttpServletRequest) servletRequest;
       final HttpServletResponse res = (HttpServletResponse) servletResponse;
 
+      log.log(Level.INFO, String.format("Http Request [%s %s %s %d]", req.getMethod(), req.getRequestURI(), req.getRemoteAddr(), req.getContentLengthLong()));
+
       initFilters();
       FilterResult result;
 
