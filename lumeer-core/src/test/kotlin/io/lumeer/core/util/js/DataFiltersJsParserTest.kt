@@ -95,7 +95,7 @@ class DataFiltersJsParserTest {
 
     @Test
     fun performanceTest() {
-        Task(1, 10000).run()
+        Task(1, 1000).run()
     }
 
     @Test
