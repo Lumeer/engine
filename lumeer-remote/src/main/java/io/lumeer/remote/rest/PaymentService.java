@@ -20,8 +20,11 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.core.facade.PaymentFacade;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,12 +46,21 @@ import javax.ws.rs.core.Response;
 public class PaymentService extends AbstractService {
 
    @Inject
+   private Logger log;
+
+   @Inject
    private PaymentFacade paymentFacade;
+
+   @Inject
+   private HttpServletRequest request;
 
    /* Callback method for the payment gateway. */
    @GET
    @Path("{organizationId:[0-9a-fA-F]{24}}/{id}")
    public Response updatePaymentState(@PathParam("organizationId") final String organizationId, @PathParam("id") final String id) {
+      final String ip = request.getRemoteAddr();
+      log.log(Level.INFO, String.format("Update payment status for organization '%s' and payment id '%s' from IP '%s'.", organizationId, id, ip));
+
       paymentFacade.updatePayment(organizationId, id);
 
       return Response.ok().build();
