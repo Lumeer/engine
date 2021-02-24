@@ -115,13 +115,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      final List<LinkInstance> result = searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true).getSecond();
-
-      result.forEach(linkInstance ->
-            linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
-      );
-
-      return result;
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true).getSecond();
    }
 
    public List<Document> searchDocumentsPublic(final Query query, Language language) {
@@ -136,13 +130,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      final List<Document> result = searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true).getFirst();
-
-      result.forEach(document ->
-            document.setData(constraintManager.decodeDataTypes(collectionsMap.get(document.getCollectionId()), document.getData()))
-      );
-
-      return result;
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true).getFirst();
    }
 
    private Map<String, Collection> getCollectionsMap(java.util.Collection<Collection> collections) {
@@ -167,17 +155,7 @@ public class SearchFacade extends AbstractFacade {
       final List<LinkType> linkTypes = filterLinkTypesByCollections(resources.getSecond(), collections);
       final Map<String, Collection> collectionsMap = getCollectionsMap(collections);
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(linkTypes);
-      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())));
-
-      result.getFirst().forEach(document ->
-            document.setData(constraintManager.decodeDataTypes(collectionsMap.get(document.getCollectionId()), document.getData()))
-      );
-
-      result.getSecond().forEach(linkInstance ->
-            linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
-      );
-
-      return result;
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())));
    }
 
    public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean includeChildDocuments) {
@@ -192,17 +170,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      final Tuple<List<Document>, List<LinkInstance>> result = searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true);
-
-      result.getFirst().forEach(document ->
-            document.setData(constraintManager.decodeDataTypes(collectionsMap.get(document.getCollectionId()), document.getData()))
-      );
-
-      result.getSecond().forEach(linkInstance ->
-            linkInstance.setData(constraintManager.decodeDataTypes(linkTypesMap.get(linkInstance.getLinkTypeId()), linkInstance.getData()))
-      );
-
-      return result;
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true);
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean includeChildDocuments, boolean isPublic, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
