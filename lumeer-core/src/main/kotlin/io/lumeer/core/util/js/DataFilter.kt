@@ -22,21 +22,10 @@ package io.lumeer.core.util.js
 import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
 import io.lumeer.core.util.Tuple
-import java.util.concurrent.ExecutorCompletionService
-import java.util.logging.Logger
-import java.util.concurrent.Executors
 
-import java.util.concurrent.ThreadPoolExecutor
-import kotlin.math.max
-import kotlin.math.min
-
-class DataFilter : AutoCloseable {
+class DataFilter {
 
     companion object {
-        private val logger: Logger = Logger.getLogger(DataFilter::class.simpleName)
-        private val threads = min(max((Runtime.getRuntime().availableProcessors() / 2), 8), 1)
-        private val executor = Executors.newFixedThreadPool(threads) as ThreadPoolExecutor
-        private val completionService = ExecutorCompletionService<Tuple<List<Document>, List<LinkInstance>>>(executor)
 
         @JvmStatic
         fun filterDocumentsAndLinksByQuery(documents: List<Document>,
@@ -44,8 +33,7 @@ class DataFilter : AutoCloseable {
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                            constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
             val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
-            val future = completionService.submit(task)
-            return future.get()
+            return task.call()
         }
 
         @JvmStatic
@@ -54,12 +42,7 @@ class DataFilter : AutoCloseable {
                                                    query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                                    constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
             val task = DataFilterJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
-            val future = completionService.submit(task)
-            return future.get()
+            return task.call()
         }
-    }
-
-    override fun close() {
-        DataFilterTask.close()
     }
 }

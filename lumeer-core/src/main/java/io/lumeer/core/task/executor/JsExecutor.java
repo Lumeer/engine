@@ -34,6 +34,7 @@ import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
+import io.lumeer.core.js.JsEngineFactory;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.PrintRequest;
@@ -78,12 +79,7 @@ public class JsExecutor {
 
    private LumeerBridge lumeerBridge;
    private boolean dryRun = false;
-   private static final Engine engine = Engine
-         .newBuilder()
-         .allowExperimentalOptions(true)
-         .option("js.experimental-foreign-object-prototype", "true")
-         .option("js.foreign-object-prototype", "true")
-         .build();
+   private static final Engine engine = JsEngineFactory.getEngine();
    private static final String momentJsCode = MomentJsParser.getMomentJsCode();
 
    public static class LumeerBridge {

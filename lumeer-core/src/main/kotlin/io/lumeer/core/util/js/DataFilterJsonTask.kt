@@ -21,19 +21,16 @@ package io.lumeer.core.util.js
 import com.google.gson.*
 import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.common.Resource
+import io.lumeer.core.js.JsEngineFactory
 import io.lumeer.core.util.Tuple
 import org.graalvm.polyglot.Context
-import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.Callable
 import java.util.logging.Level
 import java.util.logging.Logger
-import com.google.gson.FieldAttributes
-
-import com.google.gson.ExclusionStrategy
-import io.lumeer.api.model.common.Resource
 
 
 data class DataFilterJsonTask(val documents: List<Document>,
@@ -49,9 +46,10 @@ data class DataFilterJsonTask(val documents: List<Document>,
 
     override fun call(): Tuple<List<Document>, List<LinkInstance>> {
         val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
+        val context = getContext()
 
         return try {
-            val filterJsValue: Value = if (filterJsFunction.get() == null) { filterJsFunction.set(initContext()); filterJsFunction.get() } else filterJsFunction.get()
+            val filterJsValue = getFunction(context)
 
             val json = convertToJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language.toLanguageTag()))
 
@@ -76,6 +74,8 @@ data class DataFilterJsonTask(val documents: List<Document>,
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Error filtering data: ", e)
             emptyTuple
+        } finally {
+            context.close()
         }
     }
 
@@ -124,33 +124,27 @@ data class DataFilterJsonTask(val documents: List<Document>,
     companion object {
         private val logger: Logger = Logger.getLogger(DataFilterJsonTask::class.simpleName)
         private const val FILTER_JS = "filterDocumentsAndLinksIdsFromJson"
-        private val filterJsFunction: ThreadLocal<Value> = ThreadLocal()
-        private val contexts: MutableList<Context> = mutableListOf()
         private var filterJsCode: String? = null
-        private var counter = 1
-        private val engine = Engine
-            .newBuilder()
-            .allowExperimentalOptions(true)
-            .option("js.experimental-foreign-object-prototype", "true")
-            .option("js.foreign-object-prototype", "true")
-            .build()
+        private val engine = JsEngineFactory.getEngine()
 
-        @Synchronized
-        private fun initContext(): Value {
+        private fun getContext(): Context {
+            val context = Context
+                .newBuilder("js")
+                .engine(engine)
+                .allowAllAccess(true)
+                .build()
+            context.initialize("js")
+
+            return context
+        }
+
+        private fun getFunction(context: Context): Value {
             if (filterJsCode != null) {
-                logger.log(Level.INFO, "Creating filter context no. ${counter++}")
-                val context = Context
-                    .newBuilder("js")
-                    .engine(engine)
-                    .allowAllAccess(true)
-                    .build()
-                context.initialize("js")
-                contexts.add(context)
                 context.eval("js", filterJsCode)
                 return context.getBindings("js").getMember(FILTER_JS)
+            } else {
+                throw IOException("Filters JS code not present.")
             }
-
-            throw IOException("Filters JS code not present.")
         }
 
         init {
@@ -161,10 +155,6 @@ data class DataFilterJsonTask(val documents: List<Document>,
             } catch (ioe: IOException) {
                 filterJsCode = null
             }
-        }
-
-        fun close() {
-            contexts.forEach { it.close() }
         }
     }
 }
