@@ -194,8 +194,12 @@ public class SearchFacade extends AbstractFacade {
             allDocuments.addAll(result.getFirst());
             allLinkInstances.addAll(result.getSecond());
          });
-      } else {
+      } else if (encodedQuery.getFulltexts().size() > 0) {
          var result = searchDocumentsAndLinksByFulltexts(encodedQuery.getFulltexts(), language, collectionsMap, linkTypesMap, documentFilter, constraintData, includeChildDocuments);
+         allDocuments.addAll(result.getFirst());
+         allLinkInstances.addAll(result.getSecond());
+      } else {
+         var result = searchDocumentsAndLinksByEmptyQuery(collectionsMap, linkTypesMap, documentFilter);
          allDocuments.addAll(result.getFirst());
          allLinkInstances.addAll(result.getSecond());
       }
@@ -203,7 +207,8 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(new ArrayList<>(allDocuments), new ArrayList<>(allLinkInstances));
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStem(final QueryStem stem, final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter, final ConstraintData constraintData,  boolean includeChildDocuments) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStem(final QueryStem stem, final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter, final ConstraintData constraintData,
+         boolean includeChildDocuments) {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
@@ -349,6 +354,21 @@ public class SearchFacade extends AbstractFacade {
             hasMoreLinks = !linkInstances.isEmpty();
             page++;
          }
+      });
+
+      return new Tuple<>(allDocuments, allLinkInstances);
+   }
+
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByEmptyQuery(final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
+      final Set<Document> allDocuments = new HashSet<>();
+      final Set<LinkInstance> allLinkInstances = new HashSet<>();
+
+      collectionsMap.values().forEach(collection -> {
+         allDocuments.addAll(getDocumentsByCollection(collection, null, documentFilter));
+      });
+
+      linkTypesMap.values().forEach(linkType -> {
+         allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, null));
       });
 
       return new Tuple<>(allDocuments, allLinkInstances);

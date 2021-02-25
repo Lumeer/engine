@@ -18,6 +18,8 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,7 +32,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class Query {
+public class Query implements HealthChecking {
 
    private final List<QueryStem> stems;
    private final Set<String> fulltexts;
@@ -175,5 +177,12 @@ public class Query {
     */
    public String toQueryString() {
       return "{\"s\":[" + stems.stream().map(QueryStem::toQueryString).collect(Collectors.joining(", ")) + "]}";
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      if (getStems().size() > 20) {
+         throw new InsaneObjectException("Number of query stems are more than 20");
+      }
    }
 }
