@@ -19,6 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
@@ -37,20 +38,25 @@ public class DocumentCreator extends WithIdCreator {
    final private DocumentFacade documentFacade;
    final private AuthenticatedUser authenticatedUser;
    final private TemplateMetadata templateMetadata;
+   final private int maxDocuments;
 
-   private DocumentCreator(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata) {
+   private DocumentCreator(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata, final int maxDocuments) {
       super(templateParser);
       this.documentFacade = documentFacade;
       this.authenticatedUser = authenticatedUser;
       this.templateMetadata = templateMetadata;
+      this.maxDocuments = maxDocuments;
    }
 
-   public static void createDocuments(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata) {
-      final DocumentCreator creator = new DocumentCreator(templateParser, documentFacade, authenticatedUser, templateMetadata);
+   public static void createDocuments(final TemplateParser templateParser, final DocumentFacade documentFacade, final AuthenticatedUser authenticatedUser, final TemplateMetadata templateMetadata, final int maxDocuments) {
+      final DocumentCreator creator = new DocumentCreator(templateParser, documentFacade, authenticatedUser, templateMetadata, maxDocuments);
       creator.createDocuments();
    }
 
    private void createDocuments() {
+      final JSONArray collections = (JSONArray) templateParser.template.get("collections");
+      final int maxDocumentsPerCollection = (maxDocuments < 0) ? -1 : (maxDocuments / collections.size() - 20); // 20 is a reserve so that users can create some more documents
+
       JSONArray a = (JSONArray) templateParser.getTemplate().get("documents");
       final Map<String, List<Document>> documents = new HashMap<>();
       a.forEach(doc -> {
@@ -61,7 +67,12 @@ public class DocumentCreator extends WithIdCreator {
          var docu = new Document(new DataDocument());
          getDocumentData(docu, documentTemplateId, collectionTemplateId);
          docu.setMetaData(new DataDocument("templateId", documentTemplateId));
-         documents.computeIfAbsent(collectionTemplateId, cId -> new ArrayList<>()).add(docu);
+
+         var groupedDocuments = documents.computeIfAbsent(collectionTemplateId, cId -> new ArrayList<>());
+
+         if (maxDocumentsPerCollection < 0 || groupedDocuments.size() < maxDocumentsPerCollection || a.size() < maxDocuments) {
+            groupedDocuments.add(docu);
+         }
       });
 
       documents.forEach((collectionTemplateId, collectionDocuments) -> {

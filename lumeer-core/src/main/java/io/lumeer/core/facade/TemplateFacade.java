@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.template.CollectionCreator;
 import io.lumeer.core.template.DocumentCreator;
@@ -68,6 +69,9 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private Event<TemplateCreated> templateCreatedEvent;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    public String getTemplateOrganizationId(final Language language) {
       switch (language) {
@@ -129,7 +133,7 @@ public class TemplateFacade extends AbstractFacade {
    private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata, final boolean originalLumeerTemplate) {
       CollectionCreator.createCollections(templateParser, collectionFacade);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
-      DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser, templateMetadata);
+      DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser, templateMetadata, permissionsChecker.getDocumentLimits());
       LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser, templateMetadata);
       ViewCreator.createViews(templateParser, viewFacade, defaultConfigurationProducer);
       FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade, originalLumeerTemplate);
