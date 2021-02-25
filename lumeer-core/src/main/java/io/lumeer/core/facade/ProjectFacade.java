@@ -343,8 +343,8 @@ public class ProjectFacade extends AbstractFacade {
       content.setLinkTypes(linkTypeDao.getAllLinkTypes().stream().map(LinkTypeWithId::new).collect(Collectors.toList()));
       String userId = Utils.computeIfNotNull(authenticatedUser, AuthenticatedUser::getCurrentUserId);
       if (userId != null) {
-         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(authenticatedUser.getCurrentUserId(), projectId));
-         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(authenticatedUser.getCurrentUserId(), projectId));
+         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(userId, projectId));
+         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(userId, projectId));
       } else {
          content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(projectId));
          content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(projectId));
