@@ -75,8 +75,16 @@ class DataFiltersJsParserTest {
                 listOf(),
                 simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
         )
+        val simpleResult2 = DataFilter.filterDocumentsAndLinksByQueryFromJson(
+            listOf(document1, document2),
+            listOf(collection1),
+            listOf(),
+            listOf(),
+            simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+        )
 
         Assertions.assertThat(simpleResult.first).containsOnly(document1, document2)
+        Assertions.assertThat(simpleResult2.first).containsOnly(document1, document2)
 
         val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
         val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0 , 10)
@@ -88,9 +96,18 @@ class DataFiltersJsParserTest {
                 listOf(link1, link2),
                 linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
         )
+        val linkResult2 = DataFilter.filterDocumentsAndLinksByQueryFromJson(
+            listOf(document1, document2, document3, document4),
+            listOf(collection1, collection2),
+            listOf(linkType),
+            listOf(link1, link2),
+            linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+        )
 
         Assertions.assertThat(linkResult.first).containsOnly(document1, document3)
         Assertions.assertThat(linkResult.second).containsOnly(link1)
+        Assertions.assertThat(linkResult2.first).containsOnly(document1, document3)
+        Assertions.assertThat(linkResult2.second).containsOnly(link1)
     }
 
     @Test
