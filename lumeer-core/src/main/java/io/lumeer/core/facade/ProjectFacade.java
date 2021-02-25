@@ -34,6 +34,7 @@ import io.lumeer.api.model.templateParse.DocumentWithId;
 import io.lumeer.api.model.templateParse.LinkInstanceWithId;
 import io.lumeer.api.model.templateParse.LinkTypeWithId;
 import io.lumeer.api.model.templateParse.ViewWithId;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.util.Utils;
@@ -340,8 +341,14 @@ public class ProjectFacade extends AbstractFacade {
       content.setCollections(collectionDao.getAllCollections().stream().map(CollectionWithId::new).collect(Collectors.toList()));
       content.setViews(viewDao.getAllViews().stream().map(ViewWithId::new).collect(Collectors.toList()));
       content.setLinkTypes(linkTypeDao.getAllLinkTypes().stream().map(LinkTypeWithId::new).collect(Collectors.toList()));
-      content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(authenticatedUser.getCurrentUserId(), projectId));
-      content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(authenticatedUser.getCurrentUserId(), projectId));
+      String userId = Utils.computeIfNotNull(authenticatedUser, AuthenticatedUser::getCurrentUserId);
+      if (userId != null) {
+         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(authenticatedUser.getCurrentUserId(), projectId));
+         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(authenticatedUser.getCurrentUserId(), projectId));
+      } else {
+         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(projectId));
+         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(projectId));
+      }
       content.setSequences(sequenceDao.getAllSequences());
 
       final List<LinkInstanceWithId> linkInstances = new ArrayList<>();

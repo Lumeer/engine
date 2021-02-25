@@ -30,6 +30,7 @@ import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
 import io.lumeer.core.util.Tuple;
+import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
 import java.util.ArrayList;
@@ -87,6 +88,7 @@ public class SearchService extends AbstractService {
    @POST
    @Path("documents")
    @QueryProcessor
+   @HealthCheck
    public List<Document> searchDocuments(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
       List<Document> documents = searchFacade.searchDocuments(query, language, includeSubItems);
       return new ArrayList<>(documentFacade.mapDocumentsData(documents));
@@ -95,6 +97,7 @@ public class SearchService extends AbstractService {
    @POST
    @Path("linkInstances")
    @QueryProcessor
+   @HealthCheck
    public List<LinkInstance> getLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
       final List<LinkInstance> links = searchFacade.getLinkInstances(query, language, includeSubItems);
       return new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(links));
@@ -103,6 +106,7 @@ public class SearchService extends AbstractService {
    @POST
    @Path("documentsAndLinks")
    @QueryProcessor
+   @HealthCheck
    public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
       final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, language, includeSubItems);
 
@@ -115,6 +119,7 @@ public class SearchService extends AbstractService {
    @POST
    @Path("tasks")
    @QueryProcessor
+   @HealthCheck
    public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
       final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, language, includeSubItems);
 

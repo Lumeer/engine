@@ -34,7 +34,6 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -120,7 +119,7 @@ public class AuthenticatedUser implements Serializable {
    private void checkUserInProduction(String authId, String email, String name, boolean emailVerified) {
       User userByAuthId = userDao.getUserByAuthId(authId);
       if (userByAuthId != null) {
-         if (!userByAuthId.getEmail().toLowerCase().equals(email.toLowerCase())) {
+         if (!userByAuthId.getEmail().equalsIgnoreCase(email)) {
             userByAuthId.setName(name);
             userByAuthId.setEmail(email.toLowerCase());
             userByAuthId.setEmailVerified(emailVerified);
@@ -169,7 +168,7 @@ public class AuthenticatedUser implements Serializable {
 
    private User createNewUser(String email, String authId) {
       User user = new User(email.toLowerCase());
-      user.setAuthIds(new HashSet<>(Arrays.asList(authId)));
+      user.setAuthIds(new HashSet<>(Collections.singletonList(authId)));
       return userDao.createUser(user);
    }
 
