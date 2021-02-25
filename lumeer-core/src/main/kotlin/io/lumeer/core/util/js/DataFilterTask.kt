@@ -20,9 +20,9 @@ package io.lumeer.core.util.js
 
 import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
+import io.lumeer.core.js.JsEngineFactory
 import io.lumeer.core.util.Tuple
 import org.graalvm.polyglot.Context
-import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -44,9 +44,10 @@ data class DataFilterTask(val documents: List<Document>,
     override fun call(): Tuple<List<Document>, List<LinkInstance>> {
         val locale = language.toLocale()
         val emptyTuple = Tuple<List<Document>, List<LinkInstance>>(emptyList(), emptyList())
+        val context = getContext()
 
         return try {
-            val filterJsValue: Value = if (filterJsFunction.get() == null) { filterJsFunction.set(initContext()); filterJsFunction.get() } else filterJsFunction.get()
+            val filterJsValue = getFunction(context)
 
             val result = filterJsValue.execute(JvmObjectProxy.fromList(documents, locale),
                 JvmObjectProxy.fromList(collections, locale),
@@ -76,53 +77,45 @@ data class DataFilterTask(val documents: List<Document>,
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Error filtering data: ", e)
             emptyTuple
+        } finally {
+            context.close()
         }
     }
 
     companion object {
-        private val logger: Logger = Logger.getLogger(DataFilterTask::class.simpleName)
-        private const val FILTER_JS = "filterDocumentsAndLinksByQuery"
-        private val filterJsFunction: ThreadLocal<Value> = ThreadLocal()
-        private val contexts: MutableList<Context> = mutableListOf()
+        private val logger: Logger = Logger.getLogger(DataFilterJsonTask::class.simpleName)
+        private const val FILTER_JS = "filterDocumentsAndLinksIdsFromJson"
         private var filterJsCode: String? = null
-        private var counter = 1
-        private val engine = Engine
-            .newBuilder()
-            .allowExperimentalOptions(true)
-            .option("js.experimental-foreign-object-prototype", "true")
-            .option("js.foreign-object-prototype", "true")
-            .build()
+        private val engine = JsEngineFactory.getEngine()
 
-        @Synchronized
-        private fun initContext(): Value {
+        private fun getContext(): Context {
+            val context = Context
+                .newBuilder("js")
+                .engine(engine)
+                .allowAllAccess(true)
+                .build()
+            context.initialize("js")
+
+            return context
+        }
+
+        private fun getFunction(context: Context): Value {
             if (filterJsCode != null) {
-                logger.log(Level.INFO, "Creating filter context no. ${counter++}")
-                val context = Context
-                    .newBuilder("js")
-                    .engine(engine)
-                    .allowAllAccess(true)
-                    .build()
-                context.initialize("js")
-                contexts.add(context)
                 context.eval("js", filterJsCode)
                 return context.getBindings("js").getMember(FILTER_JS)
+            } else {
+                throw IOException("Filters JS code not present.")
             }
-
-            throw IOException("Filters JS code not present.")
         }
 
         init {
             try {
-                DataFilterTask::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
-                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function ${FILTER_JS}(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren, language) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections, language), Filter.createConstraintsInLinkTypes(linkTypes, language), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren); }")
+                DataFilterJsonTask::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
+                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function ${FILTER_JS}(json) { return Filter.filterDocumentsAndLinksIdsFromJson(json); }")
                 }
             } catch (ioe: IOException) {
                 filterJsCode = null
             }
-        }
-
-        fun close() {
-            contexts.forEach { it.close() }
         }
     }
 }

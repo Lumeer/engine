@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -51,7 +52,11 @@ public class MongoUtils {
 
    public static List<DataDocument> convertIterableToList(MongoIterable<Document> documents) {
       final List<DataDocument> result = new ArrayList<>();
-      documents.into(new ArrayList<>()).forEach(d -> result.add(MongoUtils.convertDocument(d)));
+      MongoCursor<Document> it = documents.iterator();
+      while (it.hasNext()) {
+         result.add(MongoUtils.convertDocument(it.next()));
+      }
+      it.close();
 
       return result;
    }

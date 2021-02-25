@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.util;
 
+import io.lumeer.core.js.JsEngineFactory;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
@@ -34,13 +36,7 @@ public class MomentJsParser implements AutoCloseable {
    private static Value formatMomentJsDate;
    private static Value parseMomentJsDate;
    private static String momentJsCode;
-   private static Engine engine = Engine
-         .newBuilder()
-         .allowExperimentalOptions(true)
-         .option("js.experimental-foreign-object-prototype", "true")
-         .option("js.foreign-object-prototype", "true")
-         .build();
-
+   private static final Engine engine = JsEngineFactory.getEngine();
 
    static {
       try (var stream = MomentJsParser.class.getResourceAsStream("/moment-with-locales.min.js")) {
