@@ -84,7 +84,7 @@ data class DataFilterTask(val documents: List<Document>,
 
     companion object {
         private val logger: Logger = Logger.getLogger(DataFilterJsonTask::class.simpleName)
-        private const val FILTER_JS = "filterDocumentsAndLinksIdsFromJson"
+        private const val FILTER_JS = "filterDocumentsAndLinksByQuery"
         private var filterJsCode: String? = null
         private val engine = JsEngineFactory.getEngine()
 
@@ -110,8 +110,8 @@ data class DataFilterTask(val documents: List<Document>,
 
         init {
             try {
-                DataFilterJsonTask::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
-                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function ${FILTER_JS}(json) { return Filter.filterDocumentsAndLinksIdsFromJson(json); }")
+                DataFilterTask::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
+                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function ${FILTER_JS}(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren, language) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections, language), Filter.createConstraintsInLinkTypes(linkTypes, language), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren); }")
                 }
             } catch (ioe: IOException) {
                 filterJsCode = null
