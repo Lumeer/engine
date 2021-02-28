@@ -30,10 +30,12 @@ public class Attribute implements HealthChecking {
    public static final String NAME = "name";
    public static final String CONSTRAINT = "constraint";
    public static final String FUNCTION = "function";
+   public static final String DESCRIPTION = "description";
    public static final String USAGE_COUNT = "usageCount";
 
    private String id;
    private String name;
+   private String description;
    private Constraint constraint;
    private Function function;
    private Integer usageCount;
@@ -48,11 +50,13 @@ public class Attribute implements HealthChecking {
    public Attribute(
          @JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
+         @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(CONSTRAINT) final Constraint constraint,
          @JsonProperty(FUNCTION) final Function function,
          @JsonProperty(USAGE_COUNT) final Integer usageCount) {
       this.name = name;
       this.id = id;
+      this.description = description;
       this.constraint = constraint;
       this.function = function;
       this.usageCount = usageCount;
@@ -98,6 +102,10 @@ public class Attribute implements HealthChecking {
       this.usageCount = usageCount;
    }
 
+   public String getDescription() {
+      return description;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -131,5 +139,6 @@ public class Attribute implements HealthChecking {
    @Override
    public void checkHealth() throws InsaneObjectException {
       checkStringLength("name", name, MAX_STRING_LENGTH);
+      checkStringLength("description", description, MAX_LONG_STRING_LENGTH);
    }
 }

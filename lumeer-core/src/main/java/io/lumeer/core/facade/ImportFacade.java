@@ -153,7 +153,7 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private List<Attribute> createAttributes(String collectionId, String[] headers) {
-      List<Attribute> attributes = Arrays.stream(headers).map(header -> new Attribute(header, header, null, null, 0)).collect(Collectors.toList());
+      List<Attribute> attributes = Arrays.stream(headers).map(header -> new Attribute(header, header, null, null, null, 0)).collect(Collectors.toList());
       return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 

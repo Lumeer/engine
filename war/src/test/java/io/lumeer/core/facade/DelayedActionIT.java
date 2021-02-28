@@ -143,8 +143,8 @@ public class DelayedActionIT extends IntegrationTestBase {
       Permissions projectPermissions = new Permissions();
       projectPermissions.addUserPermissions(
             Set.of(
-               new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())),
-               new Permission(this.user2.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()))
+                  new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())),
+                  new Permission(this.user2.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()))
             )
       );
       project.setPermissions(projectPermissions);
@@ -166,10 +166,10 @@ public class DelayedActionIT extends IntegrationTestBase {
       jsonCollection.setDocumentsCount(0);
       jsonCollection.setLastAttributeNum(0);
       jsonCollection.setAttributes(List.of(
-            new Attribute("a0", "Summary", new Constraint(ConstraintType.Text, null), null, 0),
-            new Attribute("a1", "Assignee", new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
-            new Attribute("a2", "Due date", new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")), null, 0),
-            new Attribute("a3", "State", new Constraint(ConstraintType.Select, new org.bson.Document("options",
+            new Attribute("a0", "Summary", null, new Constraint(ConstraintType.Text, null), null, 0),
+            new Attribute("a1", "Assignee", null, new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
+            new Attribute("a2", "Due date", null, new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")), null, 0),
+            new Attribute("a3", "State", null, new Constraint(ConstraintType.Select, new org.bson.Document("options",
                   List.of(
                         new org.bson.Document("value", "New").append("displayValue", ""),
                         new org.bson.Document("value", "In Progress").append("displayValue", ""),
@@ -178,16 +178,16 @@ public class DelayedActionIT extends IntegrationTestBase {
                         new org.bson.Document("value", "Won't fix").append("displayValue", "")
                   )
             )), null, 0),
-            new Attribute("a4", "Observers", new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
-            new Attribute("a5", "Something", null, null, 0)
+            new Attribute("a4", "Observers", null, new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
+            new Attribute("a5", "Something", null, null, null, 0)
       ));
       jsonCollection.setDefaultAttributeId("a0");
       jsonCollection.setPurpose(new CollectionPurpose(CollectionPurposeType.Tasks,
             new DataDocument(Collection.META_ASSIGNEE_ATTRIBUTE_ID, "a1")
-               .append(Collection.META_DUE_DATE_ATTRIBUTE_ID, "a2")
-               .append(Collection.META_STATE_ATTRIBUTE_ID, "a3")
-               .append(Collection.META_FINAL_STATES_LIST, List.of("Done", "Won't fix"))
-               .append(Collection.META_OBSERVERS_ATTRIBUTE_ID, "a4"))
+                  .append(Collection.META_DUE_DATE_ATTRIBUTE_ID, "a2")
+                  .append(Collection.META_STATE_ATTRIBUTE_ID, "a3")
+                  .append(Collection.META_FINAL_STATES_LIST, List.of("Done", "Won't fix"))
+                  .append(Collection.META_OBSERVERS_ATTRIBUTE_ID, "a4"))
       );
       collection = collectionDao.createCollection(jsonCollection);
    }
