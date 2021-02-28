@@ -307,7 +307,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, "", ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       final Attribute createdAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -332,7 +332,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Runnable r = () -> {
          for (int i = 0; i < 20; i++) {
-            Attribute attribute = new Attribute(null, ATTRIBUTE_NAME, null, null, 0);
+            Attribute attribute = new Attribute(null, ATTRIBUTE_NAME, null, null, null, 0);
             final java.util.Collection<Attribute> createdAttributes = collectionFacade.createCollectionAttributes(collection.getId(), List.of(attribute));
             createdAttributes.forEach(a -> attributeIds.add(a.getId()));
          }
@@ -360,11 +360,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateCollectionAttributeUpdate() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, updatedAttribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -382,7 +382,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteCollectionAttribute() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
@@ -395,7 +395,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteAutoLinkRules() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       Collection collection = createCollection(CODE, attribute);
 
       var rules = createRules(collection, attribute);
@@ -639,15 +639,15 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, 0),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+                  new Attribute("a1", "Task", null, null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, 0)
             )
       );
 
       var values = Arrays.asList("New", "In Progress", "To Do", "Done", "Won't fix");
       var rnd = new Random();
 
-      for(int i = 0; i < 100; i++) {
+      for (int i = 0; i < 100; i++) {
          documentFacade.createDocument(collection.getId(), new Document(new DataDocument("a1", "Task-" + (i + 1)).append("a2", values.get(rnd.nextInt(values.size())))));
       }
 
@@ -713,11 +713,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testDurationAttributeConversion() {
       Collection collection = collectionFacade.createCollection(prepareCollection(CODE3));
       collectionFacade.createCollectionAttributes(
-              collection.getId(),
-              Arrays.asList(
-                      new Attribute("a1", "Task", null, null, 0),
-                      new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
-              )
+            collection.getId(),
+            Arrays.asList(
+                  new Attribute("a1", "Task", null, null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, 0)
+            )
       );
 
       // 100800000, 77700000, 86466000, 1345, 1434534000, 10806000, 14580000
@@ -733,7 +733,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       var attributes = collectionFacade.getCollection(collection.getId()).getAttributes();
       var attr = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
       attr.setConstraint(new Constraint(ConstraintType.Duration, new org.bson.Document("type", "Work").append("conversions",
-              new org.bson.Document("w", 5).append("d", 8).append("h", 60).append("m", 60).append("s", 1000)
+            new org.bson.Document("w", 5).append("d", 8).append("h", 60).append("m", 60).append("s", 1000)
       )));
 
       collectionFacade.updateCollectionAttribute(collection.getId(), attr.getId(), attr);
@@ -747,13 +747,13 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       });
 
       assertThat(res).contains(
-              Map.entry("Task-1", 100800000L),
-              Map.entry("Task-2", 77700000L),
-              Map.entry("Task-3", 86466000L),
-              Map.entry("Task-4", 1345L),
-              Map.entry("Task-5", 1434534000L),
-              Map.entry("Task-6", 10806000L),
-              Map.entry("Task-7", 14580000L)
+            Map.entry("Task-1", 100800000L),
+            Map.entry("Task-2", 77700000L),
+            Map.entry("Task-3", 86466000L),
+            Map.entry("Task-4", 1345L),
+            Map.entry("Task-5", 1434534000L),
+            Map.entry("Task-6", 10806000L),
+            Map.entry("Task-7", 14580000L)
       );
 
       // now back to no constraint
@@ -770,19 +770,19 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       });
 
       assertThat(res2).contains(
-              Map.entry("Task-1", "3d4h"),
-              Map.entry("Task-2", "2d5h35m"),
-              Map.entry("Task-3", "3d1m6s"),
-              Map.entry("Task-4", "1s"),
-              Map.entry("Task-5", "9w4d6h28m54s"),
-              Map.entry("Task-6", "3h6s"),
-              Map.entry("Task-7", "4h3m")
+            Map.entry("Task-1", "3d4h"),
+            Map.entry("Task-2", "2d5h35m"),
+            Map.entry("Task-3", "3d1m6s"),
+            Map.entry("Task-4", "1s"),
+            Map.entry("Task-5", "9w4d6h28m54s"),
+            Map.entry("Task-6", "3h6s"),
+            Map.entry("Task-7", "4h3m")
       );
 
       // custom unit lengths
       var attr3 = attributes.stream().filter(attribute -> attribute.getName().equals(ATTRIBUTE_STATE)).findFirst().get();
       attr3.setConstraint(new Constraint(ConstraintType.Duration, new org.bson.Document("type", "Custom").append("conversions",
-              new org.bson.Document("w", 5).append("d", 5).append("h", 30).append("m", 60).append("s", 1000)
+            new org.bson.Document("w", 5).append("d", 5).append("h", 30).append("m", 60).append("s", 1000)
       )));
 
       collectionFacade.updateCollectionAttribute(collection.getId(), attr3.getId(), attr3);
@@ -795,13 +795,13 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       });
 
       assertThat(res3).contains(
-              Map.entry("Task-1", 34200000L),
-              Map.entry("Task-2", 29100000L),
-              Map.entry("Task-3", 27066000L),
-              Map.entry("Task-4", 1000L),
-              Map.entry("Task-5", 453534000L),
-              Map.entry("Task-6", 5406000L),
-              Map.entry("Task-7", 7380000L)
+            Map.entry("Task-1", 34200000L),
+            Map.entry("Task-2", 29100000L),
+            Map.entry("Task-3", 27066000L),
+            Map.entry("Task-4", 1000L),
+            Map.entry("Task-5", 453534000L),
+            Map.entry("Task-6", 5406000L),
+            Map.entry("Task-7", 7380000L)
       );
    }
 
@@ -811,8 +811,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, 0),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+                  new Attribute("a1", "Task", null, null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, 0)
             )
       );
 
@@ -882,8 +882,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, 0),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+                  new Attribute("a1", "Task", null, null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, 0)
             )
       );
 
@@ -929,10 +929,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       });
 
       assertThat(res2).contains(
-              Map.entry("Task-1", 10L),
-              Map.entry("Task-2", new BigDecimal("0.12")),
-              Map.entry("Task-3", new BigDecimal("0.12")),
-              Map.entry("Task-4", new BigDecimal("0.0012"))
+            Map.entry("Task-1", 10L),
+            Map.entry("Task-2", new BigDecimal("0.12")),
+            Map.entry("Task-3", new BigDecimal("0.12")),
+            Map.entry("Task-4", new BigDecimal("0.0012"))
       );
    }
 
@@ -940,11 +940,11 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testUpdateDocumentWithZapier() {
       Collection collection = collectionFacade.createCollection(prepareCollection(CODE4));
       collectionFacade.createCollectionAttributes(
-              collection.getId(),
-              Arrays.asList(
-                      new Attribute("a1", "Task", null, null, 0),
-                      new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
-              )
+            collection.getId(),
+            Arrays.asList(
+                  new Attribute("a1", "Task", null, null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, 0)
+            )
       );
 
       var values = Arrays.asList("10", "12%", "0.12", "0.12 %");
@@ -974,8 +974,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, 0),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, 0)
+                  new Attribute("a1", "Task", null, null, null, 0),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, 0)
             )
       );
       collection = collectionFacade.getCollection(collection.getId()); // read it back with the attributes

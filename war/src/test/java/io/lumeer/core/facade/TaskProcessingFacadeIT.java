@@ -163,9 +163,9 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       Collection collection = new Collection(code, name, ICON, COLOR, null);
       collection.getPermissions().updateUserPermissions(userPermissions);
       collection.getPermissions().updateGroupPermissions(groupPermissions);
-      attributes.entrySet().forEach(e -> {
-         Attribute a = new Attribute(e.getKey(), e.getValue(), null, null, 0);
-         collection.updateAttribute(e.getKey(), a);
+      attributes.forEach((key, value) -> {
+         Attribute a = new Attribute(key, value, null, null, null, 0);
+         collection.updateAttribute(key, a);
       });
       return collectionDao.createCollection(collection);
    }

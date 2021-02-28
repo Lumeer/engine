@@ -403,7 +403,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private Collection createCollectionWithAttributes(String code, String... attributeIds) {
       Set<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
-            new Attribute(attributeId, attributeId, null, new Function("const lumeerko", "", "", 0, false), 1))
+            new Attribute(attributeId, attributeId, null, null, new Function("const lumeerko", "", "", 0, false), 1))
                                         .collect(Collectors.toSet());
       return createCollection(code, attributes);
    }
@@ -418,7 +418,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private LinkType createLinkWithAttribute(String name, List<String> collectionIds, String... attributeIds) {
       List<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
-            new Attribute(attributeId, attributeId, null, new Function("const lumeerko", "", "", 0, false), 1))
+            new Attribute(attributeId, attributeId, null, null, new Function("const lumeerko", "", "", 0, false), 1))
                                          .collect(Collectors.toList());
       LinkType linKType = new LinkType(name, collectionIds, attributes, null);
       return linkTypeDao.createLinkType(linKType);
