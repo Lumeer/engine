@@ -69,6 +69,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -638,7 +639,19 @@ public class JsExecutor {
          final Map<String, LinkType> linkTypes = new HashMap<>();
          final StringBuilder sb = new StringBuilder();
 
+         final LongAdder i = new LongAdder();
          changes.forEach(change -> {
+            if (change instanceof DocumentCreation ) {
+               final DocumentCreation documentCreation = (DocumentCreation) change;
+               if (StringUtils.isEmpty(documentCreation.getEntity().getId())) {
+                  i.increment();
+                  documentCreation.getEntity().setId("NEW" + i.intValue());
+               }
+            }
+         });
+
+         changes.forEach(change -> {
+            System.out.println(change);
             if (change instanceof DocumentCreation) {
                final DocumentCreation documentCreation = (DocumentCreation) change;
                final Collection collection = collections.computeIfAbsent(documentCreation.getEntity().getCollectionId(), id -> task.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
