@@ -29,6 +29,7 @@ import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.LinkTypeFacade;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.json.simple.JSONArray;
@@ -132,7 +133,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
    private Rule getRule(final JSONObject o) {
       var name = (String) o.get(Rule.NAME);
       var type = Rule.RuleType.valueOf(o.get(Rule.TYPE).toString());
-      var timing = Rule.RuleTiming.valueOf(o.get(Rule.TIMING).toString());
+      var timing = Utils.computeIfNotNull(o.get(Rule.TIMING), t -> Rule.RuleTiming.valueOf(t.toString()));
       var rule = new Rule(name, type, timing, new DataDocument((JSONObject) o.get("configuration")));
 
       if (type == Rule.RuleType.BLOCKLY) {
@@ -184,6 +185,17 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          }
       });
 
+      res = TemplateParserUtils.replacer(res, Pattern.quote("('"), Pattern.quote("')"), id -> {
+         if (id.length() == 24) {
+            var collId = templateParser.getDict().getCollectionId(id);
+            if (collId != null) {
+               return collId;
+            }
+         }
+
+         return id;
+      });
+
       return res;
    }
 
@@ -215,6 +227,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       res = TemplateParserUtils.replacer(res, "variabletype=\"", "_document", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "variabletype=\"", "_link", templateParser.getDict()::getLinkTypeId);
       res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION\">", "</field>", templateParser.getDict()::getCollectionId);
+      res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION_ID\">", "</field>", templateParser.getDict()::getCollectionId);
 
       return res;
    }
