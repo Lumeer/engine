@@ -164,7 +164,6 @@ public class SearchFacade extends AbstractFacade {
       if (tasksQuery == null) {
          return new Tuple<>(Collections.emptyList(), Collections.emptyList());
       }
-      System.out.println("queryyy " + tasksQuery);
       final Function<Document, Boolean> documentFilter = query.isEmpty() ? document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())) : null;
       return searchDocumentsAndLinks(tasksQuery, language, includeChildDocuments, !isPublic && query.isEmpty(), collectionsMap, linkTypesMap, documentFilter);
    }
@@ -178,7 +177,7 @@ public class SearchFacade extends AbstractFacade {
          final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
          final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
          if (assigneeAttribute != null) {
-            final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.EQUALS, ConditionValueType.CURRENT_USER.getValue());
+            final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
             return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
          }
          return null;
@@ -259,16 +258,12 @@ public class SearchFacade extends AbstractFacade {
       var hasMoreDocuments = true;
       var page = 0;
 
-      System.out.println("starting with fetching " + stem);
-
       while (hasMoreDocuments) {
          var previousCollection = allCollections.get(0);
          var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE, null);
          var previousDocuments = filterDocumentsByDocumentFilter(firstCollectionDocuments, documentFilter);
          final Set<Document> currentDocuments = new HashSet<>(previousDocuments);
          final Set<LinkInstance> currentLinkInstances = new HashSet<>();
-
-         System.out.println(page + "/// after load of documents " + previousDocuments);
 
          for (String linkTypeId : stem.getLinkTypeIds()) {
             var linkType = linkTypesMap.get(linkTypeId);
@@ -285,8 +280,6 @@ public class SearchFacade extends AbstractFacade {
             }
          }
 
-         System.out.println(page + "/// after load links " + currentDocuments.size() + " /// " + currentLinkInstances.size());
-
          if (!currentDocuments.isEmpty()) {
             var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, language != null ? language : Language.EN);
             allDocuments.addAll(result.getFirst());
@@ -294,8 +287,6 @@ public class SearchFacade extends AbstractFacade {
          }
          page++;
          hasMoreDocuments = !firstCollectionDocuments.isEmpty();
-
-         System.out.println(page + " /// " + hasMoreDocuments);
       }
 
       return new Tuple<>(allDocuments, allLinkInstances);
