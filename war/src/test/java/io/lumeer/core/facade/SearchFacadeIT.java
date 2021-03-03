@@ -370,34 +370,39 @@ public class SearchFacadeIT extends IntegrationTestBase {
       var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
       Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
       Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, 1);
-      var attributeId = stateAttribute.getId();
-      var purposeMetadata = new DataDocument("stateAttributeId", attributeId).append("finalStatesList", Arrays.asList("c", "d"));
+      var stateAttributeId = stateAttribute.getId();
+      Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
+      Attribute assigneeAttribute = new Attribute("a2", "a2", null,  assigneeConstraint, null, 1);
+      var assigneeAttributeId = assigneeAttribute.getId();
+      var purposeMetadata = new DataDocument(Collection.META_STATE_ATTRIBUTE_ID, stateAttributeId)
+            .append(Collection.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
+            .append(Collection.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
       CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
-      String taskCollectionId = createTaskCollection("taskCollection", purpose, stateAttribute).getId();
-      String otherCollectionId = createCollection("otherCollection", stateAttribute).getId();
+      String taskCollectionId = createTaskCollection("taskCollection", purpose, stateAttribute, assigneeAttribute).getId();
+      String otherCollectionId = createCollection("otherCollection", stateAttribute, assigneeAttribute).getId();
 
-      String id1 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "a")).getId();
-      String id2 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, "b")).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "c"));
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, "d"));
-      String id5 = createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("a", "b"))).getId();
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("b", "c")));
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("c", "d")));
-      createDocument(taskCollectionId, Collections.singletonMap(attributeId, Arrays.asList("d", "a")));
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "a"));
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "b"));
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "c"));
-      createDocument(otherCollectionId, Collections.singletonMap(attributeId, "d"));
+      String id1 = createDocument(taskCollectionId, Map.of(stateAttributeId, "a", assigneeAttributeId, USER)).getId();
+      createDocument(taskCollectionId, Collections.singletonMap(stateAttributeId, "b"));
+      String id3 = createDocument(taskCollectionId, Collections.singletonMap(stateAttributeId, "c")).getId();
+      String id4 = createDocument(taskCollectionId, Collections.singletonMap(stateAttributeId, "d")).getId();
+      String id5 = createDocument(taskCollectionId, Map.of(stateAttributeId, Arrays.asList("a", "b"), assigneeAttributeId, USER)).getId();
+      String id6 = createDocument(taskCollectionId, Collections.singletonMap(stateAttributeId, Arrays.asList("b", "c"))).getId();
+      String id7 = createDocument(taskCollectionId, Collections.singletonMap(stateAttributeId, Arrays.asList("c", "d"))).getId();
+      String id8 = createDocument(taskCollectionId, Collections.singletonMap(stateAttributeId, Arrays.asList("d", "a"))).getId();
+      createDocument(otherCollectionId, Collections.singletonMap(stateAttributeId, "a"));
+      createDocument(otherCollectionId, Collections.singletonMap(stateAttributeId, "b"));
+      createDocument(otherCollectionId, Collections.singletonMap(stateAttributeId, "c"));
+      createDocument(otherCollectionId, Collections.singletonMap(stateAttributeId, "d"));
 
       Query query = new Query();
       List<Document> documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN, true).getFirst();
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id5);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id5);
 
-      query = createSimpleQueryWithAttributeFilter(taskCollectionId, CollectionAttributeFilter.createFromValues(taskCollectionId, attributeId, ConditionType.IN, Arrays.asList("a", "c", "d")));
+      query = createSimpleQueryWithAttributeFilter(taskCollectionId, CollectionAttributeFilter.createFromValues(taskCollectionId, stateAttributeId, ConditionType.HAS_SOME, Arrays.asList("a", "c", "d")));
       documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN, true).getFirst();
-      assertThat(documents).extracting(Document::getId).containsOnly(id1);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4, id5, id6, id7, id8);
 
-      query = createSimpleQueryWithAttributeFilter(otherCollectionId, CollectionAttributeFilter.createFromValues(otherCollectionId, attributeId, ConditionType.IN, Arrays.asList("a", "c", "d")));
+      query = createSimpleQueryWithAttributeFilter(otherCollectionId, CollectionAttributeFilter.createFromValues(otherCollectionId, stateAttributeId, ConditionType.HAS_SOME, Arrays.asList("a", "c", "d")));
       documents = searchFacade.searchTasksDocumentsAndLinks(query, Language.EN, true).getFirst();
       assertThat(documents).extracting(Document::getId).isEmpty();
    }

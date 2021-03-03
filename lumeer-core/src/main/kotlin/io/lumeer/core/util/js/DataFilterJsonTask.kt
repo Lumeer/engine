@@ -51,9 +51,15 @@ data class DataFilterJsonTask(val documents: List<Document>,
         return try {
             val filterJsValue = getFunction(context)
 
+            println("concerting to json ${documents.size}")
+
             val json = convertToJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language.toLanguageTag()))
 
+            println("after conversion to json ${documents.size}")
+
             val result = filterJsValue.execute(json)
+
+            println("after result ${documents.size}")
 
             if (result != null) {
                 val documentsMap = documents.groupBy { it.id }
