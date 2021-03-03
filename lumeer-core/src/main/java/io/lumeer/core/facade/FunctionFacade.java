@@ -27,10 +27,12 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.function.FunctionParameter;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.util.FunctionOrder;
 import io.lumeer.core.util.FunctionXmlParser;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -228,28 +230,11 @@ public class FunctionFacade extends AbstractFacade {
    }
 
    private Attribute findAttributeInCollection(Collection collection, String attributeId) {
-      if (collection == null || collection.getAttributes() == null) {
-         return null;
-      }
-
-      return findAttribute(collection.getAttributes(), attributeId);
+      return ResourceUtils.findAttribute(Utils.computeIfNotNull(collection, Collection::getAttributes), attributeId);
    }
 
    private Attribute findAttributeInLinkType(LinkType linkType, String attributeId) {
-      if (linkType == null || linkType.getAttributes() == null) {
-         return null;
-      }
-
-      return findAttribute(linkType.getAttributes(), attributeId);
-   }
-
-   private Attribute findAttribute(java.util.Collection<Attribute> attributes, String attributeId) {
-      for (Attribute attribute : attributes) {
-         if (attribute.getId().equals(attributeId)) {
-            return attribute;
-         }
-      }
-      return null;
+      return ResourceUtils.findAttribute(Utils.computeIfNotNull(linkType, LinkType::getAttributes), attributeId);
    }
 
    private FunctionParameterDocuments functionRowToParameter(FunctionRow row) {

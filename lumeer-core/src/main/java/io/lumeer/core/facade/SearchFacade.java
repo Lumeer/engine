@@ -19,8 +19,12 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.CollectionPurposeType;
+import io.lumeer.api.model.ConditionType;
+import io.lumeer.api.model.ConditionValueType;
 import io.lumeer.api.model.ConstraintData;
 import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
@@ -32,6 +36,7 @@ import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
@@ -115,7 +120,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true).getSecond();
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, true, collectionsMap, linkTypesMap, null).getSecond();
    }
 
    public List<Document> searchDocumentsPublic(final Query query, Language language) {
@@ -130,7 +135,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true).getFirst();
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, true, collectionsMap, linkTypesMap, null).getFirst();
    }
 
    private Map<String, Collection> getCollectionsMap(java.util.Collection<Collection> collections) {
@@ -155,7 +160,30 @@ public class SearchFacade extends AbstractFacade {
       final List<LinkType> linkTypes = filterLinkTypesByCollections(resources.getSecond(), collections);
       final Map<String, Collection> collectionsMap = getCollectionsMap(collections);
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(linkTypes);
-      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())));
+      final Query tasksQuery = modifyQueryForTasks(isPublic, query, collections);
+      if (tasksQuery == null) {
+         return new Tuple<>(Collections.emptyList(), Collections.emptyList());
+      }
+      final Function<Document, Boolean> documentFilter = query.isEmpty() ? document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())) : null;
+      return searchDocumentsAndLinks(tasksQuery, language, includeChildDocuments, !isPublic && query.isEmpty(), collectionsMap, linkTypesMap, documentFilter);
+   }
+
+   private Query modifyQueryForTasks(boolean isPublic, final Query query, final List<Collection> collections) {
+      if (isPublic || !query.isEmpty()) {
+         return query;
+      }
+
+      final List<QueryStem> stems = collections.stream().map(collection -> {
+         final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+         final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
+         if (assigneeAttribute != null) {
+            final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
+            return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
+         }
+         return null;
+      }).filter(Objects::nonNull).collect(Collectors.toList());
+
+      return stems.isEmpty() ? null : new Query(stems);
    }
 
    public Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, Language language, boolean includeChildDocuments) {
@@ -170,23 +198,17 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      return searchDocumentsAndLinks(query, language, includeChildDocuments, isPublic, collectionsMap, linkTypesMap, document -> true);
+      return searchDocumentsAndLinks(query, language, includeChildDocuments, true, collectionsMap, linkTypesMap, null);
    }
 
-   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean includeChildDocuments, boolean isPublic, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
-      final Query encodedQuery = checkQuery(query, collectionsMap, linkTypesMap, isPublic);
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, @Nullable Language language, boolean includeChildDocuments, boolean shouldCheckQuery, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter) {
+      final Query encodedQuery = checkQuery(query, collectionsMap, linkTypesMap, shouldCheckQuery);
 
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
-      final ConstraintData constraintData = new ConstraintData(
-            userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
-            authenticatedUser.getCurrentUser(),
-            translationManager.translateDurationUnitsMap(language),
-            new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
-      );
-
       if (encodedQuery.containsStems()) {
+         ConstraintData constraintData = createConstraintData(language);
          encodedQuery.getStems().forEach(stem -> {
             var result = stem.containsAnyFilter() || encodedQuery.getFulltexts().size() > 0
                   ? searchDocumentsAndLinksInStem(stem, encodedQuery.getFulltexts(), language, collectionsMap, linkTypesMap, documentFilter, constraintData, includeChildDocuments)
@@ -195,7 +217,7 @@ public class SearchFacade extends AbstractFacade {
             allLinkInstances.addAll(result.getSecond());
          });
       } else if (encodedQuery.getFulltexts().size() > 0) {
-         var result = searchDocumentsAndLinksByFulltexts(encodedQuery.getFulltexts(), language, collectionsMap, linkTypesMap, documentFilter, constraintData, includeChildDocuments);
+         var result = searchDocumentsAndLinksByFulltexts(encodedQuery.getFulltexts(), language, collectionsMap, linkTypesMap, documentFilter, createConstraintData(language), includeChildDocuments);
          allDocuments.addAll(result.getFirst());
          allLinkInstances.addAll(result.getSecond());
       } else {
@@ -207,7 +229,16 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(new ArrayList<>(allDocuments), new ArrayList<>(allLinkInstances));
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStem(final QueryStem stem, final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter, final ConstraintData constraintData,
+   private ConstraintData createConstraintData(@Nullable Language language) {
+      return new ConstraintData(
+            userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
+            authenticatedUser.getCurrentUser(),
+            translationManager.translateDurationUnitsMap(language),
+            new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language))
+      );
+   }
+
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStem(final QueryStem stem, final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter, final ConstraintData constraintData,
          boolean includeChildDocuments) {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
@@ -229,8 +260,8 @@ public class SearchFacade extends AbstractFacade {
 
       while (hasMoreDocuments) {
          var previousCollection = allCollections.get(0);
-         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE, document -> true);
-         var previousDocuments = firstCollectionDocuments.stream().filter(documentFilter::apply).collect(Collectors.toList());
+         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE, null);
+         var previousDocuments = filterDocumentsByDocumentFilter(firstCollectionDocuments, documentFilter);
          final Set<Document> currentDocuments = new HashSet<>(previousDocuments);
          final Set<LinkInstance> currentLinkInstances = new HashSet<>();
 
@@ -261,7 +292,7 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(allDocuments, allLinkInstances);
    }
 
-   private Tuple<List<Collection>, List<LinkType>> getResourcesFromStem(final QueryStem stem, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap) {
+   private Tuple<List<Collection>, List<LinkType>> getResourcesFromStem(final QueryStem stem, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       var previousCollection = collectionsMap.get(stem.getCollectionId());
       if (previousCollection == null) {
          return new Tuple<>(new ArrayList<>(), new ArrayList<>());
@@ -283,7 +314,7 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(allCollections, allLinkTypes);
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStemWithoutFilters(final QueryStem stem, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStemWithoutFilters(final QueryStem stem, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter) {
       var previousCollection = collectionsMap.get(stem.getCollectionId());
       if (previousCollection == null) {
          return new Tuple<>(new HashSet<>(), new HashSet<>());
@@ -311,7 +342,8 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(allDocuments, allLinkInstances);
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByFulltexts(final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter, final ConstraintData constraintData, boolean includeChildDocuments) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByFulltexts(final Set<String> fulltexts, @Nullable Language language, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter, final ConstraintData constraintData,
+         boolean includeChildDocuments) {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
@@ -359,7 +391,7 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(allDocuments, allLinkInstances);
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByEmptyQuery(final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, final Function<Document, Boolean> documentFilter) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByEmptyQuery(final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter) {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
@@ -393,9 +425,9 @@ public class SearchFacade extends AbstractFacade {
                           .collect(Collectors.toSet());
    }
 
-   private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, Map<String, LinkType> linkTypesMap, boolean isPublic) {
+   private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
       final View view = permissionsChecker.getActiveView();
-      if (!isPublic && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
+      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
          return view.getQuery();
       }
 
@@ -441,9 +473,16 @@ public class SearchFacade extends AbstractFacade {
                       .collect(Collectors.toList());
    }
 
-   private List<Document> getDocumentsByCollection(Collection collection, @Nullable Set<String> documentIds, final Function<Document, Boolean> documentFilter) {
-      return convertDataDocumentsToDocuments(getDocumentData(collection, documentIds))
-            .stream().filter(documentFilter::apply).collect(Collectors.toList());
+   private List<Document> getDocumentsByCollection(Collection collection, @Nullable Set<String> documentIds, @Nullable final Function<Document, Boolean> documentFilter) {
+      var documents = convertDataDocumentsToDocuments(getDocumentData(collection, documentIds));
+      return filterDocumentsByDocumentFilter(documents, documentFilter);
+   }
+
+   private List<Document> filterDocumentsByDocumentFilter(final List<Document> documents, @Nullable final Function<Document, Boolean> documentFilter) {
+      if (documentFilter != null) {
+         return documents.stream().filter(documentFilter::apply).collect(Collectors.toList());
+      }
+      return documents;
    }
 
    private List<DataDocument> getDocumentData(Collection collection, @Nullable Set<String> documentIds) {
@@ -455,10 +494,10 @@ public class SearchFacade extends AbstractFacade {
       return data.stream().map(d -> constraintManager.decodeDataTypes(collection, d)).collect(Collectors.toList());
    }
 
-   private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit, final Function<Document, Boolean> documentFilter) {
+   private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit, @Nullable final Function<Document, Boolean> documentFilter) {
       List<DataDocument> data = decodeData(collection, dataDao.getData(collection.getId(), skip, limit));
-      return convertDataDocumentsToDocuments(data)
-            .stream().filter(documentFilter::apply).collect(Collectors.toList());
+      var documents = convertDataDocumentsToDocuments(data);
+      return filterDocumentsByDocumentFilter(documents, documentFilter);
    }
 
    private List<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data) {

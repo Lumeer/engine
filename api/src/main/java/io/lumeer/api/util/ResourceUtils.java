@@ -113,7 +113,7 @@ public class ResourceUtils {
    }
 
    public static Attribute findAttribute(java.util.Collection<Attribute> attributes, String attributeId) {
-      if (attributes == null) {
+      if (attributes == null || attributeId == null) {
          return null;
       }
       for (Attribute attribute : attributes) {
