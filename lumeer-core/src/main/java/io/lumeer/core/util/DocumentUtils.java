@@ -21,17 +21,28 @@ package io.lumeer.core.util;
 import static java.util.stream.Collectors.mapping;
 import static java.util.stream.Collectors.toList;
 
+import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConstraintData;
+import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.User;
+import io.lumeer.core.facade.translate.TranslationManager;
+import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class DocumentUtils {
@@ -126,6 +137,44 @@ public class DocumentUtils {
       }
       return attrs;
    }
+
+   public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions) {
+      if (dao.getSelectedWorkspace().getOrganization().isPresent() && query.getCollectionIds().size() > 0) {
+         final String collectionId = query.getCollectionIds().iterator().next();
+         final Collection collection = dao.getCollectionDao().getCollectionById(collectionId);
+         final List<Document> documents = dao.getDocumentDao().getDocumentsByCollection(collectionId);
+         final Map<String, Document> documentsByIds = documents.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
+         dao.getDataDao().getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet())).forEach(data -> {
+            final Document doc = documentsByIds.get(data.getId());
+            if (doc != null) {
+               doc.setData(data);
+            }
+         });
+
+         final TranslationManager translationManager = new TranslationManager();
+         final ConstraintData constraintData = new ConstraintData(
+               dao.getUserDao().getAllUsers(dao.getSelectedWorkspace().getOrganization().get().getId()),
+               user,
+               translationManager.translateDurationUnitsMap(language),
+               new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
+               null
+         );
+
+         final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQuery(
+               documents, List.of(collection), List.of(), List.of(), query,
+               Map.of(collectionId, permissions),
+               Map.of(),
+               constraintData,
+               true,
+               language
+         );
+
+         return result.getFirst();
+      }
+
+      return List.of();
+   }
+
 
    private static boolean isDataDocument(Object obj) {
       return obj != null && obj instanceof DataDocument;

@@ -73,6 +73,13 @@ public class AutoLinkRuleTaskExecutor {
             thatAttribute = rule.getAttribute1();
          }
 
+         // check whether the document hasn't been deleted by previous rules
+         if (ruleTask.getNewDocument() != null) {
+            if (ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(ruleTask.getNewDocument().getId()).size() <= 0) {
+               return changesTracker;
+            }
+         }
+
          // both documents are set
          if (ruleTask.getOldDocument() != null && ruleTask.getNewDocument() != null) {
             Object o1 = ruleTask.getOldDocument().getData().get(thisAttribute);

@@ -22,6 +22,7 @@ import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -40,6 +41,9 @@ public class Rule implements HealthChecking {
    public enum RuleTiming {
       CREATE, UPDATE, CREATE_UPDATE, DELETE, CREATE_DELETE, UPDATE_DELETE, ALL
    }
+
+   @JsonIgnore
+   private String id;
 
    private String name;
    private RuleType type;
@@ -75,6 +79,14 @@ public class Rule implements HealthChecking {
 
    public void setType(final RuleType type) {
       this.type = type;
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(final String id) {
+      this.id = id;
    }
 
    @Override

@@ -16,31 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task;
+package io.lumeer.core.util;
 
-import io.lumeer.api.model.Document;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.core.task.executor.ChangesTracker;
 
-import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * A task that can be processed.
- */
-public interface Task extends Serializable {
+public class LinkTypeUtils {
 
-   long MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS = 25L;
-   long MAX_MESSAGES = 5L;
-   int MAX_VIEW_DOCUMENTS = 1000;
+   private LinkTypeUtils() {
+   }
 
-   void setParent(final Task task);
+   public static Map<String, List<LinkInstance>> getLinksByType(final List<LinkInstance> linkInstances) {
+      return linkInstances.stream().collect(Collectors.groupingBy(LinkInstance::getLinkTypeId, mapping(d -> d, toList())));
+   }
 
-   Task getParent();
-
-   void process(final TaskExecutor executor, final ChangesTracker changesTracker);
-
-   void propagateChanges(final List<Document> documents, final List<LinkInstance> links);
-
-   void processChanges(final ChangesTracker changesTracker);
 }

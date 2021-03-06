@@ -86,6 +86,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    final private Organization organization;
    final private Project project;
    final private LongAdder createdDocumentsCounter = new LongAdder();
+   final private LongAdder deletedDocumentsCounter = new LongAdder();
    final private LongAdder messageCounter = new LongAdder();
    final private WorkspaceSnapshot workspaceSnapshot;
 
@@ -299,6 +300,12 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    public long increaseCreationCounter() {
       createdDocumentsCounter.increment();
       return createdDocumentsCounter.longValue();
+   }
+
+   @Override
+   public long increaseDeletionCounter() {
+      deletedDocumentsCounter.increment();
+      return deletedDocumentsCounter.longValue();
    }
 
    @Override

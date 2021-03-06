@@ -162,6 +162,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForDocument(final Document document, final String userId, final String suffix) {
+      if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
+         return createEventForRemove(Document.class.getSimpleName(), getResourceId(document, document.getCollectionId()), userId);
+      }
+
       document.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.DOCUMENT, document.getId()));
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
@@ -182,8 +186,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
 
       if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
-         final PusherFacade.ResourceId message = new PusherFacade.ResourceId(linkInstance.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-         return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message);
+         return createEventForRemove(LinkInstance.class.getSimpleName(), getResourceId(linkInstance, linkInstance.getLinkTypeId()), userId);
       } else {
          final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
          injectCorrelationId(message);
@@ -215,6 +218,14 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private PusherFacade.ResourceId getResourceId() {
       return new PusherFacade.ResourceId(null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
+   }
+
+   private Event createEventForRemove(final String className, final PusherFacade.ResourceId object, final String userId) {
+      return new Event(eventChannel(userId), className + PusherFacade.REMOVE_EVENT_SUFFIX, object, null);
+   }
+
+   public static String eventChannel(String userId) {
+      return PusherFacade.PRIVATE_CHANNEL_PREFIX + userId;
    }
 
    public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
@@ -326,6 +337,24 @@ public abstract class AbstractContextualTask implements ContextualTask {
          });
       }
       collectionIds.removeAll(updatedIds);
+
+      if (changesTracker.getRemovedDocuments().size() > 0) {
+         final Map<String, List<Document>> documentsByCollectionId =
+               Utils.categorize(changesTracker.getRemovedDocuments().stream(), Document::getCollectionId);
+
+         documentsByCollectionId.forEach((collectionId, documents) -> {
+            if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
+               if (documents.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.REMOVE_EVENT_SUFFIX, collectionIds.contains(collectionId));
+               }
+               updatedIds.add(collectionId);
+            }
+         });
+      }
+      collectionIds.removeAll(updatedIds);
+
 
       if (collectionIds.size() > 0) {
          collectionIds.forEach(id -> {

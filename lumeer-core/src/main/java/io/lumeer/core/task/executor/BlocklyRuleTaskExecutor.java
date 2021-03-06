@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -77,6 +78,7 @@ public class BlocklyRuleTaskExecutor {
             tracker = jsExecutor.commitChanges(taskExecutor);
          } else {
             writeDryRunResults(jsExecutor.getChanges());
+            tracker = jsExecutor.commitDryRunChanges(taskExecutor);
          }
 
          checkErrorErasure();
@@ -132,11 +134,11 @@ public class BlocklyRuleTaskExecutor {
 
       if (ruleTask.isCollectionBased()) {
          final Collection originalCollection = ruleTask.getCollection().copy();
-         ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
+         ruleTask.getCollection().getRules().put(rule.getRule().getId(), rule.getRule());
          ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
       } else {
          final LinkType originalLinkType = new LinkType(ruleTask.getLinkType());
-         ruleTask.getLinkType().getRules().put(ruleName, rule.getRule());
+         ruleTask.getLinkType().getRules().put(rule.getRule().getId(), rule.getRule());
          ruleTask.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(ruleTask.getCollection().getId(), ruleTask.getLinkType(), originalLinkType);
       }
    }

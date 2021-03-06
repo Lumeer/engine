@@ -18,6 +18,9 @@
  */
 package io.lumeer.api.model;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 public class AllowedPermissions {
 
    private final Boolean read;
@@ -47,6 +50,26 @@ public class AllowedPermissions {
 
    public static AllowedPermissions getAllAllowed() {
       return new AllowedPermissions(true, true, true);
+   }
+
+   public static AllowedPermissions getAllowedPermissions(final String userId, final Permissions permissions) {
+      final Set<Permission> allowedPermissions = permissions.getUserPermissions().stream().filter(p -> p.getId().equals(userId)).collect(Collectors.toSet());
+
+      final boolean[] rwm = {false, false, false};
+
+      allowedPermissions.forEach(p -> {
+         if (p.getRoles().contains(Role.READ)) {
+            rwm[0] = true;
+         }
+         if (p.getRoles().contains(Role.WRITE)) {
+            rwm[1] = true;
+         }
+         if (p.getRoles().contains(Role.MANAGE)) {
+            rwm[2] = true;
+         }
+      });
+
+      return new AllowedPermissions(rwm[0], rwm[1], rwm[2]);
    }
 
    public Boolean getRead() {

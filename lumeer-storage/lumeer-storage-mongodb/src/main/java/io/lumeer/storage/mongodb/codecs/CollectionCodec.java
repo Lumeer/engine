@@ -84,6 +84,7 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
       if (rulesMap != null) {
          rulesMap.forEach((k, v) -> {
             final Rule rule = RuleCodec.convertFromDocument(rulesMap.get(k, Document.class));
+            rule.setId(k);
             if (StringUtils.isEmpty(rule.getName())) {
                rule.setName(k);
             }

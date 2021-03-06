@@ -112,5 +112,6 @@ public interface DaoContextSnapshot {
    SelectedWorkspace getSelectedWorkspace();
 
    long increaseCreationCounter();
+   long increaseDeletionCounter();
    long increaseMessageCounter();
 }

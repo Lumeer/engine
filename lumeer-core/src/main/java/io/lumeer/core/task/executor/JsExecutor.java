@@ -21,13 +21,17 @@ package io.lumeer.core.task.executor;
 import static java.util.stream.Collectors.*;
 
 import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
@@ -43,10 +47,12 @@ import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.UserMessage;
 import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.LinkTypeUtils;
 import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -65,6 +71,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -133,7 +140,7 @@ public class JsExecutor {
       }
 
       public DocumentBridge createDocument(final String collectionId) {
-         if (task.getDaoContextSnapshot().increaseCreationCounter() <= Task.MAX_CREATED_DOCUMENTS) {
+         if (task.getDaoContextSnapshot().increaseCreationCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS) {
             try {
                final Document d = new Document(collectionId, ZonedDateTime.now(), null, task.getInitiator().getId(), null, 0, null);
                d.createIfAbsentMetaData().put(Document.META_CORRELATION_ID, CREATE_PREFIX + UUID.randomUUID().toString());
@@ -148,6 +155,22 @@ public class JsExecutor {
             }
          } else {
             return null;
+         }
+      }
+
+      @SuppressWarnings("unused")
+      public List<DocumentBridge> readView(final String viewId) {
+         try {
+            final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
+            final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
+            final Language language = Language.fromString(task.getCurrentLocale());
+            final AllowedPermissions permissions = AllowedPermissions.getAllowedPermissions(task.getInitiator().getId(), view.getPermissions());
+            final List<Document> documents = DocumentUtils.getDocuments(task.getDaoContextSnapshot(), query, task.getInitiator(), language, permissions);
+
+            return documents.stream().map(DocumentBridge::new).collect(toList());
+         } catch (Exception e) {
+            cause = e;
+            throw e;
          }
       }
 
@@ -174,6 +197,41 @@ public class JsExecutor {
          } catch (Exception e) {
             cause = e;
             throw e;
+         }
+      }
+
+      @SuppressWarnings("unused")
+      public void removeDocument(final DocumentBridge d) {
+         if (task.getDaoContextSnapshot().increaseDeletionCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS) {
+            try {
+               changes.add(new DocumentRemoval(d.document));
+            } catch (Exception e) {
+               cause = e;
+               throw e;
+            }
+         }
+      }
+
+      @SuppressWarnings("unused")
+      public LinkBridge linkDocuments(final DocumentBridge d1, final DocumentBridge d2, final String linkTypeId) {
+         if (task.getDaoContextSnapshot().increaseCreationCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS) {
+            try {
+               final LinkInstance link = new LinkInstance(linkTypeId, List.of(
+                     d1.document.getId() != null ? d1.document.getId() : d1.document.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID),
+                     d2.document.getId() != null ? d2.document.getId() : d2.document.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID)
+               ));
+               link.setTemplateId(CREATE_PREFIX + UUID.randomUUID().toString());
+               link.setData(new DataDocument());
+
+               changes.add(new LinkCreation(link));
+
+               return new LinkBridge(link);
+            } catch (Exception e) {
+               cause = e;
+               throw e;
+            }
+         } else {
+            return null;
          }
       }
 
@@ -406,7 +464,9 @@ public class JsExecutor {
          return task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
       }
 
-      private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes, final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId, final Map<String, Collection> collectionsMapForCreatedDocuments) {
+      private List<Document> commitDocumentChanges(final TaskExecutor taskExecutor, final List<DocumentChange> changes,
+            final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId,
+            final Map<String, Collection> collectionsMapForCreatedDocuments) {
          if (changes.isEmpty()) {
             return List.of();
          }
@@ -414,6 +474,7 @@ public class JsExecutor {
          final FunctionFacade functionFacade = task.getFunctionFacade();
          final TaskProcessingFacade taskProcessingFacade = task.getTaskProcessingFacade(taskExecutor, functionFacade);
          final PurposeChangeProcessor purposeChangeProcessor = task.getPurposeChangeProcessor();
+
          final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
          Map<String, Set<String>> documentIdsByCollection = changes.stream().map(Change::getEntity)
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
@@ -504,21 +565,115 @@ public class JsExecutor {
          changesTracker.updateCollectionsMap(collectionsMap);
 
          collectionsChanged.forEach(collectionId -> task.getDaoContextSnapshot()
-                                                        .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null));
+                                                        .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null, false));
 
          return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
       }
 
-      private List<LinkInstance> commitLinkChanges(final TaskExecutor taskExecutor, final List<LinkChange> changes) {
+      private List<Document> removeDocuments(final List<DocumentRemoval> changes) {
+         if (!changes.isEmpty()) {
+            final List<Document> documents = changes.stream().map(DocumentRemoval::getEntity).collect(toList());
+            final Map<String, Collection> updatedCollections = new HashMap<>();
+            final Map<String, LinkType> updatedLinkTypes = new HashMap<>();
+
+            final Map<String, Collection> allCollections = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(
+                  documents.stream().map(Document::getCollectionId).collect(toList())
+               ).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
+            final Map<String, LinkType> allLinkTypes = task.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes().stream().collect(Collectors.toMap(LinkType::getId, Function.identity()));
+
+            documents.forEach(document -> {
+               // decrease documents count in collections map
+               if (changesTracker.getCollectionsMap().containsKey(document.getCollectionId())) { // present in collections map
+                  final Collection collection = changesTracker.getCollectionsMap().get(document.getCollectionId());
+                  collection.setDocumentsCount(collection.getDocumentsCount() - 1);
+                  updatedCollections.put(collection.getId(), collection);
+               } else { // not yet tracked
+                  final Collection collection = allCollections.get(document.getCollectionId());
+                  collection.setDocumentsCount(collection.getDocumentsCount() - 1);
+                  updatedCollections.put(document.getCollectionId(), collection);
+                  changesTracker.updateCollectionsMap(Map.of(collection.getId(), collection));
+               }
+
+               // decrease documents count in updated collections in changes tracker
+               final Optional<Collection> changedCollection = changesTracker.getCollections().stream().filter(c -> c.getId().equals(document.getCollectionId())).findFirst();
+               if (changedCollection.isPresent()) { // present in changes tracker
+                  final Collection collection = allCollections.get(document.getCollectionId());
+                  changedCollection.get().setDocumentsCount(collection.getDocumentsCount());
+               } else { // not yet tracked
+                  final Collection collection = allCollections.get(document.getCollectionId());
+                  changesTracker.getCollections().add(collection);
+               }
+
+               final List<LinkInstance> removedLinks = task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesByDocumentIds(Set.of(document.getId()));
+               final Set<String> removedFromLinkTypes = removedLinks.stream().map(LinkInstance::getLinkTypeId).collect(toSet());
+               changesTracker.addRemovedLinkInstances(removedLinks);
+               task.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstancesByDocumentsIds(Set.of(document.getId()));
+
+               removedFromLinkTypes.forEach(linkTypeId -> {
+                  // decrease link instances count in link types map
+                  if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) { // present in link types map
+                     final LinkType linkType = changesTracker.getLinkTypesMap().get(linkTypeId);
+                     linkType.setLinksCount(linkType.getLinksCount() - 1);
+                     updatedLinkTypes.put(linkType.getId(), linkType);
+                  } else { // not yet in the map
+                     final LinkType linkType = allLinkTypes.get(linkTypeId);
+                     linkType.setLinksCount(linkType.getLinksCount() - 1);
+                     updatedLinkTypes.put(linkTypeId, linkType);
+                     changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
+                  }
+
+                  // decrease link instances count in updated link types in changes tracker
+                  final Optional<LinkType> changedLinkType = changesTracker.getLinkTypes().stream().filter(l -> l.getId().equals(linkTypeId)).findFirst();
+                  if (changedLinkType.isPresent()) { // tracked in changes tracker
+                     final LinkType linkType = allLinkTypes.get(linkTypeId);
+                     changedLinkType.get().setLinksCount(linkType.getLinksCount());
+                  } else { // not yet tracked
+                     final LinkType linkType = allLinkTypes.get(linkTypeId);
+                     changesTracker.getLinkTypes().add(linkType);
+                  }
+               });
+
+               task.getDaoContextSnapshot().getDocumentDao().deleteDocument(document.getId(), document.getData());
+               task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
+            });
+
+            updatedCollections.forEach((id, col) -> task.getDaoContextSnapshot().getCollectionDao().updateCollection(id, col, null, false));
+            updatedLinkTypes.forEach((id, linkType) -> task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(id, linkType, null, false));
+
+            return documents;
+         }
+
+         return List.of();
+      }
+
+      private List<LinkInstance> createLinks(final List<LinkCreation> changes) {
+         if (changes.isEmpty()) {
+            return List.of();
+         }
+
+         final List<LinkInstance> linkInstances = changes.stream().map(LinkCreation::getEntity).collect(toList());
+
+         return task.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances, false);
+      }
+
+      private List<LinkInstance> commitLinkChanges(final TaskExecutor taskExecutor, final List<LinkChange> changes,
+            final List<LinkInstance> createdLinks, final Map<String, List<LinkInstance>> createdLinksByLinkTypeId,
+            final Map<String, LinkType> linkTypeMapForCreatedLinks) {
          if (changes.isEmpty()) {
             return List.of();
          }
 
          final FunctionFacade functionFacade = task.getFunctionFacade();
+         final TaskProcessingFacade taskProcessingFacade = task.getTaskProcessingFacade(taskExecutor, functionFacade);
+
          final Map<String, List<LinkInstance>> updatedLinks = new HashMap<>(); // LinkType -> [LinkInstance]
          final Map<String, LinkType> linkTypesMap = task.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes()
                                                         .stream().collect(Collectors.toMap(LinkType::getId, linkType -> linkType));
          Set<String> linkTypesChanged = new HashSet<>();
+
+         Map<String, LinkInstance> linksByCorrelationId = createdLinks.stream().collect(Collectors.toMap(LinkInstance::getTemplateId, Function.identity()));
+
+         // aggregate all changes to individual link instances
          final Map<String, List<LinkChange>> changesByLinkTypeId = Utils.categorize(changes.stream(), change -> change.getEntity().getId());
 
          changesByLinkTypeId.forEach((id, changeList) -> {
@@ -553,18 +708,41 @@ public class JsExecutor {
 
             updatedLink.setData(patchedData);
 
-            if (task instanceof RuleTask) {
-               taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+            // add patched data to new links
+            boolean created = false;
+            if (StringUtils.isNotEmpty(linkInstance.getTemplateId())) {
+               final LinkInstance link = linksByCorrelationId.get(linkInstance.getTemplateId());
+
+               if (link != null) {
+                  link.setData(patchedData);
+                  created = true;
+               }
             }
 
-            updatedLink.setData(constraintManager.decodeDataTypes(linkType, patchedData));
+            if (task instanceof RuleTask) {
+               if (created) {
+                  taskProcessingFacade.onCreateLink(new CreateLinkInstance(updatedLink));
+               } else {
+                  taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+               }
+            }
+
+            patchedData = constraintManager.decodeDataTypes(collection, patchedData);
+            updatedLink.setData(patchedData);
 
             updatedLinks.computeIfAbsent(linkInstance.getLinkTypeId(), key -> new ArrayList<>())
                         .add(updatedLink);
          });
 
+         linkTypeMapForCreatedLinks.forEach((id, linkType) -> {
+            linkTypesChanged.add(id);
+            final LinkType linkType1 = linkTypesMap.computeIfAbsent(id, i -> linkType);
+            linkType1.setLinksCount(linkType1.getLinksCount() + (createdLinksByLinkTypeId.get(id) != null ? createdLinksByLinkTypeId.get(id).size() : 0));
+         });
+
          changesTracker.addLinkTypes(linkTypesChanged.stream().map(linkTypesMap::get).collect(toSet()));
          changesTracker.addUpdatedLinkInstances(updatedLinks.values().stream().flatMap(java.util.Collection::stream).collect(toSet()));
+         changesTracker.updateLinkTypesMap(linkTypeMapForCreatedLinks);
          changesTracker.updateLinkTypesMap(linkTypesMap);
 
          linkTypesChanged.forEach(linkTypeId -> task.getDaoContextSnapshot()
@@ -588,9 +766,12 @@ public class JsExecutor {
 
          // first create all new documents
          final List<Document> createdDocuments = createDocuments(changes.stream().filter(change -> change instanceof DocumentCreation && change.isComplete()).map(change -> (DocumentCreation) change).collect(toList()));
+         final Map<String, List<Document>> toBeRemovedDocumentsByCollection = Utils.categorize(changes.stream().filter(change -> change instanceof DocumentRemoval && change.isComplete()).map(change -> ((DocumentRemoval) change).getEntity()), Document::getCollectionId);
          // get data structures for efficient manipulation with the new documents
          final Map<String, List<Document>> documentsByCollection = DocumentUtils.getDocumentsByCollection(createdDocuments);
-         final Map<String, Collection> collectionsMap = DocumentUtils.getCollectionsMap(task.getDaoContextSnapshot().getCollectionDao(), documentsByCollection);
+         final List<String> usedCollections = new ArrayList<>(documentsByCollection.keySet());
+         usedCollections.addAll(toBeRemovedDocumentsByCollection.keySet());
+         final Map<String, Collection> collectionsMap = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(usedCollections).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
          final Map<String, String> correlationIdsToIds = createdDocuments.stream().collect(Collectors.toMap(doc -> doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID), Document::getId));
 
          // report new empty documents, later updates are sent separately
@@ -604,8 +785,18 @@ public class JsExecutor {
                doc.setId(correlationIdsToIds.get(doc.getMetaData().getString(Document.META_CORRELATION_ID)));
             }
          });
+         changes.stream().filter(change -> change instanceof LinkCreation).forEach(change -> {
+            final LinkInstance link = ((LinkCreation) change).getEntity();
+            if (StringUtils.isEmpty(link.getId()) && StringUtils.isNotEmpty(link.getTemplateId())) {
+               link.setDocumentIds(List.of(
+                     correlationIdsToIds.containsKey(link.getDocumentIds().get(0)) ? correlationIdsToIds.get(link.getDocumentIds().get(0)) : link.getDocumentIds().get(0),
+                     correlationIdsToIds.containsKey(link.getDocumentIds().get(1)) ? correlationIdsToIds.get(link.getDocumentIds().get(1)) : link.getDocumentIds().get(1)
+               ));
+            }
+         });
 
-         // commit document and link changes
+
+         // commit document changes
          final List<Document> changedDocuments = commitDocumentChanges(
                taskExecutor,
                changes.stream().filter(change -> change instanceof DocumentChange && change.isComplete()).map(change -> (DocumentChange) change).collect(toList()),
@@ -613,9 +804,41 @@ public class JsExecutor {
                documentsByCollection,
                collectionsMap
          );
+
+         // remove documents
+         final List<Document> removedDocuments = removeDocuments(changes.stream().filter(change -> change instanceof DocumentRemoval).map(change -> (DocumentRemoval) change).collect(toList()));
+         changesTracker.addRemovedDocuments(removedDocuments);
+
+         // remove created documents that were deleted later
+         final Set<Document> unusedCreatedDocuments = new HashSet<>(changesTracker.getRemovedDocuments());
+         unusedCreatedDocuments.retainAll(changesTracker.getCreatedDocuments());
+         changesTracker.getCreatedDocuments().removeAll(unusedCreatedDocuments);
+
+         // create new links
+         final List<LinkInstance> createdLinks = createLinks(changes.stream().filter(change -> change instanceof LinkCreation && change.isComplete()).map(change -> (LinkCreation) change).collect(toList()));
+         final Map<String, List<LinkInstance>> linksByType = LinkTypeUtils.getLinksByType(createdLinks);
+         final Map<String, LinkType> linkTypesMap = task.getDaoContextSnapshot().getLinkTypeDao().getLinkTypesByIds(linksByType.keySet()).stream().collect(Collectors.toMap(LinkType::getId, Function.identity()));
+         final Map<String, String> linkCorrelationIdsToIds = createdLinks.stream().collect(Collectors.toMap(LinkInstance::getTemplateId, LinkInstance::getId));
+
+         // report new empty links, later updates are sent separately
+         changesTracker.addCreatedLinkInstances(createdLinks);
+         changesTracker.addLinkTypes(linkTypesMap.values().stream().filter(c -> linksByType.containsKey(c.getId())).collect(toSet()));
+
+         // map the newly create link IDs to all other changes so that we use the correct document in updates etc.
+         changes.stream().filter(change -> change instanceof LinkChange).forEach(change -> {
+            final LinkInstance link = (LinkInstance) change.getEntity();
+            if (StringUtils.isEmpty(link.getId()) && StringUtils.isNotEmpty(link.getTemplateId())) {
+               link.setId(linkCorrelationIdsToIds.get(link.getTemplateId()));
+            }
+         });
+
+         // commit link changes
          final List<LinkInstance> changedLinkInstances = commitLinkChanges(
                taskExecutor,
-               changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList())
+               changes.stream().filter(change -> change instanceof LinkChange && change.isComplete()).map(change -> (LinkChange) change).collect(toList()),
+               createdLinks,
+               linksByType,
+               linkTypesMap
          );
 
          // report user messages and print requests for rules triggered via an Action button
@@ -630,6 +853,20 @@ public class JsExecutor {
 
          // propagate changes in existing documents and links that has been loaded prior to calling this rule
          task.propagateChanges(changedDocuments, changedLinkInstances);
+
+         return changesTracker;
+      }
+
+      ChangesTracker commitDryRunChanges(final TaskExecutor taskExecutor) {
+         if (changes.isEmpty()) {
+            return null;
+         }
+
+         final String correlationId = task.getCorrelationId();
+         if (StringUtils.isNotEmpty(correlationId)) {
+            final List<UserMessage> userMessages = changes.stream().filter(change -> change instanceof UserMessageChange).map(change -> ((UserMessageChange) change).getEntity()).collect(toList());
+            changesTracker.addUserMessages(userMessages);
+         }
 
          return changesTracker;
       }
@@ -651,7 +888,6 @@ public class JsExecutor {
          });
 
          changes.forEach(change -> {
-            System.out.println(change);
             if (change instanceof DocumentCreation) {
                final DocumentCreation documentCreation = (DocumentCreation) change;
                final Collection collection = collections.computeIfAbsent(documentCreation.getEntity().getCollectionId(), id -> task.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
@@ -664,8 +900,14 @@ public class JsExecutor {
                final LinkChange linkChange = (LinkChange) change;
                final LinkType linkType = linkTypes.computeIfAbsent(linkChange.getEntity().getId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
                appendChange(sb, linkType.getName(), linkType.getAttributes(), linkChange);
-            } else if (change instanceof  UserMessageChange) {
+            } else if (change instanceof UserMessageChange) {
                sb.append(change.toString());
+            } else if (change instanceof PrintAttributeChange) {
+               sb.append(change.toString());
+            } else if (change instanceof LinkCreation) {
+               final LinkCreation linkCreation = (LinkCreation) change;
+               final LinkType linkType = linkTypes.computeIfAbsent(linkCreation.getEntity().getLinkTypeId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
+               sb.append("new Link(").append(linkType.getName()).append(")\n");
             }
          });
 
@@ -732,6 +974,13 @@ public class JsExecutor {
       public PrintAttributeChange(final PrintRequest entity) {
          super(entity);
       }
+
+      @Override
+      public String toString() {
+         return "PrintAttributeChange{" +
+               "entity=" + entity +
+               '}';
+      }
    }
 
    public static abstract class ResourceChange<T extends WithId> extends Change<T> {
@@ -774,6 +1023,13 @@ public class JsExecutor {
       }
    }
 
+   public static class DocumentRemoval extends Change<Document> {
+
+      public DocumentRemoval(final Document entity) {
+         super(entity);
+      }
+   }
+
    public static class DocumentChange extends ResourceChange<Document> {
 
       private final Document originalDocument;
@@ -809,6 +1065,13 @@ public class JsExecutor {
 
       public LinkInstance getOriginalLinkInstance() {
          return originalLinkInstance;
+      }
+   }
+
+   public static class LinkCreation extends Change<LinkInstance> {
+
+      public LinkCreation(final LinkInstance entity) {
+         super(entity);
       }
    }
 
@@ -878,6 +1141,10 @@ public class JsExecutor {
 
    public ChangesTracker commitChanges(final TaskExecutor taskExecutor) {
       return lumeerBridge.commitChanges(taskExecutor);
+   }
+
+   public ChangesTracker commitDryRunChanges(final TaskExecutor taskExecutor) {
+      return lumeerBridge.commitDryRunChanges(taskExecutor);
    }
 
    public String getChanges() {

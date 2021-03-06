@@ -21,20 +21,17 @@ package io.lumeer.core.task;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.ConstraintData;
-import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.SystemDatabaseConfigurationFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
-import io.lumeer.core.facade.translate.TranslationManager;
-import io.lumeer.core.util.Tuple;
-import io.lumeer.core.util.js.DataFilter;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.engine.api.data.StorageConnection;
@@ -44,11 +41,8 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -132,34 +126,11 @@ public class CronTaskProcessor {
 
    private List<Document> getDocuments(final CronRule rule, final Collection collection, final DaoContextSnapshot dao) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         final List<Document> documents = dao.getDocumentDao().getDocumentsByCollection(collection.getId());
-         final Map<String, Document> documentsByIds = documents.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
-         dao.getDataDao().getData(collection.getId(), documents.stream().map(Document::getId).collect(Collectors.toSet())).forEach(data -> {
-            final Document doc = documentsByIds.get(data.getId());
-            if (doc != null) {
-               doc.setData(data);
-            }
-         });
+         final Query query = rule.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
+         final User user = AuthenticatedUser.getMachineUser();
+         final AllowedPermissions allowedPermissions = AllowedPermissions.getAllAllowed();
 
-         final TranslationManager translationManager = new TranslationManager();
-         final ConstraintData constraintData = new ConstraintData(
-               dao.getUserDao().getAllUsers(dao.getSelectedWorkspace().getOrganization().get().getId()),
-               AuthenticatedUser.getMachineUser(),
-               translationManager.translateDurationUnitsMap(rule.getLanguage()),
-               new CurrencyData(translationManager.translateAbbreviations(rule.getLanguage()), translationManager.translateOrdinals(rule.getLanguage())),
-               null
-         );
-
-         final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQuery(
-               documents, List.of(collection), List.of(), List.of(), rule.getQuery(),
-               Map.of(collection.getId(), AllowedPermissions.getAllAllowed()),
-               Map.of(),
-               constraintData,
-               true,
-               rule.getLanguage()
-         );
-
-         return result.getFirst();
+         return DocumentUtils.getDocuments(dao, query, user, rule.getLanguage(), allowedPermissions);
       }
 
       return List.of();
