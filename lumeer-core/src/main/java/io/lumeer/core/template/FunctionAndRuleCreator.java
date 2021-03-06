@@ -228,6 +228,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       res = TemplateParserUtils.replacer(res, "variabletype=\"", "_link", templateParser.getDict()::getLinkTypeId);
       res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION\">", "</field>", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION_ID\">", "</field>", templateParser.getDict()::getCollectionId);
+      res = TemplateParserUtils.replacer(res, "<field name=\"LINKTYPE\">", "</field>", templateParser.getDict()::getLinkTypeId);
 
       return res;
    }
