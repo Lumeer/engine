@@ -280,7 +280,6 @@ public class ZapierFacade extends AbstractFacade {
                            Collections.singletonList(CollectionAttributeFilter.createFromValues(collectionId, key, ConditionType.EQUALS, data.get(key))),
                            null)
                ),
-               Language.EN,
                true
          );
       }
@@ -342,7 +341,7 @@ public class ZapierFacade extends AbstractFacade {
    public List<DataDocument> findDocuments(final String collectionId, final List<CollectionAttributeFilter> collectionAttributeFilters) {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
-      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20), Language.EN, true)
+      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20),true)
              .stream()
              .map(Document::getData)
              .map(data -> addMissingAttributes(data, collection))

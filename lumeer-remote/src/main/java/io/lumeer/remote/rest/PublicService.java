@@ -117,27 +117,27 @@ public class PublicService extends AbstractService {
 
    @GET
    @Path("link-instances")
-   public List<LinkInstance> getLinkInstances(@QueryParam("l") Language language) {
-      return searchFacade.getLinkInstancesPublic(new Query(), language);
+   public List<LinkInstance> getLinkInstances() {
+      return searchFacade.getLinkInstancesPublic(new Query());
    }
 
    @GET
    @Path("documents")
-   public List<Document> getDocuments(@QueryParam("l") Language language) {
-      return searchFacade.searchDocumentsPublic(new Query(), language);
+   public List<Document> getDocuments() {
+      return searchFacade.searchDocumentsPublic(new Query());
    }
 
    @GET
    @Path("documentsAndLinks")
-   public DocumentsAndLinks getDocumentsAndLinks(@QueryParam("l") Language language) {
-      final Tuple<List<Document>, List<LinkInstance>> tuple = searchFacade.searchDocumentsAndLinksPublic(new Query(), language);
+   public DocumentsAndLinks getDocumentsAndLinks() {
+      final Tuple<List<Document>, List<LinkInstance>> tuple = searchFacade.searchDocumentsAndLinksPublic(new Query());
       return new DocumentsAndLinks(tuple.getFirst(), tuple.getSecond());
    }
 
    @GET
    @Path("tasks")
-   public DocumentsAndLinks getTaskDocumentsAndLinks(@QueryParam("l") Language language) {
-      final Tuple<List<Document>, List<LinkInstance>> tuple = searchFacade.searchTasksDocumentsAndLinksPublic(new Query(), language);
+   public DocumentsAndLinks getTaskDocumentsAndLinks() {
+      final Tuple<List<Document>, List<LinkInstance>> tuple = searchFacade.searchTasksDocumentsAndLinksPublic(new Query());
       return new DocumentsAndLinks(tuple.getFirst(), tuple.getSecond());
    }
 

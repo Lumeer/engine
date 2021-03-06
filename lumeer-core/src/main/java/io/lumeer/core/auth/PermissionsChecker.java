@@ -291,7 +291,7 @@ public class PermissionsChecker {
    }
 
    /**
-    * Gets the active view provided in view_id HTTP header through REST endpoint.
+    * Gets the active view provided in X-Lumeer-View-Id HTTP header through REST endpoint.
     *
     * @return The active View when exists, null otherwise.
     */
