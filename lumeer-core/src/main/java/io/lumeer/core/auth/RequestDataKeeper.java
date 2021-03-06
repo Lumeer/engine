@@ -28,6 +28,8 @@ public class RequestDataKeeper {
 
    private String userLocale = "en";
 
+   private String timezone;
+
    public String getCorrelationId() {
       return correlationId;
    }
@@ -44,6 +46,14 @@ public class RequestDataKeeper {
 
    public void setUserLocale(String userLocale) {
       this.userLocale = userLocale;
+   }
+
+   public String getTimezone() {
+      return timezone;
+   }
+
+   public void setTimezone(final String timezone) {
+      this.timezone = timezone;
    }
 
    public RequestDataKeeper() {

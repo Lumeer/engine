@@ -20,7 +20,6 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.DocumentsAndLinks;
-import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.SuggestionQuery;
@@ -89,8 +88,8 @@ public class SearchService extends AbstractService {
    @Path("documents")
    @QueryProcessor
    @HealthCheck
-   public List<Document> searchDocuments(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
-      List<Document> documents = searchFacade.searchDocuments(query, language, includeSubItems);
+   public List<Document> searchDocuments(Query query, @QueryParam("subItems") boolean includeSubItems) {
+      List<Document> documents = searchFacade.searchDocuments(query, includeSubItems);
       return new ArrayList<>(documentFacade.mapDocumentsData(documents));
    }
 
@@ -98,8 +97,8 @@ public class SearchService extends AbstractService {
    @Path("linkInstances")
    @QueryProcessor
    @HealthCheck
-   public List<LinkInstance> getLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
-      final List<LinkInstance> links = searchFacade.getLinkInstances(query, language, includeSubItems);
+   public List<LinkInstance> getLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems) {
+      final List<LinkInstance> links = searchFacade.searchLinkInstances(query, includeSubItems);
       return new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(links));
    }
 
@@ -107,8 +106,8 @@ public class SearchService extends AbstractService {
    @Path("documentsAndLinks")
    @QueryProcessor
    @HealthCheck
-   public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
-      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, language, includeSubItems);
+   public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems) {
+      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, includeSubItems);
 
       return new DocumentsAndLinks(
             new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
@@ -120,8 +119,8 @@ public class SearchService extends AbstractService {
    @Path("tasks")
    @QueryProcessor
    @HealthCheck
-   public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems, @QueryParam("l") Language language) {
-      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, language, includeSubItems);
+   public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems) {
+      final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, includeSubItems);
 
       return new DocumentsAndLinks(
             new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),

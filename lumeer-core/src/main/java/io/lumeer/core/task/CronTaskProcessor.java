@@ -146,7 +146,8 @@ public class CronTaskProcessor {
                dao.getUserDao().getAllUsers(dao.getSelectedWorkspace().getOrganization().get().getId()),
                AuthenticatedUser.getMachineUser(),
                translationManager.translateDurationUnitsMap(rule.getLanguage()),
-               new CurrencyData(translationManager.translateAbbreviations(rule.getLanguage()), translationManager.translateOrdinals(rule.getLanguage()))
+               new CurrencyData(translationManager.translateAbbreviations(rule.getLanguage()), translationManager.translateOrdinals(rule.getLanguage())),
+               null
          );
 
          final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQuery(

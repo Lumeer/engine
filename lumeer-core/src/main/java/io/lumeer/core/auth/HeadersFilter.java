@@ -32,10 +32,11 @@ import javax.servlet.http.HttpServletResponse;
 @SessionScoped
 public class HeadersFilter implements AuthFilter, Serializable {
 
-   private static final String VIEW_ID = "view_id";
-   private static final String CORRELATION_ID = "correlation_id";
+   private static final String VIEW_ID = "X-Lumeer-View-Id";
+   private static final String CORRELATION_ID = "X-Lumeer-Correlation-Id";
    private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
    private static final String LOCALE_HEADER = "X-Lumeer-Locale";
+   private static final String TIMEZONE_HEADER = "X-Lumeer-Timezone";
 
    @Inject
    private ConfigurationFacade configurationFacade;
@@ -59,6 +60,7 @@ public class HeadersFilter implements AuthFilter, Serializable {
       parseRequestData(req);
       processStartTimestamp(req, res);
       processUserLocale(req, res);
+      processUserTimezone(req, res);
       processCustomHeaders(req, res);
 
       return FilterResult.CONTINUE;
@@ -93,6 +95,13 @@ public class HeadersFilter implements AuthFilter, Serializable {
       String locale = req.getHeader(LOCALE_HEADER);
       if (locale != null) {
          requestDataKeeper.setUserLocale(locale);
+      }
+   }
+
+   private void processUserTimezone(final HttpServletRequest req, final HttpServletResponse res) {
+      String timezone = req.getHeader(TIMEZONE_HEADER);
+      if (timezone != null) {
+         requestDataKeeper.setTimezone(timezone);
       }
    }
 
