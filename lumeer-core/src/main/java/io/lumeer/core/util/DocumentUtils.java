@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -138,7 +139,8 @@ public class DocumentUtils {
       return attrs;
    }
 
-   public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions) {
+   // gets encoded documents
+   public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent() && query.getCollectionIds().size() > 0) {
          final String collectionId = query.getCollectionIds().iterator().next();
          final Collection collection = dao.getCollectionDao().getCollectionById(collectionId);
@@ -157,10 +159,10 @@ public class DocumentUtils {
                user,
                translationManager.translateDurationUnitsMap(language),
                new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
-               null
+               timeZone != null ? timeZone : TimeZone.getDefault().getID()
          );
 
-         final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQuery(
+         final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQueryDecodingFromJson(
                documents, List.of(collection), List.of(), List.of(), query,
                Map.of(collectionId, permissions),
                Map.of(),

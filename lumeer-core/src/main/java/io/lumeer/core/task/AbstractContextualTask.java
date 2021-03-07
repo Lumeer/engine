@@ -49,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -66,6 +67,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
    protected DefaultConfigurationProducer.DeployEnvironment environment;
+   protected String timeZone;
 
    @Override
    public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment) {
@@ -75,6 +77,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
       this.environment = environment;
+      this.timeZone = requestDataKeeper.getTimezone();
 
       return this;
    }
@@ -107,6 +110,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public void setParent(final Task parent) {
       this.parent = parent;
+   }
+
+   @Override
+   public String getTimeZone() {
+      return timeZone;
    }
 
    public void sendPushNotifications(final Collection collection) {

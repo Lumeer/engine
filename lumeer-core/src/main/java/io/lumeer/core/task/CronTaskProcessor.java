@@ -130,7 +130,7 @@ public class CronTaskProcessor {
          final User user = AuthenticatedUser.getMachineUser();
          final AllowedPermissions allowedPermissions = AllowedPermissions.getAllAllowed();
 
-         return DocumentUtils.getDocuments(dao, query, user, rule.getLanguage(), allowedPermissions);
+         return DocumentUtils.getDocuments(dao, query, user, rule.getLanguage(), allowedPermissions, null);
       }
 
       return List.of();

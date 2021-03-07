@@ -41,6 +41,7 @@ public interface ContextualTask extends Task {
    String getCurrentLocale();
    String getCorrelationId();
    PurposeChangeProcessor getPurposeChangeProcessor();
+   String getTimeZone();
 
    FunctionFacade getFunctionFacade();
 

@@ -79,55 +79,13 @@ data class DataFilterJsonTask(val documents: List<Document>,
         }
     }
 
-    private fun convertToJson(dataFilterJson: DataFilterJson): String {
-        val strategy: ExclusionStrategy = object : ExclusionStrategy {
-            override fun shouldSkipField(field: FieldAttributes): Boolean {
-                if (field.declaringClass == Document::class.java && !listOf("id", "data", "metaData", "collectionId").contains(field.name)) {
-                    return true
-                }
-                if (field.declaringClass == Collection::class.java && !listOf("id", "attributes").contains(field.name)) {
-                    return true
-                }
-                if (field.declaringClass == Resource::class.java && !listOf("id").contains(field.name)) {
-                    return true
-                }
-                if (field.declaringClass == LinkType::class.java && !listOf("id", "attributes", "collectionIds").contains(field.name)) {
-                    return true
-                }
-                if (field.declaringClass == LinkInstance::class.java && !listOf("id", "data", "linkTypeId", "documentIds").contains(field.name)) {
-                    return true
-                }
-                if (field.declaringClass == User::class.java && !listOf("id", "name", "email").contains(field.name)) {
-                    return true
-                }
-                if (field.declaringClass == Attribute::class.java && !listOf("id", "name", "constraint").contains(field.name)) {
-                    return true
-                }
-                return false
-            }
-
-            override fun shouldSkipClass(clazz: Class<*>?): Boolean {
-                return false
-            }
-        }
-
-        val conditionTypeSerializer: JsonSerializer<ConditionType> = JsonSerializer<ConditionType> { condition, _, _  ->
-            JsonPrimitive(condition.value)
-        }
-        return GsonBuilder()
-                .addSerializationExclusionStrategy(strategy)
-                .registerTypeAdapter(ConditionType::class.java, conditionTypeSerializer)
-                .create()
-                .toJson(dataFilterJson)
-    }
-
     companion object {
         private val logger: Logger = Logger.getLogger(DataFilterJsonTask::class.simpleName)
         private const val FILTER_JS = "filterDocumentsAndLinksIdsFromJson"
         private var filterJsCode: String? = null
         private val engine = JsEngineFactory.getEngine()
 
-        private fun getContext(): Context {
+        fun getContext(): Context {
             val context = Context
                 .newBuilder("js")
                 .engine(engine)
@@ -138,13 +96,55 @@ data class DataFilterJsonTask(val documents: List<Document>,
             return context
         }
 
-        private fun getFunction(context: Context): Value {
+        fun getFunction(context: Context): Value {
             if (filterJsCode != null) {
                 context.eval("js", filterJsCode)
                 return context.getBindings("js").getMember(FILTER_JS)
             } else {
                 throw IOException("Filters JS code not present.")
             }
+        }
+
+        fun convertToJson(dataFilterJson: DataFilterJson): String {
+            val strategy: ExclusionStrategy = object : ExclusionStrategy {
+                override fun shouldSkipField(field: FieldAttributes): Boolean {
+                    if (field.declaringClass == Document::class.java && !listOf("id", "data", "metaData", "collectionId").contains(field.name)) {
+                        return true
+                    }
+                    if (field.declaringClass == Collection::class.java && !listOf("id", "attributes").contains(field.name)) {
+                        return true
+                    }
+                    if (field.declaringClass == Resource::class.java && !listOf("id").contains(field.name)) {
+                        return true
+                    }
+                    if (field.declaringClass == LinkType::class.java && !listOf("id", "attributes", "collectionIds").contains(field.name)) {
+                        return true
+                    }
+                    if (field.declaringClass == LinkInstance::class.java && !listOf("id", "data", "linkTypeId", "documentIds").contains(field.name)) {
+                        return true
+                    }
+                    if (field.declaringClass == User::class.java && !listOf("id", "name", "email").contains(field.name)) {
+                        return true
+                    }
+                    if (field.declaringClass == Attribute::class.java && !listOf("id", "name", "constraint").contains(field.name)) {
+                        return true
+                    }
+                    return false
+                }
+
+                override fun shouldSkipClass(clazz: Class<*>?): Boolean {
+                    return false
+                }
+            }
+
+            val conditionTypeSerializer: JsonSerializer<ConditionType> = JsonSerializer<ConditionType> { condition, _, _  ->
+                JsonPrimitive(condition.value)
+            }
+            return GsonBuilder()
+                    .addSerializationExclusionStrategy(strategy)
+                    .registerTypeAdapter(ConditionType::class.java, conditionTypeSerializer)
+                    .create()
+                    .toJson(dataFilterJson)
         }
 
         init {
