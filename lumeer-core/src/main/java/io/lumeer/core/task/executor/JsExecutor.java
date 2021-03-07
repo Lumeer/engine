@@ -574,7 +574,6 @@ public class JsExecutor {
          if (!changes.isEmpty()) {
             final List<Document> documents = changes.stream().map(DocumentRemoval::getEntity).collect(toList());
             final Map<String, Collection> updatedCollections = new HashMap<>();
-            final Map<String, LinkType> updatedLinkTypes = new HashMap<>();
 
             final Map<String, Collection> allCollections = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(
                   documents.stream().map(Document::getCollectionId).collect(toList())
@@ -613,12 +612,10 @@ public class JsExecutor {
                   // decrease link instances count in link types map
                   if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) { // present in link types map
                      final LinkType linkType = changesTracker.getLinkTypesMap().get(linkTypeId);
-                     linkType.setLinksCount(linkType.getLinksCount() - 1);
-                     updatedLinkTypes.put(linkType.getId(), linkType);
+                     linkType.setLinksCount(task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
                   } else { // not yet in the map
                      final LinkType linkType = allLinkTypes.get(linkTypeId);
-                     linkType.setLinksCount(linkType.getLinksCount() - 1);
-                     updatedLinkTypes.put(linkTypeId, linkType);
+                     linkType.setLinksCount(task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
                      changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
                   }
 
@@ -637,8 +634,10 @@ public class JsExecutor {
                task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
             });
 
-            updatedCollections.forEach((id, col) -> task.getDaoContextSnapshot().getCollectionDao().updateCollection(id, col, null, false));
-            updatedLinkTypes.forEach((id, linkType) -> task.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(id, linkType, null, false));
+            updatedCollections.forEach((id, col) -> {
+               col.setDocumentsCount(col.getDocumentsCount() - documents.size());
+               task.getDaoContextSnapshot().getCollectionDao().updateCollection(id, col, null, false);
+            });
 
             return documents;
          }
@@ -736,8 +735,6 @@ public class JsExecutor {
 
          linkTypeMapForCreatedLinks.forEach((id, linkType) -> {
             linkTypesChanged.add(id);
-            final LinkType linkType1 = linkTypesMap.computeIfAbsent(id, i -> linkType);
-            linkType1.setLinksCount(linkType1.getLinksCount() + (createdLinksByLinkTypeId.get(id) != null ? createdLinksByLinkTypeId.get(id).size() : 0));
          });
 
          changesTracker.addLinkTypes(linkTypesChanged.stream().map(linkTypesMap::get).collect(toSet()));
