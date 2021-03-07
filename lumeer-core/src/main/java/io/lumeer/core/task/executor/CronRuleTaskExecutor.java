@@ -19,6 +19,7 @@
 package io.lumeer.core.task.executor;
 
 import io.lumeer.core.task.RuleTask;
+import io.lumeer.core.task.executor.bridge.DocumentBridge;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class CronRuleTaskExecutor extends BlocklyRuleTaskExecutor {
    protected Map<String, Object> getBindings() {
       final Map<String, Object> bindings = new HashMap<>();
 
-      bindings.put("records", ruleTask.getDocuments().stream().map(JsExecutor.DocumentBridge::new).collect(Collectors.toList()));
+      bindings.put("records", ruleTask.getDocuments().stream().map(DocumentBridge::new).collect(Collectors.toList()));
 
       return bindings;
    }

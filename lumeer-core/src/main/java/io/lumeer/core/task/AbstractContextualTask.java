@@ -36,6 +36,10 @@ import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.request.NavigationRequest;
+import io.lumeer.core.task.executor.request.PrintRequest;
+import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -57,7 +61,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private static final int RELOAD_EVENT_THRESHOLD = 50;
 
-   private static Logger log = Logger.getLogger(AbstractConstraintConverter.class.getName());
+   private static final Logger log = Logger.getLogger(AbstractConstraintConverter.class.getName());
 
    protected User initiator;
    protected DaoContextSnapshot daoContextSnapshot;
@@ -66,6 +70,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
    protected DefaultConfigurationProducer.DeployEnvironment environment;
+   protected String timeZone;
 
    @Override
    public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment) {
@@ -75,6 +80,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
       this.environment = environment;
+      this.timeZone = requestDataKeeper.getTimezone();
 
       return this;
    }
@@ -107,6 +113,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public void setParent(final Task parent) {
       this.parent = parent;
+   }
+
+   @Override
+   public String getTimeZone() {
+      return timeZone;
    }
 
    public void sendPushNotifications(final Collection collection) {
@@ -162,6 +173,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForDocument(final Document document, final String userId, final String suffix) {
+      if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
+         return createEventForRemove(Document.class.getSimpleName(), getResourceId(document, document.getCollectionId()), userId);
+      }
+
       document.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.DOCUMENT, document.getId()));
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
@@ -182,8 +197,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
 
       if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
-         final PusherFacade.ResourceId message = new PusherFacade.ResourceId(linkInstance.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
-         return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message);
+         return createEventForRemove(LinkInstance.class.getSimpleName(), getResourceId(linkInstance, linkInstance.getLinkTypeId()), userId);
       } else {
          final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
          injectCorrelationId(message);
@@ -197,10 +211,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence, null), null);
    }
 
-   private Event createEventForUserMessage(final UserMessage userMessage, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(userMessage, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+   private Event createEventForUserMessage(final UserMessageRequest userMessageRequest, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(userMessageRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, UserMessage.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX, message, getResourceId(), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, UserMessageRequest.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX, message, getResourceId(), null);
    }
 
    private Event createEventForPrintRequest(final PrintRequest printRequest, final String userId) {
@@ -209,12 +223,32 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, PrintRequest.class.getSimpleName(), message, null);
    }
 
+   private Event createEventForNavigationRequest(final NavigationRequest navigationRequest, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(navigationRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, NavigationRequest.class.getSimpleName(), message, null);
+   }
+
+   private Event createEventForSendEmailRequest(final SendEmailRequest sendEmailRequest, final String userId) {
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(sendEmailRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, SendEmailRequest.class.getSimpleName(), message, null);
+   }
+
    private PusherFacade.ResourceId getResourceId(final WithId idObject, final String extraId) {
       return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
    }
 
    private PusherFacade.ResourceId getResourceId() {
       return new PusherFacade.ResourceId(null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
+   }
+
+   private Event createEventForRemove(final String className, final PusherFacade.ResourceId object, final String userId) {
+      return new Event(eventChannel(userId), className + PusherFacade.REMOVE_EVENT_SUFFIX, object, null);
+   }
+
+   public static String eventChannel(String userId) {
+      return PusherFacade.PRIVATE_CHANNEL_PREFIX + userId;
    }
 
    public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
@@ -261,17 +295,15 @@ public abstract class AbstractContextualTask implements ContextualTask {
       final Set<String> managers = getDaoContextSnapshot().getProjectManagers();
 
       final List<Event> events = new ArrayList<>();
-      managers.forEach(manager -> {
-         events.add(createEventForSequence(sequence, manager));
-      });
+      managers.forEach(manager -> events.add(createEventForSequence(sequence, manager)));
 
       getPusherClient().trigger(events);
    }
 
-   public void sendPushNotifications(final List<UserMessage> userMessages) {
+   public void sendPushNotifications(final List<UserMessageRequest> userMessageRequests) {
       final List<Event> events = new ArrayList<>();
 
-      userMessages.stream().filter(m -> StringUtils.isNotEmpty(m.getMessage())).forEach(m ->
+      userMessageRequests.stream().filter(m -> StringUtils.isNotEmpty(m.getMessage())).forEach(m ->
          events.add(createEventForUserMessage(m, initiator.getId()))
       );
 
@@ -288,9 +320,29 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(events);
    }
 
+   public void sendNavigationRequestPushNotifications(final List<NavigationRequest> navigationRequests) {
+      final List<Event> events = new ArrayList<>();
+
+      navigationRequests.forEach(m ->
+            events.add(createEventForNavigationRequest(m, initiator.getId()))
+      );
+
+      getPusherClient().trigger(events);
+   }
+
+   public void sendSendEmailRequestPushNotifications(final List<SendEmailRequest> sendEmailRequests) {
+      final List<Event> events = new ArrayList<>();
+
+      sendEmailRequests.forEach(m ->
+            events.add(createEventForSendEmailRequest(m, initiator.getId()))
+      );
+
+      getPusherClient().trigger(events);
+   }
+
    private void sendPushNotificationsForDocuments(final ChangesTracker changesTracker) {
       // keep track of collections without updated documents
-      final Set<String> collectionIds = new HashSet<>(changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
+      final Set<String> collectionIds = changesTracker.getCollections().stream().map(Collection::getId).collect(Collectors.toSet());
       final Set<String> updatedIds = new HashSet<>();
 
       if (changesTracker.getCreatedDocuments().size() > 0) {
@@ -327,6 +379,24 @@ public abstract class AbstractContextualTask implements ContextualTask {
       }
       collectionIds.removeAll(updatedIds);
 
+      if (changesTracker.getRemovedDocuments().size() > 0) {
+         final Map<String, List<Document>> documentsByCollectionId =
+               Utils.categorize(changesTracker.getRemovedDocuments().stream(), Document::getCollectionId);
+
+         documentsByCollectionId.forEach((collectionId, documents) -> {
+            if (changesTracker.getCollectionsMap().containsKey(collectionId)) {
+               if (documents.size() > RELOAD_EVENT_THRESHOLD) {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), PusherFacade.RELOAD_EVENT_SUFFIX);
+               } else {
+                  sendPushNotifications(changesTracker.getCollectionsMap().get(collectionId), documents, PusherFacade.REMOVE_EVENT_SUFFIX, collectionIds.contains(collectionId));
+               }
+               updatedIds.add(collectionId);
+            }
+         });
+      }
+      collectionIds.removeAll(updatedIds);
+
+
       if (collectionIds.size() > 0) {
          collectionIds.forEach(id -> {
             if (changesTracker.getCollectionsMap().containsKey(id)) {
@@ -338,7 +408,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private void sendPushNotificationsForLinks(final ChangesTracker changesTracker) {
       // keep track of collections without updated documents
-      final Set<String> linkTypeIds = new HashSet<>(changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet()));
+      final Set<String> linkTypeIds = changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet());
       final Set<String> updatedIds = changesTracker.getLinkTypes().stream().map(LinkType::getId).collect(Collectors.toSet());
 
       if (changesTracker.getCreatedLinkInstances().size() > 0) {
@@ -417,6 +487,14 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          if (changesTracker.getPrintRequests().size() > 0) {
             sendPrintRequestPushNotifications(changesTracker.getPrintRequests());
+         }
+
+         if (changesTracker.getNavigationRequests().size() > 0) {
+            sendNavigationRequestPushNotifications(changesTracker.getNavigationRequests());
+         }
+
+         if (changesTracker.getSendEmailRequests().size() > 0) {
+            sendSendEmailRequestPushNotifications(changesTracker.getSendEmailRequests());
          }
       }
    }

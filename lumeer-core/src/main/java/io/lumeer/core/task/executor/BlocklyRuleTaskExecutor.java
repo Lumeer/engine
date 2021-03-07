@@ -23,6 +23,8 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
+import io.lumeer.core.task.executor.bridge.DocumentBridge;
+import io.lumeer.core.task.executor.bridge.LinkBridge;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -52,13 +54,13 @@ public class BlocklyRuleTaskExecutor {
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
-         bindings.put("oldRecord", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
-         bindings.put("oldDocument", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
-         bindings.put("newRecord", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
-         bindings.put("newDocument", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
+         bindings.put("oldRecord", new DocumentBridge(ruleTask.getOldDocument()));
+         bindings.put("oldDocument", new DocumentBridge(ruleTask.getOldDocument()));
+         bindings.put("newRecord", new DocumentBridge(ruleTask.getNewDocument()));
+         bindings.put("newDocument", new DocumentBridge(ruleTask.getNewDocument()));
       } else {
-         bindings.put("oldLink", new JsExecutor.LinkBridge(ruleTask.getOldLinkInstance()));
-         bindings.put("newLink", new JsExecutor.LinkBridge(ruleTask.getNewLinkInstance()));
+         bindings.put("oldLink", new LinkBridge(ruleTask.getOldLinkInstance()));
+         bindings.put("newLink", new LinkBridge(ruleTask.getNewLinkInstance()));
       }
 
       return bindings;
@@ -74,9 +76,10 @@ public class BlocklyRuleTaskExecutor {
          jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
 
          if (!rule.isDryRun()) {
-            tracker = jsExecutor.commitChanges(taskExecutor);
+            tracker = jsExecutor.commitOperations(taskExecutor);
          } else {
-            writeDryRunResults(jsExecutor.getChanges());
+            writeDryRunResults(jsExecutor.getOperationsDescription());
+            tracker = jsExecutor.commitDryRunOperations(taskExecutor);
          }
 
          checkErrorErasure();
@@ -132,11 +135,11 @@ public class BlocklyRuleTaskExecutor {
 
       if (ruleTask.isCollectionBased()) {
          final Collection originalCollection = ruleTask.getCollection().copy();
-         ruleTask.getCollection().getRules().put(ruleName, rule.getRule());
+         ruleTask.getCollection().getRules().put(rule.getRule().getId(), rule.getRule());
          ruleTask.getDaoContextSnapshot().getCollectionDao().updateCollection(ruleTask.getCollection().getId(), ruleTask.getCollection(), originalCollection);
       } else {
          final LinkType originalLinkType = new LinkType(ruleTask.getLinkType());
-         ruleTask.getLinkType().getRules().put(ruleName, rule.getRule());
+         ruleTask.getLinkType().getRules().put(rule.getRule().getId(), rule.getRule());
          ruleTask.getDaoContextSnapshot().getLinkTypeDao().updateLinkType(ruleTask.getCollection().getId(), ruleTask.getLinkType(), originalLinkType);
       }
    }

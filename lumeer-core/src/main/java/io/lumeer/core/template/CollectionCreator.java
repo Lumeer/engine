@@ -25,10 +25,12 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class CollectionCreator extends WithIdCreator {
@@ -53,7 +55,7 @@ public class CollectionCreator extends WithIdCreator {
          final String templateId = TemplateParserUtils.getId((JSONObject) o);
          final Collection collection = getCollection((JSONObject) o);
          if (!"".equals(collectionsPrefix)) {
-            collection.setName(collectionsPrefix + "_" + collection.getName());
+            collection.setName(collectionsPrefix + ": " + collection.getName());
          }
          collection.setCode(null);
          final Collection storedCollection = collectionFacade.createCollection(collection, true);
@@ -66,14 +68,18 @@ public class CollectionCreator extends WithIdCreator {
 
    @SuppressWarnings("unchecked")
    private String getCollectionsPrefix(JSONArray a) {
-      var metaPrefix = (String) ((JSONObject) templateParser.getTemplate().get("templateMeta")).get("prefix");
+      var metaPrefix = StringUtils.capitalize(
+            Utils.computeIfNotNull(
+                  (String) ((JSONObject) templateParser.getTemplate().get("templateMeta")).get("prefix"),
+                  String::toLowerCase)
+      );
       var names = (List<String>) a.stream().map(o -> (String) ((JSONObject) o).get(Collection.NAME)).collect(Collectors.toList());
 
       if (!collectionNameExists(names)) {
          return "";
       }
 
-      var withPrefix = names.stream().map(name -> metaPrefix + "_" + name).collect(Collectors.toList());
+      var withPrefix = names.stream().map(name -> metaPrefix + ": " + name).collect(Collectors.toList());
       if (!collectionNameExists(withPrefix)) {
          return metaPrefix;
       }
@@ -82,10 +88,10 @@ public class CollectionCreator extends WithIdCreator {
       do {
          counter++;
          final var counterCopy = counter;
-         withPrefix = names.stream().map(name -> metaPrefix + counterCopy + "_" + name).collect(Collectors.toList());
+         withPrefix = names.stream().map(name -> metaPrefix + " " + counterCopy + ": " + name).collect(Collectors.toList());
       } while (collectionNameExists(withPrefix));
 
-      return metaPrefix + counter;
+      return metaPrefix + " " + counter;
    }
 
    private boolean collectionNameExists(final List<String> names) {

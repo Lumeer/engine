@@ -101,6 +101,11 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
 
    @Override
    public LinkType updateLinkType(final String id, final LinkType linkType, final LinkType originalLinkType) {
+      return updateLinkType(id, linkType, originalLinkType, true);
+   }
+
+   @Override
+   public LinkType updateLinkType(final String id, final LinkType linkType, final LinkType originalLinkType, final boolean sendPushNotification) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(false);
       try {
          Bson update = new Document("$set", linkType).append("$inc", new Document(LinkTypeCodec.VERSION, 1L));
@@ -111,7 +116,7 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
          if (originalLinkType != null) {
             updatedLinkType.copyComputedProperties(originalLinkType);
          }
-         if (updateLinkTypeEvent != null) {
+         if (sendPushNotification && updateLinkTypeEvent != null) {
             updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType, originalLinkType));
          }
          return updatedLinkType;

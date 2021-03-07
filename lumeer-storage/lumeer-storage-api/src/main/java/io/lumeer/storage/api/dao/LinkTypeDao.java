@@ -32,6 +32,8 @@ public interface LinkTypeDao extends ProjectScopedDao {
 
    LinkType updateLinkType(String id, LinkType linkType, LinkType originalLinkType);
 
+   LinkType updateLinkType(final String id, final LinkType linkType, final LinkType originalLinkType, final boolean sendPushNotification);
+
    void deleteLinkType(String id);
 
    void deleteLinkTypesByCollectionId(String collectionId);

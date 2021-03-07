@@ -59,6 +59,8 @@ public interface LinkInstanceDao extends ProjectScopedDao {
 
    List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds, String linkTypeId);
 
+   List<LinkInstance> getLinkInstancesByDocumentIds(Set<String> documentIds);
+
    List<LinkInstance> searchLinkInstances(SearchQuery query);
 
    LinkInstance duplicateLinkInstance(LinkInstance linkInstance, String replaceDocumentId, String newDocumentId, Map<String, String> documentMap);

@@ -16,31 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task;
+package io.lumeer.core.task.executor.operation;
 
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.ResourceOperation;
 
-import java.io.Serializable;
-import java.util.List;
+public class DocumentOperation extends ResourceOperation<Document> {
 
-/**
- * A task that can be processed.
- */
-public interface Task extends Serializable {
+   private final Document originalDocument;
 
-   long MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS = 25L;
-   long MAX_MESSAGES = 5L;
-   int MAX_VIEW_DOCUMENTS = 1000;
+   public DocumentOperation(final Document entity, final String attrId, final Object value) {
+      super(entity, attrId, value);
+      originalDocument = new Document(entity);
+   }
 
-   void setParent(final Task task);
+   public Document getOriginalDocument() {
+      return originalDocument;
+   }
 
-   Task getParent();
-
-   void process(final TaskExecutor executor, final ChangesTracker changesTracker);
-
-   void propagateChanges(final List<Document> documents, final List<LinkInstance> links);
-
-   void processChanges(final ChangesTracker changesTracker);
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+            "entity=" + entity +
+            ", attrId='" + getAttrId() + '\'' +
+            ", value=" + getValue() +
+            ", originalDocument=" + originalDocument +
+            '}';
+   }
 }

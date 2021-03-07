@@ -16,31 +16,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task;
+package io.lumeer.core.task.executor.request;
 
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.core.task.executor.ChangesTracker;
+public class SendEmailRequest {
 
-import java.io.Serializable;
-import java.util.List;
+   private final String subject;
+   private final String email;
+   private final String body;
 
-/**
- * A task that can be processed.
- */
-public interface Task extends Serializable {
+   public SendEmailRequest(final String subject, final String email, final String body) {
+      this.subject = subject;
+      this.email = email;
+      this.body = body;
+   }
 
-   long MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS = 25L;
-   long MAX_MESSAGES = 5L;
-   int MAX_VIEW_DOCUMENTS = 1000;
+   public String getSubject() {
+      return subject;
+   }
 
-   void setParent(final Task task);
+   public String getEmail() {
+      return email;
+   }
 
-   Task getParent();
+   public String getBody() {
+      return body;
+   }
 
-   void process(final TaskExecutor executor, final ChangesTracker changesTracker);
-
-   void propagateChanges(final List<Document> documents, final List<LinkInstance> links);
-
-   void processChanges(final ChangesTracker changesTracker);
+   @Override
+   public String toString() {
+      return "SendEmailRequest{" +
+            "subject='" + subject + '\'' +
+            ", email='" + email + '\'' +
+            ", body='" + body + '\'' +
+            '}';
+   }
 }

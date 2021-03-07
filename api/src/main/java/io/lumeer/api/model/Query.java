@@ -185,4 +185,11 @@ public class Query implements HealthChecking {
          throw new InsaneObjectException("Number of query stems are more than 20");
       }
    }
+
+   public Query getFirstStem(final Integer page, final Integer pageSize) {
+      final QueryStem firstStem = stems.get(0);
+      final QueryStem stem = new QueryStem(firstStem.getCollectionId(), Collections.emptyList(), new HashSet<>(firstStem.getDocumentIds()), new ArrayList<>(firstStem.getFilters()), Collections.emptyList());
+
+      return new Query(List.of(stem), new HashSet<>(this.fulltexts), page, pageSize);
+   }
 }

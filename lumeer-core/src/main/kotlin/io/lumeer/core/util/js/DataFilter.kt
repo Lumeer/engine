@@ -44,5 +44,14 @@ class DataFilter {
             val task = DataFilterJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
             return task.call()
         }
+
+        @JvmStatic
+        fun filterDocumentsAndLinksByQueryDecodingFromJson(documents: List<Document>,
+                                                   collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
+                                                   query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
+                                                   constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
+            val task = DataFilterDecodingJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
+            return task.call()
+        }
     }
 }
