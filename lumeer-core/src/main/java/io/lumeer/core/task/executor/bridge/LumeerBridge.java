@@ -452,7 +452,7 @@ public class LumeerBridge {
                final String attributeId = StringUtils.isNotEmpty(collection.getDefaultAttributeId()) ? collection.getDefaultAttributeId() :
                      (collection.getAttributes() != null && !collection.getAttributes().isEmpty() ? collection.getAttributes().iterator().next().getId() : "");
                final NavigationRequest navigationRequest = new NavigationRequest(
-                     workspace.getOrganization().get().getId(), workspace.getProject().get().getId(),
+                     workspace.getOrganization().get().getCode(), workspace.getProject().get().getCode(),
                      viewId, collectionId, documentId, attributeId, sidebar, newWindow
                );
 
