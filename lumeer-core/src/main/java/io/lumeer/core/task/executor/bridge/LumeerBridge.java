@@ -439,6 +439,7 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings("unused")
    public void navigate(final String viewId, final DocumentBridge documentBridge, final boolean sidebar, final boolean newWindow) {
       try {
          final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
@@ -465,6 +466,7 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings("unused")
    public void sendEmail(final String email, final String subject, final String body) {
       try {
          operations.add(new SendEmailOperation(new SendEmailRequest(subject, email, body)));

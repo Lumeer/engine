@@ -375,7 +375,8 @@ public class SingleStage extends Stage {
          return null;
       }
 
-      @SuppressWarnings("rawtypes") final List<Operation> invalidOperations = operations.stream().filter(operation -> !operation.isComplete()).collect(toList());
+      @SuppressWarnings("rawtypes")
+      final List<Operation> invalidOperations = operations.stream().filter(operation -> !operation.isComplete()).collect(toList());
       if (invalidOperations.size() > 0) {
          final StringBuilder sb = new StringBuilder();
          invalidOperations.forEach(operation -> sb.append("Invalid update request: ").append(operation.toString()).append("\n"));

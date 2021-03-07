@@ -190,6 +190,11 @@ public class FunctionAndRuleCreator extends WithIdCreator {
             var collId = templateParser.getDict().getCollectionId(id);
             if (collId != null) {
                return collId;
+            } else {
+               var viewId = templateParser.getDict().getViewId(id);
+               if (viewId != null) {
+                  return viewId;
+               }
             }
          }
 
@@ -229,6 +234,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION\">", "</field>", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "<field name=\"COLLECTION_ID\">", "</field>", templateParser.getDict()::getCollectionId);
       res = TemplateParserUtils.replacer(res, "<field name=\"LINKTYPE\">", "</field>", templateParser.getDict()::getLinkTypeId);
+      res = TemplateParserUtils.replacer(res, "<field name=\"VIEW_ID\">", "</field>", templateParser.getDict()::getViewId);
 
       return res;
    }
