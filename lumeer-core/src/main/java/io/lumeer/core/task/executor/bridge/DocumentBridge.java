@@ -16,27 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor;
+package io.lumeer.core.task.executor.bridge;
 
-import io.lumeer.core.task.RuleTask;
-import io.lumeer.core.task.executor.bridge.DocumentBridge;
+import io.lumeer.api.model.Document;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+public class DocumentBridge {
+   private final Document document;
 
-public class CronRuleTaskExecutor extends BlocklyRuleTaskExecutor {
+   public DocumentBridge(final Document document) {
+      this.document = document;
+   }
 
-   public CronRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
-      super(ruleName, ruleTask);
+   public Document getDocument() {
+      return document;
    }
 
    @Override
-   protected Map<String, Object> getBindings() {
-      final Map<String, Object> bindings = new HashMap<>();
-
-      bindings.put("records", ruleTask.getDocuments().stream().map(DocumentBridge::new).collect(Collectors.toList()));
-
-      return bindings;
+   public String toString() {
+      return "DocumentBridge{" +
+            "document=" + document +
+            '}';
    }
 }

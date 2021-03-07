@@ -18,7 +18,7 @@
  */
 package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.core.task.PrintRequest;
+import io.lumeer.core.task.executor.request.PrintRequest;
 
 public class PrintAttributeOperation extends Operation<PrintRequest> {
    public PrintAttributeOperation(final PrintRequest entity) {

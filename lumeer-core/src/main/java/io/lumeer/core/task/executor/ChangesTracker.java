@@ -24,8 +24,10 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.core.task.PrintRequest;
-import io.lumeer.core.task.UserMessage;
+import io.lumeer.core.task.executor.request.NavigationRequest;
+import io.lumeer.core.task.executor.request.PrintRequest;
+import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.UserMessageRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,8 +48,10 @@ public class ChangesTracker {
    private final Set<Collection> collections = new HashSet<>();
    private final Set<LinkType> linkTypes = new HashSet<>();
    private final Set<String> sequences = new HashSet<>();
-   private final List<UserMessage> userMessages = new ArrayList<>();
+   private final List<UserMessageRequest> userMessageRequests = new ArrayList<>();
    private final List<PrintRequest> printRequests = new ArrayList<>();
+   private final List<NavigationRequest> navigationRequests = new ArrayList<>();
+   private final List<SendEmailRequest> sendEmailRequests = new ArrayList<>();
 
    final Map<String, Collection> collectionsMap = new HashMap<>();
    final Map<String, LinkType> linkTypesMap = new HashMap<>();
@@ -55,19 +59,25 @@ public class ChangesTracker {
    public ChangesTracker() {
    }
 
-   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments,
+/*   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments,
          final Set<Document> removedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances,
          final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences,
-         final List<UserMessage> userMessages, final List<PrintRequest> printRequests, final Map<String, Collection> collectionsMap,
+         final List<UserMessageRequest> userMessageRequests, final List<PrintRequest> printRequests, final Map<String, Collection> collectionsMap,
          final Map<String, LinkType> linkTypesMap) {
       merge(collections, createdDocuments, updatedDocuments,
             removedDocuments, linkTypes, createdLinkInstances,
             updatedLinkInstances, removedLinkInstances, sequences,
-            userMessages, printRequests, collectionsMap,
+            userMessageRequests, printRequests, collectionsMap,
             linkTypesMap);
-   }
+   }*/
 
-   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments, final Set<Document> removedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences, final List<UserMessage> userMessages, final List<PrintRequest> printRequests, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+   public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments,
+         final Set<Document> updatedDocuments, final Set<Document> removedDocuments, final Set<LinkType> linkTypes,
+         final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances,
+         final Set<LinkInstance> removedLinkInstances, final Set<String> sequences,
+         final List<UserMessageRequest> userMessageRequests, final List<PrintRequest> printRequests,
+         final List<NavigationRequest> navigationRequests, final List<SendEmailRequest> sendEmailRequests,
+         final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
          this.collections.removeAll(collections);
          this.collections.addAll(collections);
@@ -112,8 +122,8 @@ public class ChangesTracker {
          this.sequences.addAll(sequences);
       }
 
-      if (userMessages != null) {
-         this.userMessages.addAll(userMessages);
+      if (userMessageRequests != null) {
+         this.userMessageRequests.addAll(userMessageRequests);
       }
 
       if (collectionsMap != null) {
@@ -128,6 +138,14 @@ public class ChangesTracker {
          this.printRequests.addAll(printRequests);
       }
 
+      if (navigationRequests != null) {
+         this.navigationRequests.addAll(navigationRequests);
+      }
+
+      if (sendEmailRequests != null) {
+         this.sendEmailRequests.addAll(sendEmailRequests);
+      }
+
       return this;
    }
 
@@ -136,7 +154,11 @@ public class ChangesTracker {
          return this;
       }
 
-      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.removedDocuments, other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.removedLinkInstances, other.sequences, other.userMessages, other.printRequests, other.collectionsMap, other.linkTypesMap);
+      return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.removedDocuments,
+            other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.removedLinkInstances,
+            other.sequences, other.userMessageRequests, other.printRequests,
+            other.navigationRequests, other.sendEmailRequests,
+            other.collectionsMap, other.linkTypesMap);
    }
 
    public Set<Document> getCreatedDocuments() {
@@ -175,8 +197,8 @@ public class ChangesTracker {
       return sequences;
    }
 
-   public List<UserMessage> getUserMessages() {
-      return userMessages;
+   public List<UserMessageRequest> getUserMessages() {
+      return userMessageRequests;
    }
 
    public Map<String, Collection> getCollectionsMap() {
@@ -189,6 +211,14 @@ public class ChangesTracker {
 
    public List<PrintRequest> getPrintRequests() {
       return printRequests;
+   }
+
+   public List<NavigationRequest> getNavigationRequests() {
+      return navigationRequests;
+   }
+
+   public List<SendEmailRequest> getSendEmailRequests() {
+      return sendEmailRequests;
    }
 
    public void addCreatedDocuments(final java.util.Collection<Document> createdDocuments) {
@@ -227,12 +257,20 @@ public class ChangesTracker {
       this.sequences.add(sequence);
    }
 
-   public void addUserMessages(final List<UserMessage> userMessages) {
-      this.userMessages.addAll(userMessages);
+   public void addUserMessageRequests(final List<UserMessageRequest> userMessageRequests) {
+      this.userMessageRequests.addAll(userMessageRequests);
    }
 
    public void addPrintRequests(final List<PrintRequest> printRequests) {
       this.printRequests.addAll(printRequests);
+   }
+
+   public void addNavigationRequests(final List<NavigationRequest> navigationRequests) {
+      this.navigationRequests.addAll(navigationRequests);
+   }
+
+   public void addSendEmailRequests(final List<SendEmailRequest> sendEmailRequests) {
+      this.sendEmailRequests.addAll(sendEmailRequests);
    }
 
    public void updateCollectionsMap(final Map<String, Collection> collectionsMap) {
@@ -255,8 +293,10 @@ public class ChangesTracker {
             ", updatedLinkInstances=" + computeIfNotNull(updatedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", removedLinkInstances=" + computeIfNotNull(removedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", sequences=" + sequences +
-            ", userMessages=" + userMessages +
+            ", userMessages=" + userMessageRequests +
             ", printRequests=" + printRequests +
+            ", navigationRequests=" + printRequests +
+            ", sendEmailRequests=" + printRequests +
             '}';
    }
 }

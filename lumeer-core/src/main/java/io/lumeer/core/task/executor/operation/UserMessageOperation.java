@@ -18,10 +18,10 @@
  */
 package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.core.task.UserMessage;
+import io.lumeer.core.task.executor.request.UserMessageRequest;
 
-public class UserMessageOperation extends Operation<UserMessage> {
-   public UserMessageOperation(final UserMessage entity) {
+public class UserMessageOperation extends Operation<UserMessageRequest> {
+   public UserMessageOperation(final UserMessageRequest entity) {
       super(entity);
    }
 

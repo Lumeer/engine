@@ -24,6 +24,8 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.TaskExecutor;
+import io.lumeer.core.task.executor.bridge.DocumentBridge;
+import io.lumeer.core.task.executor.bridge.LinkBridge;
 
 import java.util.Map;
 import java.util.Set;
@@ -59,15 +61,15 @@ public class FunctionTaskExecutor {
 
    public ChangesTracker execute(final TaskExecutor taskExecutor) {
       changesTracker = new ChangesTracker();
-      final JsExecutor.DocumentBridge thisDocument = new JsExecutor.DocumentBridge(document);
-      final JsExecutor.LinkBridge thisLink = new JsExecutor.LinkBridge(linkInstance);
+      final DocumentBridge thisDocument = new DocumentBridge(document);
+      final LinkBridge thisLink = new LinkBridge(linkInstance);
       final Map<String, Object> bindings = linkInstance == null ? Map.of("thisRecord", thisDocument, "thisDocument", thisDocument) : Map.of("thisLink", thisLink);
 
       final JsExecutor jsExecutor = new JsExecutor();
 
       try {
          jsExecutor.execute(bindings, task, collection, task.getFunction().getJs());
-         final ChangesTracker tracker = jsExecutor.commitChanges(taskExecutor);
+         final ChangesTracker tracker = jsExecutor.commitOperations(taskExecutor);
          checkErrorErasure();
 
          return tracker;

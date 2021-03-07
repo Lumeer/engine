@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task;
+package io.lumeer.core.task.executor.request;
 
-public class UserMessage {
+public class UserMessageRequest {
 
    private final String type;
    private final String message;
 
-   public UserMessage(final String type, final String message) {
+   public UserMessageRequest(final String type, final String message) {
       this.type = type;
       this.message = message;
    }

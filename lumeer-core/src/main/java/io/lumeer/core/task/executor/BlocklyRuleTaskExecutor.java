@@ -23,12 +23,13 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
+import io.lumeer.core.task.executor.bridge.DocumentBridge;
+import io.lumeer.core.task.executor.bridge.LinkBridge;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -53,13 +54,13 @@ public class BlocklyRuleTaskExecutor {
       final Map<String, Object> bindings = new HashMap<>();
 
       if (ruleTask.isCollectionBased()) {
-         bindings.put("oldRecord", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
-         bindings.put("oldDocument", new JsExecutor.DocumentBridge(ruleTask.getOldDocument()));
-         bindings.put("newRecord", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
-         bindings.put("newDocument", new JsExecutor.DocumentBridge(ruleTask.getNewDocument()));
+         bindings.put("oldRecord", new DocumentBridge(ruleTask.getOldDocument()));
+         bindings.put("oldDocument", new DocumentBridge(ruleTask.getOldDocument()));
+         bindings.put("newRecord", new DocumentBridge(ruleTask.getNewDocument()));
+         bindings.put("newDocument", new DocumentBridge(ruleTask.getNewDocument()));
       } else {
-         bindings.put("oldLink", new JsExecutor.LinkBridge(ruleTask.getOldLinkInstance()));
-         bindings.put("newLink", new JsExecutor.LinkBridge(ruleTask.getNewLinkInstance()));
+         bindings.put("oldLink", new LinkBridge(ruleTask.getOldLinkInstance()));
+         bindings.put("newLink", new LinkBridge(ruleTask.getNewLinkInstance()));
       }
 
       return bindings;
@@ -75,10 +76,10 @@ public class BlocklyRuleTaskExecutor {
          jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
 
          if (!rule.isDryRun()) {
-            tracker = jsExecutor.commitChanges(taskExecutor);
+            tracker = jsExecutor.commitOperations(taskExecutor);
          } else {
-            writeDryRunResults(jsExecutor.getChanges());
-            tracker = jsExecutor.commitDryRunChanges(taskExecutor);
+            writeDryRunResults(jsExecutor.getOperationsDescription());
+            tracker = jsExecutor.commitDryRunOperations(taskExecutor);
          }
 
          checkErrorErasure();

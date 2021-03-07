@@ -16,27 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor;
+package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.core.task.RuleTask;
-import io.lumeer.core.task.executor.bridge.DocumentBridge;
+import io.lumeer.core.task.executor.request.SendEmailRequest;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-public class CronRuleTaskExecutor extends BlocklyRuleTaskExecutor {
-
-   public CronRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
-      super(ruleName, ruleTask);
+public class SendEmailOperation  extends Operation<SendEmailRequest> {
+   public SendEmailOperation(final SendEmailRequest entity) {
+      super(entity);
    }
 
    @Override
-   protected Map<String, Object> getBindings() {
-      final Map<String, Object> bindings = new HashMap<>();
-
-      bindings.put("records", ruleTask.getDocuments().stream().map(DocumentBridge::new).collect(Collectors.toList()));
-
-      return bindings;
+   public String toString() {
+      return getClass().getSimpleName() + "{" +
+            "entity=" + entity +
+            '}';
    }
 }

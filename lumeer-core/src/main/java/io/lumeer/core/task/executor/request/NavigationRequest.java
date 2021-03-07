@@ -16,26 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task;
+package io.lumeer.core.task.executor.request;
 
-import io.lumeer.api.model.ResourceType;
-
-public class PrintRequest {
+public class NavigationRequest {
 
    private final String organizationCode;
    private final String projectCode;
-   private final String resourceId;
+   private final String viewId;
+   private final String collectionId;
    private final String documentId;
    private final String attributeId;
-   private final ResourceType type;
+   private final boolean sidebar;
+   private final boolean newWindow;
 
-   public PrintRequest(final String organizationCode, final String projectCode, final String resourceId, final String documentId, final String attributeId, final ResourceType type) {
+   public NavigationRequest(final String organizationCode, final String projectCode, final String viewId, final String collectionId, final String documentId, final String attributeId, final boolean sidebar, final boolean newWindow) {
       this.organizationCode = organizationCode;
       this.projectCode = projectCode;
-      this.resourceId = resourceId;
+      this.viewId = viewId;
+      this.collectionId = collectionId;
       this.documentId = documentId;
       this.attributeId = attributeId;
-      this.type = type;
+      this.sidebar = sidebar;
+      this.newWindow = newWindow;
    }
 
    public String getOrganizationCode() {
@@ -46,8 +48,12 @@ public class PrintRequest {
       return projectCode;
    }
 
-   public String getResourceId() {
-      return resourceId;
+   public String getViewId() {
+      return viewId;
+   }
+
+   public String getCollectionId() {
+      return collectionId;
    }
 
    public String getDocumentId() {
@@ -58,19 +64,25 @@ public class PrintRequest {
       return attributeId;
    }
 
-   public ResourceType getType() {
-      return type;
+   public boolean isSidebar() {
+      return sidebar;
+   }
+
+   public boolean isNewWindow() {
+      return newWindow;
    }
 
    @Override
    public String toString() {
-      return "PrintRequest{" +
+      return "NavigationRequest{" +
             "organizationCode='" + organizationCode + '\'' +
             ", projectCode='" + projectCode + '\'' +
-            ", resourceId='" + resourceId + '\'' +
+            ", viewId='" + viewId + '\'' +
+            ", collectionId='" + collectionId + '\'' +
             ", documentId='" + documentId + '\'' +
             ", attributeId='" + attributeId + '\'' +
-            ", type=" + type +
+            ", sidebar=" + sidebar +
+            ", newWindow=" + newWindow +
             '}';
    }
 }

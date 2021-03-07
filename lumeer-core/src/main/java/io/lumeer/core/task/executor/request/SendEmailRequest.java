@@ -16,27 +16,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor;
+package io.lumeer.core.task.executor.request;
 
-import io.lumeer.core.task.RuleTask;
-import io.lumeer.core.task.executor.bridge.DocumentBridge;
+public class SendEmailRequest {
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
+   private final String subject;
+   private final String email;
+   private final String body;
 
-public class CronRuleTaskExecutor extends BlocklyRuleTaskExecutor {
+   public SendEmailRequest(final String subject, final String email, final String body) {
+      this.subject = subject;
+      this.email = email;
+      this.body = body;
+   }
 
-   public CronRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
-      super(ruleName, ruleTask);
+   public String getSubject() {
+      return subject;
+   }
+
+   public String getEmail() {
+      return email;
+   }
+
+   public String getBody() {
+      return body;
    }
 
    @Override
-   protected Map<String, Object> getBindings() {
-      final Map<String, Object> bindings = new HashMap<>();
-
-      bindings.put("records", ruleTask.getDocuments().stream().map(DocumentBridge::new).collect(Collectors.toList()));
-
-      return bindings;
+   public String toString() {
+      return "SendEmailRequest{" +
+            "subject='" + subject + '\'' +
+            ", email='" + email + '\'' +
+            ", body='" + body + '\'' +
+            '}';
    }
 }
