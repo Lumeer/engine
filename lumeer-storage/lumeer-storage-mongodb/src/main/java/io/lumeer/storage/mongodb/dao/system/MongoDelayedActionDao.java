@@ -125,7 +125,7 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
          action = databaseCollection().findOneAndUpdate(
                Filters.and(
                      Filters.not(Filters.exists(DelayedAction.STARTED_PROCESSING)),
-                     Filters.lt(DelayedAction.CHECK_AFTER, Date.from(ZonedDateTime.now().toInstant()))
+                     Filters.lt(DelayedAction.CHECK_AFTER, Date.from(ZonedDateTime.now().minus(PROCESSING_DELAY_MINUTES, ChronoUnit.MINUTES).toInstant()))
                ), Updates.set(DelayedAction.STARTED_PROCESSING, Date.from(ZonedDateTime.now().toInstant())), options);
          if (action != null) {
             result.add(action);

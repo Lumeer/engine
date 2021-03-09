@@ -26,6 +26,8 @@ import java.util.Set;
 
 public interface DelayedActionDao {
 
+   int PROCESSING_DELAY_MINUTES = 2;
+
    List<DelayedAction> getActions();
 
    void deleteScheduledActions(final String resourcePath, final Set<NotificationType> notificationTypes);
