@@ -25,6 +25,7 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
@@ -48,8 +49,14 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
                final String dueDateAttr = meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
                final String stateAttr = meta.getString(Collection.META_STATE_ATTRIBUTE_ID);
 
-               if ((observers != null && !observers.contains(currentUser.getEmail())) && !isAttributeChanged(documentEvent, assigneeAttr) && !isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, stateAttr)) {
-                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
+               if (!isAttributeChanged(documentEvent, assigneeAttr) && !isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, stateAttr)) {
+                  if (observers != null) { // prevent double notification when assignee is also an observer
+                     final Set<String> assignees = new HashSet<>(getAssignees(documentEvent, collection));
+                     assignees.removeAll(observers);
+                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), assignees));
+                  } else {
+                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
+                  }
                }
             }
          }

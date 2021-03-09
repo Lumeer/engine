@@ -68,7 +68,7 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
 
             if (!(documentEvent instanceof RemoveDocument) && !doneState) {
                // create new due date events on the document
-               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus()));
+               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus(), getAddedAssignees(documentEvent, collection)));
             }
          }
       }

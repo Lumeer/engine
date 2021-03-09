@@ -79,6 +79,11 @@ public class AutoLinkRuleTaskExecutor {
                return changesTracker;
             }
          }
+         if (ruleTask.getOldDocument() != null) {
+            if (ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(ruleTask.getOldDocument().getId()).size() <= 0) {
+               return changesTracker;
+            }
+         }
 
          // both documents are set
          if (ruleTask.getOldDocument() != null && ruleTask.getNewDocument() != null) {

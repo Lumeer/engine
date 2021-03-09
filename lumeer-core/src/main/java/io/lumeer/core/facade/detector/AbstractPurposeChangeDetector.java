@@ -38,6 +38,7 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.CollectionPurposeUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentCommentedEvent;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -46,8 +47,6 @@ import io.lumeer.storage.api.dao.UserDao;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -61,7 +60,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractPurposeChangeDetector implements PurposeChangeDetector {
 
    protected static final int DUE_DATE_SOON_DAYS = 3;
-   protected static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
    protected DelayedActionDao delayedActionDao;
    protected UserDao userDao;
@@ -146,6 +144,25 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return Set.of();
    }
 
+   protected Set<String> getAddedAssignees(final DocumentEvent documentEvent, final Collection collection) {
+      final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+
+      if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
+         if (documentEvent instanceof UpdateDocument) {
+               final Set<String> originalUsers = getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId);
+               final Set<String> newUsers = new HashSet<>(getUsersList(documentEvent.getDocument(), assigneeAttributeId));
+
+               newUsers.removeAll(originalUsers);
+
+               return newUsers;
+         } else if (documentEvent instanceof CreateDocument) {
+            return getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+         }
+      }
+
+      return Set.of();
+   }
+
    protected Set<String> getObservers(final DocumentEvent documentEvent, final Collection collection) {
       final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_OBSERVERS_ATTRIBUTE_ID) : null;
 
@@ -156,6 +173,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return Set.of();
    }
 
+   @SuppressWarnings("unchecked")
    private Set<String> getUsersList(final Document document, final String attributeId) {
       final Object usersObject = document.getData().getObject(attributeId);
       if (usersObject != null) {
@@ -173,6 +191,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return CollectionPurposeUtils.getDueDate(documentEvent.getDocument(), collection);
    }
 
+   @SuppressWarnings("unchecked,unused")
    protected String getDueDateFormat(final DocumentEvent documentEvent, final Collection collection) {
       final String dueDateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID) : null;
 
@@ -215,6 +234,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return Boolean.FALSE;
    }
 
+   @SuppressWarnings("unused")
    protected String getDescriptionAttribute(final DocumentEvent documentEvent, final Collection collection) {
       return StringUtils.isNotEmpty(collection.getDefaultAttributeId()) ? collection.getDefaultAttributeId() : (collection.getAttributes().size() > 0 ? collection.getAttributes().iterator().next().getId() : null);
    }
@@ -234,6 +254,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return "";
    }
 
+   @SuppressWarnings("unused")
    protected List<NotificationSetting> getChannels(final DocumentEvent documentEvent, final Collection collection, final NotificationType notificationType, final String assignee) {
       List<NotificationSetting> notifications;
 
@@ -341,7 +362,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
    protected ZonedDateTime nowPlus() {
       if (environment == DefaultConfigurationProducer.DeployEnvironment.PRODUCTION || environment == DefaultConfigurationProducer.DeployEnvironment.STAGING) {
-         return ZonedDateTime.now().plus(2, ChronoUnit.MINUTES);
+         return ZonedDateTime.now().plus(DelayedActionDao.PROCESSING_DELAY_MINUTES, ChronoUnit.MINUTES);
       }
       return ZonedDateTime.now();
    }
