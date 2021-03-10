@@ -333,22 +333,20 @@ public class SearchFacade extends AbstractFacade {
          return new Tuple<>(new HashSet<>(), new HashSet<>());
       }
 
-      var previousDocuments = getDocumentsByCollection(previousCollection, null, documentFilter);
-      final Set<Document> allDocuments = new HashSet<>(previousDocuments);
+      final Set<Document> allDocuments = new HashSet<>(getDocumentsByCollection(previousCollection, null, documentFilter));
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
       for (String linkTypeId : stem.getLinkTypeIds()) {
          var linkType = linkTypesMap.get(linkTypeId);
          var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
          if (linkType != null && collection != null) {
-            var links = getLinkInstancesByLinkType(linkType, getDocumentsIds(previousDocuments));
-            var documents = getDocumentsByCollection(collection, getLinkDocumentsIds(links), documentFilter);
+            var links = getLinkInstancesByLinkType(linkType, null);
+            var documents = getDocumentsByCollection(collection, null, documentFilter);
 
             allDocuments.addAll(documents);
             allLinkInstances.addAll(links);
 
             previousCollection = collection;
-            previousDocuments = documents;
          }
       }
 
