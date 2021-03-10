@@ -40,6 +40,7 @@ import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
+import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
@@ -284,22 +285,22 @@ public class TaskProcessingFacade {
       }
 
       FunctionTask functionTask = functionFacade.createTaskForRemovedDocument(collection, new Document(removeDocument.getDocument()));
-      List<RuleTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument);
+      List<RuleTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument.getDocument());
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       processTasks(functionTask, ruleTask);
    }
 
-   private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final RemoveDocument removeDocument) {
-      if (removeDocument.getDocument() != null) {
-         return createRuleTasks(collection, new Document(removeDocument.getDocument()), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+   private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final Document removeDocument) {
+      if (removeDocument != null) {
+         return createRuleTasks(collection, new Document(removeDocument), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
 
-   private List<RuleTask> createLinkInstanceRemoveRuleTasks(final LinkType linkType, final RemoveLinkInstance removeLinkInstance) {
-      if (removeLinkInstance.getLinkInstance() != null) {
-         return createRuleTasks(linkType, new LinkInstance(removeLinkInstance.getLinkInstance()), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+   private List<RuleTask> createLinkInstanceRemoveRuleTasks(final LinkType linkType, final LinkInstance linkInstance) {
+      if (linkInstance != null) {
+         return createRuleTasks(linkType, new LinkInstance(linkInstance), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
@@ -309,14 +310,27 @@ public class TaskProcessingFacade {
       processTasks(tasks.toArray(new Task[0]));
    }
 
+   public void onSetLinks(@Observes final SetDocumentLinks setDocumentLinks) {
+      if (setDocumentLinks.getCreatedLinkInstances().size() > 0) {
+         List<Task> tasks = linksCreatedTasks(setDocumentLinks.getCreatedLinkInstances());
+         processTasks(tasks.toArray(new Task[0]));
+      } else if (setDocumentLinks.getRemovedLinkInstances().size() > 0) {
+         onRemoveLink(new RemoveLinkInstance(setDocumentLinks.getRemovedLinkInstances().get(0))); // TODO is it okay to start just once?
+      }
+   }
+
    private List<Task> linkCreatedTasks(LinkInstance linkInstance) {
-      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
+      return linksCreatedTasks(Collections.singletonList(linkInstance));
+   }
+
+   private List<Task> linksCreatedTasks(List<LinkInstance> linkInstances) {
+      LinkType linkType = linkTypeDao.getLinkType(linkInstances.get(0).getLinkTypeId());
       if (linkType == null) {
          return Collections.emptyList();
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForCreatedLink(linkType, linkInstance);
-      List<RuleTask> tasks = createLinkInstanceCreateRuleTasks(linkType, linkInstance);
+      FunctionTask functionTask = functionFacade.createTaskForCreatedLinks(linkType, linkInstances);
+      List<RuleTask> tasks = createLinkInstanceCreateRuleTasks(linkType, linkInstances.get(0)); // TODO do we need to create task for each new link (same LinkType)?
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       return Arrays.asList(functionTask, ruleTask);
@@ -349,8 +363,8 @@ public class TaskProcessingFacade {
          return;
       }
 
-      FunctionTask functionTask = functionFacade.createTaskForRemovedLink(linkType, new LinkInstance(removeLinkInstanceEvent.getLinkInstance()));
-      List<RuleTask> tasks = createLinkInstanceRemoveRuleTasks(linkType, removeLinkInstanceEvent);
+      FunctionTask functionTask = functionFacade.createTaskForRemovedLinks(linkType, Collections.singletonList(new LinkInstance(removeLinkInstanceEvent.getLinkInstance())));
+      List<RuleTask> tasks = createLinkInstanceRemoveRuleTasks(linkType, removeLinkInstanceEvent.getLinkInstance());
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       processTasks(functionTask, ruleTask);

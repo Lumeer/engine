@@ -64,6 +64,7 @@ import io.lumeer.engine.api.event.RemoveResourceComment;
 import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
+import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateDefaultViewConfig;
@@ -920,6 +921,21 @@ public class PusherFacade extends AbstractFacade {
             users.addAll(ResourceUtils.usersAllowedRead(project));
             ObjectWithParent object = new ObjectWithParent(createDocumentsAndLinks, getOrganization().getId(), project.getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "DocumentsAndLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void setDocumentLinksNotification(@Observes final SetDocumentLinks setDocumentLinks) {
+      if (isEnabled()) {
+         try {
+            Set<String> users = getWorkspaceManagers();
+            Project project = getProject();
+            users.addAll(ResourceUtils.usersAllowedRead(project));
+            ObjectWithParent object = new ObjectWithParent(setDocumentLinks, getOrganization().getId(), project.getId());
+            List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "SetDocumentLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);

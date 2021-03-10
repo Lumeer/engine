@@ -19,6 +19,7 @@
 
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.DocumentLinks;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.engine.api.data.DataDocument;
@@ -73,6 +74,12 @@ public class LinkInstanceService extends AbstractService {
             duplicationRequest.getNewMasterDocument(),
             duplicationRequest.getLinkInstanceIds(),
             duplicationRequest.getDocumentMap());
+   }
+
+   @POST
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/documentLinks")
+   public List<LinkInstance> setLinkInkInstances(@PathParam("linkTypeId") String linkTypeId, final DocumentLinks links) {
+      return linkInstanceFacade.setDocumentLinks(linkTypeId, links);
    }
 
    @GET

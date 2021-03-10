@@ -441,7 +441,7 @@ public class SearchFacade extends AbstractFacade {
    private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
       final View view = permissionsChecker.getActiveView();
       if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
-         return view.getQuery();
+         return constraintManager.decodeQuery(view.getQuery(), collectionsMap, linkTypesMap);
       }
 
       return constraintManager.decodeQuery(query, collectionsMap, linkTypesMap);

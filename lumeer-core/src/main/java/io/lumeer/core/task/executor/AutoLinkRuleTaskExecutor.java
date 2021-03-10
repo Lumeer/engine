@@ -24,7 +24,6 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.facade.FunctionFacade;
-import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.engine.api.data.DataDocument;
@@ -33,9 +32,7 @@ import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
 import org.apache.commons.lang3.StringUtils;
-import org.marvec.pusher.data.Event;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -138,7 +135,7 @@ public class AutoLinkRuleTaskExecutor {
          final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
          final List<String> skipCollectionIds = List.of(thisCollection);
          links.forEach(linkInstance -> {
-            taskExecutor.submitTask(functionFacade.createTaskForRemovedLink(linkType, linkInstance, skipCollectionIds));
+            taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(linkType, Collections.singletonList(linkInstance), skipCollectionIds));
          });
 
       }
@@ -178,7 +175,7 @@ public class AutoLinkRuleTaskExecutor {
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);
             linkInstances.forEach(linkInstance -> {
-               taskExecutor.submitTask(functionFacade.createTaskForCreatedLink(linkType, linkInstance, skipCollectionIds));
+               taskExecutor.submitTask(functionFacade.createTaskForCreatedLinks(linkType, Collections.singletonList(linkInstance), skipCollectionIds));
             });
          }
       }
