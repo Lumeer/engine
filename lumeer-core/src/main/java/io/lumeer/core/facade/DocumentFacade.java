@@ -18,16 +18,27 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.*;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.DocumentsChain;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.ImportCollectionContent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -53,7 +64,6 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import javax.print.Doc;
 
 @RequestScoped
 public class DocumentFacade extends AbstractFacade {
@@ -105,9 +115,16 @@ public class DocumentFacade extends AbstractFacade {
 
    private ConstraintManager constraintManager;
 
+   private DocumentAdapter adapter;
+
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
+      adapter = new DocumentAdapter(resourceCommentFacade.getAdapter(), favoriteItemDao);
+   }
+
+   public DocumentAdapter getAdapter() {
+      return adapter;
    }
 
    public Document createDocument(String collectionId, Document document) {
@@ -474,7 +491,7 @@ public class DocumentFacade extends AbstractFacade {
    public Set<String> getFavoriteDocumentsIds(String userId) {
       String projectId = getCurrentProject().getId();
 
-      return favoriteItemDao.getFavoriteDocumentIds(userId, projectId);
+      return adapter.getFavoriteDocumentIds(userId, projectId);
    }
 
    public void addFavoriteDocument(String collectionId, String documentId) {
@@ -600,8 +617,17 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document mapDocumentData(final Document document) {
-      document.setFavorite(isFavorite(document.getId()));
+      return mapDocumentData(document, getCurrentUser().getId());
+   }
+
+   public Document mapDocumentData(final Document document, final String userId) {
+      document.setFavorite(isFavorite(document.getId(), userId));
       document.setCommentsCount(getCommentsCount(document.getId()));
+      return document;
+   }
+
+   public Document mapDocumentFavorite(final Document document, final String userId) {
+      document.setFavorite(isFavorite(document.getId(), userId));
       return document;
    }
 
@@ -629,11 +655,11 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public long getCommentsCount(final String documentId) {
-      return resourceCommentFacade.getCommentsCount(ResourceType.DOCUMENT, documentId);
+      return adapter.getCommentsCount(documentId);
    }
 
    public Map<String, Integer> getCommentsCounts(final Set<String> documentIds) {
-      return resourceCommentFacade.getCommentsCounts(ResourceType.DOCUMENT, documentIds);
+      return adapter.getCommentsCounts(documentIds);
    }
 
    private Document getDocument(Collection collection, String documentId) {

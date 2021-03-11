@@ -32,6 +32,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
@@ -87,6 +88,7 @@ public class LumeerBridge {
    private Exception cause = null;
    private boolean dryRun = false;
    private boolean printed = false;
+   private Boolean isManager = null;
 
    public LumeerBridge(final ContextualTask task, final Collection collection) {
       this.task = task;
@@ -143,13 +145,30 @@ public class LumeerBridge {
       }
    }
 
+   private void initIsManager() {
+      if (isManager == null) {
+         isManager = PermissionsChecker.isManager(
+               task.getInitiator(),
+               task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().orElse(null),
+               task.getDaoContextSnapshot().getSelectedWorkspace().getProject().orElse(null));
+      }
+   }
+
    @SuppressWarnings("unused")
    public List<DocumentBridge> readView(final String viewId) {
       try {
          final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
          final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
          final Language language = Language.fromString(task.getCurrentLocale());
-         final AllowedPermissions permissions = AllowedPermissions.getAllowedPermissions(task.getInitiator().getId(), view.getPermissions());
+
+         initIsManager();
+         final AllowedPermissions permissions;
+         if (isManager) {
+            permissions = AllowedPermissions.getAllAllowed();
+         } else {
+            permissions = AllowedPermissions.getAllowedPermissions(task.getInitiator().getId(), view.getPermissions());
+         }
+
          final List<Document> documents = DocumentUtils.getDocuments(task.getDaoContextSnapshot(), query, task.getInitiator(), language, permissions, task.getTimeZone());
 
          return documents.stream().map(DocumentBridge::new).collect(toList());

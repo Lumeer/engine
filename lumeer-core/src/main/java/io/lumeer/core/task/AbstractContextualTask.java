@@ -22,10 +22,17 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.core.adapter.CollectionAdapter;
+import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.ResourceCommentAdapter;
+import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.AbstractConstraintConverter;
@@ -72,6 +79,12 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected DefaultConfigurationProducer.DeployEnvironment environment;
    protected String timeZone;
 
+   protected DocumentAdapter documentAdapter;
+   protected CollectionAdapter collectionAdapter;
+   protected ViewAdapter viewAdapter;
+   protected LinkTypeAdapter linkTypeAdapter;
+   protected LinkInstanceAdapter linkInstanceAdapter;
+
    @Override
    public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment) {
       this.initiator = initiator;
@@ -81,6 +94,13 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.constraintManager = constraintManager;
       this.environment = environment;
       this.timeZone = requestDataKeeper.getTimezone();
+
+      final ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(daoContextSnapshot.getResourceCommentDao());
+      collectionAdapter = new CollectionAdapter(daoContextSnapshot.getFavoriteItemDao());
+      viewAdapter = new ViewAdapter(daoContextSnapshot.getFavoriteItemDao());
+      documentAdapter = new DocumentAdapter(resourceCommentAdapter, daoContextSnapshot.getFavoriteItemDao());
+      linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
 
       return this;
    }
@@ -167,20 +187,27 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForCollection(final Collection collection, final String userId, final String suffix) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(collection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final String projectId = daoContextSnapshot.getSelectedWorkspace().getProject().map(Project::getId).orElse("");
+
+      final Collection mappedCollection = collectionAdapter.mapCollectionData(collection.copy(), userId, projectId);
+
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedCollection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(collection, null), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(mappedCollection, null), null);
    }
 
    private Event createEventForDocument(final Document document, final String userId, final String suffix) {
+      final String projectId = daoContextSnapshot.getSelectedWorkspace().getProject().map(Project::getId).orElse("");
+
+      final Document mappedDocument = documentAdapter.mapDocumentData(new Document(document), userId, projectId);
+
       if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
-         return createEventForRemove(Document.class.getSimpleName(), getResourceId(document, document.getCollectionId()), userId);
+         return createEventForRemove(Document.class.getSimpleName(), getResourceId(mappedDocument, mappedDocument.getCollectionId()), userId);
       }
 
-      document.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.DOCUMENT, document.getId()));
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(document, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedDocument, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + suffix, message, getResourceId(document, document.getCollectionId()), null);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + suffix, message, getResourceId(mappedDocument, mappedDocument.getCollectionId()), null);
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId) {
@@ -188,13 +215,15 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId, final String suffix) {
+      linkTypeAdapter.mapLinkTypeData(linkType);
+
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + suffix, message, getResourceId(linkType, null), null);
    }
 
    private Event createEventForLinkInstance(final LinkInstance linkInstance, final String userId, final String suffix) {
-      linkInstance.setCommentsCount(daoContextSnapshot.getResourceCommentDao().getCommentsCount(ResourceType.LINK, linkInstance.getId()));
+      linkInstanceAdapter.mapLinkInstanceData(linkInstance);
 
       if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
          return createEventForRemove(LinkInstance.class.getSimpleName(), getResourceId(linkInstance, linkInstance.getLinkTypeId()), userId);

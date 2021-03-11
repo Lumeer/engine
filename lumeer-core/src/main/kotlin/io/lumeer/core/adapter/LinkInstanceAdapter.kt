@@ -1,3 +1,8 @@
+package io.lumeer.core.adapter
+
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.ResourceType
+
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -16,28 +21,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+class LinkInstanceAdapter(val resourceCommentAdapter: ResourceCommentAdapter) {
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.util.AttributeUtil;
+   fun getCommentsCount(linkInstanceId: String): Long = resourceCommentAdapter.getCommentsCount(ResourceType.LINK, linkInstanceId)
 
-import java.util.Set;
+   fun getCommentsCounts(linkInstanceIds: Set<String>): Map<String, Int> = resourceCommentAdapter.getCommentsCounts(ResourceType.LINK, linkInstanceIds)
 
-public class NoneToUserConverter extends AbstractTranslatingConverter {
+   fun mapLinkInstanceData(linkInstance: LinkInstance): LinkInstance = linkInstance.apply { commentsCount = getCommentsCount(id) }
 
-   @Override
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.translateToArray = AttributeUtil.isMultiselect(toAttribute);
-   }
-
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
-   }
-
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.User);
-   }
 }

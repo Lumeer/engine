@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.Pusher;
+import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 import org.marvec.pusher.data.Result;
 

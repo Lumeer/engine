@@ -258,7 +258,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       List<UserNotification> notifications = userNotificationDao.getRecentNotifications(user2.getId());
       assertThat(notifications.size()).isEqualTo(0);
 
-      Document doc = createDocument("My cool task", List.of("evžen@vystrčil.cz", user2.getEmail()), new Date(ZonedDateTime.now().toInstant().toEpochMilli()), "To Do", List.of(), "so just another task");
+      Document doc = createDocument("My cool task", List.of("evžen@vystrčil.cz", user2.getEmail()), new Date(ZonedDateTime.now().minus(DelayedActionDao.PROCESSING_DELAY_MINUTES, ChronoUnit.MINUTES).toInstant().toEpochMilli()), "To Do", List.of(), "so just another task");
 
       List<DelayedAction> actions = delayedActionDao.getActions();
       var types = countOccurrences(actions, DelayedAction::getNotificationType);

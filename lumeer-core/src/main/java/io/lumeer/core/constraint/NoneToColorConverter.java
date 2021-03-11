@@ -20,19 +20,17 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.util.AttributeUtil;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class NoneToColorConverter extends AbstractTranslatingConverter {
 
    @Override
-   @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       this.ignoreMissing = true;
 
-      if (isConstraintWithConfig(toAttribute)) {
+      if (AttributeUtil.isConstraintWithConfig(toAttribute)) {
          translations.put("black", "#000000");
          translations.put("silver", "#c0c0c0");
          translations.put("gray", "#808080");

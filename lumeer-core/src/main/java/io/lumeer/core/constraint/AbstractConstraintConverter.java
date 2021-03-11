@@ -34,8 +34,4 @@ public abstract class AbstractConstraintConverter implements ConstraintConverter
       this.fromAttribute = fromAttribute;
       this.toAttribute = toAttribute;
    }
-
-   protected boolean isConstraintWithConfig(final Attribute attribute) {
-      return attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getConfig() != null;
-   }
 }

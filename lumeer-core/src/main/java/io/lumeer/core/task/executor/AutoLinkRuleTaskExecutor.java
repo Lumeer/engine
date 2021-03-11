@@ -18,27 +18,26 @@
  */
 package io.lumeer.core.task.executor;
 
-import io.lumeer.api.model.ConditionType;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
-import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
-import io.lumeer.storage.api.query.SearchQuery;
-import io.lumeer.storage.api.query.SearchQueryStem;
+import io.lumeer.core.task.executor.matcher.DocumentMatcher;
+import io.lumeer.core.util.Tuple;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class AutoLinkRuleTaskExecutor {
 
@@ -54,128 +53,122 @@ public class AutoLinkRuleTaskExecutor {
    }
 
    public ChangesTracker execute(final TaskExecutor taskExecutor) {
-      final LinkType linkType = ruleTask.getDaoContextSnapshot().getLinkTypeDao().getLinkType(rule.getLinkType());
+      try {
+         final DocumentMatcher matcher = new DocumentMatcher(ruleTask.getDaoContextSnapshot(), ruleTask);
 
-      if (linkType != null) {
-         final Document thisDocument = ruleTask.getOldDocument() != null ? ruleTask.getOldDocument() : ruleTask.getNewDocument();
-         final String thisCollectionId = thisDocument.getCollectionId();
-         final String thatCollectionId = linkType.getCollectionIds().get(0).equals(thisCollectionId) ? linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
-         final String thisAttribute, thatAttribute;
+         if (matcher.initialize(rule)) {
+            // both documents are set
+            if (matcher.getOldDocument() != null && matcher.getNewDocument() != null) {
+               // the attributes are different
+               if ((matcher.getOldValue() != null && !matcher.getOldValue().equals(matcher.getNewValue())) ||
+                     (matcher.getNewValue() != null && !matcher.getNewValue().equals(matcher.getOldValue()))) {
+                  final List<LinkInstance> links = matcher.getAllLinkInstances();
+                  List<LinkInstance> remainingLinks = List.of();
 
-         if (rule.getCollection1().equals(thisCollectionId)) {
-            thisAttribute = rule.getAttribute1();
-            thatAttribute = rule.getAttribute2();
-         } else {
-            thisAttribute = rule.getAttribute2();
-            thatAttribute = rule.getAttribute1();
-         }
-
-         // check whether the document hasn't been deleted by previous rules
-         if (ruleTask.getNewDocument() != null) {
-            if (ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(ruleTask.getNewDocument().getId()).size() <= 0) {
-               return changesTracker;
-            }
-         }
-         if (ruleTask.getOldDocument() != null) {
-            if (ruleTask.getDaoContextSnapshot().getDocumentDao().getDocumentsByIds(ruleTask.getOldDocument().getId()).size() <= 0) {
-               return changesTracker;
-            }
-         }
-
-         // both documents are set
-         if (ruleTask.getOldDocument() != null && ruleTask.getNewDocument() != null) {
-            Object o1 = ruleTask.getOldDocument().getData().get(thisAttribute);
-            Object o2 = ruleTask.getNewDocument().getData().get(thisAttribute);
-
-            // the attributes are different
-            if ((o1 != null && !o1.equals(o2)) || (o2 != null && !o2.equals(o1))) {
-               // it was not null before
-               if (o1 != null && StringUtils.isNotEmpty(o1.toString())) {
-                  removeLinks(taskExecutor, ruleTask.getOldDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
+                  // it was not null before
+                  if (matcher.getOldValue() != null && StringUtils.isNotEmpty(matcher.getOldValue().toString())) {
+                     remainingLinks = removeLinks(taskExecutor, links, matcher);
+                  }
+                  // and it is not null either
+                  if (matcher.getNewValue() != null && StringUtils.isNotEmpty(matcher.getNewValue().toString())) {
+                     addLinks(taskExecutor, remainingLinks, matcher);
+                  }
                }
-               // and it is not null either
-               if (o2 != null && StringUtils.isNotEmpty(o2.toString())) {
-                  addLinks(taskExecutor, ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
+            } else {// one of the docs is null (i.e. new document created or old document deleted)
+               // when oldDocument is set and the newDocument isn't, the old one was deleted and all links were automatically removed
+
+               // new document was created
+               if (matcher.getNewDocument() != null && matcher.getNewDocument().getData().get(matcher.getThisAttribute().getId()) != null) {
+                  addLinks(taskExecutor, List.of(), matcher);
                }
             }
-         } else { // one of the docs is null (i.e. new document created or old document deleted)
-            // when oldDocument is set and the newDocument isn't, the old one was deleted and all links were automatically removed
-
-            // new document was created
-            if (ruleTask.getNewDocument() != null && ruleTask.getNewDocument().getData().get(thisAttribute) != null) {
-               addLinks(taskExecutor, ruleTask.getNewDocument(), linkType, thatCollectionId, thisAttribute, thatAttribute);
-            }
          }
+
+         return changesTracker;
+      } catch (Exception ex) {
+         ex.printStackTrace();
+         throw ex;
       }
-
-      return changesTracker;
    }
 
-   private void removeLinks(final TaskExecutor taskExecutor, final Document oldDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
-      final String thisCollection = oldDocument.getCollectionId();
+   // returns remaining links
+   private List<LinkInstance> removeLinks(final TaskExecutor taskExecutor, final List<LinkInstance> links, final DocumentMatcher matcher) {
+      final String thisCollection = matcher.getThisCollection().getId();
 
-      final SearchQuery query = SearchQuery
-            .createBuilder()
-            .stems(Collections.singletonList(
-                  SearchQueryStem
-                        .createBuilder("")
-                        .linkTypeIds(Collections.singletonList(linkType.getId()))
-                        .documentIds(Set.of(oldDocument.getId()))
-                        .build()))
-            .build();
+      // filter links for old attribute value
+      // only source can change (old value, new value), target remains the same
+      // for multiselects on both sides, we link to values having all source values (i.e. target might have additional values)
+      // if source is multiselect (select or user) value and target is single value => compute removed values from source attr. & filter links by removed values on target
+      // if source is single value and target is multiselect value => filter links by target values containing the old source value
+      // if source is single value and target is single value => filter links by target values containing the old source value
+      // if both source and target are multiselect value => compute ADDED values to source attr. & filter links by target values NOT containing the added values
 
-      final List<LinkInstance> links = ruleTask.getDaoContextSnapshot().getLinkInstanceDao().searchLinkInstances(query);
       if (!links.isEmpty()) {
-         ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(query);
-         ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(linkType.getId(), links.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
+         // find link instances matching the old value
+         final Tuple<List<Document>, List<LinkInstance>> oldLinks = matcher.filterForRemoval();
+         final List<LinkInstance> linksForRemoval = oldLinks.getSecond();
 
-         changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
-         changesTracker.addRemovedLinkInstances(links);
+         if (linksForRemoval.size() > 0) {
+            ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(linksForRemoval.stream().map(LinkInstance::getId).collect(toSet()));
+            ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(matcher.getLinkType().getId(), linksForRemoval.stream().map(LinkInstance::getId).collect(toSet()));
 
-         final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
-         final List<String> skipCollectionIds = List.of(thisCollection);
-         links.forEach(linkInstance -> {
-            taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(linkType, Collections.singletonList(linkInstance), skipCollectionIds));
-         });
+            final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
+            final List<String> skipCollectionIds = List.of(thisCollection);
+            linksForRemoval.forEach(linkInstance -> {
+               taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(matcher.getLinkType(), Collections.singletonList(linkInstance), skipCollectionIds));
+            });
+         }
 
+         final List<LinkInstance> result = new ArrayList<>(links);
+         result.removeAll(linksForRemoval);
+
+         return result;
       }
+
+      return List.of();
    }
 
-   private void addLinks(final TaskExecutor taskExecutor, final Document newDocument, final LinkType linkType, final String thatCollection, final String thisAttribute, final String thatAttribute) {
-      final String thisCollection = newDocument.getCollectionId();
-      if (thisCollection.equals(thatCollection)) {
+   private void addLinks(final TaskExecutor taskExecutor, final List<LinkInstance> links, final DocumentMatcher matcher) {
+      final String thisCollection = matcher.getThisCollection().getId();
+      if (thisCollection.equals(matcher.getThatCollection().getId())) {
          return;
       }
 
-      final Object value = newDocument.getData().get(thisAttribute);
-      final SearchQueryStem queryStem = SearchQueryStem
-            .createBuilder(thatCollection)
-            .filters(Set.of(new CollectionSearchAttributeFilter(thatCollection, ConditionType.EQUALS, thatAttribute, value)))
-            .build();
+      final String thisDocumentId = matcher.getThisDocument().getId();
+      final Set<String> alreadyLinkedDocumentIds = links.stream().map(link -> {
+         final var res = new ArrayList<>(link.getDocumentIds());
+         res.remove(thisDocumentId);
+         return res.get(0);
+      }).collect(toSet());
+      final Tuple<List<Document>, List<LinkInstance>> newLinks = matcher.filterForCreation();
+      final Set<String> targetDocuments = newLinks.getFirst().stream().map(Document::getId).filter(id -> !alreadyLinkedDocumentIds.contains(id)).collect(toSet());
 
-      final List<String> targetDocuments = ruleTask.getDaoContextSnapshot().getDataDao()
-                                                   .searchData(queryStem, null, ruleTask.getDaoContextSnapshot().getCollectionDao().getCollectionById(thatCollection))
-                                                   .stream()
-                                                   .map(DataDocument::getId)
-                                                   .collect(Collectors.toList());
+      // filter target documents for new attribute value
+      // do not duplicate existing links
+      // only source can change (old value, new value), target remains the same
+      // for multiselects on both sides, we link to values having all source values (i.e. target might have additional values)
+      // if source is multiselect (select or user) value and target is single value => compute added values to source attr. & filter documents by added values on target
+      // if source is single value and target is multiselect value => filter documents by target values containing the new source value
+      // if source is single value and target is single value => filter documents by target values containing the new source value
+      // if both source and target are multiselect value => filter documents by target values containing all the new values
 
       if (targetDocuments.size() > 0) {
          final List<LinkInstance> linkInstances =
                targetDocuments.stream()
-                              .filter(documentId -> !documentId.equals(newDocument.getId()))
+                              .filter(documentId -> !documentId.equals(matcher.getNewDocument().getId()))
                               .map(documentId ->
-                                    new LinkInstance(rule.getLinkType(), Arrays.asList(newDocument.getId(), documentId)))
-                              .collect(Collectors.toList());
+                                    new LinkInstance(rule.getLinkType(), Arrays.asList(matcher.getNewDocument().getId(), documentId)))
+                              .collect(toList());
 
          if (!linkInstances.isEmpty()) {
             ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
-            changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
+            changesTracker.updateLinkTypesMap(Map.of(matcher.getLinkType().getId(), matcher.getLinkType()));
             changesTracker.addCreatedLinkInstances(linkInstances);
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);
             linkInstances.forEach(linkInstance -> {
-               taskExecutor.submitTask(functionFacade.createTaskForCreatedLinks(linkType, Collections.singletonList(linkInstance), skipCollectionIds));
+               taskExecutor.submitTask(functionFacade.createTaskForCreatedLinks(matcher.getLinkType(), Collections.singletonList(linkInstance), skipCollectionIds));
             });
          }
       }

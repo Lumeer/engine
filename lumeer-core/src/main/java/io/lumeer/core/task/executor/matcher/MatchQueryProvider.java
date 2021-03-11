@@ -16,28 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.task.executor.matcher;
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.model.Query;
 
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class NoneToUserConverter extends AbstractTranslatingConverter {
+public interface MatchQueryProvider {
 
-   @Override
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.translateToArray = AttributeUtil.isMultiselect(toAttribute);
-   }
+   Query getMatchQueryForRemoval(final Object oldValue, final Object newValue);
+   Query getMatchQueryForCreation(final Object oldValue, final Object newValue);
 
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
-   }
+   default List<Object> getValues(final Object value) {
+      final List<Object> values = new ArrayList<>();
 
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.User);
+      if (value instanceof Collection) {
+         values.addAll((Collection<?>) value);
+      } else {
+         values.add(value);
+      }
+
+      return values;
    }
 }

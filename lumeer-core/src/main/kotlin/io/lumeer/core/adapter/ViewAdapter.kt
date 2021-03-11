@@ -16,28 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.adapter
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.model.View
+import io.lumeer.storage.api.dao.FavoriteItemDao
 
-import java.util.Set;
+class ViewAdapter(val favoriteItemDao: FavoriteItemDao) {
 
-public class NoneToUserConverter extends AbstractTranslatingConverter {
+   fun getFavoriteViewIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteViewIds(userId, projectId)
 
-   @Override
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.translateToArray = AttributeUtil.isMultiselect(toAttribute);
-   }
+   fun isFavorite(viewId: String, userId: String, projectId: String): Boolean = getFavoriteViewIds(userId, projectId).contains(viewId)
 
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
-   }
-
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.User);
+   fun mapViewData(view: View, userId: String, projectId: String): View {
+      view.isFavorite = isFavorite(view.id, userId, projectId)
+      return view
    }
 }

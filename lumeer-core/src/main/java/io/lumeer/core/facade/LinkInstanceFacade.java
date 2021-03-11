@@ -31,6 +31,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -106,9 +107,16 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private ConstraintManager constraintManager;
 
+   private LinkInstanceAdapter adapter;
+
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
+      adapter = new LinkInstanceAdapter(resourceCommentFacade.getAdapter());
+   }
+
+   public LinkInstanceAdapter getAdapter() {
+      return adapter;
    }
 
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
@@ -391,8 +399,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance mapLinkInstanceData(final LinkInstance linkInstance) {
-      linkInstance.setCommentsCount(getCommentsCount(linkInstance.getId()));
-      return linkInstance;
+      return adapter.mapLinkInstanceData(linkInstance);
    }
 
    public java.util.Collection<LinkInstance> mapLinkInstancesData(final java.util.Collection<LinkInstance> linkInstances) {
@@ -426,12 +433,12 @@ public class LinkInstanceFacade extends AbstractFacade {
       return createdLinkInstances;
    }
 
-   public long getCommentsCount(final String documentId) {
-      return resourceCommentFacade.getCommentsCount(ResourceType.LINK, documentId);
+   public long getCommentsCount(final String linkInstanceId) {
+      return adapter.getCommentsCount(linkInstanceId);
    }
 
-   public Map<String, Integer> getCommentsCounts(final Set<String> documentIds) {
-      return resourceCommentFacade.getCommentsCounts(ResourceType.LINK, documentIds);
+   public Map<String, Integer> getCommentsCounts(final Set<String> linkInstanceIds) {
+      return adapter.getCommentsCounts(linkInstanceIds);
    }
 
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {

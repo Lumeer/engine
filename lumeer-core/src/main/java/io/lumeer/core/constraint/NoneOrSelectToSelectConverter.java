@@ -20,6 +20,7 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.util.AttributeUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -32,8 +33,8 @@ public class NoneOrSelectToSelectConverter extends AbstractTranslatingConverter 
    @SuppressWarnings("unchecked")
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       this.ignoreMissing = true;
-      
-      if (isConstraintWithConfig(toAttribute)) {
+
+      if (AttributeUtil.isConstraintWithConfig(toAttribute)) {
          Map<String, Object> config = (Map<String, Object>) toAttribute.getConstraint().getConfig();
          this.translateToArray = (fromAttribute.getConstraint() == null || fromAttribute.getConstraint().getType() == null || fromAttribute.getConstraint().getType().equals(ConstraintType.None))
                && (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
