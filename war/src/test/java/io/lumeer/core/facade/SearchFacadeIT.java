@@ -578,7 +578,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       QueryStem stem = new QueryStem(collectionIds.get(0), Arrays.asList(linkType01Id, linkType12Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(Collections.singletonList(stem), Collections.emptySet(), null, null);
       List<Document> documents = searchFacade.searchDocuments(query, true);
-      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8, id10, id11, id12);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8, id9, id10, id11, id12);
 
       stem = new QueryStem(collectionIds.get(0), Collections.singletonList(linkType01Id), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       query = new Query(Collections.singletonList(stem), Collections.singleton("lol"), null, null);
