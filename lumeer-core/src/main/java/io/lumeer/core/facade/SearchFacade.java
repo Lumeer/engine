@@ -333,22 +333,20 @@ public class SearchFacade extends AbstractFacade {
          return new Tuple<>(new HashSet<>(), new HashSet<>());
       }
 
-      var previousDocuments = getDocumentsByCollection(previousCollection, null, documentFilter);
-      final Set<Document> allDocuments = new HashSet<>(previousDocuments);
+      final Set<Document> allDocuments = new HashSet<>(getDocumentsByCollection(previousCollection, null, documentFilter));
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
       for (String linkTypeId : stem.getLinkTypeIds()) {
          var linkType = linkTypesMap.get(linkTypeId);
          var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
          if (linkType != null && collection != null) {
-            var links = getLinkInstancesByLinkType(linkType, getDocumentsIds(previousDocuments));
-            var documents = getDocumentsByCollection(collection, getLinkDocumentsIds(links), documentFilter);
+            var links = getLinkInstancesByLinkType(linkType, null);
+            var documents = getDocumentsByCollection(collection, null, documentFilter);
 
             allDocuments.addAll(documents);
             allLinkInstances.addAll(links);
 
             previousCollection = collection;
-            previousDocuments = documents;
          }
       }
 
@@ -408,13 +406,9 @@ public class SearchFacade extends AbstractFacade {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
-      collectionsMap.values().forEach(collection -> {
-         allDocuments.addAll(getDocumentsByCollection(collection, null, documentFilter));
-      });
+      collectionsMap.values().forEach(collection -> allDocuments.addAll(getDocumentsByCollection(collection, null, documentFilter)));
 
-      linkTypesMap.values().forEach(linkType -> {
-         allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, null));
-      });
+      linkTypesMap.values().forEach(linkType -> allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, null)));
 
       return new Tuple<>(allDocuments, allLinkInstances);
    }
@@ -441,7 +435,7 @@ public class SearchFacade extends AbstractFacade {
    private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
       final View view = permissionsChecker.getActiveView();
       if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
-         return view.getQuery();
+         return constraintManager.decodeQuery(view.getQuery(), collectionsMap, linkTypesMap);
       }
 
       return constraintManager.decodeQuery(query, collectionsMap, linkTypesMap);

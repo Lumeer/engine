@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.dao.project;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
@@ -135,6 +136,14 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
       }
       if (removeLinkInstanceEvent != null) {
          removeLinkInstanceEvent.fire(new RemoveLinkInstance(linkInstance));
+      }
+   }
+
+   @Override
+   public void deleteLinkInstances(final List<String> ids) {
+      Bson idsFilter = idsFilter(ids);
+      if (idsFilter != null) {
+         databaseCollection().deleteMany(idsFilter);
       }
    }
 

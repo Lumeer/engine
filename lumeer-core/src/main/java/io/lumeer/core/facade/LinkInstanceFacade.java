@@ -23,6 +23,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.DocumentLinks;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
@@ -37,6 +38,7 @@ import io.lumeer.core.util.Tuple;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.ImportLinkTypeContent;
+import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -91,6 +93,9 @@ public class LinkInstanceFacade extends AbstractFacade {
    private Event<ImportLinkTypeContent> importLinkTypeContentEvent;
 
    @Inject
+   private Event<SetDocumentLinks> setDocumentLinksEvent;
+
+   @Inject
    private FileAttachmentFacade fileAttachmentFacade;
 
    @Inject
@@ -138,44 +143,50 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendIndividualNotifications) {
       if (linkInstances.size() > 0) {
-         checkLinkDocumentsExists(linkInstances);
          final String linkTypeId = linkInstances.get(0).getLinkTypeId();
+         var linkType = checkLinkTypeWritePermissions(linkTypeId);
+
+         checkLinkDocumentsExists(linkInstances);
 
          if (linkInstances.stream().anyMatch(linkInstance -> !linkInstance.getLinkTypeId().equals(linkTypeId))) {
             throw new BadFormatException("Cannot create link instances of multiple link types at once.");
          }
 
-         var linkType = checkLinkTypeWritePermissions(linkTypeId);
-
-         linkInstances.forEach(linkInstance -> {
-            linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
-            linkInstance.setCreationDate(ZonedDateTime.now());
-         });
-
-         final List<LinkInstance> storedInstances = linkInstanceDao.createLinkInstances(linkInstances, sendIndividualNotifications);
-         final Map<String, LinkInstance> storedInstancesMap = new HashMap<>();
-
-         storedInstances.forEach(linkInstance -> {
-            storedInstancesMap.put(linkInstance.getId(), linkInstance);
-
-            var data = constraintManager.encodeDataTypes(linkType, linkInstance.getData());
-            data.setId(linkInstance.getId());
-            linkInstance.setData(data);
-         });
-
-         final List<DataDocument> storedData = linkDataDao.createData(linkType.getId(), storedInstances.stream().map(LinkInstance::getData).collect(Collectors.toList()));
-         storedData.forEach(data -> {
-            storedInstancesMap.get(data.getId()).setData(constraintManager.decodeDataTypes(linkType, data));
-         });
+         final List<LinkInstance> storedLinkInstances = createLinkInstances(linkType, linkInstances, sendIndividualNotifications);
 
          if (importLinkTypeContentEvent != null) {
             importLinkTypeContentEvent.fire(new ImportLinkTypeContent(linkType));
          }
 
-         return storedInstances;
+         return storedLinkInstances;
       }
 
       return linkInstances;
+   }
+
+   private List<LinkInstance> createLinkInstances(final LinkType linkType, final List<LinkInstance> linkInstances, boolean sendIndividualNotifications) {
+      linkInstances.forEach(linkInstance -> {
+         linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+         linkInstance.setCreationDate(ZonedDateTime.now());
+      });
+
+      final List<LinkInstance> storedInstances = linkInstanceDao.createLinkInstances(linkInstances, sendIndividualNotifications);
+      final Map<String, LinkInstance> storedInstancesMap = new HashMap<>();
+
+      storedInstances.forEach(linkInstance -> {
+         storedInstancesMap.put(linkInstance.getId(), linkInstance);
+
+         var data = constraintManager.encodeDataTypes(linkType, linkInstance.getData());
+         data.setId(linkInstance.getId());
+         linkInstance.setData(data);
+      });
+
+      final List<DataDocument> storedData = linkDataDao.createData(linkType.getId(), storedInstances.stream().map(LinkInstance::getData).collect(Collectors.toList()));
+      storedData.forEach(data -> {
+         storedInstancesMap.get(data.getId()).setData(constraintManager.decodeDataTypes(linkType, data));
+      });
+
+      return storedInstances;
    }
 
    public LinkInstance updateLinkInstance(final String linkInstanceId, final LinkInstance linkInstance) {
@@ -391,6 +402,28 @@ public class LinkInstanceFacade extends AbstractFacade {
          document.setCommentsCount((long) commentCounts.getOrDefault(document.getId(), 0));
       });
       return linkInstances;
+   }
+
+   public List<LinkInstance> setDocumentLinks(final String linkTypeId, final DocumentLinks documentLinks) {
+      LinkType linkType = checkLinkTypeWritePermissions(linkTypeId);
+      checkDocumentsExists(Collections.singletonList(documentLinks.getDocumentId()));
+
+      List<LinkInstance> deletedLinkInstances = linkInstanceDao.getLinkInstances(new HashSet<>(documentLinks.getRemovedLinkInstancesIds()));
+      linkInstanceDao.deleteLinkInstances(documentLinks.getRemovedLinkInstancesIds());
+
+      List<LinkInstance> linkInstances = documentLinks.getCreatedLinkInstances().stream()
+                                                      .peek(linkInstance -> linkInstance.setLinkTypeId(linkTypeId)).collect(Collectors.toList());
+
+      List<LinkInstance> createdLinkInstances = Collections.emptyList();
+      if (linkInstances.size() > 0) {
+         createdLinkInstances = createLinkInstances(linkType, linkInstances, false);
+      }
+
+      if (setDocumentLinksEvent != null) {
+         setDocumentLinksEvent.fire(new SetDocumentLinks(documentLinks.getDocumentId(), createdLinkInstances, deletedLinkInstances));
+      }
+
+      return createdLinkInstances;
    }
 
    public long getCommentsCount(final String documentId) {

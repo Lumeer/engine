@@ -39,6 +39,8 @@ public interface LinkInstanceDao extends ProjectScopedDao {
 
    void deleteLinkInstance(String id);
 
+   void deleteLinkInstances(List<String> ids);
+
    long deleteLinkInstances(final SearchQuery query);
 
    void deleteLinkInstancesByLinkTypesIds(Set<String> linkTypeIds);
