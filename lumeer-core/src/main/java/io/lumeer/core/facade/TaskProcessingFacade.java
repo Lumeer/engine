@@ -314,9 +314,9 @@ public class TaskProcessingFacade {
       if (setDocumentLinks.getCreatedLinkInstances().size() > 0) {
          List<Task> tasks = linksCreatedTasks(setDocumentLinks.getCreatedLinkInstances());
          processTasks(tasks.toArray(new Task[0]));
-      } else if (setDocumentLinks.getRemovedLinkInstances().size() > 0) {
-         onRemoveLink(new RemoveLinkInstance(setDocumentLinks.getRemovedLinkInstances().get(0))); // TODO is it okay to start just once?
       }
+      setDocumentLinks.getRemovedLinkInstances().forEach(linkInstance ->
+            onRemoveLink(new RemoveLinkInstance(linkInstance)));
    }
 
    private List<Task> linkCreatedTasks(LinkInstance linkInstance) {
@@ -330,7 +330,7 @@ public class TaskProcessingFacade {
       }
 
       FunctionTask functionTask = functionFacade.createTaskForCreatedLinks(linkType, linkInstances);
-      List<RuleTask> tasks = createLinkInstanceCreateRuleTasks(linkType, linkInstances.get(0)); // TODO do we need to create task for each new link (same LinkType)?
+      List<RuleTask> tasks = linkInstances.stream().map(linkInstance -> createLinkInstanceCreateRuleTasks(linkType, linkInstances.get(0))).flatMap(List::stream).collect(Collectors.toList());
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       return Arrays.asList(functionTask, ruleTask);

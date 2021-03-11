@@ -406,13 +406,9 @@ public class SearchFacade extends AbstractFacade {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
-      collectionsMap.values().forEach(collection -> {
-         allDocuments.addAll(getDocumentsByCollection(collection, null, documentFilter));
-      });
+      collectionsMap.values().forEach(collection -> allDocuments.addAll(getDocumentsByCollection(collection, null, documentFilter)));
 
-      linkTypesMap.values().forEach(linkType -> {
-         allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, null));
-      });
+      linkTypesMap.values().forEach(linkType -> allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, null)));
 
       return new Tuple<>(allDocuments, allLinkInstances);
    }

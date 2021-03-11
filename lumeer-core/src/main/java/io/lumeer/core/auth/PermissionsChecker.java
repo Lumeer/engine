@@ -514,6 +514,10 @@ public class PermissionsChecker {
    }
 
    public int getDocumentLimits() {
+      if (skipLimits()) {
+         return Integer.MAX_VALUE;
+      }
+
       final ServiceLimits limits = getServiceLimits();
       return limits.getDocuments();
    }

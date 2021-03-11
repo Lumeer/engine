@@ -31,6 +31,8 @@ import java.nio.charset.StandardCharsets
 import java.util.concurrent.Callable
 import java.util.logging.Level
 import java.util.logging.Logger
+import java.lang.Double
+import java.lang.Float
 
 
 data class DataFilterJsonTask(val documents: List<Document>,
@@ -87,10 +89,10 @@ data class DataFilterJsonTask(val documents: List<Document>,
 
         fun getContext(): Context {
             val context = Context
-                .newBuilder("js")
-                .engine(engine)
-                .allowAllAccess(true)
-                .build()
+                    .newBuilder("js")
+                    .engine(engine)
+                    .allowAllAccess(true)
+                    .build()
             context.initialize("js")
 
             return context
@@ -137,12 +139,33 @@ data class DataFilterJsonTask(val documents: List<Document>,
                 }
             }
 
-            val conditionTypeSerializer: JsonSerializer<ConditionType> = JsonSerializer<ConditionType> { condition, _, _  ->
+            val conditionTypeSerializer: JsonSerializer<ConditionType> = JsonSerializer<ConditionType> { condition, _, _ ->
                 JsonPrimitive(condition.value)
             }
+
+            // we need to use java.lang.Double because we use Java objects as input parameters
+            val doubleSerializer: JsonSerializer<Double> = JsonSerializer<Double> { number: Double, _, _ ->
+                when {
+                    number.isNaN -> JsonPrimitive("NaN")
+                    number.isInfinite -> JsonPrimitive("Infinity")
+                    else -> JsonPrimitive(number)
+                }
+            }
+
+            // we need to use java.lang.Float because we use Java objects as input parameters
+            val floatSerializer: JsonSerializer<Float> = JsonSerializer<Float> { number, _, _ ->
+                when {
+                    number.isNaN -> JsonPrimitive("NaN")
+                    number.isInfinite -> JsonPrimitive("Infinity")
+                    else -> JsonPrimitive(number)
+                }
+            }
+
             return GsonBuilder()
                     .addSerializationExclusionStrategy(strategy)
                     .registerTypeAdapter(ConditionType::class.java, conditionTypeSerializer)
+                    .registerTypeAdapter(Double::class.java, doubleSerializer)
+                    .registerTypeAdapter(Float::class.java, floatSerializer)
                     .create()
                     .toJson(dataFilterJson)
         }
