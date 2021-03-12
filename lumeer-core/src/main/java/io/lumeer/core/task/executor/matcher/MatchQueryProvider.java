@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task.executor.matcher;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Query;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public interface MatchQueryProvider {
 
    Query getMatchQueryForRemoval(final Object oldValue, final Object newValue);
    Query getMatchQueryForCreation(final Object oldValue, final Object newValue);
+   Query getMatchQuery(final io.lumeer.api.model.Collection collection, final Attribute attribute, final Object newValue);
 
    default List<Object> getValues(final Object value) {
       final List<Object> values = new ArrayList<>();

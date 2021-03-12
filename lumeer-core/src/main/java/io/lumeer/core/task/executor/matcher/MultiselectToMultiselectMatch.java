@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.task.executor.matcher;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValue;
@@ -30,6 +32,10 @@ import java.util.List;
 public class MultiselectToMultiselectMatch implements MatchQueryProvider {
 
    private final DocumentMatcher matcher;
+
+   MultiselectToMultiselectMatch() {
+      matcher = null;
+   }
 
    public MultiselectToMultiselectMatch(final DocumentMatcher matcher) {
       this.matcher = matcher;
@@ -70,6 +76,27 @@ public class MultiselectToMultiselectMatch implements MatchQueryProvider {
                               new CollectionAttributeFilter(
                                     matcher.getThatCollection().getId(),
                                     matcher.getThatAttribute().getId(),
+                                    ConditionType.HAS_ALL,
+                                    List.of(new ConditionValue(getValues(newValue)))
+                              )
+                        ),
+                        Collections.emptyList()
+                  )
+            )
+      );
+   }
+
+   public Query getMatchQuery(final Collection collection, final Attribute attribute, final Object newValue) {
+      return new Query(
+            Collections.singletonList(
+                  new QueryStem(
+                        collection.getId(),
+                        Collections.emptyList(),
+                        Collections.emptySet(),
+                        List.of(
+                              new CollectionAttributeFilter(
+                                    collection.getId(),
+                                    attribute.getId(),
                                     ConditionType.HAS_ALL,
                                     List.of(new ConditionValue(getValues(newValue)))
                               )

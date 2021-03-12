@@ -519,7 +519,7 @@ public class SearchFacade extends AbstractFacade {
       if (documentIds != null) {
          return assignDataDocumentsLinkInstances(linkInstanceDao.getLinkInstancesByDocumentIds(documentIds, linkType.getId()), linkType);
       }
-      return convertDataDocumentsToLinkInstances(getLinkInstanceData(linkType, null));
+      return getLinkInstancesWithData(linkType);
    }
 
    private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, Integer skip, Integer limit) {
@@ -552,4 +552,8 @@ public class SearchFacade extends AbstractFacade {
       return decodeData(linkType, data);
    }
 
+   private List<LinkInstance> getLinkInstancesWithData(final LinkType linkType) {
+      final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByLinkType(linkType.getId());
+      return assignDataDocumentsLinkInstances(linkInstances, linkType);
+   }
 }

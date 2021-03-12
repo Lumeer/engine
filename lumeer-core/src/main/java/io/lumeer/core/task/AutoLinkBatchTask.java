@@ -18,89 +18,163 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintData;
+import io.lumeer.api.model.CurrencyData;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.User;
+import io.lumeer.core.constraint.AbstractConstraintConverter;
+import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.matcher.MatchQueryFactory;
+import io.lumeer.core.util.Tuple;
+import io.lumeer.core.util.js.DataFilter;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class AutoLinkBatchTask extends AbstractContextualTask {
 
+   private static final Logger log = Logger.getLogger(AutoLinkBatchTask.class.getName());
+
    private LinkType linkType;
    private Collection collection;
-   private String attributeId;
-   private Constraint constraint;
+   private Attribute attribute;
    private Collection otherCollection;
-   private String otherAttributeId;
-   private Constraint otherConstraint;
+   private Attribute otherAttribute;
+   private List<Document> sourceDocuments;
+   private List<Document> targetDocuments;
+   private List<LinkInstance> existingLinks;
+   private ConstraintData constraintData;
+   private Language language;
+   private Map<String, AllowedPermissions> permissions;
+   private User user;
+   private Function<Object, Query> matchQuery;
 
    public void setupBatch(final LinkType linkType,
-         final Collection collection, final String attributeId, final Constraint constraint,
-         final Collection otherCollection, final String otherAttributeId, final Constraint otherConstraint) {
+         final Collection collection, final Attribute attribute,
+         final Collection otherCollection, final Attribute otherAttribute,
+         final User user,
+         final Map<String, AllowedPermissions> permissions) {
       this.linkType = linkType;
       this.collection = collection;
-      this.attributeId = attributeId;
-      this.constraint = constraint;
+      this.attribute = attribute;
       this.otherCollection = otherCollection;
-      this.otherAttributeId = otherAttributeId;
-      this.otherConstraint = otherConstraint;
+      this.otherAttribute = otherAttribute;
+      this.permissions = permissions;
+      this.user = user;
+
+      sourceDocuments = daoContextSnapshot.getDocumentDao().getDocumentsByCollection(collection.getId());
+      targetDocuments = daoContextSnapshot.getDocumentDao().getDocumentsByCollection(otherCollection.getId());
+      existingLinks = daoContextSnapshot.getLinkInstanceDao().getLinkInstancesByLinkType(linkType.getId());
+
+      language = Language.fromString(requestDataKeeper.getUserLocale());
+      timeZone = requestDataKeeper.getTimezone();
+      final TranslationManager translationManager = new TranslationManager();
+      constraintData = new ConstraintData(
+            daoContextSnapshot.getUserDao().getAllUsers(daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getId()),
+            user,
+            translationManager.translateDurationUnitsMap(language),
+            new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
+            timeZone != null ? timeZone : TimeZone.getDefault().getID()
+      );
+
+      matchQuery = MatchQueryFactory.getMatchQuery(attribute, otherCollection, otherAttribute);
    }
 
    @Override
    public void process(final TaskExecutor executor, final ChangesTracker changesTracker) {
-      List<LinkInstance> links = new ArrayList<>();
+      try {
+         List<LinkInstance> linksForCreation = new ArrayList<>();
 
-      Map<String, Set<String>> source = new HashMap<>();
-      daoContextSnapshot.getDataDao().getDataStream(collection.getId()).forEach(dd -> {
-         final Object o = getConstraintManager().decode(dd.getObject(attributeId), constraint);
+         final Map<String, Document> sourceDocumentsById = sourceDocuments.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
 
-         if (o != null) {
-            source.computeIfAbsent(o.toString(), key -> new HashSet<>()).add(dd.getId());
-         }
-      });
+         // group source documents by matching attribute value
+         final Map<Object, Set<String>> source = new HashMap<>();
+         daoContextSnapshot.getDataDao().getDataStream(collection.getId()).forEach(dd -> {
+            sourceDocumentsById.get(dd.getId()).setData(getConstraintManager().decodeDataTypes(collection, dd));
+            final Object o = sourceDocumentsById.get(dd.getId()).getData().getObject(attribute.getId());
 
-      if (source.size() > 0) {
-         Map<String, Set<String>> target = new HashMap<>();
-         daoContextSnapshot.getDataDao().getDataStream(otherCollection.getId()).forEach(dd -> {
-            final Object o = constraintManager.decode(dd.getObject(otherAttributeId), otherConstraint);
-
-            if (o != null && source.containsKey(o.toString())) {
-               target.computeIfAbsent(o.toString(), key -> new HashSet<>()).add(dd.getId());
+            if (o != null) {
+               source.computeIfAbsent(o, key -> new HashSet<>()).add(dd.getId());
             }
          });
 
-         if (target.size() > 0) {
-            source.keySet().forEach(key -> {
-               if (target.containsKey(key)) {
-                  final Set<String> sourceIds = source.get(key);
-                  final Set<String> targetIds = target.get(key);
-
-                  sourceIds.forEach(sourceId -> {
-                     targetIds.forEach(targetId -> {
-                        links.add(new LinkInstance(linkType.getId(), List.of(sourceId, targetId)));
-                     });
-                  });
-               }
+         if (source.size() > 0) {
+            // read data for all target documents
+            final Map<String, Document> targetDocumentsById = targetDocuments.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
+            daoContextSnapshot.getDataDao().getDataStream(otherCollection.getId()).forEach(dd -> {
+               targetDocumentsById.get(dd.getId()).setData(getConstraintManager().decodeDataTypes(otherCollection, dd));
             });
 
-            if (links.size() > 0) {
-               final List<LinkInstance> newLinks = daoContextSnapshot.getLinkInstanceDao().createLinkInstances(links, false);
+            // for every unique source value and all source documents sharing the value
+            source.forEach((value, documentIds) -> {
+               // find target documents matching this value
+               final List<Document> matchingDocuments = findMatchingDocuments(targetDocuments, value);
+
+               // for all source documents
+               documentIds.forEach(sourceDocumentId -> {
+                  // filter out the matching documents to which the source document is already linked, and create new links for the rest
+                  final List<Document> linkingDocuments = filterExistingLinks(sourceDocumentId, matchingDocuments, existingLinks);
+                  linksForCreation.addAll(linkingDocuments.stream().map(doc -> {
+                     var l = new LinkInstance(linkType.getId(), List.of(sourceDocumentId, doc.getId()));
+                     l.setCreatedBy(user.getId());
+                     l.setCreationDate(ZonedDateTime.now());
+                     return l;
+                  }).collect(Collectors.toList()));
+               });
+            });
+
+            // submit changes
+            if (linksForCreation.size() > 0) {
+               final List<LinkInstance> newLinks = daoContextSnapshot.getLinkInstanceDao().createLinkInstances(linksForCreation, false);
                if (linkType.getLinksCount() != null) {
-                  linkType.setLinksCount(linkType.getLinksCount() + links.size());
+                  linkType.setLinksCount(linkType.getLinksCount() + newLinks.size());
                   changesTracker.addLinkTypes(Set.of(linkType));
                }
                changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
                changesTracker.addCreatedLinkInstances(newLinks);
             }
          }
+      } catch (Exception e) {
+         log.log(Level.SEVERE, "Error running auto-link batch: ", e);
       }
    }
 
+   private List<Document> findMatchingDocuments(final List<Document> allDocuments, final Object value) {
+      final Tuple<List<Document>, List<LinkInstance>> tuple =
+            DataFilter.filterDocumentsAndLinksByQueryDecodingFromJson(
+               allDocuments, List.of(otherCollection), List.of(), List.of(), matchQuery.apply(value),
+               permissions, Map.of(),
+               constraintData,
+               true,
+               language
+      );
+      return tuple.getFirst();
+   }
+
+   private List<Document> filterExistingLinks(final String sourceDocumentId, final List<Document> documents, final List<LinkInstance> links) {
+      final Set<String> linkedDocumentIds = links
+            .stream()
+            .filter(link -> link.getDocumentIds().contains(sourceDocumentId))
+            .map(link -> link.getDocumentIds().get(0).equals(sourceDocumentId) ? link.getDocumentIds().get(1) : link.getDocumentIds().get(0))
+            .collect(Collectors.toSet());
+      return documents.stream().filter(document -> !linkedDocumentIds.contains(document.getId())).collect(Collectors.toList());
+   }
 }

@@ -18,10 +18,10 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
-import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -38,15 +38,12 @@ import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
-import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.NoPermissionException;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.CodeGenerator;
-import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -117,21 +114,15 @@ public class CollectionFacade extends AbstractFacade {
    private DefaultViewConfigDao defaultViewConfigDao;
 
    @Inject
-   private DefaultConfigurationProducer configurationProducer;
-
-   @Inject
    private ContextualTaskFactory taskFactory;
 
    @Inject
    private TaskExecutor taskExecutor;
 
-   private ConstraintManager constraintManager;
-
    private CollectionAdapter adapter;
 
    @PostConstruct
    public void init() {
-      constraintManager = ConstraintManager.getInstance(configurationProducer);
       adapter = new CollectionAdapter(favoriteItemDao);
    }
 
@@ -592,8 +583,8 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public void runRule(final Collection collection, final String ruleId) {
-      if (collection.getDocumentsCount() > 10_000) {
-         throw new UnsuccessfulOperationException("Too many documents in the collection");
+      if (collection.getDocumentsCount() > 2_000) {
+         throw new UnsuccessfulOperationException("Too many documents in the source collection");
       }
 
       final Rule rule = collection.getRules().get(ruleId);
@@ -602,20 +593,19 @@ public class CollectionFacade extends AbstractFacade {
          final String otherCollectionId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getCollection1() : autoLinkRule.getCollection2();
          final String attributeId = autoLinkRule.getCollection1().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Attribute attribute = collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).findFirst().orElse(null);
-         final Constraint constraint = Utils.computeIfNotNull(attribute, Attribute::getConstraint);
          final Collection otherCollection = getCollection(otherCollectionId);
          final String otherAttributeId = autoLinkRule.getCollection2().equals(collection.getId()) ? autoLinkRule.getAttribute1() : autoLinkRule.getAttribute2();
          final Attribute otherAttribute = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).findFirst().orElse(null);
-         final Constraint otherConstraint = Utils.computeIfNotNull(otherAttribute, Attribute::getConstraint);
+         final Map<String, AllowedPermissions> permissions = permissionsChecker.getCollectionsPermissions(List.of(collection, otherCollection));
 
          if (otherCollection.getDocumentsCount() > 10_000) {
-            throw new UnsuccessfulOperationException("Too many documents in the collection");
+            throw new UnsuccessfulOperationException("Too many documents in the target collection");
          }
 
          final LinkType linkType = linkTypeDao.getLinkType(autoLinkRule.getLinkType());
 
          final AutoLinkBatchTask task = taskFactory.getInstance(AutoLinkBatchTask.class);
-         task.setupBatch(linkType, collection, attributeId, constraint, otherCollection, otherAttributeId, otherConstraint);
+         task.setupBatch(linkType, collection, attribute, otherCollection, otherAttribute, authenticatedUser.getCurrentUser(), permissions);
 
          taskExecutor.submitTask(task);
       }
