@@ -36,6 +36,10 @@ public class TranslationManager {
       switch (language != null ? language : Language.EN) {
          case CS:
             return translateDurationUnitsMapCs();
+         case HU:
+            return translateDurationUnitsMapHu();
+         case JA:
+            return translateDurationUnitsMapJa();
          default:
             return translateDurationUnitsMapEn();
       }
@@ -64,10 +68,52 @@ public class TranslationManager {
       }));
    }
 
+   private Map<String, String> translateDurationUnitsMapHu() {
+      return Arrays.stream(DurationUnit.values()).collect(Collectors.toMap(DurationUnit::getValue, unit -> {
+         switch (unit) {
+            case Weeks:
+               return "h";
+            case Days:
+               return "n";
+            case Minutes:
+               return "ó";
+            case Hours:
+               return "p";
+            case Seconds:
+               return "m";
+            default:
+               return "";
+         }
+      }));
+   }
+
+   private Map<String, String> translateDurationUnitsMapJa() {
+      return Arrays.stream(DurationUnit.values()).collect(Collectors.toMap(DurationUnit::getValue, unit -> {
+         switch (unit) {
+            case Weeks:
+               return "週";
+            case Days:
+               return "日";
+            case Minutes:
+               return "分";
+            case Hours:
+               return "時";
+            case Seconds:
+               return "秒";
+            default:
+               return "";
+         }
+      }));
+   }
+
    public List<String> translateAbbreviations(@Nullable Language language) {
       switch (language != null ? language : Language.EN) {
          case CS:
             return translateAbbreviationsCs();
+         case HU:
+            return translateAbbreviationsHu();
+         case JA:
+            return translateAbbreviationsJa();
          default:
             return translateAbbreviationsEn();
       }
@@ -81,10 +127,20 @@ public class TranslationManager {
       return Arrays.asList("tis.", "mil.", "mld.", "bil.");
    }
 
+   private List<String> translateAbbreviationsHu() {
+      return Arrays.asList("E", "M", "Mrd", "T");
+   }
+
+   private List<String> translateAbbreviationsJa() {
+      return Arrays.asList("千", "百万", "十億", "兆");
+   }
+
    public List<String> translateOrdinals(@Nullable Language language) {
       switch (language != null ? language : Language.EN) {
          case CS:
-            return translateOrdinalsCs();
+         case HU:
+         case JA:
+            return translateOrdinalsDot();
          default:
             return translateOrdinalsEn();
       }
@@ -94,7 +150,7 @@ public class TranslationManager {
       return Arrays.asList("st", "nd", "rd", "th");
    }
 
-   private List<String> translateOrdinalsCs() {
+   private List<String> translateOrdinalsDot() {
       return Arrays.asList(".", ".", ".", ".");
    }
 

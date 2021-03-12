@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Payment;
 import io.lumeer.core.exception.PaymentGatewayException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -58,6 +59,8 @@ public class PaymentGatewayFacade {
       ORDER_FORMAT = new HashMap<>();
       ORDER_FORMAT.put("cs", "Služba Lumeer %s pro %d uživatelů od %s do %s.");
       ORDER_FORMAT.put("en", "Lumeer %s service for %d users since %s until %s.");
+      ORDER_FORMAT.put("hu", "Lumeer %s szolgáltatás %d felhasználó számára %s-től %s-ig.");
+      ORDER_FORMAT.put("ja", "Lumeer %s service for %d users since %s until %s.");
    }
 
    private boolean dryRun = true;
@@ -88,6 +91,16 @@ public class PaymentGatewayFacade {
       }
    }
 
+   private String getLang(final String paymentLanguage) {
+      switch (paymentLanguage) {
+         case "cz":
+         case "cs":
+            return Lang.CS;
+         default:
+            return Lang.EN;
+      }
+   }
+
    public Payment createPayment(final Payment payment, final String returnUrl, final String notifyUrl) {
       if (dryRun) {
          payment.setState(Payment.PaymentState.CREATED);
@@ -103,7 +116,7 @@ public class PaymentGatewayFacade {
                   Currency.getByCode(payment.getCurrency()), description)
             .addItem(description, payment.getAmount() * 100L, 1L, 21, ItemType.ITEM, "", "")
             .withCallback(returnUrl, notifyUrl)
-            .inLang("cz".equals(payment.getLanguage()) ? Lang.CS : Lang.EN)
+            .inLang(getLang(payment.getLanguage()))
             .toEshop(GOPAY_ID)
             .build();
 
@@ -120,12 +133,7 @@ public class PaymentGatewayFacade {
    }
 
    private String getPaymentDescription(final Payment payment) {
-      final DateFormat df;
-      if ("cs".equals(payment.getLanguage())) {
-         df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.forLanguageTag("cs_CZ"));
-      } else {
-         df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Locale.ENGLISH);
-      }
+      final DateFormat df = SimpleDateFormat.getDateInstance(DateFormat.SHORT, Language.fromString(payment.getLanguage()).toLocale());
 
       return String.format(ORDER_FORMAT.get(payment.getLanguage()), payment.getServiceLevel().toString(), payment.getUsers(),
             df.format(payment.getStart()), df.format(payment.getValidUntil()));

@@ -24,12 +24,18 @@ import java.util.Locale;
 
 public enum Language {
    EN,
-   CS;
+   CS,
+   HU,
+   JA;
 
    @JsonCreator
    public static Language fromString(String language) {
       if (language == null || language.isEmpty()) {
          return Language.EN;
+      }
+
+      if (language.equalsIgnoreCase("CZ")) { // make it more tolerant
+         return Language.CS;
       }
 
       try {
@@ -43,6 +49,10 @@ public enum Language {
       switch (this) {
          case CS:
             return Locale.forLanguageTag("cs_CZ");
+         case HU:
+            return Locale.forLanguageTag("hu_HU");
+         case JA:
+            return Locale.JAPAN;
          default:
             return Locale.ENGLISH;
       }
@@ -52,6 +62,10 @@ public enum Language {
       switch (this) {
          case CS:
             return "cs-CZ";
+         case HU:
+            return "hu-HU";
+         case JA:
+            return "ja-JP";
          default:
             return "en-US";
       }

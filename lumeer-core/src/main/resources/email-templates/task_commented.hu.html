@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html lang="en">
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   <meta name="viewport" content="width=device-width" initial-scale="1.0" user-scalable="yes">
+   <meta http-equiv="Content-Language" content="en-US">
+   <title>${title}</title>
+   <style>
+       a:link {
+           color: #00B388;
+       }
+       .mlContentTable {
+           width: 560px;
+       }
+
+       @media only screen and (max-width: 480px) {
+           .mlContentTable {
+               width: 100% !important;
+           }
+
+           img {
+               width: 100% !important;
+               height: auto !important;
+           }
+       }
+   </style>
+</head>
+<body>
+<div style="display: none; max-height: 0px; overflow: hidden;">
+   A (z) ${taskName} feladathoz új megjegyzést fűztek...
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+   &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+</div>
+<table border="0" class="mlContentTable" cellpadding="0" cellspacing="0" style="max-width: 560px;">
+   <tbody>
+   <tr>
+      <td style="font-size: 14px; line-height: 21px; font-family: Tahoma;">
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            Üdvözlünk!
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            a (z) $ {collectionName}$<em>,taskName,</em>} feladatod új megjegyzését${ írta ,userName,}.
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            Megjegyzés: <em>${taskComment}</em>
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            Feladat állapota: <em>${taskState (nincs beállítva állapot)}</em>
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            Határidő: <em>${taskDueDate(az esedékesség dátuma nincs megadva)}</em>
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            <a href="https://get.lumeer.io/hu/w/${organizationCode}/${projectCode}/view/workflow?q=${collectionQuery}&c=${documentCursor}" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Nézd meg</span></a>.
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">&nbsp;</p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            Minden jót,
+         </p>
+         <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
+            Lumeer csapat
+         </p>
+         <hr style="color: #ccc; background-color: #ccc; height: 1px; border: 0; margin: 15px 0px 20px 0px; ">
+         <h6 style="font-size: 11px; font-weight: normal; line-height: 150%; margin-bottom: 10px;margin-top: 0px; ">
+            <strong>Lumeer.io</strong> | Purkyňova 127, Brno, Czech Republic<br>
+            Ezt az e-mailt a
+            <a href="mailto:${recipient}" style="color: #00B388;">
+               <span style="color: #00B388;">
+                  <strong>${recipient}</strong>
+               </span>
+            </a>
+            címre küldtük
+         </h6>
+      </td>
+   </tr>
+   </tbody>
+</table>
+</body>
+</html>
