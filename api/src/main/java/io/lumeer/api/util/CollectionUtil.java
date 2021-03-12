@@ -66,6 +66,6 @@ public class CollectionUtil {
    }
 
    public static Attribute getAttribute(final Collection collection, final String attributeId) {
-      return collection.getAttributes().stream().filter(a -> a.getId().equals(attributeId)).findFirst().orElse(null);
+      return ResourceUtils.findAttribute(collection.getAttributes(), attributeId);
    }
 }
