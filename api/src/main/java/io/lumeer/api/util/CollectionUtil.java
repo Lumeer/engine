@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.util;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.rule.AutoLinkRule;
@@ -62,5 +63,9 @@ public class CollectionUtil {
 
       return (autoLinkRule.getCollection1().equals(collectionId) && autoLinkRule.getAttribute1().equals(attributeId))
             || (autoLinkRule.getCollection2().equals(collectionId) && autoLinkRule.getAttribute2().equals(attributeId));
+   }
+
+   public static Attribute getAttribute(final Collection collection, final String attributeId) {
+      return ResourceUtils.findAttribute(collection.getAttributes(), attributeId);
    }
 }

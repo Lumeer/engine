@@ -25,6 +25,7 @@ import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
@@ -38,6 +39,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
@@ -62,6 +64,17 @@ public class ResourceCommentFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeDao linkTypeDao;
+
+   private ResourceCommentAdapter adapter;
+
+   @PostConstruct
+   public void init() {
+      adapter = new ResourceCommentAdapter(resourceCommentDao);
+   }
+
+   public ResourceCommentAdapter getAdapter() {
+      return adapter;
+   }
 
    public ResourceComment createResourceComment(final ResourceComment comment) {
       checkPermissions(comment.getResourceType(), comment.getResourceId());
@@ -99,11 +112,11 @@ public class ResourceCommentFacade extends AbstractFacade {
    }
 
    public long getCommentsCount(final ResourceType resourceType, final String resourceId) {
-      return resourceCommentDao.getCommentsCount(resourceType, resourceId);
+      return adapter.getCommentsCount(resourceType, resourceId);
    }
 
    public Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds) {
-      return resourceCommentDao.getCommentsCounts(resourceType, resourceIds);
+      return adapter.getCommentsCounts(resourceType, resourceIds);
    }
 
    public void removeResource(@Observes final RemoveResource removeResource) {

@@ -74,18 +74,14 @@ public class DelayedActionFacade {
    private RequestDataKeeper requestDataKeeper;
 
    @Inject
-   private ConfigurationFacade configurationFacade;
-
-   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
-   private ConstraintManager constraintManager;
    private CollectionChangeProcessor collectionChangeProcessor;
    private PurposeChangeProcessor purposeChangeProcessor;
 
    @PostConstruct
    public void init() {
-      constraintManager = ConstraintManager.getInstance(configurationProducer);
+      final ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
       collectionChangeProcessor = new CollectionChangeProcessor(delayedActionDao, collectionDao, selectedWorkspace);
       purposeChangeProcessor = new PurposeChangeProcessor(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationProducer.getEnvironment());
    }

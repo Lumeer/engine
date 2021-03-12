@@ -255,6 +255,12 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
       return deleteResult.getDeletedCount();
    }
 
+   @Override
+   public long deleteLinkInstances(final Set<String> linkInstanceIds) {
+      final DeleteResult deleteResult = databaseCollection().deleteMany(idsFilter(linkInstanceIds));
+      return deleteResult.getDeletedCount();
+   }
+
    private Bson linkInstancesFilter(final SearchQuery query) {
       List<Bson> filters = new ArrayList<>();
       for (SearchQueryStem stem : query.getStems()) {

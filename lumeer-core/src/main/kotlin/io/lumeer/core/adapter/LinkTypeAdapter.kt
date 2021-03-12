@@ -1,3 +1,8 @@
+package io.lumeer.core.adapter
+
+import io.lumeer.api.model.LinkType
+import io.lumeer.storage.api.dao.LinkInstanceDao
+
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -16,28 +21,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+class LinkTypeAdapter(val linkInstanceDao: LinkInstanceDao) {
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.util.AttributeUtil;
+   fun getLinkInstancesCounts(): Map<String, Long> = linkInstanceDao.linkInstancesCounts
 
-import java.util.Set;
+   fun getLinkInstancesCountByLinkType(linkTypeId: String): Long = linkInstanceDao.getLinkInstancesCountByLinkType(linkTypeId)
 
-public class NoneToUserConverter extends AbstractTranslatingConverter {
-
-   @Override
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.translateToArray = AttributeUtil.isMultiselect(toAttribute);
-   }
-
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
-   }
-
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.User);
-   }
+   fun mapLinkTypeData(linkType: LinkType): LinkType = linkType.apply { linksCount = getLinkInstancesCountByLinkType(id) }
 }

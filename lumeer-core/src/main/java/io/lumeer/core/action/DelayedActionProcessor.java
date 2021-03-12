@@ -29,6 +29,7 @@ import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.MomentJsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -70,14 +72,24 @@ public class DelayedActionProcessor {
    @Inject
    private EmailService emailService;
 
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
    private PusherClient pusherClient;
+
+   private boolean skipDelay = false;
+
+   @PostConstruct
+   public void init() {
+      skipDelay = !(configurationProducer.getEnvironment() == DefaultConfigurationProducer.DeployEnvironment.PRODUCTION || configurationProducer.getEnvironment() == DefaultConfigurationProducer.DeployEnvironment.STAGING);
+   }
 
    @Schedule(hour = "*", minute = "*/2")
    public void process() {
       delayedActionDao.deleteProcessedActions();
       delayedActionDao.resetTimeoutedActions();
 
-      executeActions(delayedActionDao.getActionsForProcessing());
+      executeActions(delayedActionDao.getActionsForProcessing(skipDelay));
    }
 
    private void executeActions(final List<DelayedAction> actions) {

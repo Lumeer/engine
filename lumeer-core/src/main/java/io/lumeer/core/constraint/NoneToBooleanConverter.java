@@ -20,6 +20,7 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.util.AttributeUtil;
 
 import java.util.Set;
 
@@ -30,7 +31,7 @@ public class NoneToBooleanConverter extends AbstractTranslatingConverter {
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       this.ignoreMissing = true;
 
-      if (isConstraintWithConfig(toAttribute)) {
+      if (AttributeUtil.isConstraintWithConfig(toAttribute)) {
          translations.put("true", Boolean.TRUE);
          translations.put("yes", Boolean.TRUE);
          translations.put("ja", Boolean.TRUE);

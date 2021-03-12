@@ -29,6 +29,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -45,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -71,6 +73,17 @@ public class ViewFacade extends AbstractFacade {
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
+
+   private ViewAdapter adapter;
+
+   @PostConstruct
+   public void init() {
+      adapter = new ViewAdapter(favoriteItemDao);
+   }
+
+   public ViewAdapter getAdapter() {
+      return adapter;
+   }
 
    public View createView(View view) {
       if (view.getQuery().getCollectionIds() != null) {
@@ -201,7 +214,7 @@ public class ViewFacade extends AbstractFacade {
    public Set<String> getFavoriteViewsIds(String userId) {
       String projectId = getCurrentProject().getId();
 
-      return favoriteItemDao.getFavoriteViewIds(userId, projectId);
+      return adapter.getFavoriteViewIds(userId, projectId);
    }
 
    public Set<Permission> updateUserPermissions(final String id, final Set<Permission> userPermissions) {
@@ -315,5 +328,10 @@ public class ViewFacade extends AbstractFacade {
 
    private User getCurrentUser() {
       return authenticatedUser.getCurrentUser();
+   }
+
+   public View mapViewData(final View view, final String userId) {
+      view.setFavorite(isFavorite(view.getId(), userId));
+      return view;
    }
 }

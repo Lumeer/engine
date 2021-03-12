@@ -37,6 +37,7 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -126,9 +127,16 @@ public class CollectionFacade extends AbstractFacade {
 
    private ConstraintManager constraintManager;
 
+   private CollectionAdapter adapter;
+
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
+      adapter = new CollectionAdapter(favoriteItemDao);
+   }
+
+   public CollectionAdapter getAdapter() {
+      return adapter;
    }
 
    public Collection createCollection(Collection collection) {
@@ -285,6 +293,12 @@ public class CollectionFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteCollection(userId, collectionId);
    }
 
+   public Collection mapCollectionData(final Collection collection, final String userId) {
+      collection.setFavorite(isFavorite(collection.getId(), userId));
+
+      return collection;
+   }
+
    public boolean isFavorite(String collectionId) {
       return isFavorite(collectionId, getCurrentUser().getId());
    }
@@ -300,7 +314,7 @@ public class CollectionFacade extends AbstractFacade {
    public Set<String> getFavoriteCollectionsIds(String userId) {
       String projectId = getCurrentProject().getId();
 
-      return favoriteItemDao.getFavoriteCollectionIds(userId, projectId);
+      return adapter.getFavoriteCollectionIds(userId, projectId);
    }
 
    public long getDocumentsCountInAllCollections() {

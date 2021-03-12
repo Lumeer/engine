@@ -20,6 +20,7 @@ package io.lumeer.core.auth;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -53,4 +54,12 @@ public class AuthenticatedUserGroups {
       return userGroups != null && userGroups.containsKey(organization.getId()) ? userGroups.get(organization.getId()) : Collections.emptySet();
    }
 
+   public static Set<String> getUserGroups(final Organization organization, final User user) {
+      if (organization == null){
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+      Map<String,Set<String>> userGroups = user.getGroups();
+      return userGroups != null && userGroups.containsKey(organization.getId()) ? userGroups.get(organization.getId()) : Collections.emptySet();
+
+   }
 }

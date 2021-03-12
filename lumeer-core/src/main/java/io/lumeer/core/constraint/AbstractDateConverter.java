@@ -20,6 +20,7 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.util.AttributeUtil;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,8 +38,8 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       super.init(cm, userLocale, fromAttribute, toAttribute);
 
-      if (isConstraintWithConfig(toAttribute) || isConstraintWithConfig(fromAttribute)) {
-         var attr = isConstraintWithConfig(toAttribute) && toAttribute.getConstraint().getType() == ConstraintType.DateTime ? toAttribute : fromAttribute;
+      if (AttributeUtil.isConstraintWithConfig(toAttribute) || AttributeUtil.isConstraintWithConfig(fromAttribute)) {
+         var attr = AttributeUtil.isConstraintWithConfig(toAttribute) && toAttribute.getConstraint().getType() == ConstraintType.DateTime ? toAttribute : fromAttribute;
 
          var config = (Map<String, Object>) attr.getConstraint().getConfig();
          var format = config.get("format").toString();

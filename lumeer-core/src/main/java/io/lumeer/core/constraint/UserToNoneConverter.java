@@ -20,6 +20,7 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.util.AttributeUtil;
 
 import java.util.Set;
 
@@ -27,7 +28,7 @@ public class UserToNoneConverter extends AbstractTranslatingConverter { ;
 
    @Override
    void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      if (isConstraintWithConfig(fromAttribute)) {
+      if (AttributeUtil.isConstraintWithConfig(fromAttribute)) {
          this.translateFromArray = true;
       }
    }

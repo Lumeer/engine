@@ -20,6 +20,7 @@
 package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.ConstraintType;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -110,6 +112,20 @@ public class AttributeUtil {
          return new HashMap<>();
       }
       return new HashMap<>(attributes.stream().collect(Collectors.toMap(Attribute::getId, a -> a)));
+   }
+
+   public static boolean isConstraintWithConfig(final Attribute attribute) {
+      return attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getConfig() != null;
+   }
+
+   public static boolean isMultiselect(final Attribute attribute) {
+      if (isConstraintWithConfig(attribute) && (attribute.getConstraint().getType() == ConstraintType.Select || attribute.getConstraint().getType() == ConstraintType.User)) {
+         @SuppressWarnings("unchecked")
+         final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         return (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
+      }
+
+      return false;
    }
 
 }

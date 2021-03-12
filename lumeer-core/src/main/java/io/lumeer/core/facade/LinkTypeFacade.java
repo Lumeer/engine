@@ -26,6 +26,8 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
+import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -44,6 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -73,6 +76,17 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private ResourceCommentDao resourceCommentDao;
+
+   private LinkTypeAdapter adapter;
+
+   @PostConstruct
+   public void init() {
+      adapter = new LinkTypeAdapter(linkInstanceDao);
+   }
+
+   public LinkTypeAdapter getAdapter() {
+      return adapter;
+   }
 
    public LinkType createLinkType(LinkType linkType) {
       permissionsChecker.checkFunctionsLimit(linkType);
@@ -191,12 +205,11 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType assignComputedParameters(LinkType linkType) {
-      linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()));
-      return linkType;
+      return adapter.mapLinkTypeData(linkType);
    }
 
    public List<LinkType> assignComputedParameters(List<LinkType> linkTypes) {
-      var countsMap = linkInstanceDao.getLinkInstancesCounts();
+      var countsMap = adapter.getLinkInstancesCounts();
 
       return linkTypes.stream()
                       .peek(linkType -> linkType.setLinksCount(countsMap.getOrDefault(linkType.getId(), 0L)))

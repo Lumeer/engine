@@ -164,6 +164,20 @@ public class PermissionsChecker {
       return false;
    }
 
+   public static boolean isManager(final User user, final Organization organization, final Project project) {
+      if (organization != null) {
+         Set<Role> organizationRoles = getActualRolesInResource(organization, organization, user);
+         if (organizationRoles.contains(Role.MANAGE)) {
+            return true;
+         }
+         if (project != null) {
+            Set<Role> projectRoles = getActualRolesInResource(organization, project, user);
+            return projectRoles.contains(Role.MANAGE) && organizationRoles.contains(Role.READ);
+         }
+      }
+      return false;
+   }
+
    public boolean isPublic() {
       if (workspaceKeeper.getProject().isPresent()) {
          final Project project = workspaceKeeper.getProject().get();
@@ -349,6 +363,14 @@ public class PermissionsChecker {
       return Role.withTransitionRoles(actualRoles);
    }
 
+   private static Set<Role> getActualRolesInResource(final Organization organization, final Resource resource, final User user) {
+      final Set<String> groups = getUserGroups(organization, resource, user);
+
+      final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), user.getId());
+      actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
+      return Role.withTransitionRoles(actualRoles);
+   }
+
    private Set<String> getUserGroups(Resource resource) {
       if (resource instanceof Organization) {
          return Collections.emptySet();
@@ -371,14 +393,27 @@ public class PermissionsChecker {
       return user != null ? user.getGroups().get(organization.getId()) : Collections.emptySet();
    }
 
-   private Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
+   private static Set<String> getUserGroups(final Organization organization, final Resource resource, final User user) {
+      if (resource instanceof Organization || user == null || "".equals(user.getId())) {
+         return Collections.emptySet();
+      }
+
+      if (organization == null) {
+         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
+      }
+
+      return user.getGroups().get(organization.getId());
+   }
+
+
+   private static Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
       return userRoles.stream()
                       .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
                       .flatMap(entity -> entity.getRoles().stream())
                       .collect(toSet());
    }
 
-   private Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
+   private static Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
       return groupRoles.stream()
                        .filter(entity -> groupIds.contains(entity.getId()))
                        .flatMap(entity -> entity.getRoles().stream())

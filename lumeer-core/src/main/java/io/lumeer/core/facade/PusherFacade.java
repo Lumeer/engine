@@ -575,9 +575,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private View createViewForUser(final View view, final String userId) {
-      var viewCopy = view.copy();
-      viewCopy.setFavorite(viewFacade.isFavorite(view.getId(), userId));
-      return viewCopy;
+      return viewFacade.mapViewData(view.copy(), userId);
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
@@ -588,9 +586,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Collection createCollectionForUser(final Collection collection, final String userId) {
-      var collectionCopy = collection.copy();
-      collectionCopy.setFavorite(collectionFacade.isFavorite(collectionCopy.getId(), userId));
-      return collectionCopy;
+      return collectionFacade.mapCollectionData(collection.copy(), userId);
    }
 
    private Project getProject() {
@@ -679,9 +675,11 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Document createDocumentForUser(final Document document, final String userId) {
-      var documentCopy = new Document(document);
-      documentCopy.setFavorite(documentFacade.isFavorite(documentCopy.getId(), userId));
-      return documentCopy;
+      if (document.getCommentsCount() == null) {
+         return documentFacade.mapDocumentData(new Document(document), userId);
+      } else {
+         return documentFacade.mapDocumentFavorite(new Document(document), userId);
+      }
    }
 
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {
@@ -717,7 +715,7 @@ public class PusherFacade extends AbstractFacade {
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(createLinkType.getLinkType(), CREATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(linkTypeFacade.assignComputedParameters(createLinkType.getLinkType()), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -727,7 +725,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(updateLinkType.getLinkType(), UPDATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(linkTypeFacade.assignComputedParameters(updateLinkType.getLinkType()), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -876,7 +874,7 @@ public class PusherFacade extends AbstractFacade {
       final LinkInstance linkInstance = new LinkInstance(originalLinkInstance);
       LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
       linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
-      linkInstance.setCommentsCount(linkInstanceFacade.getCommentsCount(linkInstance.getId()));
+      linkInstanceFacade.mapLinkInstanceData(linkInstance);
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);
    }

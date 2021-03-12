@@ -16,28 +16,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.constraint;
+package io.lumeer.core.adapter
 
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.model.Collection
+import io.lumeer.storage.api.dao.FavoriteItemDao
 
-import java.util.Set;
+class CollectionAdapter(val favoriteItemDao: FavoriteItemDao) {
 
-public class NoneToUserConverter extends AbstractTranslatingConverter {
+   fun getFavoriteCollectionIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteCollectionIds(userId, projectId)
 
-   @Override
-   void initTranslationsTable(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
-      this.translateToArray = AttributeUtil.isMultiselect(toAttribute);
+   fun isFavorite(collectionId: String, userId: String, projectId: String): Boolean = getFavoriteCollectionIds(userId, projectId).contains(collectionId)
+
+   fun mapCollectionData(collection: Collection, userId: String, projectId: String): Collection {
+      collection.isFavorite = isFavorite(collection.id, userId, projectId)
+      return collection
    }
 
-   @Override
-   public Set<ConstraintType> getFromTypes() {
-      return Set.of(ConstraintType.None);
-   }
-
-   @Override
-   public Set<ConstraintType> getToTypes() {
-      return Set.of(ConstraintType.User);
-   }
 }
