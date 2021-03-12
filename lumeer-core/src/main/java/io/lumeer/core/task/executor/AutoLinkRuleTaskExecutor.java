@@ -32,14 +32,19 @@ import io.lumeer.core.util.Tuple;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AutoLinkRuleTaskExecutor {
+
+   private static final Logger log = Logger.getLogger(AutoLinkRuleTaskExecutor.class.getName());
 
    private final ChangesTracker changesTracker = new ChangesTracker();
    private String ruleName;
@@ -86,8 +91,8 @@ public class AutoLinkRuleTaskExecutor {
 
          return changesTracker;
       } catch (Exception ex) {
-         ex.printStackTrace();
-         throw ex;
+         log.log(Level.SEVERE, "Error executing auto-link rule: ", ex);
+         return changesTracker;
       }
    }
 
@@ -156,8 +161,12 @@ public class AutoLinkRuleTaskExecutor {
          final List<LinkInstance> linkInstances =
                targetDocuments.stream()
                               .filter(documentId -> !documentId.equals(matcher.getNewDocument().getId()))
-                              .map(documentId ->
-                                    new LinkInstance(rule.getLinkType(), Arrays.asList(matcher.getNewDocument().getId(), documentId)))
+                              .map(documentId -> {
+                                 var l = new LinkInstance(rule.getLinkType(), Arrays.asList(matcher.getNewDocument().getId(), documentId));
+                                 l.setCreatedBy(ruleTask.getInitiator().getId());
+                                 l.setCreationDate(ZonedDateTime.now());
+                                 return l;
+                              })
                               .collect(toList());
 
          if (!linkInstances.isEmpty()) {

@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.task.executor.matcher;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValue;
@@ -30,6 +32,10 @@ import java.util.List;
 public class SimpleToSimpleMatch implements MatchQueryProvider {
 
    private final DocumentMatcher matcher;
+
+   SimpleToSimpleMatch() {
+      matcher = null;
+   }
 
    public SimpleToSimpleMatch(final DocumentMatcher matcher) {
       this.matcher = matcher;
@@ -66,4 +72,20 @@ public class SimpleToSimpleMatch implements MatchQueryProvider {
       )
       );
    }
+
+   public Query getMatchQuery(final Collection collection, final Attribute attribute, final Object newValue) {
+      return new Query(Collections.singletonList(
+            new QueryStem(
+                  collection.getId(),
+                  Collections.emptyList(),
+                  Collections.emptySet(),
+                  List.of(
+                        new CollectionAttributeFilter(collection.getId(), attribute.getId(), ConditionType.EQUALS, List.of(new ConditionValue(newValue)))
+                  ),
+                  Collections.emptyList()
+            )
+      )
+      );
+   }
+
 }
