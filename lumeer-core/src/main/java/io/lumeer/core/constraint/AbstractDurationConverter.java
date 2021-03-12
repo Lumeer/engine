@@ -20,12 +20,15 @@ package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.core.facade.translate.TranslationManager;
 
 import java.util.Map;
 
 public abstract class AbstractDurationConverter extends AbstractConstraintConverter {
 
+   protected TranslationManager translationManager = new TranslationManager();
    protected Map<String, Integer> conversions;
    protected Map<String, String> translations;
 
@@ -34,9 +37,7 @@ public abstract class AbstractDurationConverter extends AbstractConstraintConver
    public void init(ConstraintManager cm, String userLocale, Attribute fromAttribute, Attribute toAttribute) {
       super.init(cm, userLocale, fromAttribute, toAttribute);
 
-      translations = "cs".equals(userLocale) ?
-              Map.of("w", "t", "d", "d", "h", "h", "m", "m", "s", "s") :
-              Map.of("w", "w", "d", "d", "h", "h", "m", "m", "s", "s");
+      translations = translationManager.translateDurationUnitsMap(Language.fromString(userLocale));
 
       if (AttributeUtil.isConstraintWithConfig(toAttribute) || AttributeUtil.isConstraintWithConfig(fromAttribute)) {
          var attr = AttributeUtil.isConstraintWithConfig(toAttribute) && toAttribute.getConstraint().getType() == ConstraintType.Duration ? toAttribute : fromAttribute;
