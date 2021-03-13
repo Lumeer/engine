@@ -20,7 +20,10 @@ package io.lumeer.core.util;
 
 import static io.lumeer.api.util.ResourceUtils.findAttribute;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -29,10 +32,13 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 public abstract class CollectionPurposeUtils {
+
+   private static final List<String> TRUTHY_VALUES = Arrays.asList("true", "yes", "ja", "ano", "áno", "sí", "si", "sim", "да", "是", "はい", "vâng", "כן");
 
    protected static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
@@ -42,9 +48,13 @@ public abstract class CollectionPurposeUtils {
 
       if (finalStates != null && data != null) {
 
-         if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
+         Attribute stateAttribute = findAttribute(collection.getAttributes(), stateAttributeId);
+         if (StringUtils.isNotEmpty(stateAttributeId) && stateAttribute != null) {
             final Object states = data.getObject(stateAttributeId);
-            if (states instanceof List) {
+            if (Utils.computeIfNotNull(stateAttribute.getConstraint(), Constraint::getType) == ConstraintType.Boolean) {
+               var finalState = finalStates.get(0);
+               return toBoolean(finalState) == toBoolean(states);
+            } else if (states instanceof List) {
                final List<Object> stringStates = data.getArrayList(stateAttributeId);
                return stringStates.stream().anyMatch(finalStates::contains);
             } else {
@@ -54,6 +64,16 @@ public abstract class CollectionPurposeUtils {
       }
 
       return false;
+   }
+
+   private static boolean toBoolean(Object value) {
+      if (value == null) {
+         return false;
+      }
+      if (Boolean.parseBoolean(value.toString())) {
+         return true;
+      }
+      return TRUTHY_VALUES.stream().anyMatch(truthyValue -> truthyValue.equals(value));
    }
 
    public static ZonedDateTime getDueDate(final Document document, final Collection collection) {
