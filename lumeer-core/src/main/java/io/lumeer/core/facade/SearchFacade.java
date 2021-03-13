@@ -192,8 +192,8 @@ public class SearchFacade extends AbstractFacade {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
             return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
          }
-         return null;
-      }).filter(Objects::nonNull).collect(Collectors.toList());
+         return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
+      }).collect(Collectors.toList());
 
       return stems.isEmpty() ? null : new Query(stems);
    }
