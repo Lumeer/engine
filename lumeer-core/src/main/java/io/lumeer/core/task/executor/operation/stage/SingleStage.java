@@ -93,7 +93,7 @@ public class SingleStage extends Stage {
    private List<Document> commitDocumentOperations(final List<DocumentOperation> operations,
          final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId,
          final Map<String, Collection> collectionsMapForCreatedDocuments) {
-      if (operations.isEmpty()) {
+      if (operations.isEmpty() && collectionsMapForCreatedDocuments.isEmpty()) {
          return List.of();
       }
 
@@ -282,7 +282,7 @@ public class SingleStage extends Stage {
    private List<LinkInstance> commitLinkOperations(final TaskExecutor taskExecutor, final List<LinkOperation> changes,
          final List<LinkInstance> createdLinks,
          final Map<String, LinkType> linkTypeMapForCreatedLinks) {
-      if (changes.isEmpty()) {
+      if (changes.isEmpty() && linkTypeMapForCreatedLinks.isEmpty()) {
          return List.of();
       }
 

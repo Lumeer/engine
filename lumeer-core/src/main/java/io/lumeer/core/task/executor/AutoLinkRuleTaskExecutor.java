@@ -114,8 +114,11 @@ public class AutoLinkRuleTaskExecutor {
          final List<LinkInstance> linksForRemoval = oldLinks.getSecond();
 
          if (linksForRemoval.size() > 0) {
-            ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(linksForRemoval.stream().map(LinkInstance::getId).collect(toSet()));
-            ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(matcher.getLinkType().getId(), linksForRemoval.stream().map(LinkInstance::getId).collect(toSet()));
+            final Set<String> removeIds = linksForRemoval.stream().map(LinkInstance::getId).collect(toSet());
+            ruleTask.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstances(removeIds);
+            ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(matcher.getLinkType().getId(), removeIds);
+            changesTracker.updateLinkTypesMap(Map.of(matcher.getLinkType().getId(), matcher.getLinkType()));
+            changesTracker.addRemovedLinkInstances(linksForRemoval);
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);
