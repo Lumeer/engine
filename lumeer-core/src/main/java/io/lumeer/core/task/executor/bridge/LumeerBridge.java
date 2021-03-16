@@ -74,6 +74,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LumeerBridge {
@@ -151,6 +152,29 @@ public class LumeerBridge {
                task.getInitiator(),
                task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().orElse(null),
                task.getDaoContextSnapshot().getSelectedWorkspace().getProject().orElse(null));
+      }
+   }
+
+   public List<DocumentBridge> getSiblings(final String linkTypeId, final DocumentBridge sourceDocument) {
+      try {
+         final String sourceDocumentId = sourceDocument.getDocument().getId();
+         final List<LinkInstance> counterparts = getLinkInstances(sourceDocumentId, linkTypeId);
+         final Set<String> counterpartIds = counterparts
+               .stream()
+               .map(l -> l.getDocumentIds().get(0).equals(sourceDocumentId) ? l.getDocumentIds().get(1) : l.getDocumentIds().get(0))
+               .collect(toSet());
+         final List<LinkInstance> instances = getLinkInstances(counterpartIds, linkTypeId);
+         final Set<String> documentIds = instances.stream().flatMap(l -> l.getDocumentIds().stream()).collect(toSet());
+         documentIds.removeAll(counterpartIds);
+         documentIds.remove(sourceDocumentId);
+
+         final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(sourceDocument.getDocument().getCollectionId());
+         final List<Document> documents = DocumentUtils.loadDocumentsWithData(task.getDaoContextSnapshot(), collection, documentIds, constraintManager, true);
+
+         return documents.stream().map(DocumentBridge::new).collect(toList());
+      } catch (Exception e) {
+         cause = e;
+         throw e;
       }
    }
 
@@ -295,13 +319,17 @@ public class LumeerBridge {
    }
 
    private List<LinkInstance> getLinkInstances(final String documentId, final String linkTypeId) {
+      return getLinkInstances(Set.of(documentId), linkTypeId);
+   }
+
+   private List<LinkInstance> getLinkInstances(final Set<String> documentIds, final String linkTypeId) {
       final SearchQuery query = SearchQuery
             .createBuilder()
             .stems(Collections.singletonList(
                   SearchQueryStem
                         .createBuilder("")
                         .linkTypeIds(Collections.singletonList(linkTypeId))
-                        .documentIds(Set.of(documentId))
+                        .documentIds(documentIds)
                         .build()))
             .build();
 
