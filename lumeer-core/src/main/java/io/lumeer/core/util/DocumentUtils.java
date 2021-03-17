@@ -18,8 +18,7 @@
  */
 package io.lumeer.core.util;
 
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
@@ -30,6 +29,7 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.User;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
@@ -177,6 +177,45 @@ public class DocumentUtils {
       return List.of();
    }
 
+   public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents) {
+      final Map<String, Document> documentMap = documents.stream().collect(toMap(Document::getId, Function.identity()));
+      final List<DataDocument> data = dao.getDataDao().getData(collection.getId(), documentMap.keySet());
+      data.forEach(dd -> {
+         if (documentMap.containsKey(dd.getId())) {
+            documentMap.get(dd.getId()).setData(dd);
+         }
+      });
+
+      return documents;
+   }
+
+   public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents, final ConstraintManager constraintManager, final boolean encodeForFce) {
+      final List<Document> documentsWithData = loadDocumentsData(dao, collection, documents);
+      encodeDocumentDataForFce(collection, documentsWithData, constraintManager, encodeForFce);
+
+      return documentsWithData;
+   }
+
+   private static void encodeDocumentDataForFce(final Collection collection, final List<Document> documents, final ConstraintManager constraintManager, final boolean encodeForFce) {
+      documents.forEach(d -> {
+         if (encodeForFce) {
+            d.setData(constraintManager.encodeDataTypesForFce(collection, d.getData()));
+         } else {
+            d.setData(constraintManager.decodeDataTypes(collection, d.getData()));
+         }
+      });
+   }
+
+   public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds) {
+      return loadDocumentsData(dao, collection, dao.getDocumentDao().getDocumentsByIds(documentIds));
+   }
+
+   public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds, final ConstraintManager constraintManager, final boolean encodeForFce) {
+      final List<Document> documents = loadDocumentsWithData(dao, collection, documentIds);
+      encodeDocumentDataForFce(collection, documents, constraintManager, encodeForFce);
+
+      return documents;
+   }
 
    private static boolean isDataDocument(Object obj) {
       return obj != null && obj instanceof DataDocument;

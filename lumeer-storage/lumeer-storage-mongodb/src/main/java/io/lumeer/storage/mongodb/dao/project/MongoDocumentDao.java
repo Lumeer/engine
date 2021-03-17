@@ -202,6 +202,12 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
       return documents;
    }
 
+   @Override
+   public List<Document> getDocumentsByParentId(final String parentId) {
+      Bson idsFilter = parentIdsFilter(Set.of(parentId));
+      return databaseCollection().find(idsFilter).into(new ArrayList<>());
+   }
+
    private Bson parentIdsFilter(Collection<String> parentIds) {
       String field = MongoUtils.concatParams(DocumentCodec.META_DATA, Document.META_PARENT_ID);
       return Filters.in(field, parentIds);
