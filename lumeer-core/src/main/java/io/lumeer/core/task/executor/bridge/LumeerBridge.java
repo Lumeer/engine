@@ -18,7 +18,8 @@
  */
 package io.lumeer.core.task.executor.bridge;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.AllowedPermissions;
@@ -36,14 +37,8 @@ import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
-import io.lumeer.core.task.executor.operation.NavigationOperation;
-import io.lumeer.core.task.executor.operation.SendEmailOperation;
-import io.lumeer.core.task.executor.request.NavigationRequest;
-import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
-import io.lumeer.core.task.executor.request.SendEmailRequest;
-import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.ResourceOperation;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
@@ -51,9 +46,15 @@ import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
 import io.lumeer.core.task.executor.operation.LinkCreationOperation;
 import io.lumeer.core.task.executor.operation.LinkOperation;
+import io.lumeer.core.task.executor.operation.NavigationOperation;
 import io.lumeer.core.task.executor.operation.Operation;
 import io.lumeer.core.task.executor.operation.PrintAttributeOperation;
+import io.lumeer.core.task.executor.operation.SendEmailOperation;
 import io.lumeer.core.task.executor.operation.UserMessageOperation;
+import io.lumeer.core.task.executor.request.NavigationRequest;
+import io.lumeer.core.task.executor.request.PrintRequest;
+import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -74,7 +75,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class LumeerBridge {
@@ -155,23 +155,90 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings("unused")
+   public DocumentBridge getParentDocument(final DocumentBridge sourceDocument) {
+      try {
+         final String parentId = sourceDocument.getDocument().createIfAbsentMetaData().getString(Document.META_PARENT_ID);
+
+         if (StringUtils.isNotEmpty(parentId)) {
+            final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(sourceDocument.getDocument().getCollectionId());
+            final List<Document> documents = DocumentUtils.loadDocumentsWithData(task.getDaoContextSnapshot(), collection, Set.of(parentId), constraintManager, true);
+
+            if (documents.size() == 1) {
+               return new DocumentBridge(documents.get(0));
+            }
+         }
+
+         return null;
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public List<DocumentBridge> getChildDocuments(final DocumentBridge sourceDocument) {
+      try {
+         final String parentId = sourceDocument.getDocument().getId();
+         final List<Document> documents = task.getDaoContextSnapshot().getDocumentDao().getDocumentsByParentId(parentId);
+
+         if (!documents.isEmpty()) {
+            final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(sourceDocument.getDocument().getCollectionId());
+            final List<Document> documentsWithData = DocumentUtils.loadDocumentsData(task.getDaoContextSnapshot(), collection, documents, constraintManager, true);
+
+            return documentsWithData.stream().map(DocumentBridge::new).collect(toList());
+         }
+
+         return List.of();
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public List<DocumentBridge> getHierarchySiblings(final DocumentBridge sourceDocument) {
+      try {
+         final DocumentBridge parent = getParentDocument(sourceDocument);
+
+         if (parent != null) {
+            final List<DocumentBridge> documents = getChildDocuments(parent);
+
+            return documents.stream().filter(db -> !db.getDocument().getId().equals(sourceDocument.getDocument().getId())).collect(toList());
+         }
+
+         return List.of();
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
    public List<DocumentBridge> getSiblings(final String linkTypeId, final DocumentBridge sourceDocument) {
       try {
          final String sourceDocumentId = sourceDocument.getDocument().getId();
          final List<LinkInstance> counterparts = getLinkInstances(sourceDocumentId, linkTypeId);
-         final Set<String> counterpartIds = counterparts
-               .stream()
-               .map(l -> l.getDocumentIds().get(0).equals(sourceDocumentId) ? l.getDocumentIds().get(1) : l.getDocumentIds().get(0))
-               .collect(toSet());
-         final List<LinkInstance> instances = getLinkInstances(counterpartIds, linkTypeId);
-         final Set<String> documentIds = instances.stream().flatMap(l -> l.getDocumentIds().stream()).collect(toSet());
-         documentIds.removeAll(counterpartIds);
-         documentIds.remove(sourceDocumentId);
 
-         final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(sourceDocument.getDocument().getCollectionId());
-         final List<Document> documents = DocumentUtils.loadDocumentsWithData(task.getDaoContextSnapshot(), collection, documentIds, constraintManager, true);
+         if (!counterparts.isEmpty()) {
+            final Set<String> counterpartIds = counterparts
+                  .stream()
+                  .map(l -> l.getDocumentIds().get(0).equals(sourceDocumentId) ? l.getDocumentIds().get(1) : l.getDocumentIds().get(0))
+                  .collect(toSet());
+            final List<LinkInstance> instances = getLinkInstances(counterpartIds, linkTypeId);
+            final Set<String> documentIds = instances.stream().flatMap(l -> l.getDocumentIds().stream()).collect(toSet());
+            documentIds.removeAll(counterpartIds);
+            documentIds.remove(sourceDocumentId);
 
-         return documents.stream().map(DocumentBridge::new).collect(toList());
+            if (!documentIds.isEmpty()) {
+               final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(sourceDocument.getDocument().getCollectionId());
+               final List<Document> documents = DocumentUtils.loadDocumentsWithData(task.getDaoContextSnapshot(), collection, documentIds, constraintManager, true);
+
+               return documents.stream().map(DocumentBridge::new).collect(toList());
+            }
+         }
+
+         return List.of();
       } catch (Exception e) {
          cause = e;
          throw e;

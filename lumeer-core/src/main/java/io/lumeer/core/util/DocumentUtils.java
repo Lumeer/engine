@@ -177,10 +177,9 @@ public class DocumentUtils {
       return List.of();
    }
 
-   public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds) {
-      final List<Document> documents = dao.getDocumentDao().getDocumentsByIds(documentIds);
+   public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents) {
       final Map<String, Document> documentMap = documents.stream().collect(toMap(Document::getId, Function.identity()));
-      final List<DataDocument> data = dao.getDataDao().getData(collection.getId(), documentIds);
+      final List<DataDocument> data = dao.getDataDao().getData(collection.getId(), documentMap.keySet());
       data.forEach(dd -> {
          if (documentMap.containsKey(dd.getId())) {
             documentMap.get(dd.getId()).setData(dd);
@@ -190,8 +189,14 @@ public class DocumentUtils {
       return documents;
    }
 
-   public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds, final ConstraintManager constraintManager, final boolean encodeForFce) {
-      final List<Document> documents = loadDocumentsWithData(dao, collection, documentIds);
+   public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents, final ConstraintManager constraintManager, final boolean encodeForFce) {
+      final List<Document> documentsWithData = loadDocumentsData(dao, collection, documents);
+      encodeDocumentDataForFce(collection, documentsWithData, constraintManager, encodeForFce);
+
+      return documentsWithData;
+   }
+
+   private static void encodeDocumentDataForFce(final Collection collection, final List<Document> documents, final ConstraintManager constraintManager, final boolean encodeForFce) {
       documents.forEach(d -> {
          if (encodeForFce) {
             d.setData(constraintManager.encodeDataTypesForFce(collection, d.getData()));
@@ -199,6 +204,15 @@ public class DocumentUtils {
             d.setData(constraintManager.decodeDataTypes(collection, d.getData()));
          }
       });
+   }
+
+   public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds) {
+      return loadDocumentsData(dao, collection, dao.getDocumentDao().getDocumentsByIds(documentIds));
+   }
+
+   public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds, final ConstraintManager constraintManager, final boolean encodeForFce) {
+      final List<Document> documents = loadDocumentsWithData(dao, collection, documentIds);
+      encodeDocumentDataForFce(collection, documents, constraintManager, encodeForFce);
 
       return documents;
    }
