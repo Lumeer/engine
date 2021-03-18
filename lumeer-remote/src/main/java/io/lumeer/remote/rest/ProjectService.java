@@ -18,7 +18,6 @@
  */
 package io.lumeer.remote.rest;
 
-import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -89,12 +88,12 @@ public class ProjectService extends AbstractService {
 
    @POST
    @Path("{projectId:[0-9a-fA-F]{24}}/templates/{templateId}")
-   public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId, @QueryParam("l") final Language language) {
+   public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId) {
       workspaceKeeper.setProjectId(projectId);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final Project project = projectFacade.getProjectById(projectId);
-         copyFacade.deepCopyTemplate(project, templateId, language);
+         copyFacade.deepCopyTemplate(project, templateId);
          return Response.ok().build();
       }
 
@@ -117,12 +116,12 @@ public class ProjectService extends AbstractService {
 
    @POST
    @Path("{projectId:[0-9a-fA-F]{24}}/sample/{type}")
-   public Response copySampleData(@PathParam("projectId") final String projectId, @PathParam("type") final SampleDataType sampleDataType, @QueryParam("l") final Language language) {
+   public Response copySampleData(@PathParam("projectId") final String projectId, @PathParam("type") final SampleDataType sampleDataType) {
       workspaceKeeper.setProjectId(projectId);
 
       if (workspaceKeeper.getOrganization().isPresent() && sampleDataType != null) {
          final Project project = projectFacade.getProjectById(projectId);
-         copyFacade.deepCopySampleData(project, sampleDataType, language);
+         copyFacade.deepCopySampleData(project, sampleDataType);
          return Response.ok().build();
       }
 
