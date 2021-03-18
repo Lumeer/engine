@@ -23,12 +23,15 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.SampleDataType;
+import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import java.util.Date;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -47,14 +50,24 @@ public class CopyFacade extends AbstractFacade {
    @Inject
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
-   public void deepCopySampleData(Project project, SampleDataType sampleType, Language language) {
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
+   private Language language;
+
+   @PostConstruct
+   public void init() {
+      language = Language.fromString(requestDataKeeper.getUserLocale());
+   }
+
+   public void deepCopySampleData(Project project, SampleDataType sampleType) {
       permissionsChecker.checkRole(project, Role.WRITE);
 
       var organizationId = templateFacade.getSampleDataOrganizationId(language);
       this.copyProjectByCode(project, organizationId, sampleType.toString(), false);
    }
 
-   public void deepCopyTemplate(Project project, String templateId, Language language) {
+   public void deepCopyTemplate(Project project, String templateId) {
       permissionsChecker.checkRole(project, Role.WRITE);
 
       var organizationId = templateFacade.getTemplateOrganizationId(language);

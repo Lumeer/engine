@@ -62,7 +62,6 @@ public class CopyFacadeIT extends IntegrationTestBase {
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
 
    private static final String TEMPLATE = "OKR";
-   private static final Language language = Language.EN;
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -148,7 +147,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
    @Test
    @Ignore
    public void testTemplateImport() {
-      copyFacade.deepCopyTemplate(project, TEMPLATE, language);
+      copyFacade.deepCopyTemplate(project, TEMPLATE);
 
       var collections = collectionFacade.getCollections();
       var templateCollections = collections.stream().filter(collection -> collection.getName().startsWith(TEMPLATE));
