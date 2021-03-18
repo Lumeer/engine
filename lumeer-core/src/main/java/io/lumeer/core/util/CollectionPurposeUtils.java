@@ -52,7 +52,7 @@ public abstract class CollectionPurposeUtils {
          if (StringUtils.isNotEmpty(stateAttributeId) && stateAttribute != null) {
             final Object states = data.getObject(stateAttributeId);
             if (Utils.computeIfNotNull(stateAttribute.getConstraint(), Constraint::getType) == ConstraintType.Boolean) {
-               var finalState = finalStates.get(0);
+               var finalState = finalStates.isEmpty() ? null : finalStates.get(0);
                return toBoolean(finalState) == toBoolean(states);
             } else if (states instanceof List) {
                final List<Object> stringStates = data.getArrayList(stateAttributeId);
