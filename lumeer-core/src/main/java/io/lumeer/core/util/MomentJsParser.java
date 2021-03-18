@@ -39,8 +39,12 @@ public class MomentJsParser implements AutoCloseable {
    private static final Engine engine = JsEngineFactory.getEngine();
 
    static {
-      try (var stream = MomentJsParser.class.getResourceAsStream("/moment-with-locales.min.js")) {
+      try (
+            var stream = MomentJsParser.class.getResourceAsStream("/moment-with-locales.min.js");
+            var stream2 = MomentJsParser.class.getResourceAsStream("/moment-business.min.js");
+      ) {
          momentJsCode = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+         momentJsCode += new String(stream2.readAllBytes(), StandardCharsets.UTF_8);
          momentJsCode +=
                "; function " + FORMAT_JS_DATE  + "(time, format, locale) { return moment(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
                "; function " + PARSE_JS_DATE + "(date, format, locale) { return moment((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } ";
