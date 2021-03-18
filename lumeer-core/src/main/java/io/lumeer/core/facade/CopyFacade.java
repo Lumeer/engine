@@ -24,7 +24,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.auth.RequestDataKeeper;
-import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -64,45 +63,42 @@ public class CopyFacade extends AbstractFacade {
       permissionsChecker.checkRole(project, Role.WRITE);
 
       var organizationId = templateFacade.getSampleDataOrganizationId(language);
-      this.copyProjectByCode(project, organizationId, sampleType.toString(), false);
+      this.copyProjectByCode(project, organizationId, sampleType.toString());
    }
 
    public void deepCopyTemplate(Project project, String templateId) {
       permissionsChecker.checkRole(project, Role.WRITE);
 
       var organizationId = templateFacade.getTemplateOrganizationId(language);
-      this.copyProjectById(project, organizationId, templateId, false);
+      this.copyProjectById(project, organizationId, templateId);
    }
 
    public void deepCopyProject(Project project, String organizationId, String projectId) {
       permissionsChecker.checkRole(project, Role.WRITE);
 
-      this.copyProjectById(project, organizationId, projectId, true);
+      this.copyProjectById(project, organizationId, projectId);
    }
 
-   private void copyProjectById(Project project, String organizationId, String projectId, boolean checkPermissions) {
+   private void copyProjectById(Project project, String organizationId, String projectId) {
       //uncomment to use predefined templates in JSON files
       //templateFacade.installTemplate(project, "PIVOT", Language.EN);
-      copyProject(project, organizationId, dao -> dao.getProjectById(projectId), checkPermissions);
+      copyProject(project, organizationId, dao -> dao.getProjectById(projectId));
    }
 
-   private void copyProjectByCode(Project project, String organizationId, String projectCode, boolean checkPermissions) {
-      copyProject(project, organizationId, dao -> dao.getProjectByCode(projectCode), checkPermissions);
+   private void copyProjectByCode(Project project, String organizationId, String projectCode) {
+      copyProject(project, organizationId, dao -> dao.getProjectByCode(projectCode));
    }
 
-   private void copyProject(Project project, String organizationId, java.util.function.Function<ProjectDao, Project> projectFunction, boolean checkPermissions) {
+   private void copyProject(Project project, String organizationId, java.util.function.Function<ProjectDao, Project> projectFunction) {
       var fromOrganization = organizationDao.getOrganizationById(organizationId);
-      if (checkPermissions) {
-         permissionsChecker.checkRole(fromOrganization, Role.READ);
-      }
-
       workspaceKeeper.push();
       workspaceKeeper.setOrganization(fromOrganization);
 
       var storage = dataStorageProvider.getUserStorage();
       var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
-      if (checkPermissions) {
+      if (!fromProject.isPublic()) {
+         permissionsChecker.checkRole(fromOrganization, Role.READ);
          permissionsChecker.checkRole(fromProject, Role.READ);
       }
 
