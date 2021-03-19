@@ -91,16 +91,32 @@ public class TaskProcessingFacade {
       return taskProcessingFacade;
    }
 
-   public void runRule(final Collection collection, final String ruleName, final Document document) {
+   public void runRule(final Collection collection, final String ruleName, final Document document, final String actionName) {
       if (collection != null && document != null) {
          Optional<RuleTask> task = createRuleTask(collection, ruleName, null, document);
+         Task t = task.orElse(null);
+         while (t != null) {
+            if (t instanceof RuleTask) {
+               ((RuleTask) t).setActionName(actionName);
+            }
+            t = t.getParent();
+         }
+
          task.ifPresent(this::processTasks);
       }
    }
 
-   public void runRule(final LinkType linkType, final String ruleName, final LinkInstance linkInstance) {
+   public void runRule(final LinkType linkType, final String ruleName, final LinkInstance linkInstance, final String actionName) {
       if (linkType != null && linkInstance != null) {
          Optional<RuleTask> task = createRuleTask(linkType, ruleName, null, linkInstance);
+         Task t = task.orElse(null);
+         while (t != null) {
+            if (t instanceof RuleTask) {
+               ((RuleTask) t).setActionName(actionName);
+            }
+            t = t.getParent();
+         }
+
          task.ifPresent(this::processTasks);
       }
    }

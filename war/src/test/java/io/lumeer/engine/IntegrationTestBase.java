@@ -83,6 +83,7 @@ public abstract class IntegrationTestBase {
                        .addAsResource("templates/okr.en.json")
                        .addAsResource("templates/hr.en.json")
                        .addAsResource("moment-with-locales.min.js")
+                       .addAsResource("moment-business.min.js")
                        .addAsResource("lumeer-data-filters.min.js")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")

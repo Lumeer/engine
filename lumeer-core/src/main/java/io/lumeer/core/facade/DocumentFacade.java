@@ -598,7 +598,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    @SuppressWarnings("unchecked")
-   public void runRule(final String collectionId, String documentId, String attributeId) {
+   public void runRule(final String collectionId, String documentId, String attributeId, final String actionName) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       Constraint constraint = ResourceUtils.findConstraint(collection.getAttributes(), attributeId);
       if (constraint != null) {
@@ -612,7 +612,7 @@ public class DocumentFacade extends AbstractFacade {
 
          permissionsChecker.checkRoleWithView(collection, role, role);
          Document document = getDocument(collection, documentId);
-         taskProcessingFacade.runRule(collection, rule, document);
+         taskProcessingFacade.runRule(collection, rule, document, actionName);
       }
    }
 

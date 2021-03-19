@@ -38,6 +38,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -120,8 +121,8 @@ public class LinkInstanceService extends AbstractService {
 
    @POST
    @Path("{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}/rule/{attributeId}")
-   public void runRule(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId, @PathParam("attributeId") final String attributeId) {
-      linkInstanceFacade.runRule(linkTypeId, linkInstanceId, attributeId);
+   public void runRule(@PathParam("linkTypeId") final String linkTypeId, @PathParam("linkInstanceId") final String linkInstanceId, @PathParam("attributeId") final String attributeId, @QueryParam("actionName") final String actionName) {
+      linkInstanceFacade.runRule(linkTypeId, linkInstanceId, attributeId, actionName);
    }
 
 }

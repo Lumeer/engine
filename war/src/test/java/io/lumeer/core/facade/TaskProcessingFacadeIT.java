@@ -388,7 +388,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
    private List<LinkInstance> waitForLinksByType(final String linkTypeId) throws InterruptedException {
       List<LinkInstance> instances;
-      int cycles = 10;
+      int cycles = 20;
       do {
          Thread.sleep(500);
          instances = getLinksByType(linkTypeId);

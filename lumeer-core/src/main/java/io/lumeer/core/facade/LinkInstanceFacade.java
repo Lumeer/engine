@@ -380,7 +380,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    @SuppressWarnings("unchecked")
-   public void runRule(final String linkTypeId, String linkInstanceId, String attributeId) {
+   public void runRule(final String linkTypeId, String linkInstanceId, String attributeId, final String actionName) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       Constraint constraint = ResourceUtils.findConstraint(linkType.getAttributes(), attributeId);
       if (constraint != null) {
@@ -394,7 +394,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
          checkLinkTypePermissions(linkType, role);
          LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
-         taskProcessingFacade.runRule(linkType, rule, linkInstance);
+         taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
       }
    }
 
