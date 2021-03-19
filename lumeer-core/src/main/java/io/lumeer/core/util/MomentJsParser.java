@@ -41,7 +41,7 @@ public class MomentJsParser implements AutoCloseable {
    static {
       try (
             var stream = MomentJsParser.class.getResourceAsStream("/moment-with-locales.min.js");
-            var stream2 = MomentJsParser.class.getResourceAsStream("/moment-business.min.js");
+            var stream2 = MomentJsParser.class.getResourceAsStream("/moment-business.min.js")
       ) {
          momentJsCode = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
          momentJsCode += new String(stream2.readAllBytes(), StandardCharsets.UTF_8);
