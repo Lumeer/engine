@@ -36,6 +36,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -135,8 +136,8 @@ public class DocumentService extends AbstractService {
 
    @POST
    @Path("{documentId:[0-9a-fA-F]{24}}/rule/{attributeId}")
-   public void runRule(@PathParam("documentId") final String documentId, @PathParam("attributeId") final String attributeId) {
-      documentFacade.runRule(collectionId, documentId, attributeId);
+   public void runRule(@PathParam("documentId") final String documentId, @PathParam("attributeId") final String attributeId, @QueryParam("actionName") final String actionName) {
+      documentFacade.runRule(collectionId, documentId, attributeId, actionName);
    }
 
 }

@@ -45,6 +45,7 @@ public class RuleTask extends AbstractContextualTask {
    private LinkInstance oldLinkInstance;
    private LinkInstance newLinkInstance;
    private List<Document> documents;
+   private String actionName;
 
    public void setRule(final String ruleName, final Rule rule, final Collection collection, final Document oldDocument, final Document newDocument) {
       this.ruleName = ruleName;
@@ -150,6 +151,14 @@ public class RuleTask extends AbstractContextualTask {
       return documents;
    }
 
+   public String getActionName() {
+      return actionName;
+   }
+
+   public void setActionName(final String actionName) {
+      this.actionName = actionName;
+   }
+
    @Override
    public String toString() {
       return "RuleTask{" +
@@ -162,6 +171,7 @@ public class RuleTask extends AbstractContextualTask {
             ", oldLinkInstance=" + oldLinkInstance +
             ", newLinkInstance=" + newLinkInstance +
             ", documents=" + documents +
+            ", actionName=" + actionName +
             '}';
    }
 
