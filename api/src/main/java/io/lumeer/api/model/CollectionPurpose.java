@@ -28,7 +28,7 @@ public class CollectionPurpose {
    public static final String TYPE = "type";
    public static final String META_DATA = "metaData";
 
-   private final CollectionPurposeType type;
+   private CollectionPurposeType type;
    private DataDocument metaData;
 
    @JsonCreator
@@ -42,8 +42,16 @@ public class CollectionPurpose {
       return type;
    }
 
+   public void setType(final CollectionPurposeType type) {
+      this.type = type;
+   }
+
    public DataDocument getMetaData() {
       return metaData;
+   }
+
+   public void setMetaData(final DataDocument metaData) {
+      this.metaData = metaData;
    }
 
    public DataDocument createIfAbsentMetaData() {

@@ -215,6 +215,20 @@ public class ProjectService extends AbstractService {
       return projectFacade.getRawProjectContent(projectId);
    }
 
+   @POST
+   @Path("{projectId:[0-9a-fA-F]{24}}/raw")
+   public Response addProjectContent(@PathParam("projectId") String projectId, final ProjectContent projectContent) {
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+
+      if (workspaceKeeper.getOrganization().isPresent()) {
+         final Project project = projectFacade.getProjectById(projectId);
+         copyFacade.installProjectContent(project, organizationId, projectContent);
+         return Response.ok().build();
+      }
+
+      return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+   }
+
    @GET
    @Path("{projectId:[0-9a-fA-F]{24}}/limits")
    public List<Organization> canBeCopiedToOrganization(@PathParam("projectId") String projectId) {

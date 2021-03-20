@@ -18,11 +18,34 @@
  */
 package io.lumeer.api.model.templateParse;
 
+import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Query;
 import io.lumeer.api.model.View;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ViewWithId extends View {
+
+   public static final String _ID = "_id";
+
+   @JsonCreator
+   public ViewWithId(
+         @JsonProperty(_ID) final String id,
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(QUERY) final Query query,
+         @JsonProperty(PERSPECTIVE) final String perspective,
+         @JsonProperty(CONFIG) final Object config,
+         @JsonProperty(SETTINGS) final Object settings,
+         @JsonProperty(AUTHOR_ID) final String authorId) {
+      super(code, name, icon, color, description, permissions, query, perspective, config, settings, authorId);
+      setId(id);
+   }
 
    public ViewWithId(final View view) {
       super(view.getCode(), view.getName(), view.getIcon(), view.getColor(),
@@ -31,7 +54,7 @@ public class ViewWithId extends View {
       this.setId(view.getId());
    }
 
-   @JsonProperty("_id")
+   @JsonProperty(_ID)
    @Override
    public String getId() {
       return super.getId();

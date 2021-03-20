@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -87,6 +88,12 @@ public class CopyFacade extends AbstractFacade {
 
    private void copyProjectByCode(Project project, String organizationId, String projectCode) {
       copyProject(project, organizationId, dao -> dao.getProjectByCode(projectCode));
+   }
+
+   public void installProjectContent(final Project project, final String organizationId, final ProjectContent projectContent) {
+      permissionsChecker.checkRole(project, Role.MANAGE);
+
+      templateFacade.installTemplate(project, organizationId, projectContent, new Date());
    }
 
    private void copyProject(Project project, String organizationId, java.util.function.Function<ProjectDao, Project> projectFunction) {
