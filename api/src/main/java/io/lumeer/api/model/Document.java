@@ -35,6 +35,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Document implements WithId {
 
+   public static final String DATA = "data";
    public static final String META_PARENT_ID = "parentId";
    public static final String META_TEMPLATE_ID = "templateId"; // for importing and template creation
    public static final String META_ORIGINAL_DOCUMENT_ID = "originalDocumentId"; // for duplicating documents
@@ -60,7 +61,7 @@ public class Document implements WithId {
    private boolean favorite;
 
    @JsonCreator
-   public Document(@JsonProperty("data") final DataDocument data) {
+   public Document(@JsonProperty(DATA) final DataDocument data) {
       this.data = data;
    }
 

@@ -18,11 +18,41 @@
  */
 package io.lumeer.api.model.templateParse;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Rule;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Map;
+import java.util.Set;
+
 public class CollectionWithId extends Collection {
+
+   public static final String _ID = "_id";
+   public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
+
+   @JsonCreator
+   public CollectionWithId(
+         @JsonProperty(_ID) final String id,
+         @JsonProperty(CODE) final String code,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
+         @JsonProperty(RULES) final Map<String, Rule> rules,
+         @JsonProperty(DATA_DESCRIPTION) final String dataDescription,
+         @JsonProperty(PURPOSE) final CollectionPurpose purpose,
+         @JsonProperty(DEFAULT_ATTRIBUTE_ID) final String defaultAttributeId) {
+      super(code, name, icon, color, description, permissions, attributes, rules, dataDescription, purpose);
+      setId(id);
+      setDefaultAttributeId(defaultAttributeId);
+   }
 
    public CollectionWithId(final Collection collection) {
       super(
@@ -41,7 +71,7 @@ public class CollectionWithId extends Collection {
    }
 
    @Override
-   @JsonProperty("_id")
+   @JsonProperty(_ID)
    public String getId() {
       return super.getId();
    }
