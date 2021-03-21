@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.geocoding.Coordinates;
 import io.lumeer.api.model.geocoding.Location;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.cache.GeoCodingCache;
 import io.lumeer.core.client.mapquest.MapQuestClient;
 import io.lumeer.core.client.opensearch.OpenSearchResult;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
@@ -44,6 +46,16 @@ public class GeoCodingFacade {
 
    @Inject
    private MapQuestClient mapQuestClient;
+
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
+   private String language;
+
+   @PostConstruct
+   public void init() {
+      language = requestDataKeeper.getUserLocale();
+   }
 
    public Map<String, Coordinates> findCoordinates(final Set<String> queries) {
       var coordinatesMap = getCachedCoordinates(queries);
@@ -59,7 +71,7 @@ public class GeoCodingFacade {
       return coordinatesMap;
    }
 
-   public Location findLocationByCoordinates(final Coordinates coordinates, final String language) {
+   public Location findLocationByCoordinates(final Coordinates coordinates) {
       var cachedLocation = geoCodingCache.getCoordinatesLocation(coordinates, language);
       if (cachedLocation != null) {
          return cachedLocation;
@@ -76,7 +88,7 @@ public class GeoCodingFacade {
       return location;
    }
 
-   public List<Location> findLocationsByQuery(final String query, final Integer limit, final String language) {
+   public List<Location> findLocationsByQuery(final String query, final Integer limit) {
       var cachedLocations = geoCodingCache.getQueryLocations(query, language);
       if (cachedLocations != null) {
          return cachedLocations;

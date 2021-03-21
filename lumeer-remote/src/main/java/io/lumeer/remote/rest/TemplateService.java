@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.TemplateMetadata;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -54,10 +55,13 @@ public class TemplateService extends AbstractService {
    @Inject
    private TemplateFacade templateFacade;
 
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
    @GET
-   public List<Project> getTemplates(@QueryParam("l") Language language) {
-      var nonNullLanguage = Objects.requireNonNullElse(language, Language.EN);
-      final String organizationId = templateFacade.getTemplateOrganizationId(nonNullLanguage);
+   public List<Project> getTemplates() {
+      Language language = Language.fromString(requestDataKeeper.getUserLocale());
+      final String organizationId = templateFacade.getTemplateOrganizationId(language);
 
       if (StringUtils.isEmpty(organizationId)) {
          return List.of();

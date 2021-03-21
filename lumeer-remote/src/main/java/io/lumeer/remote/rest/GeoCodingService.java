@@ -62,18 +62,17 @@ public class GeoCodingService extends AbstractService {
    @Path("locations")
    public List<Location> findLocations(
          @QueryParam("query") final String query,
-         @QueryParam("limit") final Integer limit,
-         @QueryParam("lang") final String language) {
+         @QueryParam("limit") final Integer limit) {
       if (query == null || query.length() == 0) {
          throw new BadRequestException("No query has been provided");
       }
 
-      return geoCodingFacade.findLocationsByQuery(query, limit, parseLanguage(language));
+      return geoCodingFacade.findLocationsByQuery(query, limit);
    }
 
    @GET
    @Path("locations/{coordinates}")
-   public Location findLocationByCoordinates(@PathParam("coordinates") String coordinates, @QueryParam("lang") String language) {
-      return geoCodingFacade.findLocationByCoordinates(new Coordinates(coordinates), parseLanguage(language));
+   public Location findLocationByCoordinates(@PathParam("coordinates") String coordinates) {
+      return geoCodingFacade.findLocationByCoordinates(new Coordinates(coordinates));
    }
 }
