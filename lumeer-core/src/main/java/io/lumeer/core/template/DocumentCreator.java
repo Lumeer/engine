@@ -55,7 +55,7 @@ public class DocumentCreator extends WithIdCreator {
 
    private void createDocuments() {
       final JSONArray collections = (JSONArray) templateParser.template.get("collections");
-      final int maxDocumentsPerCollection = (maxDocuments < 0) ? -1 : (maxDocuments / collections.size() - 20); // 20 is a reserve so that users can create some more documents
+      final int maxDocumentsPerCollection = (maxDocuments < 0 || collections.isEmpty()) ? -1 : (maxDocuments / collections.size() - 20); // 20 is a reserve so that users can create some more documents
 
       JSONArray a = (JSONArray) templateParser.getTemplate().get("documents");
       final Map<String, List<Document>> documents = new HashMap<>();
