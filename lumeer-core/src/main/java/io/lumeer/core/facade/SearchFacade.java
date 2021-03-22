@@ -58,7 +58,6 @@ import io.lumeer.storage.api.dao.UserDao;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
