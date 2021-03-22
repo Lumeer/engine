@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -350,7 +351,7 @@ public class UserFacade extends AbstractFacade {
 
       if (user.hasNewsletter() != null) {
          currentUser.setNewsletter(user.hasNewsletter());
-         mailerService.setUserSubscription(currentUser, !"cs".equals(language)); // so that en is default
+         mailerService.setUserSubscription(currentUser, !Language.fromString(language).equals(Language.CS)); // so that en is default
       }
 
       if (user.hasAgreement() != null) {
