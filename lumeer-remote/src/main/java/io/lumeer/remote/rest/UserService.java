@@ -26,6 +26,7 @@ import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.UserFacade;
@@ -67,6 +68,9 @@ public class UserService extends AbstractService {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
 
    @GET
    @JsonView(UserViews.DefaultView.class)
@@ -142,7 +146,7 @@ public class UserService extends AbstractService {
    @JsonView(UserViews.FullView.class)
    @HealthCheck
    public User patchCurrentUser(User user) {
-      return userFacade.patchCurrentUser(user, getFirstUrlPathPart());
+      return userFacade.patchCurrentUser(user, requestDataKeeper.getUserLocale());
    }
 
    @PUT

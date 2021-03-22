@@ -22,8 +22,6 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.remote.rest.init.StartupFacade;
 
-import org.jboss.resteasy.annotations.LinkHeaderParam;
-
 import java.net.URI;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -45,28 +43,11 @@ abstract class AbstractService {
    @Inject
    private StartupFacade startupFacade;
 
-   protected URI getResourceUri(String additionalPath) {
-      return UriBuilder.fromUri(request.getRequestURL() + "/" + additionalPath).build();
-   }
-
    protected URI getParentUri(String... urlEnd) {
       String fullPath = request.getRequestURL().toString();
       String regex = "\\/" + Arrays.stream(urlEnd).collect(Collectors.joining("\\/")) + "\\/?$";
       String parentPath = fullPath.replaceFirst(regex, "");
       return UriBuilder.fromUri(parentPath).build();
-   }
-
-   protected String getRequestUrl() {
-      return request.getRequestURL().toString();
-   }
-
-   protected String getFirstUrlPathPart() {
-      String url = getRequestUrl();
-      url = url.substring(url.indexOf("://") + 3);
-      url = url.substring(url.indexOf("/") + 1);
-      url = url.substring(0, url.indexOf("/"));
-
-      return url;
    }
 
    protected boolean isManager() {

@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ProjectMeta {
@@ -37,7 +38,10 @@ public class ProjectMeta {
    @JsonProperty("documentCount")
    private int documentCount;
 
-   public ProjectMeta(final String prefix, final int collectionCount, final int linkTypeCount, final int viewCount, final int documentCount) {
+   @JsonCreator
+   public ProjectMeta(@JsonProperty("prefix") final String prefix, @JsonProperty("collectionCount") final int collectionCount,
+         @JsonProperty("linkTypeCount") final int linkTypeCount, @JsonProperty("viewCount") final int viewCount,
+         @JsonProperty("documentCount") final int documentCount) {
       this.prefix = prefix;
       this.collectionCount = collectionCount;
       this.linkTypeCount = linkTypeCount;

@@ -26,6 +26,8 @@ import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.bridge.DocumentBridge;
 import io.lumeer.core.task.executor.bridge.LinkBridge;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -61,6 +63,10 @@ public class BlocklyRuleTaskExecutor {
       } else {
          bindings.put("oldLink", new LinkBridge(ruleTask.getOldLinkInstance()));
          bindings.put("newLink", new LinkBridge(ruleTask.getNewLinkInstance()));
+      }
+
+      if (StringUtils.isNotEmpty(ruleTask.getActionName())) {
+         bindings.put("lumeerActionName", ruleTask.getActionName());
       }
 
       return bindings;

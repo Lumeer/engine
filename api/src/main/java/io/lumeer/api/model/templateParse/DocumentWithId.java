@@ -19,16 +19,26 @@
 package io.lumeer.api.model.templateParse;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class DocumentWithId extends Document {
+
+   public static final String _ID = "_id";
 
    public DocumentWithId(final Document document) {
       super(document);
    }
 
-   @JsonProperty("_id")
+   @JsonCreator
+   public DocumentWithId(@JsonProperty(_ID) final String id, @JsonProperty(DATA) final DataDocument data) {
+      super(data);
+      setId(id);
+   }
+
+   @JsonProperty(_ID)
    @Override
    public String getId() {
       return super.getId();
