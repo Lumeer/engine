@@ -329,7 +329,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       linksMap.forEach((linkTypeId, value) -> {
          var linkType = linkTypeDao.getLinkType(linkTypeId);
-         if (hasLinkTypePermissions(linkType, Role.READ)) {
+         if (permissionsChecker.hasLinkTypePermissions(linkType, Role.READ)) {
 
             var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
                                      .stream()
@@ -392,7 +392,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          var roleString = config.get("role").toString();
          var role = Role.fromString(roleString);
 
-         checkLinkTypePermissions(linkType, role);
+         permissionsChecker.checkLinkTypePermissions(linkType, role, false);
          LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
          taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
       }
@@ -451,25 +451,8 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      checkLinkTypePermissions(linkType, role);
+      permissionsChecker.checkLinkTypePermissions(linkType, role, false);
       return linkType;
-   }
-
-   private void checkLinkTypePermissions(LinkType linkType, Role role) {
-      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      for (Collection collection : collections) {
-         permissionsChecker.checkRoleWithView(collection, role, role);
-      }
-   }
-
-   private boolean hasLinkTypePermissions(LinkType linkType, Role role) {
-      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      var hasPermissions = true;
-      for (Collection collection : collections) {
-         hasPermissions = hasPermissions && permissionsChecker.hasRoleWithView(collection, role, role);
-      }
-
-      return hasPermissions;
    }
 
    private void checkProjectRole(Role role) {

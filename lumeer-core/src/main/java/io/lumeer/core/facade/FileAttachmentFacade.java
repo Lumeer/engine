@@ -297,7 +297,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    private String getFileAttachmentKey(final FileAttachment fileAttachment) {
       return getFileAttachmentLocation(fileAttachment.getOrganizationId(), fileAttachment.getProjectId(), fileAttachment.getCollectionId(), fileAttachment.getDocumentId(), fileAttachment.getAttributeId(), fileAttachment.getAttachmentType()) + "/"
-              + fileAttachment.getId();
+            + fileAttachment.getId();
    }
 
    /**
@@ -443,10 +443,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      for (Collection collection : collections) {
-         permissionsChecker.checkRoleWithView(collection, role, role);
-      }
+      permissionsChecker.checkLinkTypePermissions(linkType, role, false);
       return linkType;
    }
 

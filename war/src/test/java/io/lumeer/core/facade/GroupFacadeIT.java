@@ -29,7 +29,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -110,7 +110,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       setOrganizationWithoutPermissions();
 
       assertThatThrownBy(() -> groupFacade.createGroup(new Group(GROUP1)))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -129,7 +129,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
 
       setOrganizationWithoutPermissions();
       assertThatThrownBy(() -> groupFacade.updateGroup(groupId, new Group(GROUP2)))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -188,7 +188,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
 
       setOrganizationWithoutPermissions();
       assertThatThrownBy(() -> groupFacade.deleteGroup(id))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -205,7 +205,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       setOrganizationWithoutPermissions();
 
       assertThatThrownBy(() -> groupFacade.getGroups())
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    private Group getGroup(String group) {

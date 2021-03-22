@@ -28,7 +28,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 
 import org.assertj.core.util.Sets;
 import org.junit.Before;
@@ -99,7 +99,7 @@ public class PermissionsCheckerTest {
    public void testCheckNoRole() {
       Resource resource = prepareResource(Collections.emptySet(), Collections.emptySet());
       assertThatThrownBy(() -> permissionsChecker.checkRole(resource, Role.READ))
-            .isInstanceOf(NoPermissionException.class)
+            .isInstanceOf(NoResourcePermissionException.class)
             .hasFieldOrPropertyWithValue("resource", resource);
    }
 
@@ -107,7 +107,7 @@ public class PermissionsCheckerTest {
    public void testCheckDifferentRole() {
       Resource resource = prepareResource(Collections.singleton(Role.WRITE), Collections.singleton(Role.READ));
       assertThatThrownBy(() -> permissionsChecker.checkRole(resource, Role.MANAGE))
-            .isInstanceOf(NoPermissionException.class)
+            .isInstanceOf(NoResourcePermissionException.class)
             .hasFieldOrPropertyWithValue("resource", resource);
    }
 
