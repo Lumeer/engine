@@ -420,7 +420,7 @@ public class PermissionsChecker {
                        .collect(toSet());
    }
 
-   public Map<String, AllowedPermissions> getCollectionsPermissions(final List<Collection> collection) {
+   public Map<String, AllowedPermissions> getCollectionsPermissions(final java.util.Collection<Collection> collection) {
       return collection.stream().collect(Collectors.toMap(Resource::getId, this::getCollectionPermissions));
    }
 
@@ -435,7 +435,7 @@ public class PermissionsChecker {
       );
    }
 
-   public Map<String, AllowedPermissions> getLinkTypesPermissions(final List<LinkType> linkTypes, final Map<String, AllowedPermissions> collectionsPermissions) {
+   public Map<String, AllowedPermissions> getLinkTypesPermissions(final java.util.Collection<LinkType> linkTypes, final Map<String, AllowedPermissions> collectionsPermissions) {
       return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, linkType ->
             mergePermissions(collectionsPermissions.get(linkType.getFirstCollectionId()), collectionsPermissions.get(linkType.getSecondCollectionId()))));
    }

@@ -58,6 +58,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -124,7 +125,7 @@ public class SearchFacade extends AbstractFacade {
       return searchLinkInstances(query, true, true);
    }
 
-   public List<LinkInstance> searchLinkInstances(Query query,  boolean includeChildDocuments) {
+   public List<LinkInstance> searchLinkInstances(Query query, boolean includeChildDocuments) {
       return searchLinkInstances(query, false, includeChildDocuments);
    }
 
@@ -434,11 +435,39 @@ public class SearchFacade extends AbstractFacade {
 
    private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
       final View view = permissionsChecker.getActiveView();
-      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE)) {
+      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE) && !canReadQueryResources(query, collectionsMap, linkTypesMap)) {
          return constraintManager.decodeQuery(view.getQuery(), collectionsMap, linkTypesMap);
       }
 
       return constraintManager.decodeQuery(query, collectionsMap, linkTypesMap);
+   }
+
+   private boolean canReadQueryResources(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+      return query.getStems().stream().allMatch(stem -> {
+         var collection = collectionsMap.get(stem.getCollectionId());
+         if (!canReadCollection(collection)) {
+            return false;
+         }
+         var linkTypes = stem.getLinkTypeIds().stream().map(linkTypesMap::get).collect(Collectors.toList());
+         for (LinkType linkType : linkTypes) {
+            if (!canReadLinkType(linkType, collectionsMap)) {
+               return false;
+            }
+         }
+         return true;
+      });
+   }
+
+   private boolean canReadCollection(final Collection collection) {
+      return collection != null && permissionsChecker.hasRole(collection, Role.READ);
+   }
+
+   private boolean canReadLinkType(final LinkType linkType, final Map<String, Collection> collectionsMap) {
+      if (linkType != null) {
+         var collections = linkType.getCollectionIds().stream().map(collectionsMap::get).filter(Objects::nonNull).collect(Collectors.toList());
+         return collections.size() == 2 && collections.stream().allMatch(this::canReadCollection);
+      }
+      return false;
    }
 
    private Tuple<List<Collection>, List<LinkType>> getReadResources(boolean isPublic, Query query) {
