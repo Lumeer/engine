@@ -392,7 +392,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          var roleString = config.get("role").toString();
          var role = Role.fromString(roleString);
 
-         permissionsChecker.checkLinkTypePermissions(linkType, role, false);
+         permissionsChecker.checkLinkTypePermissions(linkType, role, true);
          LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
          taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
       }
