@@ -50,18 +50,6 @@ abstract class AbstractService {
       return UriBuilder.fromUri(parentPath).build();
    }
 
-   protected String parseLanguage(final String language) {
-      if (language == null || language.isEmpty()){
-         return "en";
-      }
-
-      if(!Arrays.asList("en", "cs").contains(language)){
-         return "en";
-      }
-
-      return language;
-   }
-
    protected boolean isManager() {
       return permissionsChecker.isManager();
    }
