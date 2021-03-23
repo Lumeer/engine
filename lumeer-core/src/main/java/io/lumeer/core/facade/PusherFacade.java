@@ -101,7 +101,6 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import javax.ws.rs.core.Link;
 
 @ApplicationScoped
 public class PusherFacade extends AbstractFacade {
