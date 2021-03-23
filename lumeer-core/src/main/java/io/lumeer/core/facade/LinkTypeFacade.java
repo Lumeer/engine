@@ -103,7 +103,7 @@ public class LinkTypeFacade extends AbstractFacade {
    public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
       LinkType storedLinkType = checkLinkTypePermission(id);
       LinkType originalLinkType = new LinkType(storedLinkType);
-      if (!storedLinkType.getCollectionIds().containsAll(storedLinkType.getCollectionIds())) {
+      if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
          checkLinkTypePermission(linkType);
       }
 

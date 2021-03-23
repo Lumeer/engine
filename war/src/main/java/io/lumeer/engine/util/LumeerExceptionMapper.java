@@ -22,6 +22,7 @@ import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.exception.LumeerException;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.PaymentGatewayException;
@@ -81,7 +82,8 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
       }
 
       // 403 - FORBIDDEN
-      if (e instanceof NoResourcePermissionException || e instanceof NoSystemPermissionException || e instanceof AccessForbiddenException) {
+      if (e instanceof NoResourcePermissionException || e instanceof NoPermissionException || e instanceof NoSystemPermissionException ||
+            e instanceof AccessForbiddenException) {
          return Response.status(Response.Status.FORBIDDEN).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
