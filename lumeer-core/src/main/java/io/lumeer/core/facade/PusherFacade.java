@@ -101,6 +101,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.ws.rs.core.Link;
 
 @ApplicationScoped
 public class PusherFacade extends AbstractFacade {
@@ -283,29 +284,23 @@ public class PusherFacade extends AbstractFacade {
 
       List<LinkType> linkTypes = linkTypeDao.getLinkTypesByCollectionId(updatedCollection.getId());
       List<View> views = viewDao.getAllViews();
+      List<Collection> allCollections = collectionDao.getAllCollections();
       List<Event> notifications = new ArrayList<>();
 
       if (removedUsers.size() > 0) {
          notifications.addAll(createRemoveCollectionNotification(updatedCollection, removedUsers, views, linkTypes));
          if (linkTypes.size() > 0) {
-            notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, removedUsers, views));
+            notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, allCollections, removedUsers, views));
          }
       }
 
       if (addedUsers.size() > 0 && linkTypes.size() > 0) {
-         Map<String, Collection> collectionMapByLinkTypes = getCollectionsMapFromLinkTypes(linkTypes);
-         notifications.addAll(createSendCollectionLinkTypesNotification(linkTypes, addedUsers, views, collectionMapByLinkTypes));
+         notifications.addAll(createSendCollectionLinkTypesNotification(linkTypes, allCollections, addedUsers, views));
       }
 
       if (notifications.size() > 0) {
          sendNotificationsBatch(notifications);
       }
-   }
-
-   private Map<String, Collection> getCollectionsMapFromLinkTypes(List<LinkType> linkTypes) {
-      final Set<String> collectionIds = linkTypes.stream().map(LinkType::getCollectionIds)
-                                                 .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
-      return collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
    }
 
    private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views, final List<LinkType> linkTypes) {
@@ -332,42 +327,54 @@ public class PusherFacade extends AbstractFacade {
       return notifications;
    }
 
-   private List<Event> createRemoveCollectionLinkTypesNotification(final List<LinkType> linkTypes, final Set<String> userIds, final List<View> views) {
+   private List<Event> createRemoveCollectionLinkTypesNotification(final List<LinkType> linkTypes, final List<Collection> collections, final Set<String> userIds, final List<View> views) {
       List<Event> notifications = new ArrayList<>();
 
       for (String user : userIds) {
-         filterLinkTypesNotInViews(linkTypes, views, user).forEach(linkType -> notifications.add(createEventForRemove(linkType.getClass().getSimpleName(),
+         filterLinkTypesNotInViews(linkTypes, collections, views, user, true).forEach(linkType -> notifications.add(createEventForRemove(linkType.getClass().getSimpleName(),
                new ResourceId(linkType.getId(), getOrganization().getId(), getProject().getId()), user)));
       }
 
       return notifications;
    }
 
-   private List<LinkType> filterLinkTypesNotInViews(List<LinkType> linkTypes, List<View> views, String user) {
+   private List<LinkType> filterLinkTypesNotInViews(List<LinkType> linkTypes, List<Collection> collections, List<View> views, String user, boolean includeReadableCollections) {
       List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
-      Set<String> linkTypeIdsInView = viewsByUser.stream().map(view -> view.getQuery().getLinkTypeIds())
-                                                 .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+      Set<String> linkTypeIdsInViews = viewsByUser.stream().map(view -> view.getQuery().getLinkTypeIds())
+                                                  .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
+      if (includeReadableCollections) {
+         Set<String> readableCollectionsIds = filterViewsReadableCollectionsIds(views, linkTypes, collections, user);
+         return linkTypes.stream().filter(linkType -> !linkTypeIdsInViews.contains(linkType.getId()) && !readableCollectionsIds.containsAll(linkType.getCollectionIds())).collect(Collectors.toList());
+      }
 
-      return linkTypes.stream().filter(linkType -> !linkTypeIdsInView.contains(linkType.getId())).collect(Collectors.toList());
+      return linkTypes.stream().filter(linkType -> !linkTypeIdsInViews.contains(linkType.getId())).collect(Collectors.toList());
    }
 
-   private List<Event> createSendCollectionLinkTypesNotification(final List<LinkType> linkTypes, final Set<String> userIds, final List<View> views, final Map<String, Collection> collectionsMap) {
+   private Set<String> filterViewsReadableCollectionsIds(final List<View> views, final List<LinkType> linkTypes, final List<Collection> collections, final String user) {
+      Set<String> readableCollectionsIds = QueryUtils.getViewsCollectionIds(views, linkTypes);
+      readableCollectionsIds.addAll(collections.stream().filter(collection -> permissionsChecker.hasRole(collection, Role.READ, user)).map(Collection::getId).collect(Collectors.toSet()));
+      return readableCollectionsIds;
+   }
+
+   private List<Event> createSendCollectionLinkTypesNotification(final List<LinkType> linkTypes, final List<Collection> collections, final Set<String> userIds, final List<View> views) {
       List<Event> notifications = new ArrayList<>();
 
+      Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
+
       for (String user : userIds) {
-         filterLinkTypesNotInViews(linkTypes, views, user).stream()
-                                                          .filter(linkType -> canUserReadLinkType(user, linkType, collectionsMap))
-                                                          .forEach(linkType -> notifications.add(createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)));
+         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
+         Set<String> viewsCollectionsIds = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes);
+         filterLinkTypesNotInViews(linkTypes, collections, views, user, false).stream()
+                                                                              .filter(linkType -> canUserReadLinkType(user, linkType, collectionsMap, viewsCollectionsIds))
+                                                                              .forEach(linkType -> notifications.add(createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)));
       }
 
       return notifications;
    }
 
-   private boolean canUserReadLinkType(String userId, LinkType linkType, Map<String, Collection> collectionsMap) {
-      long count = linkType.getCollectionIds().stream().map(collectionsMap::get)
-                           .filter(collection -> collection == null || !permissionsChecker.hasRole(collection, Role.READ, userId)).count();
-
-      return count == 0;
+   private boolean canUserReadLinkType(String userId, LinkType linkType, Map<String, Collection> collectionsMap, Set<String> viewsCollectionsIds) {
+      return linkType.getCollectionIds().stream().map(collectionsMap::get)
+                     .allMatch(collection -> collection != null && (permissionsChecker.hasRole(collection, Role.READ, userId) || viewsCollectionsIds.contains(collection.getId())));
    }
 
    private void checkViewPermissionsChange(final View originalView, final View updatedView) {
@@ -386,6 +393,8 @@ public class PusherFacade extends AbstractFacade {
       List<View> views = viewDao.getAllViews();
       List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(updatedView.getQuery().getLinkTypeIds());
       List<Collection> collections = getCollectionsByQuery(updatedView.getQuery(), linkTypes);
+      List<Collection> allCollections = collectionDao.getAllCollections();
+      List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
 
       List<Event> notifications = new ArrayList<>();
 
@@ -395,12 +404,14 @@ public class PusherFacade extends AbstractFacade {
             collections.forEach(collection -> notifications.addAll(createRemoveCollectionNotification(collection, removedUsers, views, linkTypes)));
          }
          if (linkTypes.size() > 0) {
-            linkTypes.forEach(linkType -> notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, removedUsers, views)));
+            linkTypes.forEach(linkType -> notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, allCollections, removedUsers, views)));
          }
       }
 
       for (String user : addedUsers) {
-         notifications.addAll(linkTypes.stream()
+         List<LinkType> linkTypesByUser = new ArrayList<>(linkTypes);
+         linkTypesByUser.addAll(linkTypesByViewReadPermission(updatedView, views, allCollections, allLinkTypes, user));
+         notifications.addAll(linkTypesByUser.stream()
                                        .map(linkType -> createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)).collect(Collectors.toList()));
 
          notifications.addAll(collections.stream()
@@ -412,6 +423,19 @@ public class PusherFacade extends AbstractFacade {
       if (notifications.size() > 0) {
          sendNotificationsBatch(notifications);
       }
+   }
+
+   private List<LinkType> linkTypesByViewReadPermission(View currentView, List<View> views, List<Collection> collections, List<LinkType> linkTypes, String userId) {
+      List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, userId)).collect(Collectors.toList());
+      Set<String> collectionsIdsByViews = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, userId);
+      List<LinkType> linkTypesByViews = linkTypes.stream().filter(linkType -> collectionsIdsByViews.containsAll(linkType.getCollectionIds())).collect(Collectors.toList());
+
+      List<View> viewsByUserWithoutCurrent = viewsByUser.stream().filter(view -> !view.getId().equals(currentView.getId())).collect(Collectors.toList());
+      Set<String> collectionsIdsByViewsWithoutCurrent = filterViewsReadableCollectionsIds(viewsByUserWithoutCurrent, linkTypes, collections, userId);
+      List<LinkType> linkTypesByViewsWithoutCurrent = linkTypes.stream().filter(linkType -> collectionsIdsByViewsWithoutCurrent.containsAll(linkType.getCollectionIds())).collect(Collectors.toList());
+
+      linkTypesByViews.removeAll(linkTypesByViewsWithoutCurrent);
+      return linkTypesByViews;
    }
 
    private List<Collection> getCollectionsByQuery(Query query, List<LinkType> linkTypes) {

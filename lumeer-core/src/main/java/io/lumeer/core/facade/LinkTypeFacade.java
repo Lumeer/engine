@@ -178,8 +178,9 @@ public class LinkTypeFacade extends AbstractFacade {
          return assignComputedParameters(allLinkTypes);
       }
 
-      final List<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
-                                                             .map(Collection::getId).collect(Collectors.toList());
+      final Set<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
+                                                             .map(Collection::getId).collect(Collectors.toSet());
+      allowedCollectionIds.addAll(viewFacade.getViewsCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
 
       final List<LinkType> linkTypes = allLinkTypes.stream()
                                                    .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
