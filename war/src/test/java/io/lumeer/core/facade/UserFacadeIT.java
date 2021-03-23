@@ -31,7 +31,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.BadFormatException;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -206,7 +206,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    @Test
    public void testCreateUserNotPermission() {
       assertThatThrownBy(() -> userFacade.createUser(organizationIdNotPermission, prepareUser(organizationIdNotPermission, USER1)))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -253,7 +253,7 @@ public class UserFacadeIT extends IntegrationTestBase {
       String userId = createUser(organizationId1, USER1).getId();
 
       assertThatThrownBy(() -> userFacade.updateUser(organizationIdNotPermission, userId, prepareUser(organizationIdNotPermission, USER3)))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -285,7 +285,7 @@ public class UserFacadeIT extends IntegrationTestBase {
       String id = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1)).getId();
 
       assertThatThrownBy(() -> userFacade.deleteUser(organizationIdNotPermission, id))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -305,7 +305,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    @Test
    public void testGetAllUsersNoPermission() {
       assertThatThrownBy(() -> userFacade.getUsers(organizationIdNotPermission))
-            .isInstanceOf(NoPermissionException.class);
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test

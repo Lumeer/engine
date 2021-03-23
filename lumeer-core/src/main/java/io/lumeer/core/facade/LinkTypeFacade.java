@@ -26,10 +26,9 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
-import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -38,7 +37,6 @@ import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -91,7 +89,7 @@ public class LinkTypeFacade extends AbstractFacade {
    public LinkType createLinkType(LinkType linkType) {
       permissionsChecker.checkFunctionsLimit(linkType);
       permissionsChecker.checkRulesLimit(linkType);
-      checkLinkTypePermission(linkType.getCollectionIds());
+      checkLinkTypePermission(linkType);
 
       linkType.setLastAttributeNum(0);
       linkType.setLinksCount(0L);
@@ -103,17 +101,16 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
-      LinkType storedLinkType = linkTypeDao.getLinkType(id);
+      LinkType storedLinkType = checkLinkTypePermission(id);
       LinkType originalLinkType = new LinkType(storedLinkType);
-      Set<String> collectionIds = new HashSet<>(linkType.getCollectionIds());
-      collectionIds.addAll(storedLinkType.getCollectionIds());
+      if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
+         checkLinkTypePermission(linkType);
+      }
 
       if (!skipFceLimits) {
          permissionsChecker.checkFunctionsLimit(linkType);
          permissionsChecker.checkRulesLimit(linkType);
       }
-
-      checkLinkTypePermission(collectionIds);
       keepUnmodifiableFields(linkType, storedLinkType);
 
       assignComputedParameters(originalLinkType);
@@ -127,16 +124,14 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public void deleteLinkType(String id) {
-      LinkType linkType = linkTypeDao.getLinkType(id);
-      checkLinkTypePermission(linkType.getCollectionIds());
-
+      LinkType linkType = checkLinkTypePermission(id);
       linkTypeDao.deleteLinkType(id);
       deleteLinkTypeBasedData(linkType.getId());
    }
 
    private void deleteLinkTypeBasedData(final String linkTypeId) {
       linkInstanceDao.getLinkInstancesByLinkType(linkTypeId).forEach(linkInstance -> {
-        resourceCommentDao.deleteComments(ResourceType.LINK, linkInstance.getId());
+         resourceCommentDao.deleteComments(ResourceType.LINK, linkInstance.getId());
       });
 
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
@@ -174,7 +169,7 @@ public class LinkTypeFacade extends AbstractFacade {
          return assignComputedParameters(linkType);
       }
 
-      throw new NoPermissionException(collections.get(0));
+      throw new NoResourcePermissionException(collections.get(0));
    }
 
    public List<LinkType> getLinkTypes() {
@@ -217,9 +212,8 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
-      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      LinkType linkType = checkLinkTypePermission(linkTypeId);
       LinkType originalLinkType = new LinkType(linkType);
-      checkLinkTypePermission(linkType.getCollectionIds());
 
       for (Attribute attribute : attributes) {
          final Integer freeNum = getFreeAttributeNum(linkType);
@@ -250,9 +244,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
-      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      checkLinkTypePermission(linkType.getCollectionIds());
-
+      LinkType linkType = checkLinkTypePermission(linkTypeId);
       LinkType originalLinkType = new LinkType(linkType);
       final Optional<Attribute> originalAttribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
 
@@ -273,8 +265,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public void deleteLinkTypeAttribute(final String linkTypeId, final String attributeId) {
-      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      checkLinkTypePermission(linkType.getCollectionIds());
+      LinkType linkType = checkLinkTypePermission(linkTypeId);
       LinkType originalLinkType = new LinkType(linkType);
 
       linkDataDao.deleteAttribute(linkTypeId, attributeId);
@@ -285,11 +276,14 @@ public class LinkTypeFacade extends AbstractFacade {
       fileAttachmentFacade.removeAllFileAttachments(linkTypeId, attributeId, FileAttachment.AttachmentType.LINK);
    }
 
-   private void checkLinkTypePermission(java.util.Collection<String> collectionIds) {
-      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
-      for (Collection collection : collections) {
-         permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
-      }
+   private void checkLinkTypePermission(LinkType linkType) {
+      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, true);
+   }
+
+   private LinkType checkLinkTypePermission(String linkTypeId) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, true);
+      return linkType;
    }
 
    private DatabaseQuery createCollectionsQuery() {

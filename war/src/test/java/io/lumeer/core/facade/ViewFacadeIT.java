@@ -36,7 +36,7 @@ import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.auth.PermissionsChecker;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -322,7 +322,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
          collectionFacade.getCollection(collection.getId());
          fail("Still able to access collection where I have no access rights");
       } catch (Exception e) {
-         assertThat(e).isInstanceOf(NoPermissionException.class);
+         assertThat(e).isInstanceOf(NoResourcePermissionException.class);
       }
 
       // create a view under a different user
@@ -339,14 +339,14 @@ public class ViewFacadeIT extends IntegrationTestBase {
          viewFacade.getViewById(view.getId());
          fail("Still able to access view where I have no access rights");
       } catch (Exception e) {
-         assertThat(e).isInstanceOf(NoPermissionException.class);
+         assertThat(e).isInstanceOf(NoResourcePermissionException.class);
       }
 
       try {
          viewFacade.updateUserPermissions(view.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
          fail("Can manage view without manage rights");
       } catch (Exception e) {
-         assertThat(e).isInstanceOf(NoPermissionException.class);
+         assertThat(e).isInstanceOf(NoResourcePermissionException.class);
       }
 
       // share the view and make sure we can see it now

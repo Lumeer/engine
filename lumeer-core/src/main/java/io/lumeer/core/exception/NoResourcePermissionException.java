@@ -19,10 +19,18 @@
 package io.lumeer.core.exception;
 
 import io.lumeer.api.exception.LumeerException;
+import io.lumeer.api.model.common.Resource;
 
-public class NoPermissionException extends LumeerException {
+public class NoResourcePermissionException extends LumeerException {
 
-   public NoPermissionException(final String message) {
-      super(message);
+   private final Resource resource;
+
+   public NoResourcePermissionException(final Resource resource) {
+      super(resource.getType().toString());
+      this.resource = resource;
+   }
+
+   public Resource getResource() {
+      return resource;
    }
 }

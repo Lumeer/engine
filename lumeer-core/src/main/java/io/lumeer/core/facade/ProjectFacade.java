@@ -36,7 +36,7 @@ import io.lumeer.api.model.templateParse.LinkTypeWithId;
 import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.WorkspaceCache;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -184,7 +184,7 @@ public class ProjectFacade extends AbstractFacade {
       final Project project = projectDao.getProjectById(projectId);
 
       if (!project.isPublic()) {
-         throw new NoPermissionException(project);
+         throw new NoResourcePermissionException(project);
       }
 
       return setupPublicPermissions(project);

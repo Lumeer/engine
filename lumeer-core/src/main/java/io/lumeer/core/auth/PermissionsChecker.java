@@ -37,6 +37,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
@@ -127,7 +128,7 @@ public class PermissionsChecker {
     *
     * @param resource any resource with defined permissions.
     * @param role     role to be checked.
-    * @throws NoPermissionException when the user does not have the permission.
+    * @throws NoResourcePermissionException when the user does not have the permission.
     */
    public void checkRole(Resource resource, Role role) {
       if (isManager()) {
@@ -137,7 +138,7 @@ public class PermissionsChecker {
       checkOrganizationAndProject(resource, Role.READ);
 
       if (!hasRoleInResource(resource, role)) {
-         throw new NoPermissionException(resource);
+         throw new NoResourcePermissionException(resource);
       }
    }
 
@@ -187,13 +188,42 @@ public class PermissionsChecker {
       return false;
    }
 
+   public void checkLinkTypePermissions(java.util.Collection<String> collectionIds, Role role,  boolean strict) {
+      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
+      if (!strict && role == Role.WRITE) {
+         boolean atLeastOneRead = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.READ, Role.READ));
+         boolean atLeastOneWrite = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.WRITE, Role.WRITE));
+         if (!atLeastOneRead || !atLeastOneWrite) {
+            throw new NoPermissionException("LinkType");
+         }
+      } else {
+         for (Collection collection : collections) {
+            checkRoleWithView(collection, role, role);
+         }
+      }
+   }
+
+   public void checkLinkTypePermissions(LinkType linkType, Role role, boolean strict) {
+      checkLinkTypePermissions(linkType.getCollectionIds(), role, strict);
+   }
+
+   public boolean hasLinkTypePermissions(LinkType linkType, Role role) {
+      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
+      var hasPermissions = true;
+      for (Collection collection : collections) {
+         hasPermissions = hasPermissions && hasRoleWithView(collection, role, role);
+      }
+
+      return hasPermissions;
+   }
+
    /**
     * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
     *
     * @param collection collection resource
     * @param role       role to be checked.
     * @param viewRole   role needed at the view.
-    * @throws NoPermissionException when the user does not have the permission.
+    * @throws NoResourcePermissionException when the user does not have the permission.
     */
    public void checkRoleWithView(final Collection collection, final Role role, final Role viewRole) {
       if (isManager()) {
@@ -203,18 +233,18 @@ public class PermissionsChecker {
       checkOrganizationAndProject(collection, Role.READ);
 
       if (!hasRoleWithView(collection, role, viewRole)) {
-         throw new NoPermissionException(collection);
+         throw new NoResourcePermissionException(collection);
       }
    }
 
    private void checkOrganizationAndProject(final Resource resource, final Role role) {
       if (!(resource instanceof Organization) && workspaceKeeper.getOrganization().isPresent()) {
          if (!hasRoleInResource(workspaceKeeper.getOrganization().get(), role)) {
-            throw new NoPermissionException(resource);
+            throw new NoResourcePermissionException(resource);
          }
          if (!(resource instanceof Project) && workspaceKeeper.getProject().isPresent()) {
             if (!hasRoleInResource(workspaceKeeper.getProject().get(), role)) {
-               throw new NoPermissionException(resource);
+               throw new NoResourcePermissionException(resource);
             }
          }
       }
@@ -405,7 +435,6 @@ public class PermissionsChecker {
       return user.getGroups().get(organization.getId());
    }
 
-
    private static Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
       return userRoles.stream()
                       .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
@@ -469,7 +498,7 @@ public class PermissionsChecker {
             final LinkType linkType = linkTypes.get(reference.getId());
             linkType.getCollectionIds().forEach(c -> checkRole(collections.get(c), role));
          } else {
-            throw new NoPermissionException(collection);
+            throw new NoResourcePermissionException(collection);
          }
       });
    }
@@ -668,11 +697,11 @@ public class PermissionsChecker {
     * Checks whether it is possible to delete the given resource.
     *
     * @param resource Resource to check.
-    * @throws NoPermissionException When it is not possible to delete the resource.
+    * @throws NoResourcePermissionException When it is not possible to delete the resource.
     */
    public void checkCanDelete(Resource resource) {
       if (resource.isNonRemovable()) {
-         throw new NoPermissionException(resource);
+         throw new NoResourcePermissionException(resource);
       }
    }
 

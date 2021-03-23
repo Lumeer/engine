@@ -38,7 +38,7 @@ import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTaskFactory;
@@ -236,7 +236,7 @@ public class CollectionFacade extends AbstractFacade {
          return mapResource(collection);
       }
 
-      throw new NoPermissionException(collection);
+      throw new NoResourcePermissionException(collection);
    }
 
    public List<Collection> getCollectionsPublic() {
