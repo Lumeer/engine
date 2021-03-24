@@ -24,7 +24,6 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -287,6 +286,8 @@ public class ViewFacade extends AbstractFacade {
       Set<String> linkTypesIds = views.stream().map(view -> view.getQuery().getLinkTypeIds())
                                       .flatMap(java.util.Collection::stream)
                                       .collect(Collectors.toSet());
+
+
 
       return linkTypeFacade.assignComputedParameters(linkTypeDao.getLinkTypesByIds(linkTypesIds));
    }
