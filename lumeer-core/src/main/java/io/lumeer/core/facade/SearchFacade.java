@@ -434,22 +434,23 @@ public class SearchFacade extends AbstractFacade {
 
    private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
       final View view = permissionsChecker.getActiveView();
-      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE) && !canReadQueryResources(query, collectionsMap, linkTypesMap)) {
+      final Set<String> viewCollectionIds = view != null ? QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds())) : Collections.emptySet();
+      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE) && !canReadQueryResources(query, collectionsMap, linkTypesMap, viewCollectionIds)) {
          return constraintManager.decodeQuery(view.getQuery(), collectionsMap, linkTypesMap);
       }
 
       return constraintManager.decodeQuery(query, collectionsMap, linkTypesMap);
    }
 
-   private boolean canReadQueryResources(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
+   private boolean canReadQueryResources(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, final Set<String> viewCollectionsIds) {
       return query.getStems().stream().allMatch(stem -> {
          var collection = collectionsMap.get(stem.getCollectionId());
-         if (!canReadCollection(collection)) {
+         if (!canReadCollection(collection, viewCollectionsIds)) {
             return false;
          }
          var linkTypes = stem.getLinkTypeIds().stream().map(linkTypesMap::get).collect(Collectors.toList());
          for (LinkType linkType : linkTypes) {
-            if (!canReadLinkType(linkType, collectionsMap)) {
+            if (!canReadLinkType(linkType, collectionsMap, viewCollectionsIds)) {
                return false;
             }
          }
@@ -457,14 +458,14 @@ public class SearchFacade extends AbstractFacade {
       });
    }
 
-   private boolean canReadCollection(final Collection collection) {
-      return collection != null && permissionsChecker.hasRole(collection, Role.READ);
+   private boolean canReadCollection(final Collection collection, final Set<String> viewCollectionsIds) {
+      return collection != null && (permissionsChecker.hasRole(collection, Role.READ) || viewCollectionsIds.contains(collection.getId()));
    }
 
-   private boolean canReadLinkType(final LinkType linkType, final Map<String, Collection> collectionsMap) {
+   private boolean canReadLinkType(final LinkType linkType, final Map<String, Collection> collectionsMap, final Set<String> viewCollectionsIds) {
       if (linkType != null) {
          var collections = linkType.getCollectionIds().stream().map(collectionsMap::get).filter(Objects::nonNull).collect(Collectors.toList());
-         return collections.size() == 2 && collections.stream().allMatch(this::canReadCollection);
+         return collections.size() == 2 && collections.stream().allMatch(collection -> canReadCollection(collection, viewCollectionsIds));
       }
       return false;
    }

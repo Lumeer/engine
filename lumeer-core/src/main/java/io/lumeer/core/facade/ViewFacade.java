@@ -32,6 +32,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.QueryUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -270,13 +271,8 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private List<Collection> getViewsCollections(List<View> views, boolean keepActualRoles) {
-      Set<String> collectionIds = views.stream().map(view -> view.getQuery().getCollectionIds())
-                                       .flatMap(java.util.Collection::stream)
-                                       .collect(Collectors.toSet());
-      Set<String> collectionIdsFromLinkTypes = getViewsLinkTypes(views).stream().map(LinkType::getCollectionIds)
-                                                                       .flatMap(java.util.Collection::stream)
-                                                                       .collect(Collectors.toSet());
-      collectionIds.addAll(collectionIdsFromLinkTypes);
+      Set<String> collectionIds = QueryUtils.getViewsCollectionIds(views, getViewsLinkTypes(views));
+
       return collectionDao.getCollectionsByIds(collectionIds).stream()
                           .map(collection -> keepActualRoles ? mapResource(collection) : collection)
                           .collect(Collectors.toList());
@@ -290,6 +286,8 @@ public class ViewFacade extends AbstractFacade {
       Set<String> linkTypesIds = views.stream().map(view -> view.getQuery().getLinkTypeIds())
                                       .flatMap(java.util.Collection::stream)
                                       .collect(Collectors.toSet());
+
+
 
       return linkTypeFacade.assignComputedParameters(linkTypeDao.getLinkTypesByIds(linkTypesIds));
    }

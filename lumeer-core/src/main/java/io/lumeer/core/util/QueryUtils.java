@@ -2,6 +2,7 @@ package io.lumeer.core.util;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.View;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,7 +15,20 @@ public class QueryUtils {
    private QueryUtils() {
    }
 
-   public static Set<String> getQueryCollectionIds(Query query, List<LinkType> linkTypes) {
+   public static Set<String> getViewsCollectionIds(java.util.Collection<View> views, java.util.Collection<LinkType> linkTypes) {
+      List<Query> queries = views.stream().map(View::getQuery).collect(Collectors.toList());
+      return queries.stream().map(query -> QueryUtils.getQueriesCollectionIds(queries, linkTypes))
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toSet());
+   }
+
+   public static Set<String> getQueriesCollectionIds(java.util.Collection<Query> queries, java.util.Collection<LinkType> linkTypes) {
+      return queries.stream().map(query -> QueryUtils.getQueryCollectionIds(query, linkTypes))
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toSet());
+   }
+
+   public static Set<String> getQueryCollectionIds(Query query, java.util.Collection<LinkType> linkTypes) {
       Set<String> collectionIds = new HashSet<>(query.getCollectionIds());
       Set<String> linkTypeIds = query.getLinkTypeIds();
       Set<String> collectionIdsInLinks = linkTypes.stream().filter(linkType -> linkTypeIds.contains(linkType.getId()))

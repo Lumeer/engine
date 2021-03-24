@@ -228,7 +228,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       LinkType linkType2 = prepareLinkType();
       linkType2.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(2)));
-      linkTypeDao.createLinkType(linkType2);
+      String id2 = linkTypeDao.createLinkType(linkType2).getId();
 
       LinkType linkType3 = prepareLinkType();
       linkType3.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(0)));
@@ -247,7 +247,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       List<LinkType> linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
       });
-      assertThat(linkTypes).extracting("id").containsOnly(id1, id3, id4);
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id2, id3, id4, linkTypeIdFromView);
 
       // test fromViews
       response = client.target(linkTypesUrl)
@@ -260,7 +260,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
       });
-      assertThat(linkTypes).extracting("id").containsOnly(id1, id3, id4, linkTypeIdFromView);
+      assertThat(linkTypes).extracting("id").containsOnly(id1, id2, id3, id4, linkTypeIdFromView);
 
    }
 
