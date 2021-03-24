@@ -457,7 +457,7 @@ public class LumeerBridge {
       try {
          final LinkType linkType = task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
          final List<LinkInstance> links = getLinkInstances(d.getDocument().getId(), linkTypeId);
-         final String otherCollectionId = linkType.getCollectionIds().get(0).equals(collection.getId()) ?
+         final String otherCollectionId = linkType.getCollectionIds().get(0).equals(d.getDocument().getCollectionId()) ?
                linkType.getCollectionIds().get(1) : linkType.getCollectionIds().get(0);
 
          // load linked document ids
