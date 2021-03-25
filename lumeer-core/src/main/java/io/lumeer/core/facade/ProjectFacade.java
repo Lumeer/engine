@@ -39,6 +39,7 @@ import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DelayedActionDao;
@@ -109,6 +110,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private DelayedActionDao delayedActionDao;
+
+   @Inject
+   private AuditDao auditDao;
 
    void init(DaoContextSnapshot daoContextSnapshot) {
       this.collectionDao = daoContextSnapshot.getCollectionDao();
@@ -294,6 +298,7 @@ public class ProjectFacade extends AbstractFacade {
       linkInstanceDao.createRepository(project);
       linkTypeDao.createRepository(project);
       sequenceDao.createRepository(project);
+      auditDao.createRepository(project);
    }
 
    private void deleteProjectScopedRepositories(Project project) {
@@ -303,6 +308,7 @@ public class ProjectFacade extends AbstractFacade {
       linkTypeDao.deleteRepository(project);
       linkInstanceDao.deleteRepository(project);
       sequenceDao.deleteRepository(project);
+      auditDao.deleteRepository(project);
 
       favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
