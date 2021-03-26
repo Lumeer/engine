@@ -201,6 +201,28 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          return id;
       });
 
+      res = TemplateParserUtils.replacer(res, Pattern.quote("navigate('"), Pattern.quote("',"), id -> {
+         if (id.length() == 24) {
+            var viewId = templateParser.getDict().getViewId(id);
+            if (viewId != null) {
+               return viewId;
+            }
+         }
+
+         return id;
+      });
+
+      res = TemplateParserUtils.replacer(res, Pattern.quote("getSiblings('"), Pattern.quote("',"), id -> {
+         if (id.length() == 24) {
+            var linkId = templateParser.getDict().getLinkTypeId(id);
+            if (linkId != null) {
+               return linkId;
+            }
+         }
+
+         return id;
+      });
+
       return res;
    }
 
