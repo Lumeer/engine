@@ -78,7 +78,7 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       record.setId(bson.getObjectId(ID).toHexString());
       record.setParentId(bson.getString(AuditRecord.PARENT_ID));
       record.setResourceType(ResourceType.valueOf(bson.getString(AuditRecord.RESOURCE_TYPE).toUpperCase()));
-      record.setResourceId(bson.getString(AuditRecord.RESOUCE_ID));
+      record.setResourceId(bson.getString(AuditRecord.RESOURCE_ID));
       record.setUser(AuditRecord.USER);
 
       final Date changeDate = bson.getDate(AuditRecord.CHANGE_DATE);

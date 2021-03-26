@@ -62,14 +62,14 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    public void ensureIndexes(final Project project) {
       MongoCollection<Document> auditLogCollection = database.getCollection(databaseCollectionName(project));
 
-      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.RESOUCE_ID), new IndexOptions().unique(false));
-      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOUCE_ID), new IndexOptions().unique(false));
+      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.RESOURCE_ID), new IndexOptions().unique(false));
+      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOURCE_ID), new IndexOptions().unique(false));
       auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID), new IndexOptions().unique(false));
-      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOUCE_ID, AuditRecord.USER), new IndexOptions().unique(false));
+      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOURCE_ID, AuditRecord.USER), new IndexOptions().unique(false));
       auditLogCollection.createIndex(Indexes.ascending(AuditRecord.CHANGE_DATE), new IndexOptions().unique(false));
-      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOUCE_ID, AuditRecord.CHANGE_DATE), new IndexOptions().unique(false));
+      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOURCE_ID, AuditRecord.CHANGE_DATE), new IndexOptions().unique(false));
       auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.CHANGE_DATE), new IndexOptions().unique(false));
-      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOUCE_ID, AuditRecord.CHANGE_DATE, AuditRecord.USER), new IndexOptions().unique(false));
+      auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOURCE_ID, AuditRecord.CHANGE_DATE, AuditRecord.USER), new IndexOptions().unique(false));
    }
 
 
@@ -78,7 +78,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOUCE_ID, resourceId)
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
       );
 
       return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).limit(1).first();
@@ -89,7 +89,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOUCE_ID, resourceId)
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
       );
 
       return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).into(new ArrayList<>());
@@ -100,7 +100,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOUCE_ID, resourceId),
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId),
             Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
       );
 
@@ -112,7 +112,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOUCE_ID, resourceId)
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
       );
 
       return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).limit(countLimit).into(new ArrayList<>());
@@ -159,7 +159,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOUCE_ID, resourceId),
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId),
             Filters.lt(AuditRecord.CHANGE_DATE, Date.from(cleanOlderThan.toInstant()))
       );
 

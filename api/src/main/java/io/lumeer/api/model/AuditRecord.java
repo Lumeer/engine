@@ -37,7 +37,7 @@ public class AuditRecord implements WithId {
 
    public static final String PARENT_ID = "parentId";
    public static final String RESOURCE_TYPE = "resourceType";
-   public static final String RESOUCE_ID = "resourceId";
+   public static final String RESOURCE_ID = "resourceId";
    public static final String CHANGE_DATE = "changeDate";
    public static final String USER = "user";
    public static final String OLD_STATE = "oldState";
@@ -62,7 +62,7 @@ public class AuditRecord implements WithId {
 
    @JsonCreator
    public AuditRecord(@JsonProperty(PARENT_ID) final String parentId, @JsonProperty(RESOURCE_TYPE) final ResourceType resourceType,
-         @JsonProperty(RESOUCE_ID) final String resourceId, @JsonProperty(CHANGE_DATE) final ZonedDateTime changeDate,
+         @JsonProperty(RESOURCE_ID) final String resourceId, @JsonProperty(CHANGE_DATE) final ZonedDateTime changeDate,
          @JsonProperty(USER) final String user, @JsonProperty(OLD_STATE) final DataDocument oldState,
          @JsonProperty(NEW_STATE) final DataDocument newState) {
       this.parentId = parentId;
