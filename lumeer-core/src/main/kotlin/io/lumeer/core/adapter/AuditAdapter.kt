@@ -23,6 +23,7 @@ import io.lumeer.api.model.Payment
 import io.lumeer.api.model.ResourceType
 import io.lumeer.engine.api.data.DataDocument
 import io.lumeer.storage.api.dao.AuditDao
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot
 import org.apache.commons.lang3.StringUtils
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -33,7 +34,6 @@ private const val UPDATE_LIMIT: Long = 5 // number of minutes to merge record ch
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
-
    fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, serviceLevel: Payment.ServiceLevel) =
          if (serviceLevel == Payment.ServiceLevel.FREE)
             auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_LIMIT)
@@ -41,24 +41,31 @@ class AuditAdapter(private val auditDao: AuditDao) {
             auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_LIMIT, ChronoUnit.WEEKS))
 
    fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, userId: String, automation: String, oldState: DataDocument, newState: DataDocument) =
-           getChanges(oldState, newState).takeIf { it.isNotEmpty() }?.let { changes ->
-               val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
+         getChanges(oldState, newState).takeIf { it.isNotEmpty() }?.let { changes ->
+            val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
 
-               if (changesOverlap(lastAuditRecord, userId, automation, changes)) {
-                   lastAuditRecord.newState.putAll(changes)
-                   auditDao.updateAuditRecord(lastAuditRecord)
-               } else {
-                   // we will keep only those values that changed
-                   val partialOldState = DataDocument(oldState)
-                   val oldStateKeys = HashSet(oldState.keys)
-                   oldStateKeys.forEach {
-                       if (!changes.containsKey(it)) partialOldState.remove(it)
-                   }
-
-                   val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), userId, automation, partialOldState, changes)
-                   auditDao.createAuditRecord(auditRecord)
+            if (lastAuditRecord != null && changesOverlap(lastAuditRecord, userId, automation, changes)) {
+               changes.keys.forEach {
+                  lastAuditRecord.oldState[it] = oldState[it]
                }
-   }
+               lastAuditRecord.newState.putAll(changes)
+               auditDao.updateAuditRecord(lastAuditRecord)
+            } else {
+               // we will keep only those values that changed
+               val partialOldState = DataDocument(oldState)
+               val oldStateKeys = HashSet(oldState.keys)
+               oldStateKeys.forEach {
+                  if (!changes.containsKey(it)) partialOldState.remove(it)
+               }
+
+               // we need to clean the history only when adding new entries
+               // we keep business level history in case the user upgraded
+               auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_LIMIT))
+
+               val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), userId, automation, partialOldState, changes)
+               auditDao.createAuditRecord(auditRecord)
+            }
+         }
 
    private fun changesOverlap(lastAuditRecord: AuditRecord, userId: String, automation: String, changes: DataDocument): Boolean = when {
       StringUtils.isNotEmpty(lastAuditRecord.user) && lastAuditRecord.user != userId -> false
@@ -78,5 +85,15 @@ class AuditAdapter(private val auditDao: AuditDao) {
       }
 
       return result
+   }
+
+   fun removeAllAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String) {
+      auditDao.deleteAuditRecords(parentId, resourceType, resourceId)
+   }
+
+   companion object {
+
+      @JvmStatic
+      fun getAuditAdapter(daoContextSnapshot: DaoContextSnapshot) = AuditAdapter(daoContextSnapshot.auditDao)
    }
 }

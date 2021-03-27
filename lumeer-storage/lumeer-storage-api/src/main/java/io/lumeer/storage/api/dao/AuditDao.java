@@ -36,6 +36,7 @@ public interface AuditDao extends ProjectScopedDao {
    AuditRecord updateAuditRecord(final AuditRecord record);
 
    void deleteAuditRecord(final String id);
+   void deleteAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId);
    void cleanAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime cleanOlderThan);
 
    void ensureIndexes(final Project project);

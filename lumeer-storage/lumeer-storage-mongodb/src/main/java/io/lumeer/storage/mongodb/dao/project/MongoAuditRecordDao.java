@@ -155,6 +155,17 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    }
 
    @Override
+   public void deleteAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId) {
+      final Bson filters = Filters.and(
+            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
+            Filters.eq(AuditRecord.PARENT_ID, parentId),
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
+      );
+
+      databaseCollection().deleteMany(filters);
+   }
+
+   @Override
    public void cleanAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime cleanOlderThan) {
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),

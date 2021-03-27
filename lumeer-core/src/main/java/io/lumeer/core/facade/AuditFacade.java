@@ -28,20 +28,29 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.adapter.AuditAdapter;
-import io.lumeer.core.exception.BadFormatException;
-import io.lumeer.core.exception.NoPermissionException;
-import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.LinkInstanceUtils;
+import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.RemoveLinkInstance;
+import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 
 import java.util.HashSet;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
 @RequestScoped
@@ -63,13 +72,43 @@ public class AuditFacade extends AbstractFacade {
    private LinkTypeDao linkTypeDao;
 
    @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
+
+   @Inject
    private PaymentFacade paymentFacade;
 
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
    private AuditAdapter auditAdapter;
+   private ConstraintManager constraintManager;
 
    @PostConstruct
    public void init() {
+      constraintManager = ConstraintManager.getInstance(configurationProducer);
       auditAdapter = new AuditAdapter(auditDao);
+   }
+
+   public void documentUpdated(@Observes final UpdateDocument updateDocument) {
+      registerDocumentUpdate(updateDocument.getOriginalDocument(), updateDocument.getDocument(), null);
+   }
+
+   public void documentRemoved(@Observes final RemoveDocument removeDocument) {
+      auditAdapter.removeAllAuditRecords(removeDocument.getDocument().getCollectionId(), ResourceType.DOCUMENT, removeDocument.getDocument().getId());
+   }
+
+   public void linkInstanceUpdated(@Observes final UpdateLinkInstance updateLinkInstance) {
+      registerLinkUpdate(updateLinkInstance.getOriginalLinkInstance(), updateLinkInstance.getLinkInstance(), null);
+   }
+
+   public void linkInstanceRemoved(@Observes final RemoveLinkInstance removeLinkInstance) {
+      auditAdapter.removeAllAuditRecords(removeLinkInstance.getLinkInstance().getLinkTypeId(), ResourceType.LINK, removeLinkInstance.getLinkInstance().getId());
    }
 
    public List<AuditRecord> getAuditRecordsForDocument(final String collectionId, final String documentId) {
@@ -79,7 +118,7 @@ public class AuditFacade extends AbstractFacade {
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
 
-         return auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, limits.getServiceLevel());
+         return decode(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, limits.getServiceLevel()));
       }
 
       return List.of();
@@ -92,7 +131,7 @@ public class AuditFacade extends AbstractFacade {
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
 
-         return auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, limits.getServiceLevel());
+         return decode(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, limits.getServiceLevel()));
       }
 
       return List.of();
@@ -113,11 +152,17 @@ public class AuditFacade extends AbstractFacade {
          final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
 
          if (auditRecord != null && auditRecord.getId().equals(auditRecordId) && auditRecord.getOldState() != null) {
-            // toto není tak jednoduché - musí se smazat přidané
+            var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());
+            keysToBeRemoved.removeAll(auditRecord.getOldState().keySet());
+
             document.getData().putAll(auditRecord.getOldState());
+            keysToBeRemoved.forEach(key -> document.getData().remove(key));
+
             dataDao.patchData(collectionId, documentId, auditRecord.getOldState());
             auditDao.deleteAuditRecord(auditRecordId);
          }
+
+         document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
          return document;
       }
@@ -138,11 +183,10 @@ public class AuditFacade extends AbstractFacade {
 
          final AuditRecord auditRecord = auditDao.findLatestAuditRecord(linkTypeId, ResourceType.LINK, linkInstanceId);
 
-         final LinkInstance linkInstance = null;// load link with data - DocumentUtils.loadDocumentWithData(documentDao, dataDao, linkType, linkInstanceId);
+         final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkType, linkInstanceId);
 
          if (auditRecord != null && auditRecord.getId().equals(auditRecordId) && auditRecord.getOldState() != null) {
-            // toto není tak jednoduché - musí se smazat přidané
-            var keysToBeRemoved = new HashSet(auditRecord.getNewState().keySet());
+            var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());
             keysToBeRemoved.removeAll(auditRecord.getOldState().keySet());
 
             linkInstance.getData().putAll(auditRecord.getOldState());
@@ -151,6 +195,8 @@ public class AuditFacade extends AbstractFacade {
             dataDao.patchData(linkTypeId, linkInstanceId, auditRecord.getOldState());
             auditDao.deleteAuditRecord(auditRecordId);
          }
+
+         linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
 
          return linkInstance;
       }
@@ -180,5 +226,27 @@ public class AuditFacade extends AbstractFacade {
       final String parentId = oldLink.getLinkTypeId();
 
       return auditAdapter.registerUpdate(parentId, ResourceType.DOCUMENT, oldLink.getId(), user, automation, oldLink.getData(), newLink.getData());
+   }
+
+   private List<AuditRecord> decode(final Collection collection, final List<AuditRecord> auditRecords) {
+      if (auditRecords != null) {
+         auditRecords.forEach(record -> {
+            record.setOldState(constraintManager.decodeDataTypes(collection, record.getOldState()));
+            record.setNewState(constraintManager.decodeDataTypes(collection, record.getNewState()));
+         });
+      }
+
+      return auditRecords;
+   }
+
+   private List<AuditRecord> decode(final LinkType linkType, final List<AuditRecord> auditRecords) {
+      if (auditRecords != null) {
+         auditRecords.forEach(record -> {
+            record.setOldState(constraintManager.decodeDataTypes(linkType, record.getOldState()));
+            record.setNewState(constraintManager.decodeDataTypes(linkType, record.getNewState()));
+         });
+      }
+
+      return auditRecords;
    }
 }

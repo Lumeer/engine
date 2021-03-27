@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task.executor.operation.stage;
 
+import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
@@ -38,12 +39,14 @@ abstract public class Stage implements Callable<ChangesTracker> {
    protected final ContextualTask task;
    protected Set<Operation<?>> operations;
    protected final ChangesTracker changesTracker = new ChangesTracker();
+   protected final AuditAdapter auditAdapter;
 
    public Stage(final OperationExecutor executor) {
       this.executor = executor;
       this.taskExecutor = executor.getTaskExecutor();
       this.task = executor.getTask();
       this.operations = executor.getOperations();
+      this.auditAdapter = AuditAdapter.getAuditAdapter(task.getDaoContextSnapshot());
    }
 
    abstract public ChangesTracker call(); // remove exception from method signature
