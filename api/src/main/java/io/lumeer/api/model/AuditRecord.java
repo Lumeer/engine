@@ -42,6 +42,7 @@ public class AuditRecord implements WithId {
    public static final String USER = "user";
    public static final String OLD_STATE = "oldState";
    public static final String NEW_STATE = "newState";
+   public static final String AUTOMATION = "automation";
 
    private String id;
 
@@ -54,6 +55,7 @@ public class AuditRecord implements WithId {
    private ZonedDateTime changeDate;
 
    private String user;
+   private String automation;
 
    private DataDocument oldState;
    private DataDocument newState;
@@ -63,13 +65,14 @@ public class AuditRecord implements WithId {
    @JsonCreator
    public AuditRecord(@JsonProperty(PARENT_ID) final String parentId, @JsonProperty(RESOURCE_TYPE) final ResourceType resourceType,
          @JsonProperty(RESOURCE_ID) final String resourceId, @JsonProperty(CHANGE_DATE) final ZonedDateTime changeDate,
-         @JsonProperty(USER) final String user, @JsonProperty(OLD_STATE) final DataDocument oldState,
+         @JsonProperty(USER) final String user, @JsonProperty(AUTOMATION) final String automation, @JsonProperty(OLD_STATE) final DataDocument oldState,
          @JsonProperty(NEW_STATE) final DataDocument newState) {
       this.parentId = parentId;
       this.resourceType = resourceType;
       this.resourceId = resourceId;
       this.changeDate = changeDate;
       this.user = user;
+      this.automation = automation;
       this.oldState = oldState;
       this.newState = newState;
    }
@@ -113,6 +116,14 @@ public class AuditRecord implements WithId {
 
    public void setChangeDate(final ZonedDateTime changeDate) {
       this.changeDate = changeDate;
+   }
+
+   public String getAutomation() {
+      return automation;
+   }
+
+   public void setAutomation(final String automation) {
+      this.automation = automation;
    }
 
    public String getUser() {
@@ -165,6 +176,7 @@ public class AuditRecord implements WithId {
             ", resourceId='" + resourceId + '\'' +
             ", changeDate=" + changeDate +
             ", user='" + user + '\'' +
+            ", automation='" + automation + '\'' +
             ", oldState=" + oldState +
             ", newState=" + newState +
             '}';

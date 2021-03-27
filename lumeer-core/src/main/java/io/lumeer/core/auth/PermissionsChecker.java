@@ -188,8 +188,8 @@ public class PermissionsChecker {
       return false;
    }
 
-   public void checkLinkTypePermissions(java.util.Collection<String> collectionIds, Role role, boolean strict) {
-      List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
+   public void checkLinkTypePermissions(final java.util.Collection<String> collectionIds, final Role role, final boolean strict) {
+      final List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       if (!strict && role == Role.WRITE) {
          boolean atLeastOneRead = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.READ, Role.READ));
          boolean atLeastOneWrite = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.WRITE, Role.WRITE));

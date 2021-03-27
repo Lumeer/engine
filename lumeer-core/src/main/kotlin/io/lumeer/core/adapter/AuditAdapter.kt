@@ -18,7 +18,78 @@
  */
 package io.lumeer.core.adapter
 
+import io.lumeer.api.model.AuditRecord
+import io.lumeer.api.model.Payment
+import io.lumeer.api.model.ResourceType
+import io.lumeer.engine.api.data.DataDocument
 import io.lumeer.storage.api.dao.AuditDao
+import org.apache.commons.lang3.StringUtils
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 class AuditAdapter(val auditDao: AuditDao) {
+
+   val FREE_LIMIT: Int = 3 // number of last records available
+   val BUSINESS_LIMIT: Long = 2 // number of last weeks of records available
+   val UPDATE_LIMIT: Long = 5 // number of minutes to merge record changes by the same originator (user or automation)
+
+   fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, serviceLevel: Payment.ServiceLevel) =
+         if (serviceLevel.equals(Payment.ServiceLevel.FREE))
+            auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_LIMIT)
+         else
+            auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_LIMIT, ChronoUnit.WEEKS))
+
+   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, userId: String, automation: String, oldState: DataDocument, newState: DataDocument): AuditRecord? {
+      val changes = getChanges(oldState, newState)
+
+      if (changes.isNotEmpty()) {
+         val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
+
+         return if (changesOverlap(lastAuditRecord, userId, automation, changes)) {
+            lastAuditRecord.newState.putAll(changes)
+            auditDao.updateAuditRecord(lastAuditRecord)
+         } else {
+            // we will keep only those values that changed
+            val partialOldState = DataDocument(oldState)
+            val oldStateKeys = HashSet(oldState.keys)
+            oldStateKeys.forEach {
+               if (!changes.containsKey(it)) partialOldState.remove(it)
+            }
+
+            val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), userId, automation, partialOldState, changes)
+            auditDao.createAuditRecord(auditRecord)
+         }
+      }
+
+      return null
+   }
+
+   fun changesOverlap(lastAuditRecord: AuditRecord, userId: String, automation: String, changes: DataDocument): Boolean {
+      if (StringUtils.isNotEmpty(lastAuditRecord.user) && lastAuditRecord.user != userId) {
+         return false
+      }
+
+      if (StringUtils.isNotEmpty(lastAuditRecord.automation) && lastAuditRecord.automation != automation) {
+         return false
+      }
+
+      if (lastAuditRecord.changeDate.isBefore(ZonedDateTime.now().minusMinutes(UPDATE_LIMIT))) {
+         return false
+      }
+
+      return true
+   }
+
+   fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
+      val result = DataDocument(newState)
+      oldState.keys.forEach {
+         // remove everything that did not change, keeping newly added values
+         if (result.containsKey(it) && result[it] == oldState[it]) result.remove(it)
+
+         // make sure that deleted values are present in the changes
+         if (oldState.containsKey(it) && !result.containsKey(it)) result[it] = null
+      }
+
+      return result
+   }
 }
