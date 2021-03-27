@@ -28,17 +28,17 @@ import org.apache.commons.lang3.StringUtils
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
-private const val FREE_LIMIT: Int = 3 // number of last records available
-private const val BUSINESS_LIMIT: Long = 2 // number of last weeks of records available
-private const val UPDATE_LIMIT: Long = 5 // number of minutes to merge record changes by the same originator (user or automation)
+private const val FREE_MAX_RECORDS: Int = 3 // number of last records available
+private const val BUSINESS_MAX_WEEKS: Long = 2 // number of last weeks of records available
+private const val UPDATE_MERGE_WINDOW_MINUTES: Long = 5 // number of minutes to merge record changes by the same originator (user or automation)
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
    fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, serviceLevel: Payment.ServiceLevel) =
          if (serviceLevel == Payment.ServiceLevel.FREE)
-            auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_LIMIT)
+            auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_MAX_RECORDS)
          else
-            auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_LIMIT, ChronoUnit.WEEKS))
+            auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
    fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, userId: String, automation: String, oldState: DataDocument, newState: DataDocument) =
          getChanges(oldState, newState).takeIf { it.isNotEmpty() }?.let { changes ->
@@ -60,7 +60,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
 
                // we need to clean the history only when adding new entries
                // we keep business level history in case the user upgraded
-               auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_LIMIT))
+               auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_MAX_WEEKS))
 
                val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), userId, automation, partialOldState, changes)
                auditDao.createAuditRecord(auditRecord)
@@ -70,7 +70,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
    private fun changesOverlap(lastAuditRecord: AuditRecord, userId: String, automation: String, changes: DataDocument): Boolean = when {
       StringUtils.isNotEmpty(lastAuditRecord.user) && lastAuditRecord.user != userId -> false
       StringUtils.isNotEmpty(lastAuditRecord.automation) && lastAuditRecord.automation != automation -> false
-      lastAuditRecord.changeDate.isBefore(ZonedDateTime.now().minusMinutes(UPDATE_LIMIT)) -> false
+      lastAuditRecord.changeDate.isBefore(ZonedDateTime.now().minusMinutes(UPDATE_MERGE_WINDOW_MINUTES)) -> false
       else -> true
    }
 
