@@ -19,8 +19,10 @@
 
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.DocumentLinks;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.PATCH;
@@ -56,6 +58,9 @@ public class LinkInstanceService extends AbstractService {
 
    @Inject
    private LinkInstanceFacade linkInstanceFacade;
+
+   @Inject
+   private AuditFacade auditFacade;
 
    @PostConstruct
    public void init() {
@@ -109,6 +114,12 @@ public class LinkInstanceService extends AbstractService {
    public LinkInstance patchLinkInstanceData(@PathParam("linkInstanceId") String id, DataDocument data) {
       final LinkInstance link = linkInstanceFacade.patchLinkInstanceData(id, data);
       return linkInstanceFacade.mapLinkInstanceData(link);
+   }
+
+   @GET
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}/audit")
+   public List<AuditRecord> getAuditLogs(@PathParam("linkTypeId") String linkTypeId, @PathParam("linkInstanceId") String linkInstanceId) {
+      return auditFacade.getAuditRecordsForLink(linkTypeId, linkInstanceId);
    }
 
    @DELETE
