@@ -40,7 +40,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
          else
             auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
-   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, userId: String, automation: String, oldState: DataDocument, newState: DataDocument) =
+   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, userId: String?, automation: String?, oldState: DataDocument, newState: DataDocument) =
          getChanges(oldState, newState).takeIf { it.isNotEmpty() }?.let { changes ->
             val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
 
@@ -67,7 +67,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
             }
          }
 
-   private fun changesOverlap(lastAuditRecord: AuditRecord, userId: String, automation: String, changes: DataDocument): Boolean = when {
+   private fun changesOverlap(lastAuditRecord: AuditRecord, userId: String?, automation: String?, changes: DataDocument): Boolean = when {
       StringUtils.isNotEmpty(lastAuditRecord.user) && lastAuditRecord.user != userId -> false
       StringUtils.isNotEmpty(lastAuditRecord.automation) && lastAuditRecord.automation != automation -> false
       lastAuditRecord.changeDate.isBefore(ZonedDateTime.now().minusMinutes(UPDATE_MERGE_WINDOW_MINUTES)) -> false
