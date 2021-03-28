@@ -561,10 +561,13 @@ public class DocumentFacade extends AbstractFacade {
 
    public Document getDocument(String collectionId, String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
 
       final Document result = getDocument(collection, documentId);
       result.setData(constraintManager.decodeDataTypes(collection, result.getData()));
+
+      if (!DocumentUtils.isTaskAssignedByUser(collection, result, authenticatedUser.getUserEmail())) {
+         permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
+      }
 
       return result;
    }
