@@ -58,7 +58,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -515,13 +514,9 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Set<String> getUsersIdsWithAccess(final Collection collection) {
-      final Set<String> result = new HashSet<>(ResourceUtils.getResourceReaders(getCurrentOrganization(), getCurrentProject(), collection));
-
-      result.addAll(viewAdapter.getUsersIdsInViewByCollection(collection.getId(), ResourceUtils::canReadByPermission));
-
+      var viewsReaders = viewAdapter.getUsersIdsInViewByCollection(collection.getId(), ResourceUtils::canReadByPermission);
+      return ResourceUtils.getCollectionReaders(getCurrentOrganization(), getCurrentProject(), collection, viewsReaders);
       // TODO: Handle user groups as well
-
-      return result;
    }
 
    private Organization getCurrentOrganization() {
