@@ -32,12 +32,12 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
-import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
+import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.task.AutoLinkBatchTask;
@@ -58,7 +58,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -90,9 +89,6 @@ public class CollectionFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
-   private LinkInstanceFacade linkInstanceFacade;
-
-   @Inject
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
@@ -103,9 +99,6 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private ConversionFacade conversionFacade;
-
-   @Inject
-   private ViewFacade viewFacade;
 
    @Inject
    private ResourceCommentDao resourceCommentDao;
@@ -120,10 +113,12 @@ public class CollectionFacade extends AbstractFacade {
    private TaskExecutor taskExecutor;
 
    private CollectionAdapter adapter;
+   private ViewAdapter viewAdapter;
 
    @PostConstruct
    public void init() {
       adapter = new CollectionAdapter(favoriteItemDao);
+      viewAdapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
    }
 
    public CollectionAdapter getAdapter() {
@@ -231,8 +226,8 @@ public class CollectionFacade extends AbstractFacade {
          return mapResource(collection);
       }
 
-      var viewsCollections = viewFacade.getViewsCollections();
-      if (viewsCollections.stream().anyMatch(coll -> coll.getId().equals(collectionId))) {
+      var userIdsInViews = viewAdapter.getUsersIdsInViewByCollection(collectionId, ResourceUtils::canReadByPermission);
+      if(userIdsInViews.contains(authenticatedUser.getCurrentUserId())) {
          return mapResource(collection);
       }
 
@@ -519,29 +514,13 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Set<String> getUsersIdsWithAccess(final Collection collection) {
-      final Set<String> result = new HashSet<>();
-
-      result.addAll(collection.getPermissions().getUserPermissions().stream()
-                              .filter(ResourceUtils::canReadByPermission)
-                              .map(Permission::getId).collect(Collectors.toSet()));
-
-      result.addAll(ResourceUtils.getManagers(getCurrentOrganization()));
-      result.addAll(ResourceUtils.getManagers(getCurrentProject()));
-
-      viewDao.getViewsPermissionsByCollection(collection.getId()).stream()
-             .map(Resource::getPermissions)
-             .map(Permissions::getUserPermissions)
-             .forEach(permissions -> result.addAll(permissions.stream()
-                                                              .filter(ResourceUtils::canReadByPermission)
-                                                              .map(Permission::getId).collect(Collectors.toList()))
-             );
+      var viewsReaders = viewAdapter.getUsersIdsInViewByCollection(collection.getId(), ResourceUtils::canReadByPermission);
+      return ResourceUtils.getCollectionReaders(getCurrentOrganization(), getCurrentProject(), collection, viewsReaders);
       // TODO: Handle user groups as well
-
-      return result;
    }
 
    private Organization getCurrentOrganization() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
+      if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       return workspaceKeeper.getOrganization().get();

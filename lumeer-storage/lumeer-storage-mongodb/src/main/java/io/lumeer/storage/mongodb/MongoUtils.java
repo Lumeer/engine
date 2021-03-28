@@ -139,11 +139,11 @@ public class MongoUtils {
       if (args.length == 0) {
          return "";
       }
-      String returnParam = args[0];
+      StringBuilder returnParam = new StringBuilder(args[0]);
       for (int i = 1; i < args.length; i++) {
-         returnParam += "." + args[i];
+         returnParam.append(".").append(args[i]);
       }
-      return returnParam;
+      return returnParam.toString();
    }
 
 }

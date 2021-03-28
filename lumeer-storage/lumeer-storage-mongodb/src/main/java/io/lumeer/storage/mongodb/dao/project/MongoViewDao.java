@@ -18,11 +18,8 @@
  */
 package io.lumeer.storage.mongodb.dao.project;
 
-import static com.mongodb.client.model.Accumulators.*;
-import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Projections.*;
-import static io.lumeer.storage.mongodb.MongoUtils.*;
 import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
 import io.lumeer.api.model.Project;
@@ -37,9 +34,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
-import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
-import io.lumeer.storage.mongodb.codecs.QueryCodec;
-import io.lumeer.storage.mongodb.codecs.QueryStemCodec;
 import io.lumeer.storage.mongodb.codecs.ViewCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
@@ -47,7 +41,6 @@ import com.mongodb.MongoException;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.model.Field;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -177,38 +170,6 @@ public class MongoViewDao extends MongoProjectScopedDao implements ViewDao {
       FindIterable<View> findIterable = databaseCollection().find(suggestionsFilter(query, skipPermissions));
       addPaginationToQuery(findIterable, query);
       return findIterable.into(new ArrayList<>());
-   }
-
-   @Override
-   public List<View> getViewsPermissionsByCollection(final String collectionId) {
-      List<Bson> aggregates = createCollectionAggregate(collectionId);
-      return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
-   }
-
-   private List<Bson> createCollectionAggregate(final String collectionId) {
-      List<Bson> aggregates = new ArrayList<>();
-
-      aggregates.add(addFields(new Field<>(QueryCodec.STEMS, "$" + concatParams(ViewCodec.QUERY, QueryCodec.STEMS))));
-      aggregates.add(project(include(ViewCodec.PERMISSIONS, QueryCodec.STEMS)));
-      aggregates.add(unwind("$" + QueryCodec.STEMS));
-      aggregates.add(addFields(
-            new Field<>(QueryStemCodec.COLLECTION_ID, "$" + concatParams(QueryCodec.STEMS, QueryStemCodec.COLLECTION_ID)),
-            new Field<>(QueryStemCodec.LINK_TYPE_IDS, "$" + concatParams(QueryCodec.STEMS, QueryStemCodec.LINK_TYPE_IDS))
-      ));
-      aggregates.add(project(include(ViewCodec.PERMISSIONS, QueryStemCodec.COLLECTION_ID, QueryStemCodec.LINK_TYPE_IDS)));
-      aggregates.add(unwind("$" + QueryStemCodec.LINK_TYPE_IDS));
-      aggregates.add(addFields(new Field<>(QueryStemCodec.LINK_TYPE_IDS, new Document("$toObjectId", "$" + QueryStemCodec.LINK_TYPE_IDS))));
-      aggregates.add(lookup(linkTypesCollectionName(), QueryStemCodec.LINK_TYPE_IDS, LinkTypeCodec.ID, "_linkTypes"));
-
-      Bson filter = or(
-            eq(QueryStemCodec.COLLECTION_ID, collectionId),
-            in(concatParams("_linkTypes", LinkTypeCodec.COLLECTION_IDS), collectionId)
-      );
-      aggregates.add(match(filter));
-      aggregates.add(group("$_id", first(ViewCodec.PERMISSIONS, "$" + ViewCodec.PERMISSIONS)));
-      aggregates.add(project(include(ViewCodec.PERMISSIONS)));
-
-      return aggregates;
    }
 
    private String linkTypesCollectionName() {

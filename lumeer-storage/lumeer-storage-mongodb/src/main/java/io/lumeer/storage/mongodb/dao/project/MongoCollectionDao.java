@@ -22,6 +22,7 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
@@ -36,6 +37,7 @@ import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.AttributeCodec;
 import io.lumeer.storage.mongodb.codecs.CollectionCodec;
+import io.lumeer.storage.mongodb.codecs.CollectionPurposeCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
@@ -290,6 +292,12 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
    public List<Collection> getCollectionsByAttributes(final SearchSuggestionQuery query, final boolean skipPermissions) {
       Bson filter = attributeSuggestionQuery(query, skipPermissions);
       return searchCollectionsByFilter(filter, query);
+   }
+
+   @Override
+   public List<Collection> getCollectionsByPurpose(final CollectionPurposeType purposeType) {
+      Bson filter = Filters.eq(MongoUtils.concatParams(CollectionCodec.PURPOSE, CollectionPurposeCodec.TYPE), purposeType.toString());
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    private Bson attributeSuggestionQuery(SearchSuggestionQuery query, boolean skipPermissions) {

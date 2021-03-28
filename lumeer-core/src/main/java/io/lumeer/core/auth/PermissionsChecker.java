@@ -188,7 +188,7 @@ public class PermissionsChecker {
       return false;
    }
 
-   public void checkLinkTypePermissions(java.util.Collection<String> collectionIds, Role role,  boolean strict) {
+   public void checkLinkTypePermissions(java.util.Collection<String> collectionIds, Role role, boolean strict) {
       List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       if (!strict && role == Role.WRITE) {
          boolean atLeastOneRead = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.READ, Role.READ));
@@ -713,7 +713,7 @@ public class PermissionsChecker {
    public Set<String> getOrganizationManagers() {
       if (workspaceKeeper.getOrganization().isPresent()) {
          Organization organization = workspaceKeeper.getOrganization().get();
-         return ResourceUtils.getManagers(organization);
+         return ResourceUtils.getOrganizationManagers(organization);
       }
       return Collections.emptySet();
    }
@@ -724,11 +724,10 @@ public class PermissionsChecker {
     * @return Set of IDs of all managers of current organization and project.
     */
    public Set<String> getWorkspaceManagers() {
-      Set<String> userIds = new HashSet<>(getOrganizationManagers());
-      if (workspaceKeeper.getProject().isPresent()) {
+      if (workspaceKeeper.getOrganization().isPresent() && workspaceKeeper.getProject().isPresent()) {
          Project project = workspaceKeeper.getProject().get();
-         userIds.addAll(ResourceUtils.getManagers(project));
+         return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().get(), project);
       }
-      return userIds;
+      return Collections.emptySet();
    }
 }

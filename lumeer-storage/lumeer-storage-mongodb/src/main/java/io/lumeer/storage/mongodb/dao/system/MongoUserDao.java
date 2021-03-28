@@ -44,6 +44,8 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 
@@ -146,6 +148,16 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
       Bson emailFilter = Filters.or(Filters.eq(UserCodec.EMAIL, email), Filters.eq(UserCodec.EMAIL, email.toLowerCase()));
 
       return databaseCollection().find(emailFilter).first();
+   }
+
+   @Override
+   public List<User> getUsersByEmails(final Set<String> emails) {
+      if (emails.isEmpty()) {
+         return Collections.emptyList();
+      }
+      Bson emailFilter = Filters.or(Filters.in(UserCodec.EMAIL, emails), Filters.eq(UserCodec.EMAIL, emails.stream().map(String::toLowerCase).collect(Collectors.toSet())));
+
+      return databaseCollection().find(emailFilter).into(new ArrayList<>());
    }
 
    @Override

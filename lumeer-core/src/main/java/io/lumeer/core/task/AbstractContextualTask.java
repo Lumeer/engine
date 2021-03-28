@@ -23,10 +23,10 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
@@ -97,7 +97,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
       final ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(daoContextSnapshot.getResourceCommentDao());
       collectionAdapter = new CollectionAdapter(daoContextSnapshot.getFavoriteItemDao());
-      viewAdapter = new ViewAdapter(daoContextSnapshot.getFavoriteItemDao());
+      viewAdapter = new ViewAdapter(daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getFavoriteItemDao());
       documentAdapter = new DocumentAdapter(resourceCommentAdapter, daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
@@ -140,9 +140,27 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return timeZone;
    }
 
+   private Set<String> getCollectionManagers(final Collection collection) {
+      var viewManagers = viewAdapter.getUsersIdsInViewByCollection(collection.getId(), ResourceUtils::canManageByPermission);
+      return ResourceUtils.getCollectionManagers(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), collection, viewManagers);
+   }
+
+   private Set<String> getCollectionReaders(final Collection collection) {
+      var viewReaders = viewAdapter.getUsersIdsInViewByCollection(collection.getId(), ResourceUtils::canReadByPermission);
+      return ResourceUtils.getCollectionReaders(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), collection, viewReaders);
+   }
+
+   private Set<String> getCollectionReaders(final String collectionId) {
+      return getCollectionReaders(daoContextSnapshot.getCollectionDao().getCollectionById(collectionId));
+   }
+
+   private Set<String> getProjectManagers() {
+      return ResourceUtils.getProjectManagers(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject());
+   }
+
    public void sendPushNotifications(final Collection collection) {
       if (getPusherClient() != null) {
-         final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
+         final Set<String> users = getCollectionManagers(collection);
          final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user)).collect(Collectors.toList());
 
          getPusherClient().trigger(events);
@@ -151,7 +169,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    public void sendPushNotifications(final Collection collection, final String suffix) {
       if (getPusherClient() != null) {
-         final Set<String> users = getDaoContextSnapshot().getCollectionManagers(collection.getId());
+         final Set<String> users = getCollectionManagers(collection);
          final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user, suffix)).collect(Collectors.toList());
 
          getPusherClient().trigger(events);
@@ -161,8 +179,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final LinkType linkType) {
       if (getPusherClient() != null) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
-         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
-         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users1 = getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getCollectionReaders(linkType.getCollectionIds().get(1));
          final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
          final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user)).collect(Collectors.toList());
 
@@ -173,8 +191,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final LinkType linkType, final String suffix) {
       if (getPusherClient() != null) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
-         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
-         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users1 = getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getCollectionReaders(linkType.getCollectionIds().get(1));
          final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
          final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user, suffix)).collect(Collectors.toList());
 
@@ -281,7 +299,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    public void sendPushNotifications(final Collection collection, final List<Document> documents, final String suffix, final boolean collectionChanged) {
-      final Set<String> users = getDaoContextSnapshot().getCollectionReaders(collection);
+      final Set<String> users = getCollectionReaders(collection);
       final List<Event> events = new ArrayList<>();
       final List<Event> collectionEvents = new ArrayList<>();
 
@@ -299,8 +317,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
          linkType.setLinksCount(getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
-         final Set<String> users1 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(0));
-         final Set<String> users2 = getDaoContextSnapshot().getCollectionReaders(linkType.getCollectionIds().get(1));
+         final Set<String> users1 = getCollectionReaders(linkType.getCollectionIds().get(0));
+         final Set<String> users2 = getCollectionReaders(linkType.getCollectionIds().get(1));
          final Set<String> users = users1.stream().filter(users2::contains).collect(Collectors.toSet());
 
          final List<Event> events = new ArrayList<>();
@@ -321,7 +339,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final String sequenceName) {
       final Sequence sequence = getDaoContextSnapshot().getSequenceDao().getSequence(sequenceName);
 
-      final Set<String> managers = getDaoContextSnapshot().getProjectManagers();
+      final Set<String> managers = getProjectManagers();
 
       final List<Event> events = new ArrayList<>();
       managers.forEach(manager -> events.add(createEventForSequence(sequence, manager)));

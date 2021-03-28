@@ -19,10 +19,8 @@
 package io.lumeer.storage.mongodb.dao.context;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
@@ -74,9 +72,6 @@ import io.lumeer.storage.mongodb.dao.system.MongoUserNotificationDao;
 
 import com.mongodb.client.MongoDatabase;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.atomic.LongAdder;
 
 public class MongoDaoContextSnapshot implements DaoContextSnapshot {
@@ -125,6 +120,16 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       dao.setOrganization(organization);
       dao.setProject(project);
       return dao;
+   }
+
+   @Override
+   public Organization getOrganization() {
+      return organization;
+   }
+
+   @Override
+   public Project getProject() {
+      return project;
    }
 
    public String getOrganizationId() {
@@ -238,57 +243,6 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    @Override
    public DelayedActionDao getDelayedActionDao() {
       return initSystemScopedDao(new MongoDelayedActionDao());
-   }
-
-   @Override
-   public Set<String> getCollectionManagers(final String collectionId) {
-      if (organization == null || project == null) {
-         return Collections.emptySet();
-      }
-
-      final Set<String> result = new HashSet<>();
-
-      result.addAll(ResourceUtils.getManagers(organization));
-      result.addAll(ResourceUtils.getManagers(project));
-      result.addAll(ResourceUtils.getManagers(getCollectionDao().getCollectionById(collectionId)));
-
-      getViewDao().getViewsPermissionsByCollection(collectionId).forEach(view ->
-            result.addAll(ResourceUtils.getManagers(view))
-      );
-
-      return result;
-   }
-
-   @Override
-   public Set<String> getCollectionReaders(final String collectionId) {
-      if (organization == null || project == null) {
-         return Collections.emptySet();
-      }
-
-      return getCollectionReaders(getCollectionDao().getCollectionById(collectionId));
-   }
-
-   @Override
-   public Set<String> getCollectionReaders(final Collection collection) {
-      final Set<String> result = new HashSet<>();
-
-      result.addAll(ResourceUtils.usersAllowedRead(organization));
-      result.addAll(ResourceUtils.usersAllowedRead(project));
-      result.addAll(ResourceUtils.usersAllowedRead(collection));
-
-      getViewDao().getViewsPermissionsByCollection(collection.getId()).forEach(view ->
-            result.addAll(ResourceUtils.usersAllowedRead(view))
-      );
-
-      return result;
-   }
-
-   @Override
-   public Set<String> getProjectManagers() {
-      Set<String> userIds = ResourceUtils.getManagers(organization);
-      userIds.addAll(ResourceUtils.getManagers(project));
-
-      return userIds;
    }
 
    @Override

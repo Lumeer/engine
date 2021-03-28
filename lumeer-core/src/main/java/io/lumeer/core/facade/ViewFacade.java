@@ -79,7 +79,7 @@ public class ViewFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      adapter = new ViewAdapter(favoriteItemDao);
+      adapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
    }
 
    public ViewAdapter getAdapter() {
@@ -286,8 +286,6 @@ public class ViewFacade extends AbstractFacade {
       Set<String> linkTypesIds = views.stream().map(view -> view.getQuery().getLinkTypeIds())
                                       .flatMap(java.util.Collection::stream)
                                       .collect(Collectors.toSet());
-
-
 
       return linkTypeFacade.assignComputedParameters(linkTypeDao.getLinkTypesByIds(linkTypesIds));
    }
