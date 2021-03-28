@@ -88,8 +88,8 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       final Document oldState = bson.get(AuditRecord.OLD_STATE, Document.class);
       record.setOldState(oldState != null ? new DataDocument(oldState) : new DataDocument());
 
-      final Document newState = bson.get(AuditRecord.OLD_STATE, Document.class);
-      record.setOldState(newState != null ? new DataDocument(newState) : new DataDocument());
+      final Document newState = bson.get(AuditRecord.NEW_STATE, Document.class);
+      record.setNewState(newState != null ? new DataDocument(newState) : new DataDocument());
 
       return record;
    }
@@ -99,7 +99,7 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       Document bson = record.getId() != null ? new Document(ID, new ObjectId(record.getId())) : new Document();
       bson.append(AuditRecord.PARENT_ID, record.getParentId())
           .append(AuditRecord.RESOURCE_TYPE, record.getResourceType().toString())
-          .append(AuditRecord.PARENT_ID, record.getResourceId())
+          .append(AuditRecord.RESOURCE_ID, record.getResourceId())
           .append(AuditRecord.USER, record.getUser())
           .append(AuditRecord.AUTOMATION, record.getAutomation())
           .append(AuditRecord.OLD_STATE, record.getOldState())

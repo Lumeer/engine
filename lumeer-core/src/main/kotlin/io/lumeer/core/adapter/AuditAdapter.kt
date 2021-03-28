@@ -46,14 +46,26 @@ class AuditAdapter(private val auditDao: AuditDao) {
 
             if (lastAuditRecord != null && changesOverlap(lastAuditRecord, userId, automation, changes)) {
                changes.keys.forEach {
-                  lastAuditRecord.oldState[it] = oldState[it]
+                  if (!lastAuditRecord.oldState.containsKey(it) && !lastAuditRecord.newState.containsKey(it))
+                     lastAuditRecord.oldState[it] = oldState[it]
                }
                lastAuditRecord.newState.putAll(changes)
-               auditDao.updateAuditRecord(lastAuditRecord)
+               changes.keys.forEach {
+                  if (lastAuditRecord.oldState[it] == lastAuditRecord.newState[it]) {
+                     lastAuditRecord.oldState.remove(it)
+                     lastAuditRecord.newState.remove(it)
+                  }
+               }
+
+               if (lastAuditRecord.newState.isEmpty()) {
+                  auditDao.deleteAuditRecord(lastAuditRecord.id)
+                  lastAuditRecord
+               } else
+                  auditDao.updateAuditRecord(lastAuditRecord)
             } else {
                // we will keep only those values that changed
-               val partialOldState = DataDocument(oldState)
-               val oldStateKeys = HashSet(oldState.keys)
+               val partialOldState = DataDocument(oldState.filterKeys { it != "_id" })
+               val oldStateKeys = HashSet(partialOldState.keys)
                oldStateKeys.forEach {
                   if (!changes.containsKey(it)) partialOldState.remove(it)
                }
@@ -75,13 +87,14 @@ class AuditAdapter(private val auditDao: AuditDao) {
    }
 
    fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
-      val result = DataDocument(newState)
-      oldState.keys.forEach {
+      val result = DataDocument(newState.filterKeys { it != "_id" })
+      oldState.keys.filter { it != "_id" }.forEach {
          // remove everything that did not change, keeping newly added values
-         if (result.containsKey(it) && result[it] == oldState[it]) result.remove(it)
-
-         // make sure that deleted values are present in the changes
-         if (oldState.containsKey(it) && !result.containsKey(it)) result[it] = null
+         if (result.containsKey(it) && result[it] == oldState[it])
+            result.remove(it)
+         else
+            // make sure that deleted values are present in the changes
+            if (!result.containsKey(it)) result[it] = null
       }
 
       return result

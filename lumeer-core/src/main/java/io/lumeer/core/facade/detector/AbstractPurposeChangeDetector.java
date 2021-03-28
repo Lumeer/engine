@@ -199,7 +199,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
       if (StringUtils.isNotEmpty(stateAttributeId) && attribute != null) {
          final Object states = documentEvent.getDocument().getData().getObject(stateAttributeId);
-         System.out.println(states);
          if (states == null && attribute.getConstraint().getType() == ConstraintType.Boolean) {
             return "\u2610";
          } else if (states instanceof Boolean) {

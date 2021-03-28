@@ -169,7 +169,7 @@ public class SingleStage extends Stage {
          }
 
          auditAdapter.registerUpdate(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
-               task.getInitiator().getId(), automationName, oldData, newData);
+               task.getInitiator().getId(), automationName, oldData, patchedData);
 
          // add patched data to new documents
          boolean created = false;
@@ -353,7 +353,7 @@ public class SingleStage extends Stage {
          updatedLink.setData(patchedData);
 
          auditAdapter.registerUpdate(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
-               task.getInitiator().getId(), automationName, oldData, newData);
+               task.getInitiator().getId(), automationName, oldData, patchedData);
 
          // add patched data to new links
          boolean created = false;
