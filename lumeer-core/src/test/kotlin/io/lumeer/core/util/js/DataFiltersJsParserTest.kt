@@ -119,7 +119,6 @@ class DataFiltersJsParserTest {
     fun multiThreadingTest() {
         val executor = Executors.newFixedThreadPool(4) as ThreadPoolExecutor
 
-        println("Running")
         for (i in 1..16) {
             executor.submit(Task(i, 10))
         }

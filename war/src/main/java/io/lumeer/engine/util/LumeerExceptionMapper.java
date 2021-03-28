@@ -41,6 +41,7 @@ import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
+import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
@@ -73,7 +74,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
       // 400 - BAD REQUEST
       if (e instanceof UserCollectionAlreadyExistsException || e instanceof CollectionAlreadyExistsException ||
             e instanceof AttributeNotFoundException || e instanceof AttributeAlreadyExistsException ||
-            e instanceof InvalidQueryException || e instanceof InvalidDocumentKeyException ||
+            e instanceof InvalidQueryException || e instanceof UnsupportedOperationException ||
             e instanceof UnsuccessfulOperationException || e instanceof InvalidDocumentKeyException ||
             e instanceof NullParameterException || e instanceof LinkAlreadyExistsException ||
             e instanceof ViewAlreadyExistsException || e instanceof InvalidCollectionAttributeTypeException ||

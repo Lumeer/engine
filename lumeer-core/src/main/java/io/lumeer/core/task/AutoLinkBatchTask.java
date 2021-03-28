@@ -29,7 +29,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.User;
-import io.lumeer.core.constraint.AbstractConstraintConverter;
+import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.matcher.MatchQueryFactory;
@@ -53,6 +53,7 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
 
    private static final Logger log = Logger.getLogger(AutoLinkBatchTask.class.getName());
 
+   private AutoLinkRule rule;
    private LinkType linkType;
    private Collection collection;
    private Attribute attribute;
@@ -67,11 +68,12 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
    private User user;
    private Function<Object, Query> matchQuery;
 
-   public void setupBatch(final LinkType linkType,
+   public void setupBatch(final AutoLinkRule rule, final LinkType linkType,
          final Collection collection, final Attribute attribute,
          final Collection otherCollection, final Attribute otherAttribute,
          final User user,
          final Map<String, AllowedPermissions> permissions) {
+      this.rule = rule;
       this.linkType = linkType;
       this.collection = collection;
       this.attribute = attribute;
@@ -155,6 +157,10 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
       } catch (Exception e) {
          log.log(Level.SEVERE, "Error running auto-link batch: ", e);
       }
+   }
+
+   public AutoLinkRule getRule() {
+      return rule;
    }
 
    private List<Document> findMatchingDocuments(final List<Document> allDocuments, final Object value) {

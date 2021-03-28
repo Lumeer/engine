@@ -22,6 +22,7 @@ import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.engine.api.data.DataStorage;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -52,6 +53,7 @@ import io.lumeer.storage.mongodb.dao.organization.MongoFavoriteItemDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoPaymentDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoProjectDao;
+import io.lumeer.storage.mongodb.dao.project.MongoAuditRecordDao;
 import io.lumeer.storage.mongodb.dao.project.MongoCollectionDao;
 import io.lumeer.storage.mongodb.dao.project.MongoDocumentDao;
 import io.lumeer.storage.mongodb.dao.project.MongoFunctionDao;
@@ -85,6 +87,30 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    final private LongAdder messageCounter = new LongAdder();
    final private WorkspaceSnapshot workspaceSnapshot;
 
+   private final OrganizationDao organizationDao;
+   private final ProjectDao projectDao;
+   private final CollectionDao collectionDao;
+   private final CompanyContactDao companyContactDao;
+   private final DataDao dataDao;
+   private final DocumentDao documentDao;
+   private final FavoriteItemDao favoriteItemDao;
+   private final FunctionDao functionDao;
+   private final FeedbackDao feedbackDao;
+   private final GroupDao groupDao;
+   private final LinkInstanceDao linkInstanceDao;
+   private final LinkDataDao linkDataDao;
+   private final LinkTypeDao linkTypeDao;
+   private final PaymentDao paymentDao;
+   private final UserDao userDao;
+   private final UserLoginDao userLoginDao;
+   private final UserNotificationDao userNotificationDao;
+   private final ViewDao viewDao;
+   private final SequenceDao sequenceDao;
+   private final ResourceCommentDao resourceCommentDao;
+   private final DelayedActionDao delayedActionDao;
+   private final AuditDao auditDao;
+
+
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
       this.systemDatabase = (MongoDatabase) systemDataStorage.getDatabase();
       this.userDatabase = (MongoDatabase) userDataStorage.getDatabase();
@@ -102,6 +128,29 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       }
 
       workspaceSnapshot = new WorkspaceSnapshot(organization, project);
+
+      this.organizationDao = initSystemScopedDao(new MongoOrganizationDao());
+      this.projectDao = initOrganizationScopedDao(new MongoProjectDao());
+      this.collectionDao = initProjectScopedDao(new MongoCollectionDao());
+      this.companyContactDao = initSystemScopedDao(new MongoCompanyContactDao());
+      this.dataDao = initProjectScopedDao(new MongoDataDao());
+      this.documentDao = initProjectScopedDao(new MongoDocumentDao());
+      this.favoriteItemDao = initOrganizationScopedDao(new MongoFavoriteItemDao());
+      this.functionDao = initProjectScopedDao(new MongoFunctionDao());
+      this.feedbackDao = initSystemScopedDao(new MongoFeedbackDao());
+      this.groupDao = initOrganizationScopedDao(new MongoGroupDao());
+      this.linkInstanceDao = initProjectScopedDao(new MongoLinkInstanceDao());
+      this.linkDataDao = initProjectScopedDao(new MongoLinkDataDao());
+      this.linkTypeDao = initProjectScopedDao(new MongoLinkTypeDao());
+      this.paymentDao = initOrganizationScopedDao(new MongoPaymentDao());
+      this.userDao = initSystemScopedDao(new MongoUserDao());
+      this.userLoginDao = initSystemScopedDao(new MongoUserLoginDao());
+      this.userNotificationDao = initSystemScopedDao(new MongoUserNotificationDao());
+      this.viewDao = initProjectScopedDao(new MongoViewDao());
+      this.sequenceDao = initProjectScopedDao(new MongoSequenceDao());
+      this.resourceCommentDao = initProjectScopedDao(new MongoResourceCommentDao());
+      this.delayedActionDao = initSystemScopedDao(new MongoDelayedActionDao());
+      this.auditDao = initProjectScopedDao(new MongoAuditRecordDao());
    }
 
    private <T extends MongoSystemScopedDao> T initSystemScopedDao(T dao) {
@@ -142,107 +191,112 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
 
    @Override
    public OrganizationDao getOrganizationDao() {
-      return initSystemScopedDao(new MongoOrganizationDao());
+      return organizationDao;
    }
 
    @Override
    public ProjectDao getProjectDao() {
-      return initOrganizationScopedDao(new MongoProjectDao());
+      return projectDao;
    }
 
    @Override
    public CollectionDao getCollectionDao() {
-      return initProjectScopedDao(new MongoCollectionDao());
+      return collectionDao;
    }
 
    @Override
    public CompanyContactDao getCompanyContactDao() {
-      return initSystemScopedDao(new MongoCompanyContactDao());
+      return companyContactDao;
    }
 
    @Override
    public DataDao getDataDao() {
-      return initProjectScopedDao(new MongoDataDao());
+      return dataDao;
    }
 
    @Override
    public DocumentDao getDocumentDao() {
-      return initProjectScopedDao(new MongoDocumentDao());
+      return documentDao;
    }
 
    @Override
    public FavoriteItemDao getFavoriteItemDao() {
-      return initOrganizationScopedDao(new MongoFavoriteItemDao());
+      return favoriteItemDao;
    }
 
    @Override
    public FunctionDao getFunctionDao() {
-      return initProjectScopedDao(new MongoFunctionDao());
+      return functionDao;
    }
 
    @Override
    public FeedbackDao getFeedbackDao() {
-      return initSystemScopedDao(new MongoFeedbackDao());
+      return feedbackDao;
    }
 
    @Override
    public GroupDao getGroupDao() {
-      return initOrganizationScopedDao(new MongoGroupDao());
+      return groupDao;
    }
 
    @Override
    public LinkInstanceDao getLinkInstanceDao() {
-      return initProjectScopedDao(new MongoLinkInstanceDao());
+      return linkInstanceDao;
    }
 
    @Override
    public LinkDataDao getLinkDataDao() {
-      return initProjectScopedDao(new MongoLinkDataDao());
+      return linkDataDao;
    }
 
    @Override
    public LinkTypeDao getLinkTypeDao() {
-      return initProjectScopedDao(new MongoLinkTypeDao());
+      return linkTypeDao;
    }
 
    @Override
    public PaymentDao getPaymentDao() {
-      return initOrganizationScopedDao(new MongoPaymentDao());
+      return paymentDao;
    }
 
    @Override
    public UserDao getUserDao() {
-      return initSystemScopedDao(new MongoUserDao());
+      return userDao;
    }
 
    @Override
    public UserLoginDao getUserLoginDao() {
-      return initSystemScopedDao(new MongoUserLoginDao());
+      return userLoginDao;
    }
 
    @Override
    public UserNotificationDao getUserNotificationDao() {
-      return initSystemScopedDao(new MongoUserNotificationDao());
+      return userNotificationDao;
    }
 
    @Override
    public ViewDao getViewDao() {
-      return initProjectScopedDao(new MongoViewDao());
+      return viewDao;
    }
 
    @Override
    public SequenceDao getSequenceDao() {
-      return initProjectScopedDao(new MongoSequenceDao());
+      return sequenceDao;
    }
 
    @Override
    public ResourceCommentDao getResourceCommentDao() {
-      return initProjectScopedDao(new MongoResourceCommentDao());
+      return resourceCommentDao;
    }
 
    @Override
    public DelayedActionDao getDelayedActionDao() {
-      return initSystemScopedDao(new MongoDelayedActionDao());
+      return delayedActionDao;
+   }
+
+   @Override
+   public AuditDao getAuditDao() {
+      return auditDao;
    }
 
    @Override

@@ -584,7 +584,7 @@ public class CollectionFacade extends AbstractFacade {
          final LinkType linkType = linkTypeDao.getLinkType(autoLinkRule.getLinkType());
 
          final AutoLinkBatchTask task = taskFactory.getInstance(AutoLinkBatchTask.class);
-         task.setupBatch(linkType, collection, attribute, otherCollection, otherAttribute, authenticatedUser.getCurrentUser(), permissions);
+         task.setupBatch(autoLinkRule, linkType, collection, attribute, otherCollection, otherAttribute, authenticatedUser.getCurrentUser(), permissions);
 
          taskExecutor.submitTask(task);
       }

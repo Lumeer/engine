@@ -26,9 +26,11 @@ import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
+import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.executor.operation.NavigationOperation;
 import io.lumeer.core.task.executor.operation.SendEmailOperation;
@@ -71,8 +73,22 @@ import java.util.stream.Collectors;
 
 public class SingleStage extends Stage {
 
+   private final String automationName;
+
    public SingleStage(final OperationExecutor executor) {
       super(executor);
+
+      if (task instanceof FunctionTask) {
+         var functionTask = (FunctionTask) task;
+         automationName = "=" + functionTask.getAttribute().getId();
+      } else if (task instanceof RuleTask) {
+         automationName = ((RuleTask) task).getRule().getName();
+      } else if (task instanceof AutoLinkBatchTask) {
+         automationName = ((AutoLinkBatchTask) task).getRule().getRule().getName();
+      } else {
+         automationName = null;
+      }
+
    }
 
    @Override
@@ -151,6 +167,9 @@ public class SingleStage extends Stage {
          if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
             purposeChangeProcessor.processChanges(new UpdateDocument(updatedDocument, originalDocument), collection);
          }
+
+         auditAdapter.registerUpdate(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
+               task.getInitiator().getId(), automationName, oldData, patchedData);
 
          // add patched data to new documents
          boolean created = false;
@@ -232,6 +251,7 @@ public class SingleStage extends Stage {
             final Set<String> removedFromLinkTypes = removedLinks.stream().map(LinkInstance::getLinkTypeId).collect(toSet());
             changesTracker.addRemovedLinkInstances(removedLinks);
             task.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstancesByDocumentsIds(Set.of(document.getId()));
+            removedLinks.forEach(link -> auditAdapter.removeAllAuditRecords(link.getLinkTypeId(), ResourceType.LINK, link.getId()));
 
             removedFromLinkTypes.forEach(linkTypeId -> {
                // decrease link instances count in link types map
@@ -256,6 +276,7 @@ public class SingleStage extends Stage {
 
             task.getDaoContextSnapshot().getDocumentDao().deleteDocument(document.getId(), document.getData());
             task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
+            auditAdapter.removeAllAuditRecords(document.getCollectionId(), ResourceType.DOCUMENT, document.getId());
          });
 
          updatedCollections.forEach((id, col) -> {
@@ -330,6 +351,9 @@ public class SingleStage extends Stage {
                                         .updateLinkInstance(linkInstance.getId(), linkInstance);
 
          updatedLink.setData(patchedData);
+
+         auditAdapter.registerUpdate(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
+               task.getInitiator().getId(), automationName, oldData, patchedData);
 
          // add patched data to new links
          boolean created = false;

@@ -23,7 +23,9 @@ import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.rule.AutoLinkRule;
+import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
@@ -50,11 +52,13 @@ public class AutoLinkRuleTaskExecutor {
    private String ruleName;
    private final AutoLinkRule rule;
    private final RuleTask ruleTask;
+   private final AuditAdapter auditAdapter;
 
    public AutoLinkRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
       this.ruleName = ruleName;
       this.rule = new AutoLinkRule(ruleTask.getRule());
       this.ruleTask = ruleTask;
+      this.auditAdapter = AuditAdapter.getAuditAdapter(ruleTask.getDaoContextSnapshot());
    }
 
    public ChangesTracker execute(final TaskExecutor taskExecutor) {
@@ -119,6 +123,7 @@ public class AutoLinkRuleTaskExecutor {
             ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(matcher.getLinkType().getId(), removeIds);
             changesTracker.updateLinkTypesMap(Map.of(matcher.getLinkType().getId(), matcher.getLinkType()));
             changesTracker.addRemovedLinkInstances(linksForRemoval);
+            linksForRemoval.forEach(l -> auditAdapter.removeAllAuditRecords(l.getLinkTypeId(), ResourceType.LINK, l.getId()));
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);

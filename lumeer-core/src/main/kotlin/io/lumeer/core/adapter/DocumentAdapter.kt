@@ -1,3 +1,4 @@
+
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -22,7 +23,7 @@ import io.lumeer.api.model.Document
 import io.lumeer.api.model.ResourceType
 import io.lumeer.storage.api.dao.FavoriteItemDao
 
-class DocumentAdapter(val resourceCommentAdapter: ResourceCommentAdapter, val favoriteItemDao: FavoriteItemDao) {
+class DocumentAdapter(private val resourceCommentAdapter: ResourceCommentAdapter, private val favoriteItemDao: FavoriteItemDao) {
 
    fun getCommentsCount(documentId: String): Long = resourceCommentAdapter.getCommentsCount(ResourceType.DOCUMENT, documentId)
 

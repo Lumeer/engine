@@ -18,7 +18,9 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.Document;
+import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.HealthCheck;
@@ -57,6 +59,9 @@ public class DocumentService extends AbstractService {
 
    @Inject
    private DocumentFacade documentFacade;
+
+   @Inject
+   private AuditFacade auditFacade;
 
    @PostConstruct
    public void init() {
@@ -101,6 +106,12 @@ public class DocumentService extends AbstractService {
    public Document patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
       Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
       return documentFacade.mapDocumentData(storedDocument);
+   }
+
+   @GET
+   @Path("{documentId:[0-9a-fA-F]{24}}/audit")
+   public List<AuditRecord> getAuditLogs(@PathParam("documentId") String documentId) {
+      return auditFacade.getAuditRecordsForDocument(collectionId, documentId);
    }
 
    @DELETE

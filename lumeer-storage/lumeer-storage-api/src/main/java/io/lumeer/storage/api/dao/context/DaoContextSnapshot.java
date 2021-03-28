@@ -21,6 +21,7 @@ package io.lumeer.storage.api.dao.context;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -103,6 +104,8 @@ public interface DaoContextSnapshot {
    ResourceCommentDao getResourceCommentDao();
 
    DelayedActionDao getDelayedActionDao();
+
+   AuditDao getAuditDao();
 
    SelectedWorkspace getSelectedWorkspace();
 
