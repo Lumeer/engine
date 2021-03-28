@@ -195,10 +195,16 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
    protected String getState(final DocumentEvent documentEvent, final Collection collection) {
       final String stateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
+      final Attribute attribute = findAttribute(collection.getAttributes(), stateAttributeId);
 
-      if (StringUtils.isNotEmpty(stateAttributeId) && findAttribute(collection.getAttributes(), stateAttributeId) != null) {
+      if (StringUtils.isNotEmpty(stateAttributeId) && attribute != null) {
          final Object states = documentEvent.getDocument().getData().getObject(stateAttributeId);
-         if (states instanceof String) {
+         System.out.println(states);
+         if (states == null && attribute.getConstraint().getType() == ConstraintType.Boolean) {
+            return "\u2610";
+         } else if (states instanceof Boolean) {
+            return ((Boolean) states) ? "\u2611" : "\u2610";
+         } else if (states instanceof String) {
             return states.toString();
          } else if (states instanceof List) {
             final List<String> stringStates = documentEvent.getDocument().getData().getArrayList(stateAttributeId, String.class);
