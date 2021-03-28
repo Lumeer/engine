@@ -18,17 +18,32 @@
  */
 package io.lumeer.core.adapter
 
+import io.lumeer.api.model.Permission
 import io.lumeer.api.model.View
+import io.lumeer.api.util.ResourceUtils
+import io.lumeer.core.util.QueryUtils
 import io.lumeer.storage.api.dao.FavoriteItemDao
+import io.lumeer.storage.api.dao.LinkTypeDao
+import io.lumeer.storage.api.dao.ViewDao
 
-class ViewAdapter(val favoriteItemDao: FavoriteItemDao) {
+class ViewAdapter(private val viewDao: ViewDao, private val linkTypeDao: LinkTypeDao, private val favoriteItemDao: FavoriteItemDao) {
 
    fun getFavoriteViewIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteViewIds(userId, projectId)
 
    fun isFavorite(viewId: String, userId: String, projectId: String): Boolean = getFavoriteViewIds(userId, projectId).contains(viewId)
 
-   fun mapViewData(view: View, userId: String, projectId: String): View {
-      view.isFavorite = isFavorite(view.id, userId, projectId)
-      return view
+   fun mapViewData(view: View, userId: String, projectId: String): View = view.apply {
+      isFavorite = isFavorite(view.id, userId, projectId)
    }
+
+   fun getUsersIdsInViewByCollection(collectionId: String, check: (Permission) -> Boolean ): Set<String> {
+      val views = viewDao.allViews
+      val linkTypes = linkTypeDao.allLinkTypes
+
+       return views.filter { QueryUtils.getQueryCollectionIds(it.query, linkTypes).contains(collectionId) }
+               .map { view -> view.permissions?.userPermissions.orEmpty().filter { permission -> check(permission) } }
+               .flatMap { list -> list.map { permission -> permission.id } }
+               .toSet()
+   }
+
 }

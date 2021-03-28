@@ -21,6 +21,7 @@ package io.lumeer.core.util;
 import static java.util.stream.Collectors.*;
 
 import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ConstraintData;
 import io.lumeer.api.model.CurrencyData;
@@ -29,15 +30,20 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.User;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -119,12 +125,12 @@ public class DocumentUtils {
    public static Map<String, Collection> getCollectionsMap(final CollectionDao collectionDao, final List<Document> documents) {
       Map<String, List<Document>> documentsByCollection = getDocumentsByCollection(documents);
       return collectionDao.getCollectionsByIds(documentsByCollection.keySet())
-                     .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
    }
 
    public static Map<String, Collection> getCollectionsMap(final CollectionDao collectionDao, final Map<String, List<Document>> documentsByCollection) {
       return collectionDao.getCollectionsByIds(documentsByCollection.keySet())
-                     .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
+                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
    }
 
    public static Set<String> getDocumentAttributes(DataDocument dataDocument, String prefix) {
@@ -187,6 +193,45 @@ public class DocumentUtils {
       });
 
       return documents;
+   }
+
+   public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
+      return getUsersAssigneeEmails(collection, document).contains(userEmail);
+   }
+
+   public static Set<String> getUsersAssigneeEmails(final Collection collection, final Document document) {
+      final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+      final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
+      if (assigneeAttribute != null) {
+         return getUsersList(document, assigneeAttribute.getId());
+      }
+      return Collections.emptySet();
+   }
+
+   public static Set<String> getUsersAssigneeIds(final UserDao userDao, final Collection collection, final Document document) {
+      Set<String> assigneesEmails = DocumentUtils.getUsersAssigneeEmails(collection, document);
+      return userDao.getUsersByEmails(assigneesEmails).stream().map(User::getId).collect(Collectors.toSet());
+   }
+
+   @SuppressWarnings("unchecked")
+   public static Set<String> getUsersList(final Document document, final String attributeId) {
+      final Object usersObject = document.getData() != null ? document.getData().getObject(attributeId) : null;
+      if (usersObject != null) {
+         if (usersObject instanceof String) {
+            return Set.of((String) usersObject);
+         } else if (usersObject instanceof java.util.Collection) {
+            return Set.copyOf((java.util.Collection<String>) usersObject);
+         }
+      }
+
+      return Set.of();
+   }
+
+   public static Document loadDocumentWithData(final DocumentDao documentDao, final DataDao dataDao, final String documentId) {
+      final Document document = documentDao.getDocumentById(documentId);
+      document.setData(dataDao.getData(document.getCollectionId(), documentId));
+
+      return document;
    }
 
    public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents, final ConstraintManager constraintManager, final boolean encodeForFce) {

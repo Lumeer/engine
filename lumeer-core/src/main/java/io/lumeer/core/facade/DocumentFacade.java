@@ -34,6 +34,7 @@ import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -574,27 +575,27 @@ public class DocumentFacade extends AbstractFacade {
                                     .stream()
                                     .collect(Collectors.groupingBy(Document::getCollectionId));
 
+      var resultDocuments = new ArrayList<Document>();
       documentsMap.forEach((collectionId, value) -> {
          var collection = collectionDao.getCollectionById(collectionId);
-         if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
+         var hasPermissions = permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ);
+         var dataMap = dataDao.getData(collectionId, value.stream().map(Document::getId).collect(Collectors.toSet()))
+                              .stream()
+                              .collect(Collectors.toMap(DataDocument::getId, d -> d));
 
-            var dataMap = dataDao.getData(collectionId, value.stream().map(Document::getId).collect(Collectors.toSet()))
-                                 .stream()
-                                 .collect(Collectors.toMap(DataDocument::getId, d -> d));
-
-            value.forEach(document -> {
-               var data = dataMap.get(document.getId());
-               if (data != null) {
-                  document.setData(constraintManager.decodeDataTypes(collection, data));
-                  document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
-               }
-            });
-         }
+         value.forEach(document -> {
+            var data = dataMap.get(document.getId());
+            if (data != null) {
+               document.setData(constraintManager.decodeDataTypes(collection, data));
+               document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
+            }
+            if (hasPermissions || DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail())) {
+               resultDocuments.add(document);
+            }
+         });
       });
 
-      return documentsMap.entrySet().stream()
-                         .flatMap(entry -> entry.getValue().stream())
-                         .collect(Collectors.toList());
+      return resultDocuments;
    }
 
    @SuppressWarnings("unchecked")

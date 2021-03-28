@@ -19,7 +19,8 @@
 package io.lumeer.storage.api.dao.context;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -42,8 +43,6 @@ import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
-import java.util.Set;
-
 /**
  * Holds contextual information necessary to create any Dao object in the application.
  * This is useful in batch processing tasks and long running tasks that are executed out
@@ -54,6 +53,10 @@ import java.util.Set;
  * If it is desired to send these notifications, they must be created manually in the batch task.
  */
 public interface DaoContextSnapshot {
+
+   Organization getOrganization();
+
+   Project getProject();
 
    String getOrganizationId();
 
@@ -100,14 +103,6 @@ public interface DaoContextSnapshot {
    ResourceCommentDao getResourceCommentDao();
 
    DelayedActionDao getDelayedActionDao();
-
-   Set<String> getCollectionManagers(final String collectionId);
-
-   Set<String> getCollectionReaders(final String collectionId);
-
-   Set<String> getCollectionReaders(final Collection collection);
-
-   Set<String> getProjectManagers();
 
    SelectedWorkspace getSelectedWorkspace();
 

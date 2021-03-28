@@ -18,8 +18,10 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
@@ -61,8 +63,14 @@ abstract class AbstractFacade {
       Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
       Permission permission = Permission.buildWithRoles(userId, roles);
 
-      Set<String> managers = permissionsChecker.getWorkspaceManagers();
-      managers.addAll(ResourceUtils.getManagers(resource));
+      Set<String> managers;
+      if(resource instanceof Organization) {
+         managers = permissionsChecker.getOrganizationManagers();
+      } else if(resource instanceof Project) {
+         managers = permissionsChecker.getWorkspaceManagers();
+      } else {
+         managers = ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), resource);
+      }
 
       Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
                                                        .filter(perm -> managers.contains(perm.getId()))

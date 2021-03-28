@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
@@ -51,6 +52,8 @@ public interface CollectionDao extends ProjectScopedDao {
    List<Collection> getCollections(SearchSuggestionQuery query, boolean skipPermissions);
 
    List<Collection> getCollectionsByAttributes(SearchSuggestionQuery query, boolean skipPermissions);
+
+   List<Collection> getCollectionsByPurpose(CollectionPurposeType purposeType);
 
    long getCollectionsCount();
 

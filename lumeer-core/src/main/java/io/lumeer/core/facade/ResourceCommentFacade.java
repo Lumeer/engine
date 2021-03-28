@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
@@ -27,9 +28,12 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
+import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
@@ -61,6 +65,9 @@ public class ResourceCommentFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private DataDao dataDao;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -152,8 +159,15 @@ public class ResourceCommentFacade extends AbstractFacade {
          if (collectionIds != null) {
             collectionIds.forEach(id -> permissionsChecker.checkRoleWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), Role.READ, Role.READ));
          }
-      } else if (resourceType == ResourceType.COLLECTION || resourceType == ResourceType.DOCUMENT) {
+      } else if (resourceType == ResourceType.COLLECTION) {
          permissionsChecker.checkRoleWithView((Collection) getResource(resourceType, resourceId), Role.READ, Role.READ);
+      } else if (resourceType == ResourceType.DOCUMENT) {
+         Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
+         Collection collection = collectionDao.getCollectionById(document.getCollectionId());
+         if (DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail())) {
+            return;
+         }
+         permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
       } else {
          permissionsChecker.checkRole(getResource(resourceType, resourceId), Role.READ);
       }

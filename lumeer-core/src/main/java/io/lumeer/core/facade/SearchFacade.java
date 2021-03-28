@@ -31,6 +31,8 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
@@ -167,15 +169,15 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private Tuple<List<Document>, List<LinkInstance>> searchTasksDocumentsAndLinks(final Query query, boolean isPublic, boolean includeChildDocuments) {
-      var resources = getReadResources(isPublic, query);
-      final List<Collection> collections = resources.getFirst().stream().filter(collection -> collection.getPurposeType() == CollectionPurposeType.Tasks).collect(Collectors.toList());
-      final List<LinkType> linkTypes = filterLinkTypesByCollections(resources.getSecond(), collections);
-      final Map<String, Collection> collectionsMap = getCollectionsMap(collections);
-      final Map<String, LinkType> linkTypesMap = getLinkTypeMap(linkTypes);
+      final List<Collection> collections = collectionDao.getCollectionsByPurpose(CollectionPurposeType.Tasks);
+      final List<LinkType> linkTypes = Collections.emptyList(); // we don't fetch links for tasks
       final Query tasksQuery = modifyQueryForTasks(isPublic, query, collections);
       if (tasksQuery == null) {
          return new Tuple<>(Collections.emptyList(), Collections.emptyList());
       }
+
+      final Map<String, Collection> collectionsMap = getCollectionsMap(collections);
+      final Map<String, LinkType> linkTypesMap = getLinkTypeMap(linkTypes);
       final Function<Document, Boolean> documentFilter = query.isEmpty() ? document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())) : null;
       return searchDocumentsAndLinks(tasksQuery, includeChildDocuments, !isPublic && query.isEmpty(), collectionsMap, linkTypesMap, documentFilter);
    }
@@ -192,8 +194,11 @@ public class SearchFacade extends AbstractFacade {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
             return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
          }
-         return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
-      }).collect(Collectors.toList());
+         if (permissionsChecker.hasRole(collection, Role.READ)) {
+            return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
+         }
+         return null;
+      }).filter(Objects::nonNull).collect(Collectors.toList());
 
       return stems.isEmpty() ? null : new Query(stems);
    }

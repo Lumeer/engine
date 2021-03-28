@@ -36,6 +36,7 @@ import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.CollectionPurposeUtils;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
@@ -120,7 +121,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
 
       if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
-         return getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+         return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId);
       }
 
       return Set.of(currentUser.getEmail());
@@ -132,8 +133,8 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
          final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
 
          if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
-            final Set<String> originalUsers = new HashSet<>(getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId));
-            final Set<String> newUsers = getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+            final Set<String> originalUsers = new HashSet<>(DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId));
+            final Set<String> newUsers = DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId);
 
             originalUsers.removeAll(newUsers);
 
@@ -149,14 +150,14 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
       if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
          if (documentEvent instanceof UpdateDocument) {
-               final Set<String> originalUsers = getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId);
-               final Set<String> newUsers = new HashSet<>(getUsersList(documentEvent.getDocument(), assigneeAttributeId));
+               final Set<String> originalUsers = DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId);
+               final Set<String> newUsers = new HashSet<>(DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId));
 
                newUsers.removeAll(originalUsers);
 
                return newUsers;
          } else if (documentEvent instanceof CreateDocument) {
-            return getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+            return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId);
          }
       }
 
@@ -167,21 +168,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_OBSERVERS_ATTRIBUTE_ID) : null;
 
       if (StringUtils.isNotEmpty(observersAttributeId) && findAttribute(collection.getAttributes(), observersAttributeId) != null) {
-         return getUsersList(documentEvent.getDocument(), observersAttributeId);
-      }
-
-      return Set.of();
-   }
-
-   @SuppressWarnings("unchecked")
-   private Set<String> getUsersList(final Document document, final String attributeId) {
-      final Object usersObject = document.getData().getObject(attributeId);
-      if (usersObject != null) {
-         if (usersObject instanceof String) {
-            return Set.of((String) usersObject);
-         } else if (usersObject instanceof java.util.Collection) {
-            return Set.copyOf((java.util.Collection<String>) usersObject);
-         }
+         return DocumentUtils.getUsersList(documentEvent.getDocument(), observersAttributeId);
       }
 
       return Set.of();

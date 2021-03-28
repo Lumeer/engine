@@ -19,12 +19,16 @@
 package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -35,7 +39,7 @@ public class ResourceUtils {
    private ResourceUtils() {
    }
 
-   public static Set<String> getManagers(Resource resource) {
+   private static Set<String> getManagers(Resource resource) {
       return resource.getPermissions().getUserPermissions()
                      .stream()
                      .filter(permission -> permission.getRoles().contains(Role.MANAGE))
@@ -43,11 +47,61 @@ public class ResourceUtils {
                      .collect(Collectors.toSet());
    }
 
-   public static Set<String> usersAllowedRead(Resource resource) {
+   public static Set<String> getOrganizationManagers(Organization organization) {
+      return getManagers(organization);
+   }
+
+   public static Set<String> getProjectManagers(Organization organization, Project project) {
+      var managers = getManagers(project);
+      managers.retainAll(getReaders(organization));
+      return managers;
+   }
+
+   public static Set<String> getResourceManagers(Organization organization, Project project, Resource resource) {
+      var resourceManagers = getManagers(resource);
+      resourceManagers.retainAll(getProjectReaders(organization, project));
+      resourceManagers.addAll(getProjectManagers(organization, project));
+
+      return resourceManagers;
+   }
+
+   public static Set<String> getCollectionManagers(Organization organization, Project project, Collection collection, Set<String> managersFromViews) {
+      var collectionManagers = getManagers(collection);
+      collectionManagers.addAll(managersFromViews);
+      collectionManagers.retainAll(getProjectReaders(organization, project));
+      collectionManagers.addAll(getProjectManagers(organization, project));
+
+      return collectionManagers;
+   }
+
+   public static Set<String> getResourceReaders(Organization organization, Project project, Resource resource) {
+      var resourceReaders = getReaders(resource);
+      resourceReaders.retainAll(getProjectReaders(organization, project));
+      resourceReaders.addAll(getProjectManagers(organization, project));
+
+      return resourceReaders;
+   }
+
+   public static Set<String> getCollectionReaders(Organization organization, Project project, Collection collection, Set<String> readersFromViews) {
+      var collectionReaders = getReaders(collection);
+      collectionReaders.addAll(readersFromViews);
+      collectionReaders.retainAll(getProjectReaders(organization, project));
+      collectionReaders.addAll(getProjectManagers(organization, project));
+
+      return collectionReaders;
+   }
+
+   public static Set<String> getReaders(Resource resource) {
       return resource.getPermissions().getUserPermissions().stream()
                      .filter(ResourceUtils::canReadByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
+   }
+
+   public static Set<String> getProjectReaders(Organization organization, Project project) {
+      var managers = getReaders(project);
+      managers.retainAll(getReaders(organization));
+      return managers;
    }
 
    public static Set<String> getAddedPermissions(final Resource originalResource, final Resource updatedResource) {
@@ -72,7 +126,11 @@ public class ResourceUtils {
    }
 
    public static boolean canReadByPermission(Permission permission) {
-      return permission.getRoles().contains(Role.READ) || permission.getRoles().contains(Role.MANAGE);
+      return permission.getRoles().contains(Role.READ) || canManageByPermission(permission);
+   }
+
+   public static boolean canManageByPermission(Permission permission) {
+      return permission.getRoles().contains(Role.MANAGE);
    }
 
    public static java.util.Collection<Attribute> incOrDecAttributes(java.util.Collection<Attribute> attributes, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {

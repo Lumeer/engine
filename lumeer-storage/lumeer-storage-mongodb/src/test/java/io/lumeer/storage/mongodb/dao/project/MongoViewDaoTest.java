@@ -21,12 +21,10 @@ package io.lumeer.storage.mongodb.dao.project;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -42,7 +40,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -351,58 +348,6 @@ public class MongoViewDaoTest extends MongoDbTestBase {
       createView(CODE3, NAME3);
 
       assertThat(viewDao.getAllViewCodes()).contains(CODE, CODE2, CODE3);
-   }
-
-   @Test
-   public void testGetViewsByCollection() {
-      String id1 = createViewWithCollectionIdInStem("CD1", "c1").getId();
-      String id2 = createViewWithCollectionIdInStem("CD2", "c2").getId();
-      String id3 = createViewWithCollectionIdInStem("CD3", "c1").getId();
-      String id4 = createViewWithCollectionIdInLink("CD4", "c2").getId();
-      String id5 = createViewWithCollectionIdInLink("CD5", "c1").getId();
-      String id6 = createViewWithCollectionIdInLink("CD6", "c5").getId();
-
-      List<View> views = viewDao.getViewsPermissionsByCollection("c1");
-      assertThat(views).extracting(View::getId).containsOnly(id1, id3, id5);
-
-      views = viewDao.getViewsPermissionsByCollection("c2");
-      assertThat(views).extracting(View::getId).containsOnly(id2, id4);
-
-      views = viewDao.getViewsPermissionsByCollection("c5");
-      assertThat(views).extracting(View::getId).containsOnly(id6);
-   }
-
-   private View createViewWithCollectionIdInStem(String code, String id) {
-      View view = prepareView();
-      view.setCode(code);
-
-      LinkType l2 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId6", "otherId3"), Collections.emptyList(), null));
-      LinkType l3 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId7", "otherId4"), Collections.emptyList(), null));
-      LinkType l4 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId8", "otherId5"), Collections.emptyList(), null));
-
-      QueryStem stem1 = new QueryStem(id, Arrays.asList(l2.getId(), l3.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
-      QueryStem stem2 = new QueryStem("otherId", Arrays.asList(l3.getId(), l4.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
-      Query query = new Query(Arrays.asList(stem1, stem2));
-      view.setQuery(query);
-
-      return viewDao.createView(view);
-   }
-
-   private View createViewWithCollectionIdInLink(String code, String id) {
-      View view = prepareView();
-      view.setCode(code);
-
-      LinkType lt = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList(id, "otherId2"), Collections.emptyList(), null));
-      LinkType l2 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId6", "otherId3"), Collections.emptyList(), null));
-      LinkType l3 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId7", "otherId4"), Collections.emptyList(), null));
-      LinkType l4 = linkTypeDao.createLinkType(new LinkType("name", Arrays.asList("otherId8", "otherId5"), Collections.emptyList(), null));
-
-      QueryStem stem1 = new QueryStem("cl1", Arrays.asList(l2.getId(), l3.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
-      QueryStem stem2 = new QueryStem("cl2", Arrays.asList(lt.getId(), l4.getId()), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
-      Query query = new Query(Arrays.asList(stem1, stem2));
-      view.setQuery(query);
-
-      return viewDao.createView(view);
    }
 
 }

@@ -45,8 +45,6 @@ public interface ViewDao extends ProjectScopedDao {
 
    List<View> getViews(SearchSuggestionQuery query, boolean skipPermissions);
 
-   List<View> getViewsPermissionsByCollection(final String collectionId);
-
    Set<String> getAllViewCodes();
 
 }

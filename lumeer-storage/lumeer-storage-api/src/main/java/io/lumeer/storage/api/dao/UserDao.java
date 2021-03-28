@@ -21,6 +21,7 @@ package io.lumeer.storage.api.dao;
 import io.lumeer.api.model.User;
 
 import java.util.List;
+import java.util.Set;
 
 public interface UserDao {
 
@@ -37,6 +38,8 @@ public interface UserDao {
    void deleteGroupFromUsers(String organizationId, String group);
 
    User getUserByEmail(String email);
+
+   List<User> getUsersByEmails(Set<String> email);
 
    User getUserByAuthId(String authId);
 

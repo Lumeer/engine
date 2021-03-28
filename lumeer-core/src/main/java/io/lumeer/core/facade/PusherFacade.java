@@ -39,6 +39,7 @@ import io.lumeer.core.action.DelayedActionProcessor;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
@@ -76,9 +77,12 @@ import io.lumeer.engine.api.event.UpdateResourceComment;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.engine.api.event.UserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -152,6 +156,15 @@ public class PusherFacade extends AbstractFacade {
 
    @Inject
    private DocumentFacade documentFacade;
+
+   @Inject
+   private UserDao userDao;
+
+   @Inject
+   private DocumentDao documentDao;
+
+   @Inject
+   private DataDao dataDao;
 
    @Inject
    private RequestDataKeeper requestDataKeeper;
@@ -233,7 +246,7 @@ public class PusherFacade extends AbstractFacade {
 
    public void templateCreated(@Observes final TemplateCreated templateCreated) {
       if (isEnabled()) {
-         Set<String> userIds = ResourceUtils.usersAllowedRead(templateCreated.getProject());
+         Set<String> userIds = ResourceUtils.getReaders(templateCreated.getProject());
          userIds.addAll(getOrganizationManagers());
          sendNotificationsByUsers(new ObjectWithParent(templateCreated, getOrganization().getId(), templateCreated.getProject().getId()), userIds, CREATE_EVENT_SUFFIX);
       }
@@ -305,7 +318,7 @@ public class PusherFacade extends AbstractFacade {
    private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views, final List<LinkType> linkTypes) {
       List<Event> notifications = new ArrayList<>();
 
-      Set<String> usersWithRights = ResourceUtils.usersAllowedRead(collection);
+      Set<String> usersWithRights = ResourceUtils.getReaders(collection);
       for (String user : userIds) { // checks if user has collection in some view
          if (usersWithRights.contains(user)) {
             continue;
@@ -471,7 +484,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendOrganizationNotifications(final Organization organization, final String event) {
-      sendNotificationsByUsers(organization, ResourceUtils.usersAllowedRead(organization), event);
+      sendNotificationsByUsers(organization, ResourceUtils.getReaders(organization), event);
    }
 
    private void sendNotificationsByUsers(final Object object, final Set<String> userIds, final String event) {
@@ -575,7 +588,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendProjectNotifications(final Project project, final String event) {
-      Set<String> userIds = ResourceUtils.usersAllowedRead(project);
+      Set<String> userIds = ResourceUtils.getReaders(project);
       userIds.addAll(getOrganizationManagers());
       sendNotificationsByUsers(new ObjectWithParent(project, getOrganization().getId()), userIds, event);
    }
@@ -589,7 +602,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendViewNotifications(final View view, final String event) {
-      Set<String> userIds = ResourceUtils.usersAllowedRead(view);
+      Set<String> userIds = ResourceUtils.getReaders(view);
       userIds.addAll(getWorkspaceManagers());
       view.setAuthorRights(viewFacade.getViewAuthorRights(view));
       sendNotificationsBatch(userIds.stream()
@@ -636,15 +649,15 @@ public class PusherFacade extends AbstractFacade {
       if (comment.getResourceType() == ResourceType.COLLECTION) {
          sendNotificationsByUsers(comment, collectionFacade.getUsersIdsWithAccess(comment.getResourceId()), eventSuffix);
       } else if (comment.getResourceType() == ResourceType.DOCUMENT) {
-         final List<Document> docs = documentFacade.getDocuments(Set.of(comment.getResourceId()));
-         if (docs != null) {
-            final Set<String> users = new HashSet<>();
-            docs.stream().map(Document::getCollectionId).collect(Collectors.toSet()).forEach(collectionId -> {
-               users.addAll(collectionFacade.getUsersIdsWithAccess(collectionId));
-            });
+         final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, comment.getResourceId());
+         final Collection collection = collectionFacade.getCollection(document.getCollectionId());
+         document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
+         documentFacade.mapDocumentData(document);
 
-            sendNotificationsByUsers(comment, users, eventSuffix);
-         }
+         Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
+         // add assignees from tasks
+         userIds.addAll(DocumentUtils.getUsersAssigneeIds(userDao, collection, document));
+         sendNotificationsByUsers(comment, userIds, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.LINK) {
          final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(comment.getResourceId());
          final LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
@@ -652,17 +665,17 @@ public class PusherFacade extends AbstractFacade {
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.VIEW) {
-         final Set<String> users = ResourceUtils.usersAllowedRead(viewFacade.getViewById(comment.getResourceId()));
+         final Set<String> users = ResourceUtils.getReaders(viewFacade.getViewById(comment.getResourceId()));
          users.addAll(getWorkspaceManagers());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.PROJECT) {
-         final Set<String> users = ResourceUtils.usersAllowedRead(getProject());
+         final Set<String> users = ResourceUtils.getReaders(getProject());
          users.addAll(getWorkspaceManagers());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.ORGANIZATION) {
-         final Set<String> users = ResourceUtils.usersAllowedRead(getOrganization());
+         final Set<String> users = ResourceUtils.getReaders(getOrganization());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       }
@@ -686,8 +699,12 @@ public class PusherFacade extends AbstractFacade {
             final Document document = new Document(updatedDocument);
             final Collection collection = collectionFacade.getCollection(document.getCollectionId());
             document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
-            document.setCommentsCount(documentFacade.getCommentsCount(document.getId()));
+            documentFacade.mapDocumentData(document);
+
             Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
+            // add assignees from tasks
+            userIds.addAll(DocumentUtils.getUsersAssigneeIds(userDao, collection, document));
+
             sendNotificationsBatch(userIds.stream()
                                           .map(userId -> createEvent(createDocumentForUser(document, userId), eventSuffix, userId))
                                           .collect(Collectors.toList()));
@@ -768,7 +785,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateCompanyContact(@Observes final UpdateCompanyContact updateCompanyContact) {
       if (isEnabled()) {
          try {
-            Set<String> userIds = ResourceUtils.getManagers(organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId()));
+            Set<String> userIds = ResourceUtils.getOrganizationManagers(organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId()));
             sendNotificationsByUsers(updateCompanyContact.getCompanyContact(), userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -780,7 +797,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(updateServiceLimits.getServiceLimits(), updateServiceLimits.getOrganization().getId());
-            Set<String> userIds = ResourceUtils.getManagers(updateServiceLimits.getOrganization());
+            Set<String> userIds = ResourceUtils.getOrganizationManagers(updateServiceLimits.getOrganization());
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -792,7 +809,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
-            Set<String> userIds = ResourceUtils.getManagers(createOrUpdatePayment.getOrganization());
+            Set<String> userIds = ResourceUtils.getOrganizationManagers(createOrUpdatePayment.getOrganization());
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -925,7 +942,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Organization organization = organizationDao.getOrganizationById(createOrUpdateUser.getOrganizationId());
             ObjectWithParent object = new ObjectWithParent(cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
-            Set<String> users = ResourceUtils.usersAllowedRead(organization);
+            Set<String> users = ResourceUtils.getReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
@@ -939,7 +956,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Set<String> users = getWorkspaceManagers();
             Project project = getProject();
-            users.addAll(ResourceUtils.usersAllowedRead(project));
+            users.addAll(ResourceUtils.getReaders(project));
             ObjectWithParent object = new ObjectWithParent(createDocumentsAndLinks, getOrganization().getId(), project.getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "DocumentsAndLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -954,7 +971,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Set<String> users = getWorkspaceManagers();
             Project project = getProject();
-            users.addAll(ResourceUtils.usersAllowedRead(project));
+            users.addAll(ResourceUtils.getReaders(project));
             ObjectWithParent object = new ObjectWithParent(setDocumentLinks, getOrganization().getId(), project.getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "SetDocumentLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -978,7 +995,7 @@ public class PusherFacade extends AbstractFacade {
             Organization organization = organizationDao.getOrganizationById(removeUser.getOrganizationId());
             ResourceId resourceId = new ResourceId(removeUser.getUser().getId(), organization.getId());
             String className = removeUser.getUser().getClass().getSimpleName();
-            Set<String> users = ResourceUtils.usersAllowedRead(organization);
+            Set<String> users = ResourceUtils.getReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
