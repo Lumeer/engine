@@ -105,6 +105,7 @@ public class UserFacade extends AbstractFacade {
    private UserNotificationFacade userNotificationFacade;
 
    public User createUser(String organizationId, User user) {
+      user.setEmail(user.getEmail().toLowerCase());
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, Role.MANAGE);
       checkUsersCreate(organizationId, 1);
@@ -123,6 +124,8 @@ public class UserFacade extends AbstractFacade {
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       // we need at least project management rights
       checkProjectPermissions(organizationId, projectId, Role.MANAGE);
+
+      users.forEach(u -> u.setEmail(u.getEmail().toLowerCase()));
 
       // check if the users are already in the organization
       final List<User> usersInOrganization = getUsers(organizationId);
@@ -201,6 +204,7 @@ public class UserFacade extends AbstractFacade {
 
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {
       return users.stream().map(user -> {
+         user.setEmail(user.getEmail().toLowerCase());
          User storedUser = userDao.getUserByEmail(user.getEmail());
 
          if (storedUser == null) {
@@ -237,6 +241,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private User createUserAndSendNotification(String organizationId, User user) {
+      user.setEmail(user.getEmail().toLowerCase());
       User created = userDao.createUser(user);
       if (this.createOrUpdateUserEvent != null) {
          this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, created));
