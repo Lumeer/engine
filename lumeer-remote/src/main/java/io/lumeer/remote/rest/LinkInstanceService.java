@@ -122,6 +122,12 @@ public class LinkInstanceService extends AbstractService {
       return auditFacade.getAuditRecordsForLink(linkTypeId, linkInstanceId);
    }
 
+   @POST
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/{linkInstanceId:[0-9a-fA-F]{24}}/audit/{auditLogId:[0-9a-fA-F]{24}}/revert")
+   public LinkInstance revertAuditLog(@PathParam("linkTypeId") String linkTypeId, @PathParam("linkInstanceId") String linkInstanceId, @PathParam("auditLogId") String auditLogId) {
+      return auditFacade.revertLastLinkAuditOperation(linkTypeId, linkInstanceId, auditLogId);
+   }
+
    @DELETE
    @Path("{linkInstanceId:[0-9a-fA-F]{24}}")
    public Response deleteLinkInstance(@PathParam("linkInstanceId") String id) {

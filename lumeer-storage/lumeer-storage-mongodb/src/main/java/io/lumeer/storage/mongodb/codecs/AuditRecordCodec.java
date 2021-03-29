@@ -81,6 +81,9 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       record.setResourceId(bson.getString(AuditRecord.RESOURCE_ID));
       record.setUser(bson.getString(AuditRecord.USER));
       record.setAutomation(bson.getString(AuditRecord.AUTOMATION));
+      record.setUserName(bson.getString(AuditRecord.USER_NAME));
+      record.setUserEmail(bson.getString(AuditRecord.USER_EMAIL));
+      record.setAutomation(bson.getString(AuditRecord.AUTOMATION));
 
       final Date changeDate = bson.getDate(AuditRecord.CHANGE_DATE);
       record.setChangeDate(changeDate != null ? ZonedDateTime.ofInstant(changeDate.toInstant(), ZoneOffset.UTC) : null);
@@ -101,6 +104,8 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
           .append(AuditRecord.RESOURCE_TYPE, record.getResourceType().toString())
           .append(AuditRecord.RESOURCE_ID, record.getResourceId())
           .append(AuditRecord.USER, record.getUser())
+          .append(AuditRecord.USER_NAME, record.getUserName())
+          .append(AuditRecord.USER_EMAIL, record.getUserEmail())
           .append(AuditRecord.AUTOMATION, record.getAutomation())
           .append(AuditRecord.OLD_STATE, record.getOldState())
           .append(AuditRecord.NEW_STATE, record.getNewState());

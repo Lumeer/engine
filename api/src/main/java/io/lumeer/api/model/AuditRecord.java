@@ -40,6 +40,8 @@ public class AuditRecord implements WithId {
    public static final String RESOURCE_ID = "resourceId";
    public static final String CHANGE_DATE = "changeDate";
    public static final String USER = "user";
+   public static final String USER_NAME = "userName";
+   public static final String USER_EMAIL = "userEmail";
    public static final String OLD_STATE = "oldState";
    public static final String NEW_STATE = "newState";
    public static final String AUTOMATION = "automation";
@@ -55,23 +57,29 @@ public class AuditRecord implements WithId {
    private ZonedDateTime changeDate;
 
    private String user;
+   private String userName;
+   private String userEmail;
    private String automation;
 
    private DataDocument oldState;
    private DataDocument newState;
 
-   public AuditRecord() {}
+   public AuditRecord() {
+   }
 
    @JsonCreator
    public AuditRecord(@JsonProperty(PARENT_ID) final String parentId, @JsonProperty(RESOURCE_TYPE) final ResourceType resourceType,
          @JsonProperty(RESOURCE_ID) final String resourceId, @JsonProperty(CHANGE_DATE) final ZonedDateTime changeDate,
-         @JsonProperty(USER) final String user, @JsonProperty(AUTOMATION) final String automation, @JsonProperty(OLD_STATE) final DataDocument oldState,
+         @JsonProperty(USER) final String user, @JsonProperty(USER) final String userName, @JsonProperty(USER) final String userEmail,
+         @JsonProperty(AUTOMATION) final String automation, @JsonProperty(OLD_STATE) final DataDocument oldState,
          @JsonProperty(NEW_STATE) final DataDocument newState) {
       this.parentId = parentId;
       this.resourceType = resourceType;
       this.resourceId = resourceId;
       this.changeDate = changeDate;
       this.user = user;
+      this.userName = userName;
+      this.userEmail = userEmail;
       this.automation = automation;
       this.oldState = oldState;
       this.newState = newState;
@@ -150,6 +158,22 @@ public class AuditRecord implements WithId {
       this.newState = newState;
    }
 
+   public String getUserName() {
+      return userName;
+   }
+
+   public void setUserName(final String userName) {
+      this.userName = userName;
+   }
+
+   public String getUserEmail() {
+      return userEmail;
+   }
+
+   public void setUserEmail(final String userEmail) {
+      this.userEmail = userEmail;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -176,6 +200,8 @@ public class AuditRecord implements WithId {
             ", resourceId='" + resourceId + '\'' +
             ", changeDate=" + changeDate +
             ", user='" + user + '\'' +
+            ", userName='" + userName + '\'' +
+            ", userEmail='" + userEmail + '\'' +
             ", automation='" + automation + '\'' +
             ", oldState=" + oldState +
             ", newState=" + newState +
