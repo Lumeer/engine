@@ -21,6 +21,7 @@ package io.lumeer.core.adapter
 import io.lumeer.api.model.AuditRecord
 import io.lumeer.api.model.Payment
 import io.lumeer.api.model.ResourceType
+import io.lumeer.api.model.User
 import io.lumeer.engine.api.data.DataDocument
 import io.lumeer.storage.api.dao.AuditDao
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot
@@ -40,11 +41,11 @@ class AuditAdapter(private val auditDao: AuditDao) {
          else
             auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
-   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, userId: String?, automation: String?, oldState: DataDocument, newState: DataDocument) =
+   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, oldState: DataDocument, newState: DataDocument) =
          getChanges(oldState, newState).takeIf { it.isNotEmpty() }?.let { changes ->
             val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
 
-            if (lastAuditRecord != null && changesOverlap(lastAuditRecord, userId, automation, changes)) {
+            if (lastAuditRecord != null && changesOverlap(lastAuditRecord, user?.id, automation, changes)) {
                changes.keys.forEach {
                   if (!lastAuditRecord.oldState.containsKey(it) && !lastAuditRecord.newState.containsKey(it))
                      lastAuditRecord.oldState[it] = oldState[it]
@@ -56,6 +57,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
                      lastAuditRecord.newState.remove(it)
                   }
                }
+               lastAuditRecord.changeDate = ZonedDateTime.now()
 
                if (lastAuditRecord.newState.isEmpty()) {
                   auditDao.deleteAuditRecord(lastAuditRecord.id)
@@ -74,7 +76,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
                // we keep business level history in case the user upgraded
                auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_MAX_WEEKS))
 
-               val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), userId, automation, partialOldState, changes)
+               val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, automation, partialOldState, changes)
                auditDao.createAuditRecord(auditRecord)
             }
          }

@@ -27,6 +27,7 @@ import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -210,7 +211,7 @@ public class AuditFacade extends AbstractFacade {
          throw new UnsupportedOperationException("Cannot create audit record from different or incomplete documents.");
       }
 
-      final String user = authenticatedUser.getCurrentUserId();
+      final User user = authenticatedUser.getCurrentUser();
       final String parentId = oldDocument.getCollectionId();
 
       return auditAdapter.registerUpdate(parentId, ResourceType.DOCUMENT, oldDocument.getId(), user, automation, oldDocument.getData(), newDocument.getData());
@@ -222,10 +223,10 @@ public class AuditFacade extends AbstractFacade {
          throw new UnsupportedOperationException("Cannot create audit record from different or incomplete link instances.");
       }
 
-      final String user = authenticatedUser.getCurrentUserId();
+      final User user = authenticatedUser.getCurrentUser();
       final String parentId = oldLink.getLinkTypeId();
 
-      return auditAdapter.registerUpdate(parentId, ResourceType.DOCUMENT, oldLink.getId(), user, automation, oldLink.getData(), newLink.getData());
+      return auditAdapter.registerUpdate(parentId, ResourceType.LINK, oldLink.getId(), user, automation, oldLink.getData(), newLink.getData());
    }
 
    private List<AuditRecord> decode(final Collection collection, final List<AuditRecord> auditRecords) {
