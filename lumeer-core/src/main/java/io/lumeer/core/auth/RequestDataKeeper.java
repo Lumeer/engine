@@ -62,5 +62,15 @@ public class RequestDataKeeper {
    public RequestDataKeeper(final RequestDataKeeper original) {
       this.correlationId = original.getCorrelationId();
       this.userLocale = original.getUserLocale();
+      this.timezone = original.getTimezone();
+   }
+
+   @Override
+   public String toString() {
+      return "RequestDataKeeper{" +
+            "correlationId='" + correlationId + '\'' +
+            ", userLocale='" + userLocale + '\'' +
+            ", timezone='" + timezone + '\'' +
+            '}';
    }
 }
