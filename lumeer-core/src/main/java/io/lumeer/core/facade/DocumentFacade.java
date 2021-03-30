@@ -58,6 +58,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -399,8 +400,12 @@ public class DocumentFacade extends AbstractFacade {
          return true;
       }
 
-      return patch.entrySet().stream().anyMatch(entry ->
-            !oldDoc.containsKey(entry.getKey()) || (oldDoc.get(entry.getKey()) == null && entry.getValue() != null) || !oldDoc.get(entry.getKey()).equals(entry.getValue())
+      return patch.entrySet().stream().anyMatch(entry -> {
+               if (!oldDoc.containsKey(entry.getKey())) {
+                  return true;
+               }
+               return !Objects.equals(oldDoc.get(entry.getKey()), entry.getKey());
+            }
       );
    }
 
