@@ -23,7 +23,6 @@ import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Language;
-import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -274,16 +273,6 @@ public class UserFacade extends AbstractFacade {
       return updatedUser.getHints();
    }
 
-   public User updateSettings(final NotificationsSettings notifications) {
-      final User currentUser = getCurrentUser();
-      currentUser.setNotifications(notifications);
-
-      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
-      userCache.updateUser(updatedUser.getEmail(), updatedUser);
-
-      return updatedUser;
-   }
-
    private User updateExistingUser(String organizationId, User storedUser, User user) {
       final var mergedUser = UserUtil.mergeUsers(storedUser, user);
       final var updatedUser = updateUserAndSendNotification(organizationId, storedUser.getId(), mergedUser);
@@ -372,6 +361,14 @@ public class UserFacade extends AbstractFacade {
 
       if (user.getReferral() != null && (currentUser.getReferral() == null || "".equals(currentUser.getReferral())) && !user.getReferral().equals(Utils.strHexTo36(currentUser.getId()))) {
          currentUser.setReferral(user.getReferral());
+      }
+
+      if (user.getName() != null) {
+         currentUser.setName(user.getName());
+      }
+
+      if (user.getNotifications() != null) {
+         currentUser.setNotifications(user.getNotifications());
       }
 
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
