@@ -31,17 +31,22 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.UserUtil;
+import io.lumeer.core.auth.UserAuth0Utils;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.RemoveUser;
+import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
+
+import com.auth0.exception.Auth0Exception;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -102,6 +107,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private UserNotificationFacade userNotificationFacade;
+
+   @Inject
+   private UserAuth0Utils userAuth0Utils;
 
    public User createUser(String organizationId, User user) {
       user.setEmail(user.getEmail().toLowerCase());
@@ -363,8 +371,13 @@ public class UserFacade extends AbstractFacade {
          currentUser.setReferral(user.getReferral());
       }
 
-      if (user.getName() != null) {
+      if (user.getName() != null && StringUtils.compare(user.getName(), currentUser.getName()) != 0) {
          currentUser.setName(user.getName());
+         try {
+            userAuth0Utils.renameUser(user.getName());
+         } catch (Auth0Exception e) {
+            throw new UnsuccessfulOperationException("Unable to update user name: ", e);
+         }
       }
 
       if (user.getNotifications() != null) {
