@@ -121,10 +121,10 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
 
       if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
-         return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+         return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId).stream().map(String::toLowerCase).collect(Collectors.toSet());
       }
 
-      return Set.of(currentUser.getEmail());
+      return Set.of(currentUser.getEmail().toLowerCase());
    }
 
    protected Set<String> getRemovedAssignees(final DocumentEvent documentEvent, final Collection collection) {
@@ -168,7 +168,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_OBSERVERS_ATTRIBUTE_ID) : null;
 
       if (StringUtils.isNotEmpty(observersAttributeId) && findAttribute(collection.getAttributes(), observersAttributeId) != null) {
-         return DocumentUtils.getUsersList(documentEvent.getDocument(), observersAttributeId);
+         return DocumentUtils.getUsersList(documentEvent.getDocument(), observersAttributeId).stream().map(String::toLowerCase).collect(Collectors.toSet());
       }
 
       return Set.of();
@@ -281,7 +281,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
          assignees.stream().filter(assignee ->
                (notificationType == NotificationType.DUE_DATE_SOON ||
                      notificationType == NotificationType.PAST_DUE_DATE ||
-                     !assignee.equals(currentUser.getEmail()) && StringUtils.isNotEmpty(assignee))
+                     !assignee.equals(currentUser.getEmail().toLowerCase()) && StringUtils.isNotEmpty(assignee))
          ).forEach(assignee -> {
             final List<NotificationSetting> channels = getChannels(documentEvent, collection, notificationType, assignee);
 
