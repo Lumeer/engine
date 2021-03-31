@@ -42,6 +42,8 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -196,7 +198,7 @@ public class DocumentUtils {
    }
 
    public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
-      return getUsersAssigneeEmails(collection, document).contains(userEmail);
+      return getUsersAssigneeEmails(collection, document).stream().anyMatch(s -> StringUtils.compareIgnoreCase(s, userEmail) == 0);
    }
 
    public static Set<String> getUsersAssigneeEmails(final Collection collection, final Document document) {
