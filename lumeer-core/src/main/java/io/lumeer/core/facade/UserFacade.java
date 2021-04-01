@@ -349,7 +349,8 @@ public class UserFacade extends AbstractFacade {
    }
 
    public User patchCurrentUser(final User user, final String language) {
-      User currentUser = authenticatedUser.getCurrentUser();
+      final User currentUser = authenticatedUser.getCurrentUser();
+      boolean sendPushNotification = false;
 
       if (user.hasNewsletter() != null) {
          currentUser.setNewsletter(user.hasNewsletter());
@@ -378,13 +379,20 @@ public class UserFacade extends AbstractFacade {
          } catch (Auth0Exception e) {
             throw new UnsuccessfulOperationException("Unable to update user name: ", e);
          }
+         sendPushNotification = true;
       }
 
       if (user.getNotifications() != null) {
          currentUser.setNotifications(user.getNotifications());
+         sendPushNotification = true;
       }
 
-      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      final User updatedUser;
+      if (sendPushNotification) {
+         updatedUser = updateUserAndSendNotification(workspaceKeeper.getOrganizationId(), currentUser.getId(), currentUser);
+      } else {
+         updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      }
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return updatedUser;
