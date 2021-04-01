@@ -18,9 +18,6 @@
  */
 package io.lumeer.core.auth;
 
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.AuthenticationControllerProvider;
-
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.Auth0Exception;
@@ -30,13 +27,11 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
 
 @SessionScoped
 public class UserAuth0Utils implements Serializable {
@@ -52,29 +47,35 @@ public class UserAuth0Utils implements Serializable {
    private String managementApiToken;
 
    private boolean initialized = false;
+   private boolean skipSecurity = false;
 
-   @PostConstruct
-   public void init(final FilterConfig filterConfig) throws ServletException {
-      if (!initialized && System.getenv("SKIP_SECURITY") == null) {
-         domain = filterConfig.getServletContext().getInitParameter("com.auth0.domain");
-         backendClientId = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId");
-         backendClientSecret = filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret");
+   public void init() {
+      skipSecurity = System.getenv("SKIP_SECURITY") != null;
+      if (!initialized && StringUtils.isNotEmpty(domain)) {
          verifier = AuthenticationControllerProvider.getVerifier(domain);
          initialized = true;
       }
    }
 
    public void resendVerificationEmail(final String authId) throws Auth0Exception {
-      refreshManagementApiToken();
-      final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
-      Job job = mApi.jobs().sendVerificationEmail(authId, backendClientId).execute();
+      if (!initialized) {
+         init();
+      }
+      if (!skipSecurity) {
+         refreshManagementApiToken();
+         final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
+         Job job = mApi.jobs().sendVerificationEmail(authId, backendClientId).execute();
+      }
    }
 
    public void renameUser(final String newUserName) throws Auth0Exception {
+      if (!initialized) {
+         init();
+      }
       final String authId = authenticatedUser.getAuthUserInfo().user.getAuthIds().iterator().next();
       refreshManagementApiToken();
       final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
-      final User user = mApi.users().get(authId, null).execute();
+      final User user = new User();
       user.setName(newUserName);
       mApi.users().update(authId, user).execute();
    }
@@ -109,5 +110,17 @@ public class UserAuth0Utils implements Serializable {
       }
 
       return true;
+   }
+
+   public void setDomain(final String domain) {
+      this.domain = domain;
+   }
+
+   public void setBackendClientId(final String backendClientId) {
+      this.backendClientId = backendClientId;
+   }
+
+   public void setBackendClientSecret(final String backendClientSecret) {
+      this.backendClientSecret = backendClientSecret;
    }
 }
