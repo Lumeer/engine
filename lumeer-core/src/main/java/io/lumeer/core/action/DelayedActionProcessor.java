@@ -30,7 +30,7 @@ import io.lumeer.api.model.ViewCursor;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
-import io.lumeer.core.util.MomentJsParser;
+import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -151,7 +151,7 @@ public class DelayedActionProcessor {
          }
 
          data.put(DelayedAction.DATA_TASK_DUE_DATE,
-               MomentJsParser.formatMomentJsDate(
+               JsFunctionsParser.formatMomentJsDate(
                      originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE).getTime(),
                      format,
                      language.toString().toLowerCase()

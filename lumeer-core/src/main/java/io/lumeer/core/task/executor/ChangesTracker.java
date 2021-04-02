@@ -24,8 +24,8 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
-import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
 
@@ -49,7 +49,7 @@ public class ChangesTracker {
    private final Set<LinkType> linkTypes = new HashSet<>();
    private final Set<String> sequences = new HashSet<>();
    private final List<UserMessageRequest> userMessageRequests = new ArrayList<>();
-   private final List<PrintRequest> printRequests = new ArrayList<>();
+   private final List<GenericPrintRequest> printRequests = new ArrayList<>();
    private final List<NavigationRequest> navigationRequests = new ArrayList<>();
    private final List<SendEmailRequest> sendEmailRequests = new ArrayList<>();
 
@@ -59,23 +59,11 @@ public class ChangesTracker {
    public ChangesTracker() {
    }
 
-/*   public ChangesTracker(final Set<Collection> collections, final Set<Document> createdDocuments, final Set<Document> updatedDocuments,
-         final Set<Document> removedDocuments, final Set<LinkType> linkTypes, final Set<LinkInstance> createdLinkInstances,
-         final Set<LinkInstance> updatedLinkInstances, final Set<LinkInstance> removedLinkInstances, final Set<String> sequences,
-         final List<UserMessageRequest> userMessageRequests, final List<PrintRequest> printRequests, final Map<String, Collection> collectionsMap,
-         final Map<String, LinkType> linkTypesMap) {
-      merge(collections, createdDocuments, updatedDocuments,
-            removedDocuments, linkTypes, createdLinkInstances,
-            updatedLinkInstances, removedLinkInstances, sequences,
-            userMessageRequests, printRequests, collectionsMap,
-            linkTypesMap);
-   }*/
-
    public ChangesTracker merge(final Set<Collection> collections, final Set<Document> createdDocuments,
          final Set<Document> updatedDocuments, final Set<Document> removedDocuments, final Set<LinkType> linkTypes,
          final Set<LinkInstance> createdLinkInstances, final Set<LinkInstance> updatedLinkInstances,
          final Set<LinkInstance> removedLinkInstances, final Set<String> sequences,
-         final List<UserMessageRequest> userMessageRequests, final List<PrintRequest> printRequests,
+         final List<UserMessageRequest> userMessageRequests, final List<GenericPrintRequest> printRequests,
          final List<NavigationRequest> navigationRequests, final List<SendEmailRequest> sendEmailRequests,
          final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
@@ -209,7 +197,7 @@ public class ChangesTracker {
       return linkTypesMap;
    }
 
-   public List<PrintRequest> getPrintRequests() {
+   public List<GenericPrintRequest> getPrintRequests() {
       return printRequests;
    }
 
@@ -261,7 +249,7 @@ public class ChangesTracker {
       this.userMessageRequests.addAll(userMessageRequests);
    }
 
-   public void addPrintRequests(final List<PrintRequest> printRequests) {
+   public void addPrintRequests(final List<GenericPrintRequest> printRequests) {
       this.printRequests.addAll(printRequests);
    }
 

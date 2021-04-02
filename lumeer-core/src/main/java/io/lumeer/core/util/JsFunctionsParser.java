@@ -27,7 +27,7 @@ import org.graalvm.polyglot.Value;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class MomentJsParser implements AutoCloseable {
+public class JsFunctionsParser implements AutoCloseable {
 
    public static final String FORMAT_JS_DATE = "formatMomentJsDate";
    public static final String PARSE_JS_DATE = "parseMomentJsDate";
@@ -36,18 +36,26 @@ public class MomentJsParser implements AutoCloseable {
    private static Value formatMomentJsDate;
    private static Value parseMomentJsDate;
    private static String momentJsCode;
+   private static String heJsCode;
+   private static String numbroJsCode;
    private static final Engine engine = JsEngineFactory.getEngine();
 
    static {
       try (
-            var stream = MomentJsParser.class.getResourceAsStream("/moment-with-locales.min.js");
-            var stream2 = MomentJsParser.class.getResourceAsStream("/moment-business.min.js")
+            var stream = JsFunctionsParser.class.getResourceAsStream("/moment-with-locales.min.js");
+            var stream2 = JsFunctionsParser.class.getResourceAsStream("/moment-business.min.js");
+            var stream3 = JsFunctionsParser.class.getResourceAsStream("/he.min.js");
+            var stream4 = JsFunctionsParser.class.getResourceAsStream("/numbro.min.js");
+            var stream5 = JsFunctionsParser.class.getResourceAsStream("/numbro-languages.min.js");
       ) {
          momentJsCode = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
          momentJsCode += new String(stream2.readAllBytes(), StandardCharsets.UTF_8);
          momentJsCode +=
                "; function " + FORMAT_JS_DATE  + "(time, format, locale) { return moment(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
                "; function " + PARSE_JS_DATE + "(date, format, locale) { return moment((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } ";
+         heJsCode = new String(stream3.readAllBytes(), StandardCharsets.UTF_8);
+         numbroJsCode = new String(stream4.readAllBytes(), StandardCharsets.UTF_8);
+         numbroJsCode += new String(stream5.readAllBytes(), StandardCharsets.UTF_8);
       } catch (IOException ioe) {
          momentJsCode = null;
       }
@@ -55,6 +63,14 @@ public class MomentJsParser implements AutoCloseable {
 
    public static String getMomentJsCode() {
       return momentJsCode;
+   }
+
+   public static String getHeJsCode() {
+      return heJsCode;
+   }
+
+   public static String getNumbroJsCode() {
+      return numbroJsCode;
    }
 
    public static Long parseMomentJsDate(final String date, final String format, final String locale) {

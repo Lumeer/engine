@@ -18,48 +18,25 @@
  */
 package io.lumeer.core.task.executor.request;
 
-import io.lumeer.api.model.ResourceType;
+public class TextPrintRequest extends GenericPrintRequest {
 
-public class PrintRequest extends GenericPrintRequest {
+   private final String text;
 
-   private final String resourceId;
-   private final String documentId;
-   private final String attributeId;
-   private final ResourceType type;
-
-   public PrintRequest(final String organizationCode, final String projectCode, final String resourceId, final String documentId, final String attributeId, final ResourceType type) {
+   public TextPrintRequest(final String organizationCode, final String projectCode, final String text) {
       super(organizationCode, projectCode);
-      this.resourceId = resourceId;
-      this.documentId = documentId;
-      this.attributeId = attributeId;
-      this.type = type;
+      this.text = text;
    }
 
-   public String getResourceId() {
-      return resourceId;
-   }
-
-   public String getDocumentId() {
-      return documentId;
-   }
-
-   public String getAttributeId() {
-      return attributeId;
-   }
-
-   public ResourceType getType() {
-      return type;
+   public String getText() {
+      return text;
    }
 
    @Override
    public String toString() {
-      return "PrintRequest{" +
+      return "TextPrintRequest{" +
             "organizationCode='" + organizationCode + '\'' +
             ", projectCode='" + projectCode + '\'' +
-            ", resourceId='" + resourceId + '\'' +
-            ", documentId='" + documentId + '\'' +
-            ", attributeId='" + attributeId + '\'' +
-            ", type=" + type +
+            ", text='" + text + '\'' +
             '}';
    }
 }
