@@ -55,7 +55,7 @@ public abstract class ResourceCodec {
       String color = bson.getString(COLOR);
       Long version = bson.getLong(VERSION);
       String description = bson.getString(DESCRIPTION);
-      Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class)); // TODO try to use better approach
+      Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class));
 
       SimpleResource view = new SimpleResource(code, name, icon, color, description, permissions);
       view.setId(id);
