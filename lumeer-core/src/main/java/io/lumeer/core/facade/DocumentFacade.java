@@ -244,7 +244,6 @@ public class DocumentFacade extends AbstractFacade {
 
       updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec, 0);
 
-      // TODO archive the old document
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
       final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
@@ -385,7 +384,6 @@ public class DocumentFacade extends AbstractFacade {
 
       updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet(), 0);
 
-      // TODO archive the old document
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
 
       final Document updatedDocument = updateDocument(collection, documentId, patchedData, originalData);
