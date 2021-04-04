@@ -26,7 +26,7 @@ import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.bridge.LumeerBridge;
 import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.OperationExecutor;
-import io.lumeer.core.util.MomentJsParser;
+import io.lumeer.core.util.JsFunctionsParser;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -39,15 +39,20 @@ import java.util.TimerTask;
 public class JsExecutor {
 
    private static final String MOMENT_JS_SIGNATURE = "/** MomentJs **/";
+   private static final String HE_JS_SIGNATURE = "/** he.js **/";
+   private static final String NUMBRO_JS_SIGNATURE = "/** numbro.js **/";
 
    private LumeerBridge lumeerBridge;
    private ContextualTask task;
    private boolean dryRun = false;
    private static final Engine engine = JsEngineFactory.getEngine();
-   private static final String momentJsCode = MomentJsParser.getMomentJsCode();
+   private static final String momentJsCode = JsFunctionsParser.getMomentJsCode();
+   private static final String heJsCode = JsFunctionsParser.getHeJsCode();
+   private static final String numbroJsCode = JsFunctionsParser.getNumbroJsCode();
 
    private String getJsLib() {
-      return "function lumeer_isEmpty(v) {\n"
+      return "function lumeer_numbro(locale, decimals, num) { numbro.setLanguage(locale); return numbro(num).formatCurrency({mantissa: decimals}); } "
+            + "function lumeer_isEmpty(v) {\n"
             + "  return (v === null || v === undefined || v === '' || (Array.isArray(v) && (v.length === 0 || (v.length === 1 && lumeer_isEmpty(v[0])))) || (typeof v === 'object' && !!v && Object.keys(v).length === 0 && v.constructor === Object));\n"
             + "}\n";
    }
@@ -76,7 +81,9 @@ public class JsExecutor {
       }, 3000);
 
       final String jsCode = getJsLib() +
-            (js.contains(MomentJsParser.FORMAT_JS_DATE) || js.contains(MomentJsParser.PARSE_JS_DATE) || js.contains(MOMENT_JS_SIGNATURE) ? momentJsCode + ";\n" : "") + js;
+            (js.contains(HE_JS_SIGNATURE) ? heJsCode : "") +
+            (js.contains(NUMBRO_JS_SIGNATURE) ? numbroJsCode : "") +
+            (js.contains(JsFunctionsParser.FORMAT_JS_DATE) || js.contains(JsFunctionsParser.PARSE_JS_DATE) || js.contains(MOMENT_JS_SIGNATURE) ? momentJsCode + ";\n" : "") + js;
 
       context.eval("js", jsCode);
    }

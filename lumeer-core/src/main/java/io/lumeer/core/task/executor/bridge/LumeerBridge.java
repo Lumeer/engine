@@ -49,11 +49,13 @@ import io.lumeer.core.task.executor.operation.LinkOperation;
 import io.lumeer.core.task.executor.operation.NavigationOperation;
 import io.lumeer.core.task.executor.operation.Operation;
 import io.lumeer.core.task.executor.operation.PrintAttributeOperation;
+import io.lumeer.core.task.executor.operation.PrintTextOperation;
 import io.lumeer.core.task.executor.operation.SendEmailOperation;
 import io.lumeer.core.task.executor.operation.UserMessageOperation;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.TextPrintRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -343,6 +345,21 @@ public class LumeerBridge {
                ResourceType.COLLECTION
          );
          operations.add(new PrintAttributeOperation(pq));
+         printed = true; // we can trigger this only once per rule/function
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void printText(final String text) {
+      final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
+      if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
+         final TextPrintRequest pq = new TextPrintRequest(
+               workspace.getOrganization().get().getCode(),
+               workspace.getProject().get().getCode(),
+               text
+         );
+
+         operations.add(new PrintTextOperation(pq));
          printed = true; // we can trigger this only once per rule/function
       }
    }

@@ -19,7 +19,7 @@
 package io.lumeer.core.constraint;
 
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.core.util.MomentJsParser;
+import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Date;
@@ -55,7 +55,7 @@ public class DateToNoneConverter extends AbstractDateConverter {
             }
 
             try {
-               var instant = MomentJsParser.formatMomentJsDate(originalValueLong, format, userLocale);
+               var instant = JsFunctionsParser.formatMomentJsDate(originalValueLong, format, userLocale);
                return new DataDocument(toAttribute.getId(), instant);
             } catch (RuntimeException e) {
                return null;

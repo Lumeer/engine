@@ -43,6 +43,7 @@ import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
@@ -264,10 +265,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, UserMessageRequest.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX, message, getResourceId(), null);
    }
 
-   private Event createEventForPrintRequest(final PrintRequest printRequest, final String userId) {
+   private Event createEventForPrintRequest(final GenericPrintRequest printRequest, final String userId) {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(printRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
-      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, PrintRequest.class.getSimpleName(), message, null);
+      return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, printRequest.getClass().getSimpleName(), message, null);
    }
 
    private Event createEventForNavigationRequest(final NavigationRequest navigationRequest, final String userId) {
@@ -357,7 +358,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       getPusherClient().trigger(events);
    }
 
-   public void sendPrintRequestPushNotifications(final List<PrintRequest> printRequests) {
+   public void sendPrintRequestPushNotifications(final List<GenericPrintRequest> printRequests) {
       final List<Event> events = new ArrayList<>();
 
       printRequests.forEach(m ->

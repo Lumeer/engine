@@ -33,12 +33,15 @@ import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.executor.operation.NavigationOperation;
+import io.lumeer.core.task.executor.operation.PrintTextOperation;
 import io.lumeer.core.task.executor.operation.SendEmailOperation;
+import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.TextPrintRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
@@ -487,7 +490,9 @@ public class SingleStage extends Stage {
          final List<UserMessageRequest> userMessageRequests = operations.stream().filter(operation -> operation instanceof UserMessageOperation).map(operation -> ((UserMessageOperation) operation).getEntity()).collect(toList());
          changesTracker.addUserMessageRequests(userMessageRequests);
 
-         final List<PrintRequest> printRequests = operations.stream().filter(operation -> operation instanceof PrintAttributeOperation).map(operation -> ((PrintAttributeOperation) operation).getEntity()).collect(toList());
+         List<GenericPrintRequest> printRequests = operations.stream().filter(operation -> operation instanceof PrintAttributeOperation).map(operation -> ((PrintAttributeOperation) operation).getEntity()).collect(toList());
+         changesTracker.addPrintRequests(printRequests);
+         printRequests = operations.stream().filter(operation -> operation instanceof PrintTextOperation).map(operation -> ((PrintTextOperation) operation).getEntity()).collect(toList());
          changesTracker.addPrintRequests(printRequests);
 
          final List<NavigationRequest> navigationRequests = operations.stream().filter(operation -> operation instanceof NavigationOperation).map(operation -> ((NavigationOperation) operation).getEntity()).collect(toList());
