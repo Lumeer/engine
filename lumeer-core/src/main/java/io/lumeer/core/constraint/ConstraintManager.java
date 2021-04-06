@@ -345,6 +345,10 @@ public class ConstraintManager {
          }
       }
 
+      if (constraint != null && constraint.getType() == ConstraintType.Boolean) {
+         return value != null && Boolean.parseBoolean(value.toString());
+      }
+
       return value;
    }
 

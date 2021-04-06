@@ -35,6 +35,7 @@ import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.LinkInstanceUtils;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -212,9 +213,11 @@ public class AuditFacade extends AbstractFacade {
       }
 
       final User user = authenticatedUser.getCurrentUser();
-      final String parentId = oldDocument.getCollectionId();
+      final Collection collection = collectionDao.getCollectionById(oldDocument.getCollectionId());
+      final DataDocument oldDataDecoded = constraintManager.decodeDataTypes(collection, oldDocument.getData());
+      final DataDocument newDataDecoded = constraintManager.decodeDataTypes(collection, newDocument.getData());
 
-      return auditAdapter.registerUpdate(parentId, ResourceType.DOCUMENT, oldDocument.getId(), user, automation, oldDocument.getData(), newDocument.getData());
+      return auditAdapter.registerUpdate(collection.getId(), ResourceType.DOCUMENT, oldDocument.getId(), user, automation, oldDocument.getData(), oldDataDecoded, newDocument.getData(), newDataDecoded);
    }
 
    public AuditRecord registerLinkUpdate(final LinkInstance oldLink, final LinkInstance newLink, final String automation) {
@@ -224,9 +227,11 @@ public class AuditFacade extends AbstractFacade {
       }
 
       final User user = authenticatedUser.getCurrentUser();
-      final String parentId = oldLink.getLinkTypeId();
+      final LinkType linkType = linkTypeDao.getLinkType(oldLink.getLinkTypeId());
+      final DataDocument oldDataDecoded = constraintManager.decodeDataTypes(linkType, oldLink.getData());
+      final DataDocument newDataDecoded = constraintManager.decodeDataTypes(linkType, newLink.getData());
 
-      return auditAdapter.registerUpdate(parentId, ResourceType.LINK, oldLink.getId(), user, automation, oldLink.getData(), newLink.getData());
+      return auditAdapter.registerUpdate(linkType.getId(), ResourceType.LINK, oldLink.getId(), user, automation, oldLink.getData(), oldDataDecoded, newLink.getData(), newDataDecoded);
    }
 
    private List<AuditRecord> decode(final Collection collection, final List<AuditRecord> auditRecords) {

@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.codecs;
 import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.mongodb.MongoUtils;
 
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -88,10 +89,10 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       record.setChangeDate(changeDate != null ? ZonedDateTime.ofInstant(changeDate.toInstant(), ZoneOffset.UTC) : null);
 
       final Document oldState = bson.get(AuditRecord.OLD_STATE, Document.class);
-      record.setOldState(oldState != null ? new DataDocument(oldState) : new DataDocument());
+      record.setOldState(oldState != null ? MongoUtils.convertDocument(oldState) : new DataDocument());
 
       final Document newState = bson.get(AuditRecord.NEW_STATE, Document.class);
-      record.setNewState(newState != null ? new DataDocument(newState) : new DataDocument());
+      record.setNewState(newState != null ? MongoUtils.convertDocument(newState) : new DataDocument());
 
       return record;
    }
@@ -106,8 +107,8 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
           .append(AuditRecord.USER_NAME, record.getUserName())
           .append(AuditRecord.USER_EMAIL, record.getUserEmail())
           .append(AuditRecord.AUTOMATION, record.getAutomation())
-          .append(AuditRecord.OLD_STATE, record.getOldState())
-          .append(AuditRecord.NEW_STATE, record.getNewState());
+          .append(AuditRecord.OLD_STATE, new Document(record.getOldState() != null ? record.getOldState() : new DataDocument()))
+          .append(AuditRecord.NEW_STATE, new Document(record.getNewState() != null ? record.getNewState() : new DataDocument()));
 
       if (record.getChangeDate() != null) {
          bson.append(AuditRecord.CHANGE_DATE, Date.from(record.getChangeDate().toInstant()));

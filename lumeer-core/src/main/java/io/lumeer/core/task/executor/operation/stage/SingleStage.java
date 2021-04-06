@@ -122,7 +122,7 @@ public class SingleStage extends Stage {
 
       final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
       Map<String, Set<String>> documentIdsByCollection = operations.stream().map(Operation::getEntity)
-                                                                .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
+                                                                   .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
       final Map<String, Collection> collectionsMap = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
                                                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
       final Set<String> collectionsChanged = new HashSet<>();
@@ -171,8 +171,11 @@ public class SingleStage extends Stage {
             purposeChangeProcessor.processChanges(new UpdateDocument(updatedDocument, originalDocument), collection);
          }
 
+         var oldDataDecoded = constraintManager.decodeDataTypes(collection, oldData);
+         var patchedDataDecoded = constraintManager.decodeDataTypes(collection, patchedData);
+
          auditAdapter.registerUpdate(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
-               task.getInitiator(), automationName, oldData, patchedData);
+               task.getInitiator(), automationName, oldData, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new documents
          boolean created = false;
@@ -355,8 +358,11 @@ public class SingleStage extends Stage {
 
          updatedLink.setData(patchedData);
 
+         var oldDataDecoded = constraintManager.decodeDataTypes(linkType, oldData);
+         var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
+
          auditAdapter.registerUpdate(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
-               task.getInitiator(), automationName, oldData, patchedData);
+               task.getInitiator(), automationName, oldData, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new links
          boolean created = false;
@@ -402,8 +408,7 @@ public class SingleStage extends Stage {
          return null;
       }
 
-      @SuppressWarnings("rawtypes")
-      final List<Operation> invalidOperations = operations.stream().filter(operation -> !operation.isComplete()).collect(toList());
+      @SuppressWarnings("rawtypes") final List<Operation> invalidOperations = operations.stream().filter(operation -> !operation.isComplete()).collect(toList());
       if (invalidOperations.size() > 0) {
          final StringBuilder sb = new StringBuilder();
          invalidOperations.forEach(operation -> sb.append("Invalid update request: ").append(operation.toString()).append("\n"));
@@ -501,7 +506,6 @@ public class SingleStage extends Stage {
          final List<SendEmailRequest> sendEmailRequests = operations.stream().filter(operation -> operation instanceof SendEmailOperation).map(operation -> ((SendEmailOperation) operation).getEntity()).collect(toList());
          changesTracker.addSendEmailRequests(sendEmailRequests);
       }
-
 
       // propagate changes in existing documents and links that has been loaded prior to calling this rule
       task.propagateChanges(changedDocuments, changedLinkInstances);
