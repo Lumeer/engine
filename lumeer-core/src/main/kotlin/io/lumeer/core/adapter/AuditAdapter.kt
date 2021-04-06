@@ -41,8 +41,8 @@ class AuditAdapter(private val auditDao: AuditDao) {
          else
             auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
-   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, oldState: DataDocument, newState: DataDocument) =
-         getChanges(oldState, newState).takeIf { it.isNotEmpty() }?.let { changes ->
+   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, oldState: DataDocument, oldStateDecoded: DataDocument, newState: DataDocument, newStateDecoded: DataDocument) =
+         getChanges(oldStateDecoded, newStateDecoded).takeIf { it.isNotEmpty() }?.let { changes ->
             val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
 
             if (lastAuditRecord != null && changesOverlap(lastAuditRecord, user?.id, automation, changes)) {
@@ -66,7 +66,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
                   auditDao.updateAuditRecord(lastAuditRecord)
             } else {
                // we will keep only those values that changed
-               val partialOldState = DataDocument(oldState.filterKeys { it != "_id" })
+               val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
                val oldStateKeys = HashSet(partialOldState.keys)
                oldStateKeys.forEach {
                   if (!changes.containsKey(it)) partialOldState.remove(it)
@@ -89,8 +89,8 @@ class AuditAdapter(private val auditDao: AuditDao) {
    }
 
    fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
-      val result = DataDocument(newState.filterKeys { it != "_id" })
-      oldState.keys.filter { it != "_id" }.forEach {
+      val result = DataDocument(newState.filterKeys { it != DataDocument.ID })
+      oldState.keys.filter { it != DataDocument.ID }.forEach {
          // remove everything that did not change, keeping newly added values
          if (result.containsKey(it) && result[it] == oldState[it])
             result.remove(it)

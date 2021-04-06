@@ -32,9 +32,6 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author <a href="kubedo8@gmail.com">Jakub Rodák</a>
- */
 public class MongoUtils {
 
    private static final String DOCUMENT_ID = "_id";
