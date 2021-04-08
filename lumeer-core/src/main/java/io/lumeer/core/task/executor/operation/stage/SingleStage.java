@@ -72,9 +72,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SingleStage extends Stage {
+
+   private Logger log = Logger.getLogger(SingleStage.class.getName());
 
    private final String automationName;
 
@@ -96,7 +100,12 @@ public class SingleStage extends Stage {
 
    @Override
    public ChangesTracker call() {
-      return commitOperations();
+      try {
+         return commitOperations();
+      } catch (Exception e) {
+         log.log(Level.SEVERE, "Unable to execute function or automation ", e);
+         throw e;
+      }
    }
 
    private List<Document> createDocuments(final List<DocumentCreationOperation> operations) {
