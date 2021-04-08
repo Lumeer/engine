@@ -19,7 +19,6 @@
 package io.lumeer.core.task.executor.operation.stage;
 
 import static java.util.stream.Collectors.*;
-import static java.util.stream.Collectors.toList;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
@@ -32,27 +31,25 @@ import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.FunctionTask;
-import io.lumeer.core.task.executor.operation.NavigationOperation;
-import io.lumeer.core.task.executor.operation.PrintTextOperation;
-import io.lumeer.core.task.executor.operation.SendEmailOperation;
-import io.lumeer.core.task.executor.request.GenericPrintRequest;
-import io.lumeer.core.task.executor.request.NavigationRequest;
-import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
-import io.lumeer.core.task.executor.request.SendEmailRequest;
-import io.lumeer.core.task.executor.request.TextPrintRequest;
-import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
 import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
 import io.lumeer.core.task.executor.operation.LinkCreationOperation;
 import io.lumeer.core.task.executor.operation.LinkOperation;
+import io.lumeer.core.task.executor.operation.NavigationOperation;
 import io.lumeer.core.task.executor.operation.Operation;
 import io.lumeer.core.task.executor.operation.OperationExecutor;
 import io.lumeer.core.task.executor.operation.PrintAttributeOperation;
+import io.lumeer.core.task.executor.operation.PrintTextOperation;
+import io.lumeer.core.task.executor.operation.SendEmailOperation;
 import io.lumeer.core.task.executor.operation.UserMessageOperation;
+import io.lumeer.core.task.executor.request.GenericPrintRequest;
+import io.lumeer.core.task.executor.request.NavigationRequest;
+import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.LinkTypeUtils;
 import io.lumeer.core.util.Utils;
@@ -72,13 +69,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class SingleStage extends Stage {
-
-   private Logger log = Logger.getLogger(SingleStage.class.getName());
 
    private final String automationName;
 
@@ -100,12 +93,7 @@ public class SingleStage extends Stage {
 
    @Override
    public ChangesTracker call() {
-      try {
-         return commitOperations();
-      } catch (Exception e) {
-         log.log(Level.SEVERE, "Unable to execute function or automation ", e);
-         throw e;
-      }
+      return commitOperations();
    }
 
    private List<Document> createDocuments(final List<DocumentCreationOperation> operations) {

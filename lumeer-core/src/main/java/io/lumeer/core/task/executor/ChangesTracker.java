@@ -275,7 +275,7 @@ public class ChangesTracker {
             "collections=" + computeIfNotNull(collections, c -> c.stream().map(Collection::getId).collect(Collectors.joining(", "))) +
             ", createdDocuments=" + createdDocuments + //computeIfNotNull(createdDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
             ", updatedDocuments=" + updatedDocuments + //computeIfNotNull(updatedDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
-            ", removedDocuments=" + updatedDocuments + //computeIfNotNull(updatedDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
+            ", removedDocuments=" + removedDocuments + //computeIfNotNull(updatedDocuments, d -> d.stream().map(Document::getId).collect(Collectors.joining(", "))) +
             ", linkTypes=" + computeIfNotNull(linkTypes, t -> t.stream().map(LinkType::getId).collect(Collectors.joining(", "))) +
             ", createdLinkInstances=" + computeIfNotNull(createdLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +
             ", updatedLinkInstances=" + computeIfNotNull(updatedLinkInstances, l -> l.stream().map(LinkInstance::getId).collect(Collectors.joining(", "))) +

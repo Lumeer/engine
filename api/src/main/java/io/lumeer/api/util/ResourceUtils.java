@@ -54,6 +54,8 @@ public class ResourceUtils {
    public static Set<String> getProjectManagers(Organization organization, Project project) {
       var managers = getManagers(project);
       managers.retainAll(getReaders(organization));
+      managers.addAll(getManagers(organization));
+
       return managers;
    }
 
