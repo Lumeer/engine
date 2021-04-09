@@ -82,8 +82,8 @@ class AuditAdapter(private val auditDao: AuditDao) {
          }
 
    private fun changesOverlap(lastAuditRecord: AuditRecord, userId: String?, automation: String?, changes: DataDocument): Boolean = when {
-      StringUtils.isNotEmpty(lastAuditRecord.user) && lastAuditRecord.user != userId -> false
-      StringUtils.isNotEmpty(lastAuditRecord.automation) && lastAuditRecord.automation != automation -> false
+      (StringUtils.isNotEmpty(lastAuditRecord.user) || StringUtils.isNotEmpty(userId)) && lastAuditRecord.user != userId -> false
+      (StringUtils.isNotEmpty(lastAuditRecord.automation) || StringUtils.isNotEmpty(automation)) && lastAuditRecord.automation != automation -> false
       lastAuditRecord.changeDate.isBefore(ZonedDateTime.now().minusMinutes(UPDATE_MERGE_WINDOW_MINUTES)) -> false
       else -> true
    }
