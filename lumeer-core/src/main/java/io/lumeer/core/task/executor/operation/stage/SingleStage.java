@@ -155,6 +155,8 @@ public class SingleStage extends Stage {
          document.setUpdatedBy(task.getInitiator().getId());
          document.setUpdateDate(ZonedDateTime.now());
 
+         final DataDocument beforePatch = task.getDaoContextSnapshot().getDataDao().getData(document.getCollectionId(), document.getId());
+
          DataDocument patchedData = task.getDaoContextSnapshot().getDataDao()
                                         .patchData(document.getCollectionId(), document.getId(), newData);
 
@@ -168,11 +170,11 @@ public class SingleStage extends Stage {
             purposeChangeProcessor.processChanges(new UpdateDocument(updatedDocument, originalDocument), collection);
          }
 
-         var oldDataDecoded = constraintManager.decodeDataTypes(collection, oldData);
+         var oldDataDecoded = constraintManager.decodeDataTypes(collection, beforePatch);
          var patchedDataDecoded = constraintManager.decodeDataTypes(collection, patchedData);
 
          auditAdapter.registerUpdate(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
-               task.getInitiator(), automationName, oldData, oldDataDecoded, patchedData, patchedDataDecoded);
+               task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new documents
          boolean created = false;
@@ -347,6 +349,8 @@ public class SingleStage extends Stage {
          linkInstance.setUpdatedBy(task.getInitiator().getId());
          linkInstance.setUpdateDate(ZonedDateTime.now());
 
+         final DataDocument beforePatch = task.getDaoContextSnapshot().getLinkDataDao().getData(linkInstance.getLinkTypeId(), linkInstance.getId());
+
          DataDocument patchedData = task.getDaoContextSnapshot().getLinkDataDao()
                                         .patchData(linkInstance.getLinkTypeId(), linkInstance.getId(), newData);
 
@@ -355,11 +359,11 @@ public class SingleStage extends Stage {
 
          updatedLink.setData(patchedData);
 
-         var oldDataDecoded = constraintManager.decodeDataTypes(linkType, oldData);
+         var oldDataDecoded = constraintManager.decodeDataTypes(linkType, beforePatch);
          var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
 
          auditAdapter.registerUpdate(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
-               task.getInitiator(), automationName, oldData, oldDataDecoded, patchedData, patchedDataDecoded);
+               task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new links
          boolean created = false;
