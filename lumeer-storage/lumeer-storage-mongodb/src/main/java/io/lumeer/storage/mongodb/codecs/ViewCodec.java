@@ -36,6 +36,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 
 public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
 
@@ -45,6 +46,7 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
    public static final String SETTINGS = "settings";
    public static final String AUTHOR_ID = "authorId";
    public static final String LAST_TIME_USED = "lastTimeUsed";
+   public static final String FOLDERS = "folders";
 
    public ViewCodec(final CodecRegistry registry) {
       super(registry);
@@ -61,8 +63,9 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
       Object settings = bson.get(SETTINGS);
       String authorId = bson.getString(AUTHOR_ID);
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
+      List<String> folders = bson.getList(FOLDERS, String.class);
 
-      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), query, perspective, config, settings, authorId);
+      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), query, perspective, config, settings, authorId, folders);
       view.setId(resource.getId());
       view.setVersion(resource.getVersion());
 
@@ -80,7 +83,8 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
             .append(PERSPECTIVE, value.getPerspective())
             .append(CONFIG, value.getConfig())
             .append(SETTINGS, value.getSettings())
-            .append(AUTHOR_ID, value.getAuthorId());
+            .append(AUTHOR_ID, value.getAuthorId())
+            .append(FOLDERS, value.getFolders());
 
       if (value.getLastTimeUsed() != null) {
          bson.append(LAST_TIME_USED, Date.from(value.getLastTimeUsed().toInstant()));
