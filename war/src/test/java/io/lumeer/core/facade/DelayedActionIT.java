@@ -163,7 +163,7 @@ public class DelayedActionIT extends IntegrationTestBase {
             )
       );
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
+      jsonCollection.setDocumentsCount(0L);
       jsonCollection.setLastAttributeNum(0);
       jsonCollection.setAttributes(List.of(
             new Attribute("a0", "Summary", null, new Constraint(ConstraintType.Text, null), null, 0),

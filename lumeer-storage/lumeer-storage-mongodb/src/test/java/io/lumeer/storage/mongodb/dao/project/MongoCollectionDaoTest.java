@@ -70,7 +70,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String COLOR = "#0000ff";
    private static final String ICON = "fa-eye";
    private static final Set<Attribute> ATTRIBUTES;
-   private static final Integer DOCUMENTS_COUNT = 0;
+   private static final Long DOCUMENTS_COUNT = 0L;
    private static final ZonedDateTime LAST_TIME_USED = ZonedDateTime.now().withNano(0);
 
    private static final Permissions PERMISSIONS = new Permissions();

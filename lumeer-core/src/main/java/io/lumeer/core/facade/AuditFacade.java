@@ -29,6 +29,8 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
+import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
@@ -44,9 +46,11 @@ import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 
 import java.util.HashSet;
 import java.util.List;
@@ -83,18 +87,26 @@ public class AuditFacade extends AbstractFacade {
    private PaymentFacade paymentFacade;
 
    @Inject
+   private ResourceCommentDao resourceCommentDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
+
+   @Inject
    private RequestDataKeeper requestDataKeeper;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private AuditAdapter auditAdapter;
+   private DocumentAdapter documentAdapter;
    private ConstraintManager constraintManager;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       auditAdapter = new AuditAdapter(auditDao);
+      documentAdapter = new DocumentAdapter(new ResourceCommentAdapter(resourceCommentDao), favoriteItemDao);
    }
 
    public void documentUpdated(@Observes final UpdateDocument updateDocument) {
@@ -166,7 +178,7 @@ public class AuditFacade extends AbstractFacade {
 
          document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
-         return document;
+         return documentAdapter.mapDocumentData(document, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
       }
 
       throw new UnsupportedOperationException("No organization specified.");

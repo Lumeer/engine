@@ -113,9 +113,6 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
          if (updatedLinkType == null) {
             throw new StorageException("Link type '" + id + "' has not been updated.");
          }
-         if (originalLinkType != null) {
-            updatedLinkType.copyComputedProperties(originalLinkType);
-         }
          if (sendPushNotification && updateLinkTypeEvent != null) {
             updateLinkTypeEvent.fire(new UpdateLinkType(updatedLinkType, originalLinkType));
          }

@@ -117,7 +117,7 @@ public class CollectionFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      adapter = new CollectionAdapter(favoriteItemDao);
+      adapter = new CollectionAdapter(favoriteItemDao, documentDao);
       viewAdapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
    }
 
@@ -165,8 +165,11 @@ public class CollectionFacade extends AbstractFacade {
 
       keepUnmodifiableFields(collection, storedCollection);
       collection.setLastTimeUsed(ZonedDateTime.now());
-      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection);
-      return mapResource(updatedCollection);
+      return mapCollection(collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection));
+   }
+
+   private Collection mapCollection(Collection collection) {
+      return adapter.mapCollectionData(mapResource(collection), authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
@@ -178,6 +181,7 @@ public class CollectionFacade extends AbstractFacade {
       collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
       collection.setPurpose(storedCollection.getPurpose());
    }
+
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = storedCollection.copy();
@@ -186,7 +190,7 @@ public class CollectionFacade extends AbstractFacade {
       storedCollection.setPurpose(purpose);
 
       final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
-      return mapResource(updatedCollection);
+      return mapCollection(updatedCollection);
    }
 
    public void deleteCollection(String collectionId) {
@@ -227,15 +231,15 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       var userIdsInViews = viewAdapter.getUsersIdsInViewByCollection(collectionId, ResourceUtils::canReadByPermission);
-      if(userIdsInViews.contains(authenticatedUser.getCurrentUserId())) {
-         return mapResource(collection);
+      if (userIdsInViews.contains(authenticatedUser.getCurrentUserId())) {
+         return mapCollection(collection);
       }
 
       throw new NoResourcePermissionException(collection);
    }
 
    public List<Collection> getCollectionsPublic() {
-      if(permissionsChecker.isPublic()){
+      if (permissionsChecker.isPublic()) {
          return getAllCollections();
       }
 
@@ -252,14 +256,18 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private List<Collection> getCollectionsByPermissions() {
-      return collectionDao.getCollections(createSimpleQuery()).stream()
+      return mapCollectionsData(collectionDao.getCollections(createSimpleQuery()).stream()
                           .map(this::mapResource)
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
-                          .collect(Collectors.toList());
+                          .collect(Collectors.toList()));
    }
 
    private List<Collection> getAllCollections() {
-      return collectionDao.getAllCollections();
+      return mapCollectionsData(collectionDao.getAllCollections());
+   }
+
+   private List<Collection> mapCollectionsData(List<Collection> collections) {
+      return adapter.mapCollectionsData(collections, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void addFavoriteCollection(String collectionId) {
@@ -277,12 +285,6 @@ public class CollectionFacade extends AbstractFacade {
 
       String userId = getCurrentUser().getId();
       favoriteItemDao.removeFavoriteCollection(userId, collectionId);
-   }
-
-   public Collection mapCollectionData(final Collection collection, final String userId) {
-      collection.setFavorite(isFavorite(collection.getId(), userId));
-
-      return collection;
    }
 
    public boolean isFavorite(String collectionId) {
@@ -363,6 +365,7 @@ public class CollectionFacade extends AbstractFacade {
 
       return last.get();
    }
+
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute) {
       return updateCollectionAttribute(collectionId, attributeId, attribute, false);
    }
@@ -380,7 +383,7 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
-        if (!skipFceLimits) {
+         if (!skipFceLimits) {
             permissionsChecker.checkFunctionsLimit(collection);
          }
 
@@ -532,7 +535,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Project getCurrentProject() {
-      if (!workspaceKeeper.getProject().isPresent()) {
+      if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return workspaceKeeper.getProject().get();

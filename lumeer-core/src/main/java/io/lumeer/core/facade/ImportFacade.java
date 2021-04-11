@@ -140,7 +140,7 @@ public class ImportFacade extends AbstractFacade {
       addCollectionMetadata(collection, headerIds, counts, documentsCount);
    }
 
-   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, int documentsCount) {
+   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, long documentsCount) {
       final Collection originalCollection = collection.copy();
       collection.getAttributes().forEach(attr -> {
          int index = Arrays.asList(headersIds).indexOf(attr.getId());

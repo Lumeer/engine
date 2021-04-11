@@ -150,7 +150,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
+      jsonCollection.setDocumentsCount(0L);
       jsonCollection.setLastAttributeNum(0);
       collection = collectionDao.createCollection(jsonCollection);
    }

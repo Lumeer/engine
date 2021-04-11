@@ -139,7 +139,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       for (String name : COLLECTION_NAMES) {
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, userPermissions);
-         collection.setDocumentsCount(0);
+         collection.setDocumentsCount(0L);
          collectionIds.add(collectionDao.createCollection(collection).getId());
       }
 

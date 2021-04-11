@@ -80,10 +80,6 @@ public class LinkType implements WithId, HealthChecking {
       this.rules = linkType.rules != null ? linkType.rules.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new Rule(e.getValue()))) : null;
    }
 
-   public void copyComputedProperties(LinkType linkType) {
-      this.setLinksCount(linkType.getLinksCount());
-   }
-
    public String getId() {
       return id;
    }

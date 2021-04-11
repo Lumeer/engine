@@ -61,7 +61,7 @@ public class Collection extends Resource implements HealthChecking {
    public static final String RULES = "rules";
 
    private Set<Attribute> attributes;
-   private Integer documentsCount;
+   private Long documentsCount;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
    private ZonedDateTime lastTimeUsed;
@@ -91,7 +91,7 @@ public class Collection extends Resource implements HealthChecking {
       super(code, name, icon, color, description, permissions);
 
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
-      this.documentsCount = 0;
+      this.documentsCount = 0L;
       this.lastAttributeNum = 0;
       this.rules = rules;
       this.dataDescription = dataDescription;
@@ -153,11 +153,11 @@ public class Collection extends Resource implements HealthChecking {
       toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
    }
 
-   public Integer getDocumentsCount() {
+   public Long getDocumentsCount() {
       return documentsCount;
    }
 
-   public void setDocumentsCount(final Integer documentsCount) {
+   public void setDocumentsCount(final Long documentsCount) {
       this.documentsCount = documentsCount;
    }
 

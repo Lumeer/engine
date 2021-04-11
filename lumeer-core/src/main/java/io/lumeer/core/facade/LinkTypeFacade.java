@@ -113,8 +113,7 @@ public class LinkTypeFacade extends AbstractFacade {
       }
       keepUnmodifiableFields(linkType, storedLinkType);
 
-      assignComputedParameters(originalLinkType);
-      return linkTypeDao.updateLinkType(id, linkType, originalLinkType);
+      return mapLinkTypeData(linkTypeDao.updateLinkType(id, linkType, originalLinkType));
    }
 
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
@@ -161,12 +160,12 @@ public class LinkTypeFacade extends AbstractFacade {
       var linkType = linkTypeDao.getLinkType(linkTypeId);
       var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))) {
-         return assignComputedParameters(linkType);
+         return mapLinkTypeData(linkType);
       }
 
       var viewsLinkTypes = viewFacade.getViewsLinkTypes();
       if (viewsLinkTypes.stream().anyMatch(lt -> lt.getId().equals(linkTypeId))) {
-         return assignComputedParameters(linkType);
+         return mapLinkTypeData(linkType);
       }
 
       throw new NoResourcePermissionException(collections.get(0));
@@ -175,7 +174,7 @@ public class LinkTypeFacade extends AbstractFacade {
    public List<LinkType> getLinkTypes() {
       final List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
       if (isManager()) {
-         return assignComputedParameters(allLinkTypes);
+         return mapLinkTypesData(allLinkTypes);
       }
 
       final Set<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
@@ -185,31 +184,27 @@ public class LinkTypeFacade extends AbstractFacade {
       final List<LinkType> linkTypes = allLinkTypes.stream()
                                                    .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
                                                    .collect(Collectors.toList());
-      return assignComputedParameters(linkTypes);
+      return mapLinkTypesData(linkTypes);
    }
 
    public List<LinkType> getLinkTypesPublic() {
       if (permissionsChecker.isPublic()) {
-         return assignComputedParameters(linkTypeDao.getAllLinkTypes());
+         return mapLinkTypesData(linkTypeDao.getAllLinkTypes());
       }
 
       return List.of();
    }
 
    public List<LinkType> getLinkTypesByIds(Set<String> ids) {
-      return assignComputedParameters(linkTypeDao.getLinkTypesByIds(ids));
+      return mapLinkTypesData(linkTypeDao.getLinkTypesByIds(ids));
    }
 
-   public LinkType assignComputedParameters(LinkType linkType) {
+   private LinkType mapLinkTypeData(LinkType linkType) {
       return adapter.mapLinkTypeData(linkType);
    }
 
-   public List<LinkType> assignComputedParameters(List<LinkType> linkTypes) {
-      var countsMap = adapter.getLinkInstancesCounts();
-
-      return linkTypes.stream()
-                      .peek(linkType -> linkType.setLinksCount(countsMap.getOrDefault(linkType.getId(), 0L)))
-                      .collect(Collectors.toList());
+   private List<LinkType> mapLinkTypesData(List<LinkType> linkTypes) {
+      return adapter.mapLinkTypesData(linkTypes);
    }
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {

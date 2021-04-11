@@ -132,7 +132,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
          Permissions collectionPermissions = new Permissions();
          collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-         collection.setDocumentsCount(0);
+         collection.setDocumentsCount(0L);
          collectionIds.add(collectionDao.createCollection(collection).getId());
       }
 

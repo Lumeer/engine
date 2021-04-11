@@ -73,10 +73,7 @@ public class ViewService extends AbstractService {
    @Path("{viewId:[0-9a-fA-F]{24}}")
    @HealthCheck
    public View updateView(@PathParam("viewId") String id, View view) {
-      final View updatedView = viewFacade.updateView(id, view);
-      updatedView.setFavorite(viewFacade.isFavorite(id));
-
-      return updatedView;
+      return viewFacade.updateView(id, view);
    }
 
    @DELETE
@@ -90,26 +87,12 @@ public class ViewService extends AbstractService {
    @GET
    @Path("{viewId:[0-9a-fA-F]{24}}")
    public View getView(@PathParam("viewId") String id) {
-      final View view = viewFacade.getViewById(id);
-      view.setFavorite(viewFacade.isFavorite(id));
-
-      return view;
+      return viewFacade.getViewById(id);
    }
 
    @GET
    public List<View> getViews() {
-      final Set<String> favoriteViewIds = viewFacade.getFavoriteViewsIds();
-      final List<View> views = viewFacade.getViews();
-
-      if (favoriteViewIds != null && favoriteViewIds.size() > 0) {
-         views.forEach(v -> {
-            if (favoriteViewIds.contains(v.getId())) {
-               v.setFavorite(true);
-            }
-         });
-      }
-
-      return views;
+      return viewFacade.getViews();
    }
 
    @GET
