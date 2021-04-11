@@ -25,6 +25,8 @@ import io.lumeer.api.model.View;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 public class ViewWithId extends View {
 
    public static final String _ID = "_id";
@@ -42,15 +44,16 @@ public class ViewWithId extends View {
          @JsonProperty(PERSPECTIVE) final String perspective,
          @JsonProperty(CONFIG) final Object config,
          @JsonProperty(SETTINGS) final Object settings,
-         @JsonProperty(AUTHOR_ID) final String authorId) {
-      super(code, name, icon, color, description, permissions, query, perspective, config, settings, authorId);
+         @JsonProperty(AUTHOR_ID) final String authorId,
+         @JsonProperty(FOLDERS) final List<String> folders) {
+      super(code, name, icon, color, description, permissions, query, perspective, config, settings, authorId, folders);
       setId(id);
    }
 
    public ViewWithId(final View view) {
       super(view.getCode(), view.getName(), view.getIcon(), view.getColor(),
             view.getDescription(), view.getPermissions(), view.getQuery(), view.getPerspective(),
-            view.getConfig(), view.getSettings(), view.getAuthorId());
+            view.getConfig(), view.getSettings(), view.getAuthorId(), view.getFolders());
       this.setId(view.getId());
    }
 

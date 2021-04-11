@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -40,6 +41,7 @@ public class View extends Resource {
    public static final String CONFIG = "config";
    public static final String SETTINGS = "settings";
    public static final String AUTHOR_ID = "authorId";
+   public static final String FOLDERS = "folders";
 
    private Query query;
    private String perspective;
@@ -47,6 +49,7 @@ public class View extends Resource {
    private Object settings;
    private String authorId;
    private Map<String, Set<Role>> authorRights;
+   private List<String> folders;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
    private ZonedDateTime lastTimeUsed;
@@ -67,7 +70,8 @@ public class View extends Resource {
          @JsonProperty(PERSPECTIVE) final String perspective,
          @JsonProperty(CONFIG) final Object config,
          @JsonProperty(SETTINGS) final Object settings,
-         @JsonProperty(AUTHOR_ID) final String authorId) {
+         @JsonProperty(AUTHOR_ID) final String authorId,
+         @JsonProperty(FOLDERS) final List<String> folders) {
       super(code, name, icon, color, description, permissions);
 
       this.query = query;
@@ -75,6 +79,7 @@ public class View extends Resource {
       this.config = config;
       this.settings = settings;
       this.authorId = authorId;
+      this.folders = folders;
    }
 
    @Override
@@ -98,6 +103,7 @@ public class View extends Resource {
       o.version = this.version;
       o.lastTimeUsed = this.lastTimeUsed;
       o.favorite = this.favorite;
+      o.folders = this.folders;
 
       return o;
    }
@@ -170,6 +176,14 @@ public class View extends Resource {
       this.settings = settings;
    }
 
+   public List<String> getFolders() {
+      return folders;
+   }
+
+   public void setFolders(final List<String> folders) {
+      this.folders = folders;
+   }
+
    @Override
    public String toString() {
       return "View{" +
@@ -186,6 +200,7 @@ public class View extends Resource {
             ", authorRights=" + authorRights +
             ", lastTimeUsed=" + lastTimeUsed +
             ", query=" + query + '\'' +
+            ", folders=" + folders + '\'' +
             '}';
    }
 
