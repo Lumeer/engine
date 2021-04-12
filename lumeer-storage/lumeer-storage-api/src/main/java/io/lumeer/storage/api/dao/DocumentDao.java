@@ -23,6 +23,7 @@ import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface DocumentDao extends ProjectScopedDao {
@@ -38,6 +39,10 @@ public interface DocumentDao extends ProjectScopedDao {
    void deleteDocuments(String collectionId);
 
    Document getDocumentById(String id);
+
+   Long getDocumentsCountByCollection(String collectionId);
+
+   Map<String, Long> getDocumentsCounts();
 
    List<Document> getDocumentsByIds(String... ids);
 

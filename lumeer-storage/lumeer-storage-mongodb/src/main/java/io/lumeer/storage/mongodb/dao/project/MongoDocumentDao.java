@@ -34,6 +34,7 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
@@ -48,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -151,6 +153,19 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
+   public Long getDocumentsCountByCollection(final String collectionId) {
+      return databaseCollection().countDocuments(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId));
+   }
+
+   @Override
+   public Map<String, Long> getDocumentsCounts() {
+      return rawDatabaseCollection().aggregate(Collections.singletonList(Aggregates.sortByCount("$" + DocumentCodec.COLLECTION_ID)))
+                                    .into(new ArrayList<>())
+                                    .stream()
+                                    .collect(Collectors.toMap(doc -> doc.getString("_id"), doc -> Long.valueOf(doc.getInteger("count"))));
+   }
+
+   @Override
    public List<Document> getDocumentsByIds(final String... ids) {
       Bson idsFilter = MongoFilters.idsFilter(Arrays.stream(ids).collect(Collectors.toSet()));
       if (idsFilter == null) {
@@ -222,6 +237,10 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return databaseCollectionName(getProject().get());
+   }
+
+   private MongoCollection<org.bson.Document> rawDatabaseCollection() {
+      return database.getCollection(databaseCollectionName());
    }
 
    MongoCollection<Document> databaseCollection() {

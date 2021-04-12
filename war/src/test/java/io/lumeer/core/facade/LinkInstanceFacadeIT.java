@@ -167,11 +167,9 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       Collection collection = new Collection("col1", "col1", "icon", "color", collectionPermissions);
-      collection.setDocumentsCount(0);
       collection1Id = collectionDao.createCollection(collection).getId();
 
       Collection collection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
-      collection2.setDocumentsCount(0);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
       LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);

@@ -83,29 +83,25 @@ public class DocumentService extends AbstractService {
    @PUT
    @Path("{documentId:[0-9a-fA-F]{24}}/data")
    public Document updateDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
-      Document storedDocument = documentFacade.updateDocumentData(collectionId, documentId, data);
-      return documentFacade.mapDocumentData(storedDocument);
+      return documentFacade.updateDocumentData(collectionId, documentId, data);
    }
 
    @PATCH
    @Path("{documentId:[0-9a-fA-F]{24}}/data")
    public Document patchDocumentData(@PathParam("documentId") String documentId, DataDocument data) {
-      Document storedDocument = documentFacade.patchDocumentData(collectionId, documentId, data);
-      return documentFacade.mapDocumentData(storedDocument);
+      return documentFacade.patchDocumentData(collectionId, documentId, data);
    }
 
    @PUT
    @Path("{documentId:[0-9a-fA-F]{24}}/meta")
    public Document updateDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
-      Document storedDocument = documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
-      return documentFacade.mapDocumentData(storedDocument);
+      return documentFacade.updateDocumentMetaData(collectionId, documentId, metaData);
    }
 
    @PATCH
    @Path("{documentId:[0-9a-fA-F]{24}}/meta")
    public Document patchDocumentMetaData(@PathParam("documentId") final String documentId, final DataDocument metaData) {
-      Document storedDocument = documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
-      return documentFacade.mapDocumentData(storedDocument);
+      return documentFacade.patchDocumentMetaData(collectionId, documentId, metaData);
    }
 
    @GET
@@ -131,8 +127,7 @@ public class DocumentService extends AbstractService {
    @GET
    @Path("{documentId:[0-9a-fA-F]{24}}")
    public Document getDocument(@PathParam("documentId") String documentId) {
-      Document document = documentFacade.getDocument(collectionId, documentId);
-      return documentFacade.mapDocumentData(document);
+      return documentFacade.getDocument(collectionId, documentId);
    }
 
    @POST

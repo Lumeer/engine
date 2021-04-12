@@ -91,6 +91,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    private DocumentFacade documentFacade;
 
    @Inject
+   private CollectionFacade collectionFacade;
+
+   @Inject
    private DataDao dataDao;
 
    @Inject
@@ -150,7 +153,6 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-      jsonCollection.setDocumentsCount(0);
       jsonCollection.setLastAttributeNum(0);
       collection = collectionDao.createCollection(jsonCollection);
    }
@@ -172,7 +174,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateDocument() {
-      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
       assertThat(storedCollection.getAttributes()).extracting(Attribute::getName).isEmpty();
@@ -204,14 +206,14 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(storedData.get(KEY4)).isInstanceOf(BigDecimal.class);
       assertThat(storedData.get(KEY5)).isInstanceOf(BigDecimal.class);
 
-      storedCollection = collectionDao.getCollectionById(collection.getId());
+      storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
    }
 
    @Test
    public void testDuplicateDocuments() {
-      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
 
       final List<Document> documents = IntStream.range(0, 10).mapToObj(i -> {
          var doc = prepareDocument();
@@ -235,7 +237,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Document document = createDocument();
       String id = document.getId();
 
-      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
 
@@ -264,7 +266,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(storedData).containsEntry(KEY1, VALUE2);
       assertThat(storedData).doesNotContainKey(KEY2);
 
-      storedCollection = collectionDao.getCollectionById(collection.getId());
+      storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
    }
@@ -274,7 +276,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Document document = createDocument();
       String id = document.getId();
 
-      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
 
@@ -303,7 +305,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(storedData).containsEntry(KEY1, VALUE2);
       assertThat(storedData).containsEntry(KEY2, VALUE2);
 
-      storedCollection = collectionDao.getCollectionById(collection.getId());
+      storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
    }
@@ -312,7 +314,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    public void testDeleteDocument() {
       String id = createDocument().getId();
 
-      Collection storedCollection = collectionDao.getCollectionById(collection.getId());
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
 
@@ -320,10 +322,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       assertThatThrownBy(() -> documentDao.getDocumentById(id))
             .isInstanceOf(ResourceNotFoundException.class);
-      assertThatThrownBy(() -> dataDao.getData(collection.getId(), id))
-            .isInstanceOf(ResourceNotFoundException.class);
+      assertThat(dataDao.getData(collection.getId(), id)).isEqualTo(new DataDocument());
 
-      storedCollection = collectionDao.getCollectionById(collection.getId());
+      storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
    }

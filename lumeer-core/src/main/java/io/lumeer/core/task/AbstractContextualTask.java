@@ -45,7 +45,6 @@ import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
-import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.util.PusherClient;
@@ -97,7 +96,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.timeZone = requestDataKeeper.getTimezone();
 
       final ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(daoContextSnapshot.getResourceCommentDao());
-      collectionAdapter = new CollectionAdapter(daoContextSnapshot.getFavoriteItemDao());
+      collectionAdapter = new CollectionAdapter(daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
       viewAdapter = new ViewAdapter(daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getFavoriteItemDao());
       documentAdapter = new DocumentAdapter(resourceCommentAdapter, daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());

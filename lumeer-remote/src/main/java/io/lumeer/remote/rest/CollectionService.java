@@ -73,18 +73,14 @@ public class CollectionService extends AbstractService {
    @POST
    @HealthCheck
    public Collection createCollection(Collection collection) {
-      Collection storedCollection = collectionFacade.createCollection(collection);
-      storedCollection.setFavorite(false);
-      return storedCollection;
+      return collectionFacade.createCollection(collection);
    }
 
    @PUT
    @Path("{collectionId:[0-9a-fA-F]{24}}")
    @HealthCheck
    public Collection updateCollection(@PathParam("collectionId") String collectionId, Collection collection) {
-      Collection storedCollection = collectionFacade.updateCollection(collectionId, collection);
-      storedCollection.setFavorite(collectionFacade.isFavorite(storedCollection.getId()));
-      return storedCollection;
+      return collectionFacade.updateCollection(collectionId, collection);
    }
 
    @DELETE
@@ -98,16 +94,12 @@ public class CollectionService extends AbstractService {
    @GET
    @Path("{collectionId:[0-9a-fA-F]{24}}")
    public Collection getCollection(@PathParam("collectionId") String collectionId) {
-      Collection collection = collectionFacade.getCollection(collectionId);
-      collection.setFavorite(collectionFacade.isFavorite(collection.getId()));
-      return collection;
+      return collectionFacade.getCollection(collectionId);
    }
 
    @GET
    public List<Collection> getCollections(@QueryParam("fromViews") Boolean includeViewCollections) {
-      Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
       Set<Collection> collections = new HashSet<>(collectionFacade.getCollections());
-      collections.forEach(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())));
 
       if (includeViewCollections != null && includeViewCollections && !isManager()) {
          collections.addAll(viewFacade.getViewsCollections());

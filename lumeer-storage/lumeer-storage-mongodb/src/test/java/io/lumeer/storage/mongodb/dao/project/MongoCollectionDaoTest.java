@@ -70,7 +70,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    private static final String COLOR = "#0000ff";
    private static final String ICON = "fa-eye";
    private static final Set<Attribute> ATTRIBUTES;
-   private static final Integer DOCUMENTS_COUNT = 0;
    private static final ZonedDateTime LAST_TIME_USED = ZonedDateTime.now().withNano(0);
 
    private static final Permissions PERMISSIONS = new Permissions();
@@ -142,7 +141,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    private Collection prepareCollection(String code, String name) {
       Collection collection = new Collection(code, name, ICON, COLOR, "", new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>(), "", new CollectionPurpose(CollectionPurposeType.None, null));
-      collection.setDocumentsCount(DOCUMENTS_COUNT);
       collection.setLastTimeUsed(LAST_TIME_USED);
       return collection;
    }
@@ -176,7 +174,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       assertThat(storedCollection.getIcon()).isEqualTo(ICON);
       assertThat(storedCollection.getPermissions()).isEqualTo(PERMISSIONS);
       assertThat(storedCollection.getAttributes()).isEqualTo(ATTRIBUTES);
-      assertThat(storedCollection.getDocumentsCount()).isEqualTo(DOCUMENTS_COUNT);
       assertThat(storedCollection.getLastTimeUsed()).isEqualTo(LAST_TIME_USED);
    }
 

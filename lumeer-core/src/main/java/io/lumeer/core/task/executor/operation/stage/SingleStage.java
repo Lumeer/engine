@@ -107,8 +107,7 @@ public class SingleStage extends Stage {
    }
 
    private List<Document> commitDocumentOperations(final List<DocumentOperation> operations,
-         final List<Document> createdDocuments, final Map<String, List<Document>> createdDocumentsByCollectionId,
-         final Map<String, Collection> collectionsMapForCreatedDocuments) {
+         final List<Document> createdDocuments, final Map<String, Collection> collectionsMapForCreatedDocuments) {
       if (operations.isEmpty() && collectionsMapForCreatedDocuments.isEmpty()) {
          return List.of();
       }
@@ -202,13 +201,6 @@ public class SingleStage extends Stage {
                          .add(updatedDocument);
       });
 
-      // update collections with the new document counts
-      collectionsMapForCreatedDocuments.forEach((id, col) -> {
-         collectionsChanged.add(id);
-         final Collection collection = collectionsMap.computeIfAbsent(id, i -> col);
-         collection.setDocumentsCount(collection.getDocumentsCount() + (createdDocumentsByCollectionId.get(id) != null ? createdDocumentsByCollectionId.get(id).size() : 0));
-      });
-
       changesTracker.addCollections(collectionsChanged.stream().map(collectionsMap::get).collect(toSet()));
       changesTracker.addUpdatedDocuments(updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toSet()));
       changesTracker.updateCollectionsMap(collectionsMapForCreatedDocuments);
@@ -223,7 +215,6 @@ public class SingleStage extends Stage {
    private List<Document> removeDocuments(final List<DocumentRemovalOperation> operations) {
       if (!operations.isEmpty()) {
          final List<Document> documents = operations.stream().map(DocumentRemovalOperation::getEntity).collect(toList());
-         final Map<String, Collection> updatedCollections = new HashMap<>();
 
          final Map<String, Collection> allCollections = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(
                documents.stream().map(Document::getCollectionId).collect(toList())
@@ -232,23 +223,15 @@ public class SingleStage extends Stage {
 
          documents.forEach(document -> {
             // decrease documents count in collections map
-            if (changesTracker.getCollectionsMap().containsKey(document.getCollectionId())) { // present in collections map
-               final Collection collection = changesTracker.getCollectionsMap().get(document.getCollectionId());
-               collection.setDocumentsCount(collection.getDocumentsCount() - 1);
-               updatedCollections.put(collection.getId(), collection);
-            } else { // not yet tracked
+            if (!changesTracker.getCollectionsMap().containsKey(document.getCollectionId())) { // not yet tracked
                final Collection collection = allCollections.get(document.getCollectionId());
-               collection.setDocumentsCount(collection.getDocumentsCount() - 1);
-               updatedCollections.put(document.getCollectionId(), collection);
                changesTracker.updateCollectionsMap(Map.of(collection.getId(), collection));
             }
 
             // decrease documents count in updated collections in operations tracker
             final Optional<Collection> changedCollection = changesTracker.getCollections().stream().filter(c -> c.getId().equals(document.getCollectionId())).findFirst();
             final Collection collection = allCollections.get(document.getCollectionId());
-            if (changedCollection.isPresent()) { // present in operations tracker
-               changedCollection.get().setDocumentsCount(collection.getDocumentsCount());
-            } else { // not yet tracked
+            if (changedCollection.isEmpty()) { // not yet tracked
                changesTracker.getCollections().add(collection);
             }
 
@@ -282,11 +265,6 @@ public class SingleStage extends Stage {
             task.getDaoContextSnapshot().getDocumentDao().deleteDocument(document.getId(), document.getData());
             task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
             auditAdapter.removeAllAuditRecords(document.getCollectionId(), ResourceType.DOCUMENT, document.getId());
-         });
-
-         updatedCollections.forEach((id, col) -> {
-            col.setDocumentsCount(col.getDocumentsCount() - documents.size());
-            task.getDaoContextSnapshot().getCollectionDao().updateCollection(id, col, null, false);
          });
 
          return documents;
@@ -451,7 +429,6 @@ public class SingleStage extends Stage {
       final List<Document> changedDocuments = commitDocumentOperations(
             operations.stream().filter(operation -> operation instanceof DocumentOperation && operation.isComplete()).map(operation -> (DocumentOperation) operation).collect(toList()),
             createdDocuments,
-            documentsByCollection,
             collectionsMap
       );
 

@@ -415,7 +415,7 @@ public class ProjectFacade extends AbstractFacade {
 
       final List<Collection> collections = collectionDao.getAllCollections();
 
-      long documentsCount = collections.stream().mapToLong(Collection::getDocumentsCount).sum();
+      long documentsCount = permissionsChecker.countDocuments();
       long maxFunctions = collections.stream().mapToLong(c ->
             c.getAttributes().stream().filter(a -> a.getFunction() != null).count()
       ).max().orElse(0);

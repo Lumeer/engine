@@ -32,6 +32,13 @@ class ViewAdapter(private val viewDao: ViewDao, private val linkTypeDao: LinkTyp
 
    fun isFavorite(viewId: String, userId: String, projectId: String): Boolean = getFavoriteViewIds(userId, projectId).contains(viewId)
 
+   fun mapViewsData(views: List<View>, userId: String, projectId: String): List<View>  {
+      val favoriteIds = getFavoriteViewIds(userId, projectId);
+      return views.onEach {
+        it.isFavorite = favoriteIds.contains(it.id)
+      }
+   }
+
    fun mapViewData(view: View, userId: String, projectId: String): View = view.apply {
       isFavorite = isFavorite(view.id, userId, projectId)
    }

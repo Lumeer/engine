@@ -29,13 +29,17 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.core.adapter.CollectionAdapter;
+import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DefaultViewConfigDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -67,19 +71,26 @@ public class ViewFacade extends AbstractFacade {
    private LinkTypeDao linkTypeDao;
 
    @Inject
-   private LinkTypeFacade linkTypeFacade;
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
-   private FavoriteItemDao favoriteItemDao;
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private DocumentDao documentDao;
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
 
    private ViewAdapter adapter;
+   private LinkTypeAdapter linkTypeAdapter;
+   private CollectionAdapter collectionAdapter;
 
    @PostConstruct
    public void init() {
       adapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
+      linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
+      collectionAdapter = new CollectionAdapter(favoriteItemDao, documentDao);
    }
 
    public ViewAdapter getAdapter() {
@@ -117,7 +128,11 @@ public class ViewFacade extends AbstractFacade {
       View updatedView = viewDao.updateView(storedView.getId(), view);
       updatedView.setAuthorRights(getViewAuthorRights(updatedView));
 
-      return mapResource(updatedView);
+      return mapView(updatedView);
+   }
+
+   private View mapView(View view) {
+      return adapter.mapViewData(mapResource(view), authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void deleteView(final String id) {
@@ -136,7 +151,7 @@ public class ViewFacade extends AbstractFacade {
       checkAuthorId(view);
       view.setAuthorRights(getViewAuthorRights(view));
 
-      return mapResource(view);
+      return mapView(view);
    }
 
    private View checkAuthorId(final View view) {
@@ -158,9 +173,13 @@ public class ViewFacade extends AbstractFacade {
       return List.of();
    }
 
+   private List<View> mapViews(List<View> views) {
+      return adapter.mapViewsData(views, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+   }
+
    public List<View> getViews() {
       if (permissionsChecker.isManager()) {
-         return viewDao.getAllViews();
+         return mapViews(viewDao.getAllViews());
       }
 
       checkProjectRole(Role.READ);
@@ -168,12 +187,12 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private List<View> getViews(DatabaseQuery databaseQuery) {
-      return viewDao.getViews(databaseQuery).stream()
+      return mapViews(viewDao.getViews(databaseQuery).stream()
                     .filter(view -> permissionsChecker.hasRole(view, Role.READ))
                     .map(this::checkAuthorId)
                     .peek(view -> view.setAuthorRights(getViewAuthorRights(view)))
                     .map(this::mapResource)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList()));
    }
 
    public Permissions getViewPermissions(final String id) {
@@ -273,9 +292,9 @@ public class ViewFacade extends AbstractFacade {
    private List<Collection> getViewsCollections(List<View> views, boolean keepActualRoles) {
       Set<String> collectionIds = QueryUtils.getViewsCollectionIds(views, getViewsLinkTypes(views));
 
-      return collectionDao.getCollectionsByIds(collectionIds).stream()
+      return collectionAdapter.mapCollectionsData(collectionDao.getCollectionsByIds(collectionIds).stream()
                           .map(collection -> keepActualRoles ? mapResource(collection) : collection)
-                          .collect(Collectors.toList());
+                          .collect(Collectors.toList()), authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public List<LinkType> getViewsLinkTypes() {
@@ -286,8 +305,7 @@ public class ViewFacade extends AbstractFacade {
       Set<String> linkTypesIds = views.stream().map(view -> view.getQuery().getLinkTypeIds())
                                       .flatMap(java.util.Collection::stream)
                                       .collect(Collectors.toSet());
-
-      return linkTypeFacade.assignComputedParameters(linkTypeDao.getLinkTypesByIds(linkTypesIds));
+      return linkTypeAdapter.mapLinkTypesData(linkTypeDao.getLinkTypesByIds(linkTypesIds));
    }
 
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {

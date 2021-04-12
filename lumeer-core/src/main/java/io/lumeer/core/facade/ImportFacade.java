@@ -114,7 +114,6 @@ public class ImportFacade extends AbstractFacade {
 
       int[] counts = new int[headers.length];
 
-      int documentsCount = 0;
       List<Document> documents = new ArrayList<>();
       String[] row;
       while ((row = parser.parseNext()) != null) {
@@ -128,7 +127,6 @@ public class ImportFacade extends AbstractFacade {
             documents.clear();
          }
 
-         documentsCount++;
       }
 
       if (!documents.isEmpty()) {
@@ -137,17 +135,16 @@ public class ImportFacade extends AbstractFacade {
 
       parser.stopParsing();
 
-      addCollectionMetadata(collection, headerIds, counts, documentsCount);
+      addCollectionMetadata(collection, headerIds, counts);
    }
 
-   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, int documentsCount) {
+   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts) {
       final Collection originalCollection = collection.copy();
       collection.getAttributes().forEach(attr -> {
          int index = Arrays.asList(headersIds).indexOf(attr.getId());
          attr.setUsageCount(counts[index]);
       });
 
-      collection.setDocumentsCount(documentsCount);
       collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }

@@ -19,7 +19,6 @@
 
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;

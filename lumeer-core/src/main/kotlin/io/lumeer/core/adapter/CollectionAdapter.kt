@@ -19,17 +19,35 @@
 package io.lumeer.core.adapter
 
 import io.lumeer.api.model.Collection
+import io.lumeer.storage.api.dao.DocumentDao
 import io.lumeer.storage.api.dao.FavoriteItemDao
+import java.util.function.BinaryOperator
 
-class CollectionAdapter(val favoriteItemDao: FavoriteItemDao) {
+class CollectionAdapter(val favoriteItemDao: FavoriteItemDao, val documentDao: DocumentDao) {
 
    fun getFavoriteCollectionIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteCollectionIds(userId, projectId)
 
    fun isFavorite(collectionId: String, userId: String, projectId: String): Boolean = getFavoriteCollectionIds(userId, projectId).contains(collectionId)
 
-   fun mapCollectionData(collection: Collection, userId: String, projectId: String): Collection {
-      collection.isFavorite = isFavorite(collection.id, userId, projectId)
-      return collection
+   fun getDocumentsCountByCollection(collectionId: String) = documentDao.getDocumentsCountByCollection(collectionId)
+
+   fun getDocumentsCounts() = documentDao.documentsCounts
+
+   fun getDocumentsCount() = getDocumentsCounts().values.sum()
+
+   fun mapCollectionData(collection: Collection, userId: String, projectId: String) = collection.apply {
+      isFavorite = isFavorite(collection.id, userId, projectId)
+       documentsCount = getDocumentsCountByCollection(collection.id)
+   }
+
+   fun mapCollectionsData(collections: List<Collection>, userId: String, projectId: String): List<Collection> {
+      val favoriteCollectionIds = getFavoriteCollectionIds(userId, projectId)
+      val documentsCounts = getDocumentsCounts()
+
+      return collections.onEach {
+         it.isFavorite = favoriteCollectionIds.contains(it.id)
+         it.documentsCount = documentsCounts.get(it.id)?.or(0)
+      }
    }
 
 }

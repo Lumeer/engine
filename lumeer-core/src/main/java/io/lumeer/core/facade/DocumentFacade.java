@@ -32,6 +32,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
@@ -48,6 +49,7 @@ import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
@@ -95,7 +97,7 @@ public class DocumentFacade extends AbstractFacade {
    private DefaultConfigurationProducer configurationProducer;
 
    @Inject
-   private ResourceCommentFacade resourceCommentFacade;
+   private ResourceCommentDao resourceCommentDao;
 
    @Inject
    private Event<CreateDocument> createDocumentEvent;
@@ -122,7 +124,7 @@ public class DocumentFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-      adapter = new DocumentAdapter(resourceCommentFacade.getAdapter(), favoriteItemDao);
+      adapter = new DocumentAdapter(new ResourceCommentAdapter(resourceCommentDao), favoriteItemDao);
    }
 
    public DocumentAdapter getAdapter() {
@@ -153,7 +155,7 @@ public class DocumentFacade extends AbstractFacade {
 
       Document storedDocumentCopy = new Document(storedDocument);
 
-      updateCollectionMetadata(collection, data.keySet(), Collections.emptySet(), 1);
+      updateCollectionMetadata(collection, data.keySet(), Collections.emptySet());
 
       storedDocument.setData(constraintManager.decodeDataTypes(collection, storedData));
 
@@ -196,7 +198,7 @@ public class DocumentFacade extends AbstractFacade {
          storedDocument.setData(constraintManager.decodeDataTypes(collection, storedDocument.getData()));
       });
 
-      updateCollectionMetadata(collection, usages, storedDocuments.size());
+      updateCollectionMetadata(collection, usages);
 
       if (sendNotification && importCollectionContentEvent != null) {
          importCollectionContentEvent.fire(new ImportCollectionContent(collection));
@@ -242,14 +244,14 @@ public class DocumentFacade extends AbstractFacade {
          return doc;
       }
 
-      updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec, 0);
+      updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec);
 
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
       final Document updatedDocument = updateDocument(collection, documentId, updatedData, originalData);
       updatedDocument.setData(constraintManager.decodeDataTypes(collection, updatedDocument.getData()));
 
-      return updatedDocument;
+      return mapDocumentData(updatedDocument);
    }
 
    private boolean isDataDifferent(final DataDocument oldDoc, final DataDocument newDoc) {
@@ -290,7 +292,7 @@ public class DocumentFacade extends AbstractFacade {
             var tuple = createDocument(collection, document);
             createdDocuments.add(tuple.getSecond());
             currentDocumentId = tuple.getFirst().getId();
-            updateCollectionMetadata(collection, tuple.getSecond().getData().keySet(), Collections.emptySet(), 1);
+            updateCollectionMetadata(collection, tuple.getSecond().getData().keySet(), Collections.emptySet());
          }
 
          var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
@@ -341,7 +343,7 @@ public class DocumentFacade extends AbstractFacade {
       final Document updatedDocument = updateDocument(document, originalDocument);
       updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
-      return updatedDocument;
+      return mapDocumentData(updatedDocument);
    }
 
    public List<Document> updateDocumentsMetaData(final String collectionId, final List<Document> documents) {
@@ -382,7 +384,7 @@ public class DocumentFacade extends AbstractFacade {
          return doc;
       }
 
-      updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet(), 0);
+      updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet());
 
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
 
@@ -390,7 +392,7 @@ public class DocumentFacade extends AbstractFacade {
 
       updatedDocument.setData(constraintManager.decodeDataTypes(collection, updatedDocument.getData()));
 
-      return updatedDocument;
+      return mapDocumentData(updatedDocument);
    }
 
    private boolean isPatchDifferent(final DataDocument oldDoc, final DataDocument patch) {
@@ -421,7 +423,7 @@ public class DocumentFacade extends AbstractFacade {
       final Document updatedDocument = updateDocument(document, originalDocument);
       updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
-      return updatedDocument;
+      return mapDocumentData(updatedDocument);
    }
 
    private Document updateDocument(final Collection collection, final String documentId, final DataDocument newData, final DataDocument originalData) {
@@ -460,7 +462,7 @@ public class DocumentFacade extends AbstractFacade {
       Collection collection = checkCollectionWritePermissions(collectionId);
 
       DataDocument data = dataDao.getData(collectionId, documentId);
-      updateCollectionMetadata(collection, Collections.emptySet(), data.keySet(), -1);
+      updateCollectionMetadata(collection, Collections.emptySet(), data.keySet());
 
       documentDao.deleteDocument(documentId, data);
       dataDao.deleteData(collection.getId(), documentId);
@@ -541,24 +543,22 @@ public class DocumentFacade extends AbstractFacade {
          this.createChainEvent.fire(new CreateDocumentsAndLinks(documents, Collections.emptyList()));
       }
 
-      updateCollectionMetadata(collection, usages, documents.size());
+      updateCollectionMetadata(collection, usages);
 
       return documents;
    }
 
-   private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec, int documentCountDiff) {
+   private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
       final Collection originalCollection = collection.copy();
       collection.setAttributes(new HashSet<>(ResourceUtils.incOrDecAttributes(collection.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
       collection.setLastTimeUsed(ZonedDateTime.now());
-      collection.setDocumentsCount(Math.max(collection.getDocumentsCount() + documentCountDiff, 0));
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
-   private void updateCollectionMetadata(final Collection collection, final Map<String, Integer> attributesToInc, final int documentCountDiff) {
+   private void updateCollectionMetadata(final Collection collection, final Map<String, Integer> attributesToInc) {
       final Collection originalCollection = collection.copy();
       collection.setAttributes(new HashSet<>(ResourceUtils.incAttributes(collection.getAttributes(), attributesToInc)));
       collection.setLastTimeUsed(ZonedDateTime.now());
-      collection.setDocumentsCount(Math.max(collection.getDocumentsCount() + documentCountDiff, 0));
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
@@ -572,7 +572,7 @@ public class DocumentFacade extends AbstractFacade {
          permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
       }
 
-      return result;
+      return mapDocumentData(result);
    }
 
    public List<Document> getDocuments(Set<String> ids) {
@@ -623,19 +623,8 @@ public class DocumentFacade extends AbstractFacade {
       }
    }
 
-   public Document mapDocumentData(final Document document) {
-      return mapDocumentData(document, getCurrentUser().getId());
-   }
-
-   public Document mapDocumentData(final Document document, final String userId) {
-      document.setFavorite(isFavorite(document.getId(), userId));
-      document.setCommentsCount(getCommentsCount(document.getId()));
-      return document;
-   }
-
-   public Document mapDocumentFavorite(final Document document, final String userId) {
-      document.setFavorite(isFavorite(document.getId(), userId));
-      return document;
+   private Document mapDocumentData(final Document document) {
+      return adapter.mapDocumentData(document, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public java.util.Collection<Document> mapDocumentsData(final java.util.Collection<Document> documents) {

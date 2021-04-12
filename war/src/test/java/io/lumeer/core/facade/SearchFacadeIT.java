@@ -186,7 +186,6 @@ public class SearchFacadeIT extends IntegrationTestBase {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(userId, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-      collection.setDocumentsCount(0);
       collection.setAttributes(Arrays.asList(attributes));
 
       Collection createdCollection = collectionDao.createCollection(collection);

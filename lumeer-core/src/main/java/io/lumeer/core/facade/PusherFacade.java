@@ -36,6 +36,12 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.action.DelayedActionProcessor;
+import io.lumeer.core.adapter.CollectionAdapter;
+import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.ResourceCommentAdapter;
+import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -79,9 +85,11 @@ import io.lumeer.engine.api.event.UserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -128,7 +136,13 @@ public class PusherFacade extends AbstractFacade {
    private CollectionFacade collectionFacade;
 
    @Inject
+   private ViewFacade viewFacade;
+
+   @Inject
    private CollectionDao collectionDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private LinkTypeDao linkTypeDao;
@@ -137,25 +151,10 @@ public class PusherFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
-   private LinkTypeFacade linkTypeFacade;
-
-   @Inject
-   private LinkInstanceFacade linkInstanceFacade;
-
-   @Inject
    private ViewDao viewDao;
 
    @Inject
-   private ViewFacade viewFacade;
-
-   @Inject
-   private OrganizationFacade organizationFacade;
-
-   @Inject
    private OrganizationDao organizationDao;
-
-   @Inject
-   private DocumentFacade documentFacade;
 
    @Inject
    private UserDao userDao;
@@ -167,18 +166,33 @@ public class PusherFacade extends AbstractFacade {
    private DataDao dataDao;
 
    @Inject
+   private ResourceCommentDao resourceCommentDao;
+
+   @Inject
    private RequestDataKeeper requestDataKeeper;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private ConstraintManager constraintManager;
+   private CollectionAdapter collectionAdapter;
+   private LinkTypeAdapter linkTypeAdapter;
+   private ViewAdapter viewAdapter;
+   private DocumentAdapter documentAdapter;
+   private LinkInstanceAdapter linkInstanceAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       pusherClient = PusherClient.getInstance(configurationProducer);
       delayedActionProcessor.setPusherClient(pusherClient);
+      collectionAdapter = new CollectionAdapter(favoriteItemDao, documentDao);
+      linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
+      viewAdapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
+
+      ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(resourceCommentDao);
+      documentAdapter = new DocumentAdapter(resourceCommentAdapter, favoriteItemDao);
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
    }
 
    public String getPusherKey() {
@@ -611,7 +625,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private View createViewForUser(final View view, final String userId) {
-      return viewFacade.mapViewData(view.copy(), userId);
+      return viewAdapter.mapViewData(view.copy(), userId, workspaceKeeper.getProjectId());
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
@@ -622,7 +636,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Collection createCollectionForUser(final Collection collection, final String userId) {
-      return collectionFacade.mapCollectionData(collection.copy(), userId);
+      return collectionAdapter.mapCollectionData(collection.copy(), userId, workspaceKeeper.getProjectId());
    }
 
    private Project getProject() {
@@ -652,7 +666,6 @@ public class PusherFacade extends AbstractFacade {
          final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, comment.getResourceId());
          final Collection collection = collectionFacade.getCollection(document.getCollectionId());
          document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
-         documentFacade.mapDocumentData(document);
 
          Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
          // add assignees from tasks
@@ -665,7 +678,7 @@ public class PusherFacade extends AbstractFacade {
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.VIEW) {
-         final Set<String> users = ResourceUtils.getReaders(viewFacade.getViewById(comment.getResourceId()));
+         final Set<String> users = ResourceUtils.getReaders(viewDao.getViewById(comment.getResourceId()));
          users.addAll(getWorkspaceManagers());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
@@ -697,9 +710,8 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             final Document document = new Document(updatedDocument);
-            final Collection collection = collectionFacade.getCollection(document.getCollectionId());
+            final Collection collection = collectionDao.getCollectionById(document.getCollectionId());
             document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
-            documentFacade.mapDocumentData(document);
 
             Set<String> userIds = collectionFacade.getUsersIdsWithAccess(document.getCollectionId());
             // add assignees from tasks
@@ -715,11 +727,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Document createDocumentForUser(final Document document, final String userId) {
-      if (document.getCommentsCount() == null) {
-         return documentFacade.mapDocumentData(new Document(document), userId);
-      } else {
-         return documentFacade.mapDocumentFavorite(new Document(document), userId);
-      }
+      return documentAdapter.mapDocumentData(document, userId, workspaceKeeper.getProjectId());
    }
 
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {
@@ -755,7 +763,7 @@ public class PusherFacade extends AbstractFacade {
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(linkTypeFacade.assignComputedParameters(createLinkType.getLinkType()), CREATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeData(createLinkType.getLinkType()), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -765,7 +773,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(linkTypeFacade.assignComputedParameters(updateLinkType.getLinkType()), UPDATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeData(updateLinkType.getLinkType()), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -785,7 +793,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateCompanyContact(@Observes final UpdateCompanyContact updateCompanyContact) {
       if (isEnabled()) {
          try {
-            Set<String> userIds = ResourceUtils.getOrganizationManagers(organizationFacade.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId()));
+            Set<String> userIds = ResourceUtils.getOrganizationManagers(organizationDao.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId()));
             sendNotificationsByUsers(updateCompanyContact.getCompanyContact(), userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -912,9 +920,9 @@ public class PusherFacade extends AbstractFacade {
 
    private void sendNotificationByLinkType(final LinkInstance originalLinkInstance, final String linkTypeId, final String event) {
       final LinkInstance linkInstance = new LinkInstance(originalLinkInstance);
-      LinkType linkType = linkTypeFacade.getLinkType(linkTypeId);
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
-      linkInstanceFacade.mapLinkInstanceData(linkInstance);
+      linkInstanceAdapter.mapLinkInstanceData(linkInstance);
       Set<String> userIds = getUserIdsForLinkType(linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);
    }

@@ -36,6 +36,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
@@ -49,6 +50,8 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -65,6 +68,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -87,7 +91,10 @@ public class PermissionsChecker {
    private OrganizationFacade organizationFacade;
 
    @Inject
-   private CollectionFacade collectionFacade;
+   private FavoriteItemDao favoriteItemDao;
+
+   @Inject
+   private DocumentDao documentDao;
 
    @Inject
    private CollectionDao collectionDao;
@@ -113,6 +120,13 @@ public class PermissionsChecker {
 
    private Map<String, Boolean> hasRoleCache = new HashMap<>();
    private Map<String, View> viewCache = new HashMap<>();
+
+   private CollectionAdapter collectionAdapter;
+
+   @PostConstruct
+   public void init() {
+      collectionAdapter = new CollectionAdapter(favoriteItemDao, documentDao);
+   }
 
    public PermissionsChecker() {
    }
@@ -641,8 +655,8 @@ public class PermissionsChecker {
       return paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
    }
 
-   private long countDocuments() {
-      return collectionFacade.getDocumentsCountInAllCollections();
+   public long countDocuments() {
+      return collectionAdapter.getDocumentsCount();
    }
 
    /**

@@ -52,7 +52,6 @@ import java.util.stream.Collectors;
 public class CollectionCodec extends ResourceCodec implements CollectibleCodec<Collection> {
 
    public static final String ATTRIBUTES = "attributes";
-   public static final String DOCUMENTS_COUNT = "docCount";
    public static final String LAST_TIME_USED = "lastTimeUsed";
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
    public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
@@ -92,7 +91,6 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
          });
       }
 
-      Integer documentsCount = bson.getInteger(DOCUMENTS_COUNT);
       Integer lastAttributeNum = bson.getInteger(LAST_ATTRIBUTE_NUM);
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       String defaultAttributeId = bson.getString(DEFAULT_ATTRIBUTE_ID);
@@ -106,7 +104,6 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
 
       Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes, rules, dataDescription, purpose);
       collection.setId(resource.getId());
-      collection.setDocumentsCount(documentsCount);
       if (lastTimeUsed != null) {
          collection.setLastTimeUsed(ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC));
       }
@@ -121,7 +118,6 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
    @Override
    public void encode(final BsonWriter writer, final Collection collection, final EncoderContext encoderContext) {
       Document bson = encodeResource(collection)
-            .append(DOCUMENTS_COUNT, collection.getDocumentsCount())
             .append(DEFAULT_ATTRIBUTE_ID, collection.getDefaultAttributeId())
             .append(LAST_ATTRIBUTE_NUM, collection.getLastAttributeNum())
             .append(ATTRIBUTES, collection.getAttributes())

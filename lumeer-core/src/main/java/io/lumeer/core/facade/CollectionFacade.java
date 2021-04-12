@@ -117,7 +117,7 @@ public class CollectionFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      adapter = new CollectionAdapter(favoriteItemDao);
+      adapter = new CollectionAdapter(favoriteItemDao, documentDao);
       viewAdapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
    }
 
@@ -165,19 +165,22 @@ public class CollectionFacade extends AbstractFacade {
 
       keepUnmodifiableFields(collection, storedCollection);
       collection.setLastTimeUsed(ZonedDateTime.now());
-      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection);
-      return mapResource(updatedCollection);
+      return mapCollection(collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection));
+   }
+
+   private Collection mapCollection(Collection collection) {
+      return adapter.mapCollectionData(mapResource(collection), authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
       keepStoredPermissions(collection, storedCollection.getPermissions());
 
       collection.setAttributes(storedCollection.getAttributes());
-      collection.setDocumentsCount(storedCollection.getDocumentsCount());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
       collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
       collection.setPurpose(storedCollection.getPurpose());
    }
+
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = storedCollection.copy();
@@ -186,7 +189,7 @@ public class CollectionFacade extends AbstractFacade {
       storedCollection.setPurpose(purpose);
 
       final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
-      return mapResource(updatedCollection);
+      return mapCollection(updatedCollection);
    }
 
    public void deleteCollection(String collectionId) {
@@ -223,19 +226,19 @@ public class CollectionFacade extends AbstractFacade {
       checkProjectRole(Role.READ);
       Collection collection = collectionDao.getCollectionById(collectionId);
       if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
-         return mapResource(collection);
+         return mapCollection(collection);
       }
 
       var userIdsInViews = viewAdapter.getUsersIdsInViewByCollection(collectionId, ResourceUtils::canReadByPermission);
-      if(userIdsInViews.contains(authenticatedUser.getCurrentUserId())) {
-         return mapResource(collection);
+      if (userIdsInViews.contains(authenticatedUser.getCurrentUserId())) {
+         return mapCollection(collection);
       }
 
       throw new NoResourcePermissionException(collection);
    }
 
    public List<Collection> getCollectionsPublic() {
-      if(permissionsChecker.isPublic()){
+      if (permissionsChecker.isPublic()) {
          return getAllCollections();
       }
 
@@ -252,14 +255,18 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private List<Collection> getCollectionsByPermissions() {
-      return collectionDao.getCollections(createSimpleQuery()).stream()
+      return mapCollectionsData(collectionDao.getCollections(createSimpleQuery()).stream()
                           .map(this::mapResource)
                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
-                          .collect(Collectors.toList());
+                          .collect(Collectors.toList()));
    }
 
    private List<Collection> getAllCollections() {
-      return collectionDao.getAllCollections();
+      return mapCollectionsData(collectionDao.getAllCollections());
+   }
+
+   private List<Collection> mapCollectionsData(List<Collection> collections) {
+      return adapter.mapCollectionsData(collections, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void addFavoriteCollection(String collectionId) {
@@ -277,12 +284,6 @@ public class CollectionFacade extends AbstractFacade {
 
       String userId = getCurrentUser().getId();
       favoriteItemDao.removeFavoriteCollection(userId, collectionId);
-   }
-
-   public Collection mapCollectionData(final Collection collection, final String userId) {
-      collection.setFavorite(isFavorite(collection.getId(), userId));
-
-      return collection;
    }
 
    public boolean isFavorite(String collectionId) {
@@ -304,15 +305,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public long getDocumentsCountInAllCollections() {
-      final LongAdder la = new LongAdder();
-      collectionDao.getAllCollectionIds().forEach(id -> {
-         final Collection collection = collectionDao.getCollectionById(id);
-         if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
-            la.add(getCollection(id).getDocumentsCount());
-         }
-      });
-
-      return la.longValue();
+      return adapter.getDocumentsCount();
    }
 
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
@@ -363,6 +356,7 @@ public class CollectionFacade extends AbstractFacade {
 
       return last.get();
    }
+
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute) {
       return updateCollectionAttribute(collectionId, attributeId, attribute, false);
    }
@@ -380,7 +374,7 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
-        if (!skipFceLimits) {
+         if (!skipFceLimits) {
             permissionsChecker.checkFunctionsLimit(collection);
          }
 
@@ -532,7 +526,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Project getCurrentProject() {
-      if (!workspaceKeeper.getProject().isPresent()) {
+      if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return workspaceKeeper.getProject().get();
@@ -562,7 +556,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public void runRule(final Collection collection, final String ruleId) {
-      if (collection.getDocumentsCount() > 2_000) {
+      if (adapter.getDocumentsCountByCollection(collection.getId()) > 2_000) {
          throw new UnsuccessfulOperationException("Too many documents in the source collection");
       }
 
@@ -577,7 +571,7 @@ public class CollectionFacade extends AbstractFacade {
          final Attribute otherAttribute = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).findFirst().orElse(null);
          final Map<String, AllowedPermissions> permissions = permissionsChecker.getCollectionsPermissions(List.of(collection, otherCollection));
 
-         if (otherCollection.getDocumentsCount() > 10_000) {
+         if (adapter.getDocumentsCountByCollection(otherCollectionId) > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the target collection");
          }
 

@@ -27,5 +27,12 @@ class LinkTypeAdapter(val linkInstanceDao: LinkInstanceDao) {
 
    fun getLinkInstancesCountByLinkType(linkTypeId: String): Long = linkInstanceDao.getLinkInstancesCountByLinkType(linkTypeId)
 
+   fun mapLinkTypesData(linkTypes: List<LinkType>): List<LinkType> {
+      val counts = getLinkInstancesCounts();
+      return linkTypes.onEach {
+         it.linksCount = counts[it.id]?.or(0)
+      }
+   }
+
    fun mapLinkTypeData(linkType: LinkType): LinkType = linkType.apply { linksCount = getLinkInstancesCountByLinkType(id) }
 }
