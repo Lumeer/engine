@@ -176,7 +176,6 @@ public class CollectionFacade extends AbstractFacade {
       keepStoredPermissions(collection, storedCollection.getPermissions());
 
       collection.setAttributes(storedCollection.getAttributes());
-      collection.setDocumentsCount(storedCollection.getDocumentsCount());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
       collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
       collection.setPurpose(storedCollection.getPurpose());
@@ -227,7 +226,7 @@ public class CollectionFacade extends AbstractFacade {
       checkProjectRole(Role.READ);
       Collection collection = collectionDao.getCollectionById(collectionId);
       if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
-         return mapResource(collection);
+         return mapCollection(collection);
       }
 
       var userIdsInViews = viewAdapter.getUsersIdsInViewByCollection(collectionId, ResourceUtils::canReadByPermission);
@@ -306,15 +305,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public long getDocumentsCountInAllCollections() {
-      final LongAdder la = new LongAdder();
-      collectionDao.getAllCollectionIds().forEach(id -> {
-         final Collection collection = collectionDao.getCollectionById(id);
-         if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
-            la.add(getCollection(id).getDocumentsCount());
-         }
-      });
-
-      return la.longValue();
+      return adapter.getDocumentsCount();
    }
 
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
@@ -565,7 +556,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public void runRule(final Collection collection, final String ruleId) {
-      if (collection.getDocumentsCount() > 2_000) {
+      if (adapter.getDocumentsCountByCollection(collection.getId()) > 2_000) {
          throw new UnsuccessfulOperationException("Too many documents in the source collection");
       }
 
@@ -580,7 +571,7 @@ public class CollectionFacade extends AbstractFacade {
          final Attribute otherAttribute = otherCollection.getAttributes().stream().filter(a -> a.getId().equals(otherAttributeId)).findFirst().orElse(null);
          final Map<String, AllowedPermissions> permissions = permissionsChecker.getCollectionsPermissions(List.of(collection, otherCollection));
 
-         if (otherCollection.getDocumentsCount() > 10_000) {
+         if (adapter.getDocumentsCountByCollection(otherCollectionId) > 10_000) {
             throw new UnsuccessfulOperationException("Too many documents in the target collection");
          }
 

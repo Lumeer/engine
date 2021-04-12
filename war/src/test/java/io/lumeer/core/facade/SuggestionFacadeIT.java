@@ -144,13 +144,11 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
          Permissions collectionPermissions = new Permissions();
          collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
          Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-         jsonCollection.setDocumentsCount(0L);
          collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
       }
 
       for (String name : COLLECTION_NAMES_NO_RIGHTS) {
          Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, new Permissions());
-         jsonCollection.setDocumentsCount(0L);
          collectionIdsNoRights.add(collectionDao.createCollection(jsonCollection).getId());
       }
    }

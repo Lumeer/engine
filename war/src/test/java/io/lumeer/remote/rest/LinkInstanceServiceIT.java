@@ -170,11 +170,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
       Collection collection1 = new Collection("col1", "col1", "icon", "color", collectionPermissions);
-      collection1.setDocumentsCount(0L);
       collection1Id = collectionDao.createCollection(collection1).getId();
 
       Collection collection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
-      collection2.setDocumentsCount(0L);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
       LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);

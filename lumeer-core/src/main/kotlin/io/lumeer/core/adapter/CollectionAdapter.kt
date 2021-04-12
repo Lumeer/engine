@@ -21,6 +21,7 @@ package io.lumeer.core.adapter
 import io.lumeer.api.model.Collection
 import io.lumeer.storage.api.dao.DocumentDao
 import io.lumeer.storage.api.dao.FavoriteItemDao
+import java.util.function.BinaryOperator
 
 class CollectionAdapter(val favoriteItemDao: FavoriteItemDao, val documentDao: DocumentDao) {
 
@@ -31,6 +32,8 @@ class CollectionAdapter(val favoriteItemDao: FavoriteItemDao, val documentDao: D
    fun getDocumentsCountByCollection(collectionId: String) = documentDao.getDocumentsCountByCollection(collectionId)
 
    fun getDocumentsCounts() = documentDao.documentsCounts
+
+   fun getDocumentsCount() = getDocumentsCounts().values.sum()
 
    fun mapCollectionData(collection: Collection, userId: String, projectId: String) = collection.apply {
       isFavorite = isFavorite(collection.id, userId, projectId)

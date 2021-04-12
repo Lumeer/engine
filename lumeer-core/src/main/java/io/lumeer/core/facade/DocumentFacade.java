@@ -198,7 +198,7 @@ public class DocumentFacade extends AbstractFacade {
          storedDocument.setData(constraintManager.decodeDataTypes(collection, storedDocument.getData()));
       });
 
-      updateCollectionMetadata(collection, usages, storedDocuments.size());
+      updateCollectionMetadata(collection, usages);
 
       if (sendNotification && importCollectionContentEvent != null) {
          importCollectionContentEvent.fire(new ImportCollectionContent(collection));
@@ -543,7 +543,7 @@ public class DocumentFacade extends AbstractFacade {
          this.createChainEvent.fire(new CreateDocumentsAndLinks(documents, Collections.emptyList()));
       }
 
-      updateCollectionMetadata(collection, usages, documents.size());
+      updateCollectionMetadata(collection, usages);
 
       return documents;
    }
@@ -552,15 +552,13 @@ public class DocumentFacade extends AbstractFacade {
       final Collection originalCollection = collection.copy();
       collection.setAttributes(new HashSet<>(ResourceUtils.incOrDecAttributes(collection.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
       collection.setLastTimeUsed(ZonedDateTime.now());
-      // TODO count documents count?
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
-   private void updateCollectionMetadata(final Collection collection, final Map<String, Integer> attributesToInc, final int documentCountDiff) {
+   private void updateCollectionMetadata(final Collection collection, final Map<String, Integer> attributesToInc) {
       final Collection originalCollection = collection.copy();
       collection.setAttributes(new HashSet<>(ResourceUtils.incAttributes(collection.getAttributes(), attributesToInc)));
       collection.setLastTimeUsed(ZonedDateTime.now());
-      collection.setDocumentsCount(Math.max(collection.getDocumentsCount() + documentCountDiff, 0));
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
