@@ -30,6 +30,7 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -101,12 +102,16 @@ public class AuditFacade extends AbstractFacade {
    private AuditAdapter auditAdapter;
    private DocumentAdapter documentAdapter;
    private ConstraintManager constraintManager;
+   private LinkInstanceAdapter linkInstanceAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       auditAdapter = new AuditAdapter(auditDao);
-      documentAdapter = new DocumentAdapter(new ResourceCommentAdapter(resourceCommentDao), favoriteItemDao);
+
+      ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(resourceCommentDao);
+      documentAdapter = new DocumentAdapter(resourceCommentAdapter, favoriteItemDao);
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
    }
 
    public void documentUpdated(@Observes final UpdateDocument updateDocument) {
@@ -212,7 +217,7 @@ public class AuditFacade extends AbstractFacade {
 
          linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
 
-         return linkInstance;
+         return linkInstanceAdapter.mapLinkInstanceData(linkInstance);
       }
 
       throw new UnsupportedOperationException("No organization specified.");
