@@ -146,7 +146,7 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    public DataDocument getData(final String collectionId, final String documentId) {
       MongoCursor<Document> mongoCursor = dataCollection(collectionId).find(idFilter(documentId)).iterator();
       if (!mongoCursor.hasNext()) {
-         throw new ResourceNotFoundException(ResourceType.DOCUMENT);
+         return new DataDocument();
       }
       return MongoUtils.convertDocument(mongoCursor.next());
    }
