@@ -277,8 +277,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       assertThatThrownBy(() -> documentDao.getDocumentById(id))
             .isInstanceOf(ResourceNotFoundException.class);
-      assertThatThrownBy(() -> dataDao.getData(collection.getId(), id))
-            .isInstanceOf(ResourceNotFoundException.class);
+      assertThat(dataDao.getData(collection.getId(), id)).isEqualTo(new DataDocument());
    }
 
    @Test
