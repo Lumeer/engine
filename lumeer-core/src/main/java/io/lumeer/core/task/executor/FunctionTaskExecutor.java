@@ -68,7 +68,7 @@ public class FunctionTaskExecutor {
       final JsExecutor jsExecutor = new JsExecutor();
 
       try {
-         jsExecutor.execute(bindings, task, collection, task.getFunction().getJs());
+         jsExecutor.execute(bindings, task, task.getFunction().getJs());
          final ChangesTracker tracker = jsExecutor.commitOperations(taskExecutor);
          checkErrorErasure();
 

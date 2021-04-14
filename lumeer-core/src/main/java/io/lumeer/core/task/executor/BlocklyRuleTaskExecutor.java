@@ -79,7 +79,7 @@ public class BlocklyRuleTaskExecutor {
       jsExecutor.setDryRun(rule.isDryRun());
 
       try {
-         jsExecutor.execute(bindings, ruleTask, ruleTask.getCollection(), rule.getJs());
+         jsExecutor.execute(bindings, ruleTask, rule.getJs());
 
          if (!rule.isDryRun()) {
             tracker = jsExecutor.commitOperations(taskExecutor);

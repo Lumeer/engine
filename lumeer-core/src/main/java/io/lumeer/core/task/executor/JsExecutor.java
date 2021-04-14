@@ -51,15 +51,15 @@ public class JsExecutor {
    private static final String numbroJsCode = JsFunctionsParser.getNumbroJsCode();
 
    private String getJsLib() {
-      return "function lumeer_numbro(locale, decimals, num) { numbro.setLanguage(locale); return numbro(num).formatCurrency({mantissa: decimals}); } "
+      return "function lumeer_numbro(locale, decimals, num) { numbro.setLanguage(locale); return numbro(num).formatCurrency({mantissa: decimals, thousandSeparated: true}); } "
             + "function lumeer_isEmpty(v) {\n"
             + "  return (v === null || v === undefined || v === '' || (Array.isArray(v) && (v.length === 0 || (v.length === 1 && lumeer_isEmpty(v[0])))) || (typeof v === 'object' && !!v && Object.keys(v).length === 0 && v.constructor === Object));\n"
             + "}\n";
    }
 
-   public void execute(final Map<String, Object> bindings, final ContextualTask task, final Collection collection, final String js) {
+   public void execute(final Map<String, Object> bindings, final ContextualTask task, final String js) {
       this.task = task;
-      lumeerBridge = new LumeerBridge(task, collection);
+      lumeerBridge = new LumeerBridge(task);
       lumeerBridge.setDryRun(dryRun);
 
       Context context = Context
