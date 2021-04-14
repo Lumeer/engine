@@ -85,7 +85,6 @@ public class LumeerBridge {
    private static final DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static final ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
    private final ContextualTask task;
-   private final Collection collection;
    private final ChangesTracker changesTracker = new ChangesTracker();
    private Set<Operation<?>> operations = new HashSet<>();
    private Exception cause = null;
@@ -93,9 +92,8 @@ public class LumeerBridge {
    private boolean printed = false;
    private Boolean isManager = null;
 
-   public LumeerBridge(final ContextualTask task, final Collection collection) {
+   public LumeerBridge(final ContextualTask task) {
       this.task = task;
-      this.collection = collection;
    }
 
    @SuppressWarnings("unused")
