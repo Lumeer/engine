@@ -93,6 +93,7 @@ public class ImportFacade extends AbstractFacade {
          return;
       }
       CsvParserSettings settings = new CsvParserSettings();
+      settings.setMaxCharsPerColumn(16*1024);
       settings.detectFormatAutomatically(',', ';');
       settings.setHeaderExtractionEnabled(true);
 
