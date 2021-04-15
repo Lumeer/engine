@@ -295,7 +295,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       LinkInstance stored = linkInstanceDao.getLinkInstance(id);
       final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
-      linkInstanceDao.deleteLinkInstance(id);
+      linkInstanceDao.deleteLinkInstance(id, linkDataDao.getData(stored.getLinkTypeId(), id));
       linkDataDao.deleteData(stored.getLinkTypeId(), id);
 
       linkType.getAttributes().forEach(attribute -> {

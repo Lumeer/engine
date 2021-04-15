@@ -24,6 +24,7 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -129,12 +130,15 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
    }
 
    @Override
-   public void deleteLinkInstance(final String id) {
+   public void deleteLinkInstance(final String id, final DataDocument data) {
       LinkInstance linkInstance = databaseCollection().findOneAndDelete(idFilter(id));
       if (linkInstance == null) {
          throw new StorageException("Link instance '" + id + "' has not been deleted.");
       }
       if (removeLinkInstanceEvent != null) {
+         if (data != null) {
+            linkInstance.setData(data);
+         }
          removeLinkInstanceEvent.fire(new RemoveLinkInstance(linkInstance));
       }
    }

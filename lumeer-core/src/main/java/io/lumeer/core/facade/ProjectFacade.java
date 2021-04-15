@@ -19,6 +19,8 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -431,5 +433,26 @@ public class ProjectFacade extends AbstractFacade {
       maxRules = Math.max(maxRules, maxLinkRules);
 
       return new ProjectDescription(collections.size(), documentsCount, maxFunctions, maxRules);
+   }
+
+   public void emptyTemplateData(final String projectId) {
+      Project project = projectDao.getProjectById(projectId);
+
+      if (project != null) {
+         permissionsChecker.checkRole(project, Role.MANAGE);
+
+         final List<Document> documents = documentDao.getDocumentsWithTemplateId();
+         final List<LinkInstance> links = linkInstanceDao.getLinkInstancesByDocumentIds(documents.stream().map(Document::getId).collect(Collectors.toSet()));
+
+         links.forEach(l -> {
+            linkInstanceDao.deleteLinkInstance(l.getId(), linkDataDao.getData(l.getLinkTypeId(), l.getId()));
+            linkDataDao.deleteData(l.getLinkTypeId(), l.getId());
+         });
+
+         documents.forEach(d -> {
+            documentDao.deleteDocument(d.getId(), dataDao.getData(d.getCollectionId(), d.getId()));
+            dataDao.deleteData(d.getCollectionId(), d.getId());
+         });
+      }
    }
 }

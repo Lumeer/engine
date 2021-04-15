@@ -52,6 +52,8 @@ public interface DocumentDao extends ProjectScopedDao {
 
    List<Document> getDocumentsByCollection(String collectionId);
 
+   List<Document> getDocumentsWithTemplateId();
+
    List<Document> getRecentDocuments(final String collectionId, boolean byUpdate);
 
    List<Document> getDocumentsByCollectionIds(Collection<String> collectionIds);

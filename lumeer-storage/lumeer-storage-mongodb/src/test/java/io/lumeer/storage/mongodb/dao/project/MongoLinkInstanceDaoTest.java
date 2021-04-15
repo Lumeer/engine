@@ -144,7 +144,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
       LinkInstance created = linkInstanceDao.createLinkInstance(prepareLinkInstance());
       assertThat(created.getId()).isNotNull();
 
-      linkInstanceDao.deleteLinkInstance(created.getId());
+      linkInstanceDao.deleteLinkInstance(created.getId(), null);
 
       assertThatThrownBy(() -> linkInstanceDao.getLinkInstance(created.getId()))
             .isInstanceOf(StorageException.class);
@@ -152,7 +152,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
    @Test
    public void testDeleteLinkInstanceNotExisting() {
-      assertThatThrownBy(() -> linkInstanceDao.deleteLinkInstance(NOT_EXISTING_ID))
+      assertThatThrownBy(() -> linkInstanceDao.deleteLinkInstance(NOT_EXISTING_ID, null))
             .isInstanceOf(StorageException.class);
    }
 

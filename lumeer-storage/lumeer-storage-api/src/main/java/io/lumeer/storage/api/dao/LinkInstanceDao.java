@@ -21,6 +21,7 @@ package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public interface LinkInstanceDao extends ProjectScopedDao {
 
    LinkInstance updateLinkInstance(String id, LinkInstance linkInstance);
 
-   void deleteLinkInstance(String id);
+   void deleteLinkInstance(String id, final DataDocument data);
 
    void deleteLinkInstances(List<String> ids);
 
