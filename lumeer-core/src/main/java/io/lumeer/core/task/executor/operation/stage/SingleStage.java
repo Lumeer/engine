@@ -468,7 +468,7 @@ public class SingleStage extends Stage {
       );
 
       // report user messages, print, navigate, and send email requests for rules triggered via an Action button
-      final String correlationId = task.getCorrelationId();
+      final String correlationId = StringUtils.isNotBlank(task.getSecondaryCorrelationId()) ? task.getSecondaryCorrelationId() : task.getCorrelationId();
       if (StringUtils.isNotEmpty(correlationId)) {
          final List<UserMessageRequest> userMessageRequests = operations.stream().filter(operation -> operation instanceof UserMessageOperation).map(operation -> ((UserMessageOperation) operation).getEntity()).collect(toList());
          changesTracker.addUserMessageRequests(userMessageRequests);
