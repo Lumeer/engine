@@ -55,6 +55,8 @@ import javax.ws.rs.core.Response;
 @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects")
 public class ProjectService extends AbstractService {
 
+   public static final String DELETE_SAMPLE_DATA_CONFIRMATION = "PERMANENTLY DELETE";
+
    @PathParam("organizationId")
    private String organizationId;
 
@@ -166,6 +168,20 @@ public class ProjectService extends AbstractService {
       List<Project> projects = projectFacade.getProjects();
       projects.forEach(project -> project.setCollectionsCount(projectFacade.getCollectionsCount(project)));
       return projects;
+   }
+
+   @DELETE
+   @Path("{projectId:[0-9a-fA-F]{24}}/sample-data")
+   public Response deleteTemplateProjectData(@PathParam("projectId") String projectId, @QueryParam("confirmation") final String confirmation) {
+      if (DELETE_SAMPLE_DATA_CONFIRMATION.equals(confirmation)) {
+         workspaceKeeper.setProjectId(projectId);
+
+         projectFacade.emptyTemplateData(projectId);
+
+         return Response.ok().build();
+      }
+
+      return Response.notModified().build();
    }
 
    @GET

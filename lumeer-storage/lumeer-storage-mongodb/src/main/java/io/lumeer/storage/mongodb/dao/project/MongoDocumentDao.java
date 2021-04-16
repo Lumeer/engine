@@ -189,6 +189,12 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
+   public List<Document> getDocumentsWithTemplateId() {
+      return databaseCollection().find(Filters.exists(DocumentCodec.META_DATA + "." + Document.META_TEMPLATE_ID)).into(new ArrayList<>());
+
+   }
+
+   @Override
    public List<Document> getRecentDocuments(final String collectionId, boolean byUpdate) {
       return databaseCollection()
             .find(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId))
