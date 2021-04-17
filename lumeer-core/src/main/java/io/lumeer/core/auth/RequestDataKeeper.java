@@ -26,6 +26,8 @@ public class RequestDataKeeper {
 
    private String correlationId;
 
+   private String secondaryCorrelationId;
+
    private String userLocale = "en";
 
    private String timezone;
@@ -34,9 +36,19 @@ public class RequestDataKeeper {
       return correlationId;
    }
 
+   public String getSecondaryCorrelationId() {
+      return secondaryCorrelationId;
+   }
+
    public void setCorrelationId(final String correlationId) {
       if (this.correlationId == null) {
          this.correlationId = correlationId;
+      }
+   }
+
+   public void setSecondaryCorrelationId(final String secondaryCorrelationId) {
+      if (this.secondaryCorrelationId == null) {
+         this.secondaryCorrelationId = secondaryCorrelationId;
       }
    }
 
@@ -63,12 +75,14 @@ public class RequestDataKeeper {
       this.correlationId = original.getCorrelationId();
       this.userLocale = original.getUserLocale();
       this.timezone = original.getTimezone();
+      this.secondaryCorrelationId = original.getSecondaryCorrelationId();
    }
 
    @Override
    public String toString() {
       return "RequestDataKeeper{" +
             "correlationId='" + correlationId + '\'' +
+            ", secondaryCorrelationId='" + secondaryCorrelationId + '\'' +
             ", userLocale='" + userLocale + '\'' +
             ", timezone='" + timezone + '\'' +
             '}';

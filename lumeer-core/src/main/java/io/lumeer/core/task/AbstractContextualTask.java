@@ -555,7 +555,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private void injectCorrelationId(final PusherFacade.ObjectWithParent obj) {
       if (requestDataKeeper != null) {
-         obj.setCorrelationId(requestDataKeeper.getCorrelationId());
+         obj.setCorrelationId(StringUtils.isNotBlank(getSecondaryCorrelationId()) ? getSecondaryCorrelationId() : getCorrelationId());
       }
    }
 
@@ -601,6 +601,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public String getCorrelationId() {
       return requestDataKeeper.getCorrelationId();
+   }
+
+   @Override
+   public String getSecondaryCorrelationId() {
+      return requestDataKeeper.getSecondaryCorrelationId();
    }
 
    class LocalContextualTaskFactory extends ContextualTaskFactory {

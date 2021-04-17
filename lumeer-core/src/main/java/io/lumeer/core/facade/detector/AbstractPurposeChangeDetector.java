@@ -294,7 +294,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
                action.setNotificationType(notificationType);
                action.setCheckAfter(roundTime(when, settings.getNotificationFrequency()));
                action.setNotificationChannel(settings.getNotificationChannel());
-               action.setCorrelationId(requestDataKeeper.getCorrelationId());
+               action.setCorrelationId(StringUtils.isNotBlank(requestDataKeeper.getSecondaryCorrelationId()) ? requestDataKeeper.getSecondaryCorrelationId() : requestDataKeeper.getCorrelationId());
                action.setData(getData(documentEvent, collection, assignees));
 
                actions.add(action);
