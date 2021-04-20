@@ -198,14 +198,22 @@ public class DocumentUtils {
    }
 
    public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
-      return getUsersAssigneeEmails(collection, document).stream().anyMatch(s -> StringUtils.compareIgnoreCase(s, userEmail) == 0);
+      return isTaskAssignedByUser(collection, document.getData(), userEmail);
+   }
+
+   public static boolean isTaskAssignedByUser(final Collection collection, final DataDocument data, String userEmail) {
+      return getUsersAssigneeEmails(collection, data).stream().anyMatch(s -> StringUtils.compareIgnoreCase(s, userEmail) == 0);
    }
 
    public static Set<String> getUsersAssigneeEmails(final Collection collection, final Document document) {
+      return getUsersAssigneeEmails(collection, document.getData());
+   }
+
+   public static Set<String> getUsersAssigneeEmails(final Collection collection, final DataDocument data) {
       final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
       final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
       if (assigneeAttribute != null) {
-         return getUsersList(document, assigneeAttribute.getId());
+         return getUsersList(data, assigneeAttribute.getId());
       }
       return Collections.emptySet();
    }
@@ -217,7 +225,12 @@ public class DocumentUtils {
 
    @SuppressWarnings("unchecked")
    public static Set<String> getUsersList(final Document document, final String attributeId) {
-      final Object usersObject = document.getData() != null ? document.getData().getObject(attributeId) : null;
+      return getUsersList(document.getData(), attributeId);
+   }
+
+   @SuppressWarnings("unchecked")
+   public static Set<String> getUsersList(final DataDocument data, final String attributeId) {
+      final Object usersObject = data != null ? data.getObject(attributeId) : null;
       if (usersObject != null) {
          if (usersObject instanceof String) {
             return Set.of((String) usersObject);
