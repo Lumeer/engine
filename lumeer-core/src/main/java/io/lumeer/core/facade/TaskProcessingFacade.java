@@ -268,21 +268,32 @@ public class TaskProcessingFacade {
    }
 
    public void onDocumentUpdate(@Observes final UpdateDocument updateDocument) {
+      onDocumentUpdate(updateDocument, null);
+   }
+
+   public void onDocumentUpdate(final UpdateDocument updateDocument, final String skipTask) {
       final Collection collection = getCollectionForEvent(updateDocument);
       if (collection == null) {
          return;
       }
 
       FunctionTask functionTask = functionFacade.createTaskForUpdateDocument(collection, new Document(updateDocument.getOriginalDocument()), new Document(updateDocument.getDocument()));
-      List<RuleTask> tasks = createDocumentUpdateRuleTasks(collection, updateDocument);
+      List<RuleTask> tasks = createDocumentUpdateRuleTasks(collection, updateDocument, skipTask);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       processTasks(functionTask, ruleTask);
    }
 
-   private List<RuleTask> createDocumentUpdateRuleTasks(final Collection collection, final UpdateDocument updateDocument) {
+   private List<RuleTask> createDocumentUpdateRuleTasks(final Collection collection, final UpdateDocument updateDocument, final String skipTask) {
       if (updateDocument.getOriginalDocument() != null && updateDocument.getDocument() != null) {
-         return createRuleTasks(collection, new Document(updateDocument.getOriginalDocument()), new Document(updateDocument.getDocument()), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(
+               collection,
+               new Document(updateDocument.getOriginalDocument()),
+               new Document(updateDocument.getDocument()),
+               Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL)
+         ).stream()
+          .filter(ruleTask -> skipTask == null || StringUtils.isEmpty(ruleTask.getRule().getName()) || !ruleTask.getRule().getName().equals(skipTask)) // skipTask is checked for null for performance reasons
+          .collect(Collectors.toList());
       }
       return Collections.emptyList();
    }

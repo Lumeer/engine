@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.task.executor;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.core.js.JsEngineFactory;
 import io.lumeer.core.task.ContextualTask;

@@ -27,9 +27,11 @@ import java.util.List;
 public class SearchTask implements Task {
 
    private String query;
+   private int recursionDepth;
 
-   public SearchTask(final String query) {
+   public SearchTask(final String query, final int recursionDepth) {
       this.query = query;
+      this.recursionDepth = recursionDepth;
    }
 
    @Override
@@ -54,5 +56,10 @@ public class SearchTask implements Task {
    @Override
    public void processChanges(final ChangesTracker changesTracker) {
       // TBD
+   }
+
+   @Override
+   public int getRecursionDepth() {
+      return recursionDepth;
    }
 }

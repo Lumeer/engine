@@ -166,7 +166,14 @@ public class SingleStage extends Stage {
 
          // notify delayed actions about data change
          if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
-            purposeChangeProcessor.processChanges(new UpdateDocument(updatedDocument, originalDocument), collection);
+            final Document original;
+            if (originalDocument == null) { // when triggered by an action button, let's use the document from db
+               original = new Document(document);
+               original.setData(beforePatch);
+            } else {
+               original = originalDocument;
+            }
+            purposeChangeProcessor.processChanges(new UpdateDocument(updatedDocument, original), collection);
          }
 
          var oldDataDecoded = constraintManager.decodeDataTypes(collection, beforePatch);
@@ -190,7 +197,22 @@ public class SingleStage extends Stage {
             if (created) {
                taskProcessingFacade.onCreateDocument(new CreateDocument(updatedDocument));
             } else {
-               taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, originalDocument, updatedDocument, aggregatedUpdate.keySet()));
+               if (task.getRecursionDepth() == 0) {
+                  // there are now 3 versions of the document:
+                  // 1) the document before user triggered an update - original document (null when triggered by action button)
+                  // 2) the document with the new user entered value - before patch
+                  // 3) the document with the value computed by the rule based on the previous two - updated document
+                  // this rule got executed because of change from 1 to 2
+                  // for the recursive rules, we need to trigger rules for changes between 2 and 3
+                  final UpdateDocument updateDocumentEvent;
+                  final Document orig = new Document(document);
+                  orig.setData(beforePatch);
+                  updateDocumentEvent = new UpdateDocument(updatedDocument, orig);
+
+                  taskProcessingFacade.onDocumentUpdate(updateDocumentEvent, ((RuleTask) task).getRule().getName());
+               } else {
+                  taskExecutor.submitTask(functionFacade.createTaskForUpdateDocument(collection, originalDocument, updatedDocument, aggregatedUpdate.keySet()));
+               }
             }
          }
 

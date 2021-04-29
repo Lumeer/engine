@@ -66,7 +66,7 @@ public class ContextualTaskFactory {
    public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
       try {
          T t = clazz.getConstructor().newInstance();
-         t.initialize(authenticatedUser.getCurrentUser(), daoContextSnapshotFactory.getInstance(), pusherFacade.getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, configurationProducer.getEnvironment());
+         t.initialize(authenticatedUser.getCurrentUser(), daoContextSnapshotFactory.getInstance(), pusherFacade.getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, configurationProducer.getEnvironment(), 0);
 
          return t;
       } catch (Exception e) {
