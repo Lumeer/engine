@@ -30,7 +30,7 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 public interface ContextualTask extends Task {
 
-   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment);
+   ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment, final int recursionDepth);
 
    DaoContextSnapshot getDaoContextSnapshot();
    PusherClient getPusherClient();

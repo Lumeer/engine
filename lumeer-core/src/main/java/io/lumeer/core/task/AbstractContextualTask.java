@@ -70,6 +70,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private static final Logger log = Logger.getLogger(AbstractConstraintConverter.class.getName());
 
+   private int recursionDepth = 0;
+
    protected User initiator;
    protected DaoContextSnapshot daoContextSnapshot;
    protected PusherClient pusherClient;
@@ -86,7 +88,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected LinkInstanceAdapter linkInstanceAdapter;
 
    @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment) {
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment, final int recursionDepth) {
       this.initiator = initiator;
       this.daoContextSnapshot = daoContextSnapshot;
       this.pusherClient = pusherClient;
@@ -94,6 +96,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.constraintManager = constraintManager;
       this.environment = environment;
       this.timeZone = requestDataKeeper.getTimezone();
+      this.recursionDepth = recursionDepth;
 
       final ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(daoContextSnapshot.getResourceCommentDao());
       collectionAdapter = new CollectionAdapter(daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
@@ -608,12 +611,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return requestDataKeeper.getSecondaryCorrelationId();
    }
 
+   public int getRecursionDepth() {
+      return recursionDepth;
+   }
+
    class LocalContextualTaskFactory extends ContextualTaskFactory {
 
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, environment);
+            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, environment, recursionDepth + 1);
 
             return t;
          } catch (Exception e) {
@@ -642,7 +649,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(initiator, contextSnapshot, pusherClient, new RequestDataKeeper(), constraintManager, environment);
+            t.initialize(initiator, contextSnapshot, pusherClient, new RequestDataKeeper(), constraintManager, environment, 0);
 
             return t;
          } catch (Exception e) {

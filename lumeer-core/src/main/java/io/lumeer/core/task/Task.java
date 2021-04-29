@@ -43,4 +43,6 @@ public interface Task extends Serializable {
    void propagateChanges(final List<Document> documents, final List<LinkInstance> links);
 
    void processChanges(final ChangesTracker changesTracker);
+
+   int getRecursionDepth();
 }
