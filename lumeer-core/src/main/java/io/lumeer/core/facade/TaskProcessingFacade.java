@@ -25,6 +25,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.AttributesDiff;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
@@ -293,6 +294,7 @@ public class TaskProcessingFacade {
                Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL)
          ).stream()
           .filter(ruleTask -> skipTask == null || StringUtils.isEmpty(ruleTask.getRule().getName()) || !ruleTask.getRule().getName().equals(skipTask)) // skipTask is checked for null for performance reasons
+          .filter(ruleTask -> ruleTask.getRecursionDepth() == 0 || ruleTask.getRule().getType() != Rule.RuleType.BLOCKLY || new BlocklyRule(ruleTask.getRule()).isRecursive()) // either this is not recursion, or it is not blockly, or recursion is allowed
           .collect(Collectors.toList());
       }
       return Collections.emptyList();

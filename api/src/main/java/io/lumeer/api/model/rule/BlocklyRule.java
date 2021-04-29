@@ -28,6 +28,7 @@ public class BlocklyRule {
    public static final String BLOCKLY_RESULT_TIMESTAMP = "blocklyResultTimestamp";
    public static final String BLOCKLY_DRY_RUN = "blocklyDryRun";
    public static final String BLOCKLY_DRY_RUN_RESULT = "blocklyDryRunResult";
+   public static final String BLOCKLY_RECURSIVE = "blocklyRecursive";
 
    protected final Rule rule;
 
@@ -93,6 +94,14 @@ public class BlocklyRule {
 
    public void setDryRunResult(final String dryRunResult) {
       rule.getConfiguration().put(BLOCKLY_DRY_RUN_RESULT, dryRunResult);
+   }
+
+   public boolean isRecursive() {
+      return rule.getConfiguration().getBoolean(BLOCKLY_RECURSIVE, false);
+   }
+
+   public void setRecursive(final Boolean recursive) {
+      rule.getConfiguration().put(BLOCKLY_RECURSIVE, recursive);
    }
 
    @Override
