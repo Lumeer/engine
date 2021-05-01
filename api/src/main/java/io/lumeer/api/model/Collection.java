@@ -267,7 +267,11 @@ public class Collection extends Resource implements HealthChecking {
    public void checkHealth() throws InsaneObjectException {
       super.checkHealth();
 
-      if (attributes != null) attributes.forEach(Attribute::checkHealth);
-      if (rules != null) rules.forEach((k, v) -> v.checkHealth());
+      if (attributes != null) {
+         attributes.forEach(Attribute::checkHealth);
+      }
+      if (rules != null) {
+         rules.forEach((k, v) -> v.checkHealth());
+      }
    }
 }
