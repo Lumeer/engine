@@ -30,10 +30,10 @@ import java.util.concurrent.TimeUnit
 
 class DataFiltersJsParserTest {
 
-    private val collection1 = Collection("c1", "c1", "", "", "", Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
+    private val collection1 = Collection("c1", "c1", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
         id = "c1"
     }
-    private val collection2 = Collection("c2", "c2", "", "", "", Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
+    private val collection2 = Collection("c2", "c2", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
         id = "c2"
     }
     private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf()).apply { id = "lt1" }
@@ -76,18 +76,18 @@ class DataFiltersJsParserTest {
                 simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
         )
         val simpleResult2 = DataFilter.filterDocumentsAndLinksByQueryFromJson(
-            listOf(document1, document2),
-            listOf(collection1),
-            listOf(),
-            listOf(),
-            simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                listOf(document1, document2),
+                listOf(collection1),
+                listOf(),
+                listOf(),
+                simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
         )
 
         Assertions.assertThat(simpleResult.first).containsOnly(document1, document2)
         Assertions.assertThat(simpleResult2.first).containsOnly(document1, document2)
 
         val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
-        val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0 , 10)
+        val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0, 10)
 
         val linkResult = DataFilter.filterDocumentsAndLinksByQuery(
                 listOf(document1, document2, document3, document4),
@@ -97,11 +97,11 @@ class DataFiltersJsParserTest {
                 linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
         )
         val linkResult2 = DataFilter.filterDocumentsAndLinksByQueryFromJson(
-            listOf(document1, document2, document3, document4),
-            listOf(collection1, collection2),
-            listOf(linkType),
-            listOf(link1, link2),
-            linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                listOf(document1, document2, document3, document4),
+                listOf(collection1, collection2),
+                listOf(linkType),
+                listOf(link1, link2),
+                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
         )
 
         Assertions.assertThat(linkResult.first).containsOnly(document1, document3)
@@ -128,10 +128,10 @@ class DataFiltersJsParserTest {
     }
 
     class Task(val id: Int, val tasks: Int) : Runnable {
-        private val collection1 = Collection("c1", "c1", "", "", "", Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
+        private val collection1 = Collection("c1", "c1", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
             id = "c1"
         }
-        private val collection2 = Collection("c2", "c2", "", "", "", Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
+        private val collection2 = Collection("c2", "c2", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
             id = "c2"
         }
         private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf()).apply { id = "lt1" }
@@ -172,14 +172,14 @@ class DataFiltersJsParserTest {
             }
 
             val throughLinkFilter = CollectionAttributeFilter.createFromValues(collection2.id, c2AttributeId, ConditionType.EQUALS, "lumeer")
-            val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0 , 10)
+            val linkQuery = Query(listOf(QueryStem(collection1.id, listOf(linkType.id), setOf(), listOf(throughLinkFilter), listOf())), setOf(), 0, 10)
 
             val linkResult = DataFilter.filterDocumentsAndLinksByQueryFromJson(
-                documents,
-                listOf(collection1, collection2),
-                listOf(linkType),
-                links,
-                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                    documents,
+                    listOf(collection1, collection2),
+                    listOf(linkType),
+                    links,
+                    linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
             )
         }
 

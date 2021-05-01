@@ -92,21 +92,21 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
 
    private Project createProject(String code) {
-      Project project = new Project(code, NAME, ICON, COLOR, null, null,  false, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null, null, false, null);
       project.getPermissions().updateUserPermissions(userPermissions);
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithReadOnlyPermissions(final String code) {
-      Project project = new Project(code, NAME, ICON, COLOR, null, null, false, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null, null, false, null);
       project.getPermissions().updateUserPermissions(Set.of(userReadonlyPermissions, userStrangerPermissions));
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
    }
 
    private Project createProjectWithStrangerPermissions(final String code) {
-      Project project = new Project(code, NAME, ICON, COLOR, null, null, false, null);
+      Project project = new Project(code, NAME, ICON, COLOR, null, null, null, false, null);
       project.getPermissions().updateUserPermissions(Set.of(userPermissions, userStrangerPermissions));
       project.getPermissions().updateGroupPermissions(groupPermissions);
       return projectDao.createProject(project);
@@ -118,7 +118,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       this.stranger = userDao.createUser(new User(STRANGER_USER));
 
       userPermissions = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
-      userReadonlyPermissions =Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
+      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
       userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(Role.READ));
       groupPermissions = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
 
@@ -174,7 +174,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testCreateProject() {
       addOrganizationManagePermission();
 
-      Project project = new Project(CODE1, NAME, ICON, COLOR, null, null, false, null);
+      Project project = new Project(CODE1, NAME, ICON, COLOR, null, null, null, false, null);
 
       Project returnedProject = projectFacade.createProject(project);
       assertThat(returnedProject).isNotNull();
@@ -205,7 +205,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateProject() {
       String id = createProject(CODE1).getId();
 
-      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, false, null);
+      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, null, false, null);
       updatedProject.getPermissions().removeUserPermission(this.user.getId());
 
       projectFacade.updateProject(id, updatedProject);

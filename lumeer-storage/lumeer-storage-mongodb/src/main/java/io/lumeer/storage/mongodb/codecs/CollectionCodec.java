@@ -102,7 +102,7 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
          purpose = new CollectionPurpose(CollectionPurposeType.None, new DataDocument());
       }
 
-      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), attributes, rules, dataDescription, purpose);
+      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), attributes, rules, dataDescription, purpose);
       collection.setId(resource.getId());
       if (lastTimeUsed != null) {
          collection.setLastTimeUsed(ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC));

@@ -65,7 +65,7 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       List<String> folders = bson.getList(FOLDERS, String.class);
 
-      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), query, perspective, config, settings, authorId, folders);
+      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), query, perspective, config, settings, authorId, folders);
       view.setId(resource.getId());
       view.setVersion(resource.getVersion());
 

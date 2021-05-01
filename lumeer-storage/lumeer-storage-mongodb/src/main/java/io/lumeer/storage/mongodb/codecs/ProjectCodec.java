@@ -54,7 +54,7 @@ public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Proj
       }
 
       boolean isPublic = bson.getBoolean(IS_PUBLIC, false);
-      Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPermissions(), isPublic, templateMetadata);
+      Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), isPublic, templateMetadata);
       project.setId(resource.getId());
       project.setVersion(resource.getVersion());
       return project;

@@ -31,6 +31,7 @@ public abstract class Resource implements WithId, HealthChecking {
    public static final String NAME = "name";
    public static final String ICON = "icon";
    public static final String COLOR = "color";
+   public static final String PRIORITY = "priority";
    public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
 
@@ -40,6 +41,7 @@ public abstract class Resource implements WithId, HealthChecking {
    protected String name;
    protected String icon;
    protected String color;
+   protected Long priority;
    protected long version;
    protected String description;
    protected boolean nonRemovable;
@@ -49,12 +51,13 @@ public abstract class Resource implements WithId, HealthChecking {
    protected Resource() {
    }
 
-   public Resource(final String code, final String name, final String icon, final String color, String description, final Permissions permissions) {
+   public Resource(final String code, final String name, final String icon, final String color, String description, Long priority, final Permissions permissions) {
       this.code = code;
       this.name = name;
       this.icon = icon;
       this.color = color;
       this.description = description;
+      this.priority = priority;
       this.permissions = permissions != null ? permissions : new Permissions();
    }
 
@@ -67,6 +70,7 @@ public abstract class Resource implements WithId, HealthChecking {
       this.version = resource.getVersion();
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
+      this.priority = resource.getPriority();
       this.permissions = new Permissions(resource.getPermissions());
       this.version = resource.getVersion();
    }
@@ -146,6 +150,14 @@ public abstract class Resource implements WithId, HealthChecking {
 
    public void setVersion(final long version) {
       this.version = version;
+   }
+
+   public Long getPriority() {
+      return priority;
+   }
+
+   public void setPriority(final Long priority) {
+      this.priority = priority;
    }
 
    @Override

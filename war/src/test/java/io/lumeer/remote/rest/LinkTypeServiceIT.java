@@ -21,7 +21,6 @@ package io.lumeer.remote.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -152,7 +151,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem = new QueryStem(collectionIdNoPerm, Collections.singletonList(linkTypeIdFromView), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(stem);
 
-      View view = new View("code", "name", "", "", "", userPermissions, query, "perspective", "", null, createdUser.getId(), Collections.emptyList());
+      View view = new View("code", "name", "", "", "", null, userPermissions, query, "perspective", "", null, createdUser.getId(), Collections.emptyList());
       viewDao.createView(view);
 
       linkTypesUrl = projectPath(storedOrganization, storedProject) + "link-types";

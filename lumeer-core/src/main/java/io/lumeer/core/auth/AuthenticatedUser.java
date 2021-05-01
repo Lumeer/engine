@@ -190,7 +190,7 @@ public class AuthenticatedUser implements Serializable {
       String code = generateOrganizationCode(user.getEmail());
       Permission userPermission = Permission.buildWithRoles(user.getId(), Organization.ROLES);
 
-      Organization organization = new Organization(code, "Lumeer demo", getDemoIcon(), getDemoColor(), null, null);
+      Organization organization = new Organization(code, "Lumeer demo", getDemoIcon(), getDemoColor(), null, null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.setNonRemovable(true);
 
@@ -209,7 +209,7 @@ public class AuthenticatedUser implements Serializable {
    private Project createDemoProject(final User user) {
       final String code = generateProjectCode();
       final Permission userPermission = Permission.buildWithRoles(user.getId(), Project.ROLES);
-      Project project = new Project(code, "Project", getDemoIcon(), getDemoColor(), null, null,false, null);
+      Project project = new Project(code, "Project", getDemoIcon(), getDemoColor(), null, null, null,false, null);
       project.getPermissions().updateUserPermissions(userPermission);
       project.setNonRemovable(true);
 

@@ -76,7 +76,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationNoRole() {
       String name = "TestGetOrganizationNoRole";
       String code = "TestGetOrganizationNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
 
@@ -89,7 +89,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationReadRole() {
       String name = "TestGetOrganizationReadRole";
       String code = "TestGetOrganizationReadRole_id";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       Permission newPermission = new Permission(userId, Role.toStringRoles(Collections.singleton(Role.READ)));
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(newPermission));
@@ -116,7 +116,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       List<String> codes = Arrays.asList(code1, code2, code3, code4);
 
       for (int i = 0; i < codes.size(); i++) {
-         final Organization organization = organizationFacade.createOrganization(new Organization(codes.get(i), names.get(i), "a", "b", null, null));
+         final Organization organization = organizationFacade.createOrganization(new Organization(codes.get(i), names.get(i), "a", "b", null, null, null));
          if (i % 2 == 0) {
             organizationFacade.removeUserPermission(organization.getId(), userId);
          } else {
@@ -138,10 +138,10 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String name = "TestUpdateOrganizationNoRole";
       String code = "TestUpdateOrganizationNoRole_id";
       String newName = "NewTestUpdateOrganizationNoRole";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
-      Organization newOrganization = new Organization(code, newName, "c", "d", null, null);
+      Organization newOrganization = new Organization(code, newName, "c", "d", null, null, null);
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -157,14 +157,14 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String name = "TestUpdateOrganizationManageRole";
       String code = "TestUpdateOrganizationManageRole_code";
       String newName = "NewTestUpdateOrganizationManageRole";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
                                 .request(MediaType.APPLICATION_JSON)
-                                .buildPut(Entity.json(new Organization(code, newName, "c", "d", null, null)))
+                                .buildPut(Entity.json(new Organization(code, newName, "c", "d", null, null, null)))
                                 .invoke();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       Organization org = response.readEntity(Organization.class);
@@ -177,7 +177,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationPermissionsNoRole() {
       String name = "testGetOrganizationPermissionsNoRole";
       String code = "testGetOrganizationPermissionsNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
 
@@ -194,7 +194,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testGetOrganizationPermissionsManageRole() {
       String name = "testGetOrganizationPermissionsManageRole";
       String code = "testGetOrganizationPermissionsManageRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
 
@@ -211,7 +211,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateUserPermissionNoRole() {
       String name = "testUpdateUserPermissionNoRole";
       String code = "testUpdateUserPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
       Permission[] newPermission = { new Permission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
@@ -230,7 +230,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateUserPermissionManageRole() {
       String name = "testUpdateUserPermissionNoRole";
       String code = "testUpdateUserPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
       Permission[] newPermission = { new Permission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
@@ -249,7 +249,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveUserPermissionNoRole() {
       String name = "testRemoveUserPermissionNoRole";
       String code = "testRemoveUserPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
 
@@ -268,7 +268,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveUserPermissionManageRole() {
       String name = "testRemoveUserPermissionNoRole";
       String code = "testRemoveUserPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
 
@@ -287,7 +287,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateGroupPermissionNoRole() {
       String name = "testUpdateGroupPermissionNoRole";
       String code = "testUpdateGroupPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
       String group = "testGroup1";
@@ -307,7 +307,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testUpdateGroupPermissionManageRole() {
       String name = "testUpdateGroupPermissionNoRole";
       String code = "testUpdateGroupPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
       String group = "testGroup2";
@@ -327,7 +327,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveGroupPermissionNoRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
       String group = "testGroup3";
@@ -347,7 +347,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testRemoveGroupPermissionManageRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
       String group = "testGroup3";
@@ -367,12 +367,12 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testCreateProjectInOrganizationNoRole() {
       String name = "testRemoveGroupPermissionNoRole";
       String code = "testRemoveGroupPermissionNoRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
       String projectCode = "proj1";
       String projectName = "proj1_code";
-      Project project = new Project(projectCode, projectName, "a", "b", null, null, false, null);
+      Project project = new Project(projectCode, projectName, "a", "b", null, null, null, false, null);
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -387,11 +387,11 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    public void testCreateProjectInOrganizationManageRole() {
       String name = "testCreateProjectInOrganizationManageRole";
       String code = "testCreateProjectInOrganizationManageRole_code";
-      Organization organization = new Organization(code, name, "a", "b", null, null);
+      Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       String projectCode = "proj2";
       String projectName = "proj2_code";
-      Project project = new Project(projectCode, projectName, "a", "b", null, null, false, null);
+      Project project = new Project(projectCode, projectName, "a", "b", null, null, null, false, null);
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())

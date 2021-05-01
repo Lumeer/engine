@@ -73,7 +73,7 @@ public class Collection extends Resource implements HealthChecking {
    private CollectionPurpose purpose;
 
    public Collection(final String code, final String name, final String icon, final String color, final Permissions permissions) {
-      this(code, name, icon, color, "", permissions, new LinkedHashSet<>(), new HashMap<>(), "", new CollectionPurpose(CollectionPurposeType.None, null));
+      this(code, name, icon, color, "", null, permissions, new LinkedHashSet<>(), new HashMap<>(), "", new CollectionPurpose(CollectionPurposeType.None, null));
    }
 
    @JsonCreator
@@ -83,12 +83,13 @@ public class Collection extends Resource implements HealthChecking {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PRIORITY) final Long order,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
          @JsonProperty(RULES) final Map<String, Rule> rules,
          @JsonProperty(DATA_DESCRIPTION) final String dataDescription,
          @JsonProperty(PURPOSE) final CollectionPurpose purpose) {
-      super(code, name, icon, color, description, permissions);
+      super(code, name, icon, color, description, order, permissions);
 
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
       this.documentsCount = 0L;
@@ -114,6 +115,7 @@ public class Collection extends Resource implements HealthChecking {
       o.version = this.version;
       o.rules = this.rules != null ? new HashMap<>(this.rules) : Collections.emptyMap();
       o.dataDescription = this.dataDescription;
+      o.priority = this.priority;
       o.purpose = this.purpose != null ? new CollectionPurpose(this.purpose.getType(), new DataDocument(this.purpose.createIfAbsentMetaData())) : null;
 
       return o;
@@ -249,6 +251,7 @@ public class Collection extends Resource implements HealthChecking {
             ", name='" + name + '\'' +
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
+            ", order='" + priority + '\'' +
             ", permissions=" + permissions +
             ", attributes=" + attributes +
             ", documentsCount=" + documentsCount +
@@ -264,7 +267,11 @@ public class Collection extends Resource implements HealthChecking {
    public void checkHealth() throws InsaneObjectException {
       super.checkHealth();
 
-      if (attributes != null) attributes.forEach(Attribute::checkHealth);
-      if (rules != null) rules.forEach((k, v) -> v.checkHealth());
+      if (attributes != null) {
+         attributes.forEach(Attribute::checkHealth);
+      }
+      if (rules != null) {
+         rules.forEach((k, v) -> v.checkHealth());
+      }
    }
 }

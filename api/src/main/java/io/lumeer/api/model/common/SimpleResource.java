@@ -23,13 +23,13 @@ import io.lumeer.api.model.ResourceType;
 
 public class SimpleResource extends Resource {
 
-   public SimpleResource(final String code, final String name, final String icon, final String color, String description, final Permissions permissions) {
-      super(code, name, icon, color, description, permissions);
+   public SimpleResource(final String code, final String name, final String icon, final String color, String description, Long order, final Permissions permissions) {
+      super(code, name, icon, color, description, order, permissions);
    }
 
    @Override
    public SimpleResource copy() {
-      final SimpleResource o = new SimpleResource(this.code, this.name, this.icon, this.color, this.description, new Permissions(this.getPermissions()));
+      final SimpleResource o = new SimpleResource(this.code, this.name, this.icon, this.color, this.description, this.priority, new Permissions(this.getPermissions()));
 
       o.id = this.id;
       o.nonRemovable = this.nonRemovable;

@@ -65,6 +65,7 @@ public class View extends Resource {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PRIORITY) final Long order,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(QUERY) final Query query,
          @JsonProperty(PERSPECTIVE) final String perspective,
@@ -72,7 +73,7 @@ public class View extends Resource {
          @JsonProperty(SETTINGS) final Object settings,
          @JsonProperty(AUTHOR_ID) final String authorId,
          @JsonProperty(FOLDERS) final List<String> folders) {
-      super(code, name, icon, color, description, permissions);
+      super(code, name, icon, color, description, order, permissions);
 
       this.query = query;
       this.perspective = perspective;
@@ -103,6 +104,7 @@ public class View extends Resource {
       o.version = this.version;
       o.lastTimeUsed = this.lastTimeUsed;
       o.favorite = this.favorite;
+      o.priority = this.priority;
       o.folders = this.folders;
 
       return o;
@@ -192,6 +194,7 @@ public class View extends Resource {
             ", name='" + name + '\'' +
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
+            ", order='" + priority + '\'' +
             ", permissions=" + permissions +
             ", perspective='" + perspective + '\'' +
             ", config=" + config + '\'' +

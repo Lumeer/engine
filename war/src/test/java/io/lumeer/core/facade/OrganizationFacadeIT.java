@@ -106,14 +106,14 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    }
 
    private String createOrganization(final String code) {
-      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.getPermissions().updateGroupPermissions(groupPermission);
       return organizationDao.createOrganization(organization).getId();
    }
 
    private Organization createOrganizationWithReadOnlyPermissions(final String code) {
-      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null, null);
       organization.getPermissions().updateUserPermissions(Set.of(
             userReadonlyPermission,
             userStrangerPermission));
@@ -122,7 +122,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    }
 
    private Organization createOrganizationWithStrangerPermissions(final String code) {
-      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null, null);
       organization.getPermissions().updateUserPermissions(Set.of(
             userPermission,
             userStrangerPermission));
@@ -165,7 +165,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null, null);
 
       Organization createdOrganization = organizationFacade.createOrganization(organization);
       assertThat(createdOrganization).isNotNull();
@@ -188,7 +188,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateOrganization() {
       String id = createOrganization(CODE1);
 
-      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, null);
 
       organizationFacade.updateOrganization(id, updatedOrganization);
 
