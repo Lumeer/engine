@@ -31,8 +31,6 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;

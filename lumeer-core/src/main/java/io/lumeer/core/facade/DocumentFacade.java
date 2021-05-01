@@ -368,10 +368,7 @@ public class DocumentFacade extends AbstractFacade {
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       DataDocument oldData = dataDao.getData(collectionId, documentId);
-
-      if (!DocumentUtils.isTaskAssignedByUser(collection, oldData, authenticatedUser.getUserEmail())) {
-         permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
-      }
+      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
 
       data = constraintManager.encodeDataTypes(collection, data);
 

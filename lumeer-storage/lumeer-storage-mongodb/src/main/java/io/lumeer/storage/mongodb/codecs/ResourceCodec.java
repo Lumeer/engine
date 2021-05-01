@@ -38,6 +38,7 @@ public abstract class ResourceCodec {
    public static final String ICON = "icon";
    public static final String VERSION = "version";
    public static final String COLOR = "color";
+   public static final String PRIORITY = "priority";
    public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
 
@@ -54,10 +55,11 @@ public abstract class ResourceCodec {
       String icon = bson.getString(ICON);
       String color = bson.getString(COLOR);
       Long version = bson.getLong(VERSION);
+      Long order = bson.getLong(PRIORITY);
       String description = bson.getString(DESCRIPTION);
       Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class));
 
-      SimpleResource view = new SimpleResource(code, name, icon, color, description, permissions);
+      SimpleResource view = new SimpleResource(code, name, icon, color, description, order, permissions);
       view.setId(id);
       view.setVersion(version == null ? 0 : version);
       return view;
@@ -69,6 +71,7 @@ public abstract class ResourceCodec {
           .append(NAME, value.getName())
           .append(ICON, value.getIcon())
           .append(COLOR, value.getColor())
+          .append(PRIORITY, value.getPriority())
           .append(DESCRIPTION, value.getDescription())
           .append(PERMISSIONS, value.getPermissions());
 

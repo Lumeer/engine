@@ -47,10 +47,11 @@ public class Project extends Resource {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PRIORITY) final Long order,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty("public") final boolean isPublic,
          @JsonProperty("templateMetadata") final TemplateMetadata templateMetadata) {
-      super(code, name, icon, color, description, permissions);
+      super(code, name, icon, color, description, order, permissions);
       this.templateMetadata = templateMetadata;
       this.isPublic = isPublic;
    }
@@ -81,6 +82,7 @@ public class Project extends Resource {
       o.collectionsCount = this.collectionsCount;
       o.version = this.version;
       o.isPublic = this.isPublic;
+      o.priority = this.priority;
       o.templateMetadata = this.templateMetadata != null ? new TemplateMetadata(this.templateMetadata) : null;
 
       return o;

@@ -136,13 +136,13 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Organization createOrganization(final String code) {
-      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null, null);
 
       return organizationFacade.createOrganization(organization);
    }
 
    private Organization createOrganizationWithSpecificPermissions(final String code) {
-      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null, null);
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.getPermissions().updateGroupPermissions(groupPermission);
       return organizationDao.createOrganization(organization);
@@ -186,7 +186,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateOrganization() {
-      Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(CODE1, NAME, ICON, COLOR, null, null, null);
       Entity entity = Entity.json(organization);
 
       Response response = client.target(organizationUrl)
@@ -212,7 +212,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateOrganization() {
       final Organization organization = createOrganization(CODE1);
 
-      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, null);
       Entity entity = Entity.json(updatedOrganization);
 
       Response response = client.target(organizationUrl).path(organization.getId())

@@ -43,8 +43,9 @@ public class Organization extends Resource {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PRIORITY) final Long order,
          @JsonProperty(PERMISSIONS) final Permissions permissions) {
-      super(code, name, icon, color, description, permissions);
+      super(code, name, icon, color, description, order, permissions);
    }
 
    @Override
@@ -59,6 +60,7 @@ public class Organization extends Resource {
       o.description = this.description;
       o.nonRemovable = this.nonRemovable;
       o.permissions = new Permissions(this.getPermissions());
+      o.priority = this.priority;
       o.version = this.version;
 
       return o;
@@ -77,6 +79,7 @@ public class Organization extends Resource {
             ", name='" + name + '\'' +
             ", icon='" + icon + '\'' +
             ", color='" + color + '\'' +
+            ", order='" + priority + '\'' +
             ", permissions=" + permissions +
             '}';
    }

@@ -179,7 +179,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    }
 
    private Organization createOrganization() {
-      Organization organization = new Organization(CODE, NAME, ICON, COLOR, null, null);
+      Organization organization = new Organization(CODE, NAME, ICON, COLOR, null, null, null);
       return organizationFacade.createOrganization(organization);
    }
 

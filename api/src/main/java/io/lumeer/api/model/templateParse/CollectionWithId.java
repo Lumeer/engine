@@ -43,13 +43,14 @@ public class CollectionWithId extends Collection {
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
          @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(PRIORITY) final Long order,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(ATTRIBUTES) final Set<Attribute> attributes,
          @JsonProperty(RULES) final Map<String, Rule> rules,
          @JsonProperty(DATA_DESCRIPTION) final String dataDescription,
          @JsonProperty(PURPOSE) final CollectionPurpose purpose,
          @JsonProperty(DEFAULT_ATTRIBUTE_ID) final String defaultAttributeId) {
-      super(code, name, icon, color, description, permissions, attributes, rules, dataDescription, purpose);
+      super(code, name, icon, color, description, order, permissions, attributes, rules, dataDescription, purpose);
       setId(id);
       setDefaultAttributeId(defaultAttributeId);
    }
@@ -61,6 +62,7 @@ public class CollectionWithId extends Collection {
             collection.getIcon(),
             collection.getColor(),
             collection.getDescription(),
+            collection.getPriority(),
             collection.getPermissions(),
             collection.getAttributes(),
             collection.getRules(),

@@ -164,6 +164,7 @@ public class ResourceCommentFacade extends AbstractFacade {
       } else if (resourceType == ResourceType.DOCUMENT) {
          Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
          Collection collection = collectionDao.getCollectionById(document.getCollectionId());
+         // TODO create adapter to check permissions on document level
          if (DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail())) {
             return;
          }

@@ -336,7 +336,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    }
 
    private View prepareView(String name) {
-      return new View(name, name, null, null, null, null, QUERY, PERSPECTIVE, CONFIG, null, this.user.getId(), Collections.emptyList());
+      return new View(name, name, null, null, null, null, null, QUERY, PERSPECTIVE, CONFIG, null, this.user.getId(), Collections.emptyList());
    }
 
    private View createView(String name) {
