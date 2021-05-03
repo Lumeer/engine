@@ -190,10 +190,10 @@ public class SearchFacade extends AbstractFacade {
          final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
          if (assigneeAttribute != null) {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
-            return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
+            return new QueryStem(null, collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
          }
          if (permissionsChecker.hasRole(collection, Role.READ)) {
-            return new QueryStem(collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
+            return new QueryStem(null, collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
          }
          return null;
       }).filter(Objects::nonNull).collect(Collectors.toList());

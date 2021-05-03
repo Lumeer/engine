@@ -29,6 +29,7 @@ import java.util.Set;
 
 public class QueryStem {
 
+   private final String id;
    private final String collectionId;
    private final List<String> linkTypeIds;
    private final Set<String> documentIds;
@@ -36,11 +37,13 @@ public class QueryStem {
    private final List<LinkAttributeFilter> linkFilters;
 
    @JsonCreator
-   public QueryStem(@JsonProperty("collectionId") final String collectionId,
+   public QueryStem(@JsonProperty("id") final String id,
+         @JsonProperty("collectionId") final String collectionId,
          @JsonProperty("linkTypeIds") final List<String> linkTypeIds,
          @JsonProperty("documentIds") final Set<String> documentIds,
          @JsonProperty("filters") final List<CollectionAttributeFilter> filters,
          @JsonProperty("linkFilters") final List<LinkAttributeFilter> linkFilters) {
+      this.id = id;
       this.collectionId = collectionId;
       this.linkTypeIds = linkTypeIds != null ? linkTypeIds : Collections.emptyList();
       this.documentIds = documentIds != null ? documentIds : Collections.emptySet();
@@ -49,7 +52,11 @@ public class QueryStem {
    }
 
    public QueryStem(final String collectionId) {
-      this(collectionId, null, null, null, null);
+      this(null, collectionId, null, null, null, null);
+   }
+
+   public String getId() {
+      return id;
    }
 
    public String getCollectionId() {
@@ -92,6 +99,10 @@ public class QueryStem {
          return false;
       }
       final QueryStem queryStem = (QueryStem) o;
+      if (getId() != null && queryStem.getId() != null) {
+         return Objects.equals(getId(), queryStem.getId());
+      }
+
       return Objects.equals(getCollectionId(), queryStem.getCollectionId()) &&
             Objects.equals(getLinkTypeIds(), queryStem.getLinkTypeIds()) &&
             Objects.equals(getDocumentIds(), queryStem.getDocumentIds()) &&
@@ -107,7 +118,8 @@ public class QueryStem {
    @Override
    public String toString() {
       return "QueryStem{" +
-            "collectionId='" + collectionId + '\'' +
+            "id='" + id + '\'' +
+            ", collectionId='" + collectionId + '\'' +
             ", linkTypeIds=" + linkTypeIds +
             ", documentIds=" + documentIds +
             ", filters=" + filters +

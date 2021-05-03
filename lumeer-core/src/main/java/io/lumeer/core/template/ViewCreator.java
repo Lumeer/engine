@@ -137,6 +137,7 @@ public class ViewCreator extends WithIdCreator {
          }
 
          newStems.add(new QueryStem(
+               null,
                collectionId,
                linkTypeIdsUsed ? linkTypeIds : null,
                documentIdsUsed ? documentIds : null,

@@ -188,7 +188,7 @@ public class Query implements HealthChecking {
 
    public Query getFirstStem(final Integer page, final Integer pageSize) {
       final QueryStem firstStem = stems.get(0);
-      final QueryStem stem = new QueryStem(firstStem.getCollectionId(), Collections.emptyList(), new HashSet<>(firstStem.getDocumentIds()), new ArrayList<>(firstStem.getFilters()), Collections.emptyList());
+      final QueryStem stem = new QueryStem(firstStem.getId(), firstStem.getCollectionId(), Collections.emptyList(), new HashSet<>(firstStem.getDocumentIds()), new ArrayList<>(firstStem.getFilters()), Collections.emptyList());
 
       return new Query(List.of(stem), new HashSet<>(this.fulltexts), page, pageSize);
    }

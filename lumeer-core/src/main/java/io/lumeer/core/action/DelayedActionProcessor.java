@@ -159,7 +159,7 @@ public class DelayedActionProcessor {
          );
       }
 
-      final String query = new Query(List.of(new QueryStem(originalData.getString(DelayedAction.DATA_COLLECTION_ID), null, null, null, null)), null, null, null).toQueryString();
+      final String query = new Query(List.of(new QueryStem(originalData.getString(DelayedAction.DATA_COLLECTION_ID))), null, null, null).toQueryString();
       data.put(DelayedAction.DATA_COLLECTION_QUERY, Utils.encodeQueryParam(query));
 
       final String cursor = new ViewCursor(
