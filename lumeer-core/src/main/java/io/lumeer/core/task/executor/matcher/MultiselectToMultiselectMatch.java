@@ -48,6 +48,7 @@ public class MultiselectToMultiselectMatch implements MatchQueryProvider {
       return new Query(
             Collections.singletonList(
                   new QueryStem(
+                        null,
                         matcher.getThisCollection().getId(),
                         Collections.singletonList(matcher.getLinkType().getId()),
                         Collections.emptySet(),
@@ -69,6 +70,7 @@ public class MultiselectToMultiselectMatch implements MatchQueryProvider {
       return new Query(
             Collections.singletonList(
                   new QueryStem(
+                        null,
                         matcher.getThatCollection().getId(),
                         Collections.emptyList(),
                         Collections.emptySet(),
@@ -90,6 +92,7 @@ public class MultiselectToMultiselectMatch implements MatchQueryProvider {
       return new Query(
             Collections.singletonList(
                   new QueryStem(
+                        null,
                         collection.getId(),
                         Collections.emptyList(),
                         Collections.emptySet(),

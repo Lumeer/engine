@@ -165,7 +165,7 @@ public class UserNotificationFacade extends AbstractFacade {
          data.append(UserNotification.CollectionShared.COLLECTION_ICON, resource.getIcon());
          data.append(UserNotification.CollectionShared.COLLECTION_COLOR, resource.getColor());
 
-         final String query = new Query(List.of(new QueryStem(resource.getId(), null, null, null, null)), null, null, null).toQueryString();
+         final String query = new Query(List.of(new QueryStem(resource.getId())), null, null, null).toQueryString();
          data.append(UserNotification.CollectionShared.COLLECTION_QUERY, Utils.encodeQueryParam(query));
       }
 

@@ -225,7 +225,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       var keyResultsInitiativesLinkType = linkTypes.stream().filter(linkType -> linkType.getName().equals("Key Results Initiatives")).findFirst().orElse(null);
       assertThat(keyResultsInitiativesLinkType).isNotNull();
 
-      var links = searchFacade.searchLinkInstances(new Query(new QueryStem(keyResultsCollection.getId(), List.of(keyResultsInitiativesLinkType.getId()), Set.of(conversionDoc.getId()), Collections.emptyList(), Collections.emptyList())), true);
+      var links = searchFacade.searchLinkInstances(new Query(new QueryStem(null, keyResultsCollection.getId(), List.of(keyResultsInitiativesLinkType.getId()), Set.of(conversionDoc.getId()), Collections.emptyList(), Collections.emptyList())), true);
       assertThat(links).isNotNull();
 
       var allDocuments = searchFacade.searchDocuments(new Query(), true);

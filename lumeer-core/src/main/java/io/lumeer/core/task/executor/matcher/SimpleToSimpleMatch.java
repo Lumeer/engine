@@ -45,6 +45,7 @@ public class SimpleToSimpleMatch implements MatchQueryProvider {
    public Query getMatchQueryForRemoval(final Object oldValue, final Object newValue) {
       return new Query(Collections.singletonList(
                   new QueryStem(
+                        null,
                         matcher.getThisCollection().getId(),
                         Collections.singletonList(matcher.getLinkType().getId()),
                         Collections.emptySet(),
@@ -61,6 +62,7 @@ public class SimpleToSimpleMatch implements MatchQueryProvider {
    public Query getMatchQueryForCreation(final Object oldValue, final Object newValue) {
       return new Query(Collections.singletonList(
             new QueryStem(
+                  null,
                   matcher.getThatCollection().getId(),
                   Collections.emptyList(),
                   Collections.emptySet(),
@@ -76,6 +78,7 @@ public class SimpleToSimpleMatch implements MatchQueryProvider {
    public Query getMatchQuery(final Collection collection, final Attribute attribute, final Object newValue) {
       return new Query(Collections.singletonList(
             new QueryStem(
+                  null,
                   collection.getId(),
                   Collections.emptyList(),
                   Collections.emptySet(),

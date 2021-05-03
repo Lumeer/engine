@@ -274,6 +274,7 @@ public class ZapierFacade extends AbstractFacade {
          documents = searchFacade.searchDocuments(
                new Query(
                      new QueryStem(
+                           null,
                            collectionId,
                            null,
                            null,
@@ -341,7 +342,7 @@ public class ZapierFacade extends AbstractFacade {
    public List<DataDocument> findDocuments(final String collectionId, final List<CollectionAttributeFilter> collectionAttributeFilters) {
       final Collection collection = collectionFacade.getCollection(collectionId);
 
-      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20),true)
+      return searchFacade.searchDocuments(new Query(List.of(new QueryStem(null, collectionId, null, null, collectionAttributeFilters, null)), null, 0, 20),true)
              .stream()
              .map(Document::getData)
              .map(data -> addMissingAttributes(data, collection))

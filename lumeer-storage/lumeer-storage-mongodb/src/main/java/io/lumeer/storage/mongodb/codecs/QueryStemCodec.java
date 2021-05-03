@@ -30,16 +30,19 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class QueryStemCodec implements Codec<QueryStem> {
 
+   public static final String ID = "stemId";
    public static final String COLLECTION_ID = "collectionId";
    public static final String LINK_TYPE_IDS = "linkTypeIds";
    public static final String DOCUMENT_IDS = "documentIds";
@@ -60,13 +63,17 @@ public class QueryStemCodec implements Codec<QueryStem> {
    }
 
    public static QueryStem convertFromDocument(Document bson) {
+      String stemId = bson.getString(ID);
+      if (stemId == null) {
+         stemId = new ObjectId().toString();
+      }
       String collectionId = bson.getString(COLLECTION_ID);
       List<String> linkTypeIds = bson.get(LINK_TYPE_IDS, List.class);
       Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
 
       List<CollectionAttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
-                                                                                                        .map(AttributeFilterCodec::convertFromDocument)
-                                                                                                        .collect(Collectors.toList());
+                                                                                                         .map(AttributeFilterCodec::convertFromDocument)
+                                                                                                         .collect(Collectors.toList());
 
       List<LinkAttributeFilter> linkAttributes;
       if (bson.containsKey(LINK_FILTERS)) {
@@ -77,7 +84,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
          linkAttributes = new ArrayList<>();
       }
 
-      return new QueryStem(collectionId, linkTypeIds, documentIds, attributes, linkAttributes);
+      return new QueryStem(stemId, collectionId, linkTypeIds, documentIds, attributes, linkAttributes);
    }
 
    private static Set<String> convertToSet(List list) {
@@ -87,6 +94,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
    @Override
    public void encode(final BsonWriter writer, final QueryStem value, final EncoderContext encoderContext) {
       Document document = new Document()
+            .append(ID, Objects.requireNonNullElse(value.getId(), new ObjectId().toString()))
             .append(COLLECTION_ID, value.getCollectionId())
             .append(LINK_TYPE_IDS, value.getLinkTypeIds())
             .append(DOCUMENT_IDS, new ArrayList<>(value.getDocumentIds()))
