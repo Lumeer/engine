@@ -106,6 +106,10 @@ public class Attribute implements HealthChecking {
       return description;
    }
 
+   public void setDescription(final String description) {
+      this.description = description;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
