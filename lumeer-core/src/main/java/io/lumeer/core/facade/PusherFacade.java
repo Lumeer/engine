@@ -1029,7 +1029,11 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
-      return this.mapResource(resource.copy(), userId);
+      if (resource instanceof Organization || resource instanceof Project) {
+         return mapResource(resource, userId, true);
+      }
+
+      return mapResource(resource.copy(), userId);
    }
 
    private static Set<String> intersection(Set<Set<String>> sets) {
