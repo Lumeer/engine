@@ -215,7 +215,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
       permissions = organizationFacade.getOrganizationPermissions(organization2.getId());
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), userReadonlyPermission);
+      assertPermissions(permissions.getUserPermissions(), userReadonlyPermission, Permission.buildWithRoles(userStrangerPermission.getId(), Set.of(Role.READ)));
 
       permissions = organizationFacade.getOrganizationPermissions(organization3.getId());
       assertThat(permissions).isNotNull();

@@ -59,6 +59,10 @@ abstract class AbstractFacade {
       return permissionsChecker.isManager();
    }
 
+   private <T extends Resource> boolean keepReadRights(final T resource) {
+      return resource instanceof Organization || resource instanceof Project;
+   }
+
    protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
       Permission permission = Permission.buildWithRoles(userId, roles);
@@ -72,8 +76,20 @@ abstract class AbstractFacade {
          managers = ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), resource);
       }
 
+      final boolean keepReadRights = keepReadRights(resource);
+
       Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
-                                                       .filter(perm -> managers.contains(perm.getId()))
+                                                       .map(perm -> {
+                                                          if (keepReadRights) {
+                                                             if (managers.contains(perm.getId())) {
+                                                                return perm;
+                                                             }
+
+                                                             return Permission.buildWithRoles(perm.getId(), Set.of(Role.READ));
+                                                          }
+                                                          return perm;
+                                                       })
+                                                       .filter(perm -> keepReadRights || managers.contains(perm.getId()))
                                                        .collect(Collectors.toSet());
 
       resource.getPermissions().clear();
