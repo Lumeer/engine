@@ -60,6 +60,10 @@ abstract class AbstractFacade {
    }
 
    protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId) {
+      return keepOnlyActualUserRoles(resource, userId, false);
+   }
+
+   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId, final boolean keepRead) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
       Permission permission = Permission.buildWithRoles(userId, roles);
 
@@ -73,7 +77,17 @@ abstract class AbstractFacade {
       }
 
       Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
-                                                       .filter(perm -> managers.contains(perm.getId()))
+                                                       .map(perm -> {
+                                                          if (keepRead) {
+                                                             if (managers.contains(perm.getId())) {
+                                                                return perm;
+                                                             }
+
+                                                             return Permission.buildWithRoles(perm.getId(), Set.of(Role.READ));
+                                                          }
+                                                          return perm;
+                                                       })
+                                                       .filter(perm -> keepRead || managers.contains(perm.getId()))
                                                        .collect(Collectors.toSet());
 
       resource.getPermissions().clear();
@@ -84,14 +98,22 @@ abstract class AbstractFacade {
    }
 
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
+      return mapResource(resource, userId, false);
+   }
+
+   protected <T extends Resource> T mapResource(final T resource, final String userId, final boolean keepRead) {
       if (permissionsChecker.hasRole(resource, Role.MANAGE, userId)) {
          return resource;
       }
-      return keepOnlyActualUserRoles(resource, userId);
+      return keepOnlyActualUserRoles(resource, userId, keepRead);
    }
 
    protected <T extends Resource> T mapResource(final T resource) {
       return mapResource(resource, authenticatedUser.getCurrentUserId());
+   }
+
+   protected <T extends Resource> T mapResource(final T resource, final boolean keepRead) {
+      return mapResource(resource, authenticatedUser.getCurrentUserId(), keepRead);
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
