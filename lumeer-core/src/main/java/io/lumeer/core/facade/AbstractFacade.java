@@ -59,11 +59,11 @@ abstract class AbstractFacade {
       return permissionsChecker.isManager();
    }
 
-   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId) {
-      return keepOnlyActualUserRoles(resource, userId, false);
+   private <T extends Resource> boolean keepReadRights(final T resource) {
+      return resource instanceof Organization || resource instanceof Project;
    }
 
-   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId, final boolean keepRead) {
+   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId) {
       Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
       Permission permission = Permission.buildWithRoles(userId, roles);
 
@@ -76,9 +76,11 @@ abstract class AbstractFacade {
          managers = ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), resource);
       }
 
+      final boolean keepReadRights = keepReadRights(resource);
+
       Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
                                                        .map(perm -> {
-                                                          if (keepRead) {
+                                                          if (keepReadRights) {
                                                              if (managers.contains(perm.getId())) {
                                                                 return perm;
                                                              }
@@ -87,7 +89,7 @@ abstract class AbstractFacade {
                                                           }
                                                           return perm;
                                                        })
-                                                       .filter(perm -> keepRead || managers.contains(perm.getId()))
+                                                       .filter(perm -> keepReadRights || managers.contains(perm.getId()))
                                                        .collect(Collectors.toSet());
 
       resource.getPermissions().clear();
@@ -98,22 +100,14 @@ abstract class AbstractFacade {
    }
 
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
-      return mapResource(resource, userId, false);
-   }
-
-   protected <T extends Resource> T mapResource(final T resource, final String userId, final boolean keepRead) {
       if (permissionsChecker.hasRole(resource, Role.MANAGE, userId)) {
          return resource;
       }
-      return keepOnlyActualUserRoles(resource, userId, keepRead);
+      return keepOnlyActualUserRoles(resource, userId);
    }
 
    protected <T extends Resource> T mapResource(final T resource) {
       return mapResource(resource, authenticatedUser.getCurrentUserId());
-   }
-
-   protected <T extends Resource> T mapResource(final T resource, final boolean keepRead) {
-      return mapResource(resource, authenticatedUser.getCurrentUserId(), keepRead);
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {

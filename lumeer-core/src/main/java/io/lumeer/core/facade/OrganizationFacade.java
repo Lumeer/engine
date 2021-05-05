@@ -130,7 +130,7 @@ public class OrganizationFacade extends AbstractFacade {
       final Organization organization = organizationDao.getOrganizationByCode(code);
       permissionsChecker.checkRole(organization, Role.READ);
 
-      return mapResource(organization, true);
+      return mapResource(organization);
    }
 
    public Organization getOrganizationById(final String id) {
