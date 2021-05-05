@@ -21,7 +21,9 @@ package io.lumeer.test.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Role;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -31,4 +33,17 @@ public class LumeerAssertions {
       assertThat(actualPermissions).containsOnly(expectedPermission);
       assertThat(actualPermissions.stream().map(Permission::getRoles).collect(Collectors.toSet()).iterator()).toIterable().containsOnly(expectedPermission.getRoles());
    }
+
+   public static void assertPermissions(Set<Permission> actualPermissions, Permission... expectedPermission) {
+      assertThat(actualPermissions).containsOnly(expectedPermission);
+
+      Arrays.stream(expectedPermission).forEach(p -> {
+         var actual = actualPermissions.stream().filter(a -> a.equals(p)).findFirst();
+
+         assertThat(actual.isPresent()).isTrue();
+
+         assertThat(actual.get().getRoles()).containsExactly(p.getRoles().toArray(new Role[0]));
+      });
+   }
+
 }

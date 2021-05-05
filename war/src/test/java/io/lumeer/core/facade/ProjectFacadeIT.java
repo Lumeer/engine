@@ -232,7 +232,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       permissions = projectFacade.getProjectPermissions(project2.getId());
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions);
+      assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions, Permission.buildWithRoles(userStrangerPermissions.getId(), Set.of(Role.READ)));
 
       permissions = projectFacade.getProjectPermissions(project3.getId());
       assertThat(permissions).isNotNull();
