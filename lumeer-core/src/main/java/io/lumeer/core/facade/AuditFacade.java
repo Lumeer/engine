@@ -31,7 +31,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
-import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
@@ -109,9 +108,8 @@ public class AuditFacade extends AbstractFacade {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       auditAdapter = new AuditAdapter(auditDao);
 
-      ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(resourceCommentDao);
-      documentAdapter = new DocumentAdapter(resourceCommentAdapter, favoriteItemDao);
-      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
+      documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
    }
 
    public void documentUpdated(@Observes final UpdateDocument updateDocument) {

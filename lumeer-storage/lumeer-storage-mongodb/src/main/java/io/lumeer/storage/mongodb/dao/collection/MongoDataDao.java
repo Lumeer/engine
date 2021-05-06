@@ -233,26 +233,22 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    }
 
    @Override
-   public List<DataDocument> duplicateData(final String collectionId, final Map<String, String> documentIds) {
+   public List<DataDocument> duplicateData(final String collectionId, final java.util.Collection<DataDocument> dataList, final Map<String, String> documentIds) {
       final List<DataDocument> newData = new ArrayList<>();
 
-      final Bson idsFilter = MongoFilters.idsFilter(documentIds.keySet());
-      if (idsFilter != null) {
-         dataCollection(collectionId).find(idsFilter).forEach((Consumer<? super Document>) d -> {
-            final DataDocument doc = MongoUtils.convertDocument(d);
-
-            if (documentIds.containsKey(doc.getId())) {
-               doc.setId(documentIds.get(doc.getId()));
-               newData.add(doc);
-            }
-         });
-
-         if (newData.size() > 0) {
-            var documents = newData.stream()
-                                   .map(data -> new Document(data).append(ID, new ObjectId(data.getId())))
-                                   .collect(Collectors.toList());
-            dataCollection(collectionId).insertMany(documents);
+      dataList.forEach(data -> {
+         final DataDocument dataCopy = new DataDocument(data);
+         if (documentIds.containsKey(dataCopy.getId())) {
+            dataCopy.setId(documentIds.get(dataCopy.getId()));
+            newData.add(dataCopy);
          }
+      });
+
+      if (newData.size() > 0) {
+         var documents = newData.stream()
+                                .map(data -> new Document(data).append(ID, new ObjectId(data.getId())))
+                                .collect(Collectors.toList());
+         dataCollection(collectionId).insertMany(documents);
       }
 
       return newData;

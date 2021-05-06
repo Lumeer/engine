@@ -40,11 +40,11 @@ import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.ImportLinkTypeContent;
 import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
-import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
@@ -67,9 +67,6 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeDao linkTypeDao;
-
-   @Inject
-   private CollectionDao collectionDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -99,7 +96,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    private FileAttachmentFacade fileAttachmentFacade;
 
    @Inject
-   private ResourceCommentFacade resourceCommentFacade;
+   private ResourceCommentDao resourceCommentDao;
 
    @Inject
    private TaskProcessingFacade taskProcessingFacade;
@@ -111,7 +108,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-      adapter = new LinkInstanceAdapter(resourceCommentFacade.getAdapter());
+      adapter = new LinkInstanceAdapter(resourceCommentDao);
    }
 
    public LinkInstanceAdapter getAdapter() {

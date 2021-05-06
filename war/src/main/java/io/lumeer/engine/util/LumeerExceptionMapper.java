@@ -22,6 +22,7 @@ import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.exception.LumeerException;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.core.exception.NoDocumentPermissionException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
@@ -43,7 +44,6 @@ import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
-import io.lumeer.engine.api.exception.UserCollectionNotFoundException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
 import io.lumeer.engine.api.exception.ViewMetadataNotFoundException;
@@ -84,12 +84,12 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
 
       // 403 - FORBIDDEN
       if (e instanceof NoResourcePermissionException || e instanceof NoPermissionException || e instanceof NoSystemPermissionException ||
-            e instanceof AccessForbiddenException) {
+            e instanceof AccessForbiddenException || e instanceof NoDocumentPermissionException) {
          return Response.status(Response.Status.FORBIDDEN).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
       // 404 - NOT FOUND
-      if (e instanceof UserCollectionNotFoundException || e instanceof CollectionNotFoundException ||
+      if (e instanceof CollectionNotFoundException ||
             e instanceof CollectionMetadataDocumentNotFoundException || e instanceof DocumentNotFoundException ||
             e instanceof ViewMetadataNotFoundException || e instanceof ResourceNotFoundException) {
          return Response.status(Response.Status.NOT_FOUND).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();

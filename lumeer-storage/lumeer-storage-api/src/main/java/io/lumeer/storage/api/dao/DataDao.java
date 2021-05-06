@@ -60,6 +60,6 @@ public interface DataDao {
 
    List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<Collection> projectCollections);
 
-   List<DataDocument> duplicateData(String collectionId, Map<String, String> documentIds);
+   List<DataDocument> duplicateData(String collectionId, java.util.Collection<DataDocument> data, Map<String, String> documentIds);
 
 }

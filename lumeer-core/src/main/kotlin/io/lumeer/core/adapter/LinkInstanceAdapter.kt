@@ -1,8 +1,3 @@
-package io.lumeer.core.adapter
-
-import io.lumeer.api.model.LinkInstance
-import io.lumeer.api.model.ResourceType
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -21,12 +16,27 @@ import io.lumeer.api.model.ResourceType
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-class LinkInstanceAdapter(val resourceCommentAdapter: ResourceCommentAdapter) {
 
-   fun getCommentsCount(linkInstanceId: String): Long = resourceCommentAdapter.getCommentsCount(ResourceType.LINK, linkInstanceId)
+package io.lumeer.core.adapter
 
-   fun getCommentsCounts(linkInstanceIds: Set<String>): Map<String, Int> = resourceCommentAdapter.getCommentsCounts(ResourceType.LINK, linkInstanceIds)
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.ResourceType
+import io.lumeer.storage.api.dao.ResourceCommentDao
+
+class LinkInstanceAdapter(val resourceCommentDao: ResourceCommentDao) {
+
+   fun getCommentsCount(linkInstanceId: String): Long = resourceCommentDao.getCommentsCount(ResourceType.LINK, linkInstanceId)
+
+   fun getCommentsCounts(linkInstanceIds: Set<String>): Map<String, Int> = resourceCommentDao.getCommentsCounts(ResourceType.LINK, linkInstanceIds)
 
    fun mapLinkInstanceData(linkInstance: LinkInstance): LinkInstance = linkInstance.apply { commentsCount = getCommentsCount(id) }
+
+   fun mapLinkInstancesData(linkInstances: List<LinkInstance>): List<LinkInstance> {
+      val linkInstanceIds = linkInstances.map { obj: LinkInstance -> obj.id }.toSet()
+      val commentCounts = getCommentsCounts(linkInstanceIds)
+      return linkInstances.onEach {
+         it.commentsCount = (commentCounts[it.id] ?: 0).toLong()
+      }
+   }
 
 }

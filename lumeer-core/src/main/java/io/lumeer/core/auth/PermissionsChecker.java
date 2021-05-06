@@ -37,6 +37,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.CollectionAdapter;
+import io.lumeer.core.exception.NoDocumentPermissionException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
@@ -44,6 +45,7 @@ import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.FunctionRuleJsParser;
 import io.lumeer.core.util.QueryUtils;
 import io.lumeer.core.util.Utils;
@@ -265,11 +267,49 @@ public class PermissionsChecker {
    }
 
    /**
+    * Checks whether the current user has the given role on the document.
+    *
+    * @param document   The document to be checked.
+    * @param collection Parent collection.
+    * @param role       The required role.
+    * @return True if and only if the user has the given role ont he document.
+    */
+   public boolean hasRole(Document document, Collection collection, Role role) {
+      return hasRole(collection, role) || hasRoleInDocument(document, collection, role);
+   }
+
+   public boolean hasRoleWithView(Document document, Collection collection, Role role, Role viewRole) {
+      return hasRoleWithView(collection, role, viewRole) || hasRoleInDocument(document, collection, role);
+   }
+
+   public void checkRole(Document document, Collection collection, Role role) {
+      if (!hasRole(document, collection, role)) {
+         throw new NoDocumentPermissionException(document);
+      }
+   }
+
+   public void checkRoleWithView(Document document, Collection collection, Role role, Role viewRole) {
+      if (!hasRoleWithView(document, collection, role, viewRole)) {
+         throw new NoDocumentPermissionException(document);
+      }
+   }
+
+   public boolean hasRoleInDocument(Document document, Collection collection, Role role) {
+      switch (role) {
+         case READ:
+         case WRITE:
+            return DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail());
+         default:
+            return false;
+      }
+   }
+
+   /**
     * Checks whether the current user has the given role on the resource.
     *
     * @param resource The resource to be checked.
     * @param role     The required role.
-    * @return True if and only if the user has the given role ont he resource.
+    * @return True if and only if the user has the given role on the resource.
     */
    public boolean hasRole(Resource resource, Role role) {
       return hasRole(resource, role, authenticatedUser.getCurrentUserId());

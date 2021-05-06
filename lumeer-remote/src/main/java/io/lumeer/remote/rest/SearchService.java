@@ -24,15 +24,12 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.SuggestionQuery;
 import io.lumeer.api.model.Suggestions;
-import io.lumeer.core.facade.DocumentFacade;
-import io.lumeer.core.facade.LinkInstanceFacade;
 import io.lumeer.core.facade.SearchFacade;
 import io.lumeer.core.facade.SuggestionFacade;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -61,12 +58,6 @@ public class SearchService extends AbstractService {
    private SearchFacade searchFacade;
 
    @Inject
-   private DocumentFacade documentFacade;
-
-   @Inject
-   private LinkInstanceFacade linkInstanceFacade;
-
-   @Inject
    private SuggestionFacade suggestionFacade;
 
    @PostConstruct
@@ -89,8 +80,7 @@ public class SearchService extends AbstractService {
    @QueryProcessor
    @HealthCheck
    public List<Document> searchDocuments(Query query, @QueryParam("subItems") boolean includeSubItems) {
-      List<Document> documents = searchFacade.searchDocuments(query, includeSubItems);
-      return new ArrayList<>(documentFacade.mapDocumentsData(documents));
+      return searchFacade.searchDocuments(query, includeSubItems);
    }
 
    @POST
@@ -98,8 +88,7 @@ public class SearchService extends AbstractService {
    @QueryProcessor
    @HealthCheck
    public List<LinkInstance> getLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems) {
-      final List<LinkInstance> links = searchFacade.searchLinkInstances(query, includeSubItems);
-      return new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(links));
+      return searchFacade.searchLinkInstances(query, includeSubItems);
    }
 
    @POST
@@ -109,10 +98,7 @@ public class SearchService extends AbstractService {
    public DocumentsAndLinks getDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems) {
       final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchDocumentsAndLinks(query, includeSubItems);
 
-      return new DocumentsAndLinks(
-            new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
-            new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(documentsAndLinks.getSecond()))
-      );
+      return new DocumentsAndLinks(documentsAndLinks.getFirst(), documentsAndLinks.getSecond());
    }
 
    @POST
@@ -122,10 +108,7 @@ public class SearchService extends AbstractService {
    public DocumentsAndLinks getTaskDocumentsAndLinkInstances(Query query, @QueryParam("subItems") boolean includeSubItems) {
       final Tuple<List<Document>, List<LinkInstance>> documentsAndLinks = searchFacade.searchTasksDocumentsAndLinks(query, includeSubItems);
 
-      return new DocumentsAndLinks(
-            new ArrayList<>(documentFacade.mapDocumentsData(documentsAndLinks.getFirst())),
-            new ArrayList<>(linkInstanceFacade.mapLinkInstancesData(documentsAndLinks.getSecond()))
-      );
+      return new DocumentsAndLinks(documentsAndLinks.getFirst(), documentsAndLinks.getSecond());
    }
 
 }

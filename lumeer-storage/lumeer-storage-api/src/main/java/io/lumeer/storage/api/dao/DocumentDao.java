@@ -58,6 +58,6 @@ public interface DocumentDao extends ProjectScopedDao {
 
    List<Document> getDocumentsByCollectionIds(Collection<String> collectionIds);
 
-   List<Document> duplicateDocuments(List<String> documentIds);
+   List<Document> duplicateDocuments(List<Document> documents);
 
 }

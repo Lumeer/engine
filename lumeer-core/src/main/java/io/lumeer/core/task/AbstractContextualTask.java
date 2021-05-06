@@ -31,7 +31,6 @@ import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
-import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -98,12 +97,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.timeZone = requestDataKeeper.getTimezone();
       this.recursionDepth = recursionDepth;
 
-      final ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(daoContextSnapshot.getResourceCommentDao());
       collectionAdapter = new CollectionAdapter(daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
       viewAdapter = new ViewAdapter(daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getFavoriteItemDao());
-      documentAdapter = new DocumentAdapter(resourceCommentAdapter, daoContextSnapshot.getFavoriteItemDao());
+      documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
-      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
+      linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
 
       return this;
    }

@@ -1,4 +1,3 @@
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -22,20 +21,31 @@ package io.lumeer.core.adapter
 import io.lumeer.api.model.Document
 import io.lumeer.api.model.ResourceType
 import io.lumeer.storage.api.dao.FavoriteItemDao
+import io.lumeer.storage.api.dao.ResourceCommentDao
 
-class DocumentAdapter(private val resourceCommentAdapter: ResourceCommentAdapter, private val favoriteItemDao: FavoriteItemDao) {
+class DocumentAdapter(private val resourceCommentDao: ResourceCommentDao, private val favoriteItemDao: FavoriteItemDao) {
 
-   fun getCommentsCount(documentId: String): Long = resourceCommentAdapter.getCommentsCount(ResourceType.DOCUMENT, documentId)
+    fun getCommentsCount(documentId: String): Long = resourceCommentDao.getCommentsCount(ResourceType.DOCUMENT, documentId)
 
-   fun getCommentsCounts(documentIds: Set<String>): Map<String, Int> = resourceCommentAdapter.getCommentsCounts(ResourceType.DOCUMENT, documentIds)
+    fun getCommentsCounts(documentIds: Set<String>): Map<String, Int> = resourceCommentDao.getCommentsCounts(ResourceType.DOCUMENT, documentIds)
 
-   fun getFavoriteDocumentIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteDocumentIds(userId, projectId)
+    fun getFavoriteDocumentIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteDocumentIds(userId, projectId)
 
-   fun isFavorite(documentId: String, userId: String, projectId: String): Boolean = getFavoriteDocumentIds(userId, projectId).contains(documentId)
+    fun isFavorite(documentId: String, userId: String, projectId: String): Boolean = getFavoriteDocumentIds(userId, projectId).contains(documentId)
 
-   fun mapDocumentData(document: Document, userId: String, projectId: String): Document = document.apply {
-      isFavorite = isFavorite(document.id, userId, projectId)
-      commentsCount = getCommentsCount(document.id)
-   }
+    fun mapDocumentData(document: Document, userId: String, projectId: String): Document = document.apply {
+        isFavorite = isFavorite(document.id, userId, projectId)
+        commentsCount = getCommentsCount(document.id)
+    }
+
+    fun mapDocumentsData(documents: List<Document>, userId: String, projectId: String): List<Document> {
+        val favoriteDocumentIds = getFavoriteDocumentIds(userId, projectId)
+        val documentIds = documents.map { obj: Document -> obj.id }.toSet()
+        val commentCounts = getCommentsCounts(documentIds)
+        return documents.onEach {
+            it.isFavorite = favoriteDocumentIds.contains(it.id)
+            it.commentsCount = (commentCounts[it.id] ?: 0).toLong()
+        }
+    }
 
 }

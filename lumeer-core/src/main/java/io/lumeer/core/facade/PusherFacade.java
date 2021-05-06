@@ -40,7 +40,6 @@ import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
-import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -190,9 +189,8 @@ public class PusherFacade extends AbstractFacade {
       linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
       viewAdapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
 
-      ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(resourceCommentDao);
-      documentAdapter = new DocumentAdapter(resourceCommentAdapter, favoriteItemDao);
-      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
+      documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
    }
 
    public String getPusherKey() {
