@@ -108,11 +108,11 @@ abstract class AbstractFacade {
 
    private Set<String> getResourceManagers(final Resource resource) {
       if (resource instanceof Organization) {
-         return permissionsChecker.getOrganizationManagers();
+         return ResourceUtils.getOrganizationManagers((Organization) resource);
       } else if (resource instanceof Project) {
-         return permissionsChecker.getWorkspaceManagers();
+         return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().orElse(null), (Project) resource);
       } else {
-         return ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), resource);
+         return ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null), resource);
       }
    }
 
