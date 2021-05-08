@@ -410,7 +410,7 @@ public class SingleStage extends Stage {
 
    public ChangesTracker commitOperations() {
       if (operations.isEmpty()) {
-         return null;
+         return new ChangesTracker();
       }
 
       @SuppressWarnings("rawtypes") final List<Operation> invalidOperations = operations.stream().filter(operation -> !operation.isComplete()).collect(toList());

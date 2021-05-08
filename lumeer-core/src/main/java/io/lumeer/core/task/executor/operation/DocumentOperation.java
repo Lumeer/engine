@@ -19,7 +19,6 @@
 package io.lumeer.core.task.executor.operation;
 
 import io.lumeer.api.model.Document;
-import io.lumeer.core.task.executor.ResourceOperation;
 
 public class DocumentOperation extends ResourceOperation<Document> {
 

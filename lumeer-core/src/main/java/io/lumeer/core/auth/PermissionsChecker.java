@@ -301,6 +301,10 @@ public class PermissionsChecker {
       return isManager(userId) || hasRoleInResource(resource, role, userId);
    }
 
+   public static boolean hasRole(final Organization organization, final Project project, final Resource resource, final Role role, final User user) {
+      return isManager(user, organization, project) || hasRoleInResource(organization, resource, role, user);
+   }
+
    private boolean hasRoleInResource(Resource resource, Role role) {
       return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
    }
@@ -311,6 +315,10 @@ public class PermissionsChecker {
 
    private boolean hasRoleInResource(Resource resource, Role role, String userId) {
       return getActualRolesInResource(resource, userId).contains(role);
+   }
+
+   private static boolean hasRoleInResource(final Organization organization, final Resource resource, final Role role, final User user) {
+      return getActualRolesInResource(organization, resource, user).contains(role);
    }
 
    /**

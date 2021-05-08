@@ -29,8 +29,11 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
@@ -40,7 +43,7 @@ import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
-import io.lumeer.core.task.executor.ResourceOperation;
+import io.lumeer.core.task.executor.operation.ResourceOperation;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
 import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
@@ -52,6 +55,7 @@ import io.lumeer.core.task.executor.operation.PrintAttributeOperation;
 import io.lumeer.core.task.executor.operation.PrintTextOperation;
 import io.lumeer.core.task.executor.operation.SendEmailOperation;
 import io.lumeer.core.task.executor.operation.UserMessageOperation;
+import io.lumeer.core.task.executor.operation.ViewPermissionsOperation;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
@@ -68,6 +72,7 @@ import org.graalvm.polyglot.Value;
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -587,6 +592,32 @@ public class LumeerBridge {
                );
 
                operations.add(new NavigationOperation(navigationRequest));
+            }
+         }
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   public void shareView(final String viewId, final String userEmail, final String roles) {
+      try {
+         final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
+         if (workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
+
+            final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
+            if (view != null) {
+               // can the initiator manage the view?
+               if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, Role.MANAGE, task.getInitiator())) {
+                  final User newUser = task.getDaoContextSnapshot().getUserDao().getUserByEmail(userEmail);
+
+                  // can the user being added read the project?
+                  if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), workspace.getProject().get(), Role.READ, newUser)) {
+                     final Set<Role> userRoles = StringUtils.isNotEmpty(roles) && !"none".equals(roles) ? Arrays.stream(roles.split(",")).map(Role::fromString).collect(toSet()) : Set.of();
+
+                     operations.add(new ViewPermissionsOperation(view, newUser.getId(), userRoles));
+                  }
+               }
             }
          }
       } catch (Exception e) {
