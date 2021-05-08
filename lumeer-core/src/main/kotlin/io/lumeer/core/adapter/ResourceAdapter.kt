@@ -135,15 +135,12 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
     }
 
     fun getViewAuthorRights(view: View, organization: Organization?, project: Project?): Map<String, Set<Role>> {
-        val user = userDao.getUserById(view.authorId)
+        val user = userDao.getUserById(view.authorId) ?: User(view.authorId, "", "", emptyMap())
         val collections = getViewsCollections(listOf(view))
         return collections.associate { it.id to getCollectionRoles(it, user, organization, project) }
     }
 
-    private fun getCollectionRoles(collection: Collection, user: User?, organization: Organization?, project: Project?): Set<Role> {
-        if (user == null) {
-            return emptySet()
-        }
+    private fun getCollectionRoles(collection: Collection, user: User, organization: Organization?, project: Project?): Set<Role> {
         if (ResourceUtils.userIsManagerInWorkspace(user.id, organization, project)) {
             return ResourceUtils.getAllResourceRoles(collection)
         }
