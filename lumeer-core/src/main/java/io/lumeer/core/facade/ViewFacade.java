@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -27,7 +26,6 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
-import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.PermissionsChecker;
@@ -238,8 +236,7 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public Map<String, Set<Role>> getViewAuthorRights(final View view) {
-      return getCollectionsByView(view).stream()
-                                       .collect(Collectors.toMap(Resource::getId, c -> permissionsChecker.getActualRoles(c, view.getAuthorId())));
+      return resourceAdapter.getViewAuthorRights(view, workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null));
    }
 
    public List<DefaultViewConfig> getDefaultConfigs() {
@@ -250,10 +247,6 @@ public class ViewFacade extends AbstractFacade {
       config.setUserId(getCurrentUserId());
 
       return defaultViewConfigDao.updateConfig(config);
-   }
-
-   private List<Collection> getCollectionsByView(final View view) {
-      return resourceAdapter.getViewsCollections(Collections.singletonList(view));
    }
 
    private void checkProjectRole(Role role) {

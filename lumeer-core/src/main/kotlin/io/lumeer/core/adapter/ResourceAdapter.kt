@@ -89,6 +89,7 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
         val collectionIds = QueryUtils.getViewsCollectionIds(views, linkTypes)
         return collectionDao.getCollectionsByIds(collectionIds)
     }
+
     fun getViewReaders(viewId: String, organization: Organization, project: Project): Set<String> {
         val view = viewDao.getViewById(viewId)
         return getViewReaders(view, organization, project)
@@ -132,6 +133,19 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
         return ResourceUtils.getCollectionReaders(organization, project, collection, viewReaders.plus(assigneeIds))
     }
 
+    fun getViewAuthorRights(view: View, organization: Organization?, project: Project?): Map<String, Set<Role>> {
+        val user = userDao.getUserById(view.authorId)
+        val collections = getViewsCollections(listOf(view))
+        return collections.associate { it.id to getCollectionRoles(it, user, organization, project) }
+    }
+
+    private fun getCollectionRoles(collection: Collection, user: User, organization: Organization?, project: Project?): Set<Role> {
+        if (ResourceUtils.userIsManagerInWorkspace(user.id, organization, project)) {
+            return ResourceUtils.getAllResourceRoles(collection)
+        }
+        return ResourceUtils.getRolesInResource(organization, collection, user)
+    }
+
     fun getReadUsersIdsInViews(collectionId: String): Set<String> {
         return getUsersIdsInViews(collectionId, ResourceUtils::canReadByPermission)
     }
@@ -140,7 +154,7 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
         return getUsersIdsInViews(collectionId, ResourceUtils::canManageByPermission)
     }
 
-    fun getUsersIdsInViews(collectionId: String, check: (Permission) -> Boolean): Set<String> {
+    private fun getUsersIdsInViews(collectionId: String, check: (Permission) -> Boolean): Set<String> {
         val views = viewDao.allViews
         val linkTypes = linkTypeDao.allLinkTypes
 

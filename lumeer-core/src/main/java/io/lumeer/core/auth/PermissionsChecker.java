@@ -19,7 +19,6 @@
 package io.lumeer.core.auth;
 
 import static java.util.stream.Collectors.toMap;
-import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
@@ -56,7 +55,6 @@ import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -166,27 +164,7 @@ public class PermissionsChecker {
    }
 
    public boolean isManager(String userId) {
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         if (ResourceUtils.getOrganizationManagers(workspaceKeeper.getOrganization().get()).contains(userId)) {
-            return true;
-         }
-         if (workspaceKeeper.getProject().isPresent()) {
-            return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get()).contains(userId);
-         }
-      }
-      return false;
-   }
-
-   public static boolean isManager(final User user, final Organization organization, final Project project) {
-      if (organization != null) {
-         if (ResourceUtils.getOrganizationManagers(organization).contains(user.getId())) {
-            return true;
-         }
-         if (project != null) {
-            return ResourceUtils.getProjectManagers(organization, project).contains(user.getId());
-         }
-      }
-      return false;
+      return ResourceUtils.userIsManagerInWorkspace(userId, workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null));
    }
 
    public boolean isPublic() {
@@ -421,16 +399,7 @@ public class PermissionsChecker {
    }
 
    private Set<Role> getAllRoles(final Resource resource) {
-      if (resource instanceof Organization) {
-         return Organization.ROLES;
-      } else if (resource instanceof Project) {
-         return Project.ROLES;
-      } else if (resource instanceof Collection) {
-         return Collection.ROLES;
-      } else if (resource instanceof View) {
-         return View.ROLES;
-      }
-      return Collections.emptySet();
+      return ResourceUtils.getAllResourceRoles(resource);
    }
 
    private Set<Role> getActualRolesInResource(final Resource resource, final String userId) {
@@ -442,11 +411,7 @@ public class PermissionsChecker {
    }
 
    private static Set<Role> getActualRolesInResource(final Organization organization, final Resource resource, final User user) {
-      final Set<String> groups = getUserGroups(organization, resource, user);
-
-      final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), user.getId());
-      actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
-      return Role.withTransitionRoles(actualRoles);
+      return ResourceUtils.getRolesInResource(organization, resource, user);
    }
 
    private Set<String> getUserGroups(Resource resource) {
@@ -457,44 +422,21 @@ public class PermissionsChecker {
    }
 
    private Set<String> getUserGroups(final Resource resource, final String userId) {
-      if (resource instanceof Organization || userId == null || "".equals(userId)) {
-         return Collections.emptySet();
-      }
-
-      final Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
-      if (!organizationOptional.isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-      final Organization organization = organizationOptional.get();
       final User user = userDao.getUserById(userId);
-
-      return user != null ? user.getGroups().get(organization.getId()) : Collections.emptySet();
+      final Organization organization = workspaceKeeper.getOrganization().orElse(null);
+      return getUserGroups(organization, resource, user);
    }
 
    private static Set<String> getUserGroups(final Organization organization, final Resource resource, final User user) {
-      if (resource instanceof Organization || user == null || "".equals(user.getId())) {
-         return Collections.emptySet();
-      }
-
-      if (organization == null) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-
-      return user.getGroups().get(organization.getId());
+      return ResourceUtils.getUserGroupsInResource(organization, resource, user);
    }
 
    private static Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
-      return userRoles.stream()
-                      .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
-                      .flatMap(entity -> entity.getRoles().stream())
-                      .collect(toSet());
+      return ResourceUtils.getRolesByUser(userRoles, userId);
    }
 
    private static Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
-      return groupRoles.stream()
-                       .filter(entity -> groupIds.contains(entity.getId()))
-                       .flatMap(entity -> entity.getRoles().stream())
-                       .collect(toSet());
+      return ResourceUtils.getRolesByGroups(groupRoles, groupIds);
    }
 
    public Map<String, AllowedPermissions> getCollectionsPermissions(final java.util.Collection<Collection> collection) {

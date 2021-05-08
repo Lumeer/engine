@@ -18,6 +18,8 @@
  */
 package io.lumeer.api.util;
 
+import static java.util.stream.Collectors.toSet;
+
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
@@ -25,6 +27,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
@@ -36,6 +40,27 @@ import java.util.stream.Collectors;
 public class ResourceUtils {
 
    private ResourceUtils() {
+   }
+
+   public static Set<Role> getAllResourceRoles(final Resource resource) {
+      if (resource instanceof Organization) {
+         return Organization.ROLES;
+      } else if (resource instanceof Project) {
+         return Project.ROLES;
+      } else if (resource instanceof Collection) {
+         return Collection.ROLES;
+      } else if (resource instanceof View) {
+         return View.ROLES;
+      }
+      return Collections.emptySet();
+   }
+
+   public static Set<String> getUserGroupsInResource(final Organization organization, final Resource resource, final User user) {
+      if (resource == null || resource instanceof Organization || user == null || "".equals(user.getId())) {
+         return Collections.emptySet();
+      }
+
+      return user.getGroups().get(organization.getId());
    }
 
    public static Set<String> getOrganizationReaders(Organization organization) {
@@ -103,11 +128,45 @@ public class ResourceUtils {
       return resourceManagers;
    }
 
+   public static boolean userIsManagerInWorkspace(final String userId, final Organization organization, final Project project) {
+      if (organization != null) {
+         if (ResourceUtils.getOrganizationManagers(organization).contains(userId)) {
+            return true;
+         }
+         if (project != null) {
+            return ResourceUtils.getProjectManagers(organization, project).contains(userId);
+         }
+      }
+      return false;
+   }
+
    public static Set<String> getReaders(Resource resource) {
       return resource.getPermissions().getUserPermissions().stream()
                      .filter(ResourceUtils::canReadByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
+   }
+
+   public static Set<Role> getRolesByUser(Set<Permission> userRoles, String userId) {
+      return userRoles.stream()
+                      .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
+                      .flatMap(entity -> entity.getRoles().stream())
+                      .collect(toSet());
+   }
+
+   public static Set<Role> getRolesByGroups(Set<Permission> groupRoles, Set<String> groupIds) {
+      return groupRoles.stream()
+                       .filter(entity -> groupIds.contains(entity.getId()))
+                       .flatMap(entity -> entity.getRoles().stream())
+                       .collect(toSet());
+   }
+
+   public static Set<Role> getRolesInResource(final Organization organization, final Resource resource, final User user) {
+      final Set<String> groups = getUserGroupsInResource(organization, resource, user);
+
+      final Set<Role> actualRoles = getRolesByUser(resource.getPermissions().getUserPermissions(), user.getId());
+      actualRoles.addAll(getRolesByGroups(resource.getPermissions().getGroupPermissions(), groups));
+      return Role.withTransitionRoles(actualRoles);
    }
 
    public static Set<String> getAddedPermissions(final Resource originalResource, final Resource updatedResource) {

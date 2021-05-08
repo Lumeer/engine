@@ -133,9 +133,6 @@ public class PusherFacade extends AbstractFacade {
    private Logger log;
 
    @Inject
-   private ViewFacade viewFacade;
-
-   @Inject
    private CollectionDao collectionDao;
 
    @Inject
@@ -615,7 +612,7 @@ public class PusherFacade extends AbstractFacade {
 
    private void sendViewNotifications(final View view, final String event) {
       Set<String> userIds = resourceAdapter.getViewReaders(view, getOrganization(), getProject());
-      view.setAuthorRights(viewFacade.getViewAuthorRights(view));
+      view.setAuthorRights(resourceAdapter.getViewAuthorRights(view, getOrganization(), getProject()));
       sendNotificationsBatch(userIds.stream()
                                     .map(userId -> createEvent(new ObjectWithParent(createViewForUser(view, userId), getOrganization().getId(), getProject().getId()), event, userId))
                                     .collect(Collectors.toList()));
