@@ -256,9 +256,8 @@ public class CollectionFacade extends AbstractFacade {
 
    public List<Collection> getAllCollections() {
       checkProjectRole(Role.READ);
-
       var collections = getCollections();
-      if (!permissionsChecker.isManager()) {
+      if (!isWorkspaceManager()) {
          collections.addAll(getViewsCollections());
       }
       return collections;
@@ -509,13 +508,6 @@ public class CollectionFacade extends AbstractFacade {
       final Collection updatedCollection = handler.apply(collection);
 
       return collectionDao.updateCollection(updatedCollection.getId(), collection, originalCollection);
-   }
-
-   private Organization getCurrentOrganization() {
-      if (workspaceKeeper.getOrganization().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-      return workspaceKeeper.getOrganization().get();
    }
 
    private void checkProjectRole(Role role) {

@@ -90,7 +90,7 @@ public class LinkTypeService extends AbstractService {
 
    @GET
    public List<LinkType> getLinkTypes() {
-      return linkTypeFacade.getLinkTypes();
+      return linkTypeFacade.getAllLinkTypes();
    }
 
    @POST

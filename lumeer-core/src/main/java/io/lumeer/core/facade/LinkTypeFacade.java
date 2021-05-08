@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
@@ -37,6 +38,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.List;
@@ -164,6 +166,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType getLinkType(final String linkTypeId) {
+      checkProjectRole(Role.READ);
       var linkType = linkTypeDao.getLinkType(linkTypeId);
       var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))) {
@@ -179,16 +182,19 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public List<LinkType> getLinkTypes() {
+      checkProjectRole(Role.READ);
       return mapLinkTypesData(resourceAdapter.getLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
    }
 
    public List<LinkType> getViewsLinkTypes() {
+      checkProjectRole(Role.READ);
       return mapLinkTypesData(resourceAdapter.getViewsLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
    }
 
    public List<LinkType> getAllLinkTypes() {
+      checkProjectRole(Role.READ);
       var linkTypes = getLinkTypes();
-      if (!permissionsChecker.isManager()) {
+      if (!isWorkspaceManager()) {
          linkTypes.addAll(getViewsLinkTypes());
       }
       return linkTypes;
@@ -287,6 +293,18 @@ public class LinkTypeFacade extends AbstractFacade {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       checkLinkTypePermission(linkType);
       return linkType;
+   }
+
+   private void checkProjectRole(Role role) {
+      Project project = getCurrentProject();
+      permissionsChecker.checkRole(project, role);
+   }
+
+   private Project getCurrentProject() {
+      if (workspaceKeeper.getProject().isEmpty()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return workspaceKeeper.getProject().get();
    }
 
 }

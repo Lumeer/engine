@@ -50,6 +50,7 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
             return linkTypeDao.allLinkTypes
         }
         val allowedCollectionIds = getCollections(userId, groups, isWorkspaceManager).map { it.id }.toMutableSet()
+        allowedCollectionIds.addAll(getViewsCollections(userId, groups, isWorkspaceManager).map { it.id })
         return linkTypeDao.allLinkTypes.filter { allowedCollectionIds.containsAll(it.collectionIds) }
     }
 
@@ -139,7 +140,10 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
         return collections.associate { it.id to getCollectionRoles(it, user, organization, project) }
     }
 
-    private fun getCollectionRoles(collection: Collection, user: User, organization: Organization?, project: Project?): Set<Role> {
+    private fun getCollectionRoles(collection: Collection, user: User?, organization: Organization?, project: Project?): Set<Role> {
+        if (user == null) {
+            return emptySet()
+        }
         if (ResourceUtils.userIsManagerInWorkspace(user.id, organization, project)) {
             return ResourceUtils.getAllResourceRoles(collection)
         }
