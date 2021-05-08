@@ -28,6 +28,7 @@ import io.lumeer.api.model.function.FunctionParameter;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.util.FunctionOrder;
@@ -40,6 +41,7 @@ import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -52,6 +54,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -75,6 +78,13 @@ public class FunctionFacade extends AbstractFacade {
 
    @Inject
    private ContextualTaskFactory contextualTaskFactory;
+
+   private LinkTypeAdapter linkTypeAdapter;
+
+   @PostConstruct
+   public void init() {
+      linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
+   }
 
    public static FunctionFacade getInstance(final FunctionDao functionDao, final CollectionDao collectionDao, final DocumentDao documentDao, final LinkInstanceDao linkInstanceDao, final LinkTypeDao linkTypeDao, final ContextualTaskFactory taskFactory) {
       final FunctionFacade facade = new FunctionFacade();
@@ -197,7 +207,8 @@ public class FunctionFacade extends AbstractFacade {
       Set<String> linkTypeIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.LINK && q.getLinkType() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
 
       Map<String, Collection> collectionMap = collectionIds.size() > 0 ? collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Resource::getId, c -> c)) : new HashMap<>();
-      Map<String, LinkType> linkTypeMap = linkTypeIds.size() > 0 ? linkTypeDao.getLinkTypesByIds(linkTypeIds).stream().peek(linkType -> linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()))).collect(Collectors.toMap(LinkType::getId, c -> c)) : new HashMap<>();
+      List<LinkType> linkTypes = linkTypeIds.size() > 0 ? linkTypeAdapter.mapLinkTypesData(linkTypeDao.getLinkTypesByIds(linkTypeIds)) : new ArrayList<>();
+      Map<String, LinkType> linkTypeMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> c));
 
       FunctionTask task = null;
 

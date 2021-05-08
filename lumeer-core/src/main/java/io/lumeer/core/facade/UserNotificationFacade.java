@@ -85,13 +85,13 @@ public class UserNotificationFacade extends AbstractFacade {
    private List<String> mutedUsers = new ArrayList<>();
 
    public List<UserNotification> getNotifications() {
-      return dao.getRecentNotifications(authenticatedUser.getCurrentUserId());
+      return dao.getRecentNotifications(getCurrentUserId());
    }
 
    public void deleteNotification(final String notificationId) {
       final UserNotification userNotification = dao.getNotificationById(notificationId);
 
-      if (authenticatedUser.getCurrentUserId().equals(userNotification.getUserId())) {
+      if (getCurrentUserId().equals(userNotification.getUserId())) {
          dao.deleteNotification(userNotification);
       } else {
          throw new AccessForbiddenException("Cannot delete user notification that does not belong to current user.");
@@ -101,7 +101,7 @@ public class UserNotificationFacade extends AbstractFacade {
    public UserNotification updateNotification(final String notificationId, final UserNotification notification) {
       final UserNotification dbNotification = dao.getNotificationById(notificationId);
 
-      if (dbNotification.getUserId().equals(authenticatedUser.getCurrentUserId())) {
+      if (dbNotification.getUserId().equals(getCurrentUserId())) {
          if (notification.isRead() && !dbNotification.isRead() && dbNotification.getFirstReadAt() == null) {
             dbNotification.setFirstReadAt(ZonedDateTime.now());
          }
@@ -329,7 +329,7 @@ public class UserNotificationFacade extends AbstractFacade {
    public void createResource(@Observes final CreateResource createResource) {
       try {
          Set<String> managers = getManagers(createResource.getResource());
-         managers.remove(authenticatedUser.getCurrentUserId());
+         managers.remove(getCurrentUserId());
 
          if (managers.size() > 0) {
             createResourceSharedNotifications(createResource.getResource(), managers);
@@ -345,7 +345,7 @@ public class UserNotificationFacade extends AbstractFacade {
          final Set<String> managers = getManagers(updateResource.getResource());
          final Set<String> removedUsers = ResourceUtils.getRemovedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
          removedUsers.removeAll(managers);
-         removedUsers.remove(authenticatedUser.getCurrentUserId());
+         removedUsers.remove(getCurrentUserId());
          removedUsers.removeAll(mutedUsers);
 
          if (removedUsers.size() > 0) {
@@ -356,7 +356,7 @@ public class UserNotificationFacade extends AbstractFacade {
          if (updateResource.getResource().getType() != ResourceType.ORGANIZATION && updateResource.getResource().getType() != ResourceType.PROJECT) {
             addedUsers.removeAll(managers);
          }
-         addedUsers.remove(authenticatedUser.getCurrentUserId());
+         addedUsers.remove(getCurrentUserId());
          addedUsers.removeAll(mutedUsers);
 
          if (addedUsers.size() > 0) {

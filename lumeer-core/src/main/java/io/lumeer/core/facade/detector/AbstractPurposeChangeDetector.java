@@ -23,6 +23,7 @@ import static io.lumeer.api.util.ResourceUtils.findAttribute;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
@@ -118,7 +119,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected Set<String> getAssignees(final DocumentEvent documentEvent, final Collection collection) {
-      final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+      final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
 
       if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
          return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId).stream().map(String::toLowerCase).collect(Collectors.toSet());
@@ -130,7 +131,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected Set<String> getRemovedAssignees(final DocumentEvent documentEvent, final Collection collection) {
       if (documentEvent instanceof UpdateDocument) {
 
-         final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+         final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
 
          if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
             final Set<String> originalUsers = new HashSet<>(DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId));
@@ -146,7 +147,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected Set<String> getAddedAssignees(final DocumentEvent documentEvent, final Collection collection) {
-      final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+      final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
 
       if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
          if (documentEvent instanceof UpdateDocument) {
@@ -165,7 +166,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected Set<String> getObservers(final DocumentEvent documentEvent, final Collection collection) {
-      final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_OBSERVERS_ATTRIBUTE_ID) : null;
+      final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(CollectionPurpose.META_OBSERVERS_ATTRIBUTE_ID) : null;
 
       if (StringUtils.isNotEmpty(observersAttributeId) && findAttribute(collection.getAttributes(), observersAttributeId) != null) {
          return DocumentUtils.getUsersList(documentEvent.getDocument(), observersAttributeId).stream().map(String::toLowerCase).collect(Collectors.toSet());
@@ -180,7 +181,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
    @SuppressWarnings("unchecked,unused")
    protected String getDueDateFormat(final DocumentEvent documentEvent, final Collection collection) {
-      final String dueDateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID) : null;
+      final String dueDateAttributeId = collection.getPurpose().getDueDateAttributeId();
 
       if (StringUtils.isNotEmpty(dueDateAttributeId) && findAttribute(collection.getAttributes(), dueDateAttributeId) != null) {
          final Attribute attribute = collection.getAttributes().stream().filter(attr -> dueDateAttributeId.equals(attr.getId())).findFirst().orElse(null);
@@ -194,7 +195,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected String getState(final DocumentEvent documentEvent, final Collection collection) {
-      final String stateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
+      final String stateAttributeId = collection.getPurpose().getStateAttributeId();
       final Attribute attribute = findAttribute(collection.getAttributes(), stateAttributeId);
 
       if (StringUtils.isNotEmpty(stateAttributeId) && attribute != null) {

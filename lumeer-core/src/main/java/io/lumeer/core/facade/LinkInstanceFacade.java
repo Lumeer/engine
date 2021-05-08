@@ -129,7 +129,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public Tuple<LinkInstance, LinkInstance> createLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
-      linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+      linkInstance.setCreatedBy(getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
       LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
 
@@ -170,7 +170,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private List<LinkInstance> createLinkInstances(final LinkType linkType, final List<LinkInstance> linkInstances, boolean sendIndividualNotifications) {
       linkInstances.forEach(linkInstance -> {
-         linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+         linkInstance.setCreatedBy(getCurrentUserId());
          linkInstance.setCreationDate(ZonedDateTime.now());
       });
 
@@ -242,7 +242,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData, final LinkInstance originalLinkInstance) {
       linkInstance.setData(newData);
       linkInstance.setUpdateDate(ZonedDateTime.now());
-      linkInstance.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      linkInstance.setUpdatedBy(getCurrentUserId());
 
       LinkInstance updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
       updatedLinkInstance.setData(newData);
@@ -261,7 +261,6 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private void updateLinkTypeMetadata(LinkType linkType, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
       linkType.setAttributes(new ArrayList<>(ResourceUtils.incOrDecAttributes(linkType.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
-      linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()));
       linkTypeDao.updateLinkType(linkType.getId(), linkType, new LinkType(linkType));
    }
 

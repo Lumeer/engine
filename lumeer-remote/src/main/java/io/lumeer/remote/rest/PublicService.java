@@ -22,7 +22,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.DocumentsAndLinks;
 import io.lumeer.api.model.FileAttachment;
-import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
@@ -37,8 +36,6 @@ import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.core.util.Tuple;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -47,7 +44,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @RequestScoped
@@ -94,19 +90,13 @@ public class PublicService extends AbstractService {
    @GET
    @Path("collections")
    public List<Collection> getCollections() {
-      Set<String> favoriteCollectionIds = collectionFacade.getFavoriteCollectionsIds();
-      return collectionFacade.getCollectionsPublic().stream()
-                             .peek(collection -> collection.setFavorite(favoriteCollectionIds.contains(collection.getId())))
-                             .collect(Collectors.toList());
+      return collectionFacade.getPublicCollections();
    }
 
    @GET
    @Path("views")
    public List<View> getViews() {
-      final Set<String> favoriteViewIds = viewFacade.getFavoriteViewsIds();
-      return viewFacade.getViewsPublic().stream()
-                       .peek(view -> view.setFavorite(favoriteViewIds.contains(view.getId())))
-                       .collect(Collectors.toList());
+      return viewFacade.getViewsPublic();
    }
 
    @GET

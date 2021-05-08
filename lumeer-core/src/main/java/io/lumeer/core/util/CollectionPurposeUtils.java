@@ -43,8 +43,8 @@ public abstract class CollectionPurposeUtils {
    protected static final ZoneId utcZone = ZoneId.ofOffset("UTC", ZoneOffset.UTC);
 
    public static boolean isDoneState(final DataDocument data, final Collection collection) {
-      final String stateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_STATE_ATTRIBUTE_ID) : null;
-      final List<Object> finalStates = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getArrayList(Collection.META_FINAL_STATES_LIST) : null;
+      final String stateAttributeId = collection.getPurpose().getStateAttributeId();
+      final List<Object> finalStates = collection.getPurpose().getFinalStatesList();
 
       if (finalStates != null && data != null) {
 
@@ -77,7 +77,7 @@ public abstract class CollectionPurposeUtils {
    }
 
    public static ZonedDateTime getDueDate(final Document document, final Collection collection) {
-      final String dueDateAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID) : null;
+      final String dueDateAttributeId = collection.getPurpose().getDueDateAttributeId();
 
       if (StringUtils.isNotEmpty(dueDateAttributeId) && findAttribute(collection.getAttributes(), dueDateAttributeId) != null) {
          if (document.getData().get(dueDateAttributeId) instanceof Date) {

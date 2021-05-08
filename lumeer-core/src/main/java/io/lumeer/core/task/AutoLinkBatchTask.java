@@ -146,10 +146,8 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
             // submit changes
             if (linksForCreation.size() > 0) {
                final List<LinkInstance> newLinks = daoContextSnapshot.getLinkInstanceDao().createLinkInstances(linksForCreation, false);
-               if (linkType.getLinksCount() != null) {
-                  linkType.setLinksCount(linkType.getLinksCount() + newLinks.size());
-                  changesTracker.addLinkTypes(Set.of(linkType));
-               }
+               linkTypeAdapter.mapLinkTypeData(linkType);
+               changesTracker.addLinkTypes(Set.of(linkType));
                changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
                changesTracker.addCreatedLinkInstances(newLinks);
             }

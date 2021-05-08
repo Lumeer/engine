@@ -181,7 +181,7 @@ public class AuditFacade extends AbstractFacade {
 
          document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
-         return documentAdapter.mapDocumentData(document, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+         return documentAdapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
       }
 
       throw new UnsupportedOperationException("No organization specified.");

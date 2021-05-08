@@ -28,7 +28,6 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -39,16 +38,19 @@ public class ResourceUtils {
    private ResourceUtils() {
    }
 
-   private static Set<String> getManagers(Resource resource) {
-      return resource.getPermissions().getUserPermissions()
-                     .stream()
-                     .filter(permission -> permission.getRoles().contains(Role.MANAGE))
-                     .map(Permission::getId)
-                     .collect(Collectors.toSet());
+   public static Set<String> getOrganizationReaders(Organization organization) {
+      return getReaders(organization);
    }
 
    public static Set<String> getOrganizationManagers(Organization organization) {
       return getManagers(organization);
+   }
+
+   public static Set<String> getProjectReaders(Organization organization, Project project) {
+      var readers = getReaders(project);
+      readers.retainAll(getOrganizationReaders(organization));
+      readers.addAll(getManagers(organization));
+      return readers;
    }
 
    public static Set<String> getProjectManagers(Organization organization, Project project) {
@@ -59,21 +61,30 @@ public class ResourceUtils {
       return managers;
    }
 
-   public static Set<String> getResourceManagers(Organization organization, Project project, Resource resource) {
-      var resourceManagers = getManagers(resource);
-      resourceManagers.retainAll(getProjectReaders(organization, project));
-      resourceManagers.addAll(getProjectManagers(organization, project));
-
-      return resourceManagers;
-   }
-
-   public static Set<String> getCollectionManagers(Organization organization, Project project, Collection collection, Set<String> managersFromViews) {
+   public static Set<String> getCollectionManagers(Organization organization, Project project, Collection collection, Set<String> additionalManagers) {
       var collectionManagers = getManagers(collection);
-      collectionManagers.addAll(managersFromViews);
+      collectionManagers.addAll(additionalManagers);
       collectionManagers.retainAll(getProjectReaders(organization, project));
       collectionManagers.addAll(getProjectManagers(organization, project));
 
       return collectionManagers;
+   }
+
+   public static Set<String> getCollectionReaders(Organization organization, Project project, Collection collection, Set<String> additionalReaders) {
+      var collectionReaders = getReaders(collection);
+      collectionReaders.addAll(additionalReaders);
+      collectionReaders.retainAll(getProjectReaders(organization, project));
+      collectionReaders.addAll(getProjectManagers(organization, project));
+
+      return collectionReaders;
+   }
+
+   private static Set<String> getManagers(Resource resource) {
+      return resource.getPermissions().getUserPermissions()
+                     .stream()
+                     .filter(ResourceUtils::canManageByPermission)
+                     .map(Permission::getId)
+                     .collect(Collectors.toSet());
    }
 
    public static Set<String> getResourceReaders(Organization organization, Project project, Resource resource) {
@@ -84,13 +95,12 @@ public class ResourceUtils {
       return resourceReaders;
    }
 
-   public static Set<String> getCollectionReaders(Organization organization, Project project, Collection collection, Set<String> readersFromViews) {
-      var collectionReaders = getReaders(collection);
-      collectionReaders.addAll(readersFromViews);
-      collectionReaders.retainAll(getProjectReaders(organization, project));
-      collectionReaders.addAll(getProjectManagers(organization, project));
+   public static Set<String> getResourceManagers(Organization organization, Project project, Resource resource) {
+      var resourceManagers = getManagers(resource);
+      resourceManagers.retainAll(getProjectReaders(organization, project));
+      resourceManagers.addAll(getProjectManagers(organization, project));
 
-      return collectionReaders;
+      return resourceManagers;
    }
 
    public static Set<String> getReaders(Resource resource) {
@@ -98,12 +108,6 @@ public class ResourceUtils {
                      .filter(ResourceUtils::canReadByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
-   }
-
-   public static Set<String> getProjectReaders(Organization organization, Project project) {
-      var managers = getReaders(project);
-      managers.retainAll(getReaders(organization));
-      return managers;
    }
 
    public static Set<String> getAddedPermissions(final Resource originalResource, final Resource updatedResource) {

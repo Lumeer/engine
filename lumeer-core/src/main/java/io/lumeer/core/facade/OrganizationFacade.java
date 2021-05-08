@@ -85,7 +85,7 @@ public class OrganizationFacade extends AbstractFacade {
          checkCreateOrganization();
       }
 
-      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Organization.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Organization storedOrganization = organizationDao.createOrganization(organization);
@@ -138,8 +138,8 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public List<Organization> getOrganizations() {
-      String userEmail = authenticatedUser.getCurrentUserId();
-      DatabaseQuery query = DatabaseQuery.createBuilder(userEmail)
+      String userId = authenticatedUser.getCurrentUserId();
+      DatabaseQuery query = DatabaseQuery.createBuilder(userId)
                                          .build();
 
       return organizationDao.getOrganizations(query).stream()

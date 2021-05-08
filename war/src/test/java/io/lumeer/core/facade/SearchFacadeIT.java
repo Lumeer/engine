@@ -373,9 +373,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
       Attribute assigneeAttribute = new Attribute("a2", "a2", null,  assigneeConstraint, null, 1);
       var assigneeAttributeId = assigneeAttribute.getId();
-      var purposeMetadata = new DataDocument(Collection.META_STATE_ATTRIBUTE_ID, stateAttributeId)
-            .append(Collection.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
-            .append(Collection.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
+      var purposeMetadata = new DataDocument(CollectionPurpose.META_STATE_ATTRIBUTE_ID, stateAttributeId)
+            .append(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
+            .append(CollectionPurpose.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
       CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
       String taskCollectionId = createTaskCollection("taskCollection", purpose, stateAttribute, assigneeAttribute).getId();
       String otherCollectionId = createCollection("otherCollection", stateAttribute, assigneeAttribute).getId();

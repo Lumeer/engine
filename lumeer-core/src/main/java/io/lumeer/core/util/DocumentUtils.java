@@ -39,7 +39,6 @@ import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.apache.commons.lang3.StringUtils;
@@ -210,17 +209,12 @@ public class DocumentUtils {
    }
 
    public static Set<String> getUsersAssigneeEmails(final Collection collection, final DataDocument data) {
-      final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+      final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
       final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
       if (assigneeAttribute != null) {
          return getUsersList(data, assigneeAttribute.getId());
       }
       return Collections.emptySet();
-   }
-
-   public static Set<String> getUsersAssigneeIds(final UserDao userDao, final Collection collection, final Document document) {
-      Set<String> assigneesEmails = DocumentUtils.getUsersAssigneeEmails(collection, document);
-      return userDao.getUsersByEmails(assigneesEmails).stream().map(User::getId).collect(Collectors.toSet());
    }
 
    @SuppressWarnings("unchecked")

@@ -18,11 +18,12 @@
  */
 package io.lumeer.core.facade;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -34,6 +35,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.exception.NoDocumentPermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
@@ -45,8 +47,6 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import org.assertj.core.api.Assertions;
-import org.assertj.core.api.Condition;
 import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -55,6 +55,7 @@ import org.junit.runner.RunWith;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -118,6 +119,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    private WorkspaceKeeper workspaceKeeper;
 
    private Collection collection;
+   private Collection taskCollection;
 
    @Before
    public void configureCollection() {
@@ -132,7 +134,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -141,7 +143,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(userPermission);
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -152,9 +154,17 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
-      Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
-      jsonCollection.setLastAttributeNum(0);
-      collection = collectionDao.createCollection(jsonCollection);
+      Collection collection = new Collection("123456789", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      collection.setLastAttributeNum(0);
+      this.collection = collectionDao.createCollection(collection);
+
+      Collection taskCollection = new Collection("abcdefghi", COLLECTION_NAME + "_task", COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      DataDocument purposeMetadata = new DataDocument(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, KEY1);
+      CollectionPurpose taskPurpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
+      taskCollection.setPurpose(taskPurpose);
+      taskCollection.setLastAttributeNum(0);
+      taskCollection.setAttributes(Collections.singleton(new Attribute(KEY1)));
+      this.taskCollection = collectionDao.createCollection(taskCollection);
    }
 
    private Document prepareDocument() {
@@ -269,6 +279,47 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+   }
+
+   @Test
+   public void testPatchTaskData() {
+      Document myDocument = prepareDocument();
+      myDocument.getData().append(KEY1, USER);
+      myDocument = documentFacade.createDocument(taskCollection.getId(), myDocument);
+
+      Document otherDocument = prepareDocument();
+      otherDocument.getData().append(KEY1, "another.user@email.com");
+      otherDocument = documentFacade.createDocument(taskCollection.getId(), otherDocument);
+
+      collectionFacade.removeUserPermission(taskCollection.getId(), this.user.getId());
+
+      DataDocument patchData = new DataDocument(KEY2, "value");
+      documentFacade.patchDocumentData(taskCollection.getId(), myDocument.getId(), patchData);
+      assertThat(documentFacade.getDocument(taskCollection.getId(), myDocument.getId()).getData().get(KEY2)).isEqualTo("value");
+
+      // Patch data
+      final Document finalOtherDocument = otherDocument;
+      assertThatThrownBy(() -> documentFacade.patchDocumentData(taskCollection.getId(), finalOtherDocument.getId(), patchData))
+            .isInstanceOf(NoDocumentPermissionException.class);
+      assertThatThrownBy(() -> documentFacade.getDocument(taskCollection.getId(), finalOtherDocument.getId()))
+            .isInstanceOf(NoDocumentPermissionException.class);
+
+      // Add/Remove favorite
+      documentFacade.addFavoriteDocument(taskCollection.getId(), myDocument.getId());
+      documentFacade.removeFavoriteDocument(taskCollection.getId(), myDocument.getId());
+      assertThatThrownBy(() -> documentFacade.addFavoriteDocument(taskCollection.getId(), finalOtherDocument.getId()))
+            .isInstanceOf(NoDocumentPermissionException.class);
+      assertThatThrownBy(() -> documentFacade.removeFavoriteDocument(taskCollection.getId(), finalOtherDocument.getId()))
+            .isInstanceOf(NoDocumentPermissionException.class);
+
+      // Update data
+      final Document finalMyDocument = myDocument;
+      documentFacade.updateDocumentData(taskCollection.getId(), myDocument.getId(), patchData);
+      assertThatThrownBy(() -> documentFacade.getDocument(taskCollection.getId(), finalMyDocument.getId()))
+            .isInstanceOf(NoDocumentPermissionException.class);
+
+      assertThatThrownBy(() -> documentFacade.updateDocumentData(taskCollection.getId(), finalOtherDocument.getId(), patchData))
+            .isInstanceOf(NoDocumentPermissionException.class);
    }
 
    @Test

@@ -41,7 +41,6 @@ import io.lumeer.core.exception.NoDocumentPermissionException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
-import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
@@ -63,7 +62,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -127,7 +125,7 @@ public class PermissionsChecker {
 
    @PostConstruct
    public void init() {
-      collectionAdapter = new CollectionAdapter(favoriteItemDao, documentDao);
+      collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
    }
 
    public PermissionsChecker() {
@@ -169,13 +167,11 @@ public class PermissionsChecker {
 
    public boolean isManager(String userId) {
       if (workspaceKeeper.getOrganization().isPresent()) {
-         Set<Role> organizationRoles = getActualRolesInResource(workspaceKeeper.getOrganization().get(), userId);
-         if (organizationRoles.contains(Role.MANAGE)) {
+         if (ResourceUtils.getOrganizationManagers(workspaceKeeper.getOrganization().get()).contains(userId)) {
             return true;
          }
          if (workspaceKeeper.getProject().isPresent()) {
-            Set<Role> projectRoles = getActualRolesInResource(workspaceKeeper.getProject().get(), userId);
-            return projectRoles.contains(Role.MANAGE) && organizationRoles.contains(Role.READ);
+            return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get()).contains(userId);
          }
       }
       return false;
@@ -183,13 +179,11 @@ public class PermissionsChecker {
 
    public static boolean isManager(final User user, final Organization organization, final Project project) {
       if (organization != null) {
-         Set<Role> organizationRoles = getActualRolesInResource(organization, organization, user);
-         if (organizationRoles.contains(Role.MANAGE)) {
+         if (ResourceUtils.getOrganizationManagers(organization).contains(user.getId())) {
             return true;
          }
          if (project != null) {
-            Set<Role> projectRoles = getActualRolesInResource(organization, project, user);
-            return projectRoles.contains(Role.MANAGE) && organizationRoles.contains(Role.READ);
+            return ResourceUtils.getProjectManagers(organization, project).contains(user.getId());
          }
       }
       return false;

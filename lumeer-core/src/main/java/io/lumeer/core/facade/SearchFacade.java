@@ -202,7 +202,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       final List<QueryStem> stems = collections.stream().map(collection -> {
-         final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+         final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
          final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
          if (assigneeAttribute != null) {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
@@ -257,7 +257,7 @@ public class SearchFacade extends AbstractFacade {
          allLinkInstances.addAll(result.getSecond());
       }
 
-      var mappedDocuments = documentAdapter.mapDocumentsData(new ArrayList<>(allDocuments), authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+      var mappedDocuments = documentAdapter.mapDocumentsData(new ArrayList<>(allDocuments), getCurrentUserId(), workspaceKeeper.getProjectId());
       var mappedLinkInstances = linkInstanceAdapter.mapLinkInstancesData(new ArrayList<>(allLinkInstances));
 
       return new Tuple<>(mappedDocuments, mappedLinkInstances);

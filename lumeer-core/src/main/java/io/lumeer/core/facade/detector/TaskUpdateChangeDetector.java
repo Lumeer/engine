@@ -19,8 +19,8 @@
 package io.lumeer.core.facade.detector;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.NotificationType;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.RemoveDocument;
@@ -32,41 +32,39 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
 
    @Override
    public void detectChanges(final DocumentEvent documentEvent, final Collection collection) {
-      final DataDocument meta = collection.getPurposeMetaData();
+      final CollectionPurpose purpose = collection.getPurpose();
 
-      if (meta != null) {
-         final boolean doneState = isDoneState(documentEvent, collection);
+      final boolean doneState = isDoneState(documentEvent, collection);
 
-         if (!(documentEvent instanceof CreateDocument) && !(documentEvent instanceof RemoveDocument)) {
-            // delete previous due date and assignee events on the document
-            delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.TASK_UPDATED));
-            if (!doneState) {
-               final Set<String> observers = getObservers(documentEvent, collection);
-               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), observers));
+      if (!(documentEvent instanceof CreateDocument) && !(documentEvent instanceof RemoveDocument)) {
+         // delete previous due date and assignee events on the document
+         delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.TASK_UPDATED));
+         if (!doneState) {
+            final Set<String> observers = getObservers(documentEvent, collection);
+            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), observers));
 
-               // assignee != initiator, initiator != observer, no change in due date, state, nor assignee => send task update
-               final String assigneeAttr = meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
-               final String dueDateAttr = meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
-               final String stateAttr = meta.getString(Collection.META_STATE_ATTRIBUTE_ID);
+            // assignee != initiator, initiator != observer, no change in due date, state, nor assignee => send task update
+            final String assigneeAttr = purpose.getAssigneeAttributeId();
+            final String dueDateAttr = purpose.getDueDateAttributeId();
+            final String stateAttr = purpose.getStateAttributeId();
 
-               if (!isAttributeChanged(documentEvent, assigneeAttr) && !isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, stateAttr)) {
-                  if (observers != null) { // prevent double notification when assignee is also an observer
-                     final Set<String> assignees = new HashSet<>(getAssignees(documentEvent, collection));
-                     assignees.removeAll(observers);
-                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), assignees));
-                  } else {
-                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
-                  }
+            if (!isAttributeChanged(documentEvent, assigneeAttr) && !isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, stateAttr)) {
+               if (observers != null) { // prevent double notification when assignee is also an observer
+                  final Set<String> assignees = new HashSet<>(getAssignees(documentEvent, collection));
+                  assignees.removeAll(observers);
+                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), assignees));
+               } else {
+                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
                }
             }
          }
+      }
 
-         if (documentEvent instanceof RemoveDocument) {
-            // create new due date events on the document
-            if (!doneState) {
-               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus()));
-               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus(), getObservers(documentEvent, collection)));
-            }
+      if (documentEvent instanceof RemoveDocument) {
+         // create new due date events on the document
+         if (!doneState) {
+            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus()));
+            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus(), getObservers(documentEvent, collection)));
          }
       }
    }

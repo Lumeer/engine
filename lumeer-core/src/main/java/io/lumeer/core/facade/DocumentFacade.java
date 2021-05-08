@@ -208,7 +208,7 @@ public class DocumentFacade extends AbstractFacade {
    private List<Document> createDocuments(Collection collection, List<Document> documents) {
       documents.forEach(document -> {
          document.setCollectionId(collection.getId());
-         document.setCreatedBy(authenticatedUser.getCurrentUserId());
+         document.setCreatedBy(getCurrentUserId());
          document.setCreationDate(ZonedDateTime.now());
       });
       return documentDao.createDocuments(documents);
@@ -217,7 +217,7 @@ public class DocumentFacade extends AbstractFacade {
    private Document createDocument(Collection collection, Document document, DataDocument data) {
       document.setData(data);
       document.setCollectionId(collection.getId());
-      document.setCreatedBy(authenticatedUser.getCurrentUserId());
+      document.setCreatedBy(getCurrentUserId());
       document.setCreationDate(ZonedDateTime.now());
       return documentDao.createDocument(document);
    }
@@ -335,7 +335,7 @@ public class DocumentFacade extends AbstractFacade {
       final List<Document> updatedDocuments = new ArrayList<>();
 
       documents.forEach(document -> {
-         document.setUpdatedBy(authenticatedUser.getCurrentUserId());
+         document.setUpdatedBy(getCurrentUserId());
          document.setUpdateDate(ZonedDateTime.now());
          final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
          updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
@@ -420,7 +420,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private Document updateDocument(final Document document, final Document originalDocument) {
-      document.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      document.setUpdatedBy(getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
 
       final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
@@ -607,7 +607,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private Document mapDocumentData(final Document document) {
-      return adapter.mapDocumentData(document, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {

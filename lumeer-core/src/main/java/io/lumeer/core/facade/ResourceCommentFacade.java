@@ -86,7 +86,7 @@ public class ResourceCommentFacade extends AbstractFacade {
    public ResourceComment createResourceComment(final ResourceComment comment) {
       checkPermissions(comment.getResourceType(), comment.getResourceId());
 
-      comment.setAuthor(authenticatedUser.getCurrentUserId());
+      comment.setAuthor(getCurrentUserId());
       comment.setAuthorEmail(authenticatedUser.getCurrentUser().getEmail());
       comment.setAuthorName(authenticatedUser.getCurrentUser().getName());
       comment.setCreationDate(ZonedDateTime.now());
@@ -140,7 +140,7 @@ public class ResourceCommentFacade extends AbstractFacade {
    private ResourceComment getCommentForUpdate(final ResourceComment comment) {
       final ResourceComment result = resourceCommentDao.getComment(comment.getId());
 
-      if (result != null && result.getAuthor() != null && result.getAuthor().equals(authenticatedUser.getCurrentUserId())) {
+      if (result != null && result.getAuthor() != null && result.getAuthor().equals(getCurrentUserId())) {
          return result;
       }
 

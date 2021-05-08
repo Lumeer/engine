@@ -134,7 +134,7 @@ public class ProjectFacade extends AbstractFacade {
       checkOrganizationRole(Role.WRITE);
       checkProjectCreate(project);
 
-      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Project.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
 
       Project storedProject = projectDao.createProject(project);

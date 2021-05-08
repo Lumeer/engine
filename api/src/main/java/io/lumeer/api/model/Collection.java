@@ -52,12 +52,6 @@ public class Collection extends Resource implements HealthChecking {
    public static final String PURPOSE = "purpose";
    public static final String META_DATA = "metaData";
 
-   public static final String META_DUE_DATE_ATTRIBUTE_ID = "dueDateAttributeId";
-   public static final String META_ASSIGNEE_ATTRIBUTE_ID = "assigneeAttributeId";
-   public static final String META_STATE_ATTRIBUTE_ID = "stateAttributeId";
-   public static final String META_FINAL_STATES_LIST = "finalStatesList";
-   public static final String META_OBSERVERS_ATTRIBUTE_ID = "observersAttributeId";
-
    public static final String RULES = "rules";
 
    private Set<Attribute> attributes;
@@ -213,22 +207,11 @@ public class Collection extends Resource implements HealthChecking {
    }
 
    public DataDocument getPurposeMetaData() {
-      if (this.purpose != null) {
-         return this.purpose.getMetaData();
-      }
-      return new DataDocument();
+      return getPurpose().getMetaData();
    }
 
    public void setPurposeMetaData(final DataDocument purposeMetaData) {
       this.purpose.setMetaData(purposeMetaData);
-   }
-
-   public DataDocument createIfAbsentPurposeMetaData() {
-      if (this.purpose == null) {
-         this.purpose = new CollectionPurpose(CollectionPurposeType.None, new DataDocument());
-      }
-
-      return this.purpose.getMetaData();
    }
 
    public void setPurpose(final CollectionPurpose purpose) {
@@ -236,7 +219,10 @@ public class Collection extends Resource implements HealthChecking {
    }
 
    public CollectionPurpose getPurpose() {
-      return purpose;
+      if (this.purpose == null) {
+         this.purpose = new CollectionPurpose(CollectionPurposeType.None, new DataDocument());
+      }
+      return this.purpose;
    }
 
    public CollectionPurposeType getPurposeType() {
