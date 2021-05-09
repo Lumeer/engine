@@ -143,7 +143,7 @@ public class AuditFacade extends AbstractFacade {
 
    public List<AuditRecord> getAuditRecordsForLink(final String linkTypeId, final String linkInstanceId) {
       final LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, false);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
@@ -189,7 +189,7 @@ public class AuditFacade extends AbstractFacade {
 
    public LinkInstance revertLastLinkAuditOperation(final String linkTypeId, final String linkInstanceId, final String auditRecordId) {
       final LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, false);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());

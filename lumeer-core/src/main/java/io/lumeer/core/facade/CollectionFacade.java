@@ -24,7 +24,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -229,7 +228,7 @@ public class CollectionFacade extends AbstractFacade {
          return mapCollection(collection);
       }
 
-      var userIdsInViews = resourceAdapter.getReadUsersIdsInViews(collectionId);
+      var userIdsInViews = resourceAdapter.getCollectionReadersInViews(collectionId);
       if (userIdsInViews.contains(getCurrentUserId())) {
          return mapCollection(collection);
       }

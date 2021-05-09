@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -266,7 +267,7 @@ public class DocumentFacade extends AbstractFacade {
    public DocumentsChain createDocumentsChain(List<Document> documents, List<LinkInstance> linkInstances) {
       var collectionsMap = documents.stream()
                                     .map(document -> checkCollectionWritePermissionss(document.getCollectionId()))
-                                    .collect(Collectors.toMap(Resource::getId, collection -> collection));
+                                    .collect(Collectors.toMap(Resource::getId, Function.identity()));
 
       permissionsChecker.checkDocumentLimits(documents);
 

@@ -443,7 +443,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, role, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
       return linkType;
    }
 

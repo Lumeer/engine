@@ -106,7 +106,7 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
     }
 
     fun getCollectionManagers(collection: Collection, organization: Organization, project: Project): Set<String> {
-        val viewManagers = getManagerUsersIdsInViews(collection.id)
+        val viewManagers = getCollectionManagersInViews(collection.id)
         return ResourceUtils.getCollectionManagers(organization, project, collection, viewManagers)
     }
 
@@ -116,7 +116,7 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
     }
 
     fun getCollectionReaders(collection: Collection, organization: Organization, project: Project): Set<String> {
-        val viewReaders = getReadUsersIdsInViews(collection.id)
+        val viewReaders = getCollectionReadersInViews(collection.id)
         return ResourceUtils.getCollectionReaders(organization, project, collection, viewReaders)
     }
 
@@ -127,7 +127,7 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
     }
 
     fun getDocumentReaders(document: Document, collection: Collection, organization: Organization, project: Project): Set<String> {
-        val viewReaders = getReadUsersIdsInViews(collection.id)
+        val viewReaders = getCollectionReadersInViews(collection.id)
 
         val assigneesEmails = DocumentUtils.getUsersAssigneeEmails(collection, document)
         val assigneeIds = userDao.getUsersByEmails(assigneesEmails).map { it.id }
@@ -147,11 +147,11 @@ class ResourceAdapter(private val collectionDao: CollectionDao, private val link
         return ResourceUtils.getRolesInResource(organization, collection, user)
     }
 
-    fun getReadUsersIdsInViews(collectionId: String): Set<String> {
+    fun getCollectionReadersInViews(collectionId: String): Set<String> {
         return getUsersIdsInViews(collectionId, ResourceUtils::canReadByPermission)
     }
 
-    fun getManagerUsersIdsInViews(collectionId: String): Set<String> {
+    fun getCollectionManagersInViews(collectionId: String): Set<String> {
         return getUsersIdsInViews(collectionId, ResourceUtils::canManageByPermission)
     }
 

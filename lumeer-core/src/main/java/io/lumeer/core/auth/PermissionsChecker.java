@@ -176,7 +176,7 @@ public class PermissionsChecker {
       return false;
    }
 
-   public void checkLinkTypePermissions(final java.util.Collection<String> collectionIds, final Role role, final boolean strict) {
+   public void checkLinkTypeRoleWithView(final java.util.Collection<String> collectionIds, final Role role, final boolean strict) {
       final List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
       if (!strict && role == Role.WRITE) {
          boolean atLeastOneRead = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.READ, Role.READ));
@@ -191,15 +191,25 @@ public class PermissionsChecker {
       }
    }
 
-   public void checkLinkTypePermissions(LinkType linkType, Role role, boolean strict) {
-      checkLinkTypePermissions(linkType.getCollectionIds(), role, strict);
+   public void checkLinkTypeRoleWithView(LinkType linkType, Role role, boolean strict) {
+      checkLinkTypeRoleWithView(linkType.getCollectionIds(), role, strict);
    }
 
-   public boolean hasLinkTypePermissions(LinkType linkType, Role role) {
+   public boolean hasLinkTypeRoleWithView(LinkType linkType, Role role) {
       List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       var hasPermissions = true;
       for (Collection collection : collections) {
          hasPermissions = hasPermissions && hasRoleWithView(collection, role, role);
+      }
+
+      return hasPermissions;
+   }
+
+   public boolean hasLinkTypeRole(LinkType linkType, Map<String, Collection> collectionMap, Role role, String userId) {
+      List<Collection> collections = linkType.getCollectionIds().stream().map(collectionMap::get).collect(Collectors.toList());
+      var hasPermissions = true;
+      for (Collection collection : collections) {
+         hasPermissions = hasPermissions && hasRole(collection, role, userId);
       }
 
       return hasPermissions;

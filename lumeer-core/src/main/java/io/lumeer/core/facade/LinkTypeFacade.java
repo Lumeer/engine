@@ -286,7 +286,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void checkLinkTypePermission(LinkType linkType) {
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, true);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, true);
    }
 
    private LinkType checkLinkTypePermission(String linkTypeId) {

@@ -324,7 +324,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       linksMap.forEach((linkTypeId, value) -> {
          var linkType = linkTypeDao.getLinkType(linkTypeId);
-         if (permissionsChecker.hasLinkTypePermissions(linkType, Role.READ)) {
+         if (permissionsChecker.hasLinkTypeRoleWithView(linkType, Role.READ)) {
 
             var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
                                      .stream()
@@ -387,7 +387,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          var roleString = config.get("role").toString();
          var role = Role.fromString(roleString);
 
-         permissionsChecker.checkLinkTypePermissions(linkType, role, true);
+         permissionsChecker.checkLinkTypeRoleWithView(linkType, role, true);
          LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
          taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
       }
@@ -446,7 +446,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, role, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
       return linkType;
    }
 
