@@ -37,6 +37,8 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -50,9 +52,11 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import org.jetbrains.annotations.Nullable;
@@ -95,6 +99,12 @@ public class SearchFacade extends AbstractFacade {
    private LinkDataDao linkDataDao;
 
    @Inject
+   private ResourceCommentDao resourceCommentDao;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
+
+   @Inject
    private TranslationManager translationManager;
 
    @Inject
@@ -107,11 +117,17 @@ public class SearchFacade extends AbstractFacade {
    private Language language;
    private String timezone;
 
+   private DocumentAdapter documentAdapter;
+   private LinkInstanceAdapter linkInstanceAdapter;
+
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       language = Language.fromString(requestDataKeeper.getUserLocale());
       timezone = requestDataKeeper.getTimezone();
+
+      documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
    }
 
    private static final Integer FETCH_SIZE = 200;
@@ -186,7 +202,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       final List<QueryStem> stems = collections.stream().map(collection -> {
-         final String assigneeAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID) : null;
+         final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
          final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
          if (assigneeAttribute != null) {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
@@ -241,7 +257,10 @@ public class SearchFacade extends AbstractFacade {
          allLinkInstances.addAll(result.getSecond());
       }
 
-      return new Tuple<>(new ArrayList<>(allDocuments), new ArrayList<>(allLinkInstances));
+      var mappedDocuments = documentAdapter.mapDocumentsData(new ArrayList<>(allDocuments), getCurrentUserId(), workspaceKeeper.getProjectId());
+      var mappedLinkInstances = linkInstanceAdapter.mapLinkInstancesData(new ArrayList<>(allLinkInstances));
+
+      return new Tuple<>(mappedDocuments, mappedLinkInstances);
    }
 
    private ConstraintData createConstraintData() {

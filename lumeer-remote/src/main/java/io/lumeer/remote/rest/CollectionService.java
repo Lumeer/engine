@@ -62,9 +62,6 @@ public class CollectionService extends AbstractService {
    @Inject
    private CollectionFacade collectionFacade;
 
-   @Inject
-   private ViewFacade viewFacade;
-
    @PostConstruct
    public void init() {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
@@ -98,14 +95,8 @@ public class CollectionService extends AbstractService {
    }
 
    @GET
-   public List<Collection> getCollections(@QueryParam("fromViews") Boolean includeViewCollections) {
-      Set<Collection> collections = new HashSet<>(collectionFacade.getCollections());
-
-      if (includeViewCollections != null && includeViewCollections && !isManager()) {
-         collections.addAll(viewFacade.getViewsCollections());
-      }
-
-      return new ArrayList<>(collections);
+   public List<Collection> getCollections() {
+      return collectionFacade.getAllCollections();
    }
 
    @GET

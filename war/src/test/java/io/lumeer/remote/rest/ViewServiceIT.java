@@ -89,7 +89,6 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String CODE2 = "TVIEW2";
 
    private String viewsUrl;
-   private String viewsCollectionsUrl;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -151,7 +150,6 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       query = new Query(new QueryStem(collection.getId()));
 
       viewsUrl = projectPath(storedOrganization, storedProject) + "views";
-      viewsCollectionsUrl = viewsUrl + "/collections/all";
    }
 
    private View prepareView(String code) {
@@ -421,51 +419,6 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertThat(permissions.getGroupPermissions()).isEmpty();
-   }
-
-   @Test
-   public void testGetViewsCollections() {
-      final String NON_EXISTING_USER = "aaaaa4444400000000111114"; // non-existing user
-      final String VIEW_CODE = "MY_COOL_CODE";
-      final String COLLECTION_NAME = "kolekce1";
-      final String COLLECTION_ICON = "fa-eye";
-      final String COLLECTION_COLOR = "#abcdea";
-
-      // create collection under a different user
-      Permissions collectionPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(NON_EXISTING_USER, Collection.ROLES);
-      collectionPermissions.updateUserPermissions(userPermission);
-
-      Collection collection = collectionFacade.createCollection(
-            new Collection("", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Collections.emptySet())));
-
-      // create a view under a different user
-      View view = createView(VIEW_CODE);
-      view.setAuthorId(NON_EXISTING_USER);
-      view.setQuery(new Query(new QueryStem(collection.getId())));
-      view.getPermissions().clearUserPermissions();
-      view.getPermissions().updateUserPermissions(Set.of(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES), Permission.buildWithRoles(this.user.getId(), Collections.emptySet())));
-      viewDao.updateView(view.getId(), view);
-
-      // share the view and make sure we can see it now
-      Permissions viewPermissions = new Permissions();
-      viewPermissions.updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES));
-      viewPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
-      view.setPermissions(viewPermissions);
-      viewDao.updateView(view.getId(), view);
-
-      Response response = client.target(viewsCollectionsUrl)
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-      Set<Collection> collections = response.readEntity(new GenericType<>() {
-      });
-
-      assertThat(collections).hasSize(1).hasOnlyOneElementSatisfying(c ->
-            assertThat(c.getId()).isEqualTo(collection.getId()));
    }
 
 }

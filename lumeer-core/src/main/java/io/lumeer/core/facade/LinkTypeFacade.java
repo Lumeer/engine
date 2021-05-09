@@ -23,10 +23,12 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -34,7 +36,9 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
-import io.lumeer.storage.api.query.DatabaseQuery;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.List;
@@ -67,19 +71,24 @@ public class LinkTypeFacade extends AbstractFacade {
    private LinkInstanceDao linkInstanceDao;
 
    @Inject
-   private ViewFacade viewFacade;
-
-   @Inject
    private FileAttachmentFacade fileAttachmentFacade;
 
    @Inject
    private ResourceCommentDao resourceCommentDao;
 
+   @Inject
+   private ViewDao viewDao;
+
+   @Inject
+   private UserDao userDao;
+
    private LinkTypeAdapter adapter;
+   private ResourceAdapter resourceAdapter;
 
    @PostConstruct
    public void init() {
       adapter = new LinkTypeAdapter(linkInstanceDao);
+      resourceAdapter = new ResourceAdapter(collectionDao, linkTypeDao, viewDao, userDao);
    }
 
    public LinkTypeAdapter getAdapter() {
@@ -157,13 +166,14 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType getLinkType(final String linkTypeId) {
+      checkProjectRole(Role.READ);
       var linkType = linkTypeDao.getLinkType(linkTypeId);
       var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
       if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))) {
          return mapLinkTypeData(linkType);
       }
 
-      var viewsLinkTypes = viewFacade.getViewsLinkTypes();
+      var viewsLinkTypes = resourceAdapter.getViewsLinkTypes(getCurrentUserId(), authenticatedUserGroups.getCurrentUserGroups(), permissionsChecker.isManager());
       if (viewsLinkTypes.stream().anyMatch(lt -> lt.getId().equals(linkTypeId))) {
          return mapLinkTypeData(linkType);
       }
@@ -172,19 +182,22 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public List<LinkType> getLinkTypes() {
-      final List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
-      if (isManager()) {
-         return mapLinkTypesData(allLinkTypes);
+      checkProjectRole(Role.READ);
+      return mapLinkTypesData(resourceAdapter.getLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
+   }
+
+   public List<LinkType> getViewsLinkTypes() {
+      checkProjectRole(Role.READ);
+      return mapLinkTypesData(resourceAdapter.getViewsLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
+   }
+
+   public List<LinkType> getAllLinkTypes() {
+      checkProjectRole(Role.READ);
+      var linkTypes = getLinkTypes();
+      if (!isWorkspaceManager()) {
+         linkTypes.addAll(getViewsLinkTypes());
       }
-
-      final Set<String> allowedCollectionIds = collectionDao.getCollections(createCollectionsQuery()).stream()
-                                                             .map(Collection::getId).collect(Collectors.toSet());
-      allowedCollectionIds.addAll(viewFacade.getViewsCollections().stream().map(Collection::getId).collect(Collectors.toSet()));
-
-      final List<LinkType> linkTypes = allLinkTypes.stream()
-                                                   .filter(linkType -> allowedCollectionIds.containsAll(linkType.getCollectionIds()))
-                                                   .collect(Collectors.toList());
-      return mapLinkTypesData(linkTypes);
+      return linkTypes;
    }
 
    public List<LinkType> getLinkTypesPublic() {
@@ -273,21 +286,25 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void checkLinkTypePermission(LinkType linkType) {
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, true);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, true);
    }
 
    private LinkType checkLinkTypePermission(String linkTypeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, true);
+      checkLinkTypePermission(linkType);
       return linkType;
    }
 
-   private DatabaseQuery createCollectionsQuery() {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
+   private void checkProjectRole(Role role) {
+      Project project = getCurrentProject();
+      permissionsChecker.checkRole(project, role);
+   }
 
-      return DatabaseQuery.createBuilder(user).groups(groups)
-                          .build();
+   private Project getCurrentProject() {
+      if (workspaceKeeper.getProject().isEmpty()) {
+         throw new ResourceNotFoundException(ResourceType.PROJECT);
+      }
+      return workspaceKeeper.getProject().get();
    }
 
 }

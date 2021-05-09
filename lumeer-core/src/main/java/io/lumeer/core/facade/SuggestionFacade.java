@@ -114,7 +114,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private List<View> suggestViews(SuggestionQuery suggestionQuery, int limit) {
       var distance = LevenshteinDistance.getDefaultInstance();
-      return viewDao.getViews(createSuggestionQuery(suggestionQuery, null), isManager()).stream()
+      return viewDao.getViews(createSuggestionQuery(suggestionQuery, null), isWorkspaceManager()).stream()
                     .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), suggestionQuery.getText().toLowerCase())))
                     .limit(limit)
                     .collect(Collectors.toList());
@@ -161,7 +161,7 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private Set<String> getAllowedCollectionIds() {
-      if (isManager()) {
+      if (isWorkspaceManager()) {
          return collectionDao.getAllCollections().stream().map(Collection::getId).collect(Collectors.toSet());
       }
       return collectionDao.getCollections(createSimpleQuery()).stream().map(Collection::getId).collect(Collectors.toSet());
@@ -169,7 +169,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private List<Collection> suggestCollections(SuggestionQuery suggestionQuery, int limit) {
       var distance = LevenshteinDistance.getDefaultInstance();
-      return collectionDao.getCollections(createSuggestionQuery(suggestionQuery, null), isManager()).stream()
+      return collectionDao.getCollections(createSuggestionQuery(suggestionQuery, null), isWorkspaceManager()).stream()
                           .peek(collection -> collection.setAttributes(Collections.emptySet()))
                           .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), suggestionQuery.getText().toLowerCase())))
                           .limit(limit)
@@ -178,7 +178,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private List<Collection> suggestAttributes(SuggestionQuery suggestionQuery, int limit) {
       SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, isManager());
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, isWorkspaceManager());
       if (collections.isEmpty()) {
          return Collections.emptyList();
       }
@@ -205,8 +205,8 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private SearchSuggestionQuery.Builder createBuilderForSuggestionQuery(SuggestionQuery suggestionQuery, Integer limit) {
-      return SearchSuggestionQuery.createBuilder(authenticatedUser.getCurrentUserId())
-                                  .groups(authenticatedUserGroups.getCurrentUserGroups())
+      return SearchSuggestionQuery.createBuilder(getCurrentUserId())
+                                  .groups(getCurrentUserGroups())
                                   .text(suggestionQuery.getText())
                                   .priorityCollectionIds(suggestionQuery.getPriorityCollectionIds())
                                   .page(limit == null ? null : 0).pageSize(limit);

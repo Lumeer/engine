@@ -172,13 +172,6 @@ public class MongoViewDao extends MongoProjectScopedDao implements ViewDao {
       return findIterable.into(new ArrayList<>());
    }
 
-   private String linkTypesCollectionName() {
-      if (!getProject().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-      return MongoLinkTypeDao.PREFIX + getProject().get().getId();
-   }
-
    private Bson suggestionsFilter(final SearchSuggestionQuery query, boolean skipPermissions) {
       Bson regex = regex(ViewCodec.NAME, Pattern.compile(query.getText(), Pattern.CASE_INSENSITIVE));
       if (skipPermissions) {

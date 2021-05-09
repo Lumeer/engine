@@ -252,11 +252,10 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
       assertThat(documents).hasSize(10);
       assertThat(documents.stream().map(Document::getId).collect(Collectors.toSet())).hasSize(10);
 
-      var originalIds = documents.stream().map(Document::getId).collect(Collectors.toList());
-      final List<Document> newDocuments = documentDao.duplicateDocuments(originalIds);
+      final List<Document> newDocuments = documentDao.duplicateDocuments(documents);
       assertThat(newDocuments.stream().map(Document::getId).collect(Collectors.toSet())).hasSize(10);
 
       var newIds = newDocuments.stream().map(d -> d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID)).collect(Collectors.toList());
-      assertThat(newIds).containsExactly(originalIds.toArray(new String[0]));
+      assertThat(newIds).containsExactly(documents.stream().map(Document::getId).toArray(String[]::new));
    }
 }

@@ -26,6 +26,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
@@ -75,6 +76,8 @@ public class SingleStage extends Stage {
 
    private final String automationName;
 
+   private final LinkTypeAdapter linkTypeAdapter;
+
    public SingleStage(final OperationExecutor executor) {
       super(executor);
 
@@ -89,6 +92,7 @@ public class SingleStage extends Stage {
          automationName = null;
       }
 
+      linkTypeAdapter = new LinkTypeAdapter(task.getDaoContextSnapshot().getLinkInstanceDao());
    }
 
    @Override
@@ -267,10 +271,10 @@ public class SingleStage extends Stage {
                // decrease link instances count in link types map
                if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) { // present in link types map
                   final LinkType linkType = changesTracker.getLinkTypesMap().get(linkTypeId);
-                  linkType.setLinksCount(task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
+                  linkTypeAdapter.mapLinkTypeData(linkType);
                } else { // not yet in the map
                   final LinkType linkType = allLinkTypes.get(linkTypeId);
-                  linkType.setLinksCount(task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesCountByLinkType(linkType.getId()));
+                  linkTypeAdapter.mapLinkTypeData(linkType);
                   changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
                }
 

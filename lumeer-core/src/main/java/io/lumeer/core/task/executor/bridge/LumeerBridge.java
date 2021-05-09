@@ -33,7 +33,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
@@ -148,8 +148,8 @@ public class LumeerBridge {
 
    private void initIsManager() {
       if (isManager == null) {
-         isManager = PermissionsChecker.isManager(
-               task.getInitiator(),
+         isManager = ResourceUtils.userIsManagerInWorkspace(
+               task.getInitiator().getId(),
                task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().orElse(null),
                task.getDaoContextSnapshot().getSelectedWorkspace().getProject().orElse(null));
       }

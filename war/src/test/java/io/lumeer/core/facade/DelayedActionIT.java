@@ -182,11 +182,11 @@ public class DelayedActionIT extends IntegrationTestBase {
       ));
       jsonCollection.setDefaultAttributeId("a0");
       jsonCollection.setPurpose(new CollectionPurpose(CollectionPurposeType.Tasks,
-            new DataDocument(Collection.META_ASSIGNEE_ATTRIBUTE_ID, "a1")
-                  .append(Collection.META_DUE_DATE_ATTRIBUTE_ID, "a2")
-                  .append(Collection.META_STATE_ATTRIBUTE_ID, "a3")
-                  .append(Collection.META_FINAL_STATES_LIST, List.of("Done", "Won't fix"))
-                  .append(Collection.META_OBSERVERS_ATTRIBUTE_ID, "a4"))
+            new DataDocument(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, "a1")
+                  .append(CollectionPurpose.META_DUE_DATE_ATTRIBUTE_ID, "a2")
+                  .append(CollectionPurpose.META_STATE_ATTRIBUTE_ID, "a3")
+                  .append(CollectionPurpose.META_FINAL_STATES_LIST, List.of("Done", "Won't fix"))
+                  .append(CollectionPurpose.META_OBSERVERS_ATTRIBUTE_ID, "a4"))
       );
       collection = collectionDao.createCollection(jsonCollection);
    }

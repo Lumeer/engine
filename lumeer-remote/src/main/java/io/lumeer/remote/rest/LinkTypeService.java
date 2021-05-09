@@ -22,7 +22,6 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.core.facade.LinkTypeFacade;
-import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.ArrayList;
@@ -39,7 +38,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -57,9 +55,6 @@ public class LinkTypeService extends AbstractService {
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
-
-   @Inject
-   private ViewFacade viewFacade;
 
    @PostConstruct
    public void init() {
@@ -94,14 +89,8 @@ public class LinkTypeService extends AbstractService {
    }
 
    @GET
-   public List<LinkType> getLinkTypes(@QueryParam("fromViews") Boolean includeViewLinkTypes) {
-      final List<LinkType> linkTypes = linkTypeFacade.getLinkTypes();
-
-      if (includeViewLinkTypes != null && includeViewLinkTypes && !isManager()) {
-         linkTypes.addAll(viewFacade.getViewsLinkTypes());
-      }
-
-      return linkTypes;
+   public List<LinkType> getLinkTypes() {
+      return linkTypeFacade.getAllLinkTypes();
    }
 
    @POST

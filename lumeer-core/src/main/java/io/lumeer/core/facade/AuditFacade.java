@@ -31,7 +31,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
-import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
@@ -109,9 +108,8 @@ public class AuditFacade extends AbstractFacade {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       auditAdapter = new AuditAdapter(auditDao);
 
-      ResourceCommentAdapter resourceCommentAdapter = new ResourceCommentAdapter(resourceCommentDao);
-      documentAdapter = new DocumentAdapter(resourceCommentAdapter, favoriteItemDao);
-      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentAdapter);
+      documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
+      linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
    }
 
    public void documentUpdated(@Observes final UpdateDocument updateDocument) {
@@ -145,7 +143,7 @@ public class AuditFacade extends AbstractFacade {
 
    public List<AuditRecord> getAuditRecordsForLink(final String linkTypeId, final String linkInstanceId) {
       final LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, false);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
@@ -183,7 +181,7 @@ public class AuditFacade extends AbstractFacade {
 
          document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
-         return documentAdapter.mapDocumentData(document, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+         return documentAdapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
       }
 
       throw new UnsupportedOperationException("No organization specified.");
@@ -191,7 +189,7 @@ public class AuditFacade extends AbstractFacade {
 
    public LinkInstance revertLastLinkAuditOperation(final String linkTypeId, final String linkInstanceId, final String auditRecordId) {
       final LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, Role.WRITE, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, false);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());

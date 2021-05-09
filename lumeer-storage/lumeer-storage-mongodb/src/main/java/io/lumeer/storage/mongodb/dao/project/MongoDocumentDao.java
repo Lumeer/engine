@@ -211,16 +211,17 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
-   public List<Document> duplicateDocuments(final List<String> documentIds) {
-      final List<Document> documents = getDocumentsByIds(documentIds.toArray(new String[0]));
-
+   public List<Document> duplicateDocuments(final List<Document> documents) {
+      List<Document> insertDocuments = new ArrayList<>();
       documents.forEach(d -> {
-         d.createIfAbsentMetaData().put(Document.META_ORIGINAL_DOCUMENT_ID, d.getId());
-         d.setId(ObjectId.get().toString());
+         var insertDocument = new Document(d);
+         insertDocument.createIfAbsentMetaData().put(Document.META_ORIGINAL_DOCUMENT_ID, d.getId());
+         insertDocument.setId(ObjectId.get().toString());
+         insertDocuments.add(insertDocument);
       });
-      databaseCollection().insertMany(documents);
+      databaseCollection().insertMany(insertDocuments);
 
-      return documents;
+      return insertDocuments;
    }
 
    @Override

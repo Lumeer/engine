@@ -19,6 +19,7 @@
 package io.lumeer.core.facade.detector;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.engine.api.event.ResourceEvent;
@@ -38,7 +39,7 @@ public class AttributePurposeChangeDetector extends AbstractCollectionChangeDete
          if (originalCollection != null) {
             final List<String> removedIds = AttributeUtil.checkAttributesDiff(originalCollection.getAttributes(), updatedCollection.getAttributes()).getRemovedIds();
 
-            final String dueDateAttributeId = originalCollection.getPurposeMetaData().getString(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+            final String dueDateAttributeId = originalCollection.getPurpose().getDueDateAttributeId();
             if (removedIds.contains(dueDateAttributeId)) {
                delayedActionDao.deleteAllScheduledActions(getResourcePath(resourceEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE));
             }

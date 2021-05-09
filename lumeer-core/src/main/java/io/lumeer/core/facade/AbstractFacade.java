@@ -50,12 +50,20 @@ abstract class AbstractFacade {
    protected UserCache userCache;
 
    @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
+   protected AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
 
-   protected boolean isManager() {
+   protected String getCurrentUserId() {
+      return authenticatedUser.getCurrentUserId();
+   }
+
+   protected Set<String> getCurrentUserGroups() {
+      return authenticatedUserGroups.getCurrentUserGroups();
+   }
+
+   protected boolean isWorkspaceManager() {
       return permissionsChecker.isManager();
    }
 
@@ -67,15 +75,7 @@ abstract class AbstractFacade {
       Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
       Permission permission = Permission.buildWithRoles(userId, roles);
 
-      Set<String> managers;
-      if(resource instanceof Organization) {
-         managers = permissionsChecker.getOrganizationManagers();
-      } else if(resource instanceof Project) {
-         managers = permissionsChecker.getWorkspaceManagers();
-      } else {
-         managers = ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), resource);
-      }
-
+      Set<String> managers = getResourceManagers(resource);
       final boolean keepReadRights = keepReadRights(resource);
 
       Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
@@ -100,10 +100,20 @@ abstract class AbstractFacade {
    }
 
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
-      if (permissionsChecker.hasRole(resource, Role.MANAGE, userId)) {
+      if (getResourceManagers(resource).contains(userId)) {
          return resource;
       }
       return keepOnlyActualUserRoles(resource, userId);
+   }
+
+   private Set<String> getResourceManagers(final Resource resource) {
+      if (resource instanceof Organization) {
+         return ResourceUtils.getOrganizationManagers((Organization) resource);
+      } else if (resource instanceof Project) {
+         return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().orElse(null), (Project) resource);
+      } else {
+         return ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null), resource);
+      }
    }
 
    protected <T extends Resource> T mapResource(final T resource) {

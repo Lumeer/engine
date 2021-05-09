@@ -40,11 +40,11 @@ import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.ImportLinkTypeContent;
 import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
-import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
@@ -67,9 +67,6 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    @Inject
    private LinkTypeDao linkTypeDao;
-
-   @Inject
-   private CollectionDao collectionDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
@@ -99,7 +96,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    private FileAttachmentFacade fileAttachmentFacade;
 
    @Inject
-   private ResourceCommentFacade resourceCommentFacade;
+   private ResourceCommentDao resourceCommentDao;
 
    @Inject
    private TaskProcessingFacade taskProcessingFacade;
@@ -111,7 +108,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-      adapter = new LinkInstanceAdapter(resourceCommentFacade.getAdapter());
+      adapter = new LinkInstanceAdapter(resourceCommentDao);
    }
 
    public LinkInstanceAdapter getAdapter() {
@@ -132,7 +129,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public Tuple<LinkInstance, LinkInstance> createLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
-      linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+      linkInstance.setCreatedBy(getCurrentUserId());
       linkInstance.setCreationDate(ZonedDateTime.now());
       LinkInstance createdLinkInstance = linkInstanceDao.createLinkInstance(linkInstance);
 
@@ -173,7 +170,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private List<LinkInstance> createLinkInstances(final LinkType linkType, final List<LinkInstance> linkInstances, boolean sendIndividualNotifications) {
       linkInstances.forEach(linkInstance -> {
-         linkInstance.setCreatedBy(authenticatedUser.getCurrentUserId());
+         linkInstance.setCreatedBy(getCurrentUserId());
          linkInstance.setCreationDate(ZonedDateTime.now());
       });
 
@@ -245,7 +242,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    private LinkInstance updateLinkInstance(LinkInstance linkInstance, DataDocument newData, final LinkInstance originalLinkInstance) {
       linkInstance.setData(newData);
       linkInstance.setUpdateDate(ZonedDateTime.now());
-      linkInstance.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      linkInstance.setUpdatedBy(getCurrentUserId());
 
       LinkInstance updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
       updatedLinkInstance.setData(newData);
@@ -264,7 +261,6 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private void updateLinkTypeMetadata(LinkType linkType, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
       linkType.setAttributes(new ArrayList<>(ResourceUtils.incOrDecAttributes(linkType.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
-      linkType.setLinksCount(linkInstanceDao.getLinkInstancesCountByLinkType(linkType.getId()));
       linkTypeDao.updateLinkType(linkType.getId(), linkType, new LinkType(linkType));
    }
 
@@ -328,7 +324,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       linksMap.forEach((linkTypeId, value) -> {
          var linkType = linkTypeDao.getLinkType(linkTypeId);
-         if (permissionsChecker.hasLinkTypePermissions(linkType, Role.READ)) {
+         if (permissionsChecker.hasLinkTypeRoleWithView(linkType, Role.READ)) {
 
             var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
                                      .stream()
@@ -391,7 +387,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          var roleString = config.get("role").toString();
          var role = Role.fromString(roleString);
 
-         permissionsChecker.checkLinkTypePermissions(linkType, role, true);
+         permissionsChecker.checkLinkTypeRoleWithView(linkType, role, true);
          LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
          taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
       }
@@ -450,7 +446,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypePermissions(linkType, role, false);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
       return linkType;
    }
 

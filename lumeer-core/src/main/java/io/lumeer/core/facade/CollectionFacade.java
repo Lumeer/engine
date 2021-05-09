@@ -24,7 +24,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -35,16 +34,14 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
-import io.lumeer.core.adapter.ViewAdapter;
+import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.CodeGenerator;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -54,6 +51,7 @@ import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -63,7 +61,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -104,6 +101,9 @@ public class CollectionFacade extends AbstractFacade {
    private ResourceCommentDao resourceCommentDao;
 
    @Inject
+   private UserDao userDao;
+
+   @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
 
    @Inject
@@ -113,12 +113,12 @@ public class CollectionFacade extends AbstractFacade {
    private TaskExecutor taskExecutor;
 
    private CollectionAdapter adapter;
-   private ViewAdapter viewAdapter;
+   private ResourceAdapter resourceAdapter;
 
    @PostConstruct
    public void init() {
-      adapter = new CollectionAdapter(favoriteItemDao, documentDao);
-      viewAdapter = new ViewAdapter(viewDao, linkTypeDao, favoriteItemDao);
+      adapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
+      resourceAdapter = new ResourceAdapter(collectionDao, linkTypeDao, viewDao, userDao);
    }
 
    public CollectionAdapter getAdapter() {
@@ -169,7 +169,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Collection mapCollection(Collection collection) {
-      return adapter.mapCollectionData(mapResource(collection), authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapCollectionData(mapResource(collection), getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
@@ -204,9 +204,8 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void deleteCollectionBasedData(final String collectionId) {
-      documentDao.getDocumentsByCollection(collectionId).forEach(document -> {
-         resourceCommentDao.deleteComments(ResourceType.DOCUMENT, document.getId());
-      });
+      documentDao.getDocumentsByCollection(collectionId).forEach(document ->
+            resourceCommentDao.deleteComments(ResourceType.DOCUMENT, document.getId()));
 
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
@@ -229,44 +228,50 @@ public class CollectionFacade extends AbstractFacade {
          return mapCollection(collection);
       }
 
-      var userIdsInViews = viewAdapter.getUsersIdsInViewByCollection(collectionId, ResourceUtils::canReadByPermission);
-      if (userIdsInViews.contains(authenticatedUser.getCurrentUserId())) {
+      var userIdsInViews = resourceAdapter.getCollectionReadersInViews(collectionId);
+      if (userIdsInViews.contains(getCurrentUserId())) {
          return mapCollection(collection);
       }
 
       throw new NoResourcePermissionException(collection);
    }
 
-   public List<Collection> getCollectionsPublic() {
+   public List<Collection> getCollections() {
+      checkProjectRole(Role.READ);
+      return mapCollectionsData(resourceAdapter.getCollections(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
+                                               .stream()
+                                               .map(this::mapResource)
+                                               .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
+                                               .collect(Collectors.toList()));
+   }
+
+   public List<Collection> getViewsCollections() {
+      checkProjectRole(Role.READ);
+      return mapCollectionsData(resourceAdapter.getViewsCollections(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
+                                               .stream()
+                                               .map(this::mapResource)
+                                               .collect(Collectors.toList()));
+   }
+
+   public List<Collection> getAllCollections() {
+      checkProjectRole(Role.READ);
+      var collections = getCollections();
+      if (!isWorkspaceManager()) {
+         collections.addAll(getViewsCollections());
+      }
+      return collections;
+   }
+
+   public List<Collection> getPublicCollections() {
       if (permissionsChecker.isPublic()) {
-         return getAllCollections();
+         return mapCollectionsData(collectionDao.getAllCollections());
       }
 
       return List.of();
    }
 
-   public List<Collection> getCollections() {
-      if (permissionsChecker.isManager()) {
-         return getAllCollections();
-      }
-
-      checkProjectRole(Role.READ);
-      return getCollectionsByPermissions();
-   }
-
-   private List<Collection> getCollectionsByPermissions() {
-      return mapCollectionsData(collectionDao.getCollections(createSimpleQuery()).stream()
-                          .map(this::mapResource)
-                          .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
-                          .collect(Collectors.toList()));
-   }
-
-   private List<Collection> getAllCollections() {
-      return mapCollectionsData(collectionDao.getAllCollections());
-   }
-
    private List<Collection> mapCollectionsData(List<Collection> collections) {
-      return adapter.mapCollectionsData(collections, authenticatedUser.getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapCollectionsData(collections, getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void addFavoriteCollection(String collectionId) {
@@ -400,18 +405,19 @@ public class CollectionFacade extends AbstractFacade {
          collection.setDefaultAttributeId(null);
       }
 
-      final DataDocument meta = collection.createIfAbsentPurposeMetaData();
-      if (attributeId.equals(meta.getString(Collection.META_STATE_ATTRIBUTE_ID))) {
-         collection.getPurposeMetaData().remove(Collection.META_STATE_ATTRIBUTE_ID);
+      final CollectionPurpose purpose = collection.getPurpose();
+      if (attributeId.equals(purpose.getStateAttributeId())) {
+         purpose.clearStateAttributeId();
       }
-      if (attributeId.equals(meta.getString(Collection.META_DUE_DATE_ATTRIBUTE_ID))) {
-         collection.getPurposeMetaData().remove(Collection.META_DUE_DATE_ATTRIBUTE_ID);
+      if (attributeId.equals(purpose.getDueDateAttributeId())) {
+         purpose.clearDueDateAttributeId();
       }
-      if (attributeId.equals(meta.getString(Collection.META_ASSIGNEE_ATTRIBUTE_ID))) {
-         collection.getPurposeMetaData().remove(Collection.META_ASSIGNEE_ATTRIBUTE_ID);
+      if (attributeId.equals(purpose.getAssigneeAttributeId())) {
+         purpose.clearAssigneeAttributeId();
       }
-      if (attributeId.equals(meta.getString(Collection.META_OBSERVERS_ATTRIBUTE_ID))) {
-         collection.getPurposeMetaData().remove(Collection.META_OBSERVERS_ATTRIBUTE_ID);
+      if (attributeId.equals(purpose.getObserverAttributeId())) {
+         purpose.clearObserverAttributeId();
+         purpose.clearFinalStatesList();
       }
 
       collection.setLastTimeUsed(ZonedDateTime.now());
@@ -503,23 +509,6 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.updateCollection(updatedCollection.getId(), collection, originalCollection);
    }
 
-   public Set<String> getUsersIdsWithAccess(final String collectionId) {
-      return getUsersIdsWithAccess(collectionDao.getCollectionById(collectionId));
-   }
-
-   public Set<String> getUsersIdsWithAccess(final Collection collection) {
-      var viewsReaders = viewAdapter.getUsersIdsInViewByCollection(collection.getId(), ResourceUtils::canReadByPermission);
-      return ResourceUtils.getCollectionReaders(getCurrentOrganization(), getCurrentProject(), collection, viewsReaders);
-      // TODO: Handle user groups as well
-   }
-
-   private Organization getCurrentOrganization() {
-      if (workspaceKeeper.getOrganization().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-      return workspaceKeeper.getOrganization().get();
-   }
-
    private void checkProjectRole(Role role) {
       Project project = getCurrentProject();
       permissionsChecker.checkRole(project, role);
@@ -544,7 +533,7 @@ public class CollectionFacade extends AbstractFacade {
       collection.setLastAttributeNum(0);
       collection.setLastTimeUsed(ZonedDateTime.now());
 
-      Permission defaultUserPermission = Permission.buildWithRoles(authenticatedUser.getCurrentUserId(), Collection.ROLES);
+      Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
 
       return collectionDao.createCollection(collection);
@@ -578,7 +567,7 @@ public class CollectionFacade extends AbstractFacade {
          final LinkType linkType = linkTypeDao.getLinkType(autoLinkRule.getLinkType());
 
          final AutoLinkBatchTask task = taskFactory.getInstance(AutoLinkBatchTask.class);
-         task.setupBatch(autoLinkRule, linkType, collection, attribute, otherCollection, otherAttribute, authenticatedUser.getCurrentUser(), permissions);
+         task.setupBatch(autoLinkRule, linkType, collection, attribute, otherCollection, otherAttribute, getCurrentUser(), permissions);
 
          taskExecutor.submitTask(task);
       }

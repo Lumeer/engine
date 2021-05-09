@@ -31,7 +31,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.CollectionUtil;
-import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.util.Tuple;
@@ -97,8 +97,8 @@ public class DocumentMatcher {
    }
 
    private void initializePermissions() {
-      final boolean isManager = PermissionsChecker.isManager(
-            ruleTask.getInitiator(),
+      final boolean isManager = ResourceUtils.userIsManagerInWorkspace(
+            ruleTask.getInitiator().getId(),
             ruleTask.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().orElse(null),
             ruleTask.getDaoContextSnapshot().getSelectedWorkspace().getProject().orElse(null)
       );

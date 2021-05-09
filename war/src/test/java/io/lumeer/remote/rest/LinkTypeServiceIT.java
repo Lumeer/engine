@@ -247,19 +247,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       });
       assertThat(linkTypes).extracting("id").containsOnly(id1, id2, id3, id4, linkTypeIdFromView);
 
-      // test fromViews
-      response = client.target(linkTypesUrl)
-                       .queryParam("fromViews", true)
-                       .request(MediaType.APPLICATION_JSON)
-                       .buildGet().invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      linkTypes = response.readEntity(new GenericType<List<LinkType>>() {
-      });
-      assertThat(linkTypes).extracting("id").containsOnly(id1, id2, id3, id4, linkTypeIdFromView);
-
    }
 
    private LinkType prepareLinkType() {

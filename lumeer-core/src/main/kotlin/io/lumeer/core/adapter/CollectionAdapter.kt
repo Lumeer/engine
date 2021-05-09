@@ -19,11 +19,9 @@
 package io.lumeer.core.adapter
 
 import io.lumeer.api.model.Collection
-import io.lumeer.storage.api.dao.DocumentDao
-import io.lumeer.storage.api.dao.FavoriteItemDao
-import java.util.function.BinaryOperator
+import io.lumeer.storage.api.dao.*
 
-class CollectionAdapter(val favoriteItemDao: FavoriteItemDao, val documentDao: DocumentDao) {
+class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: FavoriteItemDao, val documentDao: DocumentDao) {
 
    fun getFavoriteCollectionIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteCollectionIds(userId, projectId)
 
@@ -46,7 +44,7 @@ class CollectionAdapter(val favoriteItemDao: FavoriteItemDao, val documentDao: D
 
       return collections.onEach {
          it.isFavorite = favoriteCollectionIds.contains(it.id)
-         it.documentsCount = documentsCounts.get(it.id)?.or(0)
+         it.documentsCount = documentsCounts[it.id]?.or(0)
       }
    }
 
