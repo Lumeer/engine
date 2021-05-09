@@ -23,6 +23,7 @@ import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.storage.api.dao.UserDao;
 
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -45,6 +46,23 @@ public class UserCache {
 
    public User getUser(String email) {
       return userCache.computeIfAbsent(email, userDao::getUserByEmail);
+   }
+
+   public User getUserById(String id) {
+      final Optional<User> maybeUser = userCache.stream().filter(u -> id.equals(u.getId())).findFirst();
+
+      if (maybeUser.isEmpty()) {
+         final User u = userDao.getUserById(id);
+
+         if (u != null) {
+            updateUser(u.getEmail(), u);
+            return u;
+         }
+      } else {
+         return maybeUser.get();
+      }
+
+      return null;
    }
 
    public void updateUser(String username, User user) {

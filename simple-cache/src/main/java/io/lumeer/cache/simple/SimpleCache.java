@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class SimpleCache<T> implements Cache<T> {
 
@@ -78,5 +79,9 @@ public class SimpleCache<T> implements Cache<T> {
    public void clear() {
       cache.clear();
       locks.clear();
+   }
+
+   public Stream<T> stream() {
+      return cache.values().stream();
    }
 }

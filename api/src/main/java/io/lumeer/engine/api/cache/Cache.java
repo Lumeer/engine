@@ -19,6 +19,7 @@
 package io.lumeer.engine.api.cache;
 
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Cache of values of given type. It is possible to lock on particular cache entry.
@@ -125,4 +126,10 @@ public interface Cache<T> {
     * Clears the cache including all locks.
     */
    void clear();
+
+   /**
+    * Gets the value stream.
+    * @return Stream of values.
+    */
+   Stream<T> stream();
 }

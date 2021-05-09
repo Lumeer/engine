@@ -1024,14 +1024,6 @@ public class PusherFacade extends AbstractFacade {
       return mapResource(resource.copy(), userId);
    }
 
-   private static Set<String> intersection(Set<Set<String>> sets) {
-      return sets.stream().map(HashSet::new).reduce(
-            (s1, s2) -> {
-               s1.retainAll(s2);
-               return s1;
-            }).orElse(new HashSet<>());
-   }
-
    public static final class ResourceId {
       private final String id;
       private final String organizationId;

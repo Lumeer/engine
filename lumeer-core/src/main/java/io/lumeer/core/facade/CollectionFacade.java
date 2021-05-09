@@ -240,7 +240,7 @@ public class CollectionFacade extends AbstractFacade {
       checkProjectRole(Role.READ);
       return mapCollectionsData(resourceAdapter.getCollections(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
                                                .stream()
-                                               .map(this::mapResource)
+                                               .map(r -> mapResource(r))
                                                .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
                                                .collect(Collectors.toList()));
    }

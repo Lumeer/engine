@@ -302,7 +302,7 @@ public class PermissionsChecker {
    }
 
    public static boolean hasRole(final Organization organization, final Project project, final Resource resource, final Role role, final User user) {
-      return isManager(user, organization, project) || hasRoleInResource(organization, resource, role, user);
+      return ResourceUtils.userIsManagerInWorkspace(user.getId(), organization, project) || hasRoleInResource(organization, resource, role, user);
    }
 
    private boolean hasRoleInResource(Resource resource, Role role) {
@@ -416,7 +416,15 @@ public class PermissionsChecker {
       return getActualRolesInResource(resource, userId);
    }
 
-   private Set<Role> getAllRoles(final Resource resource) {
+   public static Set<Role> getActualRoles(final Organization organization, final Project project, final Resource resource, final User user) {
+      if (ResourceUtils.userIsManagerInWorkspace(user.getId(), organization, project)) {
+         return getAllRoles(resource);
+      }
+
+      return getActualRolesInResource(organization, resource, user);
+   }
+
+   private static Set<Role> getAllRoles(final Resource resource) {
       return ResourceUtils.getAllResourceRoles(resource);
    }
 
