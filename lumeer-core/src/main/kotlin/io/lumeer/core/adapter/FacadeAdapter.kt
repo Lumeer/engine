@@ -22,21 +22,18 @@ import io.lumeer.api.model.*
 import io.lumeer.api.model.common.Resource
 import io.lumeer.api.util.ResourceUtils
 import io.lumeer.core.auth.PermissionsChecker
-import java.util.stream.Collectors
 
 class FacadeAdapter(private val organization: Organization?, private val project: Project?) {
 
-   fun <T : Resource> getResourceManagers(resource: T): Set<String> {
-      return when (resource) {
-         is Organization -> {
-            ResourceUtils.getOrganizationManagers(resource)
-         }
-         is Project -> {
-            ResourceUtils.getProjectManagers(organization, resource)
-         }
-         else -> {
-            ResourceUtils.getResourceManagers(organization, project, resource)
-         }
+   fun <T : Resource> getResourceManagers(resource: T): Set<String> = when (resource) {
+      is Organization -> {
+         ResourceUtils.getOrganizationManagers(resource)
+      }
+      is Project -> {
+         ResourceUtils.getProjectManagers(organization, resource)
+      }
+      else -> {
+         ResourceUtils.getResourceManagers(organization, project, resource)
       }
    }
 
@@ -47,10 +44,8 @@ class FacadeAdapter(private val organization: Organization?, private val project
    }
 
    fun <T : Resource> keepStoredPermissions(resource: T, storedPermissions: Permissions) {
-      val userPermissions = storedPermissions.userPermissions
-      resource.permissions.updateUserPermissions(userPermissions)
-      val groupPermissions = storedPermissions.groupPermissions
-      resource.permissions.updateGroupPermissions(groupPermissions)
+      resource.permissions.updateUserPermissions(storedPermissions.userPermissions)
+      resource.permissions.updateGroupPermissions(storedPermissions.groupPermissions)
    }
 
    fun <T : Resource> keepUnmodifiableFields(destinationResource: T, originalResource: T) {
@@ -59,11 +54,7 @@ class FacadeAdapter(private val organization: Organization?, private val project
 
    fun <T : Resource> setupPublicPermissions(resource: T, userId: String): T {
       val userPermission = Permission(userId, HashSet())
-      val currentUserPermission = resource.permissions.userPermissions
-            .stream()
-            .filter { permission: Permission -> permission.id == userId }
-            .findFirst()
-            .orElse(userPermission)
+      val currentUserPermission = resource.permissions.userPermissions.first { it.id == userId } ?: userPermission
       resource.permissions.clear()
       currentUserPermission.roles.add(Role.READ)
       resource.permissions.addUserPermissions(setOf(currentUserPermission))
@@ -71,22 +62,20 @@ class FacadeAdapter(private val organization: Organization?, private val project
    }
 
    private fun <T : Resource> keepOnlyActualUserRoles(resource: T, user: User): T {
-      val roles: Set<Role> = PermissionsChecker.getActualRoles(organization, project, resource, user)
+      val roles = PermissionsChecker.getActualRoles(organization, project, resource, user)
       val permission = Permission.buildWithRoles(user.id, roles)
-      val managers: Set<String> = getResourceManagers(resource)
-      val keepReadRights: Boolean = keepReadRights(resource)
-      val managersUserPermission = resource.permissions.userPermissions.stream()
+      val managers = getResourceManagers(resource)
+      val keepReadRights = keepReadRights(resource)
+      val managersUserPermission = resource.permissions.userPermissions
             .map { perm: Permission ->
                if (keepReadRights) {
-                  if (managers.contains(perm.id)) {
-                     return@map perm
-                  }
-                  return@map Permission.buildWithRoles(perm.id, java.util.Set.of(Role.READ))
-               }
-               perm
+                  if (managers.contains(perm.id)) perm
+                  else Permission.buildWithRoles(perm.id, java.util.Set.of(Role.READ))
+               } else perm
             }
-            .filter { perm: Permission -> keepReadRights || managers.contains(perm.id) }
-            .collect(Collectors.toSet())
+            .filter { keepReadRights || managers.contains(it.id) }
+            .toSet()
+
       resource.permissions.clear()
       resource.permissions.updateUserPermissions(managersUserPermission)
       resource.permissions.updateUserPermissions(permission)

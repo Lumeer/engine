@@ -19,17 +19,28 @@
 package io.lumeer.core.adapter
 
 import io.lumeer.api.model.*
+import io.lumeer.api.model.Collection
 import io.lumeer.api.model.common.Resource
 import io.lumeer.api.util.ResourceUtils
 import io.lumeer.core.facade.PusherFacade
 import io.lumeer.core.facade.PusherFacade.ObjectWithParent
 import io.lumeer.core.facade.PusherFacade.ResourceId
+import io.lumeer.core.util.QueryUtils
+import io.lumeer.storage.api.dao.CollectionDao
+import io.lumeer.storage.api.dao.LinkTypeDao
+import io.lumeer.storage.api.dao.ViewDao
 import org.marvec.pusher.data.BackupDataEvent
 import org.marvec.pusher.data.Event
 
-class PusherAdapter(private val facadeAdapter: FacadeAdapter) {
+class PusherAdapter(
+      private val facadeAdapter: FacadeAdapter,
+      private val permissionAdapter: PermissionAdapter,
+      private val viewDao: ViewDao,
+      private val linkTypeDao: LinkTypeDao,
+      private val collectionDao: CollectionDao,
+) {
 
-   fun checkViewPermissionsChange(organization: Organization, project: Project, user: User, originalView: View, updatedView: View) {
+   fun checkViewPermissionsChange(organization: Organization, project: Project, user: User, originalView: View, updatedView: View): List<Event> {
       val projectManagers = ResourceUtils.getProjectManagers(organization, project)
       val removedUsers = ResourceUtils.getRemovedPermissions(originalView, updatedView)
       removedUsers.removeAll(projectManagers)
@@ -40,11 +51,114 @@ class PusherAdapter(private val facadeAdapter: FacadeAdapter) {
       addedUsers.remove(user.id)
 
       if (removedUsers.isEmpty() && addedUsers.isEmpty()) {
-         return
+         return listOf()
       }
 
-      TODO("Complete method")
+      val views = viewDao.allViews
+      val viewsWithoutUpdated = views.filter {  it.id != updatedView.id }
+      val allCollections = collectionDao.allCollections
+      val allLinkTypes = linkTypeDao.allLinkTypes
+      val linkTypeIds = updatedView.query.linkTypeIds
+      val linkTypesInView = allLinkTypes.filter {  linkTypeIds.contains(it.id) }
+      val collectionIds = QueryUtils.getQueryCollectionIds(updatedView.query, linkTypesInView)
+      val collectionsInView = allCollections.filter { collectionIds.contains(it.id) }
 
+      val notifications: MutableList<Event> = ArrayList()
+
+      if (removedUsers.size > 0) {
+         removedUsers.forEach { notifications.add(createEventForResource(organization.id, project.id, updatedView, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(it))) }
+         if (collectionsInView.isNotEmpty()) {
+            collectionsInView.forEach { notifications.addAll(createRemoveCollectionNotification(organization, project, it, removedUsers, views, linkTypesInView)) }
+         }
+         if (linkTypesInView.isNotEmpty()) {
+            notifications.addAll(createRemoveCollectionLinkTypesNotification(organization, project, linkTypesInView, allCollections, removedUsers, viewsWithoutUpdated))
+         }
+      }
+
+      for (userId in addedUsers) {
+         val linkTypesByUser = filterNewLinkTypesForUser(userId, linkTypesInView, viewsWithoutUpdated, allLinkTypes, allCollections)
+         notifications.addAll(linkTypesByUser
+               .map { createEventForWorkspaceObject(organization.id, project.id, it, it.id, PusherFacade.UPDATE_EVENT_SUFFIX, userId) })
+
+         val collectionsByUser = filterNewCollectionsForUser(userId, collectionsInView, viewsWithoutUpdated, allLinkTypes)
+         notifications.addAll(collectionsByUser
+               .map { createEventForObjectWithParent(ObjectWithParent(it, organization.id, project.id),
+                        getResourceId(organization.id, project.id, it),
+                        PusherFacade.UPDATE_EVENT_SUFFIX, userId)
+               })
+      }
+
+      return notifications
+   }
+
+   private fun createRemoveCollectionNotification(organization: Organization, project: Project, collection: Collection, userIds: Set<String>, views: List<View>, linkTypes: List<LinkType>): List<Event> {
+      val notifications = mutableListOf<Event>()
+      val usersWithRights = ResourceUtils.getReaders(collection)
+      for (userId in userIds) { // checks if user has collection in some view
+         if (usersWithRights.contains(userId)) {
+            continue
+         }
+         val viewsByUser = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+         val collectionIdsInViews = viewsByUser.flatMap { QueryUtils.getQueryCollectionIds(it.query, linkTypes) }
+         if (!collectionIdsInViews.contains(collection.id)) {
+            notifications.add(createEventForResource(organization.id, project.id, collection, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(userId)))
+         }
+      }
+      return notifications
+   }
+
+   private fun createRemoveCollectionLinkTypesNotification(organization: Organization, project: Project, linkTypes: List<LinkType>, collections: List<Collection>, userIds: Set<String>, views: List<View>): List<Event> {
+      val notifications = mutableListOf<Event>()
+      for (userId in userIds) {
+         filterLinkTypesNotInViews(linkTypes, collections, views, userId, true).forEach {
+            notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(it.id, organization.id, project.id), userId))
+         }
+      }
+      return notifications
+   }
+
+   private fun filterLinkTypesNotInViews(linkTypes: List<LinkType>, collections: List<Collection>, views: List<View>, userId: String, includeReadableCollections: Boolean): List<LinkType> {
+      val viewsByUser = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+      val linkTypeIdsInViews = viewsByUser.flatMap { it.query.linkTypeIds }
+      if (includeReadableCollections) {
+         val readableCollectionsIds = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, userId)
+         return linkTypes.filter { !linkTypeIdsInViews.contains(it.id) && !readableCollectionsIds.containsAll(it.collectionIds)}
+      }
+      return linkTypes.filter { !linkTypeIdsInViews.contains(it.id) }
+   }
+
+   private fun filterNewCollectionsForUser(userId: String, possibleCollections: List<Collection>, views: List<View>, linkTypes: List<LinkType>): List<Collection> {
+      val collectionIdsInViews = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+            .flatMap {QueryUtils.getQueryCollectionIds(it.query, linkTypes) }
+
+      return possibleCollections.filter { !permissionAdapter.hasRole(it, Role.READ, userId) && !collectionIdsInViews.contains(it.id) }
+   }
+
+   private fun filterNewLinkTypesForUser(userId: String, possibleLinkTypes: List<LinkType>, views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>): List<LinkType> {
+      val linkTypeIdsInViews = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+            .flatMap { it.query.linkTypeIds }
+      val collectionMap = collections.associateBy { it.id }
+      val newLinkTypes = possibleLinkTypes
+            .filter { !permissionAdapter.hasLinkTypeRole(it, collectionMap, Role.READ, userId) && !linkTypeIdsInViews.contains(it.id) }
+            .toMutableList()
+      newLinkTypes.addAll(linkTypesByViewReadPermission(userId, views, collections, linkTypes))
+      return newLinkTypes
+   }
+
+   private fun linkTypesByViewReadPermission(userId: String, views: List<View>, collections: List<Collection>, linkTypes: List<LinkType>): List<LinkType> {
+      val viewsByUser = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+      val collectionsIdsByViews = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, userId)
+      val linkTypesByViews = linkTypes.filter { collectionsIdsByViews.containsAll(it.collectionIds) }.toMutableList()
+      val collectionsIdsByViewsWithoutCurrent = filterViewsReadableCollectionsIds(views, linkTypes, collections, userId)
+      val linkTypesByViewsWithoutCurrent = linkTypes.filter { collectionsIdsByViewsWithoutCurrent.containsAll(it.collectionIds) }
+      linkTypesByViews.removeAll(linkTypesByViewsWithoutCurrent)
+      return linkTypesByViews
+   }
+
+   private fun filterViewsReadableCollectionsIds(views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>, userId: String): Set<String> {
+      val readableCollectionsIds = QueryUtils.getViewsCollectionIds(views, linkTypes)
+      readableCollectionsIds.addAll(collections.filter { permissionAdapter.hasRole(it, Role.READ, userId) }.map {  it.id })
+      return readableCollectionsIds
    }
 
    private fun createEvent(organizationId: String, projectId: String, any: Any, event: String, user: User): Event {
@@ -94,7 +208,7 @@ class PusherAdapter(private val facadeAdapter: FacadeAdapter) {
    private fun createEventForResource(organizationId: String, projectId: String, resource: Resource, event: String, user: User): Event {
       return if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
          createEventForRemove(resource.javaClass.simpleName, getResourceId(organizationId, projectId, resource), user.id)
-      } else createEventForObject(filterUserRoles<Resource>(user, resource), getResourceId(organizationId, projectId, resource), event, user.id)
+      } else createEventForObject(filterUserRoles(user, resource), getResourceId(organizationId, projectId, resource), event, user.id)
    }
 
    private fun createEventForObject(any: Any, event: String, userId: String): Event {
