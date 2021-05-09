@@ -35,7 +35,7 @@ public class Rule implements HealthChecking {
    public static final String CONFIGURATION = "configuration";
 
    public enum RuleType {
-      AUTO_LINK, BLOCKLY, ZAPIER, CRON
+      AUTO_LINK, BLOCKLY, ZAPIER, CRON, WIZARD
    }
 
    public enum RuleTiming {
