@@ -29,6 +29,7 @@ import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
+import io.lumeer.core.util.Tuple;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class ChangesTracker {
    private final List<GenericPrintRequest> printRequests = new ArrayList<>();
    private final List<NavigationRequest> navigationRequests = new ArrayList<>();
    private final List<SendEmailRequest> sendEmailRequests = new ArrayList<>();
-   private final Set<View> updatedViews = new HashSet<>();
+   private final Set<Tuple<View, View>> updatedViews = new HashSet<>();
 
    final Map<String, Collection> collectionsMap = new HashMap<>();
    final Map<String, LinkType> linkTypesMap = new HashMap<>();
@@ -67,7 +68,7 @@ public class ChangesTracker {
          final Set<LinkInstance> removedLinkInstances, final Set<String> sequences,
          final List<UserMessageRequest> userMessageRequests, final List<GenericPrintRequest> printRequests,
          final List<NavigationRequest> navigationRequests, final List<SendEmailRequest> sendEmailRequests,
-         final Set<View> updatedViews,
+         final Set<Tuple<View, View>> updatedViews,
          final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
          this.collections.removeAll(collections);
@@ -216,7 +217,7 @@ public class ChangesTracker {
       return sendEmailRequests;
    }
 
-   public Set<View> getUpdatedViews() {
+   public Set<Tuple<View, View>> getUpdatedViews() {
       return updatedViews;
    }
 
@@ -272,7 +273,7 @@ public class ChangesTracker {
       this.sendEmailRequests.addAll(sendEmailRequests);
    }
 
-   public void addUpdatedViews(final java.util.Collection<View> updatedViews) {
+   public void addUpdatedViews(final java.util.Collection<Tuple<View, View>> updatedViews) {
       this.updatedViews.addAll(updatedViews);
    }
 

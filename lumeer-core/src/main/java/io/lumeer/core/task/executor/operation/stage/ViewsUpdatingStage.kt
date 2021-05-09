@@ -22,6 +22,7 @@ import io.lumeer.api.model.Permission
 import io.lumeer.core.task.executor.ChangesTracker
 import io.lumeer.core.task.executor.operation.OperationExecutor
 import io.lumeer.core.task.executor.operation.ViewPermissionsOperation
+import io.lumeer.core.util.Tuple
 import io.lumeer.core.util.Utils
 
 class ViewsUpdatingStage(executor: OperationExecutor) : Stage(executor) {
@@ -37,14 +38,14 @@ class ViewsUpdatingStage(executor: OperationExecutor) : Stage(executor) {
 
          viewUpdates.keys.forEach { key ->
             viewUpdates[key]?.takeIf { list -> list.isNotEmpty() }?.let { list ->
-               list[0].entity
-            }.takeIf { view -> view != null }?.let { view ->
+               Tuple(list[0].originalView, list[0].entity)
+            }.takeIf { viewTuple -> viewTuple?.first != null && viewTuple?.second != null }?.let { viewTuple ->
                viewUpdates[key]?.forEach { update ->
-                  view.permissions.updateUserPermissions(setOf(Permission.buildWithRoles(update.userId, update.roles)))
+                  viewTuple.second.permissions.updateUserPermissions(setOf(Permission.buildWithRoles(update.userId, update.roles)))
                }
 
-               task.daoContextSnapshot.viewDao.updateView(view.id, view)
-               changesTracker.addUpdatedViews(mutableSetOf(view))
+               task.daoContextSnapshot.viewDao.updateView(viewTuple.first.id, viewTuple.second)
+               changesTracker.addUpdatedViews(mutableSetOf(viewTuple))
             }
          }
 

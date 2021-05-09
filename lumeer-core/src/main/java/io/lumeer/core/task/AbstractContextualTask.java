@@ -554,7 +554,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
          }
 
          if (changesTracker.getUpdatedViews().size() > 0) {
-            changesTracker.getUpdatedViews().forEach(view -> sendPushNotifications(view, PusherFacade.UPDATE_EVENT_SUFFIX));
+            changesTracker.getUpdatedViews().forEach(viewTuple -> sendPushNotifications(viewTuple.getSecond(), PusherFacade.UPDATE_EVENT_SUFFIX));
          }
       }
    }
