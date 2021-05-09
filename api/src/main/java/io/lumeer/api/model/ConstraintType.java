@@ -39,5 +39,6 @@ public enum ConstraintType {
    User,
    Color,
    Duration,
+   View,
    None,
 }
