@@ -67,7 +67,7 @@ class PusherAdapter(
       if (removedUsers.size > 0) {
          removedUsers.forEach { notifications.add(createEventForResource(organization, project, updatedView, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(it))) }
          if (collectionsInView.isNotEmpty()) {
-            collectionsInView.forEach { notifications.addAll(createRemoveCollectionNotification(organization, project, it, removedUsers, views, linkTypesInView)) }
+            collectionsInView.forEach { notifications.addAll(createRemoveCollectionNotification(organization, project, it, removedUsers, views, allLinkTypes)) }
          }
          if (linkTypesInView.isNotEmpty()) {
             notifications.addAll(createRemoveCollectionLinkTypesNotification(organization, project, linkTypesInView, allCollections, removedUsers, viewsWithoutUpdated))
