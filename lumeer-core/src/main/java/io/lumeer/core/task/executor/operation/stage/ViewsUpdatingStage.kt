@@ -44,8 +44,8 @@ class ViewsUpdatingStage(executor: OperationExecutor) : Stage(executor) {
                   viewTuple.second.permissions.updateUserPermissions(setOf(Permission.buildWithRoles(update.userId, update.roles)))
                }
 
-               task.daoContextSnapshot.viewDao.updateView(viewTuple.first.id, viewTuple.second)
-               changesTracker.addUpdatedViews(mutableSetOf(viewTuple))
+               val updatedView = task.daoContextSnapshot.viewDao.updateView(viewTuple.first.id, viewTuple.second)
+               changesTracker.addUpdatedViews(mutableSetOf(Tuple(viewTuple.first, updatedView)))
             }
          }
 
