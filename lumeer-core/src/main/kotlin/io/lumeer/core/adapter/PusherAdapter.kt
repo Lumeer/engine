@@ -40,7 +40,7 @@ class PusherAdapter(
       private val collectionDao: CollectionDao,
 ) {
 
-   fun checkViewPermissionsChange(organization: Organization, project: Project, user: User, originalView: View, updatedView: View): List<Event> {
+   fun checkViewPermissionsChange(organization: Organization?, project: Project?, user: User, originalView: View, updatedView: View): List<Event> {
       val projectManagers = ResourceUtils.getProjectManagers(organization, project)
       val removedUsers = ResourceUtils.getRemovedPermissions(originalView, updatedView)
       removedUsers.removeAll(projectManagers)
@@ -62,11 +62,10 @@ class PusherAdapter(
       val linkTypesInView = allLinkTypes.filter {  linkTypeIds.contains(it.id) }
       val collectionIds = QueryUtils.getQueryCollectionIds(updatedView.query, linkTypesInView)
       val collectionsInView = allCollections.filter { collectionIds.contains(it.id) }
-
       val notifications: MutableList<Event> = ArrayList()
 
       if (removedUsers.size > 0) {
-         removedUsers.forEach { notifications.add(createEventForResource(organization.id, project.id, updatedView, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(it))) }
+         removedUsers.forEach { notifications.add(createEventForResource(organization, project, updatedView, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(it))) }
          if (collectionsInView.isNotEmpty()) {
             collectionsInView.forEach { notifications.addAll(createRemoveCollectionNotification(organization, project, it, removedUsers, views, linkTypesInView)) }
          }
@@ -76,14 +75,14 @@ class PusherAdapter(
       }
 
       for (userId in addedUsers) {
-         val linkTypesByUser = filterNewLinkTypesForUser(userId, linkTypesInView, viewsWithoutUpdated, allLinkTypes, allCollections)
+         val linkTypesByUser = filterNewLinkTypesForUser(organization, project, userId, linkTypesInView, viewsWithoutUpdated, allLinkTypes, allCollections)
          notifications.addAll(linkTypesByUser
-               .map { createEventForWorkspaceObject(organization.id, project.id, it, it.id, PusherFacade.UPDATE_EVENT_SUFFIX, userId) })
+               .map { createEventForWorkspaceObject(organization, project, it, it.id, PusherFacade.UPDATE_EVENT_SUFFIX, userId) })
 
-         val collectionsByUser = filterNewCollectionsForUser(userId, collectionsInView, viewsWithoutUpdated, allLinkTypes)
+         val collectionsByUser = filterNewCollectionsForUser(organization, project, userId, collectionsInView, viewsWithoutUpdated, allLinkTypes)
          notifications.addAll(collectionsByUser
-               .map { createEventForObjectWithParent(ObjectWithParent(it, organization.id, project.id),
-                        getResourceId(organization.id, project.id, it),
+               .map { createEventForObjectWithParent(ObjectWithParent(it, organization?.id.orEmpty(), project?.id.orEmpty()),
+                        getResourceId(organization, project, it),
                         PusherFacade.UPDATE_EVENT_SUFFIX, userId)
                })
       }
@@ -91,90 +90,90 @@ class PusherAdapter(
       return notifications
    }
 
-   private fun createRemoveCollectionNotification(organization: Organization, project: Project, collection: Collection, userIds: Set<String>, views: List<View>, linkTypes: List<LinkType>): List<Event> {
+   private fun createRemoveCollectionNotification(organization: Organization?, project: Project?, collection: Collection, userIds: Set<String>, views: List<View>, linkTypes: List<LinkType>): List<Event> {
       val notifications = mutableListOf<Event>()
       val usersWithRights = ResourceUtils.getReaders(collection)
       for (userId in userIds) { // checks if user has collection in some view
          if (usersWithRights.contains(userId)) {
             continue
          }
-         val viewsByUser = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+         val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
          val collectionIdsInViews = viewsByUser.flatMap { QueryUtils.getQueryCollectionIds(it.query, linkTypes) }
          if (!collectionIdsInViews.contains(collection.id)) {
-            notifications.add(createEventForResource(organization.id, project.id, collection, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(userId)))
+            notifications.add(createEventForResource(organization, project, collection, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(userId)))
          }
       }
       return notifications
    }
 
-   private fun createRemoveCollectionLinkTypesNotification(organization: Organization, project: Project, linkTypes: List<LinkType>, collections: List<Collection>, userIds: Set<String>, views: List<View>): List<Event> {
+   private fun createRemoveCollectionLinkTypesNotification(organization: Organization?, project: Project?, linkTypes: List<LinkType>, collections: List<Collection>, userIds: Set<String>, views: List<View>): List<Event> {
       val notifications = mutableListOf<Event>()
       for (userId in userIds) {
-         filterLinkTypesNotInViews(linkTypes, collections, views, userId, true).forEach {
-            notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(it.id, organization.id, project.id), userId))
+         filterLinkTypesNotInViews(organization, project, linkTypes, collections, views, userId, true).forEach {
+            notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(it.id, organization?.id.orEmpty(), project?.id.orEmpty()), userId))
          }
       }
       return notifications
    }
 
-   private fun filterLinkTypesNotInViews(linkTypes: List<LinkType>, collections: List<Collection>, views: List<View>, userId: String, includeReadableCollections: Boolean): List<LinkType> {
-      val viewsByUser = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+   private fun filterLinkTypesNotInViews(organization: Organization?, project: Project?, linkTypes: List<LinkType>, collections: List<Collection>, views: List<View>, userId: String, includeReadableCollections: Boolean): List<LinkType> {
+      val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
       val linkTypeIdsInViews = viewsByUser.flatMap { it.query.linkTypeIds }
       if (includeReadableCollections) {
-         val readableCollectionsIds = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, userId)
+         val readableCollectionsIds = filterViewsReadableCollectionsIds(organization, project, viewsByUser, linkTypes, collections, userId)
          return linkTypes.filter { !linkTypeIdsInViews.contains(it.id) && !readableCollectionsIds.containsAll(it.collectionIds)}
       }
       return linkTypes.filter { !linkTypeIdsInViews.contains(it.id) }
    }
 
-   private fun filterNewCollectionsForUser(userId: String, possibleCollections: List<Collection>, views: List<View>, linkTypes: List<LinkType>): List<Collection> {
-      val collectionIdsInViews = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+   private fun filterNewCollectionsForUser(organization: Organization?, project: Project?, userId: String, possibleCollections: List<Collection>, views: List<View>, linkTypes: List<LinkType>): List<Collection> {
+      val collectionIdsInViews = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
             .flatMap {QueryUtils.getQueryCollectionIds(it.query, linkTypes) }
 
-      return possibleCollections.filter { !permissionAdapter.hasRole(it, Role.READ, userId) && !collectionIdsInViews.contains(it.id) }
+      return possibleCollections.filter { !permissionAdapter.hasRole(organization, project, it, Role.READ, userId) && !collectionIdsInViews.contains(it.id) }
    }
 
-   private fun filterNewLinkTypesForUser(userId: String, possibleLinkTypes: List<LinkType>, views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>): List<LinkType> {
-      val linkTypeIdsInViews = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
+   private fun filterNewLinkTypesForUser(organization: Organization?, project: Project?, userId: String, possibleLinkTypes: List<LinkType>, views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>): List<LinkType> {
+      val linkTypeIdsInViews = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
             .flatMap { it.query.linkTypeIds }
       val collectionMap = collections.associateBy { it.id }
       val newLinkTypes = possibleLinkTypes
-            .filter { !permissionAdapter.hasLinkTypeRole(it, collectionMap, Role.READ, userId) && !linkTypeIdsInViews.contains(it.id) }
+            .filter { !permissionAdapter.hasLinkTypeRole(organization, project, it, collectionMap, Role.READ, userId) && !linkTypeIdsInViews.contains(it.id) }
             .toMutableList()
-      newLinkTypes.addAll(linkTypesByViewReadPermission(userId, views, collections, linkTypes))
+      newLinkTypes.addAll(linkTypesByViewReadPermission(organization, project, userId, views, collections, linkTypes))
       return newLinkTypes
    }
 
-   private fun linkTypesByViewReadPermission(userId: String, views: List<View>, collections: List<Collection>, linkTypes: List<LinkType>): List<LinkType> {
-      val viewsByUser = views.filter { permissionAdapter.hasRole(it, Role.READ, userId) }
-      val collectionsIdsByViews = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, userId)
+   private fun linkTypesByViewReadPermission(organization: Organization?, project: Project?, userId: String, views: List<View>, collections: List<Collection>, linkTypes: List<LinkType>): List<LinkType> {
+      val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
+      val collectionsIdsByViews = filterViewsReadableCollectionsIds(organization, project, viewsByUser, linkTypes, collections, userId)
       val linkTypesByViews = linkTypes.filter { collectionsIdsByViews.containsAll(it.collectionIds) }.toMutableList()
-      val collectionsIdsByViewsWithoutCurrent = filterViewsReadableCollectionsIds(views, linkTypes, collections, userId)
+      val collectionsIdsByViewsWithoutCurrent = filterViewsReadableCollectionsIds(organization, project, views, linkTypes, collections, userId)
       val linkTypesByViewsWithoutCurrent = linkTypes.filter { collectionsIdsByViewsWithoutCurrent.containsAll(it.collectionIds) }
       linkTypesByViews.removeAll(linkTypesByViewsWithoutCurrent)
       return linkTypesByViews
    }
 
-   private fun filterViewsReadableCollectionsIds(views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>, userId: String): Set<String> {
+   private fun filterViewsReadableCollectionsIds(organization: Organization?, project: Project?, views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>, userId: String): Set<String> {
       val readableCollectionsIds = QueryUtils.getViewsCollectionIds(views, linkTypes)
-      readableCollectionsIds.addAll(collections.filter { permissionAdapter.hasRole(it, Role.READ, userId) }.map {  it.id })
+      readableCollectionsIds.addAll(collections.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }.map {  it.id })
       return readableCollectionsIds
    }
 
-   private fun createEvent(organizationId: String, projectId: String, any: Any, event: String, user: User): Event {
+   private fun createEvent(organization: Organization?, project: Project?, any: Any, event: String, user: User): Event {
       return if (any is Document) {
-         createEventForWorkspaceObject(organizationId, projectId, any, any.id, event, user.id)
+         createEventForWorkspaceObject(organization, project, any, any.id, event, user.id)
       } else if (any is LinkType) {
-         createEventForWorkspaceObject(organizationId, projectId, any, any.id, event, user.id)
+         createEventForWorkspaceObject(organization, project, any, any.id, event, user.id)
       } else if (any is LinkInstance) {
-         createEventForWorkspaceObject(organizationId, projectId, any, any.id, event, user.id)
+         createEventForWorkspaceObject(organization, project, any, any.id, event, user.id)
       } else if (any is Resource) {
-         createEventForResource(organizationId, projectId, any, event, user)
+         createEventForResource(organization, project, any, event, user)
       } else if (any is ResourceComment) {
-         createEventForWorkspaceObject(organizationId, projectId, any, any.id, event, user.id)
+         createEventForWorkspaceObject(organization, project, any, any.id, event, user.id)
       } else if (any is ObjectWithParent) {
          if (any.`object` is Resource) {
-            createEventForNestedResource(organizationId, projectId, any, event, user)
+            createEventForNestedResource(organization, project, any, event, user)
          } else {
             createEventForObjectWithParent(any, event, user.id)
          }
@@ -183,19 +182,24 @@ class PusherAdapter(
       }
    }
 
-   private fun createEventForWorkspaceObject(organizationId: String, projectId: String, any: Any, id: String, event: String, userId: String): Event {
+   private fun createEventForWorkspaceObject(organization: Organization?, project: Project?, any: Any, id: String, event: String, userId: String): Event {
+      val organizationId = organization?.id.orEmpty()
+      val projectId = project?.id.orEmpty()
       if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
          return createEventForRemove(any.javaClass.simpleName, ResourceId(id, organizationId, projectId), userId)
       }
       val normalMessage = ObjectWithParent(any, organizationId, projectId)
-      var extraId: String? = null
-      if (any is Document) {
-         extraId = any.collectionId
-      } else if (any is LinkInstance) {
-         extraId = any.linkTypeId
-      } else if (any is ResourceComment) {
-         val comment = any
-         extraId = comment.resourceType.toString() + '/' + comment.resourceId
+      val extraId = when (any) {
+         is Document -> {
+            any.collectionId
+         }
+         is LinkInstance -> {
+            any.linkTypeId
+         }
+         is ResourceComment -> {
+            any.resourceType.toString() + '/' + any.resourceId
+         }
+         else -> null
       }
       val alternateMessage = ResourceId(id, organizationId, projectId, extraId)
       return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId)
@@ -205,10 +209,10 @@ class PusherAdapter(
       return Event(PusherFacade.eventChannel(userId), className + PusherFacade.REMOVE_EVENT_SUFFIX, any, null)
    }
 
-   private fun createEventForResource(organizationId: String, projectId: String, resource: Resource, event: String, user: User): Event {
+   private fun createEventForResource(organization: Organization?, project: Project?, resource: Resource, event: String, user: User): Event {
       return if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
-         createEventForRemove(resource.javaClass.simpleName, getResourceId(organizationId, projectId, resource), user.id)
-      } else createEventForObject(filterUserRoles(user, resource), getResourceId(organizationId, projectId, resource), event, user.id)
+         createEventForRemove(resource.javaClass.simpleName, getResourceId(organization, project, resource), user.id)
+      } else createEventForObject(filterUserRoles(organization, project, user, resource), getResourceId(organization, project, resource), event, user.id)
    }
 
    private fun createEventForObject(any: Any, event: String, userId: String): Event {
@@ -219,15 +223,15 @@ class PusherAdapter(
       return BackupDataEvent(eventChannel(userId), `object`.javaClass.simpleName + event, `object`, backupObject, null)
    }
 
-   private fun createEventForNestedResource(organizationId: String, projectId: String, objectWithParent: ObjectWithParent, event: String, user: User): Event {
+   private fun createEventForNestedResource(organization: Organization?, project: Project?, objectWithParent: ObjectWithParent, event: String, user: User): Event {
       val resource = objectWithParent.`object` as Resource
       if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
-         return createEventForRemove(resource.javaClass.simpleName, getResourceId(organizationId, projectId, resource), user.id)
+         return createEventForRemove(resource.javaClass.simpleName, getResourceId(organization, project, resource), user.id)
       }
-      val filteredResource: Resource = filterUserRoles<Resource>(user, resource)
+      val filteredResource = filterUserRoles(organization, project, user, resource)
       val newObjectWithParent = ObjectWithParent(filteredResource, objectWithParent.organizationId, objectWithParent.projectId)
       newObjectWithParent.correlationId = objectWithParent.correlationId
-      return createEventForObjectWithParent(newObjectWithParent, getResourceId(organizationId, projectId, resource), event, user.id)
+      return createEventForObjectWithParent(newObjectWithParent, getResourceId(organization, project, resource), event, user.id)
    }
 
    private fun createEventForObjectWithParent(objectWithParent: ObjectWithParent, event: String, userId: String): Event {
@@ -242,17 +246,17 @@ class PusherAdapter(
       return PusherFacade.PRIVATE_CHANNEL_PREFIX + userId
    }
 
-   private fun getResourceId(organizationId: String, projectId: String, resource: Resource): ResourceId {
+   private fun getResourceId(organization: Organization?, project: Project?, resource: Resource): ResourceId {
       if (resource is Organization) {
          return ResourceId(resource.getId(), null, null)
       } else if (resource is Project) {
-         return ResourceId(resource.getId(), organizationId, null)
+         return ResourceId(resource.getId(), organization?.id.orEmpty(), null)
       }
-      return ResourceId(resource.id, organizationId, projectId)
+      return ResourceId(resource.id, organization?.id.orEmpty(), project?.id.orEmpty())
    }
 
-   private fun <T : Resource> filterUserRoles(user: User, resource: T): T {
-      return facadeAdapter.mapResource(resource.copy(), user)
+   private fun <T : Resource> filterUserRoles(organization: Organization?, project: Project?, user: User, resource: T): T {
+      return facadeAdapter.mapResource(organization, project, resource.copy(), user)
    }
 
 }

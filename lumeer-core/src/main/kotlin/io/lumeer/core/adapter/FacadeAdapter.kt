@@ -23,9 +23,9 @@ import io.lumeer.api.model.common.Resource
 import io.lumeer.api.util.ResourceUtils
 import io.lumeer.core.auth.PermissionsChecker
 
-class FacadeAdapter(private val organization: Organization?, private val project: Project?) {
+class FacadeAdapter {
 
-   fun <T : Resource> getResourceManagers(resource: T): Set<String> = when (resource) {
+   fun <T : Resource> getResourceManagers(organization: Organization?, project: Project?, resource: T): Set<String> = when (resource) {
       is Organization -> {
          ResourceUtils.getOrganizationManagers(resource)
       }
@@ -37,10 +37,10 @@ class FacadeAdapter(private val organization: Organization?, private val project
       }
    }
 
-   fun <T : Resource> mapResource(resource: T, user: User): T {
-      return if (getResourceManagers(resource).contains(user.id)) {
+   fun <T : Resource> mapResource(organization: Organization?, project: Project?, resource: T, user: User): T {
+      return if (getResourceManagers(organization, project, resource).contains(user.id)) {
          resource
-      } else keepOnlyActualUserRoles(resource, user)
+      } else keepOnlyActualUserRoles(organization, project, resource, user)
    }
 
    fun <T : Resource> keepStoredPermissions(resource: T, storedPermissions: Permissions) {
@@ -61,10 +61,10 @@ class FacadeAdapter(private val organization: Organization?, private val project
       return resource
    }
 
-   private fun <T : Resource> keepOnlyActualUserRoles(resource: T, user: User): T {
+   private fun <T : Resource> keepOnlyActualUserRoles(organization: Organization?, project: Project?, resource: T, user: User): T {
       val roles = PermissionsChecker.getActualRoles(organization, project, resource, user)
       val permission = Permission.buildWithRoles(user.id, roles)
-      val managers = getResourceManagers(resource)
+      val managers = getResourceManagers(organization, project, resource)
       val keepReadRights = keepReadRights(resource)
       val managersUserPermission = resource.permissions.userPermissions
             .map { perm: Permission ->
