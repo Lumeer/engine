@@ -108,12 +108,12 @@ public class PermissionsChecker {
    private DataStorage dataStorage;
 
    private CollectionAdapter collectionAdapter;
-   private PermissionAdapter permissionAdapter;
+   public PermissionAdapter permissionAdapter;
 
    @PostConstruct
    public void init() {
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
-      permissionAdapter = new PermissionAdapter(userDao, viewDao, linkTypeDao, collectionDao, null);
+      permissionAdapter = new PermissionAdapter(userDao, viewDao, linkTypeDao, collectionDao);
    }
 
    public PermissionsChecker() {
@@ -154,7 +154,7 @@ public class PermissionsChecker {
    }
 
    public void checkLinkTypeRoleWithView(final java.util.Collection<String> collectionIds, final Role role, final boolean strict) {
-      permissionAdapter.checkLinkTypeRoleWithView(getOrganization(), getProject(), collectionIds, role, authenticatedUser.getCurrentUserId(), strict, null);
+      permissionAdapter.checkLinkTypeRoleWithView(getOrganization(), getProject(), collectionIds, role, authenticatedUser.getCurrentUserId(), strict);
    }
 
    public void checkLinkTypeRoleWithView(LinkType linkType, Role role, boolean strict) {
@@ -162,7 +162,7 @@ public class PermissionsChecker {
    }
 
    public boolean hasLinkTypeRoleWithView(LinkType linkType, Role role) {
-      return permissionAdapter.hasLinkTypeRoleWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId(), null);
+      return permissionAdapter.hasLinkTypeRoleWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
    }
 
    public boolean hasLinkTypeRole(LinkType linkType, Map<String, Collection> collectionMap, Role role, String userId) {
@@ -178,7 +178,7 @@ public class PermissionsChecker {
     * @throws NoResourcePermissionException when the user does not have the permission.
     */
    public void checkRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId(), null);
+      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -254,7 +254,7 @@ public class PermissionsChecker {
     * @return true if and only if the user has the given role ont he resource.
     */
    public boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId(), null);
+      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
    }
 
    /**

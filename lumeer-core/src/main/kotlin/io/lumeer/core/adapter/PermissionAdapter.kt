@@ -36,20 +36,14 @@ import io.lumeer.storage.api.dao.ViewDao
 class PermissionAdapter(private val userDao: UserDao,
                         private val viewDao: ViewDao,
                         private val linkTypeDao: LinkTypeDao,
-                        private val collectionDao: CollectionDao,
-                        private val currentUser: User?) {
+                        private val collectionDao: CollectionDao) {
 
    private val hasRoleCache = mutableMapOf<String, Boolean>()
    private val viewCache = mutableMapOf<String, View>()
    private val userCache = mutableMapOf<String, User>()
    private val linkTypes = lazy { linkTypeDao.allLinkTypes }
-   private val currentView: View? = null
 
    private var currentViewId: String? = null
-
-   init {
-      if (currentUser != null) userCache[currentUser.id] = currentUser
-   }
 
    fun setViewId(viewId: String) {
       currentViewId = viewId
@@ -85,36 +79,36 @@ class PermissionAdapter(private val userDao: UserDao,
       }
    }
 
-   fun checkRoleWithView(organization: Organization?, project: Project?, collection: Collection, role: Role, viewRole: Role, userId: String, viewId: String? = null) {
+   fun checkRoleWithView(organization: Organization?, project: Project?, collection: Collection, role: Role, viewRole: Role, userId: String) {
       if (isManager(organization, project, userId)) {
          return
       }
       checkOrganizationAndProject(organization, project, collection, Role.READ, userId)
-      if (!hasRoleWithView(organization, project, collection, role, viewRole, userId, viewId)) {
+      if (!hasRoleWithView(organization, project, collection, role, viewRole, userId)) {
          throw NoResourcePermissionException(collection)
       }
    }
 
-   fun checkLinkTypeRoleWithView(organization: Organization?, project: Project?, collectionIds: kotlin.collections.Collection<String>, role: Role, userId: String, strict: Boolean, viewId: String? = null) {
+   fun checkLinkTypeRoleWithView(organization: Organization?, project: Project?, collectionIds: kotlin.collections.Collection<String>, role: Role, userId: String, strict: Boolean) {
       val collections = collectionDao.getCollectionsByIds(collectionIds)
       if (!strict && role == Role.WRITE) {
-         val atLeastOneRead = collections.any { hasRoleWithView(organization, project, it, Role.READ, Role.READ, userId, viewId) }
-         val atLeastOneWrite = collections.any { hasRoleWithView(organization, project, it, Role.WRITE, Role.WRITE, userId, viewId) }
+         val atLeastOneRead = collections.any { hasRoleWithView(organization, project, it, Role.READ, Role.READ, userId) }
+         val atLeastOneWrite = collections.any { hasRoleWithView(organization, project, it, Role.WRITE, Role.WRITE, userId) }
          if (!atLeastOneRead || !atLeastOneWrite) {
             throw NoPermissionException("LinkType")
          }
       } else {
          for (collection in collections) {
-            checkRoleWithView(organization, project, collection, role, role, userId, viewId)
+            checkRoleWithView(organization, project, collection, role, role, userId)
          }
       }
    }
 
-   fun hasLinkTypeRoleWithView(organization: Organization?, project: Project?, linkType: LinkType, role: Role, userId: String, viewId: String? = null): Boolean {
+   fun hasLinkTypeRoleWithView(organization: Organization?, project: Project?, linkType: LinkType, role: Role, userId: String): Boolean {
       val collections = collectionDao.getCollectionsByIds(linkType.collectionIds)
       var hasPermissions = true
       for (collection in collections) {
-         hasPermissions = hasPermissions && hasRoleWithView(organization, project, collection, role, role, userId, viewId)
+         hasPermissions = hasPermissions && hasRoleWithView(organization, project, collection, role, role, userId)
       }
       return hasPermissions
    }
@@ -136,8 +130,8 @@ class PermissionAdapter(private val userDao: UserDao,
       return roles.any { hasRoleInResource(organization, project, resource, it, userId) }
    }
 
-   fun hasRoleWithView(organization: Organization?, project: Project?, collection: Collection, role: Role, viewRole: Role, userId: String, viewId: String? = null): Boolean {
-      return hasRoleInResource(organization, project, collection, role, userId) || getResourceRoleViaView(organization, project, collection, role, viewRole, userId, viewId ?: activeView()?.id)
+   fun hasRoleWithView(organization: Organization?, project: Project?, collection: Collection, role: Role, viewRole: Role, userId: String): Boolean {
+      return hasRoleInResource(organization, project, collection, role, userId) || getResourceRoleViaView(organization, project, collection, role, viewRole, userId, activeView()?.id)
    }
 
    private fun getResourceRoleViaView(organization: Organization?, project: Project?, collection: Collection, role: Role, viewRole: Role, userId: String, viewId: String?): Boolean {

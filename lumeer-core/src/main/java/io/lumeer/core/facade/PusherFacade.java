@@ -39,6 +39,7 @@ import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.PusherAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -99,7 +100,6 @@ import org.marvec.pusher.data.Event;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -173,6 +173,7 @@ public class PusherFacade extends AbstractFacade {
    private ViewAdapter viewAdapter;
    private ResourceAdapter resourceAdapter;
    private DocumentAdapter documentAdapter;
+   private PusherAdapter pusherAdapter;
    private LinkInstanceAdapter linkInstanceAdapter;
 
    @PostConstruct
@@ -187,6 +188,7 @@ public class PusherFacade extends AbstractFacade {
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
+      pusherAdapter = new PusherAdapter(facadeAdapter, permissionsChecker.permissionAdapter, viewDao, linkTypeDao, collectionDao);
    }
 
    public String getPusherKey() {
@@ -396,92 +398,11 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void checkViewPermissionsChange(final View originalView, final View updatedView) {
-      Set<String> removedUsers = ResourceUtils.getRemovedPermissions(originalView, updatedView);
-      removedUsers.removeAll(getWorkspaceManagers());
-      removedUsers.remove(getCurrentUserId());
-
-      Set<String> addedUsers = ResourceUtils.getAddedPermissions(originalView, updatedView);
-      addedUsers.removeAll(getWorkspaceManagers());
-      addedUsers.remove(getCurrentUserId());
-
-      if (removedUsers.isEmpty() && addedUsers.isEmpty()) {
-         return;
-      }
-
-      List<View> views = viewDao.getAllViews();
-      List<View> viewsWithoutUpdated = views.stream().filter(view -> !view.getId().equals(updatedView.getId())).collect(Collectors.toList());
-      List<Collection> allCollections = collectionDao.getAllCollections();
-      List<LinkType> allLinkTypes = linkTypeDao.getAllLinkTypes();
-      Set<String> linkTypeIds = updatedView.getQuery().getLinkTypeIds();
-      List<LinkType> linkTypesInView = allLinkTypes.stream().filter(linkType -> linkTypeIds.contains(linkType.getId())).collect(Collectors.toList());
-      Set<String> collectionIds = QueryUtils.getQueryCollectionIds(updatedView.getQuery(), linkTypesInView);
-      List<Collection> collectionsInView = allCollections.stream().filter(collection -> collectionIds.contains(collection.getId())).collect(Collectors.toList());
-
-      List<Event> notifications = new ArrayList<>();
-
-      if (removedUsers.size() > 0) {
-         removedUsers.forEach(userId -> notifications.add(createEventForResource(updatedView, REMOVE_EVENT_SUFFIX, userId)));
-         if (collectionsInView.size() > 0) {
-            collectionsInView.forEach(collection -> notifications.addAll(createRemoveCollectionNotification(collection, removedUsers, views, linkTypesInView)));
-         }
-         if (linkTypesInView.size() > 0) {
-            linkTypesInView.forEach(linkType -> notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypesInView, allCollections, removedUsers, viewsWithoutUpdated)));
-         }
-      }
-
-      for (String user : addedUsers) {
-         java.util.Collection<LinkType> linkTypesByUser = filterNewLinkTypesForUser(user, linkTypesInView, viewsWithoutUpdated, allLinkTypes, allCollections);
-         notifications.addAll(linkTypesByUser.stream()
-                                             .map(linkType -> createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user))
-                                             .collect(Collectors.toList()));
-
-         java.util.Collection<Collection> collectionsByUser = filterNewCollectionsForUser(user, collectionsInView, viewsWithoutUpdated, allLinkTypes);
-         notifications.addAll(collectionsByUser.stream()
-                                               .map(collection -> createEventForObjectWithParent(new ObjectWithParent(collection, getOrganization().getId(), getProject().getId()),
-                                                     getResourceId(collection),
-                                                     UPDATE_EVENT_SUFFIX, user))
-                                               .collect(Collectors.toList()));
-      }
-
+      List<Event> notifications = pusherAdapter.checkViewPermissionsChange(getOrganization(), getProject(), authenticatedUser.getCurrentUser(), originalView, updatedView);
       if (notifications.size() > 0) {
          sendNotificationsBatch(notifications);
       }
-   }
 
-   private java.util.Collection<Collection> filterNewCollectionsForUser(String userId, List<Collection> possibleCollections, List<View> views, List<LinkType> linkTypes) {
-      Set<String> collectionIdsInViews = views.stream()
-                                              .filter(view -> permissionsChecker.hasRole(view, Role.READ, userId))
-                                              .map(view -> QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes))
-                                              .flatMap(Set::stream).collect(Collectors.toSet());
-
-      return possibleCollections.stream().filter(collection -> !permissionsChecker.hasRole(collection, Role.READ, userId) && !collectionIdsInViews.contains(collection.getId()))
-                                .collect(Collectors.toList());
-   }
-
-   private java.util.Collection<LinkType> filterNewLinkTypesForUser(String userId, List<LinkType> possibleLinkTypes, List<View> views, List<LinkType> linkTypes, List<Collection> collections) {
-      Set<String> linkTypeIdsInViews = views.stream()
-                                            .filter(view -> permissionsChecker.hasRole(view, Role.READ, userId))
-                                            .map(view -> view.getQuery().getLinkTypeIds())
-                                            .flatMap(Set::stream).collect(Collectors.toSet());
-      Map<String, Collection> collectionMap = collections.stream().collect(Collectors.toMap(Collection::getId, collection -> collection));
-      Set<LinkType> newLinkTypes = possibleLinkTypes.stream()
-                                                    .filter(linkType -> !permissionsChecker.hasLinkTypeRole(linkType, collectionMap, Role.READ, userId) && !linkTypeIdsInViews.contains(linkType.getId()))
-                                                    .collect(Collectors.toSet());
-
-      newLinkTypes.addAll(linkTypesByViewReadPermission(userId, views, collections, linkTypes));
-      return newLinkTypes;
-   }
-
-   private java.util.Collection<LinkType> linkTypesByViewReadPermission(String userId, List<View> views, List<Collection> collections, List<LinkType> linkTypes) {
-      List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, userId)).collect(Collectors.toList());
-      Set<String> collectionsIdsByViews = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, userId);
-      List<LinkType> linkTypesByViews = linkTypes.stream().filter(linkType -> collectionsIdsByViews.containsAll(linkType.getCollectionIds())).collect(Collectors.toList());
-
-      Set<String> collectionsIdsByViewsWithoutCurrent = filterViewsReadableCollectionsIds(views, linkTypes, collections, userId);
-      List<LinkType> linkTypesByViewsWithoutCurrent = linkTypes.stream().filter(linkType -> collectionsIdsByViewsWithoutCurrent.containsAll(linkType.getCollectionIds())).collect(Collectors.toList());
-
-      linkTypesByViews.removeAll(linkTypesByViewsWithoutCurrent);
-      return linkTypesByViews;
    }
 
    private Set<String> getOrganizationManagers() {
