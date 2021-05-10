@@ -191,6 +191,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final View originalView, final View view, final String suffix) {
       if (getPusherClient() != null) {
          final Set<String> users = getViewReaders(view);
+         view.setAuthorRights(resourceAdapter.getViewAuthorRights(view, getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject()));
          final List<Event> events = users.stream().map(user ->
                createEventForView(view, user, suffix)
          ).collect(Collectors.toList());
