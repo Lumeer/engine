@@ -18,18 +18,30 @@
  */
 package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.View;
 
-public class LinkOperation extends ResourceOperation<LinkInstance> {
+import java.util.Set;
 
-   private final LinkInstance originalLinkInstance;
+public class ViewPermissionsOperation extends ResourceOperation<View> {
 
-   public LinkOperation(final LinkInstance entity, final String attrId, final Object value) {
-      super(entity, attrId, value);
-      originalLinkInstance = new LinkInstance(entity);
+   public View originalView;
+
+   public ViewPermissionsOperation(final View entity, final String userId, final Set<Role> value) {
+      super(entity, userId, value);
+      originalView = entity.copy();
    }
 
-   public LinkInstance getOriginalLinkInstance() {
-      return originalLinkInstance;
+   public String getUserId() {
+      return getAttrId();
+   }
+
+   @SuppressWarnings("unchecked")
+   public Set<Role> getRoles() {
+      return (Set<Role>) getValue();
+   }
+
+   public View getOriginalView() {
+      return originalView;
    }
 }

@@ -24,10 +24,12 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.View;
 import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
+import io.lumeer.core.util.Tuple;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +54,7 @@ public class ChangesTracker {
    private final List<GenericPrintRequest> printRequests = new ArrayList<>();
    private final List<NavigationRequest> navigationRequests = new ArrayList<>();
    private final List<SendEmailRequest> sendEmailRequests = new ArrayList<>();
+   private final Set<Tuple<View, View>> updatedViews = new HashSet<>();
 
    final Map<String, Collection> collectionsMap = new HashMap<>();
    final Map<String, LinkType> linkTypesMap = new HashMap<>();
@@ -65,6 +68,7 @@ public class ChangesTracker {
          final Set<LinkInstance> removedLinkInstances, final Set<String> sequences,
          final List<UserMessageRequest> userMessageRequests, final List<GenericPrintRequest> printRequests,
          final List<NavigationRequest> navigationRequests, final List<SendEmailRequest> sendEmailRequests,
+         final Set<Tuple<View, View>> updatedViews,
          final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       if (collections != null) {
          this.collections.removeAll(collections);
@@ -134,6 +138,10 @@ public class ChangesTracker {
          this.sendEmailRequests.addAll(sendEmailRequests);
       }
 
+      if (updatedViews != null) {
+         this.updatedViews.addAll(updatedViews);
+      }
+
       return this;
    }
 
@@ -145,7 +153,7 @@ public class ChangesTracker {
       return merge(other.collections, other.createdDocuments, other.updatedDocuments, other.removedDocuments,
             other.linkTypes, other.createdLinkInstances, other.updatedLinkInstances, other.removedLinkInstances,
             other.sequences, other.userMessageRequests, other.printRequests,
-            other.navigationRequests, other.sendEmailRequests,
+            other.navigationRequests, other.sendEmailRequests, other.updatedViews,
             other.collectionsMap, other.linkTypesMap);
    }
 
@@ -209,6 +217,10 @@ public class ChangesTracker {
       return sendEmailRequests;
    }
 
+   public Set<Tuple<View, View>> getUpdatedViews() {
+      return updatedViews;
+   }
+
    public void addCreatedDocuments(final java.util.Collection<Document> createdDocuments) {
       this.createdDocuments.addAll(createdDocuments);
    }
@@ -261,6 +273,10 @@ public class ChangesTracker {
       this.sendEmailRequests.addAll(sendEmailRequests);
    }
 
+   public void addUpdatedViews(final java.util.Collection<Tuple<View, View>> updatedViews) {
+      this.updatedViews.addAll(updatedViews);
+   }
+
    public void updateCollectionsMap(final Map<String, Collection> collectionsMap) {
       this.collectionsMap.putAll(collectionsMap);
    }
@@ -285,6 +301,7 @@ public class ChangesTracker {
             ", printRequests=" + printRequests +
             ", navigationRequests=" + printRequests +
             ", sendEmailRequests=" + printRequests +
+            ", updatedViews=" + updatedViews +
             '}';
    }
 }

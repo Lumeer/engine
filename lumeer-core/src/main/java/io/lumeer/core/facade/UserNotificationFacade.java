@@ -346,7 +346,7 @@ public class UserNotificationFacade extends AbstractFacade {
          final Set<String> removedUsers = ResourceUtils.getRemovedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
          removedUsers.removeAll(managers);
          removedUsers.remove(getCurrentUserId());
-         removedUsers.removeAll(mutedUsers);
+         mutedUsers.forEach(removedUsers::remove);
 
          if (removedUsers.size() > 0) {
             removeNotifications(updateResource.getResource(), removedUsers);
@@ -357,7 +357,7 @@ public class UserNotificationFacade extends AbstractFacade {
             addedUsers.removeAll(managers);
          }
          addedUsers.remove(getCurrentUserId());
-         addedUsers.removeAll(mutedUsers);
+         mutedUsers.forEach(addedUsers::remove);
 
          if (addedUsers.size() > 0) {
             createResourceSharedNotifications(updateResource.getResource(), addedUsers);

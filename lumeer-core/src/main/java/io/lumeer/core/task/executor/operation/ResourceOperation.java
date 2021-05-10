@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor;
+package io.lumeer.core.task.executor.operation;
 
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.task.executor.operation.Operation;
@@ -28,7 +28,7 @@ public abstract class ResourceOperation<T extends WithId> extends Operation<T> {
    private final String attrId;
    private final Object value;
 
-   public ResourceOperation(final T entity, final String attrId, final Object value) {
+   public <R> ResourceOperation(final T entity, final String attrId, final R value) {
       super(entity);
       this.attrId = attrId;
       this.value = value;

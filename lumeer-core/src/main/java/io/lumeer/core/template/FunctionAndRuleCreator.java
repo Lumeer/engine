@@ -26,6 +26,7 @@ import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.model.rule.CronRule;
+import io.lumeer.api.model.rule.WizardRule;
 import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.LinkTypeFacade;
@@ -150,6 +151,12 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          rule.getConfiguration().put(CronRule.CRON_WHEN, rule.getConfiguration().getLong(CronRule.CRON_WHEN));
          rule.getConfiguration().put(CronRule.CRON_INTERVAL, rule.getConfiguration().getInteger(CronRule.CRON_INTERVAL));
          rule.getConfiguration().put(CronRule.CRON_UNIT, rule.getConfiguration().getString(CronRule.CRON_UNIT));
+      }
+
+      if (type == Rule.RuleType.WIZARD) {
+         rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
+         rule.getConfiguration().put(BlocklyRule.BLOCKLY_XML, cureXml(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML)));
+         rule.getConfiguration().put(WizardRule.WIZARD_CONFIGURATION, rule.getConfiguration().getString(WizardRule.WIZARD_CONFIGURATION));
       }
 
       if (type == Rule.RuleType.AUTO_LINK) {

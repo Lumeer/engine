@@ -23,6 +23,7 @@ import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.operation.stage.SingleStage;
 import io.lumeer.core.task.executor.operation.stage.Stage;
+import io.lumeer.core.task.executor.operation.stage.ViewsUpdatingStage;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -54,7 +55,11 @@ public class OperationExecutor implements Callable<ChangesTracker> {
    @Override
    public ChangesTracker call() {
       final Stage singleStage = new SingleStage(this);
+      final Stage viewsStage = new ViewsUpdatingStage(this);
 
-      return singleStage.call();
+      final ChangesTracker changes = singleStage.call();
+      changes.merge(viewsStage.call());
+
+      return changes;
    }
 }

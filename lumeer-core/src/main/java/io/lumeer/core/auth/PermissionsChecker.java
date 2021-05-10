@@ -36,16 +36,13 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.CollectionAdapter;
-import io.lumeer.core.exception.NoDocumentPermissionException;
-import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.FunctionRuleJsParser;
-import io.lumeer.core.util.QueryUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
@@ -56,10 +53,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -109,30 +103,36 @@ public class PermissionsChecker {
    @Inject
    private FreshdeskFacade freshdeskFacade;
 
-   private String viewId = null;
-   private List<LinkType> linkTypes;
-
    @Inject
    @UserDataStorage
    private DataStorage dataStorage;
 
-   private Map<String, Boolean> hasRoleCache = new HashMap<>();
-   private Map<String, View> viewCache = new HashMap<>();
-
    private CollectionAdapter collectionAdapter;
+   private PermissionAdapter permissionAdapter;
 
    @PostConstruct
    public void init() {
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
+      permissionAdapter = new PermissionAdapter(userDao, viewDao, linkTypeDao, collectionDao);
    }
 
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper) {
+   PermissionsChecker(AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper, UserDao userDao, CollectionDao collectionDao, ViewDao viewDao, LinkTypeDao linkTypeDao, FavoriteItemDao favoriteItemDao, DocumentDao documentDao) {
       this.authenticatedUser = authenticatedUser;
       this.authenticatedUserGroups = authenticatedUserGroups;
       this.workspaceKeeper = workspaceKeeper;
+      this.userDao = userDao;
+      this.collectionDao = collectionDao;
+      this.viewDao = viewDao;
+      this.linkTypeDao = linkTypeDao;
+      this.favoriteItemDao = favoriteItemDao;
+      this.documentDao = documentDao;
+   }
+
+   public PermissionAdapter getPermissionAdapter() {
+      return permissionAdapter;
    }
 
    /**
@@ -143,15 +143,7 @@ public class PermissionsChecker {
     * @throws NoResourcePermissionException when the user does not have the permission.
     */
    public void checkRole(Resource resource, Role role) {
-      if (isManager()) {
-         return;
-      }
-
-      checkOrganizationAndProject(resource, Role.READ);
-
-      if (!hasRoleInResource(resource, role)) {
-         throw new NoResourcePermissionException(resource);
-      }
+      permissionAdapter.checkRole(getOrganization(), getProject(), resource, role, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -164,31 +156,15 @@ public class PermissionsChecker {
    }
 
    public boolean isManager(String userId) {
-      return ResourceUtils.userIsManagerInWorkspace(userId, workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null));
+      return permissionAdapter.isManager(getOrganization(), getProject(), userId);
    }
 
    public boolean isPublic() {
-      if (workspaceKeeper.getProject().isPresent()) {
-         final Project project = workspaceKeeper.getProject().get();
-         return project.isPublic();
-      }
-
-      return false;
+      return permissionAdapter.isPublic(getOrganization(), getProject());
    }
 
    public void checkLinkTypeRoleWithView(final java.util.Collection<String> collectionIds, final Role role, final boolean strict) {
-      final List<Collection> collections = collectionDao.getCollectionsByIds(collectionIds);
-      if (!strict && role == Role.WRITE) {
-         boolean atLeastOneRead = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.READ, Role.READ));
-         boolean atLeastOneWrite = collections.stream().anyMatch(collection -> hasRoleWithView(collection, Role.WRITE, Role.WRITE));
-         if (!atLeastOneRead || !atLeastOneWrite) {
-            throw new NoPermissionException("LinkType");
-         }
-      } else {
-         for (Collection collection : collections) {
-            checkRoleWithView(collection, role, role);
-         }
-      }
+      permissionAdapter.checkLinkTypeRoleWithView(getOrganization(), getProject(), collectionIds, role, authenticatedUser.getCurrentUserId(), strict);
    }
 
    public void checkLinkTypeRoleWithView(LinkType linkType, Role role, boolean strict) {
@@ -196,23 +172,11 @@ public class PermissionsChecker {
    }
 
    public boolean hasLinkTypeRoleWithView(LinkType linkType, Role role) {
-      List<Collection> collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      var hasPermissions = true;
-      for (Collection collection : collections) {
-         hasPermissions = hasPermissions && hasRoleWithView(collection, role, role);
-      }
-
-      return hasPermissions;
+      return permissionAdapter.hasLinkTypeRoleWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
    }
 
    public boolean hasLinkTypeRole(LinkType linkType, Map<String, Collection> collectionMap, Role role, String userId) {
-      List<Collection> collections = linkType.getCollectionIds().stream().map(collectionMap::get).collect(Collectors.toList());
-      var hasPermissions = true;
-      for (Collection collection : collections) {
-         hasPermissions = hasPermissions && hasRole(collection, role, userId);
-      }
-
-      return hasPermissions;
+      return permissionAdapter.hasLinkTypeRole(getOrganization(), getProject(), linkType, collectionMap, role, userId);
    }
 
    /**
@@ -224,28 +188,7 @@ public class PermissionsChecker {
     * @throws NoResourcePermissionException when the user does not have the permission.
     */
    public void checkRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      if (isManager()) {
-         return;
-      }
-
-      checkOrganizationAndProject(collection, Role.READ);
-
-      if (!hasRoleWithView(collection, role, viewRole)) {
-         throw new NoResourcePermissionException(collection);
-      }
-   }
-
-   private void checkOrganizationAndProject(final Resource resource, final Role role) {
-      if (!(resource instanceof Organization) && workspaceKeeper.getOrganization().isPresent()) {
-         if (!hasRoleInResource(workspaceKeeper.getOrganization().get(), role)) {
-            throw new NoResourcePermissionException(resource);
-         }
-         if (!(resource instanceof Project) && workspaceKeeper.getProject().isPresent()) {
-            if (!hasRoleInResource(workspaceKeeper.getProject().get(), role)) {
-               throw new NoResourcePermissionException(resource);
-            }
-         }
-      }
+      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -257,33 +200,23 @@ public class PermissionsChecker {
     * @return True if and only if the user has the given role ont he document.
     */
    public boolean hasRole(Document document, Collection collection, Role role) {
-      return hasRole(collection, role) || hasRoleInDocument(document, collection, role);
+      return permissionAdapter.hasRole(getOrganization(), getProject(), document, collection, role, authenticatedUser.getCurrentUserId());
    }
 
    public boolean hasRoleWithView(Document document, Collection collection, Role role, Role viewRole) {
-      return hasRoleWithView(collection, role, viewRole) || hasRoleInDocument(document, collection, role);
+      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), document, collection, role, viewRole, authenticatedUser.getCurrentUserId());
    }
 
    public void checkRole(Document document, Collection collection, Role role) {
-      if (!hasRole(document, collection, role)) {
-         throw new NoDocumentPermissionException(document);
-      }
+      permissionAdapter.checkRole(getOrganization(), getProject(), document, collection, role, authenticatedUser.getCurrentUserId());
    }
 
    public void checkRoleWithView(Document document, Collection collection, Role role, Role viewRole) {
-      if (!hasRoleWithView(document, collection, role, viewRole)) {
-         throw new NoDocumentPermissionException(document);
-      }
+      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), document, collection, role, viewRole, authenticatedUser.getCurrentUserId());
    }
 
    public boolean hasRoleInDocument(Document document, Collection collection, Role role) {
-      switch (role) {
-         case READ:
-         case WRITE:
-            return DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail());
-         default:
-            return false;
-      }
+      return permissionAdapter.hasRoleInDocument(document, collection, role, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -298,19 +231,19 @@ public class PermissionsChecker {
    }
 
    public boolean hasRole(Resource resource, Role role, String userId) {
-      return isManager(userId) || hasRoleInResource(resource, role, userId);
+      return permissionAdapter.hasRole(getOrganization(), getProject(), resource, role, userId);
    }
 
-   private boolean hasRoleInResource(Resource resource, Role role) {
-      return hasRoleCache.computeIfAbsent(resource.getId() + ":" + role.toString(), id -> getActualRoles(resource).contains(role));
+   public static boolean hasRole(final Organization organization, final Project project, final Resource resource, final Role role, final User user) {
+      return ResourceUtils.userIsManagerInWorkspace(user.getId(), organization, project) || hasRoleInResource(organization, resource, role, user);
    }
 
    public boolean hasAnyRoleInResource(Resource resource, Set<Role> roles) {
-      return roles.stream().anyMatch(role -> hasRoleInResource(resource, role));
+      return permissionAdapter.hasAnyRoleInResource(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
-   private boolean hasRoleInResource(Resource resource, Role role, String userId) {
-      return getActualRolesInResource(resource, userId).contains(role);
+   private static boolean hasRoleInResource(final Organization organization, final Resource resource, final Role role, final User user) {
+      return getActualRolesInResource(organization, resource, user).contains(role);
    }
 
    /**
@@ -319,9 +252,7 @@ public class PermissionsChecker {
     * @param resource Resource being updated.
     */
    public void invalidateCache(final Resource resource) {
-      for (final Role role : Role.values()) {
-         hasRoleCache.remove(resource.getId() + ":" + role.toString());
-      }
+      permissionAdapter.invalidateCache(resource);
    }
 
    /**
@@ -333,41 +264,7 @@ public class PermissionsChecker {
     * @return true if and only if the user has the given role ont he resource.
     */
    public boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      return isManager() || hasRoleWithView(collection, role, viewRole, viewId);
-   }
-
-   private boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole, final String viewId) {
-      return hasRoleInResource(collection, role) || getResourceRoleViaView(collection, role, viewRole, viewId);
-   }
-
-   private boolean getResourceRoleViaView(final Collection collection, final Role role, final Role viewRole, final String viewId) {
-      if (StringUtils.isNotEmpty(viewId)) { // we might have the access through a view
-         final View view = viewCache.computeIfAbsent(viewId, id -> viewDao.getViewById(viewId));
-
-         if (view != null) {
-            if (hasRoleInResource(view, viewRole)) { // do we have access to the view?
-               final String authorId = view.getAuthorId();
-
-               Set<String> collectionIds = QueryUtils.getQueryCollectionIds(view.getQuery(), getLinkTypes());
-               if (collectionIds.contains(collection.getId())) { // does the view contain the resource?
-                  if (StringUtils.isNotEmpty(authorId)) {
-                     if (hasRoleInResource(collection, role, authorId)) { // has the view author access to the resource?
-                        return true; // grant access
-                     }
-                  }
-               }
-            }
-         }
-      }
-
-      return false;
-   }
-
-   private List<LinkType> getLinkTypes() {
-      if (this.linkTypes == null) {
-         this.linkTypes = this.linkTypeDao.getAllLinkTypes();
-      }
-      return this.linkTypes;
+      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -376,11 +273,7 @@ public class PermissionsChecker {
     * @return The active View when exists, null otherwise.
     */
    public View getActiveView() {
-      if (StringUtils.isNotEmpty(viewId)) {
-         return viewCache.computeIfAbsent(viewId, id -> viewDao.getViewById(viewId));
-      }
-
-      return null;
+      return permissionAdapter.activeView();
    }
 
    /**
@@ -408,7 +301,15 @@ public class PermissionsChecker {
       return getActualRolesInResource(resource, userId);
    }
 
-   private Set<Role> getAllRoles(final Resource resource) {
+   public static Set<Role> getActualRoles(final Organization organization, final Project project, final Resource resource, final User user) {
+      if (ResourceUtils.userIsManagerInWorkspace(user.getId(), organization, project)) {
+         return getAllRoles(resource);
+      }
+
+      return getActualRolesInResource(organization, resource, user);
+   }
+
+   private static Set<Role> getAllRoles(final Resource resource) {
       return ResourceUtils.getAllResourceRoles(resource);
    }
 
@@ -454,10 +355,11 @@ public class PermissionsChecker {
    }
 
    public AllowedPermissions getCollectionPermissions(final Collection collection) {
+      var userId = authenticatedUser.getCurrentUserId();
       return new AllowedPermissions(
-            hasRoleInResource(collection, Role.READ),
-            hasRoleInResource(collection, Role.WRITE),
-            hasRoleInResource(collection, Role.MANAGE),
+            permissionAdapter.hasRoleInResource(getOrganization(), getProject(), collection, Role.READ, userId),
+            permissionAdapter.hasRoleInResource(getOrganization(), getProject(), collection, Role.WRITE, userId),
+            permissionAdapter.hasRoleInResource(getOrganization(), getProject(), collection, Role.MANAGE, userId),
             hasRoleWithView(collection, Role.READ, Role.READ),
             hasRoleWithView(collection, Role.WRITE, Role.WRITE),
             hasRoleWithView(collection, Role.MANAGE, Role.MANAGE)
@@ -675,22 +577,30 @@ public class PermissionsChecker {
     * @param viewId id of the view
     */
    void setViewId(final String viewId) {
-      if (this.viewId == null) {
-         this.viewId = viewId;
+      if (permissionAdapter.getViewId() == null) {
+         this.permissionAdapter.setViewId(viewId);
       }
    }
 
    public String getViewId() {
-      return viewId;
+      return this.permissionAdapter.getViewId();
    }
 
    // For testing purposes to allow viewId manipulation during test run.
    void testSetViewId(final String viewId) {
-      this.viewId = viewId;
+      this.permissionAdapter.setViewId(viewId);
    }
 
    String testGetViewId() {
-      return viewId;
+      return this.permissionAdapter.getViewId();
+   }
+
+   private Organization getOrganization() {
+      return workspaceKeeper.getOrganization().orElse(null);
+   }
+
+   private Project getProject() {
+      return workspaceKeeper.getProject().orElse(null);
    }
 
    /**

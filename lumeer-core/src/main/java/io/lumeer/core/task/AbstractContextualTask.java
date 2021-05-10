@@ -25,12 +25,16 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.FacadeAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.PermissionAdapter;
+import io.lumeer.core.adapter.PusherAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -60,6 +64,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -87,6 +92,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected ViewAdapter viewAdapter;
    protected LinkTypeAdapter linkTypeAdapter;
    protected LinkInstanceAdapter linkInstanceAdapter;
+   protected PermissionAdapter permissionAdapter;
+   protected PusherAdapter pusherAdapter;
+
+   private Map<String, User> userCache = new ConcurrentHashMap<>();
 
    @Override
    public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment, final int recursionDepth) {
@@ -105,6 +114,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
       documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
+      permissionAdapter = new PermissionAdapter(daoContextSnapshot.getUserDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
+      pusherAdapter = new PusherAdapter(new FacadeAdapter(), permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
 
       return this;
    }
@@ -152,6 +163,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return resourceAdapter.getLinkTypeReaders(linkType, getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject());
    }
 
+   private Set<String> getViewReaders(final View view) {
+      return ResourceUtils.getResourceReaders(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), view);
+   }
+
    private Set<String> getCollectionReaders(final Collection collection) {
       return resourceAdapter.getCollectionReaders(collection, getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject());
    }
@@ -168,6 +183,32 @@ public abstract class AbstractContextualTask implements ContextualTask {
       if (getPusherClient() != null) {
          final Set<String> users = getCollectionManagers(collection);
          final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user, suffix)).collect(Collectors.toList());
+
+         getPusherClient().trigger(events);
+      }
+   }
+
+   public void sendPushNotifications(final View originalView, final View view, final String suffix) {
+      if (getPusherClient() != null) {
+         final Set<String> users = getViewReaders(view);
+         view.setAuthorRights(resourceAdapter.getViewAuthorRights(view, getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject()));
+         final List<Event> events = users.stream().map(user ->
+               createEventForView(view, user, suffix)
+         ).collect(Collectors.toList());
+
+         users.forEach(userId -> {
+            final User user = userCache.computeIfAbsent(userId, daoContextSnapshot.getUserDao()::getUserById);
+
+            events.addAll(
+                  pusherAdapter.checkViewPermissionsChange(
+                        daoContextSnapshot.getOrganization(),
+                        getDaoContextSnapshot().getProject(),
+                        user,
+                        originalView,
+                        view
+                  )
+            );
+         });
 
          getPusherClient().trigger(events);
       }
@@ -199,6 +240,16 @@ public abstract class AbstractContextualTask implements ContextualTask {
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedCollection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(mappedCollection, null), null);
+   }
+
+   private Event createEventForView(final View view, final String userId, final String suffix) {
+      final String projectId = daoContextSnapshot.getSelectedWorkspace().getProject().map(Project::getId).orElse("");
+
+      final View mappedView = viewAdapter.mapViewData(view.copy(), userId, projectId);
+
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedView, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      injectCorrelationId(message);
+      return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, View.class.getSimpleName() + suffix, message, getResourceId(mappedView, null), null);
    }
 
    private Event createEventForDocument(final Document document, final String userId, final String suffix) {
@@ -527,6 +578,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
          if (changesTracker.getSendEmailRequests().size() > 0) {
             sendSendEmailRequestPushNotifications(changesTracker.getSendEmailRequests());
+         }
+
+         if (changesTracker.getUpdatedViews().size() > 0) {
+            changesTracker.getUpdatedViews().forEach(viewTuple -> sendPushNotifications(viewTuple.getFirst(), viewTuple.getSecond(), PusherFacade.UPDATE_EVENT_SUFFIX));
          }
       }
    }

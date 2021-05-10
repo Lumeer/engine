@@ -21,14 +21,22 @@ package io.lumeer.core.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.exception.NoResourcePermissionException;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.ViewDao;
 
 import org.assertj.core.util.Sets;
 import org.junit.Before;
@@ -49,6 +57,7 @@ public class PermissionsCheckerTest {
    @Before
    public void preparePermissionsChecker() {
       User user = Mockito.mock(User.class);
+      Mockito.when(user.getId()).thenReturn(USER);
       Mockito.when(user.getGroups()).thenReturn(Collections.singletonMap("LMR", Collections.singleton(GROUP)));
 
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
@@ -57,14 +66,38 @@ public class PermissionsCheckerTest {
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
       Mockito.when(authenticatedUserGroups.getCurrentUserGroups()).thenReturn(Collections.singleton(GROUP));
 
-      WorkspaceKeeper workspaceKeeper = Mockito.mock(WorkspaceKeeper.class);
-      Mockito.when(workspaceKeeper.getOrganization()).thenReturn(Optional.empty());
-      Mockito.when(workspaceKeeper.getProject()).thenReturn(Optional.empty());
+      Organization organization = Mockito.mock(Organization.class);
+      preparePermissions(organization, Collections.singleton(Role.READ), Collections.emptySet());
+      Mockito.when(organization.getId()).thenReturn("LMR");
 
-      permissionsChecker = new PermissionsChecker(authenticatedUser, authenticatedUserGroups, workspaceKeeper);
+      Project project = Mockito.mock(Project.class);
+      preparePermissions(project, Collections.singleton(Role.READ), Collections.emptySet());
+      Mockito.when(project.getId()).thenReturn("LMR");
+
+      WorkspaceKeeper workspaceKeeper = Mockito.mock(WorkspaceKeeper.class);
+      Mockito.when(workspaceKeeper.getOrganization()).thenReturn(Optional.of(organization));
+      Mockito.when(workspaceKeeper.getProject()).thenReturn(Optional.of(project));
+
+      CollectionDao collectionDao = Mockito.mock(CollectionDao.class);
+      LinkTypeDao linkTypeDao = Mockito.mock(LinkTypeDao.class);
+      ViewDao viewDao = Mockito.mock(ViewDao.class);
+      UserDao userDao = Mockito.mock(UserDao.class);
+      Mockito.when(userDao.getUserById(USER)).thenReturn(user);
+      FavoriteItemDao favoriteItemDao = Mockito.mock(FavoriteItemDao.class);
+      DocumentDao documentDao = Mockito.mock(DocumentDao.class);
+
+      permissionsChecker = new PermissionsChecker(authenticatedUser, authenticatedUserGroups, workspaceKeeper, userDao, collectionDao, viewDao, linkTypeDao, favoriteItemDao, documentDao);
+      permissionsChecker.init();
    }
 
    private Resource prepareResource(Set<Role> userRoles, Set<Role> groupRoles) {
+      Resource resource = Mockito.mock(Resource.class);
+      preparePermissions(resource, userRoles, groupRoles);
+      Mockito.when(resource.getType()).thenReturn(ResourceType.PROJECT);
+      return resource;
+   }
+
+   private <T extends Resource> void preparePermissions(T resource, Set<Role> userRoles, Set<Role> groupRoles) {
       Permission userPermission = Mockito.mock(Permission.class);
       Mockito.when(userPermission.getId()).thenReturn(USER);
       Mockito.when(userPermission.getRoles()).thenReturn(userRoles);
@@ -76,11 +109,7 @@ public class PermissionsCheckerTest {
       Permissions permissions = Mockito.mock(Permissions.class);
       Mockito.when(permissions.getUserPermissions()).thenReturn(Collections.singleton(userPermission));
       Mockito.when(permissions.getGroupPermissions()).thenReturn(Collections.singleton(groupPermission));
-
-      Resource resource = Mockito.mock(Resource.class);
       Mockito.when(resource.getPermissions()).thenReturn(permissions);
-      Mockito.when(resource.getType()).thenReturn(ResourceType.PROJECT);
-      return resource;
    }
 
    @Test

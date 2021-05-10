@@ -16,20 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
+package io.lumeer.api.model.rule;
 
-import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Rule;
+import io.lumeer.engine.api.data.DataDocument;
 
-public class LinkOperation extends ResourceOperation<LinkInstance> {
+public class WizardRule extends BlocklyRule {
 
-   private final LinkInstance originalLinkInstance;
+   public static final String WIZARD_CONFIGURATION = "wizardConfiguration";
 
-   public LinkOperation(final LinkInstance entity, final String attrId, final Object value) {
-      super(entity, attrId, value);
-      originalLinkInstance = new LinkInstance(entity);
+   WizardRule(final Rule rule) {
+      super(rule, Rule.RuleType.WIZARD);
    }
 
-   public LinkInstance getOriginalLinkInstance() {
-      return originalLinkInstance;
+   public DataDocument getWizardConfiguration() {
+      return rule.getConfiguration().getDataDocument(WIZARD_CONFIGURATION);
+   }
+
+   public void setWizardConfiguration(final DataDocument wizardConfiguration) {
+      rule.getConfiguration().put(WIZARD_CONFIGURATION, wizardConfiguration);
    }
 }

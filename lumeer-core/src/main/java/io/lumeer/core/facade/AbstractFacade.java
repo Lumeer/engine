@@ -19,23 +19,18 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.adapter.FacadeAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 abstract class AbstractFacade {
@@ -55,6 +50,8 @@ abstract class AbstractFacade {
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
 
+   protected final FacadeAdapter facadeAdapter = new FacadeAdapter();
+
    protected String getCurrentUserId() {
       return authenticatedUser.getCurrentUserId();
    }
@@ -67,69 +64,24 @@ abstract class AbstractFacade {
       return permissionsChecker.isManager();
    }
 
-   private <T extends Resource> boolean keepReadRights(final T resource) {
-      return resource instanceof Organization || resource instanceof Project;
-   }
-
-   protected <T extends Resource> T keepOnlyActualUserRoles(final T resource, String userId) {
-      Set<Role> roles = permissionsChecker.getActualRoles(resource, userId);
-      Permission permission = Permission.buildWithRoles(userId, roles);
-
-      Set<String> managers = getResourceManagers(resource);
-      final boolean keepReadRights = keepReadRights(resource);
-
-      Set<Permission> managersUserPermission = resource.getPermissions().getUserPermissions().stream()
-                                                       .map(perm -> {
-                                                          if (keepReadRights) {
-                                                             if (managers.contains(perm.getId())) {
-                                                                return perm;
-                                                             }
-
-                                                             return Permission.buildWithRoles(perm.getId(), Set.of(Role.READ));
-                                                          }
-                                                          return perm;
-                                                       })
-                                                       .filter(perm -> keepReadRights || managers.contains(perm.getId()))
-                                                       .collect(Collectors.toSet());
-
-      resource.getPermissions().clear();
-      resource.getPermissions().updateUserPermissions(managersUserPermission);
-      resource.getPermissions().updateUserPermissions(permission);
-
-      return resource;
-   }
-
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
-      if (getResourceManagers(resource).contains(userId)) {
-         return resource;
-      }
-      return keepOnlyActualUserRoles(resource, userId);
-   }
-
-   private Set<String> getResourceManagers(final Resource resource) {
-      if (resource instanceof Organization) {
-         return ResourceUtils.getOrganizationManagers((Organization) resource);
-      } else if (resource instanceof Project) {
-         return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().orElse(null), (Project) resource);
+      if (authenticatedUser.getCurrentUserId().equals(userId)) {
+         return facadeAdapter.mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
       } else {
-         return ResourceUtils.getResourceManagers(workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null), resource);
+         return facadeAdapter.mapResource(getOrganization(), getProject(), resource, userCache.getUserById(userId));
       }
    }
 
    protected <T extends Resource> T mapResource(final T resource) {
-      return mapResource(resource, authenticatedUser.getCurrentUserId());
+      return facadeAdapter.mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
-      Set<Permission> userPermissions = storedPermissions.getUserPermissions();
-      resource.getPermissions().updateUserPermissions(userPermissions);
-
-      Set<Permission> groupPermissions = storedPermissions.getGroupPermissions();
-      resource.getPermissions().updateGroupPermissions(groupPermissions);
+      facadeAdapter.keepStoredPermissions(resource, storedPermissions);
    }
 
    protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {
-      destinationResource.setNonRemovable(originalResource.isNonRemovable());
+      facadeAdapter.keepUnmodifiableFields(destinationResource, originalResource);
    }
 
    protected DatabaseQuery createSimpleQuery() {
@@ -141,19 +93,15 @@ abstract class AbstractFacade {
                           .build();
    }
 
+   private Organization getOrganization() {
+      return workspaceKeeper.getOrganization().orElse(null);
+   }
+
+   private Project getProject() {
+      return workspaceKeeper.getProject().orElse(null);
+   }
+
    protected <T extends Resource> T setupPublicPermissions(final T resource) {
-      String user = authenticatedUser.getCurrentUserId();
-      var userPermission = new Permission(user, new HashSet<>());
-      var currentUserPermission = resource.getPermissions().getUserPermissions()
-                                          .stream()
-                                          .filter(permission -> permission.getId().equals(user))
-                                          .findFirst()
-                                          .orElse(userPermission);
-      resource.getPermissions().clear();
-
-      currentUserPermission.getRoles().add(Role.READ);
-      resource.getPermissions().addUserPermissions(Collections.singleton(currentUserPermission));
-
-      return resource;
+      return facadeAdapter.setupPublicPermissions(resource, authenticatedUser.getCurrentUserId());
    }
 }
