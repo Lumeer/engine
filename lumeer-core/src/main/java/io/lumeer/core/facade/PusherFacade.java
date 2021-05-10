@@ -444,97 +444,50 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Event createEvent(final Object object, final String event, final String userId) {
-      if (object instanceof Document) {
-         return createEventForWorkspaceObject(object, ((Document) object).getId(), event, userId);
-      } else if (object instanceof LinkType) {
-         return createEventForWorkspaceObject(object, ((LinkType) object).getId(), event, userId);
-      } else if (object instanceof LinkInstance) {
-         return createEventForWorkspaceObject(object, ((LinkInstance) object).getId(), event, userId);
-      } else if (object instanceof Resource) {
-         return createEventForResource((Resource) object, event, userId);
-      } else if (object instanceof ResourceComment) {
-         return createEventForWorkspaceObject(object, ((ResourceComment) object).getId(), event, userId);
-      } else if (object instanceof ObjectWithParent) {
-         ObjectWithParent objectWithParent = ((ObjectWithParent) object);
-         if (objectWithParent.object instanceof Resource) {
-            return createEventForNestedResource(objectWithParent, event, userId);
-         } else {
-            return createEventForObjectWithParent(objectWithParent, event, userId);
-         }
-      } else {
-         return createEventForObject(object, event, userId);
-      }
-
+      return pusherAdapter.createEvent(
+            getOrganization(),
+            getProject(),
+            object,
+            event,
+            userCache.getUserById(userId)
+      );
    }
 
    private Event createEventForWorkspaceObject(final Object object, final String id, final String event, final String userId) {
-      if (REMOVE_EVENT_SUFFIX.equals(event)) {
-         return createEventForRemove(object.getClass().getSimpleName(), new ResourceId(id, getOrganization().getId(), getProject().getId()), userId);
-      }
-      final ObjectWithParent normalMessage = new ObjectWithParent(object, getOrganization().getId(), getProject().getId());
-      String extraId = null;
-      if (object instanceof Document) {
-         extraId = ((Document) object).getCollectionId();
-      } else if (object instanceof LinkInstance) {
-         extraId = ((LinkInstance) object).getLinkTypeId();
-      } else if (object instanceof ResourceComment) {
-         final ResourceComment comment = ((ResourceComment) object);
-         extraId = comment.getResourceType().toString() + '/' + comment.getResourceId();
-      }
-      final ResourceId alternateMessage = new ResourceId(id, getOrganization().getId(), getProject().getId(), extraId);
-      return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId);
+      return pusherAdapter.createEventForWorkspaceObject(
+            getOrganization(),
+            getProject(),
+            object,
+            id,
+            event,
+            userId
+      );
    }
 
    private Event createEventForRemove(final String className, final ResourceId object, final String userId) {
-      return new Event(eventChannel(userId), className + REMOVE_EVENT_SUFFIX, object, null);
+      return pusherAdapter.createEventForRemove(className, object, userId);
    }
 
    private Event createEventForResource(final Resource resource, final String event, final String userId) {
-      if (REMOVE_EVENT_SUFFIX.equals(event)) {
-         return createEventForRemove(resource.getClass().getSimpleName(), getResourceId(resource), userId);
-      }
-      return createEventForObject(filterUserRoles(userId, resource), getResourceId(resource), event, userId);
+      return pusherAdapter.createEventForResource(
+            getOrganization(),
+            getProject(),
+            resource,
+            event,
+            userCache.getUserById(userId)
+      );
    }
 
    private Event createEventForObject(final Object object, final String event, final String userId) {
-      return new Event(eventChannel(userId), object.getClass().getSimpleName() + event, object);
-   }
-
-   private BackupDataEvent createEventForObject(final Object object, final Object backupObject, final String event, final String userId) {
-      return new BackupDataEvent(eventChannel(userId), object.getClass().getSimpleName() + event, object, backupObject, null);
-   }
-
-   private Event createEventForNestedResource(final ObjectWithParent objectWithParent, final String event, final String userId) {
-      Resource resource = (Resource) objectWithParent.object;
-      if (REMOVE_EVENT_SUFFIX.equals(event)) {
-         return createEventForRemove(resource.getClass().getSimpleName(), getResourceId(resource), userId);
-      }
-
-      Resource filteredResource = filterUserRoles(userId, resource);
-      ObjectWithParent newObjectWithParent = new ObjectWithParent(filteredResource, objectWithParent.organizationId, objectWithParent.projectId);
-      newObjectWithParent.setCorrelationId(objectWithParent.getCorrelationId());
-      return createEventForObjectWithParent(newObjectWithParent, getResourceId(resource), event, userId);
+      return pusherAdapter.createEventForObject(object, event, userId);
    }
 
    private Event createEventForObjectWithParent(final ObjectWithParent objectWithParent, final String event, final String userId) {
-      return new Event(eventChannel(userId), objectWithParent.object.getClass().getSimpleName() + event, objectWithParent);
-   }
-
-   private BackupDataEvent createEventForObjectWithParent(final ObjectWithParent objectWithParent, final ResourceId resourceId, final String event, final String userId) {
-      return new BackupDataEvent(eventChannel(userId), objectWithParent.object.getClass().getSimpleName() + event, objectWithParent, resourceId, null);
+      return pusherAdapter.createEventForObjectWithParent(objectWithParent, event, userId);
    }
 
    public static String eventChannel(String userId) {
-      return PRIVATE_CHANNEL_PREFIX + userId;
-   }
-
-   private ResourceId getResourceId(Resource resource) {
-      if (resource instanceof Organization) {
-         return new ResourceId(resource.getId(), null, null);
-      } else if (resource instanceof Project) {
-         return new ResourceId(resource.getId(), getOrganization().getId(), null);
-      }
-      return new ResourceId(resource.getId(), getOrganization().getId(), getProject().getId());
+      return PusherAdapter.eventChannel(userId);
    }
 
    private void sendProjectNotifications(final Project project, final String event) {

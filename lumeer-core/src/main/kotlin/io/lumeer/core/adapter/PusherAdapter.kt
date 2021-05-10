@@ -160,7 +160,7 @@ class PusherAdapter(
       return readableCollectionsIds
    }
 
-   private fun createEvent(organization: Organization?, project: Project?, any: Any, event: String, user: User): Event {
+   fun createEvent(organization: Organization?, project: Project?, any: Any, event: String, user: User): Event {
       return if (any is Document) {
          createEventForWorkspaceObject(organization, project, any, any.id, event, user.id)
       } else if (any is LinkType) {
@@ -182,7 +182,7 @@ class PusherAdapter(
       }
    }
 
-   private fun createEventForWorkspaceObject(organization: Organization?, project: Project?, any: Any, id: String, event: String, userId: String): Event {
+   fun createEventForWorkspaceObject(organization: Organization?, project: Project?, any: Any, id: String, event: String, userId: String): Event {
       val organizationId = organization?.id.orEmpty()
       val projectId = project?.id.orEmpty()
       if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
@@ -205,17 +205,17 @@ class PusherAdapter(
       return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId)
    }
 
-   private fun createEventForRemove(className: String, any: ResourceId, userId: String): Event {
+   fun createEventForRemove(className: String, any: ResourceId, userId: String): Event {
       return Event(PusherFacade.eventChannel(userId), className + PusherFacade.REMOVE_EVENT_SUFFIX, any, null)
    }
 
-   private fun createEventForResource(organization: Organization?, project: Project?, resource: Resource, event: String, user: User): Event {
+   fun createEventForResource(organization: Organization?, project: Project?, resource: Resource, event: String, user: User): Event {
       return if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
          createEventForRemove(resource.javaClass.simpleName, getResourceId(organization, project, resource), user.id)
       } else createEventForObject(filterUserRoles(organization, project, user, resource), getResourceId(organization, project, resource), event, user.id)
    }
 
-   private fun createEventForObject(any: Any, event: String, userId: String): Event {
+   fun createEventForObject(any: Any, event: String, userId: String): Event {
       return Event(eventChannel(userId), any.javaClass.simpleName + event, any)
    }
 
@@ -234,16 +234,12 @@ class PusherAdapter(
       return createEventForObjectWithParent(newObjectWithParent, getResourceId(organization, project, resource), event, user.id)
    }
 
-   private fun createEventForObjectWithParent(objectWithParent: ObjectWithParent, event: String, userId: String): Event {
+   fun createEventForObjectWithParent(objectWithParent: ObjectWithParent, event: String, userId: String): Event {
       return Event(eventChannel(userId), objectWithParent.`object`.javaClass.simpleName + event, objectWithParent)
    }
 
    private fun createEventForObjectWithParent(objectWithParent: ObjectWithParent, resourceId: ResourceId, event: String, userId: String): BackupDataEvent {
       return BackupDataEvent(eventChannel(userId), objectWithParent.`object`.javaClass.simpleName + event, objectWithParent, resourceId, null)
-   }
-
-   private fun eventChannel(userId: String): String? {
-      return PusherFacade.PRIVATE_CHANNEL_PREFIX + userId
    }
 
    private fun getResourceId(organization: Organization?, project: Project?, resource: Resource): ResourceId {
@@ -257,6 +253,14 @@ class PusherAdapter(
 
    private fun <T : Resource> filterUserRoles(organization: Organization?, project: Project?, user: User, resource: T): T {
       return facadeAdapter.mapResource(organization, project, resource.copy(), user)
+   }
+
+   companion object {
+
+      @JvmStatic
+      fun eventChannel(userId: String): String {
+         return PusherFacade.PRIVATE_CHANNEL_PREFIX + userId
+      }
    }
 
 }
