@@ -25,6 +25,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
@@ -56,7 +57,7 @@ public class ResourceUtils {
    }
 
    public static Set<String> getUserGroupsInResource(final Organization organization, final Resource resource, final User user) {
-      if (resource == null || resource instanceof Organization || user == null || "".equals(user.getId())) {
+      if (organization == null || resource == null || resource instanceof Organization || user == null || user.getGroups() == null || "".equals(user.getId())) {
          return Collections.emptySet();
       }
 
@@ -105,7 +106,9 @@ public class ResourceUtils {
    }
 
    private static Set<String> getManagers(Resource resource) {
-      return resource.getPermissions().getUserPermissions()
+      Permissions permissions = resource != null ? resource.getPermissions() : null;
+      Set<Permission> userPermissions = permissions != null ? permissions.getUserPermissions() : Collections.emptySet();
+      return userPermissions
                      .stream()
                      .filter(ResourceUtils::canManageByPermission)
                      .map(Permission::getId)
@@ -141,7 +144,9 @@ public class ResourceUtils {
    }
 
    public static Set<String> getReaders(Resource resource) {
-      return resource.getPermissions().getUserPermissions().stream()
+      Permissions permissions = resource != null ? resource.getPermissions() : null;
+      Set<Permission> userPermissions = permissions != null ? permissions.getUserPermissions() : Collections.emptySet();
+      return userPermissions.stream()
                      .filter(ResourceUtils::canReadByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
@@ -164,8 +169,12 @@ public class ResourceUtils {
    public static Set<Role> getRolesInResource(final Organization organization, final Resource resource, final User user) {
       final Set<String> groups = getUserGroupsInResource(organization, resource, user);
 
-      final Set<Role> actualRoles = getRolesByUser(resource.getPermissions().getUserPermissions(), user.getId());
-      actualRoles.addAll(getRolesByGroups(resource.getPermissions().getGroupPermissions(), groups));
+      Permissions permissions = resource != null ? resource.getPermissions() : null;
+      Set<Permission> userPermissions = permissions != null ? permissions.getUserPermissions() : Collections.emptySet();
+      Set<Permission> groupPermissions = permissions != null ? permissions.getGroupPermissions() : Collections.emptySet();
+
+      final Set<Role> actualRoles = getRolesByUser(userPermissions, user.getId());
+      actualRoles.addAll(getRolesByGroups(groupPermissions, groups));
       return Role.withTransitionRoles(actualRoles);
    }
 

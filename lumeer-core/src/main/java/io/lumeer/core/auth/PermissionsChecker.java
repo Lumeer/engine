@@ -119,10 +119,16 @@ public class PermissionsChecker {
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper) {
+   PermissionsChecker(AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper, UserDao userDao, CollectionDao collectionDao, ViewDao viewDao, LinkTypeDao linkTypeDao, FavoriteItemDao favoriteItemDao, DocumentDao documentDao) {
       this.authenticatedUser = authenticatedUser;
       this.authenticatedUserGroups = authenticatedUserGroups;
       this.workspaceKeeper = workspaceKeeper;
+      this.userDao = userDao;
+      this.collectionDao = collectionDao;
+      this.viewDao = viewDao;
+      this.linkTypeDao = linkTypeDao;
+      this.favoriteItemDao = favoriteItemDao;
+      this.documentDao = documentDao;
    }
 
    public PermissionAdapter getPermissionAdapter() {
