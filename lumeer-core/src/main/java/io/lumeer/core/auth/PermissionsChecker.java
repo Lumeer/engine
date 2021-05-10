@@ -108,7 +108,7 @@ public class PermissionsChecker {
    private DataStorage dataStorage;
 
    private CollectionAdapter collectionAdapter;
-   public PermissionAdapter permissionAdapter;
+   private PermissionAdapter permissionAdapter;
 
    @PostConstruct
    public void init() {
@@ -123,6 +123,10 @@ public class PermissionsChecker {
       this.authenticatedUser = authenticatedUser;
       this.authenticatedUserGroups = authenticatedUserGroups;
       this.workspaceKeeper = workspaceKeeper;
+   }
+
+   public PermissionAdapter getPermissionAdapter() {
+      return permissionAdapter;
    }
 
    /**

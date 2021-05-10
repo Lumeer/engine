@@ -188,7 +188,7 @@ public class PusherFacade extends AbstractFacade {
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
-      pusherAdapter = new PusherAdapter(facadeAdapter, permissionsChecker.permissionAdapter, viewDao, linkTypeDao, collectionDao);
+      pusherAdapter = new PusherAdapter(facadeAdapter, permissionsChecker.getPermissionAdapter(), viewDao, linkTypeDao, collectionDao);
    }
 
    public String getPusherKey() {
