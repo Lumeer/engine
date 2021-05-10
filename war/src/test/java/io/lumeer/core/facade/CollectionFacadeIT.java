@@ -449,6 +449,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Test
    public void testUpdateUserPermissions() {
       String USER2 = "aaa" + user.getId().substring(3);
+      userDao.createUser(new User(USER2, USER2, USER2, Collections.emptyMap()));
 
       var notifications = userNotificationFacade.getNotifications();
       assertThat(notifications).isEmpty();

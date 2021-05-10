@@ -34,6 +34,7 @@ import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -57,11 +58,11 @@ public class ResourceUtils {
    }
 
    public static Set<String> getUserGroupsInResource(final Organization organization, final Resource resource, final User user) {
-      if (organization == null || resource == null || resource instanceof Organization || user == null || user.getGroups() == null || "".equals(user.getId())) {
+      if (organization == null || resource == null || resource instanceof Organization || user == null || "".equals(user.getId())) {
          return Collections.emptySet();
       }
 
-      return user.getGroups().get(organization.getId());
+      return Objects.requireNonNullElse(user.getGroups().get(organization.getId()), Collections.emptySet());
    }
 
    public static Set<String> getOrganizationReaders(Organization organization) {

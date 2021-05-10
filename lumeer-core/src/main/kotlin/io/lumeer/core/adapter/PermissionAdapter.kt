@@ -140,11 +140,9 @@ class PermissionAdapter(private val userDao: UserDao,
          if (hasRoleInResource(organization, project, view, viewRole, userId)) { // do we have access to the view?
             val authorId = view.authorId.orEmpty()
             val collectionIds = QueryUtils.getQueryCollectionIds(view.query, linkTypes.value)
-            if (collectionIds.contains(collection.id)) { // does the view contain the resource?
-               if (authorId.isNotEmpty()) {
-                  if (hasRoleInResource(organization, project, collection, role, authorId)) { // has the view author access to the resource?
-                     return true // grant access
-                  }
+            if (collectionIds.contains(collection.id) && authorId.isNotEmpty()) { // does the view contain the resource?
+               if (hasRoleInResource(organization, project, view, role, authorId)) { // has the view author access to the resource?
+                  return true // grant access
                }
             }
          }
