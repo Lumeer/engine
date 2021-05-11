@@ -44,7 +44,7 @@ class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: F
 
       return collections.onEach {
          it.isFavorite = favoriteCollectionIds.contains(it.id)
-         it.documentsCount = documentsCounts[it.id]?.or(0)
+         it.documentsCount = documentsCounts[it.id] ?: 0
       }
    }
 
