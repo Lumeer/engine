@@ -19,16 +19,32 @@
 package io.lumeer.api.model.templateParse;
 
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 public class LinkInstanceWithId extends LinkInstance {
+
+   public static final String _ID = "_id";
+   public static final String DATA = "data";
+
+   @JsonCreator
+   public LinkInstanceWithId(
+         @JsonProperty(_ID) final String id,
+         @JsonProperty(LINK_TYPE_ID) final String linkTypeId,
+         @JsonProperty(DOCUMENTS_IDS) final List<String> documentIds) {
+      super(linkTypeId, documentIds);
+      setId(id);
+   }
 
    public LinkInstanceWithId(final LinkInstance linkInstance) {
       super(linkInstance);
    }
 
-   @JsonProperty("_id")
+   @JsonProperty(_ID)
    @Override
    public String getId() {
       return super.getId();

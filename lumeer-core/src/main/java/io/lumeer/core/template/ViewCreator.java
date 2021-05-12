@@ -82,8 +82,8 @@ public class ViewCreator extends WithIdCreator {
             viewJson.put("_id", templateId);
             view.setCode(null);
             view.setQuery(translateQuery(view.getQuery()));
-            view.setConfig(translateConfig(view.getConfig()));
-            view.setSettings(translateConfig(view.getSettings()));
+            view.setConfig(templateParser.translateConfig(view.getConfig(), constraintManager));
+            view.setSettings(templateParser.translateConfig(view.getSettings(), constraintManager));
             view = viewFacade.createView(view);
             templateParser.getDict().addView(templateId, view);
          } catch (IOException e) {
@@ -148,71 +148,5 @@ public class ViewCreator extends WithIdCreator {
 
       final Query result = new Query(newStems, query.getFulltexts(), query.getPage(), query.getPageSize());
       return result;
-   }
-
-   private Object translateConfig(final Object config) {
-      if (config instanceof String) {
-         return translateString((String) config);
-      } else if (config instanceof List) {
-         var newList = new ArrayList();
-         ((List) config).forEach(value -> {
-            newList.add(translateConfig(value));
-         });
-         return newList;
-      } else if (config instanceof Set) {
-         var newSet = new HashSet();
-         ((Set) config).forEach(value -> {
-            newSet.add(translateConfig(value));
-         });
-         return newSet;
-      } else if (config instanceof Map) {
-         var newMap = new HashMap<>();
-         ((Map) config).forEach((k, v) -> {
-            newMap.put(translateConfig(k), translateConfig(v));
-         });
-         return newMap;
-      } else {
-         return config;
-      }
-   }
-
-   private Object translateString(final String resourceId) {
-      if (resourceId == null) {
-         return null;
-      }
-
-      if (resourceId.length() == 24) {
-
-         String res = templateParser.getDict().getCollectionId(resourceId);
-
-         if (res == null) {
-            res = templateParser.getDict().getLinkTypeId(resourceId);
-
-            if (res == null) {
-               res = templateParser.getDict().getDocumentId(resourceId);
-
-               if (res == null) {
-                  res = templateParser.getDict().getLinkInstanceId(resourceId);
-
-                  if (res == null) {
-                     res = templateParser.getDict().getViewId(resourceId);
-                  }
-               }
-            }
-         }
-
-         if (res != null) {
-            return res;
-         }
-      }
-
-      try {
-         final ZonedDateTime zdt = ZonedDateTime.parse(resourceId, constraintManager.getDateDecoder());
-         return Date.from(zdt.toInstant());
-      } catch (DateTimeException e) {
-         // nps
-      }
-
-      return constraintManager.encode(resourceId);
    }
 }

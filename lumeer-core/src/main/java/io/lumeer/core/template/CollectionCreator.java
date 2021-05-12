@@ -21,7 +21,9 @@ package io.lumeer.core.template;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -36,14 +38,16 @@ import java.util.stream.Collectors;
 public class CollectionCreator extends WithIdCreator {
 
    private final CollectionFacade collectionFacade;
+   private final ConstraintManager constraintManager;
 
-   private CollectionCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
+   private CollectionCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
       super(templateParser);
       this.collectionFacade = collectionFacade;
+      this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
    }
 
-   public static void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade) {
-      final CollectionCreator creator = new CollectionCreator(templateParser, collectionFacade);
+   public static void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
+      final CollectionCreator creator = new CollectionCreator(templateParser, collectionFacade, defaultConfigurationProducer);
       creator.createCollections();
    }
 
@@ -130,11 +134,18 @@ public class CollectionCreator extends WithIdCreator {
          final JSONObject metaData = (JSONObject) purpose.get(CollectionPurpose.META_DATA);
          final DataDocument dataDocument = new DataDocument();
          if (metaData != null) {
-            metaData.forEach((k, v) -> dataDocument.append(k.toString(), v));
+            metaData.forEach((k, v) ->
+                  dataDocument.append(
+                        templateParser.translateConfig(k, constraintManager).toString(),
+                        templateParser.translateConfig(v, constraintManager)
+                  )
+            );
          }
 
          c.setPurpose(new CollectionPurpose(purposeType, dataDocument));
       }
+
+      c.setPriority((Long) o.get(Collection.PRIORITY));
 
       return c;
    }

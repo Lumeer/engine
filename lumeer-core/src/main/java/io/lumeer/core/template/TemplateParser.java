@@ -21,6 +21,7 @@ package io.lumeer.core.template;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.engine.api.event.TemplateCreated;
 
@@ -33,6 +34,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.sql.Date;
+import java.time.DateTimeException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Parses a project template from a JSON file.
@@ -85,4 +95,71 @@ public class TemplateParser {
    public TemplateCreated getReport(final Project project) {
       return new TemplateCreated(project, dict.getCollectionIds(), dict.getLinkTypeIds(), dict.getViewIds());
    }
+
+   public Object translateConfig(final Object config, final ConstraintManager constraintManager) {
+      if (config instanceof String) {
+         return translateString((String) config, constraintManager);
+      } else if (config instanceof List) {
+         var newList = new ArrayList();
+         ((List) config).forEach(value -> {
+            newList.add(translateConfig(value, constraintManager));
+         });
+         return newList;
+      } else if (config instanceof Set) {
+         var newSet = new HashSet();
+         ((Set) config).forEach(value -> {
+            newSet.add(translateConfig(value, constraintManager));
+         });
+         return newSet;
+      } else if (config instanceof Map) {
+         var newMap = new HashMap<>();
+         ((Map) config).forEach((k, v) -> {
+            newMap.put(translateConfig(k, constraintManager), translateConfig(v, constraintManager));
+         });
+         return newMap;
+      } else {
+         return config;
+      }
+   }
+
+   public Object translateString(final String resourceId, final ConstraintManager constraintManager) {
+      if (resourceId == null) {
+         return null;
+      }
+
+      if (resourceId.length() == 24) {
+
+         String res = dict.getCollectionId(resourceId);
+
+         if (res == null) {
+            res = dict.getLinkTypeId(resourceId);
+
+            if (res == null) {
+               res = dict.getDocumentId(resourceId);
+
+               if (res == null) {
+                  res = dict.getLinkInstanceId(resourceId);
+
+                  if (res == null) {
+                     res = dict.getViewId(resourceId);
+                  }
+               }
+            }
+         }
+
+         if (res != null) {
+            return res;
+         }
+      }
+
+      try {
+         final ZonedDateTime zdt = ZonedDateTime.parse(resourceId, constraintManager.getDateDecoder());
+         return Date.from(zdt.toInstant());
+      } catch (DateTimeException e) {
+         // nps
+      }
+
+      return constraintManager.encode(resourceId);
+   }
+
 }

@@ -34,6 +34,7 @@ public class CollectionWithId extends Collection {
 
    public static final String _ID = "_id";
    public static final String DEFAULT_ATTRIBUTE_ID = "defaultAttributeId";
+   public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
 
    @JsonCreator
    public CollectionWithId(
@@ -49,10 +50,13 @@ public class CollectionWithId extends Collection {
          @JsonProperty(RULES) final Map<String, Rule> rules,
          @JsonProperty(DATA_DESCRIPTION) final String dataDescription,
          @JsonProperty(PURPOSE) final CollectionPurpose purpose,
-         @JsonProperty(DEFAULT_ATTRIBUTE_ID) final String defaultAttributeId) {
+         @JsonProperty(DEFAULT_ATTRIBUTE_ID) final String defaultAttributeId,
+         @JsonProperty(LAST_ATTRIBUTE_NUM) final Integer lastAttributeNum) {
       super(code, name, icon, color, description, order, permissions, attributes, rules, dataDescription, purpose);
       setId(id);
       setDefaultAttributeId(defaultAttributeId);
+      setLastAttributeNum(lastAttributeNum);
+      System.out.println("kolekce jede");
    }
 
    public CollectionWithId(final Collection collection) {
