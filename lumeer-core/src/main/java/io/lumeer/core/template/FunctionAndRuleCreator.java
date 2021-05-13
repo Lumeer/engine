@@ -104,17 +104,17 @@ public class FunctionAndRuleCreator extends WithIdCreator {
                attr.setFunction(fce);
                linkTypeFacade.updateLinkTypeAttribute(linkType.getId(), attr.getId(), attr, skipFceLimits);
             }
-
-            var rules = (JSONObject) ((JSONObject) o).get("rules");
-            if (rules != null) {
-               var linkTypeRules = new HashMap<String, Rule>();
-               rules.forEach((k, v) -> {
-                  linkTypeRules.put((String) k, getRule((JSONObject) v));
-               });
-               linkType.setRules(linkTypeRules);
-               linkTypeFacade.updateLinkType(linkType.getId(), linkType, skipFceLimits);
-            }
          });
+
+         var rules = (JSONObject) ((JSONObject) o).get("rules");
+         if (rules != null) {
+            var linkTypeRules = new HashMap<String, Rule>();
+            rules.forEach((k, v) -> {
+               linkTypeRules.put((String) k, getRule((JSONObject) v));
+            });
+            linkType.setRules(linkTypeRules);
+            linkTypeFacade.updateLinkType(linkType.getId(), linkType, skipFceLimits);
+         }
       });
    }
 

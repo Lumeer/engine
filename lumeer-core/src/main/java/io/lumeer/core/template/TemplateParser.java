@@ -39,11 +39,14 @@ import java.sql.Date;
 import java.time.DateTimeException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Parses a project template from a JSON file.
@@ -150,6 +153,12 @@ public class TemplateParser {
 
          if (res != null) {
             return res;
+         }
+      } else if (resourceId.contains(":")) {
+         final String[] parts = resourceId.split(":");
+
+         if (Arrays.stream(parts).allMatch(ObjectId::isValid)) {
+            return Arrays.stream(parts).map(s -> translateString(s, constraintManager).toString()).collect(Collectors.joining(":"));
          }
       }
 
