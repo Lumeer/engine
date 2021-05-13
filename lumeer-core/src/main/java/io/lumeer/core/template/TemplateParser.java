@@ -26,6 +26,7 @@ import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.engine.api.event.TemplateCreated;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bson.types.ObjectId;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -127,7 +128,7 @@ public class TemplateParser {
          return null;
       }
 
-      if (resourceId.length() == 24) {
+      if (ObjectId.isValid(resourceId)) {
 
          String res = dict.getCollectionId(resourceId);
 

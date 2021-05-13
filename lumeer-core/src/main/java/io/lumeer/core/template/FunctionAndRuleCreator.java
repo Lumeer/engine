@@ -33,6 +33,7 @@ import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 
+import org.bson.types.ObjectId;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -175,7 +176,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
 
    private String cureJs(final String js) {
       var res = TemplateParserUtils.replacer(js, ", '", Pattern.quote("')"), id -> {
-         if (id.length() == 24) {
+         if (ObjectId.isValid(id)) {
             var collId = templateParser.getDict().getCollectionId(id);
             if (collId != null) {
                return collId;
@@ -193,7 +194,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       });
 
       res = TemplateParserUtils.replacer(res, Pattern.quote("('"), Pattern.quote("')"), id -> {
-         if (id.length() == 24) {
+         if (ObjectId.isValid(id)) {
             var collId = templateParser.getDict().getCollectionId(id);
             if (collId != null) {
                return collId;
@@ -209,7 +210,7 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       });
 
       res = TemplateParserUtils.replacer(res, Pattern.quote("navigate('"), Pattern.quote("',"), id -> {
-         if (id.length() == 24) {
+         if (ObjectId.isValid(id)) {
             var viewId = templateParser.getDict().getViewId(id);
             if (viewId != null) {
                return viewId;
