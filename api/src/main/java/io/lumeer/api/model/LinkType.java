@@ -47,7 +47,7 @@ public class LinkType implements WithId, HealthChecking {
    public static final String ATTRIBUTES = "attributes";
    public static final String RULES = "rules";
 
-   public static String ATTRIBUTE_PREFIX = "a";
+   public static final String ATTRIBUTE_PREFIX = "a";
 
    private String id;
    private String name;

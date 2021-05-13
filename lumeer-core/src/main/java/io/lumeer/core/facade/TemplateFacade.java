@@ -131,7 +131,7 @@ public class TemplateFacade extends AbstractFacade {
    }
 
    private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata, final boolean originalLumeerTemplate) {
-      CollectionCreator.createCollections(templateParser, collectionFacade);
+      CollectionCreator.createCollections(templateParser, collectionFacade, defaultConfigurationProducer);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
       DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser, templateMetadata, permissionsChecker.getDocumentLimits());
       LinkInstanceCreator.createLinkInstances(templateParser, linkInstanceFacade, authenticatedUser, templateMetadata);

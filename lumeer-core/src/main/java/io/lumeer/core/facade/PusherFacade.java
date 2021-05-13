@@ -445,8 +445,8 @@ public class PusherFacade extends AbstractFacade {
 
    private Event createEvent(final Object object, final String event, final String userId) {
       return pusherAdapter.createEvent(
-            getOrganization(),
-            getProject(),
+            getOrganizationOrNull(),
+            getProjectOrNull(),
             object,
             event,
             userCache.getUserById(userId)
@@ -504,6 +504,10 @@ public class PusherFacade extends AbstractFacade {
       return workspaceKeeper.getOrganization().get();
    }
 
+   private Organization getOrganizationOrNull() {
+      return workspaceKeeper.getOrganization().orElse(null);
+   }
+
    private void sendViewNotifications(final View view, final String event) {
       Set<String> userIds = resourceAdapter.getViewReaders(view, getOrganization(), getProject());
       view.setAuthorRights(resourceAdapter.getViewAuthorRights(view, getOrganization(), getProject()));
@@ -534,6 +538,11 @@ public class PusherFacade extends AbstractFacade {
 
       return workspaceKeeper.getProject().get();
    }
+
+   private Project getProjectOrNull() {
+      return workspaceKeeper.getProject().orElse(null);
+   }
+
 
    public void createResourceComment(@Observes final CreateResourceComment commentEvent) {
       resourceCommentNotification(commentEvent.getResourceComment(), CREATE_EVENT_SUFFIX);
