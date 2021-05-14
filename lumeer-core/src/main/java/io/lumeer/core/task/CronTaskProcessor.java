@@ -28,6 +28,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.CronRule;
+import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.SystemDatabaseConfigurationFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -50,20 +51,7 @@ import javax.inject.Inject;
 
 @Singleton
 @Startup
-public class CronTaskProcessor {
-
-   @SystemDataStorage
-   @Inject
-   private DataStorage systemDataStorage;
-
-   @Inject
-   private SystemDatabaseConfigurationFacade systemDatabaseConfigurationFacade;
-
-   @Inject
-   private DataStorageFactory dataStorageFactory;
-
-   @Inject
-   private DefaultConfigurationProducer configurationProducer;
+public class CronTaskProcessor extends WorkspaceContext  {
 
    @Inject
    private OrganizationDao organizationDao;
@@ -151,44 +139,9 @@ public class CronTaskProcessor {
       return false;
    }
 
-   private DataStorage getDataStorage(final String organizationId) {
-      final List<StorageConnection> connections = systemDatabaseConfigurationFacade.getDataStorage(organizationId);
-      final String database = systemDatabaseConfigurationFacade.getDataStorageDatabase(organizationId);
-      final Boolean useSsl = systemDatabaseConfigurationFacade.getDataStorageUseSsl(organizationId);
-      return dataStorageFactory.getStorage(connections, database, useSsl);
-   }
-
-   private DaoContextSnapshot getDaoContextSnapshot(final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
-      return dataStorageFactory.getDaoContextSnapshot(systemDataStorage, userDataStorage, selectedWorkspace);
-   }
-
-   private ContextualTaskFactory getTaskFactory(final DaoContextSnapshot contextSnapshot) {
-      return new AbstractContextualTask.SyntheticContextualTaskFactory(configurationProducer, contextSnapshot);
-   }
-
    private Task getTask(final ContextualTaskFactory taskFactory, final String name, final Rule rule, final Collection collection, final List<Document> documents) {
       RuleTask task = taskFactory.getInstance(RuleTask.class);
       task.setRule(name, rule, collection, documents);
       return task;
-   }
-
-   class Workspace implements SelectedWorkspace {
-      private final Organization organization;
-      private final Project project;
-
-      Workspace(final Organization organization, final Project project) {
-         this.organization = organization;
-         this.project = project;
-      }
-
-      @Override
-      public Optional<Organization> getOrganization() {
-         return Optional.of(organization);
-      }
-
-      @Override
-      public Optional<Project> getProject() {
-         return Optional.ofNullable(project);
-      }
    }
 }
