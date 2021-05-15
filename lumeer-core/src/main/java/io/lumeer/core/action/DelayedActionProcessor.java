@@ -155,21 +155,26 @@ public class DelayedActionProcessor {
    }
 
    private boolean actionResourceExists(final DelayedAction action) {
-      if (action.getNotificationType() == NotificationType.PAST_DUE_DATE || action.getNotificationType() == NotificationType.DUE_DATE_SOON) {
-         final String orgId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
-         final String projId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
-         final String docId = action.getData().getString(DelayedAction.DATA_DOCUMENT_ID);
+      final String orgId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
+      final String projId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
+      final String docId = action.getData().getString(DelayedAction.DATA_DOCUMENT_ID);
 
-         final Organization organization = organizations.computeIfAbsent(orgId, id -> organizationDao.getOrganizationById(orgId));
-         workspaceKeeper.setOrganization(organization);
-         final Project project = projects.computeIfAbsent(projId, id -> projectDao.getProjectById(projId));
-         workspaceKeeper.setWorkspace(organization, project);
+      try {
+         if (orgId != null) {
+            final Organization organization = organizations.computeIfAbsent(orgId, id -> organizationDao.getOrganizationById(orgId));
+            workspaceKeeper.setOrganization(organization);
 
-         try {
-            final Document document = documentDao.getDocumentById(docId);
-         } catch (ResourceNotFoundException rnfe) {
-            return false;
+            if (projId != null) {
+               final Project project = projects.computeIfAbsent(projId, id -> projectDao.getProjectById(projId));
+               workspaceKeeper.setWorkspace(organization, project);
+
+               if (docId != null) {
+                  documentDao.getDocumentById(docId);
+               }
+            }
          }
+      } catch (ResourceNotFoundException e) {
+         return false;
       }
 
       return true;
