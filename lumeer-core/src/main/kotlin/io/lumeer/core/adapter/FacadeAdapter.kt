@@ -54,7 +54,7 @@ class FacadeAdapter {
 
    fun <T : Resource> setupPublicPermissions(resource: T, userId: String): T {
       val userPermission = Permission(userId, HashSet())
-      val currentUserPermission = resource.permissions.userPermissions.first { it.id == userId } ?: userPermission
+      val currentUserPermission = resource.permissions.userPermissions.firstOrNull { it.id == userId } ?: userPermission
       resource.permissions.clear()
       currentUserPermission.roles.add(Role.READ)
       resource.permissions.addUserPermissions(setOf(currentUserPermission))
@@ -70,7 +70,7 @@ class FacadeAdapter {
             .map { perm: Permission ->
                if (keepReadRights) {
                   if (managers.contains(perm.id)) perm
-                  else Permission.buildWithRoles(perm.id, java.util.Set.of(Role.READ))
+                  else Permission.buildWithRoles(perm.id, setOf(Role.READ))
                } else perm
             }
             .filter { keepReadRights || managers.contains(it.id) }
