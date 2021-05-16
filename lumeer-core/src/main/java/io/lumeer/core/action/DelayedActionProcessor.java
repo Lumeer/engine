@@ -19,7 +19,6 @@
 package io.lumeer.core.action;
 
 import io.lumeer.api.model.DelayedAction;
-import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
@@ -31,7 +30,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
 import io.lumeer.core.WorkspaceContext;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -41,9 +39,7 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.DelayedActionDao;
-import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -79,15 +75,6 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    @Inject
    private OrganizationDao organizationDao;
-
-   @Inject
-   private ProjectDao projectDao;
-
-   @Inject
-   private DocumentDao documentDao;
-
-   @Inject
-   private WorkspaceKeeper workspaceKeeper;
 
    @Inject
    private UserNotificationDao userNotificationDao;
