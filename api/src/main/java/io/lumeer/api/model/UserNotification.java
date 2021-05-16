@@ -189,6 +189,8 @@ public class UserNotification {
    }
 
    public interface ViewShared extends ProjectShared {
+      String VIEW_ICON = "viewIcon";
+      String VIEW_COLOR = "viewColor";
       String VIEW_CODE = "viewCode";
       String VIEW_NAME = "viewName";
       String VIEW_PERSPECTIVE = "viewPerspective";

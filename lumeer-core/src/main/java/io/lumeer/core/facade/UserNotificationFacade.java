@@ -172,6 +172,8 @@ public class UserNotificationFacade extends AbstractFacade {
       if (resource.getType() == ResourceType.VIEW) {
          appendOrganization(data);
          appendProject(data);
+         data.append(UserNotification.ViewShared.VIEW_COLOR, resource.getColor());
+         data.append(UserNotification.ViewShared.VIEW_ICON, resource.getIcon());
          data.append(UserNotification.ViewShared.VIEW_CODE, resource.getCode());
          data.append(UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) resource).getPerspective());
          data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());

@@ -19,14 +19,19 @@
 package io.lumeer.core.action;
 
 import io.lumeer.api.model.DelayedAction;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
+import io.lumeer.core.WorkspaceContext;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -34,9 +39,15 @@ import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.Event;
@@ -58,13 +69,25 @@ import javax.inject.Inject;
 
 @Singleton
 @Startup
-public class DelayedActionProcessor {
+public class DelayedActionProcessor extends WorkspaceContext {
 
    @Inject
    private DelayedActionDao delayedActionDao;
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private OrganizationDao organizationDao;
+
+   @Inject
+   private ProjectDao projectDao;
+
+   @Inject
+   private DocumentDao documentDao;
+
+   @Inject
+   private WorkspaceKeeper workspaceKeeper;
 
    @Inject
    private UserNotificationDao userNotificationDao;
@@ -78,6 +101,9 @@ public class DelayedActionProcessor {
    private PusherClient pusherClient;
 
    private boolean skipDelay = false;
+
+   private Map<String, Organization> organizations = new HashMap<>();
+   private Map<String, Project> projects = new HashMap<>();
 
    @PostConstruct
    public void init() {
@@ -97,30 +123,66 @@ public class DelayedActionProcessor {
       final Map<String, Language> userLanguages = initializeLanguages(users.values());
       final Map<String, String> userIds = getUserIds(users.values());
 
+      organizations.clear();
+      projects.clear();
+
       actions.forEach(action -> {
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
-         if (action.getNotificationChannel() == NotificationChannel.Email) {
-            final String sender = userIds.containsKey(action.getInitiator()) ? emailService.formatUserReference(users.get(userIds.get(action.getInitiator()))) : "";
-            final String recipient = action.getReceiver();
-            final Map<String, Object> additionalData = processData(action.getData(), lang);
+         if (actionResourceExists(action)) {
 
-            emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, getEmailSubjectPart(action, additionalData), additionalData);
-         } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
-            UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
-            notification = userNotificationDao.createNotification(notification);
-            if (pusherClient != null) {
-               pusherClient.trigger(List.of(createUserNotificationEvent(notification, PusherFacade.CREATE_EVENT_SUFFIX, userIds.get(action.getReceiver()))));
+            if (action.getNotificationChannel() == NotificationChannel.Email) {
+               final String sender = userIds.containsKey(action.getInitiator()) ? emailService.formatUserReference(users.get(userIds.get(action.getInitiator()))) : "";
+               final String recipient = action.getReceiver();
+               final Map<String, Object> additionalData = processData(action.getData(), lang);
+
+               emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, getEmailSubjectPart(action, additionalData), additionalData);
+            } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
+               UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
+               notification = userNotificationDao.createNotification(notification);
+               if (pusherClient != null) {
+                  pusherClient.trigger(List.of(createUserNotificationEvent(notification, PusherFacade.CREATE_EVENT_SUFFIX, userIds.get(action.getReceiver()))));
+               }
             }
-         }
 
-         // reschedule past due actions
-         if (!rescheduleDueDateAction(action)) {
+            // reschedule past due actions
+            if (!rescheduleDueDateAction(action)) {
+               action.setCompleted(ZonedDateTime.now());
+            }
+         } else {
             action.setCompleted(ZonedDateTime.now());
          }
 
          delayedActionDao.updateAction(action);
       });
+   }
+
+   private boolean actionResourceExists(final DelayedAction action) {
+      final String orgId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
+      final String projId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
+      final String docId = action.getData().getString(DelayedAction.DATA_DOCUMENT_ID);
+
+      try {
+         if (orgId != null) {
+            final DataStorage userDataStorage = getDataStorage(orgId);
+            final Organization organization = organizations.computeIfAbsent(orgId, id -> organizationDao.getOrganizationById(orgId));
+
+            final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
+
+            if (projId != null) {
+               final Project project = projects.computeIfAbsent(projId, id -> orgDao.getProjectDao().getProjectById(projId));
+               final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
+
+               if (docId != null) {
+                  projDao.getDocumentDao().getDocumentById(docId);
+               }
+            }
+         }
+      } catch (ResourceNotFoundException e) {
+         return false;
+      }
+
+      return true;
    }
 
    // reschedule past due actions until they are completed
