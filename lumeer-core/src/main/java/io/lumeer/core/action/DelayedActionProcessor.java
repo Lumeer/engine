@@ -30,6 +30,7 @@ import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
+import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
@@ -38,12 +39,14 @@ import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserNotificationDao;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -66,7 +69,7 @@ import javax.inject.Inject;
 
 @Singleton
 @Startup
-public class DelayedActionProcessor {
+public class DelayedActionProcessor extends WorkspaceContext {
 
    @Inject
    private DelayedActionDao delayedActionDao;
@@ -161,15 +164,17 @@ public class DelayedActionProcessor {
 
       try {
          if (orgId != null) {
+            final DataStorage userDataStorage = getDataStorage(orgId);
             final Organization organization = organizations.computeIfAbsent(orgId, id -> organizationDao.getOrganizationById(orgId));
-            workspaceKeeper.setOrganization(organization);
+
+            final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
 
             if (projId != null) {
-               final Project project = projects.computeIfAbsent(projId, id -> projectDao.getProjectById(projId));
-               workspaceKeeper.setWorkspace(organization, project);
+               final Project project = projects.computeIfAbsent(projId, id -> orgDao.getProjectDao().getProjectById(projId));
+               final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
 
                if (docId != null) {
-                  documentDao.getDocumentById(docId);
+                  projDao.getDocumentDao().getDocumentById(docId);
                }
             }
          }
