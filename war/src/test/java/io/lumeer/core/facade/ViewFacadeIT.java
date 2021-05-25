@@ -28,7 +28,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
@@ -125,7 +125,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       this.organization = organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       this.userPermission = Permission.buildWithRoles(this.user.getId(), View.ROLES);
-      this.groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
+      this.groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(RoleOld.READ));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
@@ -144,7 +144,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(RoleOld.READ))));
       query = new Query(new QueryStem(collection.getId()));
    }
 
@@ -252,7 +252,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       final View view = createView(CODE);
 
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(Role.MANAGE, Role.READ));
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(RoleOld.MANAGE, RoleOld.READ));
       viewFacade.updateUserPermissions(view.getId(), Set.of(userPermission));
 
       Permissions permissions = viewDao.getViewById(view.getId()).getPermissions();
@@ -277,7 +277,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final View view = createView(CODE);
 
-      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(Role.SHARE, Role.READ));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(RoleOld.SHARE, RoleOld.READ));
       viewFacade.updateGroupPermissions(view.getId(), Set.of(groupPermission));
 
       Permissions permissions = viewDao.getViewByCode(CODE).getPermissions();
@@ -343,7 +343,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       }
 
       try {
-         viewFacade.updateUserPermissions(view.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
+         viewFacade.updateUserPermissions(view.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(RoleOld.READ))));
          fail("Can manage view without manage rights");
       } catch (Exception e) {
          assertThat(e).isInstanceOf(NoResourcePermissionException.class);
@@ -352,7 +352,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       // share the view and make sure we can see it now
       Permissions viewPermissions = new Permissions();
       viewPermissions.updateUserPermissions(Permission.buildWithRoles(NON_EXISTING_USER, View.ROLES));
-      viewPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      viewPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ)));
       view.setPermissions(viewPermissions);
       viewDao.updateView(view.getId(), view); // since we lost manage rights, we can only do it directly
       permissionsChecker.invalidateCache(view);
@@ -383,7 +383,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    private void removeOrganizationManagePermission() {
       Permissions organizationPermissions = new Permissions();
-      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.READ, Role.WRITE))));
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(RoleOld.READ, RoleOld.WRITE))));
       organization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(organization.getId(), organization);
       workspaceCache.clear();
@@ -391,7 +391,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
    private void removeProjectManagePermission() {
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.READ, Role.WRITE))));
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(RoleOld.READ, RoleOld.WRITE))));
       project.setPermissions(projectPermissions);
       projectDao.updateProject(project.getId(), project);
       workspaceCache.clear();

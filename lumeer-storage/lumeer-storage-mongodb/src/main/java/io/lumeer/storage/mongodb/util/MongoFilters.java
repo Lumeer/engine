@@ -20,7 +20,7 @@
 package io.lumeer.storage.mongodb.util;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.storage.api.filter.SearchAttributeFilter;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
@@ -90,7 +90,7 @@ public class MongoFilters {
    private static Bson entityPermissionsFilter(String entityField, String entityName) {
       return Filters.elemMatch(PERMISSIONS + "." + entityField, Filters.and(
             entityNameFilter(entityName),
-            entityRolesFilter(Role.READ, Role.MANAGE)
+            entityRolesFilter(RoleOld.READ, RoleOld.MANAGE)
       ));
    }
 
@@ -98,8 +98,8 @@ public class MongoFilters {
       return Filters.eq(PermissionCodec.ID, name);
    }
 
-   private static Bson entityRolesFilter(Role... roles) {
-      List<String> rolesStrings = Arrays.stream(roles).map(Role::toString).collect(Collectors.toList());
+   private static Bson entityRolesFilter(RoleOld... roles) {
+      List<String> rolesStrings = Arrays.stream(roles).map(RoleOld::toString).collect(Collectors.toList());
       return Filters.in(PermissionCodec.ROLES, rolesStrings);
    }
 

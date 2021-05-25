@@ -97,7 +97,7 @@ class PusherAdapter(
          if (usersWithRights.contains(userId)) {
             continue
          }
-         val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
+         val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) }
          val collectionIdsInViews = viewsByUser.flatMap { QueryUtils.getQueryCollectionIds(it.query, linkTypes) }
          if (!collectionIdsInViews.contains(collection.id)) {
             notifications.add(createEventForResource(organization, project, collection, PusherFacade.REMOVE_EVENT_SUFFIX, permissionAdapter.getUser(userId)))
@@ -117,7 +117,7 @@ class PusherAdapter(
    }
 
    private fun filterLinkTypesNotInViews(organization: Organization?, project: Project?, linkTypes: List<LinkType>, collections: List<Collection>, views: List<View>, userId: String, includeReadableCollections: Boolean): List<LinkType> {
-      val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
+      val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) }
       val linkTypeIdsInViews = viewsByUser.flatMap { it.query.linkTypeIds }
       if (includeReadableCollections) {
          val readableCollectionsIds = filterViewsReadableCollectionsIds(organization, project, viewsByUser, linkTypes, collections, userId)
@@ -127,25 +127,25 @@ class PusherAdapter(
    }
 
    private fun filterNewCollectionsForUser(organization: Organization?, project: Project?, userId: String, possibleCollections: List<Collection>, views: List<View>, linkTypes: List<LinkType>): List<Collection> {
-      val collectionIdsInViews = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
+      val collectionIdsInViews = views.filter { permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) }
             .flatMap {QueryUtils.getQueryCollectionIds(it.query, linkTypes) }
 
-      return possibleCollections.filter { !permissionAdapter.hasRole(organization, project, it, Role.READ, userId) && !collectionIdsInViews.contains(it.id) }
+      return possibleCollections.filter { !permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) && !collectionIdsInViews.contains(it.id) }
    }
 
    private fun filterNewLinkTypesForUser(organization: Organization?, project: Project?, userId: String, possibleLinkTypes: List<LinkType>, views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>): List<LinkType> {
-      val linkTypeIdsInViews = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
+      val linkTypeIdsInViews = views.filter { permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) }
             .flatMap { it.query.linkTypeIds }
       val collectionMap = collections.associateBy { it.id }
       val newLinkTypes = possibleLinkTypes
-            .filter { !permissionAdapter.hasLinkTypeRole(organization, project, it, collectionMap, Role.READ, userId) && !linkTypeIdsInViews.contains(it.id) }
+            .filter { !permissionAdapter.hasRoleInLinkType(organization, project, it, collectionMap, RoleOld.READ, userId) && !linkTypeIdsInViews.contains(it.id) }
             .toMutableList()
       newLinkTypes.addAll(linkTypesByViewReadPermission(organization, project, userId, views, collections, linkTypes))
       return newLinkTypes
    }
 
    private fun linkTypesByViewReadPermission(organization: Organization?, project: Project?, userId: String, views: List<View>, collections: List<Collection>, linkTypes: List<LinkType>): List<LinkType> {
-      val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }
+      val viewsByUser = views.filter { permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) }
       val collectionsIdsByViews = filterViewsReadableCollectionsIds(organization, project, viewsByUser, linkTypes, collections, userId)
       val linkTypesByViews = linkTypes.filter { collectionsIdsByViews.containsAll(it.collectionIds) }.toMutableList()
       val collectionsIdsByViewsWithoutCurrent = filterViewsReadableCollectionsIds(organization, project, views, linkTypes, collections, userId)
@@ -156,7 +156,7 @@ class PusherAdapter(
 
    private fun filterViewsReadableCollectionsIds(organization: Organization?, project: Project?, views: List<View>, linkTypes: List<LinkType>, collections: List<Collection>, userId: String): Set<String> {
       val readableCollectionsIds = QueryUtils.getViewsCollectionIds(views, linkTypes)
-      readableCollectionsIds.addAll(collections.filter { permissionAdapter.hasRole(organization, project, it, Role.READ, userId) }.map {  it.id })
+      readableCollectionsIds.addAll(collections.filter { permissionAdapter.hasRole(organization, project, it, RoleOld.READ, userId) }.map {  it.id })
       return readableCollectionsIds
    }
 

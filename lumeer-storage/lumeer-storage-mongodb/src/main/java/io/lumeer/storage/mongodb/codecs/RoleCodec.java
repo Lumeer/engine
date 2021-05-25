@@ -20,28 +20,51 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecRegistry;
 
 public class RoleCodec implements Codec<Role> {
 
+   public static final String TYPE = "type";
+   public static final String TRANSITIVE = "transitive";
+
+   private final Codec<Document> documentCodec;
+
+   public RoleCodec(final CodecRegistry registry) {
+      this.documentCodec = registry.get(Document.class);
+   }
+
    @Override
    public Role decode(final BsonReader reader, final DecoderContext decoderContext) {
-      return Role.fromString(reader.readString());
+      Document document = documentCodec.decode(reader, decoderContext);
+
+      return RoleCodec.convertFromDocument(document);
+   }
+
+   public static Role convertFromDocument(Document bson) {
+      RoleType type = RoleType.fromString(bson.getString(TYPE));
+      Boolean transitive = bson.getBoolean(TRANSITIVE);
+
+      return new Role(type, transitive);
    }
 
    @Override
    public void encode(final BsonWriter writer, final Role value, final EncoderContext encoderContext) {
-      writer.writeString(value.toString());
+      Document document = new Document(TYPE, value.getRoleType())
+            .append(TRANSITIVE, value.isTransitive());
+
+      documentCodec.encode(writer, document, encoderContext);
    }
 
    @Override
    public Class<Role> getEncoderClass() {
       return Role.class;
    }
-
 }

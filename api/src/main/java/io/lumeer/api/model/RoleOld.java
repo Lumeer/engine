@@ -16,32 +16,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
-
-import io.lumeer.api.model.RoleOld;
-import io.lumeer.api.model.View;
+package io.lumeer.api.model;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
-public class ViewPermissionsOperation extends ResourceOperation<View> {
+@Deprecated
+public enum RoleOld {
 
-   public View originalView;
+   MANAGE,
+   WRITE,
+   SHARE,
+   READ,
+   CLONE;
 
-   public ViewPermissionsOperation(final View entity, final String userId, final Set<RoleOld> value) {
-      super(entity, userId, value);
-      originalView = entity.copy();
+   @Override
+   public String toString() {
+      return name().toLowerCase();
    }
 
-   public String getUserId() {
-      return getAttrId();
+   public static @Nullable
+   RoleOld fromString(String role) {
+      try {
+         return RoleOld.valueOf(role.toUpperCase());
+      } catch (IllegalArgumentException exception) {
+         return null;
+      }
    }
 
-   @SuppressWarnings("unchecked")
-   public Set<RoleOld> getRoles() {
-      return (Set<RoleOld>) getValue();
+   public static Set<String> toStringRoles(Set<RoleOld> roles) {
+      return roles.stream()
+                  .map(RoleOld::toString)
+                  .collect(Collectors.toSet());
    }
 
-   public View getOriginalView() {
-      return originalView;
-   }
 }

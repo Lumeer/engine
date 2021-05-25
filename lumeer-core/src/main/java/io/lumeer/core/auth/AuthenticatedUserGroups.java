@@ -44,21 +44,21 @@ public class AuthenticatedUserGroups {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
-   public Set<String> getCurrentUserGroups(){
+   public Set<String> getCurrentUserGroups() {
       Optional<Organization> organizationOptional = workspaceKeeper.getOrganization();
-      if (!organizationOptional.isPresent()){
+      if (organizationOptional.isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       Organization organization = organizationOptional.get();
-      Map<String,Set<String>> userGroups = userCache.getUser(authenticatedUser.getUserEmail()).getGroups();
+      Map<String, Set<String>> userGroups = userCache.getUserById(authenticatedUser.getCurrentUserId()).getGroups();
       return userGroups != null && userGroups.containsKey(organization.getId()) ? userGroups.get(organization.getId()) : Collections.emptySet();
    }
 
    public static Set<String> getUserGroups(final Organization organization, final User user) {
-      if (organization == null){
+      if (organization == null) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
-      Map<String,Set<String>> userGroups = user.getGroups();
+      Map<String, Set<String>> userGroups = user.getGroups();
       return userGroups != null && userGroups.containsKey(organization.getId()) ? userGroups.get(organization.getId()) : Collections.emptySet();
 
    }

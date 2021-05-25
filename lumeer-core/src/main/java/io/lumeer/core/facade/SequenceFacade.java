@@ -20,7 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -58,7 +58,7 @@ public class SequenceFacade extends AbstractFacade {
 
    private void checkProjectManageRole() {
       Project project = getCurrentProject();
-      permissionsChecker.checkRole(project, Role.MANAGE);
+      permissionsChecker.checkRole(project, RoleOld.MANAGE);
    }
 
    private Project getCurrentProject() {

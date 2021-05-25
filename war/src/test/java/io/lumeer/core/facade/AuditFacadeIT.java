@@ -27,7 +27,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.AuditAdapter;
@@ -113,7 +113,7 @@ public class AuditFacadeIT extends IntegrationTestBase {
       this.group = groupDao.createGroup(group);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Collection.ROLES);
-      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(Role.READ));
+      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(RoleOld.READ));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);

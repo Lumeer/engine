@@ -31,7 +31,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -134,7 +134,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -153,7 +153,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       collectionDao.createRepository(storedProject);
 
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
       Collection collection = new Collection("123456789", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection.setLastAttributeNum(0);
       this.collection = collectionDao.createCollection(collection);

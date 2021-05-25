@@ -133,7 +133,7 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
                         Filters.and(
                               Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
                               Filters.in(ResourceCommentCodec.RESOURCE_ID, resourceIds))),
-                  Aggregates.group("$"+ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
+                  Aggregates.group("$" + ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
             )
       ).into(new ArrayList<>());
 
@@ -215,6 +215,22 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
             Filters.and(
                   Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
                   Filters.eq(ResourceCommentCodec.RESOURCE_ID, resourceId)));
+
+      // no event is fired here as this method only occurs when the resource is deleted completely
+
+      return result.wasAcknowledged();
+   }
+
+   @Override
+   public boolean deleteComments(final ResourceType resourceType, final java.util.Collection<String> resourceIds) {
+      if (resourceIds.isEmpty()) {
+         return true;
+      }
+
+      DeleteResult result = databaseCollection().deleteMany(
+            Filters.and(
+                  Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
+                  Filters.in(ResourceCommentCodec.RESOURCE_ID, resourceIds)));
 
       // no event is fired here as this method only occurs when the resource is deleted completely
 

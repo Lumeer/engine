@@ -28,7 +28,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -315,7 +315,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> getLinkInstances(Set<String> ids) {
-      checkProjectRole(Role.READ);
+      checkProjectRole(RoleOld.READ);
 
       var linkComments = getCommentsCounts(ids);
       var linksMap = linkInstanceDao.getLinkInstances(ids)
@@ -324,7 +324,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       linksMap.forEach((linkTypeId, value) -> {
          var linkType = linkTypeDao.getLinkType(linkTypeId);
-         if (permissionsChecker.hasLinkTypeRoleWithView(linkType, Role.READ)) {
+         if (permissionsChecker.hasLinkTypeRoleWithView(linkType, RoleOld.READ)) {
 
             var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
                                      .stream()
@@ -385,7 +385,7 @@ public class LinkInstanceFacade extends AbstractFacade {
             throw new IllegalStateException("Rule not found");
          }
          var roleString = config.get("role").toString();
-         var role = Role.fromString(roleString);
+         var role = RoleOld.fromString(roleString);
 
          permissionsChecker.checkLinkTypeRoleWithView(linkType, role, true);
          LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
@@ -437,20 +437,20 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, Role.WRITE);
+      return checkLinkTypePermissions(linkTypeId, RoleOld.WRITE);
    }
 
    private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, Role.READ);
+      return checkLinkTypePermissions(linkTypeId, RoleOld.READ);
    }
 
-   private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
+   private LinkType checkLinkTypePermissions(String linkTypeId, RoleOld role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
       return linkType;
    }
 
-   private void checkProjectRole(Role role) {
+   private void checkProjectRole(RoleOld role) {
       Project project = getCurrentProject();
       permissionsChecker.checkRole(project, role);
    }

@@ -27,7 +27,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
@@ -106,7 +106,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 

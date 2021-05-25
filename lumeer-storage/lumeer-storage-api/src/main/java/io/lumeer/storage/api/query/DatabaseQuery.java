@@ -74,7 +74,7 @@ public class DatabaseQuery {
       private Integer pageSize;
 
       protected Builder(String... users) {
-         this.users = Arrays.asList(users).stream().collect(Collectors.toSet());
+         this.users = Arrays.stream(users).collect(Collectors.toSet());
       }
 
       public T groups(Set<String> groups) {

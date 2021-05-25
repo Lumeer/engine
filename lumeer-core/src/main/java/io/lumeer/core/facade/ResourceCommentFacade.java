@@ -25,13 +25,12 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.Utils;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -169,19 +168,17 @@ public class ResourceCommentFacade extends AbstractFacade {
    }
 
    private void checkPermissions(final ResourceType resourceType, final String resourceId) {
-      if (permissionsChecker.isManager()) {
-         return;
-      }
+      // TODO some workspace permissions ???
 
       if (resourceType == ResourceType.LINK) {
          final LinkType linkType = getLinkType(resourceId);
          final List<String> collectionIds = linkType.getCollectionIds();
 
          if (collectionIds != null) {
-            collectionIds.forEach(id -> permissionsChecker.checkRoleWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), Role.READ, Role.READ));
+            collectionIds.forEach(id -> permissionsChecker.checkRoleWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), RoleOld.READ, RoleOld.READ));
          }
       } else if (resourceType == ResourceType.COLLECTION) {
-         permissionsChecker.checkRoleWithView((Collection) getResource(resourceType, resourceId), Role.READ, Role.READ);
+         permissionsChecker.checkRoleWithView((Collection) getResource(resourceType, resourceId), RoleOld.READ, RoleOld.READ);
       } else if (resourceType == ResourceType.DOCUMENT) {
          Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
          Collection collection = collectionDao.getCollectionById(document.getCollectionId());
@@ -189,9 +186,9 @@ public class ResourceCommentFacade extends AbstractFacade {
          if (DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail())) {
             return;
          }
-         permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
+         permissionsChecker.checkRoleWithView(collection, RoleOld.READ, RoleOld.READ);
       } else {
-         permissionsChecker.checkRole(getResource(resourceType, resourceId), Role.READ);
+         permissionsChecker.checkRole(getResource(resourceType, resourceId), RoleOld.READ);
       }
    }
 

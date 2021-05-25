@@ -16,32 +16,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.RoleOld;
-import io.lumeer.api.model.View;
+import io.lumeer.api.model.Rule;
+import io.lumeer.storage.mongodb.codecs.RoleCodec;
 
-import java.util.Set;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-public class ViewPermissionsOperation extends ResourceOperation<View> {
+public class RoleCodecProvider implements CodecProvider {
 
-   public View originalView;
+   @Override
+   public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
+      if (aClass == Rule.class) {
+         return (Codec<T>) new RoleCodec(codecRegistry);
+      }
 
-   public ViewPermissionsOperation(final View entity, final String userId, final Set<RoleOld> value) {
-      super(entity, userId, value);
-      originalView = entity.copy();
-   }
-
-   public String getUserId() {
-      return getAttrId();
-   }
-
-   @SuppressWarnings("unchecked")
-   public Set<RoleOld> getRoles() {
-      return (Set<RoleOld>) getValue();
-   }
-
-   public View getOriginalView() {
-      return originalView;
+      return null;
    }
 }

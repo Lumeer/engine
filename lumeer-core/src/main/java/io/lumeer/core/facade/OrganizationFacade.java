@@ -23,7 +23,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectDescription;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
@@ -81,7 +81,7 @@ public class OrganizationFacade extends AbstractFacade {
    public Organization createOrganization(final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
 
-      if (getOrganizations().stream().anyMatch(o -> permissionsChecker.hasRole(o, Role.READ))) {
+      if (getOrganizations().stream().anyMatch(o -> permissionsChecker.hasRole(o, RoleOld.READ))) {
          checkCreateOrganization();
       }
 
@@ -98,7 +98,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    private void checkCreateOrganization() {
       List<Organization> organizations = getOrganizations();
-      var hasManagedOrganization = organizations.stream().anyMatch(organization -> permissionsChecker.hasRole(organization, Role.MANAGE));
+      var hasManagedOrganization = organizations.stream().anyMatch(organization -> permissionsChecker.hasRole(organization, RoleOld.MANAGE));
       if (hasManagedOrganization) {
          this.checkSystemPermission();
       }
@@ -106,7 +106,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Organization updateOrganization(final String organizationId, final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
-      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
+      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleOld.MANAGE);
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
       keepUnmodifiableFields(organization, storedOrganization);
@@ -117,7 +117,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void deleteOrganization(final String organizationId) {
-      Organization organization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
+      Organization organization = checkRoleAndGetOrganization(organizationId, RoleOld.MANAGE);
       permissionsChecker.checkCanDelete(organization);
 
       deleteOrganizationScopedRepositories(organization);
@@ -128,13 +128,13 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Organization getOrganizationByCode(final String code) {
       final Organization organization = organizationDao.getOrganizationByCode(code);
-      permissionsChecker.checkRole(organization, Role.READ);
+      permissionsChecker.checkRole(organization, RoleOld.READ);
 
       return mapResource(organization);
    }
 
    public Organization getOrganizationById(final String id) {
-      return mapResource(checkRoleAndGetOrganization(id, Role.READ));
+      return mapResource(checkRoleAndGetOrganization(id, RoleOld.READ));
    }
 
    public List<Organization> getOrganizations() {
@@ -151,7 +151,7 @@ public class OrganizationFacade extends AbstractFacade {
       return organizationDao.getOrganizationsCodes();
    }
 
-   private Organization checkRoleAndGetOrganization(final String organizationId, final Role role) {
+   private Organization checkRoleAndGetOrganization(final String organizationId, final RoleOld role) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
       permissionsChecker.checkRole(organization, role);
 
@@ -159,7 +159,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Permissions getOrganizationPermissions(final String organizationId) {
-      return mapResource(checkRoleAndGetOrganization(organizationId, Role.READ)).getPermissions();
+      return mapResource(checkRoleAndGetOrganization(organizationId, RoleOld.READ)).getPermissions();
    }
 
    public Set<Permission> updateUserPermissions(final String organizationId, final Set<Permission> userPermissions) {
@@ -171,7 +171,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Set<Permission> updateUserPermissions(final String organizationId, final Set<Permission> userPermissions, boolean update) {
-      Organization organization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
+      Organization organization = checkRoleAndGetOrganization(organizationId, RoleOld.MANAGE);
 
       final Organization originalOrganization = organization.copy();
       if (update) {
@@ -186,7 +186,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void removeUserPermission(final String organizationId, final String userId) {
-      final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
+      final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleOld.MANAGE);
       final Organization organization = storedOrganization.copy();
 
       projectDao.getAllProjects().forEach(project -> {
@@ -202,7 +202,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public Set<Permission> updateGroupPermissions(final String organizationId, final Set<Permission> groupPermissions) {
-      final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
+      final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleOld.MANAGE);
       final Organization organization = storedOrganization.copy();
 
       organization.getPermissions().updateGroupPermissions(groupPermissions);
@@ -213,7 +213,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void removeGroupPermission(final String organizationId, final String groupId) {
-      final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, Role.MANAGE);
+      final Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleOld.MANAGE);
       final Organization organization = storedOrganization.copy();
 
       projectDao.getAllProjects().forEach(project -> {
@@ -230,7 +230,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    public List<Organization> getOrganizationsCapableForProject(final ProjectDescription projectDescription) {
       return getOrganizations().stream().filter(org ->
-            permissionsChecker.hasAnyRoleInResource(org, Set.of(Role.WRITE, Role.MANAGE))
+            permissionsChecker.hasAnyRoleInResource(org, Set.of(RoleOld.WRITE, RoleOld.MANAGE))
       ).filter(org -> {
          final ServiceLimits serviceLimits = paymentFacade.getCurrentServiceLimits(org);
          final long projects = projectDao.getProjectsCount(org);

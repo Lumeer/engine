@@ -37,7 +37,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.core.WorkspaceKeeper;
@@ -143,8 +143,8 @@ public class DelayedActionIT extends IntegrationTestBase {
       Permissions projectPermissions = new Permissions();
       projectPermissions.addUserPermissions(
             Set.of(
-                  new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())),
-                  new Permission(this.user2.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()))
+                  new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())),
+                  new Permission(this.user2.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet()))
             )
       );
       project.setPermissions(projectPermissions);
@@ -158,8 +158,8 @@ public class DelayedActionIT extends IntegrationTestBase {
       Permissions collectionPermissions = new Permissions();
       collectionPermissions.addUserPermissions(
             Set.of(
-                  new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())),
-                  new Permission(this.user2.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()))
+                  new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())),
+                  new Permission(this.user2.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet()))
             )
       );
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);

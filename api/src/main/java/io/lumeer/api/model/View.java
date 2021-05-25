@@ -20,13 +20,12 @@ package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,7 +33,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class View extends Resource {
 
-   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ, Role.SHARE, Role.WRITE));
+   public static Set<Role> ROLES = RoleUtils.viewResourceRoles();
 
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
@@ -48,7 +47,7 @@ public class View extends Resource {
    private Object config;
    private Object settings;
    private String authorId;
-   private Map<String, Set<Role>> authorRights;
+   private Map<String, Set<RoleType>> authorRights;
    private List<String> folders;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
@@ -146,11 +145,11 @@ public class View extends Resource {
       this.authorId = authorId;
    }
 
-   public Map<String, Set<Role>> getAuthorRights() {
+   public Map<String, Set<RoleType>> getAuthorRights() {
       return authorRights;
    }
 
-   public void setAuthorRights(final Map<String, Set<Role>> authorRights) {
+   public void setAuthorRights(final Map<String, Set<RoleType>> authorRights) {
       this.authorRights = authorRights;
    }
 

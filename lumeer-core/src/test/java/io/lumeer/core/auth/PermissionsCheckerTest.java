@@ -26,7 +26,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
@@ -61,17 +61,15 @@ public class PermissionsCheckerTest {
       Mockito.when(user.getGroups()).thenReturn(Collections.singletonMap("LMR", Collections.singleton(GROUP)));
 
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
-      AuthenticatedUserGroups authenticatedUserGroups = Mockito.mock(AuthenticatedUserGroups.class);
       Mockito.when(authenticatedUser.getCurrentUserId()).thenReturn(USER);
       Mockito.when(authenticatedUser.getUserEmail()).thenReturn(USER);
-      Mockito.when(authenticatedUserGroups.getCurrentUserGroups()).thenReturn(Collections.singleton(GROUP));
 
       Organization organization = Mockito.mock(Organization.class);
-      preparePermissions(organization, Collections.singleton(Role.READ), Collections.emptySet());
+      preparePermissions(organization, Collections.singleton(RoleOld.READ), Collections.emptySet());
       Mockito.when(organization.getId()).thenReturn("LMR");
 
       Project project = Mockito.mock(Project.class);
-      preparePermissions(project, Collections.singleton(Role.READ), Collections.emptySet());
+      preparePermissions(project, Collections.singleton(RoleOld.READ), Collections.emptySet());
       Mockito.when(project.getId()).thenReturn("LMR");
 
       WorkspaceKeeper workspaceKeeper = Mockito.mock(WorkspaceKeeper.class);
@@ -86,18 +84,18 @@ public class PermissionsCheckerTest {
       FavoriteItemDao favoriteItemDao = Mockito.mock(FavoriteItemDao.class);
       DocumentDao documentDao = Mockito.mock(DocumentDao.class);
 
-      permissionsChecker = new PermissionsChecker(authenticatedUser, authenticatedUserGroups, workspaceKeeper, userDao, collectionDao, viewDao, linkTypeDao, favoriteItemDao, documentDao);
+      permissionsChecker = new PermissionsChecker(authenticatedUser, workspaceKeeper, userDao, collectionDao, viewDao, linkTypeDao, favoriteItemDao, documentDao);
       permissionsChecker.init();
    }
 
-   private Resource prepareResource(Set<Role> userRoles, Set<Role> groupRoles) {
+   private Resource prepareResource(Set<RoleOld> userRoles, Set<RoleOld> groupRoles) {
       Resource resource = Mockito.mock(Resource.class);
       preparePermissions(resource, userRoles, groupRoles);
       Mockito.when(resource.getType()).thenReturn(ResourceType.PROJECT);
       return resource;
    }
 
-   private <T extends Resource> void preparePermissions(T resource, Set<Role> userRoles, Set<Role> groupRoles) {
+   private <T extends Resource> void preparePermissions(T resource, Set<RoleOld> userRoles, Set<RoleOld> groupRoles) {
       Permission userPermission = Mockito.mock(Permission.class);
       Mockito.when(userPermission.getId()).thenReturn(USER);
       Mockito.when(userPermission.getRoles()).thenReturn(userRoles);
@@ -114,57 +112,57 @@ public class PermissionsCheckerTest {
 
    @Test
    public void testCheckUserRole() {
-      Resource resource = prepareResource(Collections.singleton(Role.READ), Collections.emptySet());
-      permissionsChecker.checkRole(resource, Role.READ);
+      Resource resource = prepareResource(Collections.singleton(RoleOld.READ), Collections.emptySet());
+      permissionsChecker.checkRole(resource, RoleOld.READ);
    }
 
    @Test
    public void testCheckGroupRole() {
-      Resource resource = prepareResource(Collections.emptySet(), Collections.singleton(Role.READ));
-      permissionsChecker.checkRole(resource, Role.READ);
+      Resource resource = prepareResource(Collections.emptySet(), Collections.singleton(RoleOld.READ));
+      permissionsChecker.checkRole(resource, RoleOld.READ);
    }
 
    @Test
    public void testCheckNoRole() {
       Resource resource = prepareResource(Collections.emptySet(), Collections.emptySet());
-      assertThatThrownBy(() -> permissionsChecker.checkRole(resource, Role.READ))
+      assertThatThrownBy(() -> permissionsChecker.checkRole(resource, RoleOld.READ))
             .isInstanceOf(NoResourcePermissionException.class)
             .hasFieldOrPropertyWithValue("resource", resource);
    }
 
    @Test
    public void testCheckDifferentRole() {
-      Resource resource = prepareResource(Collections.singleton(Role.WRITE), Collections.singleton(Role.READ));
-      assertThatThrownBy(() -> permissionsChecker.checkRole(resource, Role.MANAGE))
+      Resource resource = prepareResource(Collections.singleton(RoleOld.WRITE), Collections.singleton(RoleOld.READ));
+      assertThatThrownBy(() -> permissionsChecker.checkRole(resource, RoleOld.MANAGE))
             .isInstanceOf(NoResourcePermissionException.class)
             .hasFieldOrPropertyWithValue("resource", resource);
    }
 
    @Test
    public void testGetActualRolesUserOnly() {
-      Resource resource = prepareResource(Sets.newLinkedHashSet(Role.READ, Role.WRITE), Collections.emptySet());
-      Set<Role> roles = permissionsChecker.getActualRoles(resource);
-      assertThat(roles).containsOnly(Role.READ, Role.WRITE);
+      Resource resource = prepareResource(Sets.newLinkedHashSet(RoleOld.READ, RoleOld.WRITE), Collections.emptySet());
+      Set<RoleOld> roles = permissionsChecker.getActualRoles(resource);
+      assertThat(roles).containsOnly(RoleOld.READ, RoleOld.WRITE);
    }
 
    @Test
    public void testGetActualRolesGroupOnly() {
-      Resource resource = prepareResource(Collections.emptySet(), Sets.newLinkedHashSet(Role.READ, Role.SHARE));
-      Set<Role> roles = permissionsChecker.getActualRoles(resource);
-      assertThat(roles).containsOnly(Role.READ, Role.SHARE);
+      Resource resource = prepareResource(Collections.emptySet(), Sets.newLinkedHashSet(RoleOld.READ, RoleOld.SHARE));
+      Set<RoleOld> roles = permissionsChecker.getActualRoles(resource);
+      assertThat(roles).containsOnly(RoleOld.READ, RoleOld.SHARE);
    }
 
    @Test
    public void testGetActualRolesIntersection() {
-      Resource resource = prepareResource(Sets.newLinkedHashSet(Role.READ, Role.WRITE), Sets.newLinkedHashSet(Role.READ, Role.SHARE));
-      Set<Role> roles = permissionsChecker.getActualRoles(resource);
-      assertThat(roles).containsOnly(Role.READ, Role.WRITE, Role.SHARE);
+      Resource resource = prepareResource(Sets.newLinkedHashSet(RoleOld.READ, RoleOld.WRITE), Sets.newLinkedHashSet(RoleOld.READ, RoleOld.SHARE));
+      Set<RoleOld> roles = permissionsChecker.getActualRoles(resource);
+      assertThat(roles).containsOnly(RoleOld.READ, RoleOld.WRITE, RoleOld.SHARE);
    }
 
    @Test
    public void testGetActualRolesEmpty() {
       Resource resource = prepareResource(Collections.emptySet(), Collections.emptySet());
-      Set<Role> roles = permissionsChecker.getActualRoles(resource);
+      Set<RoleOld> roles = permissionsChecker.getActualRoles(resource);
       assertThat(roles).isEmpty();
 
    }

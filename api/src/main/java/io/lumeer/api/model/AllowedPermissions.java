@@ -58,13 +58,13 @@ public class AllowedPermissions {
       final boolean[] rwm = {false, false, false};
 
       allowedPermissions.forEach(p -> {
-         if (p.getRoles().contains(Role.READ)) {
+         if (p.getRoles().contains(RoleOld.READ)) {
             rwm[0] = true;
          }
-         if (p.getRoles().contains(Role.WRITE)) {
+         if (p.getRoles().contains(RoleOld.WRITE)) {
             rwm[1] = true;
          }
-         if (p.getRoles().contains(Role.MANAGE)) {
+         if (p.getRoles().contains(RoleOld.MANAGE)) {
             rwm[2] = true;
          }
       });

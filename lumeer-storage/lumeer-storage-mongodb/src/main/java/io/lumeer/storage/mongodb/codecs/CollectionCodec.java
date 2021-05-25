@@ -23,6 +23,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
@@ -66,7 +67,7 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
    @Override
    public Collection decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      SimpleResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson, ResourceType.COLLECTION);
 
       Set<Attribute> attributes;
       List attributeList = bson.get(ATTRIBUTES, List.class);

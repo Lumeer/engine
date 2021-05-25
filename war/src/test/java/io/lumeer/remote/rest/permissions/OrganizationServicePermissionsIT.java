@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.OrganizationFacade;
@@ -91,7 +91,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "TestGetOrganizationReadRole_id";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      Permission newPermission = new Permission(userId, Role.toStringRoles(Collections.singleton(Role.READ)));
+      Permission newPermission = new Permission(userId, RoleOld.toStringRoles(Collections.singleton(RoleOld.READ)));
       organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(newPermission));
       Set<Permission> perm = organizationDao.getOrganizationByCode(code).getPermissions().getUserPermissions();
       LumeerAssertions.assertPermissions(perm, newPermission);
@@ -120,7 +120,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
          if (i % 2 == 0) {
             organizationFacade.removeUserPermission(organization.getId(), userId);
          } else {
-            organizationFacade.updateUserPermissions(organization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ))));
+            organizationFacade.updateUserPermissions(organization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ))));
          }
       }
 
@@ -159,7 +159,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String newName = "NewTestUpdateOrganizationManageRole";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ, RoleOld.MANAGE))));
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -196,7 +196,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testGetOrganizationPermissionsManageRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ, RoleOld.MANAGE))));
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -214,7 +214,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
-      Permission[] newPermission = { new Permission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
+      Permission[] newPermission = { new Permission(userId, RoleOld.toStringRoles(new HashSet<>(Collections.singletonList(RoleOld.WRITE)))) };
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -232,8 +232,8 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testUpdateUserPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
-      Permission[] newPermission = { new Permission(userId, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ, RoleOld.MANAGE))));
+      Permission[] newPermission = { new Permission(userId, RoleOld.toStringRoles(new HashSet<>(Collections.singletonList(RoleOld.WRITE)))) };
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -270,7 +270,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testRemoveUserPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ, RoleOld.MANAGE))));
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -291,7 +291,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
       organizationFacade.removeUserPermission(storedOrganization.getId(), userId);
       String group = "testGroup1";
-      Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
+      Permission[] newPermission = { new Permission(group, RoleOld.toStringRoles(new HashSet<>(Collections.singletonList(RoleOld.WRITE)))) };
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -309,9 +309,9 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testUpdateGroupPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ, RoleOld.MANAGE))));
       String group = "testGroup2";
-      Permission[] newPermission = { new Permission(group, Role.toStringRoles(new HashSet<>(Collections.singletonList(Role.WRITE)))) };
+      Permission[] newPermission = { new Permission(group, RoleOld.toStringRoles(new HashSet<>(Collections.singletonList(RoleOld.WRITE)))) };
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -349,7 +349,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testRemoveGroupPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(Role.READ, Role.MANAGE))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(RoleOld.READ, RoleOld.MANAGE))));
       String group = "testGroup3";
 
       Response response = client.target(organizationsUrl)

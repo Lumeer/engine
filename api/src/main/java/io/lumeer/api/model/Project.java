@@ -19,19 +19,18 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Project extends Resource {
 
-   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
+   public static Set<Role> ROLES = RoleUtils.projectResourceRoles();
 
    private TemplateMetadata templateMetadata;
    private int collectionsCount;

@@ -1,65 +1,60 @@
-/*
- * Lumeer: Modern Data Definition and Processing Platform
- *
- * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package io.lumeer.api.model;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public enum Role {
+import java.util.Objects;
 
-   MANAGE,
-   WRITE,
-   SHARE,
-   READ,
-   CLONE;
+public class Role {
+
+   private static final String TYPE = "type";
+   private static final String TRANSITIVE = "transitive";
+
+   private final RoleType roleType;
+   private final boolean transitive;
+
+   @JsonCreator
+   public Role(@JsonProperty(TYPE) final RoleType roleType,
+         @JsonProperty(TRANSITIVE) final Boolean transitive) {
+      this.roleType = roleType;
+      this.transitive = transitive;
+   }
+
+   public Role(final RoleType roleType) {
+      this.roleType = roleType;
+      this.transitive = false;
+   }
+
+   public RoleType getRoleType() {
+      return roleType;
+   }
+
+   public boolean isTransitive() {
+      return transitive;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+         return false;
+      }
+      final Role role = (Role) o;
+      return transitive == role.transitive && roleType == role.roleType;
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(roleType, transitive);
+   }
 
    @Override
    public String toString() {
-      return name().toLowerCase();
+      return "Role{" +
+            "roleType=" + roleType +
+            ", transitive=" + transitive +
+            '}';
    }
-
-   public static Role fromString(String role) {
-      return Role.valueOf(role.toUpperCase());
-   }
-
-   public static Set<String> toStringRoles(Set<Role> roles) {
-      return roles.stream()
-                  .map(Role::toString)
-                  .collect(Collectors.toSet());
-   }
-
-   public static Set<Role> withTransitionRoles(Set<Role> roles) {
-      return roles.stream()
-                  .map(Role::withTransitionRoles)
-                  .flatMap(Collection::stream)
-                  .collect(Collectors.toSet());
-   }
-
-   public static Set<Role> withTransitionRoles(Role role) {
-      if (role == Role.MANAGE) {
-         return new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE, Role.SHARE, Role.CLONE));
-      }
-      return Collections.singleton(role);
-   }
-
 }

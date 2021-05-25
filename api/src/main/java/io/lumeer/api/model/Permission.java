@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.concurrent.Immutable;
 
 @Immutable
@@ -36,9 +35,9 @@ public class Permission {
 
    @JsonCreator
    public Permission(@JsonProperty("id") final String id,
-         @JsonProperty("roles") final Set<String> roles) {
+         @JsonProperty("roles") final Set<Role> roles) {
       this.id = id;
-      this.roles = roles.stream().map(Role::fromString).collect(Collectors.toSet());
+      this.roles = roles;
    }
 
    public static Permission buildWithRoles(final String id, final Set<Role> roles) {

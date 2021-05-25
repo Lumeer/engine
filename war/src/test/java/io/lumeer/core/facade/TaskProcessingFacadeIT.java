@@ -30,7 +30,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.AutoLinkRule;
@@ -131,20 +131,20 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       this.stranger = userDao.createUser(new User(STRANGER_USER));
 
       userPermissions = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
-      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(Role.READ));
+      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ));
+      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(RoleOld.READ));
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
-      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ)));
       this.organization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
       Group group = new Group(GROUP);
       this.group = groupDao.createGroup(group);
-      groupPermissions = Permission.buildWithRoles(this.group.getId(), Collections.singleton(Role.READ));
+      groupPermissions = Permission.buildWithRoles(this.group.getId(), Collections.singleton(RoleOld.READ));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);

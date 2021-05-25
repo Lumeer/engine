@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.UserFacade;
@@ -62,13 +62,13 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
       organizationId1 = organizationDao.createOrganization(organization1).getId();
 
       Organization organization2 = new Organization();
       organization2.setCode("MRL");
       organization2.setPermissions(new Permissions());
-      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
 
       this.usersUrl = basePath() + "users/organizations/";

@@ -22,6 +22,7 @@ import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.util.RoleUtils;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +43,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Collection extends Resource implements HealthChecking {
 
-   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
+   public static Set<Role> ROLES = RoleUtils.collectionResourceRoles();
 
    public static String ATTRIBUTE_PREFIX = "a";
 

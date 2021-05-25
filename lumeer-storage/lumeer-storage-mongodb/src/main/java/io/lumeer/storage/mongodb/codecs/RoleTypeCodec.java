@@ -16,32 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.api.model.RoleOld;
-import io.lumeer.api.model.View;
+package io.lumeer.storage.mongodb.codecs;
 
-import java.util.Set;
+import io.lumeer.api.model.RoleType;
 
-public class ViewPermissionsOperation extends ResourceOperation<View> {
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
-   public View originalView;
+public class RoleTypeCodec implements Codec<RoleType> {
 
-   public ViewPermissionsOperation(final View entity, final String userId, final Set<RoleOld> value) {
-      super(entity, userId, value);
-      originalView = entity.copy();
+   @Override
+   public RoleType decode(final BsonReader reader, final DecoderContext decoderContext) {
+      return RoleType.valueOf(reader.readString());
    }
 
-   public String getUserId() {
-      return getAttrId();
+   @Override
+   public void encode(final BsonWriter writer, final RoleType value, final EncoderContext encoderContext) {
+      writer.writeString(value.toString());
    }
 
-   @SuppressWarnings("unchecked")
-   public Set<RoleOld> getRoles() {
-      return (Set<RoleOld>) getValue();
+   @Override
+   public Class<RoleType> getEncoderClass() {
+      return RoleType.class;
    }
 
-   public View getOriginalView() {
-      return originalView;
-   }
 }

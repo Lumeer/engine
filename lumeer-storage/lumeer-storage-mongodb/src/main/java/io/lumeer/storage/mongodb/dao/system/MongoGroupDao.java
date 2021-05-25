@@ -103,7 +103,7 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    }
 
    String databaseCollectionName() {
-      if (!getOrganization().isPresent()) {
+      if (getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       return databaseCollectionName(getOrganization().get());

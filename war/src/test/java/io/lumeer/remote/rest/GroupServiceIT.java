@@ -6,7 +6,8 @@ import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -39,8 +40,6 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
 
    private String urlPrefix;
 
-   private Organization organization;
-
    @Inject
    private GroupDao groupDao;
 
@@ -58,8 +57,8 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
-      organization = organizationDao.createOrganization(organization1);
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
+      Organization organization = organizationDao.createOrganization(organization1);
 
       groupDao.createRepository(organization);
       groupDao.setOrganization(organization);
@@ -68,10 +67,11 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testCreateUser() {
+   public void testCreateGroup() {
       Group group = new Group(GROUP1);
+      group.setRoles(new HashSet<>(Arrays.asList(RoleType.ProjectRead, RoleType.CollectionDataContribute, RoleType.PerspectiveConfig)));
 
-      Entity entity = Entity.json(group);
+      Entity<Group> entity = Entity.json(group);
       Response response = client.target(urlPrefix)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
@@ -85,17 +85,20 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
 
       assertThat(storedGroup).isNotNull();
       assertThat(storedGroup.getId()).isEqualTo(returnedGroup.getId());
+      assertThat(returnedGroup.getName()).isEqualTo(GROUP1);
+      assertThat(returnedGroup.getRoles()).contains(RoleType.ProjectRead, RoleType.CollectionDataContribute, RoleType.PerspectiveConfig);
       assertThat(storedGroup.getName()).isEqualTo(GROUP1);
+      assertThat(storedGroup.getRoles()).contains(RoleType.ProjectRead, RoleType.CollectionDataContribute, RoleType.PerspectiveConfig);
    }
 
    @Test
-   public void testUpdateUser() {
+   public void testUpdateGroup() {
       groupDao.createGroup(new Group(GROUP1));
       Group storedGroup = getGroup(GROUP1);
       assertThat(storedGroup).isNotNull();
 
       Group updateGroup = new Group(GROUP2);
-      Entity entity = Entity.json(updateGroup);
+      Entity<Group> entity = Entity.json(updateGroup);
       Response response = client.target(urlPrefix).path(storedGroup.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
@@ -110,7 +113,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testDeleteUser() {
+   public void testDeleteGroup() {
       groupDao.createGroup(new Group(GROUP1));
       Group storedGroup = getGroup(GROUP1);
       assertThat(storedGroup).isNotNull();
@@ -126,7 +129,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testGetUsers() {
+   public void testGetGroups() {
       groupDao.createGroup(new Group(GROUP1));
       groupDao.createGroup(new Group(GROUP3));
 

@@ -29,7 +29,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
@@ -79,8 +79,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private static final String PERSPECTIVE = "postit";
    private static final Object CONFIG = "configuration object";
 
-   private static final Set<Role> USER_ROLES = View.ROLES;
-   private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
+   private static final Set<RoleOld> USER_ROLES = View.ROLES;
+   private static final Set<RoleOld> GROUP_ROLES = Collections.singleton(RoleOld.READ);
    private Permission userPermission;
    private Permission groupPermission;
 
@@ -146,7 +146,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       Collection collection = collectionFacade.createCollection(
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
-      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(Role.READ))));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(RoleOld.READ))));
       query = new Query(new QueryStem(collection.getId()));
 
       viewsUrl = projectPath(storedOrganization, storedProject) + "views";
@@ -275,10 +275,10 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    @SuppressWarnings("unchecked")
    public void testGetViewWithAuthorRights() {
       final String USER = "aaaaa4444400000000111112"; // non-existing author
-      Permission permission = new Permission(USER, new HashSet<>(Collections.singletonList(Role.WRITE.toString())));
+      Permission permission = new Permission(USER, new HashSet<>(Collections.singletonList(RoleOld.WRITE.toString())));
       Collection collection = collectionFacade.createCollection(
             new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Collections.singletonList(permission)), Collections.emptySet())));
-      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(USER, Set.of(Role.WRITE))));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(USER, Set.of(RoleOld.WRITE))));
 
       View view = prepareView(CODE + "3");
       view.setQuery(new Query(new QueryStem(collection.getId())));
@@ -296,7 +296,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), new HashSet<>(Collections.singletonList(Role.WRITE))));
+      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), new HashSet<>(Collections.singletonList(RoleOld.WRITE))));
       assertions.assertAll();
    }
 
@@ -345,7 +345,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       final View view = createView(CODE);
 
-      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(RoleOld.MANAGE, RoleOld.READ))) };
       Entity<Permission[]> entity = Entity.json(userPermission);
 
       Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("users")
@@ -385,7 +385,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final View view = createView(CODE);
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(RoleOld.SHARE, RoleOld.READ))) };
       Entity<Permission[]> entity = Entity.json(groupPermission);
 
       Response response = client.target(viewsUrl).path(view.getId()).path("permissions").path("groups")

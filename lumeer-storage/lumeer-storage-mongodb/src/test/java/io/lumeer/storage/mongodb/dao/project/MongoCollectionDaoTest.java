@@ -31,7 +31,7 @@ import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.engine.api.data.DataDocument;
@@ -108,10 +108,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       USER_PERMISSION = Permission.buildWithRoles(USER, Collection.ROLES);
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      Permission userManagePermission = Permission.buildWithRoles(USER, Collections.singleton(Role.MANAGE));
+      Permission userManagePermission = Permission.buildWithRoles(USER, Collections.singleton(RoleOld.MANAGE));
       MANAGE_PERMISSIONS.updateUserPermissions(userManagePermission);
 
-      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(RoleOld.READ.toString()));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
 
       Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
@@ -271,12 +271,12 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    @Test
    public void testGetCollectionsNoReadRole() {
       Collection collection = prepareCollection(CODE, NAME);
-      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(RoleOld.CLONE.toString()));
       collection.getPermissions().updateUserPermissions(userPermission);
       collectionDao.databaseCollection().insertOne(collection);
 
       Collection collection2 = prepareCollection(CODE2, NAME2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(RoleOld.SHARE.toString()));
       collection2.getPermissions().updateGroupPermissions(groupPermission);
       collectionDao.databaseCollection().insertOne(collection2);
 

@@ -21,7 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3Utils;
@@ -421,27 +421,27 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    private Collection checkCollectionWritePermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.WRITE, Role.WRITE);
+      permissionsChecker.checkRoleWithView(collection, RoleOld.WRITE, RoleOld.WRITE);
 
       return collection;
    }
 
    private Collection checkCollectionReadPermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, Role.READ, Role.READ);
+      permissionsChecker.checkRoleWithView(collection, RoleOld.READ, RoleOld.READ);
 
       return collection;
    }
 
    private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, Role.WRITE);
+      return checkLinkTypePermissions(linkTypeId, RoleOld.WRITE);
    }
 
    private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, Role.READ);
+      return checkLinkTypePermissions(linkTypeId, RoleOld.READ);
    }
 
-   private LinkType checkLinkTypePermissions(String linkTypeId, Role role) {
+   private LinkType checkLinkTypePermissions(String linkTypeId, RoleOld role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
       return linkType;

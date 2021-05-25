@@ -21,7 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -65,7 +65,7 @@ public class GroupFacade extends AbstractFacade {
    }
 
    private void deleteGroupFromUsers(String groupId) {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
+      if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
@@ -76,12 +76,12 @@ public class GroupFacade extends AbstractFacade {
    }
 
    private void checkPermissions() {
-      if (!workspaceKeeper.getOrganization().isPresent()) {
+      if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
       Organization organization = workspaceKeeper.getOrganization().get();
-      permissionsChecker.checkRole(organization, Role.MANAGE);
+      permissionsChecker.checkRole(organization, RoleOld.MANAGE);
    }
 
 }

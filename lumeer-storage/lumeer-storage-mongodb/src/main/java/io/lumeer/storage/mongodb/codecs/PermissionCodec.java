@@ -20,6 +20,11 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.util.RoleUtils;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -29,9 +34,12 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PermissionCodec implements Codec<Permission> {
 
@@ -51,9 +59,30 @@ public class PermissionCodec implements Codec<Permission> {
       return PermissionCodec.convertFromDocument(document);
    }
 
+   @Deprecated
+   public static Permission convertFromDocumentLegacy(Document bson, ResourceType resourceType) {
+      String name = bson.getString(ID);
+      Set<Role> roles = new ArrayList<String>(bson.get(ROLES, List.class)).stream().reduce(new HashSet<>(), (Set<Role> result, String role) -> {
+         var oldRole = RoleOld.fromString(role);
+         if (oldRole != null) {
+            result.addAll(RoleUtils.resourceRoles(oldRole, resourceType));
+         } else {
+            var newRole = RoleType.fromString(role);
+            if (newRole != null) {
+               result.add(new Role(newRole));
+            }
+         }
+         return result;
+      }, (roles1, roles2) -> Stream.concat(roles1.stream(), roles2.stream()).collect(Collectors.toSet()));
+
+      return new Permission(name, roles);
+   }
+
    public static Permission convertFromDocument(Document bson) {
       String name = bson.getString(ID);
-      Set<String> roles = new HashSet<String>(bson.get(ROLES, List.class));
+      Set<Role> roles = new ArrayList<Document>(bson.get(ROLES, List.class)).stream()
+                                                                            .map(RoleCodec::convertFromDocument)
+                                                                            .collect(Collectors.toSet());
 
       return new Permission(name, roles);
    }

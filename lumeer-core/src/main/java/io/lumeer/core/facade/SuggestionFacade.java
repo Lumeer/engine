@@ -24,9 +24,12 @@ import io.lumeer.api.model.Suggestions;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.View;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
 
@@ -37,6 +40,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -55,7 +59,17 @@ public class SuggestionFacade extends AbstractFacade {
    private LinkTypeDao linkTypeDao;
 
    @Inject
+   private UserDao userDao;
+
+   @Inject
    private AuthenticatedUserGroups authenticatedUserGroups;
+
+   private ResourceAdapter resourceAdapter;
+
+   @PostConstruct
+   public void init() {
+      resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
+   }
 
    public Suggestions suggest(SuggestionQuery suggestionQuery) {
       switch (suggestionQuery.getType()) {
@@ -114,7 +128,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private List<View> suggestViews(SuggestionQuery suggestionQuery, int limit) {
       var distance = LevenshteinDistance.getDefaultInstance();
-      return viewDao.getViews(createSuggestionQuery(suggestionQuery, null), isWorkspaceManager()).stream()
+      return viewDao.getViews(createSuggestionQuery(suggestionQuery, null), false).stream()
                     .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), suggestionQuery.getText().toLowerCase())))
                     .limit(limit)
                     .collect(Collectors.toList());
@@ -161,15 +175,13 @@ public class SuggestionFacade extends AbstractFacade {
    }
 
    private Set<String> getAllowedCollectionIds() {
-      if (isWorkspaceManager()) {
-         return collectionDao.getAllCollections().stream().map(Collection::getId).collect(Collectors.toSet());
-      }
-      return collectionDao.getCollections(createSimpleQuery()).stream().map(Collection::getId).collect(Collectors.toSet());
+      return resourceAdapter.getAllCollections(getOrganization(), getProject(), getCurrentUserId())
+                            .stream().map(Collection::getId).collect(Collectors.toSet());
    }
 
    private List<Collection> suggestCollections(SuggestionQuery suggestionQuery, int limit) {
       var distance = LevenshteinDistance.getDefaultInstance();
-      return collectionDao.getCollections(createSuggestionQuery(suggestionQuery, null), isWorkspaceManager()).stream()
+      return collectionDao.getCollections(createSuggestionQuery(suggestionQuery, null), false).stream()
                           .peek(collection -> collection.setAttributes(Collections.emptySet()))
                           .sorted(Comparator.comparingInt(a -> distance.apply(a.getName().toLowerCase(), suggestionQuery.getText().toLowerCase())))
                           .limit(limit)
@@ -178,7 +190,7 @@ public class SuggestionFacade extends AbstractFacade {
 
    private List<Collection> suggestAttributes(SuggestionQuery suggestionQuery, int limit) {
       SearchSuggestionQuery searchSuggestionQuery = createSuggestionQuery(suggestionQuery, limit);
-      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, isWorkspaceManager());
+      List<Collection> collections = collectionDao.getCollectionsByAttributes(searchSuggestionQuery, false);
       if (collections.isEmpty()) {
          return Collections.emptyList();
       }

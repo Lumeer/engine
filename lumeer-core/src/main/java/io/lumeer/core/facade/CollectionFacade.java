@@ -22,13 +22,14 @@ import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.AutoLinkRule;
@@ -121,16 +122,12 @@ public class CollectionFacade extends AbstractFacade {
       resourceAdapter = new ResourceAdapter(collectionDao, linkTypeDao, viewDao, userDao);
    }
 
-   public CollectionAdapter getAdapter() {
-      return adapter;
-   }
-
    public Collection createCollection(Collection collection) {
       return createCollection(collection, false);
    }
 
    public Collection createCollection(Collection collection, final boolean skipLimits) {
-      checkProjectRole(Role.WRITE);
+      checkProjectRole(RoleOld.WRITE);
       long collectionsCount = collectionDao.getCollectionsCount();
 
       if (!skipLimits) {
@@ -152,7 +149,7 @@ public class CollectionFacade extends AbstractFacade {
    public Collection updateCollection(final String collectionId, final Collection collection, final boolean skipFceLimits) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = storedCollection.copy();
-      permissionsChecker.checkRole(storedCollection, Role.MANAGE);
+      permissionsChecker.checkRole(storedCollection, RoleOld.MANAGE);
 
       if (!skipFceLimits) {
          permissionsChecker.checkRulesLimit(collection);
@@ -160,7 +157,7 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       collection.getRules().values().stream().filter(r -> r.getType() == Rule.RuleType.BLOCKLY).forEach(rule ->
-            permissionsChecker.checkFunctionRuleAccess(storedCollection, new BlocklyRule(rule).getJs(), Role.WRITE)
+            permissionsChecker.checkFunctionRuleAccess(storedCollection, new BlocklyRule(rule).getJs(), RoleOld.WRITE)
       );
 
       keepUnmodifiableFields(collection, storedCollection);
@@ -183,8 +180,9 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+//      permissionsChecker.checkResourceRole(storedCollection, ResourceRole.CollectionWorkflowConfig);
+
       final Collection originalCollection = storedCollection.copy();
-      permissionsChecker.checkRole(storedCollection, Role.MANAGE);
 
       storedCollection.setPurpose(purpose);
 
@@ -194,7 +192,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public void deleteCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+//      permissionsChecker.checkResourceRole(collection, ResourceRole.ProjectCollectionDelete);
 
       collectionDao.deleteCollection(collectionId);
 
@@ -204,8 +202,8 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void deleteCollectionBasedData(final String collectionId) {
-      documentDao.getDocumentsByCollection(collectionId).forEach(document ->
-            resourceCommentDao.deleteComments(ResourceType.DOCUMENT, document.getId()));
+      var documentIds = documentDao.getDocumentsByCollection(collectionId).stream().map(Document::getId).collect(Collectors.toSet());
+      resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentIds);
 
       documentDao.deleteDocuments(collectionId);
       dataDao.deleteDataRepository(collectionId);
@@ -222,13 +220,13 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Collection getCollection(String collectionId) {
-      checkProjectRole(Role.READ);
+      checkProjectRole(RoleOld.READ);
       Collection collection = collectionDao.getCollectionById(collectionId);
-      if (permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ)) {
+      if (permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ)) {
          return mapCollection(collection);
       }
 
-      var userIdsInViews = resourceAdapter.getCollectionReadersInViews(collectionId);
+      var userIdsInViews = resourceAdapter.getCollectionReadersInViews(getOrganization(), getProject(), collectionId);
       if (userIdsInViews.contains(getCurrentUserId())) {
          return mapCollection(collection);
       }
@@ -237,26 +235,26 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public List<Collection> getCollections() {
-      checkProjectRole(Role.READ);
-      return mapCollectionsData(resourceAdapter.getCollections(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
+      checkProjectRole(RoleOld.READ);
+      return mapCollectionsData(resourceAdapter.getCollections(getOrganization(), getProject(), getCurrentUserId())
                                                .stream()
-                                               .map(r -> mapResource(r))
-                                               .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
+                                               .map(this::mapResource)
+                                               .filter(collection -> permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ))
                                                .collect(Collectors.toList()));
    }
 
    public List<Collection> getViewsCollections() {
-      checkProjectRole(Role.READ);
-      return mapCollectionsData(resourceAdapter.getViewsCollections(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
+      checkProjectRole(RoleOld.READ);
+      return mapCollectionsData(resourceAdapter.getViewsCollections(getOrganization(), getProject(), getCurrentUserId())
                                                .stream()
                                                .map(this::mapResource)
                                                .collect(Collectors.toList()));
    }
 
    public List<Collection> getAllCollections() {
-      checkProjectRole(Role.READ);
+      checkProjectRole(RoleOld.READ);
       var collections = getCollections();
-      if (!isWorkspaceManager()) {
+      if (!canReadAllInWorkspace()) {
          collections.addAll(getViewsCollections());
       }
       return collections;
@@ -276,7 +274,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public void addFavoriteCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.READ);
+      permissionsChecker.checkRole(collection, RoleOld.READ);
 
       String projectId = getCurrentProject().getId();
       String userId = getCurrentUser().getId();
@@ -285,7 +283,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public void removeFavoriteCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.READ);
+      permissionsChecker.checkRole(collection, RoleOld.READ);
 
       String userId = getCurrentUser().getId();
       favoriteItemDao.removeFavoriteCollection(userId, collectionId);
@@ -315,7 +313,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.checkRole(collection, RoleOld.MANAGE);
 
       final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collectionId, collection, attributes.size());
 
@@ -337,7 +335,7 @@ public class CollectionFacade extends AbstractFacade {
    public java.util.Collection<Attribute> createCollectionAttributesSkipIndexFix(final String collectionId, final java.util.Collection<Attribute> attributes, final boolean pushNotification) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.checkRole(collection, RoleOld.MANAGE);
 
       for (Attribute attribute : attributes) {
          attribute.setUsageCount(0);
@@ -370,7 +368,7 @@ public class CollectionFacade extends AbstractFacade {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Optional<Attribute> originalAttribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
       final Collection originalCollection = collection.copy();
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.checkRole(collection, RoleOld.MANAGE);
 
       collection.updateAttribute(attributeId, attribute);
       collection.setLastTimeUsed(ZonedDateTime.now());
@@ -383,7 +381,7 @@ public class CollectionFacade extends AbstractFacade {
             permissionsChecker.checkFunctionsLimit(collection);
          }
 
-         permissionsChecker.checkFunctionRuleAccess(collection, attribute.getFunction().getJs(), Role.READ);
+         permissionsChecker.checkFunctionRuleAccess(collection, attribute.getFunction().getJs(), RoleOld.READ);
       }
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
@@ -396,7 +394,7 @@ public class CollectionFacade extends AbstractFacade {
    public void deleteCollectionAttribute(final String collectionId, final String attributeId) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.checkRole(collection, RoleOld.MANAGE);
 
       dataDao.deleteAttribute(collectionId, attributeId);
 
@@ -448,9 +446,9 @@ public class CollectionFacade extends AbstractFacade {
 
    public void setDefaultAttribute(final String collectionId, final String attributeId) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      final Collection originalCollection = collection.copy();
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+//      permissionsChecker.checkResourceRole(collection, ResourceRole.CollectionAttributeEdit);
 
+      final Collection originalCollection = collection.copy();
       boolean containsAttribute = collection.getAttributes().stream()
                                             .anyMatch(attribute -> attribute.getId().equals(attributeId));
       if (containsAttribute) {
@@ -461,7 +459,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public Permissions getCollectionPermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+      permissionsChecker.checkRole(collection, RoleOld.MANAGE);
 
       return collection.getPermissions();
    }
@@ -501,7 +499,7 @@ public class CollectionFacade extends AbstractFacade {
    private Collection collectionTreat(final String collectionId, Function<Collection, Collection> handler) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
-      permissionsChecker.checkRole(collection, Role.MANAGE);
+//      permissionsChecker.checkResourceRole(collection,ResourceRole.CollectionUserConfig);
       permissionsChecker.invalidateCache(collection);
 
       final Collection updatedCollection = handler.apply(collection);
@@ -509,7 +507,7 @@ public class CollectionFacade extends AbstractFacade {
       return collectionDao.updateCollection(updatedCollection.getId(), collection, originalCollection);
    }
 
-   private void checkProjectRole(Role role) {
+   private void checkProjectRole(RoleOld role) {
       Project project = getCurrentProject();
       permissionsChecker.checkRole(project, role);
    }

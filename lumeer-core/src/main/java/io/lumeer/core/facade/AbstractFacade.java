@@ -60,8 +60,8 @@ abstract class AbstractFacade {
       return authenticatedUserGroups.getCurrentUserGroups();
    }
 
-   protected boolean isWorkspaceManager() {
-      return permissionsChecker.isManager();
+   protected boolean canReadAllInWorkspace() {
+      return permissionsChecker.canReadAllInWorkspace();
    }
 
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
@@ -93,11 +93,11 @@ abstract class AbstractFacade {
                           .build();
    }
 
-   private Organization getOrganization() {
+   protected Organization getOrganization() {
       return workspaceKeeper.getOrganization().orElse(null);
    }
 
-   private Project getProject() {
+   protected Project getProject() {
       return workspaceKeeper.getProject().orElse(null);
    }
 

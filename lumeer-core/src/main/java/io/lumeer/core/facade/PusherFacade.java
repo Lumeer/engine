@@ -26,7 +26,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
@@ -92,9 +92,7 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import org.marvec.pusher.data.BackupDataEvent;
 import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
@@ -182,7 +180,7 @@ public class PusherFacade extends AbstractFacade {
       pusherClient = PusherClient.getInstance(configurationProducer);
       delayedActionProcessor.setPusherClient(pusherClient);
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
-      resourceAdapter = new ResourceAdapter(collectionDao, linkTypeDao, viewDao, userDao);
+      resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
       linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
       viewAdapter = new ViewAdapter(favoriteItemDao);
 
@@ -334,7 +332,7 @@ public class PusherFacade extends AbstractFacade {
             continue;
          }
 
-         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
+         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, RoleOld.READ, user)).collect(Collectors.toList());
          Set<String> collectionIdsInViews = viewsByUser.stream().map(view -> QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes))
                                                        .flatMap(java.util.Collection::stream)
                                                        .collect(Collectors.toSet());
@@ -359,7 +357,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private List<LinkType> filterLinkTypesNotInViews(List<LinkType> linkTypes, List<Collection> collections, List<View> views, String user, boolean includeReadableCollections) {
-      List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
+      List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, RoleOld.READ, user)).collect(Collectors.toList());
       Set<String> linkTypeIdsInViews = viewsByUser.stream().map(view -> view.getQuery().getLinkTypeIds())
                                                   .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
       if (includeReadableCollections) {
@@ -372,7 +370,7 @@ public class PusherFacade extends AbstractFacade {
 
    private Set<String> filterViewsReadableCollectionsIds(final List<View> views, final List<LinkType> linkTypes, final List<Collection> collections, final String user) {
       Set<String> readableCollectionsIds = QueryUtils.getViewsCollectionIds(views, linkTypes);
-      readableCollectionsIds.addAll(collections.stream().filter(collection -> permissionsChecker.hasRole(collection, Role.READ, user)).map(Collection::getId).collect(Collectors.toSet()));
+      readableCollectionsIds.addAll(collections.stream().filter(collection -> permissionsChecker.hasRole(collection, RoleOld.READ, user)).map(Collection::getId).collect(Collectors.toSet()));
       return readableCollectionsIds;
    }
 
@@ -382,7 +380,7 @@ public class PusherFacade extends AbstractFacade {
       Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
 
       for (String user : userIds) {
-         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, Role.READ, user)).collect(Collectors.toList());
+         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, RoleOld.READ, user)).collect(Collectors.toList());
          Set<String> viewsCollectionsIds = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes);
          filterLinkTypesNotInViews(linkTypes, collections, views, user, false).stream()
                                                                               .filter(linkType -> canUserReadLinkType(user, linkType, collectionsMap, viewsCollectionsIds))
@@ -394,7 +392,7 @@ public class PusherFacade extends AbstractFacade {
 
    private boolean canUserReadLinkType(String userId, LinkType linkType, Map<String, Collection> collectionsMap, Set<String> viewsCollectionsIds) {
       return linkType.getCollectionIds().stream().map(collectionsMap::get)
-                     .allMatch(collection -> collection != null && (permissionsChecker.hasRole(collection, Role.READ, userId) || viewsCollectionsIds.contains(collection.getId())));
+                     .allMatch(collection -> collection != null && (permissionsChecker.hasRole(collection, RoleOld.READ, userId) || viewsCollectionsIds.contains(collection.getId())));
    }
 
    private void checkViewPermissionsChange(final View originalView, final View updatedView) {
@@ -445,8 +443,8 @@ public class PusherFacade extends AbstractFacade {
 
    private Event createEvent(final Object object, final String event, final String userId) {
       return pusherAdapter.createEvent(
-            getOrganizationOrNull(),
-            getProjectOrNull(),
+            getOrganization(),
+            getProject(),
             object,
             event,
             userCache.getUserById(userId)
@@ -496,21 +494,9 @@ public class PusherFacade extends AbstractFacade {
       sendNotificationsByUsers(new ObjectWithParent(project, getOrganization().getId()), userIds, event);
    }
 
-   private Organization getOrganization() {
-      if (workspaceKeeper.getOrganization().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-
-      return workspaceKeeper.getOrganization().get();
-   }
-
-   private Organization getOrganizationOrNull() {
-      return workspaceKeeper.getOrganization().orElse(null);
-   }
-
    private void sendViewNotifications(final View view, final String event) {
-      Set<String> userIds = resourceAdapter.getViewReaders(view, getOrganization(), getProject());
-      view.setAuthorRights(resourceAdapter.getViewAuthorRights(view, getOrganization(), getProject()));
+      Set<String> userIds = resourceAdapter.getViewReaders(getOrganization(), getProject(), view);
+      view.setAuthorRights(resourceAdapter.getViewAuthorRights(getOrganization(), getProject(), view));
       sendNotificationsBatch(userIds.stream()
                                     .map(userId -> createEvent(new ObjectWithParent(createViewForUser(view, userId), getOrganization().getId(), getProject().getId()), event, userId))
                                     .collect(Collectors.toList()));
@@ -521,7 +507,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
-      Set<String> userIds = resourceAdapter.getCollectionReaders(collection, getOrganization(), getProject());
+      Set<String> userIds = resourceAdapter.getCollectionReaders(getOrganization(), getProject(), collection);
       sendNotificationsBatch(userIds.stream()
                                     .map(userId -> createEvent(new ObjectWithParent(createCollectionForUser(collection, userId), getOrganization().getId(), getProject().getId()), event, userId))
                                     .collect(Collectors.toList()));
@@ -530,19 +516,6 @@ public class PusherFacade extends AbstractFacade {
    private Collection createCollectionForUser(final Collection collection, final String userId) {
       return collectionAdapter.mapCollectionData(collection.copy(), userId, workspaceKeeper.getProjectId());
    }
-
-   private Project getProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-
-      return workspaceKeeper.getProject().get();
-   }
-
-   private Project getProjectOrNull() {
-      return workspaceKeeper.getProject().orElse(null);
-   }
-
 
    public void createResourceComment(@Observes final CreateResourceComment commentEvent) {
       resourceCommentNotification(commentEvent.getResourceComment(), CREATE_EVENT_SUFFIX);
@@ -558,14 +531,14 @@ public class PusherFacade extends AbstractFacade {
 
    private void resourceCommentNotification(final ResourceComment comment, final String eventSuffix) {
       if (comment.getResourceType() == ResourceType.COLLECTION) {
-         final Set<String> users = resourceAdapter.getCollectionReaders(comment.getResourceId(), getOrganization(), getProject());
+         final Set<String> users = resourceAdapter.getCollectionReaders(getOrganization(), getProject(), comment.getResourceId());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.DOCUMENT) {
          final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, comment.getResourceId());
          final Collection collection = collectionDao.getCollectionById(document.getCollectionId());
          document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
-         Set<String> userIds = resourceAdapter.getDocumentReaders(document, collection, getOrganization(), getProject());
+         Set<String> userIds = resourceAdapter.getDocumentReaders(getOrganization(), getProject(), collection, document);
 
          sendNotificationsByUsers(comment, userIds, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.LINK) {
@@ -575,7 +548,7 @@ public class PusherFacade extends AbstractFacade {
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.VIEW) {
-         final Set<String> users = resourceAdapter.getViewReaders(comment.getResourceId(), getOrganization(), getProject());
+         final Set<String> users = resourceAdapter.getViewReaders(getOrganization(), getProject(), comment.getResourceId());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.PROJECT) {
@@ -607,7 +580,7 @@ public class PusherFacade extends AbstractFacade {
             final Document document = new Document(updatedDocument);
             final Collection collection = collectionDao.getCollectionById(document.getCollectionId());
             document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
-            Set<String> userIds = resourceAdapter.getDocumentReaders(document, collection, getOrganization(), getProject());
+            Set<String> userIds = resourceAdapter.getDocumentReaders(getOrganization(), getProject(), collection, document);
 
             sendNotificationsBatch(userIds.stream()
                                           .map(userId -> createEvent(createDocumentForUser(document, userId), eventSuffix, userId))

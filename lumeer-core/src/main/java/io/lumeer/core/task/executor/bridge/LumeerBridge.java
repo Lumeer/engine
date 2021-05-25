@@ -31,7 +31,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
@@ -661,12 +661,12 @@ public class LumeerBridge {
             final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
             if (view != null) {
                // can the initiator manage the view?
-               if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, Role.MANAGE, task.getInitiator())) {
+               if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, RoleOld.MANAGE, task.getInitiator())) {
                   final User newUser = task.getDaoContextSnapshot().getUserDao().getUserByEmail(userEmail);
 
                   // can the user being added read the project?
-                  if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), workspace.getProject().get(), Role.READ, newUser)) {
-                     final Set<Role> userRoles = StringUtils.isNotEmpty(roles) && !"none".equals(roles) ? Arrays.stream(roles.split(",")).map(Role::fromString).collect(toSet()) : Set.of();
+                  if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), workspace.getProject().get(), RoleOld.READ, newUser)) {
+                     final Set<RoleOld> userRoles = StringUtils.isNotEmpty(roles) && !"none".equals(roles) ? Arrays.stream(roles.split(",")).map(RoleOld::fromString).collect(toSet()) : Set.of();
 
                      operations.add(new ViewPermissionsOperation(view, newUser.getId(), userRoles));
                   }

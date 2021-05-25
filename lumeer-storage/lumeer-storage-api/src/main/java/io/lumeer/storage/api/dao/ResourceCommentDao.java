@@ -36,6 +36,7 @@ public interface ResourceCommentDao extends ProjectScopedDao {
    ResourceComment pureUpdateComment(final ResourceComment comment);
    boolean deleteComment(final ResourceComment comment);
    boolean deleteComments(final ResourceType resourceType, final String resourceId);
+   boolean deleteComments(final ResourceType resourceType, final java.util.Collection<String> resourceIds);
 
    List<ResourceComment> getResourceComments(final ResourceType resourceType, final String resourceId, final int pageStart, final int pageLenght);
    List<ResourceComment> getResourceComments(final ResourceType resourceType);

@@ -65,17 +65,11 @@ public class Group implements HealthChecking {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof Group)) {
+      if (o == null || getClass() != o.getClass()) {
          return false;
       }
       final Group group = (Group) o;
-      return Objects.equals(getId(), group.getId()) &&
-            Objects.equals(getName(), group.getName());
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(getId(), getName());
+      return Objects.equals(id, group.id) && Objects.equals(name, group.name);
    }
 
    @Override

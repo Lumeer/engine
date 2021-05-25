@@ -20,27 +20,14 @@ package io.lumeer.core.adapter
 
 import io.lumeer.api.model.*
 import io.lumeer.api.model.common.Resource
-import io.lumeer.api.util.ResourceUtils
-import io.lumeer.core.auth.PermissionsChecker
+import io.lumeer.api.util.PermissionUtils
 
-class FacadeAdapter {
+class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
 
-   fun <T : Resource> getResourceManagers(organization: Organization?, project: Project?, resource: T): Set<String> = when (resource) {
-      is Organization -> {
-         ResourceUtils.getOrganizationManagers(resource)
-      }
-      is Project -> {
-         ResourceUtils.getProjectManagers(organization, resource)
-      }
-      else -> {
-         ResourceUtils.getResourceManagers(organization, project, resource)
-      }
-   }
-
-   fun <T : Resource> mapResource(organization: Organization?, project: Project?, resource: T, user: User): T {
-      return if (getResourceManagers(organization, project, resource).contains(user.id)) {
+   fun <T : Resource> mapResource(organization: Organization, project: Project?, resource: T, user: User): T {
+      return if (getUserAdmins(organization, project, resource).contains(user.id)) {
          resource
-      } else keepOnlyActualUserRoles(organization, project, resource, user)
+      } else keepOnlyNecessaryPermissions(organization, project, resource, user)
    }
 
    fun <T : Resource> keepStoredPermissions(resource: T, storedPermissions: Permissions) {
@@ -56,34 +43,48 @@ class FacadeAdapter {
       val userPermission = Permission(userId, HashSet())
       val currentUserPermission = resource.permissions.userPermissions.firstOrNull { it.id == userId } ?: userPermission
       resource.permissions.clear()
-      currentUserPermission.roles.add(Role.READ)
+      currentUserPermission.roles.add(Role(RoleType.Read))
       resource.permissions.addUserPermissions(setOf(currentUserPermission))
       return resource
    }
 
-   private fun <T : Resource> keepOnlyActualUserRoles(organization: Organization?, project: Project?, resource: T, user: User): T {
-      val roles = PermissionsChecker.getActualRoles(organization, project, resource, user)
-      val permission = Permission.buildWithRoles(user.id, roles)
-      val managers = getResourceManagers(organization, project, resource)
-      val keepReadRights = keepReadRights(resource)
-      val managersUserPermission = resource.permissions.userPermissions
-            .map { perm: Permission ->
-               if (keepReadRights) {
-                  if (managers.contains(perm.id)) perm
-                  else Permission.buildWithRoles(perm.id, setOf(Role.READ))
-               } else perm
-            }
-            .filter { keepReadRights || managers.contains(it.id) }
-            .toSet()
+   private fun <T : Resource> keepOnlyNecessaryPermissions(organization: Organization?, project: Project?, resource: T, user: User): T {
+      val userPermission = resource.permissions?.userPermissions?.filter { it.id == user.id }.orEmpty().toSet()
+      val userGroups = PermissionUtils.getUserGroups(organization, user)
+      val userGroupPermissions = resource.permissions?.groupPermissions?.filter { userGroups.contains(it.id) }.orEmpty().toSet()
+
+      // Some roles are necessary to compute roles in other resources (i.e. Content readers/managers on view sharing)
+      val keepRoles = keepRoleTypes(resource)
+      val userPermissions = filterOnlyNecessaryPermissions(resource.permissions?.userPermissions, keepRoles)
+      val groupPermissions = filterOnlyNecessaryPermissions(resource.permissions?.groupPermissions, keepRoles)
 
       resource.permissions.clear()
-      resource.permissions.updateUserPermissions(managersUserPermission)
-      resource.permissions.updateUserPermissions(permission)
+      resource.permissions.updateUserPermissions(userPermissions)
+      // Replace current user permissions
+      resource.permissions.updateUserPermissions(userPermission)
+      resource.permissions.updateGroupPermissions(groupPermissions)
+      // Replace current user groups permissions
+      resource.permissions.updateGroupPermissions(userGroupPermissions)
       return resource
    }
 
-   private fun <T : Resource> keepReadRights(resource: T): Boolean {
-      return resource is Organization || resource is Project
+   private fun filterOnlyNecessaryPermissions(permissions: Set<Permission>?, keepRoleTypes: Set<RoleType>): Set<Permission> {
+      return permissions.orEmpty()
+            .map { it.apply { roles.filter { role -> role.isTransitive || keepRoleTypes.contains(role.roleType) } } }
+            .filter { it.roles.isNotEmpty() }
+            .toSet()
+   }
+
+   private fun <T : Resource> keepRoleTypes(resource: T): Set<RoleType> {
+      return when (resource) {
+         is Organization -> setOf(RoleType.Read)
+         is Project -> setOf(RoleType.Read)
+         else -> setOf()
+      }
+   }
+
+   private fun <T : Resource> getUserAdmins(organization: Organization, project: Project?, resource: T): Set<String> {
+      return permissionAdapter.getResourceUsersByRole(organization, project, resource, RoleType.UserConfig)
    }
 
 }

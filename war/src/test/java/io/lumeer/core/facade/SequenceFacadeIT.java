@@ -26,7 +26,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
@@ -96,7 +96,7 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       Group group = groupDao.createGroup(new Group(GROUP));
 
       userPermission = Permission.buildWithRoles(user.getId(), Collection.ROLES);
-      groupPermission = Permission.buildWithRoles(group.getId(), Collections.singleton(Role.READ));
+      groupPermission = Permission.buildWithRoles(group.getId(), Collections.singleton(RoleOld.READ));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);

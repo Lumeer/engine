@@ -22,8 +22,9 @@ import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.adapter.ResourceAdapter;
@@ -87,7 +88,7 @@ public class ViewFacade extends AbstractFacade {
    public View createView(View view) {
       if (view.getQuery().getCollectionIds() != null) {
          collectionDao.getCollectionsByIds(view.getQuery().getCollectionIds()).forEach(collection ->
-               permissionsChecker.checkRole(collection, Role.READ));
+               permissionsChecker.checkRole(collection, RoleOld.READ));
       }
       view.setAuthorId(getCurrentUserId());
       view.setLastTimeUsed(ZonedDateTime.now());
@@ -106,7 +107,7 @@ public class ViewFacade extends AbstractFacade {
 
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
-      permissionsChecker.checkRole(storedView, Role.MANAGE);
+      permissionsChecker.checkRole(storedView, RoleOld.MANAGE);
 
       keepStoredPermissions(view, storedView.getPermissions());
       view.setAuthorId(storedView.getAuthorId());
@@ -124,7 +125,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void deleteView(final String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleOld.MANAGE);
 
       viewDao.deleteView(view.getId());
 
@@ -133,7 +134,7 @@ public class ViewFacade extends AbstractFacade {
 
    public View getViewById(final String id) {
       final View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.READ);
+      permissionsChecker.checkRole(view, RoleOld.READ);
 
       view.setAuthorRights(getViewAuthorRights(view));
 
@@ -153,8 +154,8 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public List<View> getViews() {
-      checkProjectRole(Role.READ);
-      return mapViews(resourceAdapter.getViews(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
+      checkProjectRole(RoleOld.READ);
+      return mapViews(resourceAdapter.getViews(getOrganization(), getProject(), getCurrentUserId())
                                      .stream()
                                      .peek(view -> view.setAuthorRights(getViewAuthorRights(view)))
                                      .map(this::mapResource)
@@ -164,14 +165,14 @@ public class ViewFacade extends AbstractFacade {
 
    public Permissions getViewPermissions(final String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleOld.MANAGE);
 
       return view.getPermissions();
    }
 
    public void addFavoriteView(String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.READ);
+      permissionsChecker.checkRole(view, RoleOld.READ);
 
       String projectId = getCurrentProject().getId();
       String userId = getCurrentUser().getId();
@@ -180,7 +181,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void removeFavoriteView(String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.READ);
+      permissionsChecker.checkRole(view, RoleOld.READ);
 
       String userId = getCurrentUser().getId();
       favoriteItemDao.removeFavoriteView(userId, id);
@@ -188,7 +189,7 @@ public class ViewFacade extends AbstractFacade {
 
    public Set<Permission> updateUserPermissions(final String id, final Set<Permission> userPermissions) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleOld.MANAGE);
       permissionsChecker.invalidateCache(view);
 
       final View originalView = view.copy();
@@ -201,7 +202,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void removeUserPermission(final String id, final String userId) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleOld.MANAGE);
       permissionsChecker.invalidateCache(view);
 
       view.getPermissions().removeUserPermission(userId);
@@ -210,7 +211,7 @@ public class ViewFacade extends AbstractFacade {
 
    public Set<Permission> updateGroupPermissions(final String id, final Set<Permission> groupPermissions) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleOld.MANAGE);
       permissionsChecker.invalidateCache(view);
 
       view.getPermissions().clearGroupPermissions();
@@ -222,7 +223,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void removeGroupPermission(final String id, final String groupId) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleOld.MANAGE);
       permissionsChecker.invalidateCache(view);
 
       view.getPermissions().removeGroupPermission(groupId);
@@ -234,8 +235,8 @@ public class ViewFacade extends AbstractFacade {
       return CodeGenerator.generate(existingCodes, viewName);
    }
 
-   public Map<String, Set<Role>> getViewAuthorRights(final View view) {
-      return resourceAdapter.getViewAuthorRights(view, workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null));
+   public Map<String, Set<RoleType>> getViewAuthorRights(final View view) {
+      return resourceAdapter.getViewAuthorRights(getOrganization(), getProject(), view);
    }
 
    public List<DefaultViewConfig> getDefaultConfigs() {
@@ -248,7 +249,7 @@ public class ViewFacade extends AbstractFacade {
       return defaultViewConfigDao.updateConfig(config);
    }
 
-   private void checkProjectRole(Role role) {
+   private void checkProjectRole(RoleOld role) {
       Project project = getCurrentProject();
       permissionsChecker.checkRole(project, role);
    }

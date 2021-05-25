@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
@@ -91,9 +91,9 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       this.strangerUser = userDao.createUser(user2);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
-      userReadonlyPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermission = Permission.buildWithRoles(this.strangerUser.getId(), Collections.singleton(Role.READ));
-      groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
+      userReadonlyPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ));
+      userStrangerPermission = Permission.buildWithRoles(this.strangerUser.getId(), Collections.singleton(RoleOld.READ));
+      groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(RoleOld.READ));
    }
 
    @Test
@@ -215,7 +215,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
       permissions = organizationFacade.getOrganizationPermissions(organization2.getId());
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), userReadonlyPermission, Permission.buildWithRoles(userStrangerPermission.getId(), Set.of(Role.READ)));
+      assertPermissions(permissions.getUserPermissions(), userReadonlyPermission, Permission.buildWithRoles(userStrangerPermission.getId(), Set.of(RoleOld.READ)));
 
       permissions = organizationFacade.getOrganizationPermissions(organization3.getId());
       assertThat(permissions).isNotNull();
@@ -226,7 +226,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       final String organizationId = createOrganization(CODE1);
 
-      Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ)));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(RoleOld.MANAGE, RoleOld.READ)));
       organizationFacade.updateUserPermissions(organizationId, Set.of(userPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
@@ -252,7 +252,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final String organizationId = createOrganization(CODE1);
 
-      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(RoleOld.SHARE, RoleOld.READ)));
       organizationFacade.updateGroupPermissions(organizationId, Set.of(groupPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();

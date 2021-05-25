@@ -28,7 +28,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.SuggestionQuery;
 import io.lumeer.api.model.SuggestionType;
 import io.lumeer.api.model.User;
@@ -120,7 +120,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       userPermission = Permission.buildWithRoles(createdUser.getId(), View.ROLES);
-      groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(Role.READ));
+      groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(RoleOld.READ));
 
       Project project = new Project();
       project.setPermissions(new Permissions());
@@ -142,7 +142,7 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
 
       for (String name : COLLECTION_NAMES) {
          Permissions collectionPermissions = new Permissions();
-         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
          Collection jsonCollection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          collectionIds.add(collectionDao.createCollection(jsonCollection).getId());
       }

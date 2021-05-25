@@ -27,7 +27,7 @@ import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
@@ -503,7 +503,7 @@ public class DocumentFacade extends AbstractFacade {
                            .collect(Collectors.toMap(DataDocument::getId, d -> d));
       final List<Document> originalDocuments = documentDao.getDocumentsByIds(new HashSet<>(documentIds))
                                                           .stream().peek(document -> document.setData(dataMap.getOrDefault(document.getId(), new DataDocument())))
-                                                          .filter(document -> permissionsChecker.hasRoleWithView(document, collection, Role.WRITE, Role.WRITE))
+                                                          .filter(document -> permissionsChecker.hasRoleWithView(document, collection, RoleOld.WRITE, RoleOld.WRITE))
                                                           .collect(Collectors.toList());
 
       if (originalDocuments.isEmpty()) {
@@ -579,7 +579,7 @@ public class DocumentFacade extends AbstractFacade {
          value.forEach(document -> {
             var data = dataMap.getOrDefault(document.getId(), new DataDocument());
             document.setData(constraintManager.decodeDataTypes(collection, data));
-            if (permissionsChecker.hasRoleWithView(document, collection, Role.READ, Role.READ)) {
+            if (permissionsChecker.hasRoleWithView(document, collection, RoleOld.READ, RoleOld.READ)) {
                document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
                resultDocuments.add(document);
             }
@@ -600,7 +600,7 @@ public class DocumentFacade extends AbstractFacade {
             throw new IllegalStateException("Rule not found");
          }
          var roleString = config.get("role").toString();
-         var role = Role.fromString(roleString);
+         var role = RoleOld.fromString(roleString);
 
          var tuple = checkDocumentPermission(collection, documentId, role);
          taskProcessingFacade.runRule(collection, rule, tuple.getSecond(), actionName);
@@ -643,33 +643,33 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private Collection checkCollectionWritePermissionss(String collectionId) {
-      return checkCollectionPermissions(collectionId, Role.WRITE);
+      return checkCollectionPermissions(collectionId, RoleOld.WRITE);
    }
 
    private Collection checkCollectionReadPermissionss(String collectionId) {
-      return checkCollectionPermissions(collectionId, Role.READ);
+      return checkCollectionPermissions(collectionId, RoleOld.READ);
    }
 
-   private Collection checkCollectionPermissions(String collectionId, Role role) {
+   private Collection checkCollectionPermissions(String collectionId, RoleOld role) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRoleWithView(collection, role, role);
       return collection;
    }
 
    private Tuple<Collection, Document> checkDocumentWritePermissions(String collectionId, String documentId) {
-      return checkDocumentPermission(collectionId, documentId, Role.WRITE);
+      return checkDocumentPermission(collectionId, documentId, RoleOld.WRITE);
    }
 
    private Tuple<Collection, Document> checkDocumentReadPermissions(String collectionId, String documentId) {
-      return checkDocumentPermission(collectionId, documentId, Role.READ);
+      return checkDocumentPermission(collectionId, documentId, RoleOld.READ);
    }
 
-   private Tuple<Collection, Document> checkDocumentPermission(String collectionId, String documentId, Role role) {
+   private Tuple<Collection, Document> checkDocumentPermission(String collectionId, String documentId, RoleOld role) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       return checkDocumentPermission(collection, documentId, role);
    }
 
-   private Tuple<Collection, Document> checkDocumentPermission(Collection collection, String documentId, Role role) {
+   private Tuple<Collection, Document> checkDocumentPermission(Collection collection, String documentId, RoleOld role) {
       final Document document = documentDao.getDocumentById(documentId);
       document.setData(dataDao.getData(collection.getId(), documentId));
       permissionsChecker.checkRoleWithView(document, collection, role, role);

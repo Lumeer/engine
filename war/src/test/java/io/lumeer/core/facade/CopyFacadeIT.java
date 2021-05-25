@@ -31,7 +31,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -110,7 +110,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       Permissions organizationPermissions = new Permissions();
-      organizationPermissions.updateUserPermissions(new Permission(user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      organizationPermissions.updateUserPermissions(new Permission(user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
       organization.setPermissions(organizationPermissions);
       organization = organizationDao.createOrganization(organization);
 
@@ -120,7 +120,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new Permission(user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       project = projectDao.createProject(project);
 

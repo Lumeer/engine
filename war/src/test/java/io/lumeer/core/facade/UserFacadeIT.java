@@ -27,7 +27,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.BadFormatException;
@@ -100,14 +100,14 @@ public class UserFacadeIT extends IntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
       organization = organizationDao.createOrganization(organization1);
       organizationId1 = organization.getId();
 
       Organization organization2 = new Organization();
       organization2.setCode("MRL");
       organization2.setPermissions(new Permissions());
-      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
 
       Organization organization3 = new Organization();
@@ -119,7 +119,7 @@ public class UserFacadeIT extends IntegrationTestBase {
       Project project = new Project();
       project.setCode("Lalala");
       project.setPermissions(new Permissions());
-      project.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      project.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
       this.project = projectDao.createProject(project);
    }
 

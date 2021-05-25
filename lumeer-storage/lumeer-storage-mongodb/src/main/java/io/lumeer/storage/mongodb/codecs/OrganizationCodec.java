@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
 
@@ -41,7 +42,7 @@ public class OrganizationCodec extends ResourceCodec implements CollectibleCodec
    @Override
    public Organization decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      SimpleResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson, ResourceType.ORGANIZATION);
 
       Organization organization = new Organization(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions());
       organization.setId(resource.getId());

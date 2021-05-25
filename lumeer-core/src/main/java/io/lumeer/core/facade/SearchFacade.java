@@ -33,7 +33,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
@@ -208,7 +208,7 @@ public class SearchFacade extends AbstractFacade {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
             return new QueryStem(null, collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
          }
-         if (permissionsChecker.hasRole(collection, Role.READ)) {
+         if (permissionsChecker.hasRole(collection, RoleOld.READ)) {
             return new QueryStem(null, collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
          }
          return null;
@@ -457,7 +457,7 @@ public class SearchFacade extends AbstractFacade {
    private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
       final View view = permissionsChecker.getActiveView();
       final Set<String> viewCollectionIds = view != null ? QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds())) : Collections.emptySet();
-      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, Role.MANAGE) && !canReadQueryResources(query, collectionsMap, linkTypesMap, viewCollectionIds)) {
+      if (shouldCheckQuery && view != null && !permissionsChecker.hasRole(view, RoleOld.MANAGE) && !canReadQueryResources(query, collectionsMap, linkTypesMap, viewCollectionIds)) {
          return constraintManager.decodeQuery(view.getQuery(), collectionsMap, linkTypesMap);
       }
 
@@ -481,7 +481,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private boolean canReadCollection(final Collection collection, final Set<String> viewCollectionsIds) {
-      return collection != null && (permissionsChecker.hasRole(collection, Role.READ) || viewCollectionsIds.contains(collection.getId()));
+      return collection != null && (permissionsChecker.hasRole(collection, RoleOld.READ) || viewCollectionsIds.contains(collection.getId()));
    }
 
    private boolean canReadLinkType(final LinkType linkType, final Map<String, Collection> collectionsMap, final Set<String> viewCollectionsIds) {
@@ -512,7 +512,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       var filteredCollections = collections.stream()
-                                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))
+                                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ))
                                            .collect(Collectors.toList());
       var filteredLinkTypes = filterLinkTypesByCollections(linkTypes, filteredCollections);
       return new Tuple<>(filteredCollections, filteredLinkTypes);

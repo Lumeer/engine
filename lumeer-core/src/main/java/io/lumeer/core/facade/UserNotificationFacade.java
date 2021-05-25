@@ -26,7 +26,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
@@ -191,7 +191,7 @@ public class UserNotificationFacade extends AbstractFacade {
 
       final List<UserNotification> notifications =
             newUsers.stream()
-                    .filter(userId -> permissionsChecker.hasRole(resource, Role.READ, userId) && filterNotificationsByManagers(resource, userId))
+                    .filter(userId -> permissionsChecker.hasRole(resource, RoleOld.READ, userId) && filterNotificationsByManagers(resource, userId))
                     .map(userId -> createNotification(userId, getNotificationTypeByResource(resource), data)
       ).collect(Collectors.toList());
 
@@ -249,7 +249,7 @@ public class UserNotificationFacade extends AbstractFacade {
          final Map<String, Language> languages = initializeLanguages(users.values());
 
          newUsers.stream()
-                 .filter(user -> hasUserEnabledNotifications(resource, users.get(user)) && permissionsChecker.hasRole(resource, Role.READ, user) && filterNotificationsByManagers(resource, user))
+                 .filter(user -> hasUserEnabledNotifications(resource, users.get(user)) && permissionsChecker.hasRole(resource, RoleOld.READ, user) && filterNotificationsByManagers(resource, user))
                  .forEach(user ->
                        emailService.sendEmailFromTemplate(
                              getEmailTemplate(resource),
@@ -290,7 +290,7 @@ public class UserNotificationFacade extends AbstractFacade {
 
       if (resource.getType() == ResourceType.PROJECT) {
          if (workspaceKeeper.getOrganization().isPresent()) {
-            return !permissionsChecker.hasRole(workspaceKeeper.getOrganization().get(), Role.MANAGE, userId);
+            return !permissionsChecker.hasRole(workspaceKeeper.getOrganization().get(), RoleOld.MANAGE, userId);
          } else {
             return true;
          }

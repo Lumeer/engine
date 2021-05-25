@@ -18,23 +18,18 @@
  */
 package io.lumeer.api.util;
 
-import static java.util.stream.Collectors.toSet;
-
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.User;
-import io.lumeer.api.model.View;
+import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,27 +37,6 @@ import java.util.stream.Collectors;
 public class ResourceUtils {
 
    private ResourceUtils() {
-   }
-
-   public static Set<Role> getAllResourceRoles(final Resource resource) {
-      if (resource instanceof Organization) {
-         return Organization.ROLES;
-      } else if (resource instanceof Project) {
-         return Project.ROLES;
-      } else if (resource instanceof Collection) {
-         return Collection.ROLES;
-      } else if (resource instanceof View) {
-         return View.ROLES;
-      }
-      return Collections.emptySet();
-   }
-
-   public static Set<String> getUserGroupsInResource(final Organization organization, final Resource resource, final User user) {
-      if (organization == null || resource == null || resource instanceof Organization || user == null || "".equals(user.getId())) {
-         return Collections.emptySet();
-      }
-
-      return Objects.requireNonNullElse(user.getGroups().get(organization.getId()), Collections.emptySet());
    }
 
    public static Set<String> getOrganizationReaders(Organization organization) {
@@ -88,24 +62,6 @@ public class ResourceUtils {
       return managers;
    }
 
-   public static Set<String> getCollectionManagers(Organization organization, Project project, Collection collection, Set<String> additionalManagers) {
-      var collectionManagers = getManagers(collection);
-      collectionManagers.addAll(additionalManagers);
-      collectionManagers.retainAll(getProjectReaders(organization, project));
-      collectionManagers.addAll(getProjectManagers(organization, project));
-
-      return collectionManagers;
-   }
-
-   public static Set<String> getCollectionReaders(Organization organization, Project project, Collection collection, Set<String> additionalReaders) {
-      var collectionReaders = getReaders(collection);
-      collectionReaders.addAll(additionalReaders);
-      collectionReaders.retainAll(getProjectReaders(organization, project));
-      collectionReaders.addAll(getProjectManagers(organization, project));
-
-      return collectionReaders;
-   }
-
    private static Set<String> getManagers(Resource resource) {
       Permissions permissions = resource != null ? resource.getPermissions() : null;
       Set<Permission> userPermissions = permissions != null ? permissions.getUserPermissions() : Collections.emptySet();
@@ -114,22 +70,6 @@ public class ResourceUtils {
                      .filter(ResourceUtils::canManageByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
-   }
-
-   public static Set<String> getResourceReaders(Organization organization, Project project, Resource resource) {
-      var resourceReaders = getReaders(resource);
-      resourceReaders.retainAll(getProjectReaders(organization, project));
-      resourceReaders.addAll(getProjectManagers(organization, project));
-
-      return resourceReaders;
-   }
-
-   public static Set<String> getResourceManagers(Organization organization, Project project, Resource resource) {
-      var resourceManagers = getManagers(resource);
-      resourceManagers.retainAll(getProjectReaders(organization, project));
-      resourceManagers.addAll(getProjectManagers(organization, project));
-
-      return resourceManagers;
    }
 
    public static boolean userIsManagerInWorkspace(final String userId, final Organization organization, final Project project) {
@@ -151,32 +91,6 @@ public class ResourceUtils {
                      .filter(ResourceUtils::canReadByPermission)
                      .map(Permission::getId)
                      .collect(Collectors.toSet());
-   }
-
-   public static Set<Role> getRolesByUser(Set<Permission> userRoles, String userId) {
-      return userRoles.stream()
-                      .filter(entity -> entity.getId() != null && entity.getId().equals(userId))
-                      .flatMap(entity -> entity.getRoles().stream())
-                      .collect(toSet());
-   }
-
-   public static Set<Role> getRolesByGroups(Set<Permission> groupRoles, Set<String> groupIds) {
-      return groupRoles.stream()
-                       .filter(entity -> groupIds.contains(entity.getId()))
-                       .flatMap(entity -> entity.getRoles().stream())
-                       .collect(toSet());
-   }
-
-   public static Set<Role> getRolesInResource(final Organization organization, final Resource resource, final User user) {
-      final Set<String> groups = getUserGroupsInResource(organization, resource, user);
-
-      Permissions permissions = resource != null ? resource.getPermissions() : null;
-      Set<Permission> userPermissions = permissions != null ? permissions.getUserPermissions() : Collections.emptySet();
-      Set<Permission> groupPermissions = permissions != null ? permissions.getGroupPermissions() : Collections.emptySet();
-
-      final Set<Role> actualRoles = getRolesByUser(userPermissions, user.getId());
-      actualRoles.addAll(getRolesByGroups(groupPermissions, groups));
-      return Role.withTransitionRoles(actualRoles);
    }
 
    public static Set<String> getAddedPermissions(final Resource originalResource, final Resource updatedResource) {
@@ -201,11 +115,11 @@ public class ResourceUtils {
    }
 
    public static boolean canReadByPermission(Permission permission) {
-      return permission.getRoles().contains(Role.READ) || canManageByPermission(permission);
+      return permission.getRoles().contains(RoleType.Read) || canManageByPermission(permission);
    }
 
    public static boolean canManageByPermission(Permission permission) {
-      return permission.getRoles().contains(Role.MANAGE);
+      return permission.getRoles().contains(RoleOld.MANAGE);
    }
 
    public static java.util.Collection<Attribute> incOrDecAttributes(java.util.Collection<Attribute> attributes, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {

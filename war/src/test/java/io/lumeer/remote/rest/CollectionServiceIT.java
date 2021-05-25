@@ -31,7 +31,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
@@ -78,8 +78,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
 
-   private static final Set<Role> USER_ROLES = View.ROLES;
-   private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
+   private static final Set<RoleOld> USER_ROLES = View.ROLES;
+   private static final Set<RoleOld> GROUP_ROLES = Collections.singleton(RoleOld.READ);
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
@@ -138,7 +138,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -410,7 +410,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] userPermission = { Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
+      Permission[] userPermission = { Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(RoleOld.MANAGE, RoleOld.READ))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("users")
@@ -449,7 +449,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(RoleOld.SHARE, RoleOld.READ))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups")

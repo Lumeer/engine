@@ -22,10 +22,11 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
@@ -138,9 +139,8 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void deleteLinkTypeBasedData(final String linkTypeId) {
-      linkInstanceDao.getLinkInstancesByLinkType(linkTypeId).forEach(linkInstance -> {
-         resourceCommentDao.deleteComments(ResourceType.LINK, linkInstance.getId());
-      });
+      var linkInstanceIds = linkInstanceDao.getLinkInstancesByLinkType(linkTypeId).stream().map(LinkInstance::getId).collect(Collectors.toSet());
+      resourceCommentDao.deleteComments(ResourceType.LINK, linkInstanceIds);
 
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
       linkDataDao.deleteDataRepository(linkTypeId);
@@ -166,14 +166,14 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType getLinkType(final String linkTypeId) {
-      checkProjectRole(Role.READ);
+      checkProjectRole(RoleOld.READ);
       var linkType = linkTypeDao.getLinkType(linkTypeId);
       var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))) {
+      if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ))) {
          return mapLinkTypeData(linkType);
       }
 
-      var viewsLinkTypes = resourceAdapter.getViewsLinkTypes(getCurrentUserId(), authenticatedUserGroups.getCurrentUserGroups(), permissionsChecker.isManager());
+      var viewsLinkTypes = resourceAdapter.getViewsLinkTypes(getOrganization(), getProject(), getCurrentUserId());
       if (viewsLinkTypes.stream().anyMatch(lt -> lt.getId().equals(linkTypeId))) {
          return mapLinkTypeData(linkType);
       }
@@ -182,19 +182,19 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public List<LinkType> getLinkTypes() {
-      checkProjectRole(Role.READ);
-      return mapLinkTypesData(resourceAdapter.getLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
+      checkProjectRole(RoleOld.READ);
+      return mapLinkTypesData(resourceAdapter.getLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
    }
 
    public List<LinkType> getViewsLinkTypes() {
-      checkProjectRole(Role.READ);
-      return mapLinkTypesData(resourceAdapter.getViewsLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
+      checkProjectRole(RoleOld.READ);
+      return mapLinkTypesData(resourceAdapter.getViewsLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
    }
 
    public List<LinkType> getAllLinkTypes() {
-      checkProjectRole(Role.READ);
+      checkProjectRole(RoleOld.READ);
       var linkTypes = getLinkTypes();
-      if (!isWorkspaceManager()) {
+      if (!canReadAllInWorkspace()) {
          linkTypes.addAll(getViewsLinkTypes());
       }
       return linkTypes;
@@ -286,7 +286,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void checkLinkTypePermission(LinkType linkType) {
-      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, true);
+      permissionsChecker.checkLinkTypeRoleWithView(linkType, RoleOld.WRITE, true);
    }
 
    private LinkType checkLinkTypePermission(String linkTypeId) {
@@ -295,7 +295,7 @@ public class LinkTypeFacade extends AbstractFacade {
       return linkType;
    }
 
-   private void checkProjectRole(Role role) {
+   private void checkProjectRole(RoleOld role) {
       Project project = getCurrentProject();
       permissionsChecker.checkRole(project, role);
    }

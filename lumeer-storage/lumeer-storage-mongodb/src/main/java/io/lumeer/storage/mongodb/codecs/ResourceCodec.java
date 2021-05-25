@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
 
@@ -41,6 +42,7 @@ public abstract class ResourceCodec {
    public static final String PRIORITY = "priority";
    public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
+   public static final String ROLES = "permissions";
 
    protected final Codec<Document> documentCodec;
 
@@ -48,7 +50,7 @@ public abstract class ResourceCodec {
       this.documentCodec = registry.get(Document.class);
    }
 
-   protected SimpleResource decodeResource(final Document bson) {
+   protected SimpleResource decodeResource(final Document bson, final ResourceType resourceType) {
       String id = bson.getObjectId(ID).toHexString();
       String code = bson.getString(CODE);
       String name = bson.getString(NAME);
@@ -57,7 +59,12 @@ public abstract class ResourceCodec {
       Long version = bson.getLong(VERSION);
       Long order = bson.getLong(PRIORITY);
       String description = bson.getString(DESCRIPTION);
-      Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(PERMISSIONS, Document.class));
+      Permissions permissions;
+      if (bson.containsKey(ROLES)) {
+         permissions = PermissionsCodec.convertFromDocument(bson.get(ROLES, Document.class));
+      } else {
+         permissions = PermissionsCodec.convertFromDocumentLegacy(bson.get(PERMISSIONS, Document.class), resourceType);
+      }
 
       SimpleResource view = new SimpleResource(code, name, icon, color, description, order, permissions);
       view.setId(id);
@@ -73,7 +80,7 @@ public abstract class ResourceCodec {
           .append(COLOR, value.getColor())
           .append(PRIORITY, value.getPriority())
           .append(DESCRIPTION, value.getDescription())
-          .append(PERMISSIONS, value.getPermissions());
+          .append(ROLES, value.getPermissions());
 
       return bson;
    }
