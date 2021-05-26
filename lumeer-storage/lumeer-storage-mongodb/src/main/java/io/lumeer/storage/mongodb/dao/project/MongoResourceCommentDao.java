@@ -178,6 +178,24 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
    }
 
    @Override
+   public ResourceComment pureUpdateComment(final ResourceComment comment) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+
+      try {
+         Bson update = new org.bson.Document("$set", comment);
+         ResourceComment updatedComment = databaseCollection().findOneAndUpdate(idFilter(comment.getId()), update, options);
+
+         if (updatedComment == null) {
+            throw new StorageException("Comment '" + comment.getId() + "' has not been updated.");
+         }
+
+         return updatedComment;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update comment: " + comment, ex);
+      }
+   }
+
+   @Override
    public boolean deleteComment(final ResourceComment comment) {
       ResourceComment originalComment = databaseCollection().findOneAndDelete(idFilter(comment.getId()));
       if (originalComment == null) {
@@ -217,6 +235,14 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
 
       return result.into(new ArrayList<>());
    }
+
+   @Override
+   public List<ResourceComment> getResourceComments(final ResourceType resourceType) {
+      final FindIterable<ResourceComment> result = databaseCollection().find(Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()));
+
+      return result.into(new ArrayList<>());
+   }
+
 
    @Override
    public long updateParentId(final ResourceType resourceType, final String resourceId, final String parentId) {

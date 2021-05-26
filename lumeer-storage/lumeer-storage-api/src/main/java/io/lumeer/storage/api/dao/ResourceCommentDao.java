@@ -33,10 +33,12 @@ public interface ResourceCommentDao extends ProjectScopedDao {
    Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds);
    Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final String parentId);
    ResourceComment updateComment(final ResourceComment comment);
+   ResourceComment pureUpdateComment(final ResourceComment comment);
    boolean deleteComment(final ResourceComment comment);
    boolean deleteComments(final ResourceType resourceType, final String resourceId);
 
    List<ResourceComment> getResourceComments(final ResourceType resourceType, final String resourceId, final int pageStart, final int pageLenght);
+   List<ResourceComment> getResourceComments(final ResourceType resourceType);
 
    long updateParentId(final ResourceType resourceType, final String resourceId, final String parentId);
    void ensureIndexes(final Project project);

@@ -30,6 +30,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
@@ -102,11 +103,9 @@ public class ResourceCommentFacade extends AbstractFacade {
 
    private String getParentIdByComment(final ResourceComment comment) {
       if (comment.getResourceType() == ResourceType.DOCUMENT) {
-         final Document doc = documentDao.getDocumentById(comment.getResourceId());
-         return doc != null ? doc.getCollectionId() : null;
+         return Utils.computeIfNotNull(documentDao.getDocumentById(comment.getResourceId()), Document::getCollectionId);
       } else if (comment.getResourceType() == ResourceType.LINK) {
-         final LinkInstance link = linkInstanceDao.getLinkInstance(comment.getResourceId());
-         return link != null ? link.getLinkTypeId() : null;
+         return Utils.computeIfNotNull(linkInstanceDao.getLinkInstance(comment.getResourceId()), LinkInstance::getLinkTypeId);
       }
 
       return null;
