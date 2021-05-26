@@ -29,6 +29,8 @@ class DocumentAdapter(private val resourceCommentDao: ResourceCommentDao, privat
 
     fun getCommentsCounts(documentIds: Set<String>): Map<String, Int> = resourceCommentDao.getCommentsCounts(ResourceType.DOCUMENT, documentIds)
 
+    fun getCommentsCounts(collectionId: String): Map<String, Int> = resourceCommentDao.getCommentsCounts(ResourceType.DOCUMENT, collectionId)
+
     fun getFavoriteDocumentIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteDocumentIds(userId, projectId)
 
     fun isFavorite(documentId: String, userId: String, projectId: String): Boolean = getFavoriteDocumentIds(userId, projectId).contains(documentId)
@@ -40,12 +42,29 @@ class DocumentAdapter(private val resourceCommentDao: ResourceCommentDao, privat
 
     fun mapDocumentsData(documents: List<Document>, userId: String, projectId: String): List<Document> {
         val favoriteDocumentIds = getFavoriteDocumentIds(userId, projectId)
-        val documentIds = documents.map { obj: Document -> obj.id }.toSet()
-        val commentCounts = getCommentsCounts(documentIds)
+        val commentCounts = obtainCommentCounts(documents)
         return documents.onEach {
             it.isFavorite = favoriteDocumentIds.contains(it.id)
             it.commentsCount = (commentCounts[it.id] ?: 0).toLong()
         }
     }
 
+    private fun obtainCommentCounts(documents: List<Document>): Map<String, Int> {
+        val documentIds = documents.map { obj: Document -> obj.id }.toSet()
+        if (documents.size < 100) {
+            return getCommentsCounts(documentIds)
+        }
+
+        val commentCounts = mutableMapOf<String, Int>()
+        val documentsByCollectionId = documents.groupBy { it.collectionId }
+        documentsByCollectionId.keys.forEach { k ->
+            if (documentsByCollectionId[k].orEmpty().size < 100) {
+                commentCounts.putAll(getCommentsCounts(documentsByCollectionId[k].orEmpty().map { it.id }.toSet()))
+            } else {
+                commentCounts.putAll(getCommentsCounts(k))
+            }
+        }
+
+        return commentCounts
+    }
 }

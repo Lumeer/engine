@@ -29,14 +29,33 @@ class LinkInstanceAdapter(val resourceCommentDao: ResourceCommentDao) {
 
    fun getCommentsCounts(linkInstanceIds: Set<String>): Map<String, Int> = resourceCommentDao.getCommentsCounts(ResourceType.LINK, linkInstanceIds)
 
+   fun getCommentsCounts(linkTypeId: String): Map<String, Int> = resourceCommentDao.getCommentsCounts(ResourceType.LINK, linkTypeId)
+
    fun mapLinkInstanceData(linkInstance: LinkInstance): LinkInstance = linkInstance.apply { commentsCount = getCommentsCount(id) }
 
    fun mapLinkInstancesData(linkInstances: List<LinkInstance>): List<LinkInstance> {
-      val linkInstanceIds = linkInstances.map { obj: LinkInstance -> obj.id }.toSet()
-      val commentCounts = getCommentsCounts(linkInstanceIds)
+      val commentCounts = obtainCommentCounts(linkInstances)
       return linkInstances.onEach {
          it.commentsCount = (commentCounts[it.id] ?: 0).toLong()
       }
    }
 
+   private fun obtainCommentCounts(linkInstances: List<LinkInstance>): Map<String, Int> {
+      val linkInstanceIds = linkInstances.map { obj: LinkInstance -> obj.id }.toSet()
+      if (linkInstances.size < 100) {
+         return getCommentsCounts(linkInstanceIds)
+      }
+
+      val commentCounts = mutableMapOf<String, Int>()
+      val linksByLinkTypeId = linkInstances.groupBy { it.linkTypeId }
+      linksByLinkTypeId.keys.forEach { k ->
+         if (linksByLinkTypeId[k].orEmpty().size < 100) {
+            commentCounts.putAll(getCommentsCounts(linksByLinkTypeId[k].orEmpty().map { it.id }.toSet()))
+         } else {
+            commentCounts.putAll(getCommentsCounts(k))
+         }
+      }
+
+      return commentCounts
+   }
 }

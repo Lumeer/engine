@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
@@ -29,12 +30,14 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -72,6 +75,9 @@ public class ResourceCommentFacade extends AbstractFacade {
    @Inject
    private LinkTypeDao linkTypeDao;
 
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
+
    private ResourceCommentAdapter adapter;
 
    @PostConstruct
@@ -90,8 +96,19 @@ public class ResourceCommentFacade extends AbstractFacade {
       comment.setAuthorEmail(authenticatedUser.getCurrentUser().getEmail());
       comment.setAuthorName(authenticatedUser.getCurrentUser().getName());
       comment.setCreationDate(ZonedDateTime.now());
+      comment.setParentId(getParentIdByComment(comment));
 
       return resourceCommentDao.createComment(comment);
+   }
+
+   private String getParentIdByComment(final ResourceComment comment) {
+      if (comment.getResourceType() == ResourceType.DOCUMENT) {
+         return Utils.computeIfNotNull(documentDao.getDocumentById(comment.getResourceId()), Document::getCollectionId);
+      } else if (comment.getResourceType() == ResourceType.LINK) {
+         return Utils.computeIfNotNull(linkInstanceDao.getLinkInstance(comment.getResourceId()), LinkInstance::getLinkTypeId);
+      }
+
+      return null;
    }
 
    public ResourceComment updateResourceComment(final ResourceComment comment) {
@@ -120,6 +137,10 @@ public class ResourceCommentFacade extends AbstractFacade {
 
    public long getCommentsCount(final ResourceType resourceType, final String resourceId) {
       return adapter.getCommentsCount(resourceType, resourceId);
+   }
+
+   public Map<String, Integer> getCommentsCountByParent(final ResourceType resourceType, final String parentId) {
+      return adapter.getCommentsCountsByParent(resourceType, parentId);
    }
 
    public Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds) {
