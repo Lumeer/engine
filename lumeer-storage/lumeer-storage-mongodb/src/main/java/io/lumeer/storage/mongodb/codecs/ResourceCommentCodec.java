@@ -43,6 +43,7 @@ public class ResourceCommentCodec implements CollectibleCodec<ResourceComment> {
    public static final String ID = "_id";
    public static final String RESOURCE_TYPE = "resourceType";
    public static final String RESOURCE_ID = "resourceId";
+   public static final String PARENT_ID = "parentId";
    public static final String CREATION_DATE = "creationDate";
    public static final String UPDATE_DATE = "updateDate";
    public static final String AUTHOR = "author";
@@ -65,6 +66,7 @@ public class ResourceCommentCodec implements CollectibleCodec<ResourceComment> {
       comment.setId(bson.getObjectId(ID).toHexString());
       comment.setResourceType(ResourceType.valueOf(bson.getString(RESOURCE_TYPE).toUpperCase()));
       comment.setResourceId(bson.getString(RESOURCE_ID));
+      comment.setParentId(bson.getString(PARENT_ID));
 
       final Date creationDate = bson.getDate(CREATION_DATE);
       comment.setCreationDate(creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null);
@@ -87,6 +89,7 @@ public class ResourceCommentCodec implements CollectibleCodec<ResourceComment> {
       Document bson = value.getId() != null ? new Document(ID, new ObjectId(value.getId())) : new Document();
       bson.append(RESOURCE_TYPE, value.getResourceType().toString())
           .append(RESOURCE_ID, value.getResourceId())
+          .append(PARENT_ID, value.getParentId())
           .append(AUTHOR, value.getAuthor())
           .append(AUTHOR_EMAIL, value.getAuthorEmail())
           .append(AUTHOR_NAME, value.getAuthorName())

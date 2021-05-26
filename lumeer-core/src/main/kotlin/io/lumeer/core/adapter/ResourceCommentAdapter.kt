@@ -26,4 +26,6 @@ class ResourceCommentAdapter(val resourceCommentDao: ResourceCommentDao) {
    fun getCommentsCount(resourceType: ResourceType, resourceId: String): Long = resourceCommentDao.getCommentsCount(resourceType, resourceId)
 
    fun getCommentsCounts(resourceType: ResourceType, resourceIds: Set<String>): Map<String, Int> = resourceCommentDao.getCommentsCounts(resourceType, resourceIds)
+
+   fun getCommentsCountsByParent(resourceType: ResourceType, parentId: String): Map<String, Int> = resourceCommentDao.getCommentsCounts(resourceType, parentId)
 }

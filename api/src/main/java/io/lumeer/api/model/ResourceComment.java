@@ -40,6 +40,7 @@ public class ResourceComment implements WithId, HealthChecking {
 
    private ResourceType resourceType;
    private String resourceId;
+   private String parentId;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
    private ZonedDateTime creationDate;
@@ -138,6 +139,14 @@ public class ResourceComment implements WithId, HealthChecking {
       return metaData;
    }
 
+   public String getParentId() {
+      return parentId;
+   }
+
+   public void setParentId(final String parentId) {
+      this.parentId = parentId;
+   }
+
    public DataDocument createIfAbsentMetaData() {
       if (metaData == null) {
          this.metaData = new DataDocument();
@@ -175,6 +184,7 @@ public class ResourceComment implements WithId, HealthChecking {
             "id='" + id + '\'' +
             ", resourceType=" + resourceType +
             ", resourceId='" + resourceId + '\'' +
+            ", parentId='" + parentId + '\'' +
             ", creationDate=" + creationDate +
             ", updateDate=" + updateDate +
             ", author='" + author + '\'' +

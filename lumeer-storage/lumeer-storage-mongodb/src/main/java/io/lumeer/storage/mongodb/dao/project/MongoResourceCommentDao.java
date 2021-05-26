@@ -43,7 +43,9 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -72,10 +74,15 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
 
    @Override
    public void createRepository(final Project project) {
-      database.createCollection(databaseCollectionName());
+      database.createCollection(databaseCollectionName(project));
+      ensureIndexes(project);
+   }
 
-      MongoCollection<ResourceComment> collection = databaseCollection();
+   @Override
+   public void ensureIndexes(final Project project) {
+      MongoCollection<ResourceComment> collection = databaseCollection(databaseCollectionName(project));
       collection.createIndex(Indexes.ascending(ResourceCommentCodec.RESOURCE_TYPE, ResourceCommentCodec.RESOURCE_ID), new IndexOptions().unique(false));
+      collection.createIndex(Indexes.ascending(ResourceCommentCodec.RESOURCE_TYPE, ResourceCommentCodec.PARENT_ID, ResourceCommentCodec.RESOURCE_ID), new IndexOptions().unique(false));
       collection.createIndex(Indexes.descending(ResourceCommentCodec.RESOURCE_TYPE, ResourceCommentCodec.RESOURCE_ID, ResourceCommentCodec.CREATION_DATE), new IndexOptions().unique(false));
       collection.createIndex(Indexes.ascending(ResourceCommentCodec.AUTHOR), new IndexOptions().unique(false));
    }
@@ -126,6 +133,21 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
                         Filters.and(
                               Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
                               Filters.in(ResourceCommentCodec.RESOURCE_ID, resourceIds))),
+                  Aggregates.group("$"+ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
+            )
+      ).into(new ArrayList<>());
+
+      return result.stream().collect(Collectors.toMap(e -> e.getString("_id"), e -> e.getInteger("count")));
+   }
+
+   @Override
+   public Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final String parentId) {
+      final List<Document> result = database.getCollection(databaseCollectionName()).aggregate(
+            List.of(
+                  Aggregates.match(
+                        Filters.and(
+                              Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
+                              Filters.eq(ResourceCommentCodec.PARENT_ID, parentId))),
                   Aggregates.group("$"+ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
             )
       ).into(new ArrayList<>());
@@ -196,6 +218,19 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
       return result.into(new ArrayList<>());
    }
 
+   @Override
+   public long updateParentId(final ResourceType resourceType, final String resourceId, final String parentId) {
+      final UpdateResult result = databaseCollection().updateMany(
+            Filters.and(
+                  Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
+                  Filters.eq(ResourceCommentCodec.RESOURCE_ID, resourceId)),
+            Updates.set(ResourceCommentCodec.PARENT_ID, parentId)
+      );
+
+      return result.getModifiedCount();
+   }
+
+
    private String databaseCollectionName(Project project) {
       return PREFIX + project.getId();
    }
@@ -208,6 +243,11 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
    }
 
    MongoCollection<ResourceComment> databaseCollection() {
-      return database.getCollection(databaseCollectionName(), ResourceComment.class);
+      return databaseCollection(databaseCollectionName());
    }
+
+   MongoCollection<ResourceComment> databaseCollection(final String collectionName) {
+      return database.getCollection(collectionName, ResourceComment.class);
+   }
+
 }

@@ -532,7 +532,7 @@ public class SearchFacade extends AbstractFacade {
    }
 
    private List<Document> getDocumentsByCollection(Collection collection, @Nullable Set<String> documentIds, @Nullable final Function<Document, Boolean> documentFilter) {
-      var documents = convertDataDocumentsToDocuments(getDocumentData(collection, documentIds));
+      var documents = convertDataDocumentsToDocuments(getDocumentData(collection, documentIds), documentIds == null ? collection.getId() : null);
       return filterDocumentsByDocumentFilter(documents, documentFilter);
    }
 
@@ -554,12 +554,19 @@ public class SearchFacade extends AbstractFacade {
 
    private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit, @Nullable final Function<Document, Boolean> documentFilter) {
       List<DataDocument> data = decodeData(collection, dataDao.getData(collection.getId(), skip, limit));
-      var documents = convertDataDocumentsToDocuments(data);
+      var documents = convertDataDocumentsToDocuments(data, null);
       return filterDocumentsByDocumentFilter(documents, documentFilter);
    }
 
-   private List<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data) {
-      List<Document> documents = documentDao.getDocumentsByIds(data.stream().map(DataDocument::getId).distinct().toArray(String[]::new));
+   // when we read the whole collection, we pass in the collection id to eliminate long document id filters
+   // when collectionId is null, pagination is in play and makes sure data size is equal to the page size
+   private List<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data, @Nullable final String collectionId) {
+      final List<Document> documents;
+      if (collectionId != null) {
+         documents = documentDao.getDocumentsByCollection(collectionId);
+      } else {
+         documents = documentDao.getDocumentsByIds(data.stream().map(DataDocument::getId).distinct().toArray(String[]::new));
+      }
       Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
       return documents.stream()
                       .peek(document -> document.setData(Objects.requireNonNullElse(dataMap.get(document.getId()), new DataDocument())))

@@ -18,6 +18,7 @@
  */
 package io.lumeer.storage.api.dao;
 
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 
@@ -30,9 +31,13 @@ public interface ResourceCommentDao extends ProjectScopedDao {
    ResourceComment getComment(final String id);
    long getCommentsCount(final ResourceType resourceType, final String resourceId);
    Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds);
+   Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final String parentId);
    ResourceComment updateComment(final ResourceComment comment);
    boolean deleteComment(final ResourceComment comment);
    boolean deleteComments(final ResourceType resourceType, final String resourceId);
 
    List<ResourceComment> getResourceComments(final ResourceType resourceType, final String resourceId, final int pageStart, final int pageLenght);
+
+   long updateParentId(final ResourceType resourceType, final String resourceId, final String parentId);
+   void ensureIndexes(final Project project);
 }
