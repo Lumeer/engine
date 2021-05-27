@@ -70,7 +70,7 @@ public class StartupFacade implements Serializable {
       log.info("Checking database for updates...");
       long tm = System.currentTimeMillis();
 
-      final LongAdder orgs = new LongAdder(), projs = new LongAdder(), comments = new LongAdder();
+      /*final LongAdder orgs = new LongAdder(), projs = new LongAdder(), comments = new LongAdder();
 
       workspaceKeeper.push();
 
@@ -121,8 +121,10 @@ public class StartupFacade implements Serializable {
 
       workspaceKeeper.pop();
 
-      log.info("Updates completed in " + (System.currentTimeMillis() - tm) + "ms.");
       log.info(String.format("Updated %d organizations, %d project, %d comments.",
             orgs.longValue(), projs.longValue(), comments.longValue()));
+      */
+
+      log.info("Updates completed in " + (System.currentTimeMillis() - tm) + "ms.");
    }
 }
