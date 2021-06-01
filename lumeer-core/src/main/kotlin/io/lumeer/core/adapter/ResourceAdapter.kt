@@ -77,6 +77,27 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       return collectionDao.getCollectionsByIds(collectionIds)
    }
 
+   fun getAllLinkTypes(organization: Organization, project: Project?, linkTypes: List<LinkType>, views: List<View>, collections: List<Collection>, userId: String): List<LinkType> {
+      val viewsByUser = filterViewsByUser(organization, project, views, userId)
+      val collectionIdsInViews = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes)
+      val collectionsMap = collections.associateBy { it.id }
+      return linkTypes.filter { it.collectionIds.all { collectionId -> collectionIdsInViews.contains(collectionId) || permissionAdapter.hasRole(organization, project, collectionsMap[collectionId]!!, RoleType.Read, userId) } }
+   }
+
+   fun getAllCollections(organization: Organization, project: Project?, linkTypes: List<LinkType>, views: List<View>, collections: List<Collection>, userId: String): List<Collection> {
+      val viewsByUser = filterViewsByUser(organization, project, views, userId)
+      val collectionIdsInViews = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes)
+      return collections.filter { collectionIdsInViews.contains(it.id) || permissionAdapter.hasRole(organization, project, it, RoleType.Read, userId) }
+   }
+
+   fun getOrganizationReaders(organization: Organization): Set<String> {
+      return permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Read)
+   }
+
+   fun getProjectReaders(organization: Organization, project: Project): Set<String> {
+      return permissionAdapter.getProjectUsersByRole(organization, project, RoleType.Read)
+   }
+
    fun getViewReaders(organization: Organization, project: Project, viewId: String): Set<String> {
       return getViewReaders(organization, project, permissionAdapter.getView(viewId))
    }
@@ -101,7 +122,6 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       return users1.filter { users2.contains(it) }.toSet()
    }
 
-
    fun getDocumentReaders(organization: Organization, project: Project, collection: Collection, document: Document): Set<String> {
       val assigneesEmails = DocumentUtils.getUsersAssigneeEmails(collection, document)
       val assigneeIds = userDao.getUsersByEmails(assigneesEmails).map { it.id }
@@ -124,5 +144,9 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       val views = viewDao.allViews.filter { QueryUtils.getQueryCollectionIds(it.query, linkTypes).contains(collectionId) }
 
       return views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()
+   }
+
+   fun filterViewsByUser(organization: Organization?, project: Project?, views: List<View>, userId: String): List<View> {
+      return views.filter { permissionAdapter.hasRole(organization, project, it, RoleType.Read, userId) }
    }
 }

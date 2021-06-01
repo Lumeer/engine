@@ -26,10 +26,12 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.RolesDifference;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -39,6 +41,10 @@ import javax.annotation.Nullable;
 public class PermissionUtils {
 
    private PermissionUtils() {
+   }
+
+   public static boolean hasRole(Organization organization, @Nullable Project project, Resource resource, RoleType role, User user) {
+      return getUserRolesInResource(organization, project, resource, user).contains(role);
    }
 
    public static Set<String> getOrganizationUsersByRole(Organization organization, List<User> users, RoleType roleType) {
@@ -72,7 +78,7 @@ public class PermissionUtils {
       if (project != null && !(resource instanceof Project)) {
          final Set<Role> projectRoles = getUserRolesInResource(project, user, groups);
 
-         // It's necessary to have read permission in project in order to process resource (collection, view, link)
+         // It's necessary to have read permission in project (or transitive in organization) in order to process resource (collection, view, link)
          if (organizationRoles.stream().noneMatch(role -> role.getRoleType() == RoleType.Read && role.isTransitive())
                && projectRoles.stream().noneMatch(role -> role.getRoleType() == RoleType.Read)) {
             return Collections.emptySet();
@@ -83,6 +89,37 @@ public class PermissionUtils {
       }
 
       return actualRoles.stream().map(Role::getRoleType).collect(Collectors.toSet());
+   }
+
+   public static RolesDifference getOrganizationUsersDifferenceByRole(Organization organization1, Organization organization2, List<User> users, RoleType roleType) {
+      Set<String> users1 = getOrganizationUsersByRole(organization1, users, roleType);
+      Set<String> users2 = getOrganizationUsersByRole(organization2, users, roleType);
+
+      return getUsersDifference(users1, users2);
+   }
+
+   public static RolesDifference getProjectUsersDifferenceByRole(Organization organization, Project project1, Project project2, List<User> users, RoleType roleType) {
+      Set<String> users1 = getProjectUsersByRole(organization, project1, users, roleType);
+      Set<String> users2 = getProjectUsersByRole(organization, project2, users, roleType);
+
+      return getUsersDifference(users1, users2);
+   }
+
+   public static RolesDifference getResourceUsersDifferenceByRole(Organization organization, @Nullable Project project, Resource resource1, Resource resource2, List<User> users, RoleType roleType) {
+      Set<String> users1 = getResourceUsersByRole(organization, project, resource1, users, roleType);
+      Set<String> users2 = getResourceUsersByRole(organization, project, resource2, users, roleType);
+
+      return getUsersDifference(users1, users2);
+   }
+
+   private static RolesDifference getUsersDifference(Set<String> users1, Set<String> users2) {
+      Set<String> addedUsers = new HashSet<>(users2);
+      addedUsers.removeAll(users1);
+
+      Set<String> removedUsers = new HashSet<>(users1);
+      removedUsers.removeAll(users2);
+
+      return new RolesDifference(addedUsers, removedUsers);
    }
 
    public static Set<Role> getUserRolesInResource(Resource resource, User user, Set<String> groups) {

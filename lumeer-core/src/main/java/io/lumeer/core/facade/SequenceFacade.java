@@ -18,12 +18,9 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.storage.api.dao.SequenceDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
@@ -40,32 +37,24 @@ public class SequenceFacade extends AbstractFacade {
    }
 
    public List<Sequence> getAllSequences() {
-      checkProjectManageRole();
+      checkProjectRole();
 
       return sequenceDao.getAllSequences();
    }
 
    public Sequence updateSequence(final String id, final Sequence sequence) {
-      checkProjectManageRole();
+      checkProjectRole();
 
       return sequenceDao.updateSequence(id, sequence);
    }
 
    public void deleteSequence(final String id) {
-      checkProjectManageRole();
+      checkProjectRole();
       sequenceDao.deleteSequence(id);
    }
 
-   private void checkProjectManageRole() {
-      Project project = getCurrentProject();
-      permissionsChecker.checkRole(project, RoleOld.MANAGE);
-   }
-
-   private Project getCurrentProject() {
-      if (!workspaceKeeper.getProject().isPresent()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-      return workspaceKeeper.getProject().get();
+   private void checkProjectRole() {
+      permissionsChecker.checkRole(getProject(), RoleType.TechConfig);
    }
 
 }

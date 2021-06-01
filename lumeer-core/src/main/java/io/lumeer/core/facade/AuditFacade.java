@@ -25,7 +25,6 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
@@ -130,7 +129,8 @@ public class AuditFacade extends AbstractFacade {
 
    public List<AuditRecord> getAuditRecordsForDocument(final String collectionId, final String documentId) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, RoleOld.WRITE, RoleOld.WRITE);
+      final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
+      permissionsChecker.checkEditDocument(collection, document);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
@@ -156,7 +156,8 @@ public class AuditFacade extends AbstractFacade {
 
    public Document revertLastDocumentAuditOperation(final String collectionId, final String documentId, final String auditRecordId) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, RoleOld.WRITE, RoleOld.WRITE);
+      final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
+      permissionsChecker.checkEditDocument(collection, document);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
@@ -166,7 +167,6 @@ public class AuditFacade extends AbstractFacade {
          }
 
          final AuditRecord auditRecord = auditDao.findLatestAuditRecord(collectionId, ResourceType.DOCUMENT, documentId);
-         final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
 
          if (auditRecord != null && auditRecord.getId().equals(auditRecordId) && auditRecord.getOldState() != null) {
             var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());

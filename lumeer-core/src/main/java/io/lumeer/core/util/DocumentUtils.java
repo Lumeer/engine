@@ -196,6 +196,10 @@ public class DocumentUtils {
       return documents;
    }
 
+   public static boolean isDocumentOwner(final Collection collection, final Document document, String userId) {
+      return document.getCreatedBy().equals(userId);
+   }
+
    public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
       return isTaskAssignedByUser(collection, document.getData(), userEmail);
    }

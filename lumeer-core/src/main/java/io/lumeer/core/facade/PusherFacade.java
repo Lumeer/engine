@@ -23,22 +23,24 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.RolesDifference;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.action.DelayedActionProcessor;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
+import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.adapter.PusherAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
@@ -47,7 +49,6 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.PusherClient;
-import io.lumeer.core.util.QueryUtils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
@@ -95,14 +96,13 @@ import io.lumeer.storage.api.dao.ViewDao;
 
 import org.marvec.pusher.data.Event;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -173,20 +173,22 @@ public class PusherFacade extends AbstractFacade {
    private DocumentAdapter documentAdapter;
    private PusherAdapter pusherAdapter;
    private LinkInstanceAdapter linkInstanceAdapter;
+   private PermissionAdapter permissionAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       pusherClient = PusherClient.getInstance(configurationProducer);
       delayedActionProcessor.setPusherClient(pusherClient);
+      permissionAdapter = permissionsChecker.getPermissionAdapter();
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
-      resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
+      resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
       linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
       viewAdapter = new ViewAdapter(favoriteItemDao);
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
-      pusherAdapter = new PusherAdapter(facadeAdapter, permissionsChecker.getPermissionAdapter(), viewDao, linkTypeDao, collectionDao);
+      pusherAdapter = new PusherAdapter(facadeAdapter, resourceAdapter, permissionAdapter, viewDao, linkTypeDao, collectionDao);
    }
 
    public String getPusherKey() {
@@ -204,6 +206,7 @@ public class PusherFacade extends AbstractFacade {
    public void createResource(@Observes final CreateResource createResource) {
       if (isEnabled()) {
          try {
+            checkPermissionsChange(createResource);
             processResource(createResource.getResource(), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -254,9 +257,26 @@ public class PusherFacade extends AbstractFacade {
 
    public void templateCreated(@Observes final TemplateCreated templateCreated) {
       if (isEnabled()) {
-         Set<String> userIds = ResourceUtils.getReaders(templateCreated.getProject());
-         userIds.addAll(getOrganizationManagers());
+         Set<String> userIds = resourceAdapter.getProjectReaders(getOrganization(), templateCreated.getProject());
          sendNotificationsByUsers(new ObjectWithParent(templateCreated, getOrganization().getId(), templateCreated.getProject().getId()), userIds, CREATE_EVENT_SUFFIX);
+      }
+   }
+
+   /*
+    * There is possibility to create resource with permissions inside via API.
+    */
+   private void checkPermissionsChange(final CreateResource createResource) {
+      var originalResource = createResource.getResource().copy();
+      originalResource.setPermissions(new Permissions());
+
+      if (createResource.getResource() instanceof Organization) {
+         checkOrganizationPermissionsChange((Organization) originalResource, (Organization) createResource.getResource());
+      } else if (createResource.getResource() instanceof Project) {
+         checkProjectPermissionsChange((Project)originalResource, (Project) createResource.getResource());
+      } else if (createResource.getResource() instanceof Collection) {
+         checkCollectionsPermissionsChange((Collection) originalResource, (Collection) createResource.getResource());
+      } else if (createResource.getResource() instanceof View) {
+         checkViewPermissionsChange((View) originalResource, (View) createResource.getResource());
       }
    }
 
@@ -273,7 +293,8 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void checkOrganizationPermissionsChange(final Organization originalOrganization, final Organization updatedOrganization) {
-      Set<String> removedUsers = ResourceUtils.getRemovedPermissions(originalOrganization, updatedOrganization);
+      RolesDifference rolesDifference = permissionAdapter.getOrganizationReadersDifference(originalOrganization, updatedOrganization);
+      Set<String> removedUsers = new HashSet<>(rolesDifference.getRemovedUsers());
       removedUsers.remove(getCurrentUserId());
       if (!removedUsers.isEmpty()) {
          sendNotificationsByUsers(updatedOrganization, removedUsers, REMOVE_EVENT_SUFFIX);
@@ -281,8 +302,8 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void checkProjectPermissionsChange(final Project originalProject, final Project updatedProject) {
-      Set<String> removedUsers = ResourceUtils.getRemovedPermissions(originalProject, updatedProject);
-      removedUsers.removeAll(getOrganizationManagers());
+      RolesDifference rolesDifference = permissionAdapter.getProjectReadersDifference(getOrganization(), originalProject, updatedProject);
+      Set<String> removedUsers = new HashSet<>(rolesDifference.getRemovedUsers());
       removedUsers.remove(getCurrentUserId());
       if (!removedUsers.isEmpty()) {
          sendNotificationsByUsers(updatedProject, removedUsers, REMOVE_EVENT_SUFFIX);
@@ -290,109 +311,10 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void checkCollectionsPermissionsChange(final Collection originalCollection, final Collection updatedCollection) {
-      Set<String> removedUsers = ResourceUtils.getRemovedPermissions(originalCollection, updatedCollection);
-      removedUsers.removeAll(getWorkspaceManagers());
-      removedUsers.remove(getCurrentUserId());
-
-      Set<String> addedUsers = ResourceUtils.getAddedPermissions(originalCollection, updatedCollection);
-      addedUsers.removeAll(getWorkspaceManagers());
-      addedUsers.remove(getCurrentUserId());
-
-      if (removedUsers.isEmpty() && addedUsers.isEmpty()) {
-         return;
-      }
-
-      List<LinkType> linkTypes = linkTypeDao.getLinkTypesByCollectionId(updatedCollection.getId());
-      List<View> views = viewDao.getAllViews();
-      List<Collection> allCollections = collectionDao.getAllCollections();
-      List<Event> notifications = new ArrayList<>();
-
-      if (removedUsers.size() > 0) {
-         notifications.addAll(createRemoveCollectionNotification(updatedCollection, removedUsers, views, linkTypes));
-         if (linkTypes.size() > 0) {
-            notifications.addAll(createRemoveCollectionLinkTypesNotification(linkTypes, allCollections, removedUsers, views));
-         }
-      }
-
-      if (addedUsers.size() > 0 && linkTypes.size() > 0) {
-         notifications.addAll(createSendCollectionLinkTypesNotification(linkTypes, allCollections, addedUsers, views));
-      }
-
+      List<Event> notifications = pusherAdapter.checkCollectionsPermissionsChange(getOrganization(), getProject(), authenticatedUser.getCurrentUser(), originalCollection, updatedCollection);
       if (notifications.size() > 0) {
          sendNotificationsBatch(notifications);
       }
-   }
-
-   private List<Event> createRemoveCollectionNotification(final Collection collection, final Set<String> userIds, final List<View> views, final List<LinkType> linkTypes) {
-      List<Event> notifications = new ArrayList<>();
-
-      Set<String> usersWithRights = ResourceUtils.getReaders(collection);
-      for (String user : userIds) { // checks if user has collection in some view
-         if (usersWithRights.contains(user)) {
-            continue;
-         }
-
-         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, RoleOld.READ, user)).collect(Collectors.toList());
-         Set<String> collectionIdsInViews = viewsByUser.stream().map(view -> QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes))
-                                                       .flatMap(java.util.Collection::stream)
-                                                       .collect(Collectors.toSet());
-
-         if (!collectionIdsInViews.contains(collection.getId())) {
-            notifications.add(createEventForResource(collection, REMOVE_EVENT_SUFFIX, user));
-         }
-      }
-
-      return notifications;
-   }
-
-   private List<Event> createRemoveCollectionLinkTypesNotification(final List<LinkType> linkTypes, final List<Collection> collections, final Set<String> userIds, final List<View> views) {
-      List<Event> notifications = new ArrayList<>();
-
-      for (String user : userIds) {
-         filterLinkTypesNotInViews(linkTypes, collections, views, user, true).forEach(linkType -> notifications.add(createEventForRemove(linkType.getClass().getSimpleName(),
-               new ResourceId(linkType.getId(), getOrganization().getId(), getProject().getId()), user)));
-      }
-
-      return notifications;
-   }
-
-   private List<LinkType> filterLinkTypesNotInViews(List<LinkType> linkTypes, List<Collection> collections, List<View> views, String user, boolean includeReadableCollections) {
-      List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, RoleOld.READ, user)).collect(Collectors.toList());
-      Set<String> linkTypeIdsInViews = viewsByUser.stream().map(view -> view.getQuery().getLinkTypeIds())
-                                                  .flatMap(java.util.Collection::stream).collect(Collectors.toSet());
-      if (includeReadableCollections) {
-         Set<String> readableCollectionsIds = filterViewsReadableCollectionsIds(viewsByUser, linkTypes, collections, user);
-         return linkTypes.stream().filter(linkType -> !linkTypeIdsInViews.contains(linkType.getId()) && !readableCollectionsIds.containsAll(linkType.getCollectionIds())).collect(Collectors.toList());
-      }
-
-      return linkTypes.stream().filter(linkType -> !linkTypeIdsInViews.contains(linkType.getId())).collect(Collectors.toList());
-   }
-
-   private Set<String> filterViewsReadableCollectionsIds(final List<View> views, final List<LinkType> linkTypes, final List<Collection> collections, final String user) {
-      Set<String> readableCollectionsIds = QueryUtils.getViewsCollectionIds(views, linkTypes);
-      readableCollectionsIds.addAll(collections.stream().filter(collection -> permissionsChecker.hasRole(collection, RoleOld.READ, user)).map(Collection::getId).collect(Collectors.toSet()));
-      return readableCollectionsIds;
-   }
-
-   private List<Event> createSendCollectionLinkTypesNotification(final List<LinkType> linkTypes, final List<Collection> collections, final Set<String> userIds, final List<View> views) {
-      List<Event> notifications = new ArrayList<>();
-
-      Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
-
-      for (String user : userIds) {
-         List<View> viewsByUser = views.stream().filter(view -> permissionsChecker.hasRole(view, RoleOld.READ, user)).collect(Collectors.toList());
-         Set<String> viewsCollectionsIds = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes);
-         filterLinkTypesNotInViews(linkTypes, collections, views, user, false).stream()
-                                                                              .filter(linkType -> canUserReadLinkType(user, linkType, collectionsMap, viewsCollectionsIds))
-                                                                              .forEach(linkType -> notifications.add(createEventForWorkspaceObject(linkType, linkType.getId(), UPDATE_EVENT_SUFFIX, user)));
-      }
-
-      return notifications;
-   }
-
-   private boolean canUserReadLinkType(String userId, LinkType linkType, Map<String, Collection> collectionsMap, Set<String> viewsCollectionsIds) {
-      return linkType.getCollectionIds().stream().map(collectionsMap::get)
-                     .allMatch(collection -> collection != null && (permissionsChecker.hasRole(collection, RoleOld.READ, userId) || viewsCollectionsIds.contains(collection.getId())));
    }
 
    private void checkViewPermissionsChange(final View originalView, final View updatedView) {
@@ -401,14 +323,6 @@ public class PusherFacade extends AbstractFacade {
          sendNotificationsBatch(notifications);
       }
 
-   }
-
-   private Set<String> getOrganizationManagers() {
-      return permissionsChecker.getOrganizationManagers();
-   }
-
-   private Set<String> getWorkspaceManagers() {
-      return permissionsChecker.getWorkspaceManagers();
    }
 
    private void processResource(final Resource resource, final String event) {
@@ -432,7 +346,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendOrganizationNotifications(final Organization organization, final String event) {
-      sendNotificationsByUsers(organization, ResourceUtils.getReaders(organization), event);
+      sendNotificationsByUsers(organization, resourceAdapter.getOrganizationReaders(organization), event);
    }
 
    private void sendNotificationsByUsers(final Object object, final Set<String> userIds, final String event) {
@@ -451,29 +365,8 @@ public class PusherFacade extends AbstractFacade {
       );
    }
 
-   private Event createEventForWorkspaceObject(final Object object, final String id, final String event, final String userId) {
-      return pusherAdapter.createEventForWorkspaceObject(
-            getOrganization(),
-            getProject(),
-            object,
-            id,
-            event,
-            userId
-      );
-   }
-
    private Event createEventForRemove(final String className, final ResourceId object, final String userId) {
       return pusherAdapter.createEventForRemove(className, object, userId);
-   }
-
-   private Event createEventForResource(final Resource resource, final String event, final String userId) {
-      return pusherAdapter.createEventForResource(
-            getOrganization(),
-            getProject(),
-            resource,
-            event,
-            userCache.getUserById(userId)
-      );
    }
 
    private Event createEventForObject(final Object object, final String event, final String userId) {
@@ -489,8 +382,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void sendProjectNotifications(final Project project, final String event) {
-      Set<String> userIds = ResourceUtils.getReaders(project);
-      userIds.addAll(getOrganizationManagers());
+      Set<String> userIds = resourceAdapter.getProjectReaders(getOrganization(), project);
       sendNotificationsByUsers(new ObjectWithParent(project, getOrganization().getId()), userIds, event);
    }
 
@@ -552,11 +444,11 @@ public class PusherFacade extends AbstractFacade {
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.PROJECT) {
-         final Set<String> users = ResourceUtils.getProjectReaders(getOrganization(), getProject());
+         final Set<String> users = resourceAdapter.getProjectReaders(getOrganization(), getProject());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.ORGANIZATION) {
-         final Set<String> users = ResourceUtils.getOrganizationReaders(getOrganization());
+         final Set<String> users = resourceAdapter.getOrganizationReaders(getOrganization());
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       }
@@ -658,7 +550,8 @@ public class PusherFacade extends AbstractFacade {
    public void updateCompanyContact(@Observes final UpdateCompanyContact updateCompanyContact) {
       if (isEnabled()) {
          try {
-            Set<String> userIds = ResourceUtils.getOrganizationManagers(organizationDao.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId()));
+            Organization organization = organizationDao.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId());
+            Set<String> userIds =  permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Config);
             sendNotificationsByUsers(updateCompanyContact.getCompanyContact(), userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -670,7 +563,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(updateServiceLimits.getServiceLimits(), updateServiceLimits.getOrganization().getId());
-            Set<String> userIds = ResourceUtils.getOrganizationManagers(updateServiceLimits.getOrganization());
+            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(updateServiceLimits.getOrganization(), RoleType.Config);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -682,7 +575,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
-            Set<String> userIds = ResourceUtils.getOrganizationManagers(createOrUpdatePayment.getOrganization());
+            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(createOrUpdatePayment.getOrganization(), RoleType.Config);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -707,7 +600,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(), getOrganization().getId(), getProject().getId());
-            Set<String> userIds = permissionsChecker.getWorkspaceManagers();
+            Set<String> userIds = permissionAdapter.getProjectUsersByRole(getOrganization(), getProject(), RoleType.TechConfig);
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
@@ -720,7 +613,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Sequence sequence = removeSequence.getSequence();
-            Set<String> userIds = permissionsChecker.getWorkspaceManagers();
+            Set<String> userIds = permissionAdapter.getProjectUsersByRole(getOrganization(), getProject(), RoleType.TechConfig);
 
             ResourceId message = new ResourceId(sequence.getId());
 
@@ -802,7 +695,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Organization organization = organizationDao.getOrganizationById(createOrUpdateUser.getOrganizationId());
             ObjectWithParent object = new ObjectWithParent(cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
-            Set<String> users = ResourceUtils.getReaders(organization);
+            Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
@@ -814,7 +707,7 @@ public class PusherFacade extends AbstractFacade {
    public void createChainNotification(@Observes final CreateDocumentsAndLinks createDocumentsAndLinks) {
       if (isEnabled()) {
          try {
-            Set<String> users = ResourceUtils.getProjectReaders(getOrganization(), getProject());
+            Set<String> users = resourceAdapter.getProjectReaders(getOrganization(), getProject());
             ObjectWithParent object = new ObjectWithParent(createDocumentsAndLinks, getOrganization().getId(), getProject().getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "DocumentsAndLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -827,7 +720,7 @@ public class PusherFacade extends AbstractFacade {
    public void setDocumentLinksNotification(@Observes final SetDocumentLinks setDocumentLinks) {
       if (isEnabled()) {
          try {
-            Set<String> users = ResourceUtils.getProjectReaders(getOrganization(), getProject());
+            Set<String> users = resourceAdapter.getProjectReaders(getOrganization(), getProject());
             ObjectWithParent object = new ObjectWithParent(setDocumentLinks, getOrganization().getId(), getProject().getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "SetDocumentLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -851,7 +744,7 @@ public class PusherFacade extends AbstractFacade {
             Organization organization = organizationDao.getOrganizationById(removeUser.getOrganizationId());
             ResourceId resourceId = new ResourceId(removeUser.getUser().getId(), organization.getId());
             String className = removeUser.getUser().getClass().getSimpleName();
-            Set<String> users = ResourceUtils.getReaders(organization);
+            Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
@@ -874,10 +767,6 @@ public class PusherFacade extends AbstractFacade {
 
    private boolean isEnabled() {
       return pusherClient != null;
-   }
-
-   private <T extends Resource> T filterUserRoles(final String userId, final T resource) {
-      return mapResource(resource.copy(), userId);
    }
 
    public static final class ResourceId {

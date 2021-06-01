@@ -23,11 +23,11 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.FacadeAdapter;
@@ -152,11 +152,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return timeZone;
    }
 
-   private Set<String> getCollectionManagers(final Collection collection) {
-      // TODO
-      return resourceAdapter.getCollectionReaders(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), collection);
-   }
-
    private Set<String> getLinkTypeReaders(final LinkType linkType) {
       return resourceAdapter.getLinkTypeReaders(linkType, getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject());
    }
@@ -169,17 +164,13 @@ public abstract class AbstractContextualTask implements ContextualTask {
       return resourceAdapter.getCollectionReaders(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), collection);
    }
 
-   private Set<String> getProjectManagers() {
-      return ResourceUtils.getProjectManagers(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject());
-   }
-
    public void sendPushNotifications(final Collection collection) {
       sendPushNotifications(collection, PusherFacade.UPDATE_EVENT_SUFFIX);
    }
 
    public void sendPushNotifications(final Collection collection, final String suffix) {
       if (getPusherClient() != null) {
-         final Set<String> users = getCollectionManagers(collection);
+         final Set<String> users = getCollectionReaders(collection);
          final List<Event> events = users.stream().map(user -> createEventForCollection(collection, user, suffix)).collect(Collectors.toList());
 
          getPusherClient().trigger(events);
@@ -373,10 +364,10 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final String sequenceName) {
       final Sequence sequence = getDaoContextSnapshot().getSequenceDao().getSequence(sequenceName);
 
-      final Set<String> managers = getProjectManagers();
+      final Set<String> techManagers = permissionAdapter.getProjectUsersByRole(daoContextSnapshot.getOrganization(), daoContextSnapshot.getProject(), RoleType.TechConfig);
 
       final List<Event> events = new ArrayList<>();
-      managers.forEach(manager -> events.add(createEventForSequence(sequence, manager)));
+      techManagers.forEach(manager -> events.add(createEventForSequence(sequence, manager)));
 
       getPusherClient().trigger(events);
    }

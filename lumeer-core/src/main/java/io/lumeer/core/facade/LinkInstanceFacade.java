@@ -324,7 +324,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       linksMap.forEach((linkTypeId, value) -> {
          var linkType = linkTypeDao.getLinkType(linkTypeId);
-         if (permissionsChecker.hasLinkTypeRoleWithView(linkType, RoleOld.READ)) {
+         if (permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleOld.READ)) {
 
             var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
                                      .stream()

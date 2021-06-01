@@ -30,6 +30,10 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       } else keepOnlyNecessaryPermissions(organization, project, resource, user)
    }
 
+   private fun <T : Resource> getUserAdmins(organization: Organization, project: Project?, resource: T): Set<String> {
+      return permissionAdapter.getResourceUsersByRole(organization, project, resource, RoleType.UserConfig)
+   }
+
    fun <T : Resource> keepStoredPermissions(resource: T, storedPermissions: Permissions) {
       resource.permissions.updateUserPermissions(storedPermissions.userPermissions)
       resource.permissions.updateGroupPermissions(storedPermissions.groupPermissions)
@@ -81,10 +85,6 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
          is Project -> setOf(RoleType.Read)
          else -> setOf()
       }
-   }
-
-   private fun <T : Resource> getUserAdmins(organization: Organization, project: Project?, resource: T): Set<String> {
-      return permissionAdapter.getResourceUsersByRole(organization, project, resource, RoleType.UserConfig)
    }
 
 }

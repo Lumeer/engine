@@ -169,7 +169,7 @@ public class LinkTypeFacade extends AbstractFacade {
       checkProjectRole(RoleOld.READ);
       var linkType = linkTypeDao.getLinkType(linkTypeId);
       var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ))) {
+      if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleInDocumentWithView(collection, RoleOld.READ, RoleOld.READ))) {
          return mapLinkTypeData(linkType);
       }
 

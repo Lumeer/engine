@@ -512,7 +512,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       var filteredCollections = collections.stream()
-                                           .filter(collection -> permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ))
+                                           .filter(collection -> permissionsChecker.hasRoleInDocumentWithView(collection, RoleOld.READ, RoleOld.READ))
                                            .collect(Collectors.toList());
       var filteredLinkTypes = filterLinkTypesByCollections(linkTypes, filteredCollections);
       return new Tuple<>(filteredCollections, filteredLinkTypes);

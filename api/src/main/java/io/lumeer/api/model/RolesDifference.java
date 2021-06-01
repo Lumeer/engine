@@ -16,32 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
-
-import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.View;
+package io.lumeer.api.model;
 
 import java.util.Set;
 
-public class ViewPermissionsOperation extends ResourceOperation<View> {
+public class RolesDifference {
 
-   public View originalView;
+   private final Set<String> addedUsers;
+   private final Set<String> removedUsers;
 
-   public ViewPermissionsOperation(final View entity, final String userId, final Set<RoleType> value) {
-      super(entity, userId, value);
-      originalView = entity.copy();
+   public RolesDifference(final Set<String> addedUsers, final Set<String> removedUsers) {
+      this.addedUsers = addedUsers;
+      this.removedUsers = removedUsers;
    }
 
-   public String getUserId() {
-      return getAttrId();
+   public Set<String> getAddedUsers() {
+      return addedUsers;
    }
 
-   @SuppressWarnings("unchecked")
-   public Set<RoleType> getRoles() {
-      return (Set<RoleType>) getValue();
-   }
-
-   public View getOriginalView() {
-      return originalView;
+   public Set<String> getRemovedUsers() {
+      return removedUsers;
    }
 }

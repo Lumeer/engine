@@ -503,7 +503,7 @@ public class DocumentFacade extends AbstractFacade {
                            .collect(Collectors.toMap(DataDocument::getId, d -> d));
       final List<Document> originalDocuments = documentDao.getDocumentsByIds(new HashSet<>(documentIds))
                                                           .stream().peek(document -> document.setData(dataMap.getOrDefault(document.getId(), new DataDocument())))
-                                                          .filter(document -> permissionsChecker.hasRoleWithView(document, collection, RoleOld.WRITE, RoleOld.WRITE))
+                                                          .filter(document -> permissionsChecker.hasRoleInDocumentWithView(document, collection, RoleOld.WRITE, RoleOld.WRITE))
                                                           .collect(Collectors.toList());
 
       if (originalDocuments.isEmpty()) {
@@ -579,7 +579,7 @@ public class DocumentFacade extends AbstractFacade {
          value.forEach(document -> {
             var data = dataMap.getOrDefault(document.getId(), new DataDocument());
             document.setData(constraintManager.decodeDataTypes(collection, data));
-            if (permissionsChecker.hasRoleWithView(document, collection, RoleOld.READ, RoleOld.READ)) {
+            if (permissionsChecker.hasRoleInDocumentWithView(document, collection, RoleOld.READ, RoleOld.READ)) {
                document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
                resultDocuments.add(document);
             }
@@ -672,7 +672,7 @@ public class DocumentFacade extends AbstractFacade {
    private Tuple<Collection, Document> checkDocumentPermission(Collection collection, String documentId, RoleOld role) {
       final Document document = documentDao.getDocumentById(documentId);
       document.setData(dataDao.getData(collection.getId(), documentId));
-      permissionsChecker.checkRoleWithView(document, collection, role, role);
+      permissionsChecker.checkRoleInDocumentWithView(document, collection, role, role);
       return new Tuple<>(collection, document);
    }
 

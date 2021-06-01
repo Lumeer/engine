@@ -31,6 +31,7 @@ import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 abstract class AbstractFacade {
@@ -50,7 +51,12 @@ abstract class AbstractFacade {
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
 
-   protected final FacadeAdapter facadeAdapter = new FacadeAdapter();
+   @PostConstruct
+   public void init() {
+       facadeAdapter = new FacadeAdapter(permissionsChecker.getPermissionAdapter());
+   }
+
+   protected FacadeAdapter facadeAdapter;
 
    protected String getCurrentUserId() {
       return authenticatedUser.getCurrentUserId();

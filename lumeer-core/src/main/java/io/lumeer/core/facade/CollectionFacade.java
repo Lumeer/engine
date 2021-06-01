@@ -222,7 +222,7 @@ public class CollectionFacade extends AbstractFacade {
    public Collection getCollection(String collectionId) {
       checkProjectRole(RoleOld.READ);
       Collection collection = collectionDao.getCollectionById(collectionId);
-      if (permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ)) {
+      if (permissionsChecker.hasRoleInDocumentWithView(collection, RoleOld.READ, RoleOld.READ)) {
          return mapCollection(collection);
       }
 
@@ -239,7 +239,7 @@ public class CollectionFacade extends AbstractFacade {
       return mapCollectionsData(resourceAdapter.getCollections(getOrganization(), getProject(), getCurrentUserId())
                                                .stream()
                                                .map(this::mapResource)
-                                               .filter(collection -> permissionsChecker.hasRoleWithView(collection, RoleOld.READ, RoleOld.READ))
+                                               .filter(collection -> permissionsChecker.hasRoleInDocumentWithView(collection, RoleOld.READ, RoleOld.READ))
                                                .collect(Collectors.toList()));
    }
 

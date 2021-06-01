@@ -18,81 +18,63 @@
  */
 package io.lumeer.api.model;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class AllowedPermissions {
 
-   private final Boolean read;
-   private final Boolean write;
-   private final Boolean manage;
-   private final Boolean readWithView;
-   private final Boolean writeWithView;
-   private final Boolean manageWithView;
+   private final Map<RoleType, Boolean> roles;
+   private final Map<RoleType, Boolean> rolesWithView;
 
-   public AllowedPermissions(final Boolean read, final Boolean write, final Boolean manage, final Boolean readWithView, final Boolean writeWithView, final Boolean manageWithView) {
-      this.read = read;
-      this.write = write;
-      this.manage = manage;
-      this.readWithView = readWithView;
-      this.writeWithView = writeWithView;
-      this.manageWithView = manageWithView;
+   public AllowedPermissions(final Map<RoleType, Boolean> roles, final Map<RoleType, Boolean> rolesWithView) {
+      this.roles = roles;
+      this.rolesWithView = rolesWithView;
    }
 
-   public AllowedPermissions(final Boolean read, final Boolean write, final Boolean manage) {
-      this.read = read;
-      this.write = write;
-      this.manage = manage;
-      this.readWithView = read;
-      this.writeWithView = write;
-      this.manageWithView = manage;
+   public AllowedPermissions(final Map<RoleType, Boolean> roles) {
+      this.roles = roles;
+      this.rolesWithView = roles;
    }
 
-   public static AllowedPermissions getAllAllowed() {
-      return new AllowedPermissions(true, true, true);
+   public AllowedPermissions(final Set<RoleType> roles) {
+      this.roles = roles.stream().collect(Collectors.toMap(role -> role, role -> true));
+      this.rolesWithView = this.roles;
    }
 
-   public static AllowedPermissions getAllowedPermissions(final String userId, final Permissions permissions) {
-      final Set<Permission> allowedPermissions = permissions.getUserPermissions().stream().filter(p -> p.getId().equals(userId)).collect(Collectors.toSet());
-
-      final boolean[] rwm = {false, false, false};
-
-      allowedPermissions.forEach(p -> {
-         if (p.getRoles().contains(RoleOld.READ)) {
-            rwm[0] = true;
-         }
-         if (p.getRoles().contains(RoleOld.WRITE)) {
-            rwm[1] = true;
-         }
-         if (p.getRoles().contains(RoleOld.MANAGE)) {
-            rwm[2] = true;
-         }
-      });
-
-      return new AllowedPermissions(rwm[0], rwm[1], rwm[2]);
+   public AllowedPermissions(final Set<RoleType> roles, final Set<RoleType> rolesWithView) {
+      this.roles = roles.stream().collect(Collectors.toMap(role -> role, role -> true));
+      this.rolesWithView = rolesWithView.stream().collect(Collectors.toMap(role -> role, role -> true));
    }
 
-   public Boolean getRead() {
-      return read;
+   public Map<RoleType, Boolean> getRoles() {
+      return roles != null ? roles : Collections.emptyMap();
    }
 
-   public Boolean getWrite() {
-      return write;
+   public Map<RoleType, Boolean> getRolesWithView() {
+      return rolesWithView != null ? rolesWithView : Collections.emptyMap();
    }
 
-   public Boolean getManage() {
-      return manage;
+   public static AllowedPermissions allAllowed() {
+      Set<RoleType> roles = Arrays.stream(RoleType.values()).collect(Collectors.toSet());
+      return new AllowedPermissions(roles);
    }
 
-   public Boolean getReadWithView() {
-      return readWithView;
-   }
+   public static AllowedPermissions merge(AllowedPermissions a1, AllowedPermissions a2) {
+      if (a1 == null || a2 == null) {
+         return a1 != null ? a1 : a2;
+      }
 
-   public Boolean getWriteWithView() {
-      return writeWithView;
-   }
-
-   public Boolean getManageWithView() {
-      return manageWithView;
+      Set<RoleType> roles = a1.getRoles().entrySet().stream()
+                              .filter(entry -> entry.getValue() && a2.getRoles().get(entry.getKey()))
+                              .map(Map.Entry::getKey)
+                              .collect(Collectors.toSet());
+      Set<RoleType> rolesWithView = a1.getRolesWithView().entrySet().stream()
+                                      .filter(entry -> entry.getValue() && a2.getRolesWithView().get(entry.getKey()))
+                                      .map(Map.Entry::getKey)
+                                      .collect(Collectors.toSet());
+      return new AllowedPermissions(roles, rolesWithView);
    }
 }

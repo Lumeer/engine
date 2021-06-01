@@ -23,7 +23,6 @@ import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
 import io.lumeer.api.model.common.Resource
 import io.lumeer.api.util.PermissionUtils
-import io.lumeer.api.util.ResourceUtils
 import io.lumeer.core.exception.NoDocumentPermissionException
 import io.lumeer.core.exception.NoPermissionException
 import io.lumeer.core.exception.NoResourcePermissionException
@@ -74,39 +73,48 @@ class PermissionAdapter(private val userDao: UserDao,
       if (PermissionUtils.getUserRolesInResource(organization, user, groups).any { role -> role.isTransitive && role.roleType === RoleType.Read }) {
          return true
       }
-      return project?.let { PermissionUtils.getUserRolesInResource(it, user, groups).any { role -> role.isTransitive && role.roleType === RoleType.Read }  } ?: false
+      return project?.let { PermissionUtils.getUserRolesInResource(it, user, groups).any { role -> role.isTransitive && role.roleType === RoleType.Read } } ?: false
+   }
+
+   fun getOrganizationUsersByRole(organization: Organization, roleType: RoleType): Set<String> {
+      return PermissionUtils.getOrganizationUsersByRole(organization, getUsers(organization.id), roleType)
+   }
+
+   fun getOrganizationReadersDifference(organization1: Organization, organization2: Organization): RolesDifference {
+      return PermissionUtils.getOrganizationUsersDifferenceByRole(organization1, organization2, getUsers(organization1.id), RoleType.Read)
+   }
+
+   fun getProjectUsersByRole(organization: Organization, project: Project?, roleType: RoleType): Set<String> {
+      return PermissionUtils.getProjectUsersByRole(organization, project, getUsers(organization.id), roleType)
+   }
+
+   fun getProjectReadersDifference(organization: Organization, project1: Project, project2: Project): RolesDifference {
+      return PermissionUtils.getProjectUsersDifferenceByRole(organization, project1, project2, getUsers(organization.id), RoleType.Read)
    }
 
    fun <T : Resource> getResourceUsersByRole(organization: Organization, project: Project?, resource: T, roleType: RoleType): Set<String> {
       return PermissionUtils.getResourceUsersByRole(organization, project, resource, getUsers(organization.id), roleType)
    }
 
-   fun <T : Resource> getUserRolesInResource(organization: Organization?, project: Project?, resource: T, userId: String): Set<RoleType> {
-      return PermissionUtils.getUserRolesInResource(organization, project, resource, getUser(userId))
+   fun <T : Resource> getResourceReadersDifference(organization: Organization, project: Project?, resource1: T, resource2: T): RolesDifference {
+      return PermissionUtils.getResourceUsersDifferenceByRole(organization, project, resource1, resource2, getUsers(organization.id), RoleType.Read)
    }
 
-   private fun checkReadWorkspace(organization: Organization?, project: Project?, resource: Resource, userId: String) {
-      if (resource !is Organization && organization != null) {
-         if (!hasRole(organization, project, organization, RoleType.Read, userId)) {
-            throw NoResourcePermissionException(resource)
-         }
-         if (resource !is Project && project != null) {
-            if (!hasRole(organization, project, project, RoleType.Read, userId)) {
-               throw NoResourcePermissionException(resource)
-            }
-         }
-      }
+   fun <T : Resource> getUserRolesInResource(organization: Organization?, project: Project?, resource: T, userId: String): Set<RoleType> {
+      return getUserRolesInResource(organization, project, resource, getUser(userId))
+   }
+
+   fun <T : Resource> getUserRolesInResource(organization: Organization?, project: Project?, resource: T, user: User): Set<RoleType> {
+      return PermissionUtils.getUserRolesInResource(organization, project, resource, user)
    }
 
    fun checkRole(organization: Organization?, project: Project?, resource: Resource, role: RoleType, userId: String) {
-      checkReadWorkspace(organization, project, resource, userId)
       if (!hasRole(organization, project, resource, role, userId)) {
          throw NoResourcePermissionException(resource)
       }
    }
 
    fun checkRoleWithView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, viewRole: RoleType, userId: String) {
-      checkReadWorkspace(organization, project, collection, userId)
       if (!hasRoleWithView(organization, project, collection, role, viewRole, userId)) {
          throw NoResourcePermissionException(collection)
       }
@@ -136,8 +144,41 @@ class PermissionAdapter(private val userDao: UserDao,
       return false
    }
 
-   fun hasRoleInDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, role: RoleType, userId: String): Boolean {
-      return hasRole(organization, project, collection, role, userId) || hasRoleInDocument(document, collection, role, userId)
+   fun checkCanCreateDocuments(organization: Organization?, project: Project?, collection: Collection, userId: String) {
+      if (!canCreateDocuments(organization, project, collection, userId)) {
+         throw NoResourcePermissionException(collection)
+      }
+   }
+
+   fun canCreateDocuments(organization: Organization?, project: Project?, collection: Collection, userId: String): Boolean {
+      return hasRoleWithView(organization, project, collection, RoleType.Contribute, RoleType.Contribute, userId)
+   }
+
+   fun checkCanEditDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String) {
+      if (!canEditDocument(organization, project, document, collection, userId)) {
+         throw NoDocumentPermissionException(document)
+      }
+   }
+
+   fun canEditDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
+      return hasRoleWithView(organization, project, collection, RoleType.Write, RoleType.Write, userId)
+            || isDocumentContributor(organization, project, document, collection, userId)
+   }
+
+   fun checkCanDeleteDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String) {
+      if (!canDeleteDocument(organization, project, document, collection, userId)) {
+         throw NoDocumentPermissionException(document)
+      }
+   }
+
+   fun canDeleteDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
+      return hasRoleWithView(organization, project, collection, RoleType.Delete, RoleType.Delete, userId)
+            || isDocumentContributor(organization, project, document, collection, userId)
+   }
+
+   private fun isDocumentContributor(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
+      return hasRoleWithView(organization, project, collection, RoleType.Contribute, RoleType.Contribute, userId)
+            && DocumentUtils.isDocumentOwner(collection, document, userId)
    }
 
    private fun hasRoleInDocument(document: Document?, collection: Collection, role: RoleType, userId: String): Boolean {
@@ -147,25 +188,11 @@ class PermissionAdapter(private val userDao: UserDao,
       }
    }
 
-   fun hasRoleInDocumentWithView(organization: Organization?, project: Project?, document: Document, collection: Collection, role: RoleType, viewRole: RoleType, userId: String): Boolean {
-      return hasRoleWithView(organization, project, collection, role, viewRole, userId) || hasRoleInDocument(document, collection, role, userId)
-   }
-
-   fun checkRoleInDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, role: RoleType, userId: String) {
-      if (!hasRoleInDocument(organization, project, document, collection, role, userId)) {
-         throw NoDocumentPermissionException(document)
-      }
-   }
-
-   fun checkRoleInDocumentWithView(organization: Organization?, project: Project?, document: Document, collection: Collection, role: RoleType, viewRole: RoleType, userId: String) {
-      if (!hasRoleInDocumentWithView(organization, project, document, collection, role, viewRole, userId)) {
-         throw NoDocumentPermissionException(document)
-      }
-   }
 
    fun checkRoleInLinkTypeWithView(organization: Organization?, project: Project?, collectionIds: kotlin.collections.Collection<String>, role: RoleType, userId: String, strict: Boolean) {
       val collections = collectionDao.getCollectionsByIds(collectionIds)
       if (!strict && role == RoleType.Write) {
+         // TODO link type permissions
          val atLeastOneRead = collections.any { hasRoleWithView(organization, project, it, RoleType.Read, RoleType.Read, userId) }
          val atLeastOneWrite = collections.any { hasRoleWithView(organization, project, it, RoleType.Write, RoleType.Write, userId) }
          if (!atLeastOneRead || !atLeastOneWrite) {
@@ -180,7 +207,7 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun hasRoleInLinkTypeWithView(organization: Organization?, project: Project?, linkType: LinkType, role: RoleType, userId: String): Boolean {
       val collections = collectionDao.getCollectionsByIds(linkType.collectionIds)
-      var hasPermissions = true
+      var hasPermissions = collections.size == 2
       for (collection in collections) {
          hasPermissions = hasPermissions && hasRoleWithView(organization, project, collection, role, role, userId)
       }
@@ -189,7 +216,7 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun hasRoleInLinkType(organization: Organization?, project: Project?, linkType: LinkType, collectionMap: Map<String, Collection>, role: RoleType, userId: String): Boolean {
       val collections: List<Collection> = linkType.collectionIds.mapNotNull { collectionMap[it] }
-      var hasPermissions = true
+      var hasPermissions = collections.size == 2
       for (collection in collections) {
          hasPermissions = hasPermissions && hasRole(organization, project, collection, role, userId)
       }

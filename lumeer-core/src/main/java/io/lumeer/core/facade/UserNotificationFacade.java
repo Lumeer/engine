@@ -22,16 +22,16 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RolesDifference;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.AccessForbiddenException;
@@ -49,6 +49,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -82,7 +83,7 @@ public class UserNotificationFacade extends AbstractFacade {
    @Inject
    private UserDao userDao;
 
-   private List<String> mutedUsers = new ArrayList<>();
+   private final List<String> mutedUsers = new ArrayList<>();
 
    public List<UserNotification> getNotifications() {
       return dao.getRecentNotifications(getCurrentUserId());
@@ -113,10 +114,39 @@ public class UserNotificationFacade extends AbstractFacade {
       return null;
    }
 
-   private void appendOrganization(final DataDocument data) {
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final Organization organization = workspaceKeeper.getOrganization().get();
+   private DataDocument getResourceDescription(final Resource resource) {
+      final DataDocument data = new DataDocument();
 
+      if (resource.getType() == ResourceType.ORGANIZATION) {
+         appendOrganization((Organization) resource, data);
+      } else if (resource.getType() == ResourceType.PROJECT) {
+         appendOrganization(getOrganization(), data);
+         appendProject((Project) resource, data);
+      } else if (resource.getType() == ResourceType.COLLECTION) {
+         appendOrganization(getOrganization(), data);
+         appendProject(getProject(), data);
+         data.append(UserNotification.CollectionShared.COLLECTION_ID, resource.getId());
+         data.append(UserNotification.CollectionShared.COLLECTION_NAME, resource.getName());
+         data.append(UserNotification.CollectionShared.COLLECTION_ICON, resource.getIcon());
+         data.append(UserNotification.CollectionShared.COLLECTION_COLOR, resource.getColor());
+
+         final String query = new Query(List.of(new QueryStem(resource.getId())), null, null, null).toQueryString();
+         data.append(UserNotification.CollectionShared.COLLECTION_QUERY, Utils.encodeQueryParam(query));
+      } else if (resource.getType() == ResourceType.VIEW) {
+         appendOrganization(getOrganization(), data);
+         appendProject(getProject(), data);
+         data.append(UserNotification.ViewShared.VIEW_CODE, resource.getCode());
+         data.append(UserNotification.ViewShared.VIEW_ICON, resource.getIcon());
+         data.append(UserNotification.ViewShared.VIEW_COLOR, resource.getColor());
+         data.append(UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) resource).getPerspective());
+         data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());
+      }
+
+      return data;
+   }
+
+   private void appendOrganization(final Organization organization, final DataDocument data) {
+      if (organization != null) {
          data.append(UserNotification.OrganizationShared.ORGANIZATION_ID, organization.getId());
          data.append(UserNotification.OrganizationShared.ORGANIZATION_CODE, organization.getCode());
          data.append(UserNotification.OrganizationShared.ORGANIZATION_ICON, organization.getIcon());
@@ -125,77 +155,14 @@ public class UserNotificationFacade extends AbstractFacade {
       }
    }
 
-   private void appendProject(final DataDocument data) {
-      if (workspaceKeeper.getProject().isPresent()) {
-         final Project project = workspaceKeeper.getProject().get();
-
+   private void appendProject(final Project project, final DataDocument data) {
+      if (project != null) {
          data.append(UserNotification.ProjectShared.PROJECT_ID, project.getId());
          data.append(UserNotification.ProjectShared.PROJECT_CODE, project.getCode());
          data.append(UserNotification.ProjectShared.PROJECT_NAME, project.getName());
          data.append(UserNotification.ProjectShared.PROJECT_ICON, project.getIcon());
          data.append(UserNotification.ProjectShared.PROJECT_COLOR, project.getColor());
       }
-   }
-
-   private DataDocument getResourceDescription(final Resource resource) {
-      final DataDocument data = new DataDocument();
-
-      if (resource.getType() == ResourceType.ORGANIZATION) {
-         data.append(UserNotification.OrganizationShared.ORGANIZATION_ID, resource.getId());
-         data.append(UserNotification.OrganizationShared.ORGANIZATION_CODE, resource.getCode());
-         data.append(UserNotification.OrganizationShared.ORGANIZATION_ICON, resource.getIcon());
-         data.append(UserNotification.OrganizationShared.ORGANIZATION_COLOR, resource.getColor());
-         data.append(UserNotification.OrganizationShared.ORGANIZATION_NAME, resource.getName());
-      }
-
-      if (resource.getType() == ResourceType.PROJECT) {
-         appendOrganization(data);
-         data.append(UserNotification.ProjectShared.PROJECT_ID, resource.getId());
-         data.append(UserNotification.ProjectShared.PROJECT_CODE, resource.getCode());
-         data.append(UserNotification.ProjectShared.PROJECT_ICON, resource.getIcon());
-         data.append(UserNotification.ProjectShared.PROJECT_COLOR, resource.getColor());
-         data.append(UserNotification.ProjectShared.PROJECT_NAME, resource.getName());
-      }
-
-      if (resource.getType() == ResourceType.COLLECTION) {
-         appendOrganization(data);
-         appendProject(data);
-         data.append(UserNotification.CollectionShared.COLLECTION_ID, resource.getId());
-         data.append(UserNotification.CollectionShared.COLLECTION_NAME, resource.getName());
-         data.append(UserNotification.CollectionShared.COLLECTION_ICON, resource.getIcon());
-         data.append(UserNotification.CollectionShared.COLLECTION_COLOR, resource.getColor());
-
-         final String query = new Query(List.of(new QueryStem(resource.getId())), null, null, null).toQueryString();
-         data.append(UserNotification.CollectionShared.COLLECTION_QUERY, Utils.encodeQueryParam(query));
-      }
-
-      if (resource.getType() == ResourceType.VIEW) {
-         appendOrganization(data);
-         appendProject(data);
-         data.append(UserNotification.ViewShared.VIEW_COLOR, resource.getColor());
-         data.append(UserNotification.ViewShared.VIEW_ICON, resource.getIcon());
-         data.append(UserNotification.ViewShared.VIEW_CODE, resource.getCode());
-         data.append(UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) resource).getPerspective());
-         data.append(UserNotification.ViewShared.VIEW_NAME, resource.getName());
-      }
-
-      return data;
-   }
-
-   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final java.util.Collection<String> newUsers) {
-      if (workspaceKeeper.getOrganization().isEmpty() && resource.getType() != ResourceType.ORGANIZATION) {
-         return Collections.emptyList();
-      }
-
-      final DataDocument data = getResourceDescription(resource);
-
-      final List<UserNotification> notifications =
-            newUsers.stream()
-                    .filter(userId -> permissionsChecker.hasRole(resource, RoleOld.READ, userId) && filterNotificationsByManagers(resource, userId))
-                    .map(userId -> createNotification(userId, getNotificationTypeByResource(resource), data)
-      ).collect(Collectors.toList());
-
-      return dao.createNotificationsBatch(notifications);
    }
 
    private EmailService.EmailTemplate getEmailTemplate(final Resource resource) {
@@ -218,7 +185,7 @@ public class UserNotificationFacade extends AbstractFacade {
       return null;
    }
 
-   private boolean hasUserEnabledNotifications(final Resource resource, final User user) {
+   private boolean hasUserEnabledNotifications(final Resource resource, final User user, final NotificationChannel channel) {
       NotificationType type = null;
       switch (resource.getType()) {
          case ORGANIZATION:
@@ -237,33 +204,12 @@ public class UserNotificationFacade extends AbstractFacade {
 
       if (type != null) {
          final NotificationType finalType = type;
-         return user.getNotificationsSettingsList().stream().anyMatch(notification -> notification.getNotificationType() == finalType && notification.getNotificationChannel() == NotificationChannel.Email);
+         return user.getNotificationsSettingsList().stream().anyMatch(notification -> notification.getNotificationType() == finalType && notification.getNotificationChannel() == channel);
       }
 
       return false;
    }
 
-   private void sendResourceSharedEmails(final Resource resource, final java.util.Collection<String> newUsers) {
-      if (workspaceKeeper.getOrganization().isPresent() || resource.getType() == ResourceType.ORGANIZATION) {
-         final Map<String, User> users = getUsers(newUsers);
-         final Map<String, Language> languages = initializeLanguages(users.values());
-
-         newUsers.stream()
-                 .filter(user -> hasUserEnabledNotifications(resource, users.get(user)) && permissionsChecker.hasRole(resource, RoleOld.READ, user) && filterNotificationsByManagers(resource, user))
-                 .forEach(user ->
-                       emailService.sendEmailFromTemplate(
-                             getEmailTemplate(resource),
-                             languages.getOrDefault(user, Language.EN),
-                             emailService.formatUserReference(authenticatedUser.getCurrentUser()),
-                             emailService.formatFrom(authenticatedUser.getCurrentUser()),
-                             users.get(user).getEmail(),
-                             StringUtils.isNotEmpty(resource.getName()) ? resource.getName() : resource.getCode(),
-                             getResourceDescription(resource))
-         );
-      }
-   }
-
-   // get map of user id -> user
    private Map<String, User> getUsers(final java.util.Collection<String> userIds) {
       return userIds.stream()
                     .distinct()
@@ -283,23 +229,6 @@ public class UserNotificationFacade extends AbstractFacade {
                   );
    }
 
-   private boolean filterNotificationsByManagers(final Resource resource, final String userId) {
-      if (resource.getType() == ResourceType.ORGANIZATION) {
-         return true;
-      }
-
-      if (resource.getType() == ResourceType.PROJECT) {
-         if (workspaceKeeper.getOrganization().isPresent()) {
-            return !permissionsChecker.hasRole(workspaceKeeper.getOrganization().get(), RoleOld.MANAGE, userId);
-         } else {
-            return true;
-         }
-      }
-
-      // for collection, view, document
-      return !permissionsChecker.isManager(userId);
-   }
-
    private NotificationType getNotificationTypeByResource(final Resource resource) {
       switch (resource.getType()) {
          case ORGANIZATION:
@@ -315,29 +244,12 @@ public class UserNotificationFacade extends AbstractFacade {
       }
    }
 
-   private Set<String> getManagers(final Resource resource) {
-      if (resource.getType() == ResourceType.ORGANIZATION) {
-         return Collections.emptySet();
-      } else if (resource.getType() == ResourceType.PROJECT) {
-         return permissionsChecker.getOrganizationManagers();
-      }
-      return permissionsChecker.getWorkspaceManagers();
-   }
-
-   /* Managers are handled on resource creation, they may or may not be in the resource permissions.
-      At the beginning, we know they are not there. Later, we can remove all managers from notifications
-      upon resource update because they were already notified. If we did not do that, we would never
-      be able to to tell whether we already sent a notification to the manager.
-    */
    public void createResource(@Observes final CreateResource createResource) {
       try {
-         Set<String> managers = getManagers(createResource.getResource());
-         managers.remove(getCurrentUserId());
+         var originalResource = createResource.getResource().copy();
+         originalResource.setPermissions(new Permissions());
 
-         if (managers.size() > 0) {
-            createResourceSharedNotifications(createResource.getResource(), managers);
-            sendResourceSharedEmails(createResource.getResource(), managers);
-         }
+         checkResourcesNotifications(originalResource, createResource.getResource());
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to create notification: ", e);
       }
@@ -345,31 +257,64 @@ public class UserNotificationFacade extends AbstractFacade {
 
    public void updateResource(@Observes final UpdateResource updateResource) {
       try {
-         final Set<String> managers = getManagers(updateResource.getResource());
-         final Set<String> removedUsers = ResourceUtils.getRemovedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
-         removedUsers.removeAll(managers);
-         removedUsers.remove(getCurrentUserId());
-         mutedUsers.forEach(removedUsers::remove);
-
-         if (removedUsers.size() > 0) {
-            removeNotifications(updateResource.getResource(), removedUsers);
-         }
-
-         final Set<String> addedUsers = ResourceUtils.getAddedPermissions(updateResource.getOriginalResource(), updateResource.getResource());
-         if (updateResource.getResource().getType() != ResourceType.ORGANIZATION && updateResource.getResource().getType() != ResourceType.PROJECT) {
-            addedUsers.removeAll(managers);
-         }
-         addedUsers.remove(getCurrentUserId());
-         mutedUsers.forEach(addedUsers::remove);
-
-         if (addedUsers.size() > 0) {
-            createResourceSharedNotifications(updateResource.getResource(), addedUsers);
-            sendResourceSharedEmails(updateResource.getResource(), addedUsers);
-         }
-
+         checkResourcesNotifications(updateResource.getOriginalResource(), updateResource.getResource());
          updateExistingNotifications(updateResource.getOriginalResource(), updateResource.getResource());
       } catch (Exception e) {
          log.log(Level.WARNING, "Unable to create notification: ", e);
+      }
+   }
+
+   private void checkResourcesNotifications(final Resource originalResource, final Resource currentResource) {
+      final RolesDifference resourceReadersDifference = permissionsChecker.getPermissionAdapter().getResourceReadersDifference(getOrganization(), getProject(), originalResource, currentResource);
+      final Set<String> removedUsers = new HashSet<>(resourceReadersDifference.getRemovedUsers());
+      removedUsers.remove(getCurrentUserId());
+      mutedUsers.forEach(removedUsers::remove);
+
+      if (removedUsers.size() > 0) {
+         removeNotifications(currentResource, removedUsers);
+      }
+
+      final Set<String> addedUsers = new HashSet<>(resourceReadersDifference.getAddedUsers());
+      addedUsers.remove(getCurrentUserId());
+      mutedUsers.forEach(addedUsers::remove);
+
+      if (addedUsers.size() > 0) {
+         createResourceSharedNotifications(currentResource, addedUsers);
+         sendResourceSharedEmails(currentResource, addedUsers);
+      }
+   }
+
+   private List<UserNotification> createResourceSharedNotifications(final Resource resource, final java.util.Collection<String> newUsers) {
+      if (workspaceKeeper.getOrganization().isEmpty() && resource.getType() != ResourceType.ORGANIZATION) {
+         return Collections.emptyList();
+      }
+
+      final DataDocument data = getResourceDescription(resource);
+
+      final List<UserNotification> notifications = newUsers.stream()
+                                                           .map(userId -> createNotification(userId, getNotificationTypeByResource(resource), data))
+                                                           .collect(Collectors.toList());
+
+      return dao.createNotificationsBatch(notifications);
+   }
+
+   private void sendResourceSharedEmails(final Resource resource, final java.util.Collection<String> newUsers) {
+      if (workspaceKeeper.getOrganization().isPresent() || resource.getType() == ResourceType.ORGANIZATION) {
+         final Map<String, User> users = getUsers(newUsers);
+         final Map<String, Language> languages = initializeLanguages(users.values());
+
+         newUsers.stream()
+                 .filter(user -> hasUserEnabledNotifications(resource, users.get(user), NotificationChannel.Email))
+                 .forEach(user ->
+                       emailService.sendEmailFromTemplate(
+                             getEmailTemplate(resource),
+                             languages.getOrDefault(user, Language.EN),
+                             emailService.formatUserReference(authenticatedUser.getCurrentUser()),
+                             emailService.formatFrom(authenticatedUser.getCurrentUser()),
+                             users.get(user).getEmail(),
+                             StringUtils.isNotEmpty(resource.getName()) ? resource.getName() : resource.getCode(),
+                             getResourceDescription(resource))
+                 );
       }
    }
 
@@ -440,6 +385,8 @@ public class UserNotificationFacade extends AbstractFacade {
                      original.getCode(),
                      Map.of(
                            UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_NAME, updated.getName(),
+                           UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_COLOR, updated.getColor(),
+                           UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_ICON, updated.getIcon(),
                            UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) updated).getPerspective()
                      )
                );

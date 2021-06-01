@@ -116,7 +116,7 @@ public class CronTaskProcessor extends WorkspaceContext  {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
          final Query query = rule.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
          final User user = AuthenticatedUser.getMachineUser();
-         final AllowedPermissions allowedPermissions = AllowedPermissions.getAllAllowed();
+         final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
          return DocumentUtils.getDocuments(dao, query, user, rule.getLanguage(), allowedPermissions, null);
       }

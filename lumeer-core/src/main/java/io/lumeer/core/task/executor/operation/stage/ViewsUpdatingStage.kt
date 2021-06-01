@@ -19,39 +19,38 @@
 package io.lumeer.core.task.executor.operation.stage
 
 import io.lumeer.api.model.Permission
+import io.lumeer.api.model.Role
 import io.lumeer.core.task.executor.ChangesTracker
 import io.lumeer.core.task.executor.operation.OperationExecutor
 import io.lumeer.core.task.executor.operation.ViewPermissionsOperation
 import io.lumeer.core.util.Tuple
-import io.lumeer.core.util.Utils
 
 class ViewsUpdatingStage(executor: OperationExecutor) : Stage(executor) {
 
    override fun call(): ChangesTracker {
-      operations.takeIf { it.isNotEmpty() }?.let {
-
-         val viewUpdates : Map<String, List<ViewPermissionsOperation>> = Utils.categorize(
-               it.filter { operation -> operation is ViewPermissionsOperation && operation.isComplete }
-                     .map { operation -> (operation as ViewPermissionsOperation) }
-                     .stream()
-         ) { op -> op.entity.id }
-
-         viewUpdates.keys.forEach { key ->
-            viewUpdates[key]?.takeIf { list -> list.isNotEmpty() }?.let { list ->
-               Tuple(list[0].originalView, list[0].entity)
-            }.takeIf { viewTuple -> viewTuple?.first != null && viewTuple?.second != null }?.let { viewTuple ->
-               viewUpdates[key]?.forEach { update ->
-                  viewTuple.second.permissions.updateUserPermissions(setOf(Permission.buildWithRoles(update.userId, update.roles)))
-               }
-
-               val updatedView = task.daoContextSnapshot.viewDao.updateView(viewTuple.first.id, viewTuple.second)
-               changesTracker.addUpdatedViews(mutableSetOf(Tuple(viewTuple.first, updatedView)))
-            }
-         }
-
-         return changesTracker
+      if (operations.isEmpty()) {
+         return ChangesTracker()
       }
 
-      return ChangesTracker()
+      val viewUpdates = operations.orEmpty().filter { operation -> operation is ViewPermissionsOperation && operation.isComplete }
+            .map { operation -> (operation as ViewPermissionsOperation) }
+            .groupBy { operation -> operation.entity.id }
+
+      viewUpdates.entries.forEach { (_, operations) ->
+         val originalView = operations.firstOrNull()?.getOriginalView()
+         val view = operations.firstOrNull()?.entity
+
+         if (originalView != null && view != null) {
+            operations.forEach { operation ->
+               val roles = operation.roles.map { Role(it) }.toSet()
+               view.permissions.updateUserPermissions(setOf(Permission.buildWithRoles(operation.userId, roles)))
+            }
+
+            val updatedView = task.daoContextSnapshot.viewDao.updateView(originalView.id, view)
+            changesTracker.addUpdatedViews(mutableSetOf(Tuple(originalView, updatedView)))
+         }
+      }
+
+      return changesTracker
    }
 }

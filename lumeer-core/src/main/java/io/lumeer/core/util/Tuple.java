@@ -20,8 +20,8 @@ package io.lumeer.core.util;
 
 public class Tuple<K, V> {
 
-   private K first;
-   private V second;
+   private final K first;
+   private final V second;
 
    public Tuple(K first, V second){
       this.first = first;
