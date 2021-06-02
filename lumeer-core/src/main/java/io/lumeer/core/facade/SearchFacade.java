@@ -287,7 +287,7 @@ public class SearchFacade extends AbstractFacade {
       }
 
       final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(allCollections);
-      final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(allLinkTypes, collectionsPermissions);
+      final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(allLinkTypes);
       final Query query = new Query(Collections.singletonList(stem), fulltexts, null, null);
 
       var hasMoreDocuments = true;
@@ -406,7 +406,7 @@ public class SearchFacade extends AbstractFacade {
          final List<LinkType> linkTypes = Collections.singletonList(linkType);
          final List<Collection> collections = linkType.getCollectionIds().stream().map(collectionsMap::get).filter(Objects::nonNull).collect(Collectors.toList());
          final Map<String, AllowedPermissions> collectionsPermissions = permissionsChecker.getCollectionsPermissions(collections);
-         final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes, collectionsPermissions);
+         final Map<String, AllowedPermissions> linkTypesPermissions = permissionsChecker.getLinkTypesPermissions(linkTypes);
          final Query query = new Query(Collections.emptyList(), fulltexts, null, null);
          var hasMoreLinks = true;
          var page = 0;

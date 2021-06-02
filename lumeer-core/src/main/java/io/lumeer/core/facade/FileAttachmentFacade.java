@@ -421,14 +421,14 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    private Collection checkCollectionWritePermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, RoleOld.WRITE, RoleOld.WRITE);
+      permissionsChecker.checkRoleInCollectionWithView(collection, RoleOld.WRITE, RoleOld.WRITE);
 
       return collection;
    }
 
    private Collection checkCollectionReadPermissions(final String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, RoleOld.READ, RoleOld.READ);
+      permissionsChecker.checkRoleInCollectionWithView(collection, RoleOld.READ, RoleOld.READ);
 
       return collection;
    }

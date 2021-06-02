@@ -436,7 +436,7 @@ public class PusherFacade extends AbstractFacade {
       } else if (comment.getResourceType() == ResourceType.LINK) {
          final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(comment.getResourceId());
          final LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
-         Set<String> users = resourceAdapter.getLinkTypeReaders(linkType, getOrganization(), getProject());
+         Set<String> users = resourceAdapter.getLinkTypeReaders(getOrganization(), getProject(), linkType);
 
          sendNotificationsByUsers(comment, users, eventSuffix);
       } else if (comment.getResourceType() == ResourceType.VIEW) {
@@ -681,12 +681,12 @@ public class PusherFacade extends AbstractFacade {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
       linkInstanceAdapter.mapLinkInstanceData(linkInstance);
-      Set<String> userIds = resourceAdapter.getLinkTypeReaders(linkType, getOrganization(), getProject());
+      Set<String> userIds = resourceAdapter.getLinkTypeReaders(getOrganization(), getProject(), linkType);
       sendNotificationsByUsers(linkInstance, userIds, event);
    }
 
    private void sendResourceNotificationByLinkType(final LinkType linkType, final String event) {
-      Set<String> userIds = resourceAdapter.getLinkTypeReaders(linkType, getOrganization(), getProject());
+      Set<String> userIds = resourceAdapter.getLinkTypeReaders(getOrganization(), getProject(), linkType);
       sendNotificationsByUsers(linkType, userIds, event);
    }
 

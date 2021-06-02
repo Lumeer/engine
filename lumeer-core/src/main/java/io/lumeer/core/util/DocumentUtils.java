@@ -200,6 +200,10 @@ public class DocumentUtils {
       return document.getCreatedBy().equals(userId);
    }
 
+   public static boolean isDocumentOwnerByPurpose(final Collection collection, final Document document, final User user) {
+      return DocumentUtils.isTaskAssignedByUser(collection, document, user.getEmail());
+   }
+
    public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
       return isTaskAssignedByUser(collection, document.getData(), userEmail);
    }

@@ -174,9 +174,9 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       Collection collection2 = new Collection("col2", "col2", "icon", "color", collectionPermissions);
       collection2Id = collectionDao.createCollection(collection2).getId();
 
-      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);
+      LinkType linkType = new LinkType(NAME, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null, null);
       linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null);
+      LinkType linkType2 = new LinkType(NAME2, Arrays.asList(collection1Id, collection2Id), ATTRIBUTES, null, null);
       linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       documentIdsColl1.clear();

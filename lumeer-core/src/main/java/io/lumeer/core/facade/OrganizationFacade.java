@@ -24,6 +24,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
@@ -81,7 +82,7 @@ public class OrganizationFacade extends AbstractFacade {
    public Organization createOrganization(final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
 
-      if (getOrganizations().stream().anyMatch(o -> permissionsChecker.hasRole(o, RoleOld.READ))) {
+      if (getOrganizations().stream().anyMatch(o -> permissionsChecker.hasRole(o, RoleType.Read))) {
          checkCreateOrganization();
       }
 

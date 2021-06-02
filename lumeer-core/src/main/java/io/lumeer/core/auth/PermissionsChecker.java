@@ -160,58 +160,6 @@ public class PermissionsChecker {
       permissionAdapter.checkRole(getOrganization(), getProject(), resource, role, authenticatedUser.getCurrentUserId());
    }
 
-   public void checkRoleInLinkTypeWithView(final java.util.Collection<String> collectionIds, final RoleType role, final boolean strict) {
-      permissionAdapter.checkRoleInLinkTypeWithView(getOrganization(), getProject(), collectionIds, role, authenticatedUser.getCurrentUserId(), strict);
-   }
-
-   public void checkRoleInLinkTypeWithView(LinkType linkType, RoleType role, boolean strict) {
-      checkRoleInLinkTypeWithView(linkType.getCollectionIds(), role, strict);
-   }
-
-   public boolean hasRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
-      return permissionAdapter.hasRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean hasRoleInLinkType(LinkType linkType, Map<String, Collection> collectionMap, RoleType role, String userId) {
-      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, collectionMap, role, userId);
-   }
-
-   /**
-    * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
-    *
-    * @param collection collection resource
-    * @param role       role to be checked.
-    * @param viewRole   role needed at the view.
-    * @throws NoResourcePermissionException when the user does not have the permission.
-    */
-   public void checkRoleWithView(final Collection collection, final RoleType role, final RoleType viewRole) {
-      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
-   }
-
-   public void checkCreateDocuments(final Collection collection) {
-      permissionAdapter.checkCanCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean canCreateDocuments(final Collection collection) {
-      return permissionAdapter.canCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
-   }
-
-   public void checkEditDocument(final Collection collection, final Document document) {
-      permissionAdapter.checkCanEditDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean canEditDocument(final Collection collection, final Document document) {
-      return permissionAdapter.canEditDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
-   }
-
-   public void checkDeleteDocument(final Collection collection, final Document document) {
-      permissionAdapter.checkCanDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean canDeleteDocuments(final Collection collection, final Document document) {
-      return permissionAdapter.canDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
-   }
-
    /**
     * Checks whether the current user has the given role on the resource.
     *
@@ -239,8 +187,56 @@ public class PermissionsChecker {
     * @param viewRole   role needed at the view.
     * @return true if and only if the user has the given role ont he resource.
     */
-   public boolean hasRoleWithView(final Collection collection, final RoleType role, final RoleType viewRole) {
-      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
+   public boolean hasRoleInCollectionWithView(final Collection collection, final RoleType role, final RoleType viewRole) {
+      return permissionAdapter.hasRoleInCollectionWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
+   }
+
+   /**
+    * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
+    *
+    * @param collection collection resource
+    * @param role       role to be checked.
+    * @param viewRole   role needed at the view.
+    * @throws NoResourcePermissionException when the user does not have the permission.
+    */
+   public void checkRoleInCollectionWithView(final Collection collection, final RoleType role, final RoleType viewRole) {
+      permissionAdapter.checkRoleInCollectionWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
+      permissionAdapter.checkRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
+      return permissionAdapter.hasRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRoleInLinkType(LinkType linkType, RoleType role, String userId) {
+      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, userId);
+   }
+
+   public void checkCreateDocuments(final Collection collection) {
+      permissionAdapter.checkCanCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canCreateDocuments(final Collection collection) {
+      return permissionAdapter.canCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkEditDocument(final Collection collection, final Document document) {
+      permissionAdapter.checkCanEditDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canEditDocument(final Collection collection, final Document document) {
+      return permissionAdapter.canEditDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkDeleteDocument(final Collection collection, final Document document) {
+      permissionAdapter.checkCanDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canDeleteDocuments(final Collection collection, final Document document) {
+      return permissionAdapter.canDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -290,13 +286,19 @@ public class PermissionsChecker {
    public AllowedPermissions getCollectionPermissions(final Collection collection) {
       User user = authenticatedUser.getCurrentUser();
       Set<RoleType> roles = permissionAdapter.getUserRolesInResource(getOrganization(), getProject(), collection, user);
-      Set<RoleType> rolesWithView = roles.stream().filter(role -> permissionAdapter.hasRoleWithView(getOrganization(), getProject(), collection, role, role, user.getId())).collect(Collectors.toSet());
+      Set<RoleType> rolesWithView = permissionAdapter.getUserRolesInCollectionWithView(getOrganization(), getProject(), collection, user);
       return new AllowedPermissions(roles, rolesWithView);
    }
 
-   public Map<String, AllowedPermissions> getLinkTypesPermissions(final java.util.Collection<LinkType> linkTypes, final Map<String, AllowedPermissions> collectionsPermissions) {
-      return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, linkType ->
-            AllowedPermissions.merge(collectionsPermissions.get(linkType.getFirstCollectionId()), collectionsPermissions.get(linkType.getSecondCollectionId()))));
+   public Map<String, AllowedPermissions> getLinkTypesPermissions(final java.util.Collection<LinkType> linkTypes) {
+       return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, this::getLinkTypePermissions));
+   }
+
+   public AllowedPermissions getLinkTypePermissions(final LinkType linkType) {
+      User user = authenticatedUser.getCurrentUser();
+      Set<RoleType> roles = permissionAdapter.getUserRolesInLinkType(getOrganization(), getProject(), linkType, user);
+      Set<RoleType> rolesWithView = permissionAdapter.getUserRolesInLinkTypeWithView(getOrganization(), getProject(), linkType, user);
+      return new AllowedPermissions(roles, rolesWithView);
    }
 
    public void checkFunctionRuleAccess(final Collection collection, final String js, final RoleType role) {

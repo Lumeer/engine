@@ -652,7 +652,7 @@ public class DocumentFacade extends AbstractFacade {
 
    private Collection checkCollectionPermissions(String collectionId, RoleOld role) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleWithView(collection, role, role);
+      permissionsChecker.checkRoleInCollectionWithView(collection, role, role);
       return collection;
    }
 

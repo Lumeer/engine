@@ -50,7 +50,6 @@ public class Collection extends Resource implements HealthChecking {
    public static final String ATTRIBUTES = "attributes";
    public static final String DATA_DESCRIPTION = "dataDescription";
    public static final String PURPOSE = "purpose";
-   public static final String META_DATA = "metaData";
 
    public static final String RULES = "rules";
 

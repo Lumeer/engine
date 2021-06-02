@@ -46,6 +46,7 @@ public class LinkType implements WithId, HealthChecking {
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
    public static final String RULES = "rules";
+   public static final String PERMISSIONS = "permissions";
 
    public static final String ATTRIBUTE_PREFIX = "a";
 
@@ -57,16 +58,19 @@ public class LinkType implements WithId, HealthChecking {
    private Integer lastAttributeNum;
    private Long linksCount;
    private Map<String, Rule> rules;
+   private Permissions permissions;
 
    @JsonCreator
    public LinkType(@JsonProperty(NAME) final String name,
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<Attribute> attributes,
-         @JsonProperty(RULES) final Map<String, Rule> rules) {
+         @JsonProperty(RULES) final Map<String, Rule> rules,
+         @JsonProperty(PERMISSIONS) final Permissions permissions) {
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;
       this.rules = rules;
+      this.permissions = permissions;
    }
 
    public LinkType(LinkType linkType) {
@@ -78,6 +82,7 @@ public class LinkType implements WithId, HealthChecking {
       this.lastAttributeNum = linkType.getLastAttributeNum();
       this.linksCount = linkType.getLinksCount();
       this.rules = linkType.rules != null ? linkType.rules.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new Rule(e.getValue()))) : null;
+      this.permissions = linkType.getPermissions() != null ? new Permissions(linkType.getPermissions()) : new Permissions();
    }
 
    public String getId() {
@@ -112,6 +117,14 @@ public class LinkType implements WithId, HealthChecking {
 
    public void setCollectionIds(List<String> collectionIds) {
       this.collectionIds = collectionIds;
+   }
+
+   public Permissions getPermissions() {
+      return permissions;
+   }
+
+   public void setPermissions(final Permissions permissions) {
+      this.permissions = permissions;
    }
 
    public List<Attribute> getAttributes() {

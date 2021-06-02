@@ -175,10 +175,10 @@ public class ResourceCommentFacade extends AbstractFacade {
          final List<String> collectionIds = linkType.getCollectionIds();
 
          if (collectionIds != null) {
-            collectionIds.forEach(id -> permissionsChecker.checkRoleWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), RoleOld.READ, RoleOld.READ));
+            collectionIds.forEach(id -> permissionsChecker.checkRoleInCollectionWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), RoleOld.READ, RoleOld.READ));
          }
       } else if (resourceType == ResourceType.COLLECTION) {
-         permissionsChecker.checkRoleWithView((Collection) getResource(resourceType, resourceId), RoleOld.READ, RoleOld.READ);
+         permissionsChecker.checkRoleInCollectionWithView((Collection) getResource(resourceType, resourceId), RoleOld.READ, RoleOld.READ);
       } else if (resourceType == ResourceType.DOCUMENT) {
          Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
          Collection collection = collectionDao.getCollectionById(document.getCollectionId());
@@ -186,7 +186,7 @@ public class ResourceCommentFacade extends AbstractFacade {
          if (DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail())) {
             return;
          }
-         permissionsChecker.checkRoleWithView(collection, RoleOld.READ, RoleOld.READ);
+         permissionsChecker.checkRoleInCollectionWithView(collection, RoleOld.READ, RoleOld.READ);
       } else {
          permissionsChecker.checkRole(getResource(resourceType, resourceId), RoleOld.READ);
       }

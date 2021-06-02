@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Rule;
 
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +52,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public static final String ATTRIBUTES = "attributes";
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
    public static final String RULES = "rules";
+   public static final String ROLES = "roles";
 
    private final Codec<Document> documentCodec;
 
@@ -83,7 +85,9 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
          });
       }
 
-      LinkType linkType = new LinkType(name, collectionCodes, attributes, rules);
+      Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(ROLES, Document.class));
+
+      LinkType linkType = new LinkType(name, collectionCodes, attributes, rules, permissions);
       linkType.setId(id);
       linkType.setVersion(version == null ? 0 : version);
       linkType.setLastAttributeNum(lastAttributeNum);

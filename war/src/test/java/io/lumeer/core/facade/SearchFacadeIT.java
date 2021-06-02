@@ -562,9 +562,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id11 = createDocument(collectionIds.get(2), "mr lumr").getId();
       String id12 = createDocument(collectionIds.get(2), "lol").getId();
       String linkType01Id = linkTypeDao.createLinkType(new LinkType("lmr",
-            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null)).getId();
+            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null)).getId();
       String linkType12Id = linkTypeDao.createLinkType(new LinkType("lmrr",
-            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList(), null)).getId();
+            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList(), null, null)).getId();
       createLinkInstance(linkType01Id, Arrays.asList(id1, id6));
       createLinkInstance(linkType01Id, Arrays.asList(id1, id7));
       createLinkInstance(linkType01Id, Arrays.asList(id2, id8));
@@ -698,9 +698,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchLinkInstances() {
-      LinkType linkType = new LinkType("nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
+      LinkType linkType = new LinkType("nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null);
       String linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType("nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
+      LinkType linkType2 = new LinkType("nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null);
       String linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       String id10 = createDocument(collectionIds.get(0), "lumeer").getId();

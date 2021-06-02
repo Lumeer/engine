@@ -89,11 +89,11 @@ public class RoleUtils {
    public static Set<Role> collectionResourceRoles(RoleOld role) {
       switch (role) {
          case READ:
-            return Set.of(new Role(RoleType.Read), new Role(RoleType.CommentContribute));
+            return Set.of(new Role(RoleType.Read, true), new Role(RoleType.CommentContribute));
          case WRITE:
             return Set.of(new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete));
          case MANAGE:
-            return Set.of(new Role(RoleType.Read), new Role(RoleType.CommentContribute), new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete), new Role(RoleType.Config), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.TechConfig));
+            return Set.of(new Role(RoleType.Read, true), new Role(RoleType.CommentContribute), new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete), new Role(RoleType.Config), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.TechConfig));
          default:
             return Collections.emptySet();
       }
@@ -109,7 +109,7 @@ public class RoleUtils {
          case WRITE:
             return collectionResourceRoles(role);
          case MANAGE:
-            return Set.of(new Role(RoleType.Read), new Role(RoleType.CommentContribute), new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete), new Role(RoleType.Config), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.QueryConfig), new Role(RoleType.PerspectiveConfig));
+            return Set.of(new Role(RoleType.Read, true), new Role(RoleType.CommentContribute), new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete), new Role(RoleType.Config), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.QueryConfig), new Role(RoleType.PerspectiveConfig));
          default:
             return Collections.emptySet();
       }

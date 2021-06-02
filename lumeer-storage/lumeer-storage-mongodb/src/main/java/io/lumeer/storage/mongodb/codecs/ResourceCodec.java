@@ -42,7 +42,7 @@ public abstract class ResourceCodec {
    public static final String PRIORITY = "priority";
    public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
-   public static final String ROLES = "permissions";
+   public static final String ROLES = "roles";
 
    protected final Codec<Document> documentCodec;
 

@@ -20,13 +20,11 @@ package io.lumeer.api.model.templateParse;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Rule;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.List;
 import java.util.Map;
@@ -45,8 +43,9 @@ public class LinkTypeWithId extends LinkType {
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<Attribute> attributes,
          @JsonProperty(LAST_ATTRIBUTE_NUM) final Integer lastAttributeNum,
-         @JsonProperty(RULES) final Map<String, Rule> rules) {
-      super(name, collectionIds, attributes, rules);
+         @JsonProperty(RULES) final Map<String, Rule> rules,
+         @JsonProperty(PERMISSIONS) final Permissions permissions) {
+      super(name, collectionIds, attributes, rules, permissions);
       setId(id);
       setVersion(version);
       setLastAttributeNum(lastAttributeNum);

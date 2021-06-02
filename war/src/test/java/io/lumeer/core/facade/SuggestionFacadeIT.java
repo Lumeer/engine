@@ -327,12 +327,12 @@ public class SuggestionFacadeIT extends IntegrationTestBase {
    }
 
    private LinkType prepareLinkType(String name, String collectionId1, String collectionId2) {
-      return new LinkType(name, Arrays.asList(collectionId1, collectionId2), Collections.emptyList(), null);
+      return new LinkType(name, Arrays.asList(collectionId1, collectionId2), Collections.emptyList(), null, null);
    }
 
    private LinkType prepareLinkType(String name, String collectionId1, String collectionId2, String... attributeNames) {
       List<Attribute> attributes = Arrays.stream(attributeNames).map(Attribute::new).collect(Collectors.toList());
-      return new LinkType(name, Arrays.asList(collectionId1, collectionId2), attributes, null);
+      return new LinkType(name, Arrays.asList(collectionId1, collectionId2), attributes, null, null);
    }
 
    private View prepareView(String name) {
