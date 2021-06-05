@@ -200,7 +200,7 @@ public class AuditFacade extends AbstractFacade {
 
          final AuditRecord auditRecord = auditDao.findLatestAuditRecord(linkTypeId, ResourceType.LINK, linkInstanceId);
 
-         final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkType, linkInstanceId);
+         final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
 
          if (auditRecord != null && auditRecord.getId().equals(auditRecordId) && auditRecord.getOldState() != null) {
             var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());

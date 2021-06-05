@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
@@ -26,10 +25,12 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
-import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.auth.UserAuth0Utils;
 import io.lumeer.core.exception.BadFormatException;
@@ -82,12 +83,6 @@ public class UserFacade extends AbstractFacade {
    private ProjectFacade projectFacade;
 
    @Inject
-   private CollectionFacade collectionFacade;
-
-   @Inject
-   private ViewFacade viewFacade;
-
-   @Inject
    private FeedbackDao feedbackDao;
 
    @Inject
@@ -114,7 +109,7 @@ public class UserFacade extends AbstractFacade {
    public User createUser(String organizationId, User user) {
       user.setEmail(user.getEmail().toLowerCase());
       checkOrganizationInUser(organizationId, user);
-      checkOrganizationPermissions(organizationId, RoleOld.MANAGE);
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
       checkUsersCreate(organizationId, 1);
 
       User storedUser = userDao.getUserByEmail(user.getEmail());
@@ -130,7 +125,7 @@ public class UserFacade extends AbstractFacade {
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       // we need at least project management rights
-      checkProjectPermissions(organizationId, projectId, RoleOld.MANAGE);
+      checkProjectPermissions(organizationId, projectId, RoleType.UserConfig);
 
       users.forEach(u -> u.setEmail(u.getEmail().toLowerCase()));
 
@@ -144,7 +139,7 @@ public class UserFacade extends AbstractFacade {
 
       // we need to add new users in the organization
       if (!orgUserEmails.containsAll(usersInRequest)) {
-         organization = checkOrganizationPermissions(organizationId, RoleOld.MANAGE);
+         organization = checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
          users.forEach(user -> {
             if (!checkOrganizationInUser(organizationId, user)) {
@@ -155,58 +150,40 @@ public class UserFacade extends AbstractFacade {
          checkUsersCreate(organizationId, users.size());
 
          newUsers = createUsersInOrganization(organizationId, users);
-         addUsersToOrganization(organization, newUsers);
       } else { // we will just amend the rights at the project level
          organization = organizationFacade.getOrganizationById(organizationId);
          newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
-         addUsersToOrganization(organization, newUsers);
       }
 
+      addUsersToOrganization(organization, newUsers);
       addUsersToProject(organization, projectId, newUsers, invitationType);
-
-      // in case of manage rights, we add them at the project level only
-      if (invitationType != null && invitationType != InvitationType.JOIN_ONLY && invitationType != InvitationType.MANAGE) {
-         shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
-      }
 
       return newUsers;
    }
 
-   private Set<RoleOld> getInvitationRoles(final InvitationType invitationType) {
-      return getInvitationRoles(invitationType, new HashSet<>());
-   }
-
-   private Set<RoleOld> getInvitationRoles(final InvitationType invitationType, Set<RoleOld> minimalSet) {
-      final Set<RoleOld> roles = new HashSet<>(minimalSet);
+   private Set<Role> getInvitationRoles(final InvitationType invitationType, final ResourceType resourceType, Set<Role> minimalSet) {
+      final Set<Role> roles = new HashSet<>(minimalSet);
 
       // do not wonder - there isn't the return statement on purpose so that we collect the roles on the way
       switch (invitationType) {
          case MANAGE:
-            roles.add(RoleOld.MANAGE);
+            if (resourceType == ResourceType.ORGANIZATION) {
+               roles.addAll(RoleUtils.organizationResourceRoles());
+            } else if (resourceType == ResourceType.PROJECT) {
+               roles.addAll(RoleUtils.projectResourceRoles());
+            }
          case READ_WRITE:
-            roles.add(RoleOld.WRITE);
+            if (resourceType == ResourceType.ORGANIZATION) {
+               roles.addAll(Set.of(new Role(RoleType.Contribute)));
+            } else if (resourceType == ResourceType.PROJECT) {
+               roles.addAll(Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.CollectionContribute), new Role(RoleType.LinkContribute)));
+            }
+            roles.add(new Role(RoleType.Write, true));
          case READ_ONLY:
-            roles.add(RoleOld.READ);
+            roles.add(new Role(RoleType.Read));
       }
 
       return roles;
-   }
-
-   private void shareResources(final Organization organization, final Project project, final List<User> users, final InvitationType invitationType) {
-      workspaceKeeper.setWorkspaceIds(organization.getId(), project.getId());
-
-      final Set<RoleOld> roles = getInvitationRoles(invitationType);
-
-      final Set<Permission> permissionSet = new HashSet<>();
-      users.forEach(user -> {
-         permissionSet.add(Permission.buildWithRoles(user.getId(), roles));
-      });
-
-      final List<Collection> collections = collectionFacade.getCollections();
-      collections.forEach(c -> collectionFacade.updateUserPermissions(c.getId(), permissionSet));
-
-      final List<View> views = viewFacade.getViews();
-      views.forEach(v -> viewFacade.updateUserPermissions(v.getId(), permissionSet));
    }
 
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {
@@ -233,9 +210,9 @@ public class UserFacade extends AbstractFacade {
       return users.stream()
                   .map(user -> {
                      var existingPermissions = resource.getPermissions().getUserPermissions().stream().filter(permission -> permission.getId().equals(user.getId())).findFirst();
-                     var minimalSet = new HashSet<>(Set.of(RoleOld.READ));
+                     var minimalSet = new HashSet<>(Set.of(new Role(RoleType.Read)));
                      existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
-                     return Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, minimalSet));
+                     return Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, resource.getType(), minimalSet));
                   })
                   .collect(Collectors.toSet());
    }
@@ -263,7 +240,7 @@ public class UserFacade extends AbstractFacade {
 
    public User updateUser(String organizationId, String userId, User user) {
       checkOrganizationInUser(organizationId, user);
-      checkOrganizationPermissions(organizationId, RoleOld.MANAGE);
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
       User storedUser = userDao.getUserById(userId);
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
@@ -299,7 +276,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public void deleteUser(String organizationId, String userId) {
-      checkOrganizationPermissions(organizationId, RoleOld.MANAGE);
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
       userDao.deleteUserGroups(organizationId, userId);
       User storedUser = userDao.getUserById(userId);
@@ -312,7 +289,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public List<User> getUsers(String organizationId) {
-      checkOrganizationPermissions(organizationId, RoleOld.READ);
+      checkOrganizationPermissions(organizationId, RoleType.Read);
 
       return userDao.getAllUsers(organizationId).stream()
                     .map(user -> keepOnlyOrganizationGroups(user, organizationId))
@@ -401,16 +378,16 @@ public class UserFacade extends AbstractFacade {
    public void setDefaultWorkspace(DefaultWorkspace workspace) {
       Organization organization;
       if (workspace.getOrganizationId() != null) {
-         organization = checkOrganizationPermissions(workspace.getOrganizationId(), RoleOld.READ);
+         organization = checkOrganizationPermissions(workspace.getOrganizationId(), RoleType.Read);
       } else {
-         organization = checkOrganizationPermissionsByCode(workspace.getOrganizationCode(), RoleOld.READ);
+         organization = checkOrganizationPermissionsByCode(workspace.getOrganizationCode(), RoleType.Read);
       }
 
       Project project;
       if (workspace.getProjectId() != null) {
-         project = checkProjectPermissions(organization.getId(), workspace.getProjectId(), RoleOld.READ);
+         project = checkProjectPermissions(organization.getId(), workspace.getProjectId(), RoleType.Read);
       } else {
-         project = checkProjectPermissionsByCode(organization.getId(), workspace.getProjectCode(), RoleOld.READ);
+         project = checkProjectPermissionsByCode(organization.getId(), workspace.getProjectCode(), RoleType.Read);
       }
 
       DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
@@ -446,21 +423,21 @@ public class UserFacade extends AbstractFacade {
       return user;
    }
 
-   private Organization checkOrganizationPermissions(final String organizationId, final RoleOld role) {
+   private Organization checkOrganizationPermissions(final String organizationId, final RoleType role) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
       permissionsChecker.checkRole(organization, role);
 
       return organization;
    }
 
-   private Organization checkOrganizationPermissionsByCode(final String organizationCode, final RoleOld role) {
+   private Organization checkOrganizationPermissionsByCode(final String organizationCode, final RoleType role) {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, role);
 
       return organization;
    }
 
-   private Project checkProjectPermissions(final String organizationId, final String projectId, final RoleOld role) {
+   private Project checkProjectPermissions(final String organizationId, final String projectId, final RoleType role) {
       workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
@@ -468,7 +445,7 @@ public class UserFacade extends AbstractFacade {
       return project;
    }
 
-   private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final RoleOld role) {
+   private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final RoleType role) {
       workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, role);

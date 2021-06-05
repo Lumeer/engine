@@ -16,24 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.util;
+package io.lumeer.core.exception;
 
+import io.lumeer.api.exception.LumeerException;
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
-import io.lumeer.storage.api.dao.LinkDataDao;
-import io.lumeer.storage.api.dao.LinkInstanceDao;
 
-public class LinkInstanceUtils {
+public class NoLinkInstancePermissionException extends LumeerException {
 
-   public static LinkInstance loadLinkInstanceWithData(final LinkInstanceDao linkInstanceDao, final LinkDataDao linkDataDao, final String linkInstanceId) {
-      final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(linkInstanceId);
-      linkInstance.setData(linkDataDao.getData(linkInstance.getLinkTypeId(), linkInstanceId));
+   private final LinkInstance linkInstance;
 
+   public NoLinkInstancePermissionException(final LinkInstance linkInstance) {
+      super("document");
+      this.linkInstance = linkInstance;
+   }
+
+   public LinkInstance getLinkInstance() {
       return linkInstance;
    }
-
-   public static boolean isLinkInstanceOwner(final LinkType linkType, final LinkInstance linkInstance, String userId) {
-      return linkInstance.getCreatedBy().equals(userId);
-   }
-
 }

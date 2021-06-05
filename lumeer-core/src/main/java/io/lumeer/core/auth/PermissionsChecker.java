@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toMap;
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
@@ -35,6 +36,8 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
+import io.lumeer.core.exception.FeatureNotAllowedException;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.FreshdeskFacade;
@@ -175,8 +178,12 @@ public class PermissionsChecker {
       return permissionAdapter.hasRole(getOrganization(), getProject(), resource, role, userId);
    }
 
-   public boolean hasAnyRoleInResource(Resource resource, Set<RoleType> roles) {
-      return permissionAdapter.hasAnyRoleInResource(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   public boolean hasAllRoles(Resource resource, Set<RoleType> roles) {
+      return permissionAdapter.hasAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkAllRoles(Resource resource, Set<RoleType> roles) {
+      permissionAdapter.checlAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -215,12 +222,23 @@ public class PermissionsChecker {
       return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, userId);
    }
 
+   /**
+    * Checks if user can create documents in the given collection
+    *
+    * @param collection collection resource
+    * @throws NoResourcePermissionException when the user does not have the permission.
+    */
+
    public void checkCreateDocuments(final Collection collection) {
       permissionAdapter.checkCanCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
    }
 
    public boolean canCreateDocuments(final Collection collection) {
       return permissionAdapter.canCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkReadDocument(final Collection collection, final Document document) {
+      permissionAdapter.checkCanReadDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
    }
 
    public void checkEditDocument(final Collection collection, final Document document) {
@@ -237,6 +255,45 @@ public class PermissionsChecker {
 
    public boolean canDeleteDocuments(final Collection collection, final Document document) {
       return permissionAdapter.canDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   /**
+    * Checks if user can create link instances in the given lnk type
+    *
+    * @param linkType linkType resource
+    * @throws NoPermissionException when the user does not have the permission.
+    */
+
+   public void checkCreateLinkInstances(final LinkType linkType) {
+      permissionAdapter.checkCanCreateLinkInstances(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canCreateLinkInstances(final LinkType linkType) {
+      return permissionAdapter.canCreateLinkInstances(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkReadLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      permissionAdapter.checkCanReadLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canReadLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      return permissionAdapter.canReadLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkEditLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      permissionAdapter.checkCanEditLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canEditLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      return permissionAdapter.canEditLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkDeleteLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      permissionAdapter.checkCanDeleteLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canDeleteLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      return permissionAdapter.canDeleteLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -291,7 +348,7 @@ public class PermissionsChecker {
    }
 
    public Map<String, AllowedPermissions> getLinkTypesPermissions(final java.util.Collection<LinkType> linkTypes) {
-       return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, this::getLinkTypePermissions));
+      return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, this::getLinkTypePermissions));
    }
 
    public AllowedPermissions getLinkTypePermissions(final LinkType linkType) {
@@ -319,6 +376,20 @@ public class PermissionsChecker {
             throw new NoResourcePermissionException(collection);
          }
       });
+   }
+
+   /**
+    * Checks whether current plan includes groups handling.
+    */
+   public void checkGroupsHandle() {
+      if (skipLimits()) {
+         return;
+      }
+
+      final ServiceLimits limits = getServiceLimits();
+      if (!limits.isGroups()) {
+         throw new FeatureNotAllowedException("groups");
+      }
    }
 
    /**

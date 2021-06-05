@@ -18,24 +18,25 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.LinkInstanceUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
@@ -63,9 +64,6 @@ public class ResourceCommentFacade extends AbstractFacade {
    private ViewDao viewDao;
 
    @Inject
-   private SelectedWorkspace selectedWorkspace;
-
-   @Inject
    private DocumentDao documentDao;
 
    @Inject
@@ -76,6 +74,9 @@ public class ResourceCommentFacade extends AbstractFacade {
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
 
    private ResourceCommentAdapter adapter;
 
@@ -168,36 +169,41 @@ public class ResourceCommentFacade extends AbstractFacade {
    }
 
    private void checkPermissions(final ResourceType resourceType, final String resourceId) {
-      // TODO some workspace permissions ???
-
-      if (resourceType == ResourceType.LINK) {
-         final LinkType linkType = getLinkType(resourceId);
-         final List<String> collectionIds = linkType.getCollectionIds();
-
-         if (collectionIds != null) {
-            collectionIds.forEach(id -> permissionsChecker.checkRoleInCollectionWithView((Collection) getResource(ResourceType.COLLECTION, resourceId), RoleOld.READ, RoleOld.READ));
+      switch (resourceType) {
+         case LINK_TYPE: {
+            permissionsChecker.checkRoleInLinkTypeWithView(getLinkType(resourceId), RoleType.CommentContribute);
          }
-      } else if (resourceType == ResourceType.COLLECTION) {
-         permissionsChecker.checkRoleInCollectionWithView((Collection) getResource(resourceType, resourceId), RoleOld.READ, RoleOld.READ);
-      } else if (resourceType == ResourceType.DOCUMENT) {
-         Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
-         Collection collection = collectionDao.getCollectionById(document.getCollectionId());
-         // TODO create adapter to check permissions on document level
-         if (DocumentUtils.isTaskAssignedByUser(collection, document, authenticatedUser.getUserEmail())) {
-            return;
+         case COLLECTION: {
+            permissionsChecker.checkRoleInCollectionWithView(getCollection(resourceId), RoleType.CommentContribute, RoleType.CommentContribute);
          }
-         permissionsChecker.checkRoleInCollectionWithView(collection, RoleOld.READ, RoleOld.READ);
-      } else {
-         permissionsChecker.checkRole(getResource(resourceType, resourceId), RoleOld.READ);
+         case LINK: {
+            final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, resourceId);
+            final LinkType linkType = getLinkType(linkInstance.getLinkTypeId());
+
+            if (!permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleType.CommentContribute)) {
+               permissionsChecker.checkReadLinkInstance(linkType, linkInstance);
+            }
+         }
+         case DOCUMENT: {
+            Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
+            Collection collection = collectionDao.getCollectionById(document.getCollectionId());
+
+            if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.CommentContribute, RoleType.CommentContribute)) {
+               permissionsChecker.checkReadDocument(collection, document);
+            }
+         }
+         default: {
+            permissionsChecker.checkRole(getResource(resourceType, resourceId), RoleType.CommentContribute);
+         }
       }
    }
 
    private Resource getResource(final ResourceType resourceType, final String resourceId) {
       switch (resourceType) {
          case ORGANIZATION:
-            return selectedWorkspace.getOrganization().get();
+            return getOrganization();
          case PROJECT:
-            return selectedWorkspace.getProject().get();
+            return getProject();
          case VIEW:
             return viewDao.getViewById(resourceId);
          case COLLECTION:
@@ -211,5 +217,9 @@ public class ResourceCommentFacade extends AbstractFacade {
 
    private LinkType getLinkType(final String resourceId) {
       return linkTypeDao.getLinkType(resourceId);
+   }
+
+   private Collection getCollection(final String resourceId) {
+      return collectionDao.getCollectionById(resourceId);
    }
 }

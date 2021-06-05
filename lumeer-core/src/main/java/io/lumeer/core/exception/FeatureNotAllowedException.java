@@ -16,24 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.util;
+package io.lumeer.core.exception;
 
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
-import io.lumeer.storage.api.dao.LinkDataDao;
-import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.api.exception.LumeerException;
 
-public class LinkInstanceUtils {
+public class FeatureNotAllowedException extends LumeerException {
 
-   public static LinkInstance loadLinkInstanceWithData(final LinkInstanceDao linkInstanceDao, final LinkDataDao linkDataDao, final String linkInstanceId) {
-      final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(linkInstanceId);
-      linkInstance.setData(linkDataDao.getData(linkInstance.getLinkTypeId(), linkInstanceId));
-
-      return linkInstance;
+   public FeatureNotAllowedException(final String feature) {
+      super("Feature " + feature + " is not allowed in current plan.");
    }
-
-   public static boolean isLinkInstanceOwner(final LinkType linkType, final LinkInstance linkInstance, String userId) {
-      return linkInstance.getCreatedBy().equals(userId);
-   }
-
 }

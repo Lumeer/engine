@@ -30,7 +30,7 @@ import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.ProjectMeta;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.templateParse.CollectionWithId;
 import io.lumeer.api.model.templateParse.DocumentWithId;
 import io.lumeer.api.model.templateParse.LinkInstanceWithId;
@@ -131,7 +131,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project createProject(Project project) {
       Utils.checkCodeSafe(project.getCode());
-      checkOrganizationRole(RoleOld.WRITE);
+      checkOrganizationRole(RoleType.Contribute);
       checkProjectCreate(project);
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Project.ROLES);
@@ -147,7 +147,7 @@ public class ProjectFacade extends AbstractFacade {
    public Project updateProject(final String projectId, final Project project) {
       Utils.checkCodeSafe(project.getCode());
       final Project storedProject = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(storedProject, RoleOld.MANAGE);
+      permissionsChecker.checkRole(storedProject, RoleType.Config);
 
       keepStoredPermissions(project, storedProject.getPermissions());
       keepUnmodifiableFields(project, storedProject);
@@ -159,7 +159,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public void deleteProject(final String projectId) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleOld.MANAGE);
+      permissionsChecker.checkRole(project, RoleType.Delete);
       permissionsChecker.checkCanDelete(project);
 
       deleteProjectScopedRepositories(project);
@@ -170,16 +170,16 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project getProjectByCode(final String projectCode) {
       Project project = projectDao.getProjectByCode(projectCode);
-      permissionsChecker.checkRole(project, RoleOld.READ);
+      permissionsChecker.checkRole(project, RoleType.Read);
 
       return mapResource(project);
    }
 
    public Project getProjectById(final String projectId) {
-      return getProject(projectId, RoleOld.READ);
+      return getProject(projectId, RoleType.Read);
    }
 
-   private Project getProject(final String projectId, final RoleOld role) {
+   private Project getProject(final String projectId, final RoleType role) {
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
 
@@ -197,9 +197,12 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public List<Project> getProjects() {
-      // TODO get all?
-      checkOrganizationRole(RoleOld.READ);
-      return getProjectsByPermissions();
+      checkOrganizationRole(RoleType.Read);
+
+      return getAllProjects().stream()
+                             .filter(project -> permissionsChecker.hasRole(project, RoleType.Read))
+                             .map(this::mapResource)
+                             .collect(Collectors.toList());
    }
 
    public List<Project> getPublicProjects() {
@@ -218,19 +221,13 @@ public class ProjectFacade extends AbstractFacade {
       return projectDao.getAllProjects();
    }
 
-   private List<Project> getProjectsByPermissions() {
-      return projectDao.getProjects(createSimpleQuery()).stream()
-                       .map(this::mapResource)
-                       .collect(Collectors.toList());
-   }
-
    public Set<String> getProjectsCodes() {
       return projectDao.getProjectsCodes();
    }
 
    public Permissions getProjectPermissions(final String projectId) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleOld.READ);
+      permissionsChecker.checkRole(project, RoleType.UserConfig);
 
       return mapResource(project).getPermissions();
    }
@@ -245,7 +242,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public Set<Permission> updateUserPermissions(final String projectId, final Set<Permission> userPermissions, boolean update) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleOld.MANAGE);
+      permissionsChecker.checkRole(project, RoleType.UserConfig);
 
       final Project originalProject = project.copy();
       if (update) {
@@ -261,7 +258,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public void removeUserPermission(final String projectId, final String userId) {
       final Project storedProject = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(storedProject, RoleOld.MANAGE);
+      permissionsChecker.checkRole(storedProject, RoleType.UserConfig);
 
       final Project project = storedProject.copy();
       project.getPermissions().removeUserPermission(userId);
@@ -270,8 +267,10 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public Set<Permission> updateGroupPermissions(final String projectId, final Set<Permission> groupPermissions) {
+      permissionsChecker.checkGroupsHandle();
+
       final Project storedProject = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(storedProject, RoleOld.MANAGE);
+      permissionsChecker.checkRole(storedProject, RoleType.UserConfig);
 
       final Project project = storedProject.copy();
       project.getPermissions().updateGroupPermissions(groupPermissions);
@@ -282,8 +281,10 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public void removeGroupPermission(final String projectId, final String groupId) {
+      permissionsChecker.checkGroupsHandle();
+
       final Project storedProject = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(storedProject, RoleOld.MANAGE);
+      permissionsChecker.checkRole(storedProject, RoleType.UserConfig);
 
       final Project project = storedProject.copy();
       project.getPermissions().removeGroupPermission(groupId);
@@ -318,7 +319,7 @@ public class ProjectFacade extends AbstractFacade {
       }
    }
 
-   private void checkOrganizationRole(RoleOld role) {
+   private void checkOrganizationRole(RoleType role) {
       if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
@@ -338,8 +339,8 @@ public class ProjectFacade extends AbstractFacade {
 
    public ProjectContent getRawProjectContent(final String projectId) {
       final Project storedProject = projectDao.getProjectById(projectId);
-      if (!storedProject.isPublic()) {
-         permissionsChecker.checkRole(storedProject, RoleOld.MANAGE);
+      if (!storedProject.isPublic() && !permissionsChecker.canReadAllInWorkspace()) {
+         throw new NoResourcePermissionException(storedProject);
       }
 
       final ProjectContent content = new ProjectContent();
@@ -402,13 +403,13 @@ public class ProjectFacade extends AbstractFacade {
 
    public void switchOrganization() {
       workspaceKeeper.getOrganization().ifPresent(o -> {
-         permissionsChecker.checkRole(o, RoleOld.READ);
+         permissionsChecker.checkRole(o, RoleType.Read);
          projectDao.switchOrganization();
       });
    }
 
    public ProjectDescription getProjectDescription() {
-      if (!permissionsChecker.isPublic() && !permissionsChecker.hasAnyRoleInResource(getProject(), Set.of(RoleOld.READ, RoleOld.WRITE))) {
+      if (!permissionsChecker.isPublic() && !permissionsChecker.hasRole(getProject(), RoleType.Read)) {
          return null;
       }
 
@@ -436,7 +437,7 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectById(projectId);
 
       if (project != null) {
-         permissionsChecker.checkRole(project, RoleOld.MANAGE);
+         permissionsChecker.checkRole(project, RoleType.Delete);
 
          final List<Document> documents = documentDao.getDocumentsWithTemplateId();
          final List<LinkInstance> links = linkInstanceDao.getLinkInstancesByDocumentIds(documents.stream().map(Document::getId).collect(Collectors.toSet()));

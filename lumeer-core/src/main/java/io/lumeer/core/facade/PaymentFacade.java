@@ -25,7 +25,7 @@ import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.ReferralPayment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -313,7 +313,7 @@ public class PaymentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, RoleOld.MANAGE);
+      permissionsChecker.checkRole(organization, RoleType.Config);
    }
 
    private void checkReadPermissions(final Organization organization) {
@@ -321,6 +321,6 @@ public class PaymentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, RoleOld.READ);
+      permissionsChecker.checkRole(organization, RoleType.Read);
    }
 }

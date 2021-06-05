@@ -19,15 +19,22 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.LinkInstanceUtils;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3Utils;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.StorageException;
 
@@ -88,6 +95,18 @@ public class FileAttachmentFacade extends AbstractFacade {
    private LinkTypeDao linkTypeDao;
 
    @Inject
+   private DocumentDao documentDao;
+
+   @Inject
+   private DataDao dataDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
+
+   @Inject
    private ConfigurationFacade configurationFacade;
 
    @PostConstruct
@@ -117,9 +136,9 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    public FileAttachment createFileAttachment(final FileAttachment fileAttachment) {
       if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+         checkCanEditDocument(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       } else {
-         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+         checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       }
 
       return presignFileAttachment(fileAttachmentDao.createFileAttachment(fileAttachment), true);
@@ -130,9 +149,9 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       if (!permissionsChecker.isPublic()) {
          if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-            checkCollectionWritePermissions(fileAttachment.getCollectionId());
+            checkCanEditDocument(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
          } else {
-            checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+            checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
          }
       }
 
@@ -141,31 +160,27 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
       if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionReadPermissions(collectionId);
+         checkCanReadDocument(collectionId, documentId);
       } else {
-         checkLinkTypeReadPermissions(collectionId);
+         checkCanReadLinkInstance(collectionId, documentId);
       }
 
       return fileAttachmentDao.findAllFileAttachments(
-              workspaceKeeper.getOrganization().get(),
-              workspaceKeeper.getProject().get(),
+            getOrganization(),
+            getProject(),
               collectionId, documentId, attributeId, type)
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
               .collect(Collectors.toList());
    }
 
-   public void duplicateFileAttachments(final String collectionId, final Map<String, String> sourceTargetIdMap, final FileAttachment.AttachmentType type) {
-      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionReadPermissions(collectionId);
-      } else {
-         checkLinkTypeReadPermissions(collectionId);
-      }
+   protected void duplicateFileAttachments(final String collectionId, final Map<String, String> sourceTargetIdMap, final FileAttachment.AttachmentType type) {
+      // we don't have to check permissions because method is not called from service
 
       sourceTargetIdMap.forEach((sourceId, targetId) -> {
          List<FileAttachment> fileAttachments = fileAttachmentDao.findAllFileAttachments(
-               workspaceKeeper.getOrganization().get(),
-               workspaceKeeper.getProject().get(),
+               getOrganization(),
+               getProject(),
                collectionId, sourceId, type);
 
          fileAttachments.forEach(fa -> {
@@ -179,14 +194,14 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final String documentId, final FileAttachment.AttachmentType type) {
       if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionReadPermissions(collectionId);
+         checkCanReadDocument(collectionId, documentId);
       } else {
-         checkLinkTypeReadPermissions(collectionId);
+         checkCanReadLinkInstance(collectionId, documentId);
       }
 
       return fileAttachmentDao.findAllFileAttachments(
-              workspaceKeeper.getOrganization().get(),
-              workspaceKeeper.getProject().get(),
+            getOrganization(),
+            getProject(),
               collectionId, documentId, type)
               .stream()
               .map(fa -> presignFileAttachment(fa, false))
@@ -196,15 +211,15 @@ public class FileAttachmentFacade extends AbstractFacade {
    public List<FileAttachment> getAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
       if (!permissionsChecker.isPublic()) {
          if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-            checkCollectionReadPermissions(collectionId);
+            // TODO checkCollectionReadPermissions(collectionId);
          } else {
-            checkLinkTypeReadPermissions(collectionId);
+            // TODO checkLinkTypeReadPermissions(collectionId);
          }
       }
 
       return fileAttachmentDao.findAllFileAttachments(
-              workspaceKeeper.getOrganization().get(),
-              workspaceKeeper.getProject().get(),
+            getOrganization(),
+            getProject(),
               collectionId,
               type)
               .stream()
@@ -214,9 +229,9 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
       if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+         checkCanEditDocument(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       } else {
-         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+         checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       }
 
       final FileAttachment storedFileAttachment = fileAttachmentDao.findFileAttachment(fileAttachment);
@@ -244,9 +259,9 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    public void removeFileAttachment(final FileAttachment fileAttachment) {
       if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionWritePermissions(fileAttachment.getCollectionId());
+         checkCanEditDocument(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       } else {
-         checkLinkTypeWritePermissions(fileAttachment.getCollectionId());
+         checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       }
 
       if (s3 != null) {
@@ -315,13 +330,13 @@ public class FileAttachmentFacade extends AbstractFacade {
       }
 
       if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-         checkCollectionReadPermissions(collectionId);
+         checkCanReadDocument(collectionId, documentId);
       } else {
-         checkLinkTypeReadPermissions(collectionId);
+         checkCanReadLinkInstance(collectionId, documentId);
       }
 
-      final String organizationId = workspaceKeeper.getOrganization().get().getId();
-      final String projectId = workspaceKeeper.getProject().get().getId();
+      final String organizationId = getOrganization().getId();
+      final String projectId = getProject().getId();
       final ListObjectsV2Response response = s3.listObjectsV2(
               ListObjectsV2Request
                       .builder()
@@ -374,7 +389,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       removeAllFileAttachments(collectionId, null, null, type);
 
-      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, type);
+      fileAttachmentDao.removeAllFileAttachments(getOrganization(), getProject(), collectionId, type);
    }
 
    void removeAllFileAttachments(final String collectionId, final String attributeId, final FileAttachment.AttachmentType type) {
@@ -382,7 +397,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       removeFileAttachments(collectionId, null, attributeId, type);
 
-      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, attributeId, type);
+      fileAttachmentDao.removeAllFileAttachments(getOrganization(), getProject(), collectionId, attributeId, type);
    }
 
    void removeAllFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
@@ -390,7 +405,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       removeFileAttachments(collectionId, documentId, attributeId, type);
 
-      fileAttachmentDao.removeAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), collectionId, documentId, attributeId, type);
+      fileAttachmentDao.removeAllFileAttachments(getOrganization(), getProject(), collectionId, documentId, attributeId, type);
    }
 
    private void removeFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
@@ -398,8 +413,8 @@ public class FileAttachmentFacade extends AbstractFacade {
          return;
       }
 
-      final String organizationId = workspaceKeeper.getOrganization().get().getId();
-      final String projectId = workspaceKeeper.getProject().get().getId();
+      final String organizationId = getOrganization().getId();
+      final String projectId = getProject().getId();
       final ListObjectsV2Response response = s3.listObjectsV2(
               ListObjectsV2Request
                       .builder()
@@ -419,32 +434,32 @@ public class FileAttachmentFacade extends AbstractFacade {
       s3.deleteObjects(DeleteObjectsRequest.builder().bucket(S3_BUCKET).delete(delete).build());
    }
 
-   private Collection checkCollectionWritePermissions(final String collectionId) {
+   private void checkCanEditDocument(final String collectionId, final String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleInCollectionWithView(collection, RoleOld.WRITE, RoleOld.WRITE);
+      Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, documentId);
 
-      return collection;
+      permissionsChecker.checkEditDocument(collection, document);
    }
 
-   private Collection checkCollectionReadPermissions(final String collectionId) {
+   private void checkCanReadDocument(final String collectionId, final String documentId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleInCollectionWithView(collection, RoleOld.READ, RoleOld.READ);
+      Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, documentId);
 
-      return collection;
+      permissionsChecker.checkReadDocument(collection, document);
    }
 
-   private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, RoleOld.WRITE);
-   }
-
-   private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, RoleOld.READ);
-   }
-
-   private LinkType checkLinkTypePermissions(String linkTypeId, RoleOld role) {
+   private void checkCanEditLinkInstance(final String linkTypeId, final String linkInstanceId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
-      return linkType;
+      LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+
+      permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
+   }
+
+   private void checkCanReadLinkInstance(final String linkTypeId, final String linkInstanceId) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+
+      permissionsChecker.checkReadLinkInstance(linkType, linkInstance);
    }
 
    private void checkFileAttachmentName(final FileAttachment fileAttachment) {

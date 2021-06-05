@@ -21,7 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.CompanyContact;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
@@ -58,6 +58,6 @@ public class CompanyContactFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, RoleOld.MANAGE);
+      permissionsChecker.checkRole(organization, RoleType.Config);
    }
 }
