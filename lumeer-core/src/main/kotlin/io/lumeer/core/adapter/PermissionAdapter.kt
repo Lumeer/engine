@@ -32,7 +32,6 @@ import io.lumeer.core.util.FunctionRuleJsParser
 import io.lumeer.core.util.LinkInstanceUtils
 import io.lumeer.core.util.QueryUtils
 import io.lumeer.storage.api.dao.*
-import java.util.function.Consumer
 
 class PermissionAdapter(private val userDao: UserDao,
                         private val groupDao: GroupDao,
@@ -106,8 +105,14 @@ class PermissionAdapter(private val userDao: UserDao,
       return PermissionUtils.getLinkTypeUsersByRole(organization, project, linkType, getLinkTypeCollections(linkType), getUsers(organization.id), roleType)
    }
 
-   fun <T : Resource> getResourceReadersDifference(organization: Organization, project: Project?, resource1: T, resource2: T): RolesDifference {
-      return PermissionUtils.getResourceUsersDifferenceByRole(organization, project, resource1, resource2, getUsers(organization.id), RoleType.Read)
+   fun <T : Resource> getResourceReadersDifference(organization: Organization?, project: Project?, resource1: T, resource2: T): RolesDifference {
+      if (resource1.type == ResourceType.ORGANIZATION) {
+         return getOrganizationReadersDifference(resource1 as Organization, resource2 as Organization)
+      }
+      if (organization != null) {
+         return PermissionUtils.getResourceUsersDifferenceByRole(organization, project, resource1, resource2, getUsers(organization.id), RoleType.Read)
+      }
+      return RolesDifference(setOf(), setOf())
    }
 
    fun <T : Resource> getUserRolesInResource(organization: Organization?, project: Project?, resource: T, userId: String): Set<RoleType> {
@@ -355,7 +360,7 @@ class PermissionAdapter(private val userDao: UserDao,
 
       val references = FunctionRuleJsParser.parseRuleFunctionJs(js, collectionIds, linkTypeIds)
 
-      references.forEach(Consumer { reference: FunctionRuleJsParser.ResourceReference ->
+      references.forEach { reference ->
          when (reference.resourceType) {
             ResourceType.COLLECTION -> {
                checkRole(organization, project, collections[reference.id]!!, role, userId)
@@ -367,7 +372,7 @@ class PermissionAdapter(private val userDao: UserDao,
                throw NoPermissionException("Rule")
             }
          }
-      })
+      }
    }
 
    fun getUser(userId: String): User {

@@ -26,7 +26,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
@@ -44,9 +45,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -118,14 +117,14 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       this.stranger = userDao.createUser(new User(STRANGER_USER));
 
       userPermissions = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
-      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ));
-      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(RoleOld.READ));
-      groupPermissions = Permission.buildWithRoles(GROUP, Collections.singleton(RoleOld.READ));
+      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
+      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(new Role(RoleType.Read)));
+      groupPermissions = Permission.buildWithRoles(GROUP, Collections.singleton(new Role(RoleType.Read)));
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
-      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ)));
+      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
       this.organization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(this.organization);
@@ -232,7 +231,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
       permissions = projectFacade.getProjectPermissions(project2.getId());
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions, Permission.buildWithRoles(userStrangerPermissions.getId(), Set.of(RoleOld.READ)));
+      assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions, Permission.buildWithRoles(userStrangerPermissions.getId(), Collections.singleton(new Role(RoleType.Read))));
 
       permissions = projectFacade.getProjectPermissions(project3.getId());
       assertThat(permissions).isNotNull();
@@ -243,7 +242,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(RoleOld.MANAGE, RoleOld.READ));
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.Write, true)));
       projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
@@ -268,7 +267,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission groupPermission = Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(RoleOld.SHARE, RoleOld.READ)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.CollectionContribute, true), new Role(RoleType.Write)));
       projectFacade.updateGroupPermissions(project.getId(), Set.of(groupPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();

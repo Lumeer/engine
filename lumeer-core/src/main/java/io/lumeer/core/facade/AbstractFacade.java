@@ -31,7 +31,6 @@ import io.lumeer.core.cache.UserCache;
 import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
-import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 
 abstract class AbstractFacade {
@@ -51,12 +50,14 @@ abstract class AbstractFacade {
    @Inject
    protected WorkspaceKeeper workspaceKeeper;
 
-   @PostConstruct
-   public void init() {
-       facadeAdapter = new FacadeAdapter(permissionsChecker.getPermissionAdapter());
-   }
-
    protected FacadeAdapter facadeAdapter;
+
+   public FacadeAdapter getFacadeAdapter() {
+      if (facadeAdapter == null) {
+         facadeAdapter = new FacadeAdapter(permissionsChecker.getPermissionAdapter());
+      }
+      return facadeAdapter;
+   }
 
    protected String getCurrentUserId() {
       return authenticatedUser.getCurrentUserId();
@@ -72,22 +73,22 @@ abstract class AbstractFacade {
 
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
       if (authenticatedUser.getCurrentUserId().equals(userId)) {
-         return facadeAdapter.mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
+         return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
       } else {
-         return facadeAdapter.mapResource(getOrganization(), getProject(), resource, userCache.getUserById(userId));
+         return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, userCache.getUserById(userId));
       }
    }
 
    protected <T extends Resource> T mapResource(final T resource) {
-      return facadeAdapter.mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
+      return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
    }
 
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
-      facadeAdapter.keepStoredPermissions(resource, storedPermissions);
+      getFacadeAdapter().keepStoredPermissions(resource, storedPermissions);
    }
 
    protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {
-      facadeAdapter.keepUnmodifiableFields(destinationResource, originalResource);
+      getFacadeAdapter().keepUnmodifiableFields(destinationResource, originalResource);
    }
 
    protected DatabaseQuery createSimpleQuery() {
@@ -108,6 +109,6 @@ abstract class AbstractFacade {
    }
 
    protected <T extends Resource> T setupPublicPermissions(final T resource) {
-      return facadeAdapter.setupPublicPermissions(resource, authenticatedUser.getCurrentUserId());
+      return getFacadeAdapter().setupPublicPermissions(resource, authenticatedUser.getCurrentUserId());
    }
 }

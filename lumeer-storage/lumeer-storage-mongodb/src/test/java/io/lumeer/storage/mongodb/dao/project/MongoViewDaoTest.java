@@ -25,7 +25,8 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.View;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -42,7 +43,6 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MongoViewDaoTest extends MongoDbTestBase {
 
@@ -74,10 +74,10 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final String NOT_EXISTING_ID = "598323f5d412bc7a51b5a460";
 
    static {
-      USER_PERMISSION = new Permission(USER, View.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet()));
+      USER_PERMISSION = new Permission(USER, View.ROLES);
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(RoleOld.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(new Role(RoleType.Read)));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
@@ -271,14 +271,14 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    @Test
    public void testGetViewsNoReadRole() {
       View view = prepareView();
-      Permission userPermission = new Permission(USER2, Collections.singleton(RoleOld.CLONE.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Config)));
       view.getPermissions().updateUserPermissions(userPermission);
       viewDao.databaseCollection().insertOne(view);
 
       View view2 = prepareView();
       view2.setCode(CODE2);
       view2.setName(NAME2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(RoleOld.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.UserConfig)));
       view2.getPermissions().updateGroupPermissions(groupPermission);
       viewDao.databaseCollection().insertOne(view2);
 

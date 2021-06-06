@@ -27,7 +27,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -46,10 +47,8 @@ import org.junit.runner.RunWith;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -73,8 +72,8 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
 
-   private static final Set<RoleOld> USER_ROLES = Organization.ROLES;
-   private static final Set<RoleOld> GROUP_ROLES = Collections.singleton(RoleOld.READ);
+   private static final Set<Role> USER_ROLES = Organization.ROLES;
+   private static final Set<Role> GROUP_ROLES = Collections.singleton(new Role(RoleType.Read));
 
    private Permission userPermission;
    private Permission groupPermission;
@@ -263,7 +262,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(RoleOld.MANAGE, RoleOld.READ))) };
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.TechConfig, true), new Role(RoleType.Write))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("users")
@@ -303,7 +302,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(RoleOld.SHARE, RoleOld.READ))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Config), new Role(RoleType.Write, true))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups")

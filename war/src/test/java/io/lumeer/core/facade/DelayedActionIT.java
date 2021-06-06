@@ -37,7 +37,6 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.core.WorkspaceKeeper;
@@ -141,12 +140,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.addUserPermissions(
-            Set.of(
-                  new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())),
-                  new Permission(this.user2.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet()))
-            )
-      );
+      projectPermissions.addUserPermissions(Set.of(new Permission(this.user.getId(), Project.ROLES), new Permission(this.user2.getId(), Project.ROLES)));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -156,12 +150,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       collectionDao.createRepository(storedProject);
 
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.addUserPermissions(
-            Set.of(
-                  new Permission(this.user.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())),
-                  new Permission(this.user2.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet()))
-            )
-      );
+      collectionPermissions.addUserPermissions(Set.of(new Permission(this.user.getId(), Project.ROLES), new Permission(this.user2.getId(), Project.ROLES)));
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       jsonCollection.setLastAttributeNum(0);
       jsonCollection.setAttributes(List.of(

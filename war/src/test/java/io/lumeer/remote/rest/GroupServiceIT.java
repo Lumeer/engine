@@ -6,8 +6,6 @@ import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -19,8 +17,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
@@ -57,7 +53,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Organization.ROLES));
       Organization organization = organizationDao.createOrganization(organization1);
 
       groupDao.createRepository(organization);
@@ -69,7 +65,6 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    @Test
    public void testCreateGroup() {
       Group group = new Group(GROUP1);
-      group.setRoles(new HashSet<>(Arrays.asList(RoleType.ProjectRead, RoleType.CollectionDataContribute, RoleType.PerspectiveConfig)));
 
       Entity<Group> entity = Entity.json(group);
       Response response = client.target(urlPrefix)
@@ -86,9 +81,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       assertThat(storedGroup).isNotNull();
       assertThat(storedGroup.getId()).isEqualTo(returnedGroup.getId());
       assertThat(returnedGroup.getName()).isEqualTo(GROUP1);
-      assertThat(returnedGroup.getRoles()).contains(RoleType.ProjectRead, RoleType.CollectionDataContribute, RoleType.PerspectiveConfig);
       assertThat(storedGroup.getName()).isEqualTo(GROUP1);
-      assertThat(storedGroup.getRoles()).contains(RoleType.ProjectRead, RoleType.CollectionDataContribute, RoleType.PerspectiveConfig);
    }
 
    @Test

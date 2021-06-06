@@ -31,7 +31,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
@@ -182,7 +183,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       this.group = groupDao.createGroup(group);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Collection.ROLES);
-      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(RoleOld.READ));
+      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
@@ -457,7 +458,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       final Collection collection = createCollection(CODE);
       final String collectionId = collection.getId();
 
-      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(RoleOld.MANAGE, RoleOld.READ));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Write), new Role(RoleType.Config)));
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -465,7 +466,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
 
-      userPermission = Permission.buildWithRoles(USER2, Set.of(RoleOld.MANAGE, RoleOld.READ));
+      userPermission = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read), new Role(RoleType.Config)));
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
@@ -506,7 +507,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission groupPermission = Permission.buildWithRoles(group.getId(), Set.of(RoleOld.SHARE, RoleOld.READ));
+      Permission groupPermission = Permission.buildWithRoles(group.getId(), Set.of(new Role(RoleType.Write), new Role(RoleType.Config)));
       collectionFacade.updateGroupPermissions(collectionId, Set.of(groupPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -618,7 +619,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThat(collectionFacade.getCollections()).hasSize(2);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ)));
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
       project.setPermissions(projectPermissions);
       projectDao.updateProject(project.getId(), project);
       workspaceCache.clear();
@@ -626,7 +627,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertThat(collectionFacade.getCollections()).hasSize(2);
 
       Permissions organizationPermissions = new Permissions();
-      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(RoleOld.READ)));
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
       organization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(organization.getId(), organization);
       workspaceCache.clear();

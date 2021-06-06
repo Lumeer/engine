@@ -20,11 +20,12 @@
 package io.lumeer.storage.mongodb.util;
 
 import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.filter.SearchAttributeFilter;
 import io.lumeer.storage.api.query.DatabaseQuery;
 import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
+import io.lumeer.storage.mongodb.codecs.RoleCodec;
 
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
@@ -42,7 +43,7 @@ public class MongoFilters {
    private static final String ID = "_id";
    private static final String CODE = "code";
    private static final String NAME = "name";
-   private static final String PERMISSIONS = "permissions";
+   private static final String PERMISSIONS = "roles";
 
    public static Bson idFilter(String id) {
       return Filters.eq(ID, new ObjectId(id));
@@ -90,7 +91,7 @@ public class MongoFilters {
    private static Bson entityPermissionsFilter(String entityField, String entityName) {
       return Filters.elemMatch(PERMISSIONS + "." + entityField, Filters.and(
             entityNameFilter(entityName),
-            entityRolesFilter(RoleOld.READ, RoleOld.MANAGE)
+            entityRolesFilter(RoleType.Read)
       ));
    }
 
@@ -98,9 +99,9 @@ public class MongoFilters {
       return Filters.eq(PermissionCodec.ID, name);
    }
 
-   private static Bson entityRolesFilter(RoleOld... roles) {
-      List<String> rolesStrings = Arrays.stream(roles).map(RoleOld::toString).collect(Collectors.toList());
-      return Filters.in(PermissionCodec.ROLES, rolesStrings);
+   private static Bson entityRolesFilter(RoleType... roles) {
+      List<String> rolesStrings = Arrays.stream(roles).map(RoleType::toString).collect(Collectors.toList());
+      return Filters.in(PermissionCodec.ROLES + "." + RoleCodec.TYPE, rolesStrings);
    }
 
    public static Bson createFilterForFulltexts(java.util.Collection<Attribute> attributes, Set<String> fulltexts) {

@@ -18,7 +18,7 @@
  */
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.Role;
 import io.lumeer.storage.mongodb.codecs.RoleCodec;
 
 import org.bson.codecs.Codec;
@@ -29,7 +29,7 @@ public class RoleCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> aClass, final CodecRegistry codecRegistry) {
-      if (aClass == Rule.class) {
+      if (aClass == Role.class) {
          return (Codec<T>) new RoleCodec(codecRegistry);
       }
 

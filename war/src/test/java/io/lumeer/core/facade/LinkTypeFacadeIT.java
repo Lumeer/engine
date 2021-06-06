@@ -28,7 +28,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
@@ -49,9 +50,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -106,7 +105,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), new HashSet<>(Collections.singletonList(RoleOld.READ)));
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -117,7 +116,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), new HashSet<>(Collections.singletonList(RoleOld.READ)));
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -130,7 +129,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
       for (String name : COLLECTION_NAMES) {
          Permissions collectionPermissions = new Permissions();
-         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
+         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          collectionIds.add(collectionDao.createCollection(collection).getId());
       }

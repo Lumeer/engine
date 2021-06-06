@@ -25,7 +25,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
@@ -39,7 +40,6 @@ import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
@@ -63,10 +63,10 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    static {
       PERMISSIONS = new Permissions();
 
-      Permission userPermission = new Permission(USER, Organization.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet()));
+      Permission userPermission = new Permission(USER, Organization.ROLES);
       PERMISSIONS.updateUserPermissions(userPermission);
 
-      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(RoleOld.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(new Role(RoleType.Read)));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
    }
 
@@ -167,12 +167,12 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    @Test
    public void testGetOrganizationsNoReadRole() {
       Organization organization = prepareOrganization(CODE1);
-      Permission userPermission = new Permission(USER2, Collections.singleton(RoleOld.CLONE.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Config)));
       organization.getPermissions().updateUserPermissions(userPermission);
       organizationDao.databaseCollection().insertOne(organization);
 
       Organization organization2 = prepareOrganization(CODE2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(RoleOld.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.PerspectiveConfig)));
       organization2.getPermissions().updateGroupPermissions(groupPermission);
       organizationDao.databaseCollection().insertOne(organization2);
 

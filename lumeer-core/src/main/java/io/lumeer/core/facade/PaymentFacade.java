@@ -178,7 +178,7 @@ public class PaymentFacade extends AbstractFacade {
             serviceLimits = new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
                   ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
-                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection());
+                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
             workspaceKeeper.setServiceLimits(organization, serviceLimits);
             return serviceLimits;
          }
@@ -218,7 +218,7 @@ public class PaymentFacade extends AbstractFacade {
             return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
                   ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
-                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection());
+                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
          }
       }
 

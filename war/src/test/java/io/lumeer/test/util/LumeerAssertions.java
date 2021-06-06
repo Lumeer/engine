@@ -21,7 +21,7 @@ package io.lumeer.test.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class LumeerAssertions {
 
          assertThat(actual.isPresent()).isTrue();
 
-         assertThat(actual.get().getRoles()).containsExactly(p.getRoles().toArray(new RoleOld[0]));
+         assertThat(actual.get().getRoles()).containsExactly(p.getRoles().toArray(new Role[0]));
       });
    }
 

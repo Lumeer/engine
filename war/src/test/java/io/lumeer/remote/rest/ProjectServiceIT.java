@@ -26,7 +26,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -40,9 +41,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -71,8 +70,8 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    private static final String COLOR = "#ff0000";
    private static final String ICON = "fa-search";
 
-   private static final Set<RoleOld> USER_ROLES = Project.ROLES;
-   private static final Set<RoleOld> GROUP_ROLES = Collections.singleton(RoleOld.READ);
+   private static final Set<Role> USER_ROLES = Project.ROLES;
+   private static final Set<Role> GROUP_ROLES = Collections.singleton(new Role(RoleType.Read));
    private Permission userPermission;
    private Permission groupPermission;
 
@@ -264,7 +263,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(RoleOld.MANAGE, RoleOld.READ))) };
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Config, true), new Role(RoleType.CollectionContribute))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("users")
@@ -304,7 +303,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(RoleOld.SHARE, RoleOld.READ))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Contribute, true), new Role(RoleType.UserConfig))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("groups")

@@ -29,7 +29,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -50,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -111,7 +111,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(RoleOld.READ));
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -122,7 +122,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(RoleOld.READ));
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -134,7 +134,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       collectionIds.clear();
 
       Permissions userPermissions = new Permissions();
-      userPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
+      userPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
 
       for (String name : COLLECTION_NAMES) {
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, userPermissions);

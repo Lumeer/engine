@@ -27,11 +27,12 @@ import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.engine.api.data.DataDocument;
@@ -108,10 +109,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       USER_PERMISSION = Permission.buildWithRoles(USER, Collection.ROLES);
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      Permission userManagePermission = Permission.buildWithRoles(USER, Collections.singleton(RoleOld.MANAGE));
+      Permission userManagePermission = Permission.buildWithRoles(USER,  Collections.singleton(new Role(RoleType.Config)));
       MANAGE_PERMISSIONS.updateUserPermissions(userManagePermission);
 
-      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(RoleOld.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(new Role(RoleType.Read)));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
 
       Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
@@ -271,12 +272,12 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    @Test
    public void testGetCollectionsNoReadRole() {
       Collection collection = prepareCollection(CODE, NAME);
-      Permission userPermission = new Permission(USER2, Collections.singleton(RoleOld.CLONE.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Config)));
       collection.getPermissions().updateUserPermissions(userPermission);
       collectionDao.databaseCollection().insertOne(collection);
 
       Collection collection2 = prepareCollection(CODE2, NAME2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(RoleOld.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.PerspectiveConfig)));
       collection2.getPermissions().updateGroupPermissions(groupPermission);
       collectionDao.databaseCollection().insertOne(collection2);
 

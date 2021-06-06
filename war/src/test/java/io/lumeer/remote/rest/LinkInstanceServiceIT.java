@@ -32,7 +32,6 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.data.DataDocument;
@@ -58,7 +57,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -167,7 +165,7 @@ public class LinkInstanceServiceIT extends ServiceIntegrationTestBase {
       projectDao.updateProject(storedProject.getId(), storedProject);
 
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
+      collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
       Collection collection1 = new Collection("col1", "col1", "icon", "color", collectionPermissions);
       collection1Id = collectionDao.createCollection(collection1).getId();
 

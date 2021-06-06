@@ -112,7 +112,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
-      pusherAdapter = new PusherAdapter(new FacadeAdapter(permissionAdapter), permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
+      pusherAdapter = new PusherAdapter(new FacadeAdapter(permissionAdapter),  resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
 
       return this;
    }
@@ -153,7 +153,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Set<String> getLinkTypeReaders(final LinkType linkType) {
-      return resourceAdapter.getLinkTypeReaders(linkType, getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject());
+      return resourceAdapter.getLinkTypeReaders(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), linkType);
    }
 
    private Set<String> getViewReaders(final View view) {

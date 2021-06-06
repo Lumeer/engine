@@ -25,7 +25,6 @@ import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
@@ -86,7 +85,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), RoleOld.toStringRoles(new HashSet<>(Arrays.asList(RoleOld.WRITE, RoleOld.READ, RoleOld.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Organization.ROLES));
       organization = organizationDao.createOrganization(organization1);
 
       workspaceKeeper.setOrganizationId(organization.getId());

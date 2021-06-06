@@ -39,7 +39,6 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.RoleOld;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -184,7 +183,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    private Collection createCollection(String name, Attribute... attributes) {
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(userId, Project.ROLES.stream().map(RoleOld::toString).collect(Collectors.toSet())));
+      collectionPermissions.updateUserPermissions(new Permission(userId, Project.ROLES));
       Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection.setAttributes(Arrays.asList(attributes));
 
