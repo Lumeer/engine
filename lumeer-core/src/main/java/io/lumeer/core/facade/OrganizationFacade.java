@@ -116,7 +116,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void deleteOrganization(final String organizationId) {
-      Organization organization = checkRoleAndGetOrganization(organizationId, RoleType.Delete);
+      Organization organization = checkRoleAndGetOrganization(organizationId, RoleType.Config);
       permissionsChecker.checkCanDelete(organization);
 
       deleteOrganizationScopedRepositories(organization);

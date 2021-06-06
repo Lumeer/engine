@@ -30,7 +30,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
-import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -92,9 +91,6 @@ public class AuditFacade extends AbstractFacade {
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
-   private RequestDataKeeper requestDataKeeper;
-
-   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private AuditAdapter auditAdapter;
@@ -143,7 +139,8 @@ public class AuditFacade extends AbstractFacade {
 
    public List<AuditRecord> getAuditRecordsForLink(final String linkTypeId, final String linkInstanceId) {
       final LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypeRoleWithView(linkType, RoleOld.WRITE, false);
+      final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+      permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
@@ -189,7 +186,8 @@ public class AuditFacade extends AbstractFacade {
 
    public LinkInstance revertLastLinkAuditOperation(final String linkTypeId, final String linkInstanceId, final String auditRecordId) {
       final LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypeRoleWithView(linkType, RoleOld.WRITE, false);
+      final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+      permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
       if (workspaceKeeper.getOrganization().isPresent()) {
          final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
@@ -199,8 +197,6 @@ public class AuditFacade extends AbstractFacade {
          }
 
          final AuditRecord auditRecord = auditDao.findLatestAuditRecord(linkTypeId, ResourceType.LINK, linkInstanceId);
-
-         final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
 
          if (auditRecord != null && auditRecord.getId().equals(auditRecordId) && auditRecord.getOldState() != null) {
             var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());

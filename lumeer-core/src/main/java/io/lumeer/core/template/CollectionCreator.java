@@ -32,7 +32,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class CollectionCreator extends WithIdCreator {
@@ -112,7 +111,7 @@ public class CollectionCreator extends WithIdCreator {
    }
 
    private void createAttributes(final Collection collection, final JSONObject o) {
-      collectionFacade.createCollectionAttributesSkipIndexFix(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")), false);
+      collectionFacade.createCollectionAttributesWithoutPushNotification(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
    }
 
    private Collection getCollection(final JSONObject o) {

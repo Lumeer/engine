@@ -28,9 +28,11 @@ import io.lumeer.core.exception.NoLinkInstancePermissionException
 import io.lumeer.core.exception.NoPermissionException
 import io.lumeer.core.exception.NoResourcePermissionException
 import io.lumeer.core.util.DocumentUtils
+import io.lumeer.core.util.FunctionRuleJsParser
 import io.lumeer.core.util.LinkInstanceUtils
 import io.lumeer.core.util.QueryUtils
 import io.lumeer.storage.api.dao.*
+import java.util.function.Consumer
 
 class PermissionAdapter(private val userDao: UserDao,
                         private val groupDao: GroupDao,
@@ -45,6 +47,7 @@ class PermissionAdapter(private val userDao: UserDao,
    private val userCache = mutableMapOf<String, User>()
    private val groupsCache = mutableMapOf<String, List<Group>>()
    private val linkTypes = lazy { linkTypeDao.allLinkTypes }
+   private val collections = lazy { collectionDao.allCollections }
 
    private var currentViewId: String? = null
 
@@ -161,7 +164,7 @@ class PermissionAdapter(private val userDao: UserDao,
       }
    }
 
-   fun checlAllRoles(organization: Organization?, project: Project?, resource: Resource, roles: Set<RoleType>, userId: String) {
+   fun checkAllRoles(organization: Organization?, project: Project?, resource: Resource, roles: Set<RoleType>, userId: String) {
       if (!hasAllRoles(organization, project, resource, roles, userId)) {
          throw NoResourcePermissionException(resource)
       }
@@ -322,6 +325,12 @@ class PermissionAdapter(private val userDao: UserDao,
       return false
    }
 
+   fun checkRoleInLinkType(organization: Organization?, project: Project?, linkType: LinkType, role: RoleType, userId: String) {
+      if (!hasRoleInLinkType(organization, project, linkType, role, userId)) {
+         throw NoPermissionException(ResourceType.LINK_TYPE.toString())
+      }
+   }
+
    fun hasRoleInLinkType(organization: Organization?, project: Project?, linkType: LinkType, role: RoleType, userId: String): Boolean {
       return hasRoleInLinkType(organization, project, linkType, getLinkTypeCollections(linkType), role, userId)
    }
@@ -336,6 +345,29 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun hasRole(organization: Organization?, project: Project?, linkType: LinkType, collection: List<Collection>, role: RoleType, userId: String): Boolean {
       return hasRoleCache.computeIfAbsent("${ResourceType.LINK_TYPE}:${linkType.id}:$role") { getUserRolesInLinkType(organization, project, linkType, collection, userId).contains(role) }
+   }
+
+   fun checkFunctionRuleAccess(organization: Organization, project: Project?, js: String, role: RoleType, userId: String) {
+      val collections = collections.value.associateBy { it.id }
+      val collectionIds = collections.keys
+      val linkTypes = linkTypes.value.associateBy { it.id }
+      val linkTypeIds = linkTypes.keys
+
+      val references = FunctionRuleJsParser.parseRuleFunctionJs(js, collectionIds, linkTypeIds)
+
+      references.forEach(Consumer { reference: FunctionRuleJsParser.ResourceReference ->
+         when (reference.resourceType) {
+            ResourceType.COLLECTION -> {
+               checkRole(organization, project, collections[reference.id]!!, role, userId)
+            }
+            ResourceType.LINK -> {
+               checkRoleInLinkType(organization, project, linkTypes[reference.id]!!, role, userId)
+            }
+            else -> {
+               throw NoPermissionException("Rule")
+            }
+         }
+      })
    }
 
    fun getUser(userId: String): User {

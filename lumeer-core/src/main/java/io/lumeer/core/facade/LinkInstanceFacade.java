@@ -26,14 +26,13 @@ import io.lumeer.api.model.DocumentLinks;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.LinkInstanceUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
@@ -45,7 +44,6 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -117,7 +115,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public LinkInstance createLinkInstance(final LinkInstance linkInstance) {
       checkDocumentsExists(linkInstance.getDocumentIds());
-      var linkType = checkLinkTypeWritePermissions(linkInstance.getLinkTypeId());
+      var linkType = checkCreateLinks(linkInstance.getLinkTypeId());
 
       var linkInstanceData = createLinkInstance(linkType, linkInstance);
 
@@ -148,7 +146,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    public List<LinkInstance> createLinkInstances(final List<LinkInstance> linkInstances, final boolean sendIndividualNotifications) {
       if (linkInstances.size() > 0) {
          final String linkTypeId = linkInstances.get(0).getLinkTypeId();
-         var linkType = checkLinkTypeWritePermissions(linkTypeId);
+         var linkType = checkCreateLinks(linkTypeId);
 
          checkLinkDocumentsExists(linkInstances);
 
@@ -195,11 +193,11 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public LinkInstance updateLinkInstance(final String linkInstanceId, final LinkInstance linkInstance) {
       checkDocumentsExists(linkInstance.getDocumentIds());
-      final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      var linkTypeAndInstance = checkEditLink(linkInstanceId);
+      final LinkType linkType = linkTypeAndInstance.getFirst();
+      final LinkInstance stored = linkTypeAndInstance.getSecond();
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final String linkTypeId = Objects.requireNonNullElse(linkInstance.getLinkTypeId(), stored.getLinkTypeId());
-
-      final LinkType linkType = checkLinkTypeWritePermissions(linkTypeId);
 
       updateLinkTypeMetadata(linkType, Collections.emptySet(), Collections.emptySet());
 
@@ -215,9 +213,10 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance updateLinkInstanceData(final String linkInstanceId, final DataDocument updateData) {
-      final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      var linkTypeAndInstance = checkEditLink(linkInstanceId);
+      final LinkType linkType = linkTypeAndInstance.getFirst();
+      final LinkInstance stored = linkTypeAndInstance.getSecond();
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
-      final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       final DataDocument data = constraintManager.encodeDataTypes(linkType, updateData);
 
@@ -265,9 +264,10 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument updateData) {
-      final LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
+      var linkTypeAndInstance = checkEditLink(linkInstanceId);
+      final LinkType linkType = linkTypeAndInstance.getFirst();
+      final LinkInstance stored = linkTypeAndInstance.getSecond();
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
-      final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
 
       final DataDocument data = constraintManager.encodeDataTypes(linkType, updateData);
 
@@ -288,8 +288,9 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public void deleteLinkInstance(String id) {
-      LinkInstance stored = linkInstanceDao.getLinkInstance(id);
-      final LinkType linkType = checkLinkTypeWritePermissions(stored.getLinkTypeId());
+      var linkTypeAndInstance = checkDeleteLink(id);
+      final LinkType linkType = linkTypeAndInstance.getFirst();
+      final LinkInstance stored = linkTypeAndInstance.getSecond();
 
       linkInstanceDao.deleteLinkInstance(id, linkDataDao.getData(stored.getLinkTypeId(), id));
       linkDataDao.deleteData(stored.getLinkTypeId(), id);
@@ -302,12 +303,10 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public LinkInstance getLinkInstance(String linkTypeId, String linkInstanceId) {
-      LinkType linkType = checkLinkTypeReadPermissions(linkTypeId);
-      return getLinkInstance(linkType, linkInstanceId);
-   }
+      var linkTypeAndInstance = checkReadLink(linkInstanceId);
+      final LinkType linkType = linkTypeAndInstance.getFirst();
+      final LinkInstance stored = linkTypeAndInstance.getSecond();
 
-   private LinkInstance getLinkInstance(LinkType linkType, String linkInstanceId) {
-      LinkInstance stored = linkInstanceDao.getLinkInstance(linkInstanceId);
       final DataDocument data = constraintManager.decodeDataTypes(linkType, linkDataDao.getData(linkType.getId(), linkInstanceId));
       stored.setData(data);
 
@@ -315,44 +314,41 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> getLinkInstances(Set<String> ids) {
-      checkProjectRole(RoleOld.READ);
-
-      var linkComments = getCommentsCounts(ids);
       var linksMap = linkInstanceDao.getLinkInstances(ids)
                                     .stream()
                                     .collect(Collectors.groupingBy(LinkInstance::getLinkTypeId));
 
+      var resultLinks = new ArrayList<LinkInstance>();
       linksMap.forEach((linkTypeId, value) -> {
          var linkType = linkTypeDao.getLinkType(linkTypeId);
-         if (permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleOld.READ)) {
+         var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
+                                  .stream()
+                                  .collect(Collectors.toMap(DataDocument::getId, d -> d));
 
-            var dataMap = linkDataDao.getData(linkTypeId, value.stream().map(LinkInstance::getId).collect(Collectors.toSet()))
-                                     .stream()
-                                     .collect(Collectors.toMap(DataDocument::getId, d -> d));
-
-            value.forEach(linkInstance -> {
-               var data = dataMap.get(linkInstance.getId());
-               if (data != null) {
-                  linkInstance.setData(constraintManager.decodeDataTypes(linkType, data));
-                  linkInstance.setCommentsCount((long) linkComments.getOrDefault(linkInstance.getId(), 0));
-               }
-            });
-         }
+         value.forEach(linkInstance -> {
+            var data = dataMap.getOrDefault(linkInstance.getId(), new DataDocument());
+            linkInstance.setData(constraintManager.decodeDataTypes(linkType, data));
+            if (permissionsChecker.canReadLinkInstance(linkType, linkInstance)) {
+               resultLinks.add(linkInstance);
+            }
+         });
       });
 
-      return linksMap.entrySet().stream()
-                     .flatMap(entry -> entry.getValue().stream())
-                     .collect(Collectors.toList());
+      return adapter.mapLinkInstancesData(resultLinks);
    }
 
    public List<LinkInstance> duplicateLinkInstances(final String originalDocumentId, final String newDocumentId, final Set<String> linkInstanceIds, final Map<String, String> documentMap) {
-      final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
-      if (linkInstances.size() <= 0 || linkInstances.stream().map(LinkInstance::getLinkTypeId).distinct().count() != 1) {
+      final List<LinkInstance> allLinkInstances = linkInstanceDao.getLinkInstances(linkInstanceIds);
+      if (allLinkInstances.size() <= 0 || allLinkInstances.stream().map(LinkInstance::getLinkTypeId).distinct().count() != 1) {
          return null;
       }
 
-      final String linkTypeId = linkInstances.get(0).getLinkTypeId();
-      checkLinkTypeWritePermissions(linkTypeId);
+      final String linkTypeId = allLinkInstances.get(0).getLinkTypeId();
+      final LinkType linkType = checkCreateLinks(linkTypeId);
+
+      final List<LinkInstance> linkInstances = allLinkInstances.stream()
+                                                               .filter(linkInstance -> permissionsChecker.canReadLinkInstance(linkType, linkInstance))
+                                                               .collect(Collectors.toList());
 
       final List<LinkInstance> newLinks = linkInstanceDao.duplicateLinkInstances(linkInstances, originalDocumentId, newDocumentId, documentMap);
       final Map<String, LinkInstance> linkInstancesDirectory = new HashMap<>();
@@ -385,11 +381,15 @@ public class LinkInstanceFacade extends AbstractFacade {
             throw new IllegalStateException("Rule not found");
          }
          var roleString = config.get("role").toString();
-         var role = RoleOld.fromString(roleString);
+         var role = RoleType.fromString(roleString);
 
-         permissionsChecker.checkLinkTypeRoleWithView(linkType, role, true);
-         LinkInstance linkInstance = getLinkInstance(linkType, linkInstanceId);
-         taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
+         if (role == RoleType.Read) {
+            var linkInstance = checkReadLink(linkType, linkInstanceId);
+            taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
+         } else if (role == RoleType.Write) {
+            var linkInstance = checkEditLink(linkType, linkInstanceId);
+            taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
+         }
       }
    }
 
@@ -407,7 +407,7 @@ public class LinkInstanceFacade extends AbstractFacade {
    }
 
    public List<LinkInstance> setDocumentLinks(final String linkTypeId, final DocumentLinks documentLinks) {
-      LinkType linkType = checkLinkTypeWritePermissions(linkTypeId);
+      LinkType linkType = checkCreateLinks(linkTypeId);
       checkDocumentsExists(Collections.singletonList(documentLinks.getDocumentId()));
 
       List<LinkInstance> deletedLinkInstances = linkInstanceDao.getLinkInstances(new HashSet<>(documentLinks.getRemovedLinkInstancesIds()));
@@ -428,38 +428,50 @@ public class LinkInstanceFacade extends AbstractFacade {
       return createdLinkInstances;
    }
 
-   public long getCommentsCount(final String linkInstanceId) {
-      return adapter.getCommentsCount(linkInstanceId);
-   }
-
    public Map<String, Integer> getCommentsCounts(final Set<String> linkInstanceIds) {
       return adapter.getCommentsCounts(linkInstanceIds);
    }
 
-   private LinkType checkLinkTypeWritePermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, RoleOld.WRITE);
-   }
-
-   private LinkType checkLinkTypeReadPermissions(String linkTypeId) {
-      return checkLinkTypePermissions(linkTypeId, RoleOld.READ);
-   }
-
-   private LinkType checkLinkTypePermissions(String linkTypeId, RoleOld role) {
+   private LinkType checkCreateLinks(String linkTypeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      permissionsChecker.checkLinkTypeRoleWithView(linkType, role, false);
+      permissionsChecker.checkCreateLinkInstances(linkType);
       return linkType;
    }
 
-   private void checkProjectRole(RoleOld role) {
-      Project project = getCurrentProject();
-      permissionsChecker.checkRole(project, role);
+   private Tuple<LinkType, LinkInstance> checkEditLink(String linkInstanceId) {
+      var tuple = readLinkTypeAndInstance(linkInstanceId);
+      permissionsChecker.checkEditLinkInstance(tuple.getFirst(), tuple.getSecond());
+      return tuple;
    }
 
-   private Project getCurrentProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-      return workspaceKeeper.getProject().get();
+   private LinkInstance checkEditLink(LinkType linkType, String linkInstanceId) {
+      final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+      permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
+      return linkInstance;
+   }
+
+   private Tuple<LinkType, LinkInstance> checkDeleteLink(String linkInstanceId) {
+      var tuple = readLinkTypeAndInstance(linkInstanceId);
+      permissionsChecker.checkDeleteLinkInstance(tuple.getFirst(), tuple.getSecond());
+      return tuple;
+   }
+
+   private Tuple<LinkType, LinkInstance> checkReadLink(String linkInstanceId) {
+      var tuple = readLinkTypeAndInstance(linkInstanceId);
+      permissionsChecker.checkReadLinkInstance(tuple.getFirst(), tuple.getSecond());
+      return tuple;
+   }
+
+   private LinkInstance checkReadLink(LinkType linkType, String linkInstanceId) {
+      final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+      permissionsChecker.checkReadLinkInstance(linkType, linkInstance);
+      return linkInstance;
+   }
+
+   private Tuple<LinkType, LinkInstance> readLinkTypeAndInstance(String linkInstanceId) {
+      final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
+      LinkType linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
+      return new Tuple<>(linkType, linkInstance);
    }
 
    private void checkDocumentsExists(final List<String> documentIds) {

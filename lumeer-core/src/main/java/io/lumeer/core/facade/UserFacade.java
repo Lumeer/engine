@@ -161,31 +161,6 @@ public class UserFacade extends AbstractFacade {
       return newUsers;
    }
 
-   private Set<Role> getInvitationRoles(final InvitationType invitationType, final ResourceType resourceType, Set<Role> minimalSet) {
-      final Set<Role> roles = new HashSet<>(minimalSet);
-
-      // do not wonder - there isn't the return statement on purpose so that we collect the roles on the way
-      switch (invitationType) {
-         case MANAGE:
-            if (resourceType == ResourceType.ORGANIZATION) {
-               roles.addAll(RoleUtils.organizationResourceRoles());
-            } else if (resourceType == ResourceType.PROJECT) {
-               roles.addAll(RoleUtils.projectResourceRoles());
-            }
-         case READ_WRITE:
-            if (resourceType == ResourceType.ORGANIZATION) {
-               roles.addAll(Set.of(new Role(RoleType.Contribute)));
-            } else if (resourceType == ResourceType.PROJECT) {
-               roles.addAll(Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.CollectionContribute), new Role(RoleType.LinkContribute)));
-            }
-            roles.add(new Role(RoleType.Write, true));
-         case READ_ONLY:
-            roles.add(new Role(RoleType.Read));
-      }
-
-      return roles;
-   }
-
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {
       return users.stream().map(user -> {
          user.setEmail(user.getEmail().toLowerCase());
@@ -212,9 +187,35 @@ public class UserFacade extends AbstractFacade {
                      var existingPermissions = resource.getPermissions().getUserPermissions().stream().filter(permission -> permission.getId().equals(user.getId())).findFirst();
                      var minimalSet = new HashSet<>(Set.of(new Role(RoleType.Read)));
                      existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
+                     // TODO should we remove group roles?
                      return Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, resource.getType(), minimalSet));
                   })
                   .collect(Collectors.toSet());
+   }
+
+   private Set<Role> getInvitationRoles(final InvitationType invitationType, final ResourceType resourceType, Set<Role> minimalSet) {
+      final Set<Role> roles = new HashSet<>(minimalSet);
+
+      switch (invitationType) {
+         case MANAGE:
+            if (resourceType == ResourceType.ORGANIZATION) {
+               roles.addAll(RoleUtils.organizationResourceRoles());
+            } else if (resourceType == ResourceType.PROJECT) {
+               roles.addAll(RoleUtils.projectResourceRoles());
+            }
+         case READ_WRITE:
+            if (resourceType == ResourceType.ORGANIZATION) {
+               roles.addAll(Set.of(new Role(RoleType.Contribute)));
+            } else if (resourceType == ResourceType.PROJECT) {
+               roles.addAll(Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.CollectionContribute), new Role(RoleType.LinkContribute)));
+            }
+            roles.add(new Role(RoleType.Write, true));
+            roles.add(new Role(RoleType.Contribute, true));
+         case READ_ONLY:
+            roles.add(new Role(RoleType.Read));
+      }
+
+      return roles;
    }
 
    private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final InvitationType invitationType) {

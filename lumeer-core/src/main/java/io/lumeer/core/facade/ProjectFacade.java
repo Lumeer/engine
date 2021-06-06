@@ -159,7 +159,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public void deleteProject(final String projectId) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleType.Delete);
+      permissionsChecker.checkRole(project, RoleType.Config);
       permissionsChecker.checkCanDelete(project);
 
       deleteProjectScopedRepositories(project);
@@ -437,7 +437,7 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectById(projectId);
 
       if (project != null) {
-         permissionsChecker.checkRole(project, RoleType.Delete);
+         permissionsChecker.checkRole(project, RoleType.Config);
 
          final List<Document> documents = documentDao.getDocumentsWithTemplateId();
          final List<LinkInstance> links = linkInstanceDao.getLinkInstancesByDocumentIds(documents.stream().map(Document::getId).collect(Collectors.toSet()));

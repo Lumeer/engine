@@ -25,15 +25,17 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.DocumentsChain;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -131,7 +133,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document createDocument(String collectionId, Document document) {
-      Collection collection = checkCollectionWritePermissionss(collectionId);
+      Collection collection = checkCreateDocuments(collectionId);
       permissionsChecker.checkDocumentLimits(document);
 
       final Tuple<Document, Document> documentTuple = createDocument(collection, document);
@@ -162,7 +164,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> createDocuments(final String collectionId, final List<Document> documents, final boolean sendNotification) {
-      final Collection collection = checkCollectionWritePermissionss(collectionId);
+      final Collection collection = checkCreateDocuments(collectionId);
       final Map<String, Integer> usages = new HashMap<>();
       final Map<String, DataDocument> documentsData = new HashMap<>();
       permissionsChecker.checkDocumentLimits(documents);
@@ -224,7 +226,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document updateDocumentData(String collectionId, String documentId, DataDocument data) {
-      Tuple<Collection, Document> tuple = checkDocumentWritePermissions(collectionId, documentId);
+      Tuple<Collection, Document> tuple = checkEditDocument(documentId);
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
 
@@ -266,8 +268,11 @@ public class DocumentFacade extends AbstractFacade {
 
    public DocumentsChain createDocumentsChain(List<Document> documents, List<LinkInstance> linkInstances) {
       var collectionsMap = documents.stream()
-                                    .map(document -> checkCollectionWritePermissionss(document.getCollectionId()))
+                                    .map(document -> checkCreateDocuments(document.getCollectionId()))
                                     .collect(Collectors.toMap(Resource::getId, Function.identity()));
+      var linkTypesMap = linkInstances.stream()
+                                      .map(linkInstanceId -> checkCreateLinks(linkInstanceId.getLinkTypeId()))
+                                      .collect(Collectors.toMap(LinkType::getId, Function.identity()));
 
       permissionsChecker.checkDocumentLimits(documents);
 
@@ -294,7 +299,7 @@ public class DocumentFacade extends AbstractFacade {
 
          var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
          if (previousDocumentId != null && linkInstance != null) {
-            var linkType = linkTypeDao.getLinkType(linkInstance.getLinkTypeId());
+            var linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
             linkInstance.setDocumentIds(Arrays.asList(previousDocumentId, currentDocumentId));
             if (linkInstance.getId() != null) {
                var updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
@@ -318,7 +323,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document updateDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      Tuple<Collection, Document> tuple = checkDocumentWritePermissions(collectionId, documentId);
+      Tuple<Collection, Document> tuple = checkEditDocument(documentId);
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
       final Document originalDocument = new Document(document);
@@ -332,18 +337,20 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> updateDocumentsMetaData(final String collectionId, final List<Document> documents) {
-      final Collection collection = checkCollectionWritePermissionss(collectionId);
       final List<Document> updatedDocuments = new ArrayList<>();
 
-      documents.forEach(document -> {
+      Collection collection = null;
+      for (Document document : documents) {
+         var tuple = checkEditDocument(document.getId());
+         collection = tuple.getFirst();
          document.setUpdatedBy(getCurrentUserId());
          document.setUpdateDate(ZonedDateTime.now());
          final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
          updatedDocument.setData(constraintManager.decodeDataTypes(collection, document.getData()));
          updatedDocuments.add(updatedDocument);
-      });
+      }
 
-      if (importCollectionContentEvent != null) {
+      if (importCollectionContentEvent != null && collection != null) {
          importCollectionContentEvent.fire(new ImportCollectionContent(collection));
       }
 
@@ -351,7 +358,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
-      Tuple<Collection, Document> tuple = checkDocumentWritePermissions(collectionId, documentId);
+      Tuple<Collection, Document> tuple = checkEditDocument(documentId);
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
 
@@ -392,7 +399,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document patchDocumentMetaData(final String collectionId, final String documentId, final DataDocument metaData) {
-      Tuple<Collection, Document> tuple = checkDocumentWritePermissions(collectionId, documentId);
+      Tuple<Collection, Document> tuple = checkEditDocument(documentId);
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
       final Document originalDocument = new Document(document);
@@ -440,7 +447,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public void deleteDocument(String collectionId, String documentId) {
-      Tuple<Collection, Document> tuple = checkDocumentWritePermissions(collectionId, documentId);
+      Tuple<Collection, Document> tuple = checkDeleteDocument(documentId);
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
 
@@ -483,27 +490,27 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public void addFavoriteDocument(String collectionId, String documentId) {
-      checkDocumentReadPermissions(collectionId, documentId);
+      checkReadDocument(documentId);
 
       favoriteItemDao.addFavoriteDocument(getCurrentUser().getId(), getCurrentProject().getId(), collectionId, documentId);
    }
 
    public void removeFavoriteDocument(String collectionId, String documentId) {
-      checkDocumentWritePermissions(collectionId, documentId);
+      checkReadDocument(documentId);
 
       String userId = getCurrentUser().getId();
       favoriteItemDao.removeFavoriteDocument(userId, documentId);
    }
 
    public List<Document> duplicateDocuments(final String collectionId, final List<String> documentIds) {
+      final Collection collection = checkCreateDocuments(collectionId);
       permissionsChecker.checkDocumentLimits(documentIds.size());
 
-      final Collection collection = collectionDao.getCollectionById(collectionId);
       var dataMap = dataDao.getData(collectionId, new HashSet<>(documentIds)).stream()
                            .collect(Collectors.toMap(DataDocument::getId, d -> d));
       final List<Document> originalDocuments = documentDao.getDocumentsByIds(new HashSet<>(documentIds))
                                                           .stream().peek(document -> document.setData(dataMap.getOrDefault(document.getId(), new DataDocument())))
-                                                          .filter(document -> permissionsChecker.hasRoleInDocumentWithView(document, collection, RoleOld.WRITE, RoleOld.WRITE))
+                                                          .filter(document -> permissionsChecker.canEditDocument(collection, document))
                                                           .collect(Collectors.toList());
 
       if (originalDocuments.isEmpty()) {
@@ -554,7 +561,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Document getDocument(String collectionId, String documentId) {
-      Tuple<Collection, Document> tuple = checkDocumentReadPermissions(collectionId, documentId);
+      Tuple<Collection, Document> tuple = checkReadDocument(documentId);
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
 
@@ -564,14 +571,13 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> getDocuments(Set<String> ids) {
-      var documentComments = getCommentsCounts(ids);
       var documentsMap = documentDao.getDocumentsByIds(ids.toArray(new String[0]))
                                     .stream()
                                     .collect(Collectors.groupingBy(Document::getCollectionId));
-
+      var collectionsMap = new HashMap<String, Collection>();
       var resultDocuments = new ArrayList<Document>();
       documentsMap.forEach((collectionId, value) -> {
-         var collection = collectionDao.getCollectionById(collectionId);
+         var collection = collectionsMap.computeIfAbsent(collectionId, id -> collectionDao.getCollectionById(id));
          var dataMap = dataDao.getData(collectionId, value.stream().map(Document::getId).collect(Collectors.toSet()))
                               .stream()
                               .collect(Collectors.toMap(DataDocument::getId, d -> d));
@@ -579,14 +585,14 @@ public class DocumentFacade extends AbstractFacade {
          value.forEach(document -> {
             var data = dataMap.getOrDefault(document.getId(), new DataDocument());
             document.setData(constraintManager.decodeDataTypes(collection, data));
-            if (permissionsChecker.hasRoleInDocumentWithView(document, collection, RoleOld.READ, RoleOld.READ)) {
-               document.setCommentsCount((long) documentComments.getOrDefault(document.getId(), 0));
+
+            if (permissionsChecker.canReadDocument(collection, document)) {
                resultDocuments.add(document);
             }
          });
       });
 
-      return resultDocuments;
+      return adapter.mapDocumentsData(resultDocuments, authenticatedUser.getCurrentUserId(), getProject().getId());
    }
 
    @SuppressWarnings("unchecked")
@@ -600,10 +606,15 @@ public class DocumentFacade extends AbstractFacade {
             throw new IllegalStateException("Rule not found");
          }
          var roleString = config.get("role").toString();
-         var role = RoleOld.fromString(roleString);
+         var role = RoleType.fromString(roleString);
 
-         var tuple = checkDocumentPermission(collection, documentId, role);
-         taskProcessingFacade.runRule(collection, rule, tuple.getSecond(), actionName);
+         if (role == RoleType.Read) {
+            var document = checkReadDocument(collection, documentId);
+            taskProcessingFacade.runRule(collection, rule, document, actionName);
+         } else if (role == RoleType.Write) {
+            var document = checkEditDocument(collection, documentId);
+            taskProcessingFacade.runRule(collection, rule, document, actionName);
+         }
       }
    }
 
@@ -612,7 +623,9 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {
-      final Collection collection = checkCollectionReadPermissionss(collectionId);
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      // TODO which role ?
+      permissionsChecker.checkRole(collection, RoleType.Read);
       final List<Document> documents = documentDao.getRecentDocuments(collectionId, byUpdate);
 
       var dataMap = dataDao.getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet()))
@@ -627,10 +640,6 @@ public class DocumentFacade extends AbstractFacade {
       return documents;
    }
 
-   private Map<String, Integer> getCommentsCounts(final Set<String> documentIds) {
-      return adapter.getCommentsCounts(documentIds);
-   }
-
    private Project getCurrentProject() {
       if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
@@ -642,37 +651,51 @@ public class DocumentFacade extends AbstractFacade {
       return authenticatedUser.getCurrentUser();
    }
 
-   private Collection checkCollectionWritePermissionss(String collectionId) {
-      return checkCollectionPermissions(collectionId, RoleOld.WRITE);
-   }
-
-   private Collection checkCollectionReadPermissionss(String collectionId) {
-      return checkCollectionPermissions(collectionId, RoleOld.READ);
-   }
-
-   private Collection checkCollectionPermissions(String collectionId, RoleOld role) {
+   private Collection checkCreateDocuments(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRoleInCollectionWithView(collection, role, role);
+      permissionsChecker.checkCreateDocuments(collection);
       return collection;
    }
 
-   private Tuple<Collection, Document> checkDocumentWritePermissions(String collectionId, String documentId) {
-      return checkDocumentPermission(collectionId, documentId, RoleOld.WRITE);
+   private LinkType checkCreateLinks(String linkTypeId) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      permissionsChecker.checkCreateLinkInstances(linkType);
+      return linkType;
    }
 
-   private Tuple<Collection, Document> checkDocumentReadPermissions(String collectionId, String documentId) {
-      return checkDocumentPermission(collectionId, documentId, RoleOld.READ);
+   private Tuple<Collection, Document> checkEditDocument(String documentId) {
+      var tuple = readCollectionAndDocument(documentId);
+      permissionsChecker.checkEditDocument(tuple.getFirst(), tuple.getSecond());
+      return tuple;
    }
 
-   private Tuple<Collection, Document> checkDocumentPermission(String collectionId, String documentId, RoleOld role) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      return checkDocumentPermission(collection, documentId, role);
+   private Document checkEditDocument(Collection collection, String documentId) {
+      final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, documentId);
+      permissionsChecker.checkEditDocument(collection, document);
+      return document;
    }
 
-   private Tuple<Collection, Document> checkDocumentPermission(Collection collection, String documentId, RoleOld role) {
-      final Document document = documentDao.getDocumentById(documentId);
-      document.setData(dataDao.getData(collection.getId(), documentId));
-      permissionsChecker.checkRoleInDocumentWithView(document, collection, role, role);
+   private Tuple<Collection, Document> checkDeleteDocument(String documentId) {
+      var tuple = readCollectionAndDocument(documentId);
+      permissionsChecker.checkDeleteDocument(tuple.getFirst(), tuple.getSecond());
+      return tuple;
+   }
+
+   private Tuple<Collection, Document> checkReadDocument(String documentId) {
+      var tuple = readCollectionAndDocument(documentId);
+      permissionsChecker.checkReadDocument(tuple.getFirst(), tuple.getSecond());
+      return tuple;
+   }
+
+   private Document checkReadDocument(Collection collection, String documentId) {
+      final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, documentId);
+      permissionsChecker.checkReadDocument(collection, document);
+      return document;
+   }
+
+   private Tuple<Collection, Document> readCollectionAndDocument(String documentId) {
+      final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, documentId);
+      Collection collection = collectionDao.getCollectionById(document.getCollectionId());
       return new Tuple<>(collection, document);
    }
 

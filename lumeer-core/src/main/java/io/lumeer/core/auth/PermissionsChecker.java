@@ -29,10 +29,12 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
@@ -43,7 +45,6 @@ import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.core.util.FunctionRuleJsParser;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
@@ -59,7 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -183,7 +183,7 @@ public class PermissionsChecker {
    }
 
    public void checkAllRoles(Resource resource, Set<RoleType> roles) {
-      permissionAdapter.checlAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+      permissionAdapter.checkAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -239,6 +239,10 @@ public class PermissionsChecker {
 
    public void checkReadDocument(final Collection collection, final Document document) {
       permissionAdapter.checkCanReadDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canReadDocument(final Collection collection, final Document document) {
+      return permissionAdapter.canReadDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
    }
 
    public void checkEditDocument(final Collection collection, final Document document) {
@@ -358,24 +362,16 @@ public class PermissionsChecker {
       return new AllowedPermissions(roles, rolesWithView);
    }
 
-   public void checkFunctionRuleAccess(final Collection collection, final String js, final RoleType role) {
-      final Map<String, Collection> collections = collectionDao.getAllCollections().stream().collect(toMap(Resource::getId, Function.identity()));
-      final Set<String> collectionIds = collections.keySet();
-      final Map<String, LinkType> linkTypes = linkTypeDao.getAllLinkTypes().stream().collect(toMap(LinkType::getId, Function.identity()));
-      final Set<String> linkTypeIds = linkTypes.keySet();
+   public void checkRulesPermissions(Map<String, Rule> ruleMap) {
+      if (ruleMap != null) {
+         ruleMap.values().stream().filter(r -> r.getType() == Rule.RuleType.BLOCKLY).forEach(rule ->
+               checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.Write)
+         );
+      }
+   }
 
-      final List<FunctionRuleJsParser.ResourceReference> references = FunctionRuleJsParser.parseRuleFunctionJs(js, collectionIds, linkTypeIds);
-
-      references.forEach(reference -> {
-         if (reference.getResourceType() == ResourceType.COLLECTION) {
-            checkRole(collections.get(reference.getId()), role);
-         } else if (reference.getResourceType() == ResourceType.LINK) {
-            final LinkType linkType = linkTypes.get(reference.getId());
-            linkType.getCollectionIds().forEach(c -> checkRole(collections.get(c), role));
-         } else {
-            throw new NoResourcePermissionException(collection);
-         }
-      });
+   public void checkFunctionRuleAccess(final String js, final RoleType role) {
+      permissionAdapter.checkFunctionRuleAccess(getOrganization(), getProject(), js, role, authenticatedUser.getCurrentUserId());
    }
 
    /**
