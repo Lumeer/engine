@@ -144,6 +144,13 @@ public class PermissionUtils {
       return getUsersDifference(users1, users2);
    }
 
+   public static RolesDifference getLinkTypeUsersDifferenceByRole(Organization organization, @Nullable Project project, LinkType resource1, LinkType resource2, List<Collection> collections, List<User> users, RoleType roleType) {
+      Set<String> users1 = getLinkTypeUsersByRole(organization, project, resource1, collections, users, roleType);
+      Set<String> users2 = getLinkTypeUsersByRole(organization, project, resource2, collections, users, roleType);
+
+      return getUsersDifference(users1, users2);
+   }
+
    private static RolesDifference getUsersDifference(Set<String> users1, Set<String> users2) {
       Set<String> addedUsers = new HashSet<>(users2);
       addedUsers.removeAll(users1);

@@ -51,7 +51,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -410,7 +409,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] userPermission = { Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Write), new Role(RoleType.Config))) };
+      Permission[] userPermission = { Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Manage))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("users")
@@ -449,7 +448,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Write), new Role(RoleType.Read))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Read))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups")

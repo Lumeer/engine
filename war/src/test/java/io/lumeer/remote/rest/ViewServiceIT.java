@@ -275,10 +275,10 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    @SuppressWarnings("unchecked")
    public void testGetViewWithAuthorRights() {
       final String USER = "aaaaa4444400000000111112"; // non-existing author
-      Permission permission = new Permission(USER, Collections.singleton(new Role(RoleType.Write)));
+      Permission permission = new Permission(USER, Collections.singleton(new Role(RoleType.DataWrite)));
       Collection collection = collectionFacade.createCollection(
             new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Collections.singletonList(permission)), Collections.emptySet())));
-      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(USER, Set.of(new Role(RoleType.Write)))));
+      collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(USER, Set.of(new Role(RoleType.DataWrite)))));
 
       View view = prepareView(CODE + "3");
       view.setQuery(new Query(new QueryStem(collection.getId())));
@@ -296,7 +296,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), Set.of(RoleType.Write)));
+      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), Set.of(RoleType.DataWrite)));
       assertions.assertAll();
    }
 

@@ -271,7 +271,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    @Test
    public void testGetViewsNoReadRole() {
       View view = prepareView();
-      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Config)));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Manage)));
       view.getPermissions().updateUserPermissions(userPermission);
       viewDao.databaseCollection().insertOne(view);
 

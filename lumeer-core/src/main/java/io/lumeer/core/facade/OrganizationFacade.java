@@ -97,7 +97,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    private void checkCreateOrganization(List<Organization> organizations) {
-      var hasManagedOrganization = organizations.stream().anyMatch(organization -> permissionsChecker.hasRole(organization, RoleType.Config));
+      var hasManagedOrganization = organizations.stream().anyMatch(organization -> permissionsChecker.hasRole(organization, RoleType.Manage));
       if (hasManagedOrganization) {
          this.checkSystemPermission();
       }
@@ -105,7 +105,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Organization updateOrganization(final String organizationId, final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
-      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleType.Config);
+      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleType.Manage);
 
       keepStoredPermissions(organization, storedOrganization.getPermissions());
       keepUnmodifiableFields(organization, storedOrganization);
@@ -116,7 +116,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public void deleteOrganization(final String organizationId) {
-      Organization organization = checkRoleAndGetOrganization(organizationId, RoleType.Config);
+      Organization organization = organizationDao.getOrganizationById(organizationId);
       permissionsChecker.checkCanDelete(organization);
 
       deleteOrganizationScopedRepositories(organization);
@@ -229,7 +229,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public List<Organization> getOrganizationsCapableForProject(final ProjectDescription projectDescription) {
-      return getOrganizations().stream().filter(org -> permissionsChecker.hasRole(org, RoleType.Contribute)
+      return getOrganizations().stream().filter(org -> permissionsChecker.hasRole(org, RoleType.DataContribute)
       ).filter(org -> {
          final ServiceLimits serviceLimits = paymentFacade.getCurrentServiceLimits(org);
          final long projects = projectDao.getProjectsCount(org);

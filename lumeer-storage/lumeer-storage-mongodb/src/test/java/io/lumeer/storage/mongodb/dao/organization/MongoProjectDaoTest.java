@@ -167,12 +167,12 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
    @Test
    public void testGetProjectsNoReadRole() {
       Project project = prepareProject(CODE1);
-      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Write)));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.DataWrite)));
       project.getPermissions().updateUserPermissions(userPermission);
       projectDao.databaseCollection().insertOne(project);
 
       Project project2 = prepareProject(CODE2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.Config)));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.Manage)));
       project2.getPermissions().updateGroupPermissions(groupPermission);
       projectDao.databaseCollection().insertOne(project2);
 

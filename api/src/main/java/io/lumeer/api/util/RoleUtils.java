@@ -57,7 +57,7 @@ public class RoleUtils {
          case READ:
             return Set.of(new Role(RoleType.Read));
          case WRITE:
-            return Set.of(new Role(RoleType.Contribute));
+            return Set.of(new Role(RoleType.ProjectContribute));
          case MANAGE:
             return Arrays.stream(RoleType.values()).map(roleType -> new Role(roleType, true)).collect(Collectors.toSet());
          default:
@@ -89,11 +89,11 @@ public class RoleUtils {
    public static Set<Role> collectionResourceRoles(RoleOld role) {
       switch (role) {
          case READ:
-            return Set.of(new Role(RoleType.Read, true), new Role(RoleType.CommentContribute));
+            return Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead), new Role(RoleType.CommentContribute));
          case WRITE:
-            return Set.of(new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete));
+            return Set.of(new Role(RoleType.DataWrite), new Role(RoleType.DataContribute), new Role(RoleType.DataDelete));
          case MANAGE:
-            return Set.of(new Role(RoleType.Read, true), new Role(RoleType.CommentContribute), new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete), new Role(RoleType.Config), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.TechConfig));
+            return Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead), new Role(RoleType.CommentContribute), new Role(RoleType.DataWrite), new Role(RoleType.DataContribute), new Role(RoleType.DataDelete), new Role(RoleType.Manage), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.TechConfig));
          default:
             return Collections.emptySet();
       }
@@ -109,7 +109,7 @@ public class RoleUtils {
          case WRITE:
             return collectionResourceRoles(role);
          case MANAGE:
-            return Set.of(new Role(RoleType.Read, true), new Role(RoleType.CommentContribute), new Role(RoleType.Write), new Role(RoleType.Contribute), new Role(RoleType.Delete), new Role(RoleType.Config), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.QueryConfig), new Role(RoleType.PerspectiveConfig));
+            return Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead), new Role(RoleType.CommentContribute), new Role(RoleType.DataWrite), new Role(RoleType.DataContribute), new Role(RoleType.DataDelete), new Role(RoleType.Manage), new Role(RoleType.AttributeEdit), new Role(RoleType.UserConfig), new Role(RoleType.QueryConfig), new Role(RoleType.PerspectiveConfig));
          default:
             return Collections.emptySet();
       }

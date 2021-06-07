@@ -262,7 +262,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.TechConfig, true), new Role(RoleType.Write))) };
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.TechConfig, true), new Role(RoleType.DataWrite))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("users")
@@ -302,7 +302,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Config), new Role(RoleType.Write, true))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Manage), new Role(RoleType.DataWrite, true))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups")

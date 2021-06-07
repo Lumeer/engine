@@ -109,7 +109,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       USER_PERMISSION = Permission.buildWithRoles(USER, Collection.ROLES);
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      Permission userManagePermission = Permission.buildWithRoles(USER,  Collections.singleton(new Role(RoleType.Config)));
+      Permission userManagePermission = Permission.buildWithRoles(USER,  Collections.singleton(new Role(RoleType.Manage)));
       MANAGE_PERMISSIONS.updateUserPermissions(userManagePermission);
 
       GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(new Role(RoleType.Read)));
@@ -272,7 +272,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    @Test
    public void testGetCollectionsNoReadRole() {
       Collection collection = prepareCollection(CODE, NAME);
-      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Config)));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Manage)));
       collection.getPermissions().updateUserPermissions(userPermission);
       collectionDao.databaseCollection().insertOne(collection);
 

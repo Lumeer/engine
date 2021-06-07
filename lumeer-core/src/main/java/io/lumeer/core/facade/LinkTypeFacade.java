@@ -105,10 +105,10 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
-      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Config);
+      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Manage);
       LinkType originalLinkType = new LinkType(storedLinkType);
       if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
-         checkLinkTypePermission(linkType, RoleType.Config);
+         checkLinkTypePermission(linkType, RoleType.Manage);
       }
 
       if (!skipFceLimits) {
@@ -131,7 +131,9 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public void deleteLinkType(String id) {
-      LinkType linkType = checkLinkTypePermission(id, RoleType.Config);
+      LinkType linkType = linkTypeDao.getLinkType(id);
+      permissionsChecker.checkCanDelete(linkType);
+
       linkTypeDao.deleteLinkType(id);
       deleteLinkTypeBasedData(linkType.getId());
    }

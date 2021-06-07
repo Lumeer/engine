@@ -611,7 +611,7 @@ public class DocumentFacade extends AbstractFacade {
          if (role == RoleType.Read) {
             var document = checkReadDocument(collection, documentId);
             taskProcessingFacade.runRule(collection, rule, document, actionName);
-         } else if (role == RoleType.Write) {
+         } else if (role == RoleType.DataWrite) {
             var document = checkEditDocument(collection, documentId);
             taskProcessingFacade.runRule(collection, rule, document, actionName);
          }

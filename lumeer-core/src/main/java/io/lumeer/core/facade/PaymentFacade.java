@@ -313,7 +313,7 @@ public class PaymentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, RoleType.Config);
+      permissionsChecker.checkRole(organization, RoleType.Manage);
    }
 
    private void checkReadPermissions(final Organization organization) {

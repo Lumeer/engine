@@ -106,7 +106,7 @@ public class ViewFacade extends AbstractFacade {
 
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
-      permissionsChecker.checkRole(storedView, RoleType.Config);
+      permissionsChecker.checkRole(storedView, RoleType.Manage);
 
       // TODO partial update
       keepStoredPermissions(view, storedView.getPermissions());
@@ -125,7 +125,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void deleteView(final String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, RoleType.Config);
+      permissionsChecker.checkCanDelete(view);
 
       viewDao.deleteView(view.getId());
 

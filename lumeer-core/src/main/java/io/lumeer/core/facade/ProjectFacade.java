@@ -131,7 +131,7 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project createProject(Project project) {
       Utils.checkCodeSafe(project.getCode());
-      checkOrganizationRole(RoleType.Contribute);
+      checkOrganizationRole(RoleType.ProjectContribute);
       checkProjectCreate(project);
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Project.ROLES);
@@ -147,7 +147,7 @@ public class ProjectFacade extends AbstractFacade {
    public Project updateProject(final String projectId, final Project project) {
       Utils.checkCodeSafe(project.getCode());
       final Project storedProject = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(storedProject, RoleType.Config);
+      permissionsChecker.checkRole(storedProject, RoleType.Manage);
 
       keepStoredPermissions(project, storedProject.getPermissions());
       keepUnmodifiableFields(project, storedProject);
@@ -159,7 +159,6 @@ public class ProjectFacade extends AbstractFacade {
 
    public void deleteProject(final String projectId) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleType.Config);
       permissionsChecker.checkCanDelete(project);
 
       deleteProjectScopedRepositories(project);
@@ -437,7 +436,7 @@ public class ProjectFacade extends AbstractFacade {
       Project project = projectDao.getProjectById(projectId);
 
       if (project != null) {
-         permissionsChecker.checkRole(project, RoleType.Config);
+         permissionsChecker.checkRole(project, RoleType.Manage);
 
          final List<Document> documents = documentDao.getDocumentsWithTemplateId();
          final List<LinkInstance> links = linkInstanceDao.getLinkInstancesByDocumentIds(documents.stream().map(Document::getId).collect(Collectors.toSet()));

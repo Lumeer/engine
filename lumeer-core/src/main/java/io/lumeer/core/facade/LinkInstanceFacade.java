@@ -386,7 +386,7 @@ public class LinkInstanceFacade extends AbstractFacade {
          if (role == RoleType.Read) {
             var linkInstance = checkReadLink(linkType, linkInstanceId);
             taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
-         } else if (role == RoleType.Write) {
+         } else if (role == RoleType.DataWrite) {
             var linkInstance = checkEditLink(linkType, linkInstanceId);
             taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
          }

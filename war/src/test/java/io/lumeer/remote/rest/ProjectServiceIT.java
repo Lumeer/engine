@@ -263,7 +263,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Config, true), new Role(RoleType.CollectionContribute))) };
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Manage, true), new Role(RoleType.CollectionContribute))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("users")
@@ -303,7 +303,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Contribute, true), new Role(RoleType.UserConfig))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.DataContribute, true), new Role(RoleType.UserConfig))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(projectUrl).path(project.getId()).path("permissions").path("groups")

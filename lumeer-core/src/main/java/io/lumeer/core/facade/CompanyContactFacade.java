@@ -58,6 +58,6 @@ public class CompanyContactFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, RoleType.Config);
+      permissionsChecker.checkRole(organization, RoleType.Manage);
    }
 }

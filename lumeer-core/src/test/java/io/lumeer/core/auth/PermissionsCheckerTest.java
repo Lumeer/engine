@@ -133,17 +133,17 @@ public class PermissionsCheckerTest {
 
    @Test
    public void testCheckDifferentRole() {
-      Resource resource = prepareResource(Collections.singleton(new Role(RoleType.Write)), Collections.singleton(new Role(RoleType.Read)));
-      assertThatThrownBy(() -> permissionsChecker.checkRole(resource, RoleType.Config))
+      Resource resource = prepareResource(Collections.singleton(new Role(RoleType.DataWrite)), Collections.singleton(new Role(RoleType.Read)));
+      assertThatThrownBy(() -> permissionsChecker.checkRole(resource, RoleType.Manage))
             .isInstanceOf(NoResourcePermissionException.class)
             .hasFieldOrPropertyWithValue("resource", resource);
    }
 
    @Test
    public void testGetActualRolesUserOnly() {
-      Resource resource = prepareResource(Sets.newLinkedHashSet(new Role(RoleType.Read), new Role(RoleType.Write)), Collections.emptySet());
+      Resource resource = prepareResource(Sets.newLinkedHashSet(new Role(RoleType.Read), new Role(RoleType.DataWrite)), Collections.emptySet());
       Set<RoleType> roles = permissionsChecker.getActualRoles(resource);
-      assertThat(roles).containsOnly(RoleType.Read, RoleType.Write);
+      assertThat(roles).containsOnly(RoleType.Read, RoleType.DataWrite);
    }
 
    @Test
@@ -155,9 +155,9 @@ public class PermissionsCheckerTest {
 
    @Test
    public void testGetActualRolesIntersection() {
-      Resource resource = prepareResource(Sets.newLinkedHashSet(new Role(RoleType.Read), new Role(RoleType.Write)), Sets.newLinkedHashSet(new Role(RoleType.UserConfig), new Role(RoleType.PerspectiveConfig)));
+      Resource resource = prepareResource(Sets.newLinkedHashSet(new Role(RoleType.Read), new Role(RoleType.DataWrite)), Sets.newLinkedHashSet(new Role(RoleType.UserConfig), new Role(RoleType.PerspectiveConfig)));
       Set<RoleType> roles = permissionsChecker.getActualRoles(resource);
-      assertThat(roles).containsOnly(RoleType.Read, RoleType.Write, RoleType.UserConfig, RoleType.PerspectiveConfig);
+      assertThat(roles).containsOnly(RoleType.Read, RoleType.DataWrite, RoleType.UserConfig, RoleType.PerspectiveConfig);
    }
 
    @Test

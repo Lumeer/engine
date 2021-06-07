@@ -458,7 +458,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       final Collection collection = createCollection(CODE);
       final String collectionId = collection.getId();
 
-      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Write), new Role(RoleType.Config)));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Manage)));
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -466,7 +466,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
 
-      userPermission = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read), new Role(RoleType.Config)));
+      userPermission = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
@@ -507,7 +507,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission groupPermission = Permission.buildWithRoles(group.getId(), Set.of(new Role(RoleType.Write), new Role(RoleType.Config)));
+      Permission groupPermission = Permission.buildWithRoles(group.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Manage)));
       collectionFacade.updateGroupPermissions(collectionId, Set.of(groupPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();

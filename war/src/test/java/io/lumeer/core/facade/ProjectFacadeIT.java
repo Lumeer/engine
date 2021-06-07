@@ -242,7 +242,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.Write, true)));
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.DataWrite, true)));
       projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();
@@ -267,7 +267,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Project project = createProject(CODE1);
 
-      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.CollectionContribute, true), new Role(RoleType.Write)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.CollectionContribute, true), new Role(RoleType.DataWrite)));
       projectFacade.updateGroupPermissions(project.getId(), Set.of(groupPermission));
 
       Permissions permissions = projectDao.getProjectByCode(CODE1).getPermissions();

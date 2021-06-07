@@ -42,9 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -227,7 +225,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateUserPermissions() {
       final String organizationId = createOrganization(CODE1);
 
-      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Config), new Role(RoleType.TechConfig, true)));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Manage), new Role(RoleType.TechConfig, true)));
       organizationFacade.updateUserPermissions(organizationId, Set.of(userPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();
@@ -253,7 +251,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final String organizationId = createOrganization(CODE1);
 
-      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Delete, true), new Role(RoleType.Config)));
+      Permission groupPermission = Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.DataDelete, true), new Role(RoleType.Manage)));
       organizationFacade.updateGroupPermissions(organizationId, Set.of(groupPermission));
 
       Permissions permissions = organizationDao.getOrganizationByCode(CODE1).getPermissions();

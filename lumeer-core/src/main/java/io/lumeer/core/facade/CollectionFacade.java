@@ -149,7 +149,7 @@ public class CollectionFacade extends AbstractFacade {
    public Collection updateCollection(final String collectionId, final Collection collection, final boolean skipFceLimits) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = storedCollection.copy();
-      permissionsChecker.checkRole(storedCollection, RoleType.Config);
+      permissionsChecker.checkRole(storedCollection, RoleType.Manage);
 
       if (!skipFceLimits) {
          permissionsChecker.checkRulesLimit(collection);
@@ -190,7 +190,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public void deleteCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(collection, RoleType.Config);
+      permissionsChecker.checkCanDelete(collection);
 
       collectionDao.deleteCollection(collectionId);
 

@@ -18,8 +18,6 @@
  */
 package io.lumeer.core.auth;
 
-import static java.util.stream.Collectors.toMap;
-
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
@@ -184,6 +182,20 @@ public class PermissionsChecker {
 
    public void checkAllRoles(Resource resource, Set<RoleType> roles) {
       permissionAdapter.checkAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   }
+
+   /**
+    * Checks whether it is possible to delete the given resource.
+    *
+    * @param resource Resource to check.
+    * @throws NoResourcePermissionException When it is not possible to delete the resource.
+    */
+   public void checkCanDelete(Resource resource) {
+      permissionAdapter.checkCanDelete(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkCanDelete(LinkType linkType) {
+      permissionAdapter.checkCanDelete(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -365,7 +377,7 @@ public class PermissionsChecker {
    public void checkRulesPermissions(Map<String, Rule> ruleMap) {
       if (ruleMap != null) {
          ruleMap.values().stream().filter(r -> r.getType() == Rule.RuleType.BLOCKLY).forEach(rule ->
-               checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.Write)
+               checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.DataWrite)
          );
       }
    }
@@ -584,17 +596,5 @@ public class PermissionsChecker {
 
    private Project getProject() {
       return workspaceKeeper.getProject().orElse(null);
-   }
-
-   /**
-    * Checks whether it is possible to delete the given resource.
-    *
-    * @param resource Resource to check.
-    * @throws NoResourcePermissionException When it is not possible to delete the resource.
-    */
-   public void checkCanDelete(Resource resource) {
-      if (resource.isNonRemovable()) {
-         throw new NoResourcePermissionException(resource);
-      }
    }
 }

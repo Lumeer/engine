@@ -18,8 +18,6 @@
  */
 package io.lumeer.api.model;
 
-import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public enum RoleType {
@@ -27,17 +25,20 @@ public enum RoleType {
    // read resource
    Read,
 
+   // change name, description, icon, color, folders in view
+   Manage,
+
+   // read child resources data (i.e. collection -> documents)
+   DataRead,
+
    // edit child resources data (i.e. collection -> documents)
-   Write,
+   DataWrite,
 
    // delete child resources (i.e. collection -> documents)
-   Delete,
+   DataDelete,
 
-   // create and remove child resources (i.e. organization -> projects, collection -> documents)
-   Contribute,
-
-   // change name, description, icon, color, folders in view
-   Config,
+   // create and remove child resources (i.e. collection -> documents)
+   DataContribute,
 
    // create new views and delete them
    ViewContribute,
@@ -47,6 +48,9 @@ public enum RoleType {
 
    // create new links and delete them
    LinkContribute,
+
+   // create new projects and delete them
+   ProjectContribute,
 
    // create new comments and delete them
    CommentContribute,
@@ -73,12 +77,6 @@ public enum RoleType {
       } catch (IllegalArgumentException exception) {
          return null;
       }
-   }
-
-   public static Set<String> toStringRoles(Set<RoleType> roles) {
-      return roles.stream()
-                  .map(RoleType::toString)
-                  .collect(Collectors.toSet());
    }
 
 }

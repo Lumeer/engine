@@ -310,6 +310,13 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
+   private void checkLinkTypesPermissionsChange(final LinkType originalLinkType, final LinkType updatedLinkType) {
+      List<Event> notifications = pusherAdapter.checkLinkTypePermissionsChange(getOrganization(), getProject(), authenticatedUser.getCurrentUser(), originalLinkType, updatedLinkType);
+      if (notifications.size() > 0) {
+         sendNotificationsBatch(notifications);
+      }
+   }
+
    private void checkCollectionsPermissionsChange(final Collection originalCollection, final Collection updatedCollection) {
       List<Event> notifications = pusherAdapter.checkCollectionsPermissionsChange(getOrganization(), getProject(), authenticatedUser.getCurrentUser(), originalCollection, updatedCollection);
       if (notifications.size() > 0) {
@@ -361,7 +368,7 @@ public class PusherFacade extends AbstractFacade {
             getProject(),
             object,
             event,
-            userCache.getUserById(userId)
+            userId
       );
    }
 
@@ -520,6 +527,10 @@ public class PusherFacade extends AbstractFacade {
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
       if (isEnabled()) {
          try {
+            var originalLinkType = new LinkType(createLinkType.getLinkType());
+            originalLinkType.setPermissions(new Permissions());
+
+            checkLinkTypesPermissionsChange(originalLinkType, createLinkType.getLinkType());
             sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeComputedProperties(createLinkType.getLinkType()), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -530,6 +541,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
       if (isEnabled()) {
          try {
+            checkLinkTypesPermissionsChange(updateLinkType.getOriginalLinkType(), updateLinkType.getLinkType());
             sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeComputedProperties(updateLinkType.getLinkType()), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -551,7 +563,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Organization organization = organizationDao.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId());
-            Set<String> userIds =  permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Config);
+            Set<String> userIds =  permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Manage);
             sendNotificationsByUsers(updateCompanyContact.getCompanyContact(), userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -563,7 +575,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(updateServiceLimits.getServiceLimits(), updateServiceLimits.getOrganization().getId());
-            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(updateServiceLimits.getOrganization(), RoleType.Config);
+            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(updateServiceLimits.getOrganization(), RoleType.Manage);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -575,7 +587,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
-            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(createOrUpdatePayment.getOrganization(), RoleType.Config);
+            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(createOrUpdatePayment.getOrganization(), RoleType.Manage);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);

@@ -167,7 +167,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
    @Test
    public void testGetOrganizationsNoReadRole() {
       Organization organization = prepareOrganization(CODE1);
-      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Config)));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Manage)));
       organization.getPermissions().updateUserPermissions(userPermission);
       organizationDao.databaseCollection().insertOne(organization);
 

@@ -205,12 +205,12 @@ public class UserFacade extends AbstractFacade {
             }
          case READ_WRITE:
             if (resourceType == ResourceType.ORGANIZATION) {
-               roles.addAll(Set.of(new Role(RoleType.Contribute)));
+               roles.addAll(Set.of(new Role(RoleType.DataContribute)));
             } else if (resourceType == ResourceType.PROJECT) {
                roles.addAll(Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.CollectionContribute), new Role(RoleType.LinkContribute)));
             }
-            roles.add(new Role(RoleType.Write, true));
-            roles.add(new Role(RoleType.Contribute, true));
+            roles.add(new Role(RoleType.DataWrite, true));
+            roles.add(new Role(RoleType.DataContribute, true));
          case READ_ONLY:
             roles.add(new Role(RoleType.Read));
       }
