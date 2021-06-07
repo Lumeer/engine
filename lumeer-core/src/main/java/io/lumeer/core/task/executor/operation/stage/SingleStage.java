@@ -286,10 +286,10 @@ public class SingleStage extends Stage {
                // decrease link instances count in link types map
                if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) { // present in link types map
                   final LinkType linkType = changesTracker.getLinkTypesMap().get(linkTypeId);
-                  linkTypeAdapter.mapLinkTypeData(linkType);
+                  linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
                } else { // not yet in the map
                   final LinkType linkType = allLinkTypes.get(linkTypeId);
-                  linkTypeAdapter.mapLinkTypeData(linkType);
+                  linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
                   changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
                }
 

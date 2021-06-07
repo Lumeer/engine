@@ -207,7 +207,7 @@ public class FunctionFacade extends AbstractFacade {
       Set<String> linkTypeIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.LINK && q.getLinkType() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
 
       Map<String, Collection> collectionMap = collectionIds.size() > 0 ? collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Resource::getId, c -> c)) : new HashMap<>();
-      List<LinkType> linkTypes = linkTypeIds.size() > 0 ? linkTypeAdapter.mapLinkTypesData(linkTypeDao.getLinkTypesByIds(linkTypeIds)) : new ArrayList<>();
+      List<LinkType> linkTypes = linkTypeIds.size() > 0 ? linkTypeAdapter.mapLinkTypesComputedProperties(linkTypeDao.getLinkTypesByIds(linkTypeIds)) : new ArrayList<>();
       Map<String, LinkType> linkTypeMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> c));
 
       FunctionTask task = null;

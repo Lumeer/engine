@@ -27,16 +27,38 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
    fun <T : Resource> mapResource(organization: Organization, project: Project?, resource: T, user: User): T {
       return if (getUserAdmins(organization, project, resource).contains(user.id)) {
          resource
-      } else keepOnlyNecessaryPermissions(organization, project, resource, user)
+      } else resource.apply {
+         permissions = keepOnlyNecessaryPermissions(organization, project, resource.permissions, resource.type, user)
+      }
+   }
+
+   fun mapLinkType(organization: Organization, project: Project?, linkType: LinkType, user: User): LinkType {
+      if (linkType.permissionsType == LinkPermissionsType.MERGE) {
+         return linkType.apply { permissions = Permissions() }
+      }
+      return if (getUserAdmins(organization, project, linkType).contains(user.id)) {
+         linkType
+      } else linkType.apply {
+         permissions = keepOnlyNecessaryPermissions(organization, project, linkType.permissions, ResourceType.LINK_TYPE, user)
+      }
    }
 
    private fun <T : Resource> getUserAdmins(organization: Organization, project: Project?, resource: T): Set<String> {
       return permissionAdapter.getResourceUsersByRole(organization, project, resource, RoleType.UserConfig)
    }
 
+   private fun getUserAdmins(organization: Organization, project: Project?, linkType: LinkType): Set<String> {
+      return permissionAdapter.getLinkTypeUsersByRole(organization, project, linkType, RoleType.UserConfig)
+   }
+
    fun <T : Resource> keepStoredPermissions(resource: T, storedPermissions: Permissions) {
-      resource.permissions.updateUserPermissions(storedPermissions.userPermissions)
-      resource.permissions.updateGroupPermissions(storedPermissions.groupPermissions)
+      resource.permissions?.updateUserPermissions(storedPermissions.userPermissions)
+      resource.permissions?.updateGroupPermissions(storedPermissions.groupPermissions)
+   }
+
+   fun keepStoredPermissions(linkType: LinkType, storedPermissions: Permissions) {
+      linkType.permissions?.updateUserPermissions(storedPermissions.userPermissions)
+      linkType.permissions?.updateGroupPermissions(storedPermissions.groupPermissions)
    }
 
    fun <T : Resource> keepUnmodifiableFields(destinationResource: T, originalResource: T) {
@@ -52,24 +74,24 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return resource
    }
 
-   private fun <T : Resource> keepOnlyNecessaryPermissions(organization: Organization?, project: Project?, resource: T, user: User): T {
-      val userPermission = resource.permissions?.userPermissions?.filter { it.id == user.id }.orEmpty().toSet()
+   private fun keepOnlyNecessaryPermissions(organization: Organization?, project: Project?, permissions: Permissions?, resourceType: ResourceType, user: User): Permissions? {
+      val userPermission = permissions?.userPermissions?.filter { it.id == user.id }.orEmpty().toSet()
       val userGroups = PermissionUtils.getUserGroups(organization, user)
-      val userGroupPermissions = resource.permissions?.groupPermissions?.filter { userGroups.contains(it.id) }.orEmpty().toSet()
+      val userGroupPermissions = permissions?.groupPermissions?.filter { userGroups.contains(it.id) }.orEmpty().toSet()
 
       // Some roles are necessary to compute roles in other resources (i.e. Content readers/managers on view sharing)
-      val keepRoles = keepRoleTypes(resource)
-      val userPermissions = filterOnlyNecessaryPermissions(resource.permissions?.userPermissions, keepRoles)
-      val groupPermissions = filterOnlyNecessaryPermissions(resource.permissions?.groupPermissions, keepRoles)
+      val keepRoles = keepRoleTypes(resourceType)
+      val userPermissions = filterOnlyNecessaryPermissions(permissions?.userPermissions, keepRoles)
+      val groupPermissions = filterOnlyNecessaryPermissions(permissions?.groupPermissions, keepRoles)
 
-      resource.permissions.clear()
-      resource.permissions.updateUserPermissions(userPermissions)
+      permissions?.clear()
+      permissions?.updateUserPermissions(userPermissions)
       // Replace current user permissions
-      resource.permissions.updateUserPermissions(userPermission)
-      resource.permissions.updateGroupPermissions(groupPermissions)
+      permissions?.updateUserPermissions(userPermission)
+      permissions?.updateGroupPermissions(groupPermissions)
       // Replace current user groups permissions
-      resource.permissions.updateGroupPermissions(userGroupPermissions)
-      return resource
+      permissions?.updateGroupPermissions(userGroupPermissions)
+      return permissions
    }
 
    private fun filterOnlyNecessaryPermissions(permissions: Set<Permission>?, keepRoleTypes: Set<RoleType>): Set<Permission> {
@@ -79,10 +101,10 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
             .toSet()
    }
 
-   private fun <T : Resource> keepRoleTypes(resource: T): Set<RoleType> {
-      return when (resource) {
-         is Organization -> setOf(RoleType.Read)
-         is Project -> setOf(RoleType.Read)
+   private fun keepRoleTypes(resourceType: ResourceType): Set<RoleType> {
+      return when (resourceType) {
+         ResourceType.ORGANIZATION -> setOf(RoleType.Read)
+         ResourceType.PROJECT -> setOf(RoleType.Read)
          else -> setOf()
       }
    }

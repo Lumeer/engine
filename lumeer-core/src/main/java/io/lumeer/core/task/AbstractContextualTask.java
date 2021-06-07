@@ -209,7 +209,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    public void sendPushNotifications(final LinkType linkType, final String suffix) {
       if (getPusherClient() != null) {
-         linkTypeAdapter.mapLinkTypeData(linkType);
+         linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
          final Set<String> users = getLinkTypeReaders(linkType);
          final List<Event> events = users.stream().map(user -> createEventForLinkType(linkType, user, suffix)).collect(Collectors.toList());
 
@@ -224,7 +224,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    private Event createEventForCollection(final Collection collection, final String userId, final String suffix) {
       final String projectId = daoContextSnapshot.getSelectedWorkspace().getProject().map(Project::getId).orElse("");
 
-      final Collection mappedCollection = collectionAdapter.mapCollectionData(collection.copy(), userId, projectId);
+      final Collection mappedCollection = collectionAdapter.mapCollectionComputedProperties(collection.copy(), userId, projectId);
 
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedCollection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
@@ -260,7 +260,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private Event createEventForLinkType(final LinkType linkType, final String userId, final String suffix) {
-      linkTypeAdapter.mapLinkTypeData(linkType);
+      linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
 
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
@@ -343,7 +343,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    public void sendPushNotifications(final LinkType linkType, final List<LinkInstance> linkInstances, final String suffix, final boolean linkTypeChanged) {
       if (linkType.getCollectionIds().size() == 2) {
-         linkTypeAdapter.mapLinkTypeData(linkType);
+         linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
          final Set<String> users = getLinkTypeReaders(linkType);
 
          final List<Event> events = new ArrayList<>();

@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -124,6 +123,8 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
+      keepStoredPermissions(linkType, storedLinkType.getPermissions());
+
       linkType.setAttributes(storedLinkType.getAttributes());
       linkType.setLastAttributeNum(storedLinkType.getLastAttributeNum());
       linkType.setCollectionIds(storedLinkType.getCollectionIds());
@@ -196,16 +197,15 @@ public class LinkTypeFacade extends AbstractFacade {
       return List.of();
    }
 
-   public List<LinkType> getLinkTypesByIds(Set<String> ids) {
-      return mapLinkTypesData(linkTypeDao.getLinkTypesByIds(ids));
-   }
-
    private LinkType mapLinkTypeData(LinkType linkType) {
-      return adapter.mapLinkTypeData(linkType);
+      return mapLinkType(adapter.mapLinkTypeComputedProperties(linkType));
    }
 
    private List<LinkType> mapLinkTypesData(List<LinkType> linkTypes) {
-      return adapter.mapLinkTypesData(linkTypes);
+      return adapter.mapLinkTypesComputedProperties(linkTypes)
+            .stream()
+            .peek(this::mapLinkType)
+            .collect(Collectors.toList());
    }
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {

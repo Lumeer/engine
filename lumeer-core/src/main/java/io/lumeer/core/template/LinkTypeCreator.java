@@ -67,7 +67,8 @@ public class LinkTypeCreator extends WithIdCreator {
             collections,
             new ArrayList<>(),
             null,
-            new Permissions()
+            new Permissions(),
+            null
       );
    }
 }

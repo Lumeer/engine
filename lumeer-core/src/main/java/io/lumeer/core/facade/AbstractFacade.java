@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -28,7 +29,6 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
-import io.lumeer.storage.api.query.DatabaseQuery;
 
 import java.util.Set;
 import javax.inject.Inject;
@@ -83,21 +83,20 @@ abstract class AbstractFacade {
       return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
    }
 
+   protected LinkType mapLinkType(final LinkType linkType) {
+      return getFacadeAdapter().mapLinkType(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUser());
+   }
+
    protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
       getFacadeAdapter().keepStoredPermissions(resource, storedPermissions);
    }
 
-   protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {
-      getFacadeAdapter().keepUnmodifiableFields(destinationResource, originalResource);
+   protected void keepStoredPermissions(final LinkType linkType, final Permissions storedPermissions) {
+      getFacadeAdapter().keepStoredPermissions(linkType, storedPermissions);
    }
 
-   protected DatabaseQuery createSimpleQuery() {
-      String user = authenticatedUser.getCurrentUserId();
-      Set<String> groups = authenticatedUserGroups.getCurrentUserGroups();
-
-      return DatabaseQuery.createBuilder(user)
-                          .groups(groups)
-                          .build();
+   protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {
+      getFacadeAdapter().keepUnmodifiableFields(destinationResource, originalResource);
    }
 
    protected Organization getOrganization() {

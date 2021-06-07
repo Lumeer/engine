@@ -33,7 +33,6 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.AutoLinkRule;
-import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
@@ -165,7 +164,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Collection mapCollection(Collection collection) {
-      return adapter.mapCollectionData(mapResource(collection), getCurrentUserId(), workspaceKeeper.getProjectId());
+      return mapResource(adapter.mapCollectionComputedProperties(mapResource(collection), getCurrentUserId(), workspaceKeeper.getProjectId()));
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
@@ -262,7 +261,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private List<Collection> mapCollectionsData(List<Collection> collections) {
-      return adapter.mapCollectionsData(collections, getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapCollectionsComputedProperties(collections, getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void addFavoriteCollection(String collectionId) {

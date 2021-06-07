@@ -21,6 +21,7 @@ package io.lumeer.api.util;
 import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -71,19 +72,23 @@ public class PermissionUtils {
    }
 
    public static Set<RoleType> getUserRolesInLinkType(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, User user) {
-      if (!canReadLinkTypeCollections(organization, project, linkType, collections, user)) {
+      var linkTypeCollections = collections.stream().filter(collection -> linkType.getCollectionIds().contains(collection.getId())).collect(Collectors.toList());
+      var canReadCollections = linkTypeCollections.size() == 2;
+      for (Collection collection : linkTypeCollections) {
+         canReadCollections = canReadCollections && hasRole(organization, project, collection, RoleType.Read, user);
+      }
+      if (!canReadCollections) {
          return Collections.emptySet();
       }
-      return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user);
-   }
 
-   private static boolean canReadLinkTypeCollections(Organization organization, Project project, LinkType linkType, java.util.Collection<Collection> collections, User user) {
-      var linkTypeCollections = collections.stream().filter(collection -> linkType.getCollectionIds().contains(collection.getId())).collect(Collectors.toList());
-      var hasPermissions = linkTypeCollections.size() == 2;
-      for (Collection collection : linkTypeCollections) {
-         hasPermissions = hasPermissions && hasRole(organization, project, collection, RoleType.Read, user);
+      if (linkType.getPermissionsType() == LinkPermissionsType.MERGE) {
+         var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);
+         var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user);
+         roles1.retainAll(roles2);
+         return roles1;
       }
-      return hasPermissions;
+
+      return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user);
    }
 
    private static Set<RoleType> getUserRolesInResource(Organization organization, @Nullable Project project, ResourceType resourceType, Permissions permissions, User user) {

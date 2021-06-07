@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Rule;
@@ -53,6 +54,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public static final String LAST_ATTRIBUTE_NUM = "lastAttributeNum";
    public static final String RULES = "rules";
    public static final String ROLES = "roles";
+   public static final String ROLES_TYPE = "rolesType";
 
    private final Codec<Document> documentCodec;
 
@@ -86,8 +88,9 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
       }
 
       Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(ROLES, Document.class));
+      LinkPermissionsType permissionsType = LinkPermissionsType.fromString(bson.getString(ROLES_TYPE));
 
-      LinkType linkType = new LinkType(name, collectionCodes, attributes, rules, permissions);
+      LinkType linkType = new LinkType(name, collectionCodes, attributes, rules, permissions, permissionsType);
       linkType.setId(id);
       linkType.setVersion(version == null ? 0 : version);
       linkType.setLastAttributeNum(lastAttributeNum);
@@ -101,6 +104,8 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
           .append(COLLECTION_IDS, value.getCollectionIds())
           .append(ATTRIBUTES, value.getAttributes())
           .append(LAST_ATTRIBUTE_NUM, value.getLastAttributeNum())
+          .append(ROLES, value.getPermissions())
+          .append(ROLES_TYPE, value.getPermissionsType() != null ? value.getPermissionsType().toString() : null)
           .append(RULES, value.getRules());
 
       documentCodec.encode(writer, bson, encoderContext);

@@ -19,6 +19,7 @@
 package io.lumeer.api.model.templateParse;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Rule;
@@ -44,8 +45,9 @@ public class LinkTypeWithId extends LinkType {
          @JsonProperty(ATTRIBUTES) final List<Attribute> attributes,
          @JsonProperty(LAST_ATTRIBUTE_NUM) final Integer lastAttributeNum,
          @JsonProperty(RULES) final Map<String, Rule> rules,
-         @JsonProperty(PERMISSIONS) final Permissions permissions) {
-      super(name, collectionIds, attributes, rules, permissions);
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(PERMISSIONS_TYPE) final LinkPermissionsType permissionsType) {
+      super(name, collectionIds, attributes, rules, permissions, permissionsType);
       setId(id);
       setVersion(version);
       setLastAttributeNum(lastAttributeNum);

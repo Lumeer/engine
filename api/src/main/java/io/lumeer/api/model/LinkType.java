@@ -46,6 +46,7 @@ public class LinkType implements WithId, HealthChecking {
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
    public static final String RULES = "rules";
+   public static final String PERMISSIONS_TYPE = "permissionsType";
    public static final String PERMISSIONS = "permissions";
 
    public static final String ATTRIBUTE_PREFIX = "a";
@@ -58,6 +59,7 @@ public class LinkType implements WithId, HealthChecking {
    private Integer lastAttributeNum;
    private Long linksCount;
    private Map<String, Rule> rules;
+   private LinkPermissionsType permissionsType;
    private Permissions permissions;
 
    @JsonCreator
@@ -65,7 +67,8 @@ public class LinkType implements WithId, HealthChecking {
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<Attribute> attributes,
          @JsonProperty(RULES) final Map<String, Rule> rules,
-         @JsonProperty(PERMISSIONS) final Permissions permissions) {
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(PERMISSIONS_TYPE) final LinkPermissionsType permissionsType) {
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;
@@ -83,6 +86,7 @@ public class LinkType implements WithId, HealthChecking {
       this.linksCount = linkType.getLinksCount();
       this.rules = linkType.rules != null ? linkType.rules.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new Rule(e.getValue()))) : null;
       this.permissions = linkType.getPermissions() != null ? new Permissions(linkType.getPermissions()) : new Permissions();
+      this.permissionsType = linkType.getPermissionsType();
    }
 
    public String getId() {
@@ -190,6 +194,10 @@ public class LinkType implements WithId, HealthChecking {
 
    public void setRules(final Map<String, Rule> rules) {
       this.rules = rules;
+   }
+
+   public LinkPermissionsType getPermissionsType() {
+      return permissionsType;
    }
 
    @Override

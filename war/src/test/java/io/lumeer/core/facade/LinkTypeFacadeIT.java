@@ -244,7 +244,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null);
+      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null, null);
    }
 
 }

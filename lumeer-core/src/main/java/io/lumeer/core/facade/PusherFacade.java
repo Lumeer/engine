@@ -406,7 +406,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Collection createCollectionForUser(final Collection collection, final String userId) {
-      return collectionAdapter.mapCollectionData(collection.copy(), userId, workspaceKeeper.getProjectId());
+      return collectionAdapter.mapCollectionComputedProperties(collection.copy(), userId, workspaceKeeper.getProjectId());
    }
 
    public void createResourceComment(@Observes final CreateResourceComment commentEvent) {
@@ -520,7 +520,7 @@ public class PusherFacade extends AbstractFacade {
    public void createLinkType(@Observes final CreateLinkType createLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeData(createLinkType.getLinkType()), CREATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeComputedProperties(createLinkType.getLinkType()), CREATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
@@ -530,7 +530,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateLinkType(@Observes final UpdateLinkType updateLinkType) {
       if (isEnabled()) {
          try {
-            sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeData(updateLinkType.getLinkType()), UPDATE_EVENT_SUFFIX);
+            sendResourceNotificationByLinkType(linkTypeAdapter.mapLinkTypeComputedProperties(updateLinkType.getLinkType()), UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }

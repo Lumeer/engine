@@ -265,6 +265,10 @@ public class UserNotificationFacade extends AbstractFacade {
    }
 
    private void checkResourcesNotifications(final Resource originalResource, final Resource currentResource) {
+      if (originalResource == null || currentResource == null) {
+         return;
+      }
+      
       final RolesDifference resourceReadersDifference = permissionsChecker.getPermissionAdapter().getResourceReadersDifference(getOrganization(), getProject(), originalResource, currentResource);
       final Set<String> removedUsers = new HashSet<>(resourceReadersDifference.getRemovedUsers());
       removedUsers.remove(getCurrentUserId());

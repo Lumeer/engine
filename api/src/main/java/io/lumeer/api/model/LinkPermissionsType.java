@@ -1,8 +1,3 @@
-package io.lumeer.core.adapter
-
-import io.lumeer.api.model.LinkType
-import io.lumeer.storage.api.dao.LinkInstanceDao
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -21,18 +16,39 @@ import io.lumeer.storage.api.dao.LinkInstanceDao
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-class LinkTypeAdapter(val linkInstanceDao: LinkInstanceDao) {
+package io.lumeer.api.model;
 
-   fun getLinkInstancesCounts(): Map<String, Long> = linkInstanceDao.linkInstancesCounts
+import com.fasterxml.jackson.annotation.JsonValue;
 
-   fun getLinkInstancesCountByLinkType(linkTypeId: String): Long = linkInstanceDao.getLinkInstancesCountByLinkType(linkTypeId)
+public enum LinkPermissionsType {
 
-   fun mapLinkTypesComputedProperties(linkTypes: List<LinkType>): List<LinkType> {
-      val counts = getLinkInstancesCounts();
-      return linkTypes.onEach {
-         it.linksCount = counts[it.id]?.or(0)
+   CUSTOM("custom"),
+   MERGE("merge");
+
+   private final String value;
+
+   LinkPermissionsType(String value) {
+      this.value = value;
+   }
+
+   @JsonValue
+   public String getValue() {
+      return value;
+   }
+
+   public static LinkPermissionsType fromString(String value) {
+      if (value == null) {
+         return null;
+      }
+      try {
+         return LinkPermissionsType.valueOf(value);
+      } catch (IllegalArgumentException exception) {
+         return null;
       }
    }
 
-   fun mapLinkTypeComputedProperties(linkType: LinkType): LinkType = linkType.apply { linksCount = getLinkInstancesCountByLinkType(id) }
+   @Override
+   public String toString() {
+      return value;
+   }
 }

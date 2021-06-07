@@ -176,7 +176,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       final String ruleName = "blocklyRule";
       final Collection c1 = createCollection("c1", "name1", Map.of("a0", "A", "a1", "B"));
       final Collection c2 = createCollection("c2", "name2", Map.of("a0", "C", "a1", "D"));
-      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null, null));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null, null, null));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));
@@ -322,7 +322,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       final String ruleName = "autoLinkRule";
       final Collection c1 = createCollection("ac1", "auto1", Map.of("a0", "A", "a1", "B"));
       final Collection c2 = createCollection("ac2", "auto2", Map.of("a0", "C", "a1", "D"));
-      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null, null));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null, null, null));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));

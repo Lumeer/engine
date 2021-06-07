@@ -421,7 +421,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       List<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
             new Attribute(attributeId, attributeId, null, null, new Function("const lumeerko", "", "", 0, false), 1))
                                          .collect(Collectors.toList());
-      LinkType linkType = new LinkType(name, collectionIds, attributes, null, null);
+      LinkType linkType = new LinkType(name, collectionIds, attributes, null, null, null);
       return linkTypeDao.createLinkType(linkType);
    }
 
