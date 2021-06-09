@@ -194,43 +194,15 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    fun checkCanDelete(organization: Organization?, project: Project?, resource: Resource, userId: String) {
-      if ((!hasRole(organization, project, resource, RoleType.Manage, userId) && !canDeleteByContributor(organization, project, resource, userId)) || resource.isNonRemovable) {
+      if (!hasRole(organization, project, resource, RoleType.Manage, userId) || resource.isNonRemovable) {
          throw NoResourcePermissionException(resource)
       }
    }
 
    fun checkCanDelete(organization: Organization?, project: Project?, linkType: LinkType, userId: String) {
-      if (!hasRole(organization, project, linkType, getLinkTypeCollections(linkType), RoleType.Manage, userId) && !canDeleteByContributor(organization, project, linkType, userId)) {
+      if (!hasRole(organization, project, linkType, getLinkTypeCollections(linkType), RoleType.Manage, userId)) {
          throw NoPermissionException(ResourceType.LINK_TYPE.toString())
       }
-   }
-
-   private fun canDeleteByContributor(organization: Organization?, project: Project?, linkType: LinkType, userId: String): Boolean {
-      return organization != null && project != null && hasRole(organization, project, project, RoleType.ViewContribute, userId) && isOwner(linkType, userId)
-   }
-
-   private fun canDeleteByContributor(organization: Organization?, project: Project?, resource: Resource, userId: String): Boolean = when (resource) {
-      is Organization -> {
-         false
-      }
-      is Project -> {
-         organization != null && hasRole(organization, project, organization, RoleType.ProjectContribute, userId) && isOwner(resource, userId)
-      }
-      is View -> {
-         organization != null && project != null && hasRole(organization, project, project, RoleType.ViewContribute, userId) && isOwner(resource, userId)
-      }
-      is Collection -> {
-         organization != null && project != null && hasRole(organization, project, project, RoleType.CollectionContribute, userId) && isOwner(resource, userId)
-      }
-      else -> false
-   }
-
-   private fun isOwner(resource: Resource, userId: String): Boolean {
-      return false // currently we don't save user who created resource
-   }
-
-   private fun isOwner(linkType: LinkType, userId: String): Boolean {
-      return false // currently we don't save user who created linkresource
    }
 
    private fun hasRoleInCollectionViaView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, viewRole: RoleType, userId: String, view: View?): Boolean {
