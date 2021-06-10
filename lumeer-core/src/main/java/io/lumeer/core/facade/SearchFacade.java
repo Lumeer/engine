@@ -49,7 +49,6 @@ import io.lumeer.core.util.QueryUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.Utils;
 import io.lumeer.core.util.js.DataFilter;
-import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;

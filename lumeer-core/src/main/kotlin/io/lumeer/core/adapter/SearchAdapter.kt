@@ -30,14 +30,14 @@ import io.lumeer.storage.api.dao.LinkInstanceDao
 import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter
 import io.lumeer.storage.api.query.SearchQueryStem
 
+private const val MAX_IDS_QUERY = 500
+
 class SearchAdapter(private val permissionAdapter: PermissionAdapter,
                     private val constraintManager: ConstraintManager,
                     private val documentDao: DocumentDao,
                     private val dataDao: DataDao,
                     private val linkInstanceDao: LinkInstanceDao,
                     private val linkDataDao: LinkDataDao) {
-
-   private val MAX_IDS_QUERY = 500
 
    fun getDocuments(organization: Organization?, project: Project?, collection: Collection, documentIds: Set<String>, userId: String): List<Document> {
       val documents = mutableListOf<Document>()
