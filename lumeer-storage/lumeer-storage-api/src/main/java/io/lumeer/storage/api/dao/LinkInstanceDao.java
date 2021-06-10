@@ -20,6 +20,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
@@ -54,7 +55,13 @@ public interface LinkInstanceDao extends ProjectScopedDao {
 
    List<LinkInstance> getLinkInstances(Set<String> ids);
 
+   List<LinkInstance> getLinkInstancesByCreator(String linkTypeId, String userId, Pagination pagination);
+
+   List<LinkInstance> getLinkInstancesByCreator(String linkTypeId, String userId, Set<String> documentIds);
+
    List<LinkInstance> getLinkInstancesByLinkType(String linkTypeId);
+
+   List<LinkInstance> getLinkInstancesByLinkType(String linkTypeId, Pagination pagination);
 
    Long getLinkInstancesCountByLinkType(String linkTypeId);
 

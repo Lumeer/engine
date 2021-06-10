@@ -58,6 +58,8 @@ public interface DataDao {
 
    List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, Collection collection);
 
+   List<DataDocument> searchDataByIds(SearchQueryStem stem, Set<String> documentIds, Collection collection);
+
    List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<Collection> projectCollections);
 
    List<DataDocument> duplicateData(String collectionId, java.util.Collection<DataDocument> data, Map<String, String> documentIds);

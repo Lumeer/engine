@@ -624,8 +624,6 @@ public class DocumentFacade extends AbstractFacade {
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      // TODO which role ?
-      permissionsChecker.checkRole(collection, RoleType.Read);
       final List<Document> documents = documentDao.getRecentDocuments(collectionId, byUpdate);
 
       var dataMap = dataDao.getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet()))
@@ -637,7 +635,9 @@ public class DocumentFacade extends AbstractFacade {
          doc.setData(constraintManager.decodeDataTypes(collection, data));
       });
 
-      return documents;
+      return documents.stream()
+                      .filter(document -> permissionsChecker.canReadDocument(collection, document))
+                      .collect(Collectors.toList());
    }
 
    private Project getCurrentProject() {

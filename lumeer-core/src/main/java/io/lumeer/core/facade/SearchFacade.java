@@ -39,6 +39,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.SearchAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -59,6 +60,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -119,6 +121,7 @@ public class SearchFacade extends AbstractFacade {
 
    private DocumentAdapter documentAdapter;
    private LinkInstanceAdapter linkInstanceAdapter;
+   private SearchAdapter searchAdapter;
 
    @PostConstruct
    public void init() {
@@ -128,6 +131,7 @@ public class SearchFacade extends AbstractFacade {
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
+      searchAdapter = new SearchAdapter(permissionsChecker.getPermissionAdapter(), constraintManager, documentDao, dataDao, linkInstanceDao, linkDataDao);
    }
 
    private static final Integer FETCH_SIZE = 200;
@@ -208,7 +212,7 @@ public class SearchFacade extends AbstractFacade {
             final CollectionAttributeFilter filter = CollectionAttributeFilter.createFromTypes(collection.getId(), assigneeAttribute.getId(), ConditionType.HAS_SOME, ConditionValueType.CURRENT_USER.getValue());
             return new QueryStem(null, collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.singletonList(filter), Collections.emptyList());
          }
-         if (permissionsChecker.hasRole(collection, RoleType.Read)) {
+         if (permissionsChecker.hasAnyRole(collection, Set.of(RoleType.DataRead, RoleType.DataContribute))) {
             return new QueryStem(null, collection.getId(), Collections.emptyList(), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
          }
          return null;
@@ -295,7 +299,7 @@ public class SearchFacade extends AbstractFacade {
 
       while (hasMoreDocuments) {
          var previousCollection = allCollections.get(0);
-         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE, null);
+         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE);
          var previousDocuments = filterDocumentsByDocumentFilter(firstCollectionDocuments, documentFilter);
          final Set<Document> currentDocuments = new HashSet<>(previousDocuments);
          final Set<LinkInstance> currentLinkInstances = new HashSet<>();
@@ -355,15 +359,15 @@ public class SearchFacade extends AbstractFacade {
          return new Tuple<>(new HashSet<>(), new HashSet<>());
       }
 
-      final Set<Document> allDocuments = new HashSet<>(getDocumentsByCollection(previousCollection, null, documentFilter));
+      final Set<Document> allDocuments = new HashSet<>(getDocumentsByCollection(previousCollection, documentFilter));
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
       for (String linkTypeId : stem.getLinkTypeIds()) {
          var linkType = linkTypesMap.get(linkTypeId);
          var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
          if (linkType != null && collection != null) {
-            var links = getLinkInstancesByLinkType(linkType, null);
-            var documents = getDocumentsByCollection(collection, null, documentFilter);
+            var links = getLinkInstancesByLinkType(linkType);
+            var documents = getDocumentsByCollection(collection, documentFilter);
 
             allDocuments.addAll(documents);
             allLinkInstances.addAll(links);
@@ -392,12 +396,13 @@ public class SearchFacade extends AbstractFacade {
          var hasMoreDocuments = true;
          var page = 0;
          while (hasMoreDocuments) {
-            final List<Document> documents = getDocumentsByCollection(collection, page * fetchSize, fetchSize, documentFilter);
-            if (!documents.isEmpty()) {
-               var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(documents), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, language);
+            final List<Document> pagedDocuments = getDocumentsByCollection(collection, page * fetchSize, fetchSize);
+            final List<Document> filteredDocuments = filterDocumentsByDocumentFilter(pagedDocuments, documentFilter);
+            if (!filteredDocuments.isEmpty()) {
+               var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(filteredDocuments), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, language);
                allDocuments.addAll(result.getFirst());
             }
-            hasMoreDocuments = !documents.isEmpty();
+            hasMoreDocuments = !pagedDocuments.isEmpty();
             page++;
          }
       });
@@ -428,9 +433,9 @@ public class SearchFacade extends AbstractFacade {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
-      collectionsMap.values().forEach(collection -> allDocuments.addAll(getDocumentsByCollection(collection, null, documentFilter)));
+      collectionsMap.values().forEach(collection -> allDocuments.addAll(getDocumentsByCollection(collection, documentFilter)));
 
-      linkTypesMap.values().forEach(linkType -> allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, null)));
+      linkTypesMap.values().forEach(linkType -> allLinkInstances.addAll(getLinkInstancesByLinkType(linkType)));
 
       return new Tuple<>(allDocuments, allLinkInstances);
    }
@@ -466,7 +471,7 @@ public class SearchFacade extends AbstractFacade {
    private boolean canReadQueryResources(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       return query.getStems().stream().allMatch(stem -> {
          var collection = collectionsMap.get(stem.getCollectionId());
-         if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read, RoleType.Read)) {
+         if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read)) {
             return false;
          }
          var linkTypes = stem.getLinkTypeIds().stream().map(linkTypesMap::get).collect(Collectors.toList());
@@ -499,17 +504,26 @@ public class SearchFacade extends AbstractFacade {
       }
 
       var filteredCollections = collections.stream()
-                                           .filter(collection -> permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read, RoleType.Read))
+                                           .filter(collection -> permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read))
                                            .collect(Collectors.toList());
       var filteredLinkTypes = linkTypes.stream()
-                                         .filter(collection -> permissionsChecker.hasRoleInLinkTypeWithView(collection, RoleType.Read))
-                                         .collect(Collectors.toList());
+                                       .filter(collection -> permissionsChecker.hasRoleInLinkTypeWithView(collection, RoleType.Read))
+                                       .collect(Collectors.toList());
       return new Tuple<>(filteredCollections, filteredLinkTypes);
    }
 
-   private List<Document> getDocumentsByCollection(Collection collection, @Nullable Set<String> documentIds, @Nullable final Function<Document, Boolean> documentFilter) {
-      var documents = convertDataDocumentsToDocuments(getDocumentData(collection, documentIds), documentIds == null ? collection.getId() : null);
+   private List<Document> getDocumentsByCollection(Collection collection, @Nullable final Function<Document, Boolean> documentFilter) {
+      var documents = searchAdapter.getDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
       return filterDocumentsByDocumentFilter(documents, documentFilter);
+   }
+
+   private List<Document> getDocumentsByCollection(Collection collection, @NotNull Set<String> documentIds, @Nullable final Function<Document, Boolean> documentFilter) {
+      var documents = searchAdapter.getDocuments(getOrganization(), getProject(), collection, documentIds, authenticatedUser.getCurrentUserId());
+      return filterDocumentsByDocumentFilter(documents, documentFilter);
+   }
+
+   private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit) {
+      return searchAdapter.getDocuments(getOrganization(), getProject(), collection, skip, limit, authenticatedUser.getCurrentUserId());
    }
 
    private List<Document> filterDocumentsByDocumentFilter(final List<Document> documents, @Nullable final Function<Document, Boolean> documentFilter) {
@@ -519,75 +533,15 @@ public class SearchFacade extends AbstractFacade {
       return documents;
    }
 
-   private List<DataDocument> getDocumentData(Collection collection, @Nullable Set<String> documentIds) {
-      List<DataDocument> data = documentIds != null ? dataDao.getData(collection.getId(), documentIds) : dataDao.getData(collection.getId());
-      return decodeData(collection, data);
+   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType) {
+      return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
    }
 
-   private List<DataDocument> decodeData(Collection collection, List<DataDocument> data) {
-      return data.stream().map(d -> constraintManager.decodeDataTypes(collection, d)).collect(Collectors.toList());
-   }
-
-   private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit, @Nullable final Function<Document, Boolean> documentFilter) {
-      List<DataDocument> data = decodeData(collection, dataDao.getData(collection.getId(), skip, limit));
-      var documents = convertDataDocumentsToDocuments(data, null);
-      return filterDocumentsByDocumentFilter(documents, documentFilter);
-   }
-
-   // when we read the whole collection, we pass in the collection id to eliminate long document id filters
-   // when collectionId is null, pagination is in play and makes sure data size is equal to the page size
-   private List<Document> convertDataDocumentsToDocuments(java.util.Collection<DataDocument> data, @Nullable final String collectionId) {
-      final List<Document> documents;
-      if (collectionId != null) {
-         documents = documentDao.getDocumentsByCollection(collectionId);
-      } else {
-         documents = documentDao.getDocumentsByIds(data.stream().map(DataDocument::getId).distinct().toArray(String[]::new));
-      }
-      Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
-      return documents.stream()
-                      .peek(document -> document.setData(Objects.requireNonNullElse(dataMap.get(document.getId()), new DataDocument())))
-                      .collect(Collectors.toList());
-   }
-
-   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, @Nullable Set<String> documentIds) {
-      if (documentIds != null) {
-         return assignDataDocumentsLinkInstances(linkInstanceDao.getLinkInstancesByDocumentIds(documentIds, linkType.getId()), linkType);
-      }
-      return getLinkInstancesWithData(linkType);
+   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, @NotNull Set<String> documentIds) {
+      return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, documentIds, authenticatedUser.getCurrentUserId());
    }
 
    private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, Integer skip, Integer limit) {
-      List<DataDocument> data = decodeData(linkType, linkDataDao.getData(linkType.getId(), skip, limit));
-      return convertDataDocumentsToLinkInstances(data);
-   }
-
-   private List<DataDocument> decodeData(LinkType linkType, List<DataDocument> data) {
-      return data.stream().map(d -> constraintManager.decodeDataTypes(linkType, d)).collect(Collectors.toList());
-   }
-
-   private List<LinkInstance> convertDataDocumentsToLinkInstances(java.util.Collection<DataDocument> data) {
-      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(data.stream().map(DataDocument::getId).collect(Collectors.toSet()));
-      Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
-      return linkInstances.stream()
-                          .peek(linkInstance -> linkInstance.setData(Objects.requireNonNullElse(dataMap.get(linkInstance.getId()), new DataDocument())))
-                          .collect(Collectors.toList());
-   }
-
-   private List<LinkInstance> assignDataDocumentsLinkInstances(java.util.Collection<LinkInstance> linkInstances, LinkType linkType) {
-      List<DataDocument> data = getLinkInstanceData(linkType, linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet()));
-      Map<String, DataDocument> dataMap = data.stream().collect(Collectors.toMap(DataDocument::getId, Function.identity()));
-      return linkInstances.stream()
-                          .peek(linkInstance -> linkInstance.setData(Objects.requireNonNullElse(dataMap.get(linkInstance.getId()), new DataDocument())))
-                          .collect(Collectors.toList());
-   }
-
-   private List<DataDocument> getLinkInstanceData(LinkType linkType, @Nullable Set<String> linkInstanceIds) {
-      List<DataDocument> data = linkInstanceIds != null ? linkDataDao.getData(linkType.getId(), linkInstanceIds) : linkDataDao.getData(linkType.getId());
-      return decodeData(linkType, data);
-   }
-
-   private List<LinkInstance> getLinkInstancesWithData(final LinkType linkType) {
-      final List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstancesByLinkType(linkType.getId());
-      return assignDataDocumentsLinkInstances(linkInstances, linkType);
+      return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, skip, limit, authenticatedUser.getCurrentUserId());
    }
 }

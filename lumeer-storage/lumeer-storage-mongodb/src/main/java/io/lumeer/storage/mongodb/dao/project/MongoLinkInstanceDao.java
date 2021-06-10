@@ -22,6 +22,7 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
@@ -182,8 +183,38 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
    }
 
    @Override
+   public List<LinkInstance> getLinkInstancesByCreator(final String linkTypeId, final String userId, final Pagination pagination) {
+      Bson filter = Filters.and(
+            Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId),
+            Filters.eq(LinkInstanceCodec.CREATED_BY, userId)
+      );
+      return getLinkInstancesPaginated(filter, pagination);
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstancesByCreator(final String linkTypeId, final String userId, final Set<String> documentIds) {
+      Bson idsFilter = MongoFilters.idsFilter(documentIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      Bson filter = Filters.and(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), idsFilter);
+      return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   @Override
    public List<LinkInstance> getLinkInstancesByLinkType(final String linkTypeId) {
       return databaseCollection().find(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<LinkInstance> getLinkInstancesByLinkType(final String linkTypeId, final Pagination pagination) {
+      return getLinkInstancesPaginated(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), pagination);
+   }
+
+   private List<LinkInstance> getLinkInstancesPaginated(final Bson filter, final Pagination pagination) {
+      FindIterable<LinkInstance> iterable = databaseCollection().find(filter);
+      addPaginationToQuery(iterable, pagination);
+      return iterable.into(new ArrayList<>());
    }
 
    @Override
@@ -206,14 +237,21 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
 
    @Override
    public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds, final String linkTypeId) {
-      Bson filter = Filters.and(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds));
+      Bson idsFilter = MongoFilters.idsFilter(documentIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      Bson filter = Filters.and(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), idsFilter);
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override
    public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds) {
-      Bson filter = Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds);
-      return databaseCollection().find(filter).into(new ArrayList<>());
+      Bson idsFilter = MongoFilters.idsFilter(documentIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      return databaseCollection().find(idsFilter).into(new ArrayList<>());
    }
 
    @Override

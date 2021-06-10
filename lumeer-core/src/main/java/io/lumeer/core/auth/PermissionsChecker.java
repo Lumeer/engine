@@ -176,6 +176,10 @@ public class PermissionsChecker {
       return permissionAdapter.hasRole(getOrganization(), getProject(), resource, role, userId);
    }
 
+   public boolean hasAnyRole(Resource resource, Set<RoleType> roles) {
+      return permissionAdapter.hasAnyRole(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   }
+
    public boolean hasAllRoles(Resource resource, Set<RoleType> roles) {
       return permissionAdapter.hasAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
@@ -203,11 +207,10 @@ public class PermissionsChecker {
     *
     * @param collection collection resource
     * @param role       role to be checked.
-    * @param viewRole   role needed at the view.
     * @return true if and only if the user has the given role ont he resource.
     */
-   public boolean hasRoleInCollectionWithView(final Collection collection, final RoleType role, final RoleType viewRole) {
-      return permissionAdapter.hasRoleInCollectionWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
+   public boolean hasRoleInCollectionWithView(final Collection collection, final RoleType role) {
+      return permissionAdapter.hasRoleInCollectionWithView(getOrganization(), getProject(), collection, role, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -215,11 +218,10 @@ public class PermissionsChecker {
     *
     * @param collection collection resource
     * @param role       role to be checked.
-    * @param viewRole   role needed at the view.
     * @throws NoResourcePermissionException when the user does not have the permission.
     */
-   public void checkRoleInCollectionWithView(final Collection collection, final RoleType role, final RoleType viewRole) {
-      permissionAdapter.checkRoleInCollectionWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
+   public void checkRoleInCollectionWithView(final Collection collection, final RoleType role) {
+      permissionAdapter.checkRoleInCollectionWithView(getOrganization(), getProject(), collection, role, authenticatedUser.getCurrentUserId());
    }
 
    public void checkRoleInLinkTypeWithView(LinkType linkType, RoleType role) {

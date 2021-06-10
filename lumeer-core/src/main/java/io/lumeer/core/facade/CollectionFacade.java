@@ -219,7 +219,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection getCollection(String collectionId) {
       Collection collection = collectionDao.getCollectionById(collectionId);
-      if (permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read, RoleType.Read)) {
+      if (permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read)) {
          return mapCollection(collection);
       }
 

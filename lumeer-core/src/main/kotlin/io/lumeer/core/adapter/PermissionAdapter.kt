@@ -183,14 +183,18 @@ class PermissionAdapter(private val userDao: UserDao,
       return roles.all { hasRole(organization, project, resource, it, userId) }
    }
 
-   fun checkRoleInCollectionWithView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, viewRole: RoleType, userId: String) {
-      if (!hasRoleInCollectionWithView(organization, project, collection, role, viewRole, userId)) {
+   fun hasAnyRole(organization: Organization?, project: Project?, resource: Resource, roles: Set<RoleType>, userId: String): Boolean {
+      return roles.any { hasRole(organization, project, resource, it, userId) }
+   }
+
+   fun checkRoleInCollectionWithView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, userId: String) {
+      if (!hasRoleInCollectionWithView(organization, project, collection, role, userId)) {
          throw NoResourcePermissionException(collection)
       }
    }
 
-   fun hasRoleInCollectionWithView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, viewRole: RoleType, userId: String): Boolean {
-      return hasRole(organization, project, collection, role, userId) || hasRoleInCollectionViaView(organization, project, collection, role, viewRole, userId, activeView())
+   fun hasRoleInCollectionWithView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, userId: String): Boolean {
+      return hasRole(organization, project, collection, role, userId) || hasRoleInCollectionViaView(organization, project, collection, role, role, userId, activeView())
    }
 
    fun checkCanDelete(organization: Organization?, project: Project?, resource: Resource, userId: String) {
@@ -225,10 +229,10 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    fun canReadDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
-      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, RoleType.Read, userId)) {
+      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, userId)) {
          return false
       }
-      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataRead, RoleType.DataRead, userId)
+      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataRead, userId)
             || isDocumentOwner(organization, project, document, collection, userId)
    }
 
@@ -259,10 +263,10 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    fun canCreateDocuments(organization: Organization?, project: Project?, collection: Collection, userId: String): Boolean {
-      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, RoleType.Read, userId)) {
+      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, userId)) {
          return false
       }
-      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataContribute, RoleType.DataContribute, userId)
+      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataContribute, userId)
    }
 
    fun canCreateLinkInstances(organization: Organization?, project: Project?, linkType: LinkType, userId: String): Boolean {
@@ -285,10 +289,10 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    fun canEditDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
-      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, RoleType.Read, userId)) {
+      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, userId)) {
          return false
       }
-      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataWrite, RoleType.DataWrite, userId)
+      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataWrite, userId)
             || isDocumentOwner(organization, project, document, collection, userId)
    }
 
@@ -313,10 +317,10 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    fun canDeleteDocument(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
-      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, RoleType.Read, userId)) {
+      if (!hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, userId)) {
          return false
       }
-      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataDelete, RoleType.DataDelete, userId)
+      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataDelete, userId)
             || isDocumentOwner(organization, project, document, collection, userId)
    }
 
@@ -333,7 +337,7 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    private fun isDocumentContributor(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
-      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataContribute, RoleType.DataContribute, userId) && DocumentUtils.isDocumentOwner(collection, document, userId)
+      return hasRoleInCollectionWithView(organization, project, collection, RoleType.DataContribute, userId) && DocumentUtils.isDocumentOwner(collection, document, userId)
    }
 
    private fun isLinkOwner(organization: Organization?, project: Project?, linkInstance: LinkInstance, linkType: LinkType, userId: String): Boolean {
@@ -341,7 +345,7 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    private fun isDocumentOwnerByPurpose(organization: Organization?, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
-      return hasRoleInCollectionWithView(organization, project, collection, RoleType.Read, RoleType.Read, userId) && DocumentUtils.isDocumentOwnerByPurpose(collection, document, getUser(userId))
+      return hasRoleInCollectionWithView(organization, project, collection, RoleType.Read,  userId) && DocumentUtils.isDocumentOwnerByPurpose(collection, document, getUser(userId))
    }
 
    fun checkRoleInLinkTypeWithView(organization: Organization?, project: Project?, linkType: LinkType, role: RoleType, userId: String) {

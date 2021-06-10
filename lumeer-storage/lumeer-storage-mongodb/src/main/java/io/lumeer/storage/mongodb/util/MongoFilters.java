@@ -143,6 +143,8 @@ public class MongoFilters {
             return Filters.eq(filter.getAttributeId(), filter.getValue());
          case NOT_EQUALS:
             return Filters.ne(filter.getAttributeId(), filter.getValue());
+         case HAS_SOME:
+            return Filters.in(filter.getAttributeId(), filter.getValue());
          case LOWER_THAN:
             return Filters.lt(filter.getAttributeId(), filter.getValue());
          case LOWER_THAN_EQUALS:

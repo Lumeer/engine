@@ -174,7 +174,7 @@ public class ResourceCommentFacade extends AbstractFacade {
             permissionsChecker.checkRoleInLinkTypeWithView(getLinkType(resourceId), RoleType.CommentContribute);
          }
          case COLLECTION: {
-            permissionsChecker.checkRoleInCollectionWithView(getCollection(resourceId), RoleType.CommentContribute, RoleType.CommentContribute);
+            permissionsChecker.checkRoleInCollectionWithView(getCollection(resourceId), RoleType.CommentContribute);
          }
          case LINK: {
             final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, resourceId);
@@ -188,7 +188,7 @@ public class ResourceCommentFacade extends AbstractFacade {
             Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
             Collection collection = collectionDao.getCollectionById(document.getCollectionId());
 
-            if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.CommentContribute, RoleType.CommentContribute)) {
+            if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.CommentContribute)) {
                permissionsChecker.checkReadDocument(collection, document);
             }
          }
