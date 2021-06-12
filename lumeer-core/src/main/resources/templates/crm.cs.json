@@ -20,9 +20,9 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
                             "SHARE"
                         ]
                     }
@@ -148,9 +148,9 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
                             "SHARE"
                         ]
                     }
@@ -231,9 +231,9 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
                             "SHARE"
                         ]
                     }
@@ -327,9 +327,9 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
                             "SHARE"
                         ]
                     }
@@ -508,9 +508,9 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
                             "SHARE"
                         ]
                     }
@@ -563,10 +563,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }
@@ -812,10 +812,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }
@@ -888,10 +888,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }
@@ -1076,10 +1076,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }
@@ -1225,10 +1225,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }
@@ -1401,10 +1401,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }
@@ -1478,10 +1478,10 @@
                     {
                         "id": "5b538ecc857aba0061886b97",
                         "roles": [
-                            "READ",
-                            "WRITE",
-                            "MANAGE",
-                            "CLONE",
+                            {"type": "Read", "transitive": false},
+                            {"type": "DataWrite", "transitive": false},
+                            {"type": "Manage", "transitive": false},
+
                             "SHARE"
                         ]
                     }

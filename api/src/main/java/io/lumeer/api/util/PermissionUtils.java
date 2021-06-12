@@ -81,14 +81,13 @@ public class PermissionUtils {
          return Collections.emptySet();
       }
 
-      if (linkType.getPermissionsType() == LinkPermissionsType.MERGE) {
-         var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);
-         var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user);
-         roles1.retainAll(roles2);
-         return roles1;
+      if (linkType.getPermissionsType() == LinkPermissionsType.CUSTOM) {
+         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user);
       }
-
-      return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user);
+      var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);
+      var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user);
+      roles1.retainAll(roles2);
+      return roles1;
    }
 
    private static Set<RoleType> getUserRolesInResource(Organization organization, @Nullable Project project, ResourceType resourceType, Permissions permissions, User user) {

@@ -51,6 +51,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -69,6 +70,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -123,6 +125,12 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private CollectionFacade collectionFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private CollectionDao collectionDao;
 
    @Inject
@@ -156,6 +164,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    private UserNotificationDao userNotificationDao;
 
    @Inject
+   private FavoriteItemDao favoriteItemDao;
+
+   @Inject
    private TaskExecutor taskExecutor;
 
    @Inject
@@ -175,14 +186,15 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       organizationPermissions.updateUserPermissions(userPermission);
       organization.setPermissions(organizationPermissions);
-      this.organization = organizationDao.createOrganization(organization);
+      this.organization = organizationFacade.createOrganization(organization);
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
+      favoriteItemDao.setOrganization(this.organization);
       Group group = new Group(GROUP);
       this.group = groupDao.createGroup(group);
 
-      userPermission = Permission.buildWithRoles(this.user.getId(), Collection.ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
       groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Project project = new Project();
@@ -450,7 +462,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Test
    public void testUpdateUserPermissions() {
       String USER2 = "aaa" + user.getId().substring(3);
-      userDao.createUser(new User(USER2, USER2, USER2, Collections.emptyMap()));
+      userDao.createUser(new User(USER2, USER2, USER2, Collections.singletonMap(organization.getId(), Collections.emptySet())));
 
       var notifications = userNotificationFacade.getNotifications();
       assertThat(notifications).isEmpty();
@@ -466,11 +478,13 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
 
-      userPermission = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
+      userPermission = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read)));
+      organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
-      assertThat(notifications).hasSize(1).allMatch(n ->
+      assertThat(notifications).hasSize(3).anyMatch(n ->
             n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR)
                   && n.getUserId().equals(USER2)
                   && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
@@ -479,12 +493,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.updateCollection(collectionId, collection);
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
-      assertThat(notifications).hasSize(1).allMatch(n ->
+      assertThat(notifications).hasSize(3).anyMatch(n ->
             n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR2)
                   && n.getUserId().equals(USER2)
                   && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
 
       userPermission = Permission.buildWithRoles(USER2, Collections.emptySet());
+      organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);

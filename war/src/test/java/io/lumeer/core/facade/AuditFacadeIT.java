@@ -31,7 +31,6 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
@@ -72,8 +71,6 @@ public class AuditFacadeIT extends IntegrationTestBase {
    @Inject
    private AuditFacade auditFacade;
 
-   private AuditAdapter auditAdapter;
-
    @Inject
    private UserDao userDao;
 
@@ -103,17 +100,14 @@ public class AuditFacadeIT extends IntegrationTestBase {
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       Permissions organizationPermissions = new Permissions();
-      userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       organization.setPermissions(organizationPermissions);
       this.organization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
-      Group group = new Group(GROUP);
-      this.group = groupDao.createGroup(group);
-
-      userPermission = Permission.buildWithRoles(this.user.getId(), Collection.ROLES);
+      group = groupDao.createGroup(new Group(GROUP));
       groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Project project = new Project();

@@ -193,8 +193,6 @@ public class UserNotification {
       String VIEW_COLOR = "viewColor";
       String VIEW_CODE = "viewCode";
       String VIEW_NAME = "viewName";
-      String VIEW_ICON = "collectionIcon";
-      String VIEW_COLOR = "collectionColor";
       String VIEW_PERSPECTIVE = "viewPerspective";
    }
 

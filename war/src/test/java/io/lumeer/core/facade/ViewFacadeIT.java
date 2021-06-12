@@ -97,6 +97,12 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private ViewFacade viewFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    @Inject
@@ -304,6 +310,10 @@ public class ViewFacadeIT extends IntegrationTestBase {
       final String COLLECTION_ICON = "fa-eye";
       final String COLLECTION_COLOR = "#abcdea";
 
+      Permission workspacePermission = Permission.buildWithRoles(NON_EXISTING_USER, Set.of(new Role(RoleType.Read)));
+      organizationFacade.updateUserPermissions(organization.getId(), Set.of(workspacePermission));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(workspacePermission));
+
       // create collection under a different user
       Permissions collectionPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(NON_EXISTING_USER, Collection.ROLES);
@@ -381,7 +391,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    }
 
    private void removeOrganizationManagePermission() {
-      Permissions organizationPermissions = new Permissions();
+      Permissions organizationPermissions = organizationDao.getOrganizationById(organization.getId()).getPermissions();
       organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read))));
       organization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(organization.getId(), organization);
@@ -389,7 +399,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    }
 
    private void removeProjectManagePermission() {
-      Permissions projectPermissions = new Permissions();
+      Permissions projectPermissions = projectDao.getProjectById(project.getId()).getPermissions();
       projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read))));
       project.setPermissions(projectPermissions);
       projectDao.updateProject(project.getId(), project);

@@ -237,21 +237,14 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
 
    @Override
    public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds, final String linkTypeId) {
-      Bson idsFilter = MongoFilters.idsFilter(documentIds);
-      if (idsFilter == null) {
-         return Collections.emptyList();
-      }
-      Bson filter = Filters.and(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), idsFilter);
+      Bson filter = Filters.and(Filters.eq(LinkInstanceCodec.LINK_TYPE_ID, linkTypeId), Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds));
       return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override
    public List<LinkInstance> getLinkInstancesByDocumentIds(final Set<String> documentIds) {
-      Bson idsFilter = MongoFilters.idsFilter(documentIds);
-      if (idsFilter == null) {
-         return Collections.emptyList();
-      }
-      return databaseCollection().find(idsFilter).into(new ArrayList<>());
+      Bson filter = Filters.in(LinkInstanceCodec.DOCUMENTS_IDS, documentIds);
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override

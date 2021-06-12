@@ -36,6 +36,8 @@ import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.OrganizationFacade;
+import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -85,6 +87,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private Permission groupPermission;
 
    private User user;
+   private Organization organization;
+   private Project project;
 
    private static final String CODE2 = "TVIEW2";
 
@@ -106,6 +110,12 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    private CollectionFacade collectionFacade;
 
    @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    @Before
@@ -120,6 +130,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
+      this.organization = storedOrganization;
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
@@ -133,6 +144,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       project.setCode(PROJECT_CODE);
       project.setPermissions(new Permissions());
       Project storedProject = projectDao.createProject(project);
+      this.project = storedProject;
 
       Permissions projectPermissions = new Permissions();
       Permission userProjectPermission = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
@@ -275,6 +287,11 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
    @SuppressWarnings("unchecked")
    public void testGetViewWithAuthorRights() {
       final String USER = "aaaaa4444400000000111112"; // non-existing author
+
+      Permission workspacePermission = new Permission(USER, Collections.singleton(new Role(RoleType.Read)));
+      organizationFacade.updateUserPermissions(organization.getId(), Set.of(workspacePermission));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(workspacePermission));
+
       Permission permission = new Permission(USER, Collections.singleton(new Role(RoleType.DataWrite)));
       Collection collection = collectionFacade.createCollection(
             new Collection("cdefg", "abcefg random", ICON, COLOR, new Permissions(new HashSet<>(Collections.singletonList(permission)), Collections.emptySet())));

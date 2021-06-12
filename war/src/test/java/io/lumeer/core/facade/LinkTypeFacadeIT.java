@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -116,7 +117,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.LinkContribute)));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -129,7 +130,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
       for (String name : COLLECTION_NAMES) {
          Permissions collectionPermissions = new Permissions();
-         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
+         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Collection.ROLES));
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          collectionIds.add(collectionDao.createCollection(collection).getId());
       }

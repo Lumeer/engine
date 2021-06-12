@@ -32,6 +32,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -229,9 +230,8 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       assertPermissions(permissions.getUserPermissions(), userPermissions);
       assertPermissions(permissions.getGroupPermissions(), groupPermissions);
 
-      permissions = projectFacade.getProjectPermissions(project2.getId());
-      assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), userReadonlyPermissions, Permission.buildWithRoles(userStrangerPermissions.getId(), Collections.singleton(new Role(RoleType.Read))));
+      assertThatThrownBy(() -> projectFacade.getProjectPermissions(project2.getId()))
+            .isInstanceOf(NoResourcePermissionException.class);
 
       permissions = projectFacade.getProjectPermissions(project3.getId());
       assertThat(permissions).isNotNull();

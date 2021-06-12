@@ -196,7 +196,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testGetOrganizationPermissionsManageRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -232,7 +232,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testUpdateUserPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       Permission[] newPermission = { new Permission(userId,  Set.of(new Role(RoleType.DataWrite))) };
 
       Response response = client.target(organizationsUrl)
@@ -270,7 +270,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testRemoveUserPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
       Response response = client.target(organizationsUrl)
                                 .path(storedOrganization.getId())
@@ -309,7 +309,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testUpdateGroupPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       String group = "testGroup2";
       Permission[] newPermission = { new Permission(group,  Set.of(new Role(RoleType.DataWrite))) };
 
@@ -349,7 +349,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
       String code = "testRemoveGroupPermissionNoRole_code";
       Organization organization = new Organization(code, name, "a", "b", null, null, null);
       final Organization storedOrganization = organizationFacade.createOrganization(organization);
-      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      organizationFacade.updateUserPermissions(storedOrganization.getId(), Set.of(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       String group = "testGroup3";
 
       Response response = client.target(organizationsUrl)

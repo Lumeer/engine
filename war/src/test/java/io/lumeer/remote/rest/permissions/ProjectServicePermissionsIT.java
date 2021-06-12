@@ -53,7 +53,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
-public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
+public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Inject
    private ProjectFacade projectFacade;
@@ -266,7 +266,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsManageRole_code1";
       String projectName = "testGetProjectPermissionsManageRole";
       final Project project = createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
       Response response = client.target(projectsUrl).path(project.getId()).path("permissions")
                                 .request(MediaType.APPLICATION_JSON).buildGet().invoke();
@@ -292,7 +292,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       final Project project = createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
       Permission[] newPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.DataWrite))) };
       Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("users")
@@ -317,7 +317,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       final Project project = createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(),Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(),Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
       Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("users").path(this.user.getId())
                                 .request(MediaType.APPLICATION_JSON).buildDelete().invoke();
@@ -343,7 +343,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       final Project project = createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       String group = "testGroup5";
       Permission[] newPermission = { new Permission(group, Set.of(new Role(RoleType.DataWrite))) };
 
@@ -370,7 +370,7 @@ public class ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       String projectCode = "testGetProjectPermissionsNoRole_code1";
       String projectName = "testGetProjectPermissionsNoRole";
       final Project project = createProject(projectCode, projectName);
-      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       String group = "testGroup7";
 
       Response response = client.target(projectsUrl).path(project.getId()).path("permissions").path("groups").path(group)

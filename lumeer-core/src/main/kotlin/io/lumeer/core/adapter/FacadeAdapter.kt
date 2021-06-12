@@ -24,11 +24,12 @@ import io.lumeer.api.util.PermissionUtils
 
 class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
 
-   fun <T : Resource> mapResource(organization: Organization, project: Project?, resource: T, user: User): T {
+   fun <T : Resource> mapResource(organization: Organization?, project: Project?, resource: T, user: User): T {
       return if (getUserAdmins(organization, project, resource).contains(user.id)) {
          resource
       } else resource.apply {
-         permissions = keepOnlyNecessaryPermissions(organization, project, resource.permissions, resource.type, user)
+         val groups = if (resource is Organization) PermissionUtils.getUserGroups(resource, user) else PermissionUtils.getUserGroups(organization, user)
+         permissions = keepOnlyNecessaryPermissions(resource.permissions, resource.type, user, groups)
       }
    }
 
@@ -39,12 +40,18 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return if (getUserAdmins(organization, project, linkType).contains(user.id)) {
          linkType
       } else linkType.apply {
-         permissions = keepOnlyNecessaryPermissions(organization, project, linkType.permissions, ResourceType.LINK_TYPE, user)
+         val groups = PermissionUtils.getUserGroups(organization, user)
+         permissions = keepOnlyNecessaryPermissions(linkType.permissions, ResourceType.LINK_TYPE, user, groups)
       }
    }
 
-   private fun <T : Resource> getUserAdmins(organization: Organization, project: Project?, resource: T): Set<String> {
-      return permissionAdapter.getResourceUsersByRole(organization, project, resource, RoleType.UserConfig)
+   private fun <T : Resource> getUserAdmins(organization: Organization?, project: Project?, resource: T): Set<String> {
+      if (resource is Organization) {
+         return permissionAdapter.getOrganizationUsersByRole(resource, RoleType.UserConfig)
+      } else if (organization != null) {
+         return permissionAdapter.getResourceUsersByRole(organization, project, resource, RoleType.UserConfig)
+      }
+      return setOf()
    }
 
    private fun getUserAdmins(organization: Organization, project: Project?, linkType: LinkType): Set<String> {
@@ -74,9 +81,8 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return resource
    }
 
-   private fun keepOnlyNecessaryPermissions(organization: Organization?, project: Project?, permissions: Permissions?, resourceType: ResourceType, user: User): Permissions? {
+   private fun keepOnlyNecessaryPermissions(permissions: Permissions?, resourceType: ResourceType, user: User, userGroups: Set<String>): Permissions? {
       val userPermission = permissions?.userPermissions?.filter { it.id == user.id }.orEmpty().toSet()
-      val userGroups = PermissionUtils.getUserGroups(organization, user)
       val userGroupPermissions = permissions?.groupPermissions?.filter { userGroups.contains(it.id) }.orEmpty().toSet()
 
       // Some roles are necessary to compute roles in other resources (i.e. Content readers/managers on view sharing)

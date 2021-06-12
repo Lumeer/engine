@@ -133,7 +133,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    }
 
    private fun getCollectionRoles(organization: Organization?, project: Project?, collection: Collection, user: User): Set<RoleType> {
-      return permissionAdapter.getUserRolesInResource(organization, project, collection, user.id)
+      return permissionAdapter.getUserRolesInResource(organization, project, collection, user)
    }
 
    fun getCollectionReadersInViews(organization: Organization, project: Project, collectionId: String): Set<String> {

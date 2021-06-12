@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -111,7 +112,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Set.of(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -122,7 +123,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.LinkContribute)));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -225,7 +226,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       String id1 = linkTypeDao.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(2)));
+      linkType2.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
       String id2 = linkTypeDao.createLinkType(linkType2).getId();
 
       LinkType linkType3 = prepareLinkType();
