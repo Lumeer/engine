@@ -39,6 +39,8 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -139,7 +141,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new Permissions());
+      Permissions organizationPermissions = new Permissions();
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read))));
+      organization.setPermissions(organizationPermissions);
       Organization storedOrganization = organizationDao.createOrganization(organization);
       updateOrganizationInUser(userId, USER, organization.getId());
       createUser(USER1, organization.getId());
@@ -148,7 +152,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Project project = new Project();
-      project.setPermissions(new Permissions());
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read))));
+      project.setPermissions(projectPermissions);
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
@@ -183,7 +189,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    private Collection createCollection(String name, Attribute... attributes) {
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(userId, Project.ROLES));
+      collectionPermissions.updateUserPermissions(new Permission(userId, Collection.ROLES));
       Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection.setAttributes(Arrays.asList(attributes));
 

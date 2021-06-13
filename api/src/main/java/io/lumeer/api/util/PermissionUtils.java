@@ -67,8 +67,11 @@ public class PermissionUtils {
       return users.stream().filter(user -> getUserRolesInLinkType(organization, project, linkType, collections, user).contains(roleType)).map(User::getId).collect(Collectors.toSet());
    }
 
-   public static Set<RoleType> getUserRolesInResource(Organization organization, @Nullable Project project, Resource resource, User user) {
-      return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user);
+   public static Set<RoleType> getUserRolesInResource(@Nullable Organization organization, @Nullable Project project, Resource resource, User user) {
+      if (resource instanceof Organization) {
+         return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups((Organization) resource, user));
+      }
+      return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups(organization, user));
    }
 
    public static Set<RoleType> getUserRolesInLinkType(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, User user) {
@@ -82,7 +85,7 @@ public class PermissionUtils {
       }
 
       if (linkType.getPermissionsType() == LinkPermissionsType.CUSTOM) {
-         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user);
+         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user));
       }
       var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);
       var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user);
@@ -90,11 +93,9 @@ public class PermissionUtils {
       return roles1;
    }
 
-   private static Set<RoleType> getUserRolesInResource(Organization organization, @Nullable Project project, ResourceType resourceType, Permissions permissions, User user) {
-      final Set<String> groups = getUserGroups(organization, user);
-
-      final Set<Role> actualRoles = getUserRolesInResource(permissions, user, groups);
-      final Set<Role> organizationRoles = resourceType == ResourceType.ORGANIZATION ? actualRoles : getUserRolesInResource(organization, user, groups);
+   private static Set<RoleType> getUserRolesInResource(Organization organization, @Nullable Project project, ResourceType resourceType, Permissions permissions, User user, Set<String> userGroups) {
+      final Set<Role> actualRoles = getUserRolesInResource(permissions, user, userGroups);
+      final Set<Role> organizationRoles = resourceType == ResourceType.ORGANIZATION ? actualRoles : getUserRolesInResource(organization, user, userGroups);
 
       if (organization != null && resourceType != ResourceType.ORGANIZATION) {
          // It's necessary to have read permission in organization in order to process resource (project, collection, view, link)
@@ -107,7 +108,7 @@ public class PermissionUtils {
       }
 
       if (project != null && resourceType != ResourceType.PROJECT) {
-         final Set<Role> projectRoles = getUserRolesInResource(project, user, groups);
+         final Set<Role> projectRoles = getUserRolesInResource(project, user, userGroups);
 
          // It's necessary to have read permission in project (or transitive in organization) in order to process resource (collection, view, link)
          if (organizationRoles.stream().noneMatch(role -> role.getRoleType() == RoleType.Read && role.isTransitive())

@@ -33,4 +33,5 @@ public interface GroupDao extends OrganizationScopedDao {
 
    List<Group> getAllGroups();
 
+   Group getGroup(String id);
 }

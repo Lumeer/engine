@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -81,7 +82,7 @@ public class OrganizationFacade extends AbstractFacade {
       Utils.checkCodeSafe(organization.getCode());
 
       List<Organization> organizations = getOrganizations();
-      if (organizations.stream().anyMatch(o -> permissionsChecker.hasRole(o, RoleType.Read))) {
+      if (organizations.size() > 0) {
          checkCreateOrganization(organizations);
       }
 
@@ -254,6 +255,13 @@ public class OrganizationFacade extends AbstractFacade {
       currentUser.setGroups(groups);
 
       userDao.updateUser(currentUser.getId(), currentUser);
+   }
+
+   public void addUsersToGroup(final String organizationId, final String groupId, final Set<String> userIds) {
+      checkRoleAndGetOrganization(organizationId, RoleType.UserConfig);
+
+      Group group = groupDao.getGroup(groupId);
+      userDao.addGroupToUsers(organizationId, group.getId(), userIds);
    }
 
    private void createOrganizationScopedRepositories(Organization organization) {

@@ -292,6 +292,34 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    }
 
    @Test
+   public void testAddGroup() {
+      User user1 = prepareUser();
+      user1.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>(Collections.singletonList("g1"))));
+      user1 = mongoUserDao.createUser(user1);
+
+      User user2 = prepareUser();
+      user2.setEmail("lala@email.com");
+      user2.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>(Collections.emptyList())));
+      user2 = mongoUserDao.createUser(user2);
+
+      User user3 = prepareUser();
+      user3.setEmail("lolo@email.com");
+      user3.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>(Arrays.asList("g2", "g5"))));
+      user3 = mongoUserDao.createUser(user3);
+
+      mongoUserDao.addGroupToUsers(organization.getId(), "g1", Set.of(user1.getId(), user2.getId(), user3.getId()));
+      assertThat(mongoUserDao.getUserById(user1.getId()).getGroups().get(organization.getId())).hasSize(1);
+      assertThat(mongoUserDao.getUserById(user1.getId()).getGroups().get(organization.getId())).containsOnly("g1");
+      assertThat(mongoUserDao.getUserById(user2.getId()).getGroups().get(organization.getId())).containsOnly("g1");
+      assertThat(mongoUserDao.getUserById(user3.getId()).getGroups().get(organization.getId())).containsOnly("g1", "g2", "g5");
+
+      mongoUserDao.addGroupToUsers(organization.getId(), "g2", Set.of(user1.getId(), user2.getId(), user3.getId()));
+      assertThat(mongoUserDao.getUserById(user1.getId()).getGroups().get(organization.getId())).containsOnly("g1", "g2");
+      assertThat(mongoUserDao.getUserById(user2.getId()).getGroups().get(organization.getId())).containsOnly("g1", "g2");
+      assertThat(mongoUserDao.getUserById(user3.getId()).getGroups().get(organization.getId())).containsOnly("g1", "g2", "g5");
+   }
+
+   @Test
    public void testRemoveGroup() {
       User user = prepareUser();
       user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>(Arrays.asList("g1", "g2", "g3"))));

@@ -69,6 +69,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
    }
 
    fun <T : Resource> keepUnmodifiableFields(destinationResource: T, originalResource: T) {
+      destinationResource.id = originalResource.id
       destinationResource.isNonRemovable = originalResource.isNonRemovable
    }
 

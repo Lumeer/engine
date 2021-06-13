@@ -35,6 +35,7 @@ import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -81,11 +82,12 @@ public class PermissionsCheckerTest {
       LinkTypeDao linkTypeDao = Mockito.mock(LinkTypeDao.class);
       ViewDao viewDao = Mockito.mock(ViewDao.class);
       UserDao userDao = Mockito.mock(UserDao.class);
+      GroupDao groupDao = Mockito.mock(GroupDao.class);
       Mockito.when(userDao.getUserById(USER)).thenReturn(user);
       FavoriteItemDao favoriteItemDao = Mockito.mock(FavoriteItemDao.class);
       DocumentDao documentDao = Mockito.mock(DocumentDao.class);
 
-      permissionsChecker = new PermissionsChecker(authenticatedUser, workspaceKeeper, userDao, collectionDao, viewDao, linkTypeDao, favoriteItemDao, documentDao);
+      permissionsChecker = new PermissionsChecker(authenticatedUser, workspaceKeeper, userDao, groupDao, collectionDao, viewDao, linkTypeDao, favoriteItemDao, documentDao);
       permissionsChecker.init();
    }
 

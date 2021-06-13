@@ -42,12 +42,14 @@ public class GroupFacade extends AbstractFacade {
    public Group createGroup(Group group) {
       checkPermissions();
 
+      group.setId(null);
       return groupDao.createGroup(group);
    }
 
    public Group updateGroup(String groupId, Group group) {
       checkPermissions();
 
+      group.setId(groupId);
       return groupDao.updateGroup(groupId, group);
    }
 

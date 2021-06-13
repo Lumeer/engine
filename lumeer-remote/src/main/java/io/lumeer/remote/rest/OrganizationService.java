@@ -151,6 +151,14 @@ public class OrganizationService extends AbstractService {
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }
 
+   @PUT
+   @Path("{organizationId:[0-9a-fA-F]{24}}/groups/{groupId:[0-9a-fA-F]{24}}")
+   public Response updateGroupPermission(@PathParam("organizationId") String organizationId, @PathParam("groupId") String groupId, Set<String> users) {
+      organizationFacade.addUsersToGroup(organizationId, groupId, users);
+
+      return Response.ok().link(getParentUri("groups", groupId), "parent").build();
+   }
+
    /* Gets a complete list of all payments sorted by valid until descending. */
    @GET
    @Path("{organizationId:[0-9a-fA-F]{24}}/payments")

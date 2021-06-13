@@ -64,9 +64,18 @@ class PermissionAdapter(private val userDao: UserDao,
       return null
    }
 
+   fun invalidateUserCache() {
+      for (key in usersCache.keys) {
+         usersCache.remove(key)
+      }
+      for (key in userCache.keys) {
+         userCache.remove(key)
+      }
+   }
+
    fun invalidateCache(resource: Resource) {
       for (role in RoleType.values()) {
-         hasRoleCache.remove(resource.id + ":" + role.toString())
+         hasRoleCache.remove("${resource.type}:${resource.id}:$role")
       }
    }
 

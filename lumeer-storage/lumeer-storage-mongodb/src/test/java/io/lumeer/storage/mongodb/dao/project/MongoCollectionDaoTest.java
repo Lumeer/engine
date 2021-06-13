@@ -134,12 +134,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       collectionDao.createRepository(project);
    }
 
-   private Collection prepareManageCollection(String code, String name) {
-      Collection collection = prepareCollection(code, name);
-      collection.setPermissions(MANAGE_PERMISSIONS);
-      return collection;
-   }
-
    private Collection prepareCollection(String code, String name) {
       Collection collection = new Collection(code, name, ICON, COLOR, "", null, new Permissions(PERMISSIONS), ATTRIBUTES, new HashMap<>(), "", new CollectionPurpose(CollectionPurposeType.None, null));
       collection.setLastTimeUsed(LAST_TIME_USED);
@@ -410,16 +404,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE3, NAME3);
 
       assertThat(collectionDao.getAllCollectionNames()).contains(NAME, NAME2, NAME3);
-   }
-
-   @Test
-   public void testGetCollectionsByManagePermission(){
-      collectionDao.createCollection(prepareManageCollection(CODE, NAME));
-      collectionDao.createCollection(prepareCollection(CODE2, NAME));
-      collectionDao.createCollection(prepareManageCollection(CODE3, NAME));
-
-      DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
-      assertThat(collectionDao.getCollections(query)).extracting(Collection::getCode).containsOnly(CODE, CODE2, CODE3);
    }
 
 }

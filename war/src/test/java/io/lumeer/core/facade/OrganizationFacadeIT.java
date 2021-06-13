@@ -22,6 +22,7 @@ import static io.lumeer.test.util.LumeerAssertions.assertPermissions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -31,8 +32,10 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -62,6 +65,12 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    @Inject
    private UserDao userDao;
 
+   @Inject
+   private GroupDao groupDao;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String STRANGER_USER = "stranger@nowhere.com";
    private static final String GROUP = "testGroup";
@@ -81,14 +90,12 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    private User user;
    private User strangerUser;
+   private Group group;
 
    @Before
    public void configure() {
-      User user = new User(USER);
-      this.user = userDao.createUser(user);
-
-      User user2 = new User(STRANGER_USER);
-      this.strangerUser = userDao.createUser(user2);
+      this.user = userDao.createUser(new User(USER));
+      this.strangerUser = userDao.createUser(new User(STRANGER_USER));
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
       userReadonlyPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
@@ -110,6 +117,22 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       organization.getPermissions().updateUserPermissions(userPermission);
       organization.getPermissions().updateGroupPermissions(groupPermission);
       return organizationDao.createOrganization(organization).getId();
+   }
+
+   private String createOrganizationWithGroupPermissions(final String code, final RoleType roleType) {
+      Organization organization = new Organization(code, NAME, ICON, COLOR, null, null, null);
+      Organization storedOrganization = organizationDao.createOrganization(organization);
+
+      groupDao.setOrganization(storedOrganization);
+      group = groupDao.createGroup(new Group(GROUP));
+      user.setGroups(Collections.singletonMap(storedOrganization.getId(), Set.of(group.getId())));
+      user = userDao.updateUser(user.getId(), user);
+
+      groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(roleType)));
+      storedOrganization.getPermissions().updateGroupPermissions(groupPermission);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+
+      return storedOrganization.getId();
    }
 
    private Organization createOrganizationWithReadOnlyPermissions(final String code) {
@@ -145,7 +168,31 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       assertions.assertAll();
 
       assertPermissions(storedOrganization.getPermissions().getUserPermissions(), userPermission);
-      assertPermissions(storedOrganization.getPermissions().getGroupPermissions(), this.groupPermission);
+      assertPermissions(storedOrganization.getPermissions().getGroupPermissions(), groupPermission);
+   }
+
+   @Test
+   public void testGetOrganizationByGroup() {
+      final String organizationId = createOrganizationWithGroupPermissions(CODE1, RoleType.Read);
+
+      Organization storedOrganization = organizationFacade.getOrganizationById(organizationId);
+      assertThat(storedOrganization).isNotNull();
+
+      SoftAssertions assertions = new SoftAssertions();
+      assertions.assertThat(storedOrganization.getCode()).isEqualTo(CODE1);
+      assertions.assertThat(storedOrganization.getName()).isEqualTo(NAME);
+      assertions.assertThat(storedOrganization.getColor()).isEqualTo(COLOR);
+      assertions.assertThat(storedOrganization.getIcon()).isEqualTo(ICON);
+      assertions.assertThat(storedOrganization.getPermissions().getUserPermissions()).isEmpty();
+      assertions.assertAll();
+
+      assertPermissions(storedOrganization.getPermissions().getGroupPermissions(), groupPermission);
+
+      userDao.deleteGroupFromUsers(storedOrganization.getId(), group.getId());
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
+
+      assertThatThrownBy(() -> organizationFacade.getOrganizationById(organizationId))
+            .isInstanceOf(NoResourcePermissionException.class);
    }
 
    @Test
@@ -157,6 +204,15 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    @Test
    public void testDeleteOrganization() {
       final String organizationId = createOrganization(CODE1);
+      organizationFacade.deleteOrganization(organizationId);
+
+      assertThatThrownBy(() -> organizationDao.getOrganizationByCode(CODE1))
+            .isInstanceOf(ResourceNotFoundException.class);
+   }
+
+   @Test
+   public void testDeleteOrganizationByGroup() {
+      final String organizationId = createOrganizationWithGroupPermissions(CODE1, RoleType.Manage);
       organizationFacade.deleteOrganization(organizationId);
 
       assertThatThrownBy(() -> organizationDao.getOrganizationByCode(CODE1))

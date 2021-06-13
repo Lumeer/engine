@@ -25,6 +25,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.UserCodec;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -130,12 +131,24 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
    }
 
    @Override
-   public void deleteGroupFromUsers(final String organizationId, final String group) {
+   public void addGroupToUsers(final String organizationId, final String group, final Set<String> userIds) {
       String key = MongoUtils.concatParams(UserCodec.ALL_GROUPS, "$[" + ELEMENT_NAME + "]", UserCodec.GROUPS);
-      Bson pullGroups = Updates.pull(key, group);
+      Bson pushGroup = Updates.push(key, group);
       UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters(organizationId));
 
-      databaseCollection().updateMany(new BsonDocument(), pullGroups, options);
+      Bson filter = MongoFilters.idsFilter(userIds);
+      if (filter != null) {
+         databaseCollection().updateMany(filter, pushGroup, options);
+      }
+   }
+
+   @Override
+   public void deleteGroupFromUsers(final String organizationId, final String group) {
+      String key = MongoUtils.concatParams(UserCodec.ALL_GROUPS, "$[" + ELEMENT_NAME + "]", UserCodec.GROUPS);
+      Bson pullGroup = Updates.pull(key, group);
+      UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters(organizationId));
+
+      databaseCollection().updateMany(new BsonDocument(), pullGroup, options);
    }
 
    private List<Bson> arrayFilters(final String organizationId) {
@@ -177,6 +190,15 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
    @Override
    public User getUserById(final String id) {
       return databaseCollection().find(idFilter(id)).first();
+   }
+
+   @Override
+   public List<User> getUserByIds(final Set<String> ids) {
+      Bson filter = MongoFilters.idsFilter(ids);
+      if (filter == null) {
+         return Collections.emptyList();
+      }
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override

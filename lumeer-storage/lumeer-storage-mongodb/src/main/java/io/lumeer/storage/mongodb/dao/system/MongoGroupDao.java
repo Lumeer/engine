@@ -28,9 +28,11 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.GroupCodec;
 import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
+import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -96,6 +98,15 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    @Override
    public List<Group> getAllGroups() {
       return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
+   public Group getGroup(final String id) {
+      MongoCursor<Group> mongoCursor = databaseCollection().find(MongoFilters.idFilter(id)).iterator();
+      if (!mongoCursor.hasNext()) {
+         throw new StorageException("Group '" + id + "' could not be found.");
+      }
+      return mongoCursor.next();
    }
 
    MongoCollection<Group> databaseCollection() {
