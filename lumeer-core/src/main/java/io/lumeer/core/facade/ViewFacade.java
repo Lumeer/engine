@@ -19,26 +19,25 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.DefaultViewConfig;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.QueryUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -85,10 +84,8 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public View createView(View view) {
-      if (view.getQuery().getCollectionIds() != null) {
-         collectionDao.getCollectionsByIds(view.getQuery().getCollectionIds()).forEach(collection ->
-               permissionsChecker.checkRole(collection, RoleType.Read));
-      }
+      permissionsChecker.checkRole(getProject(), RoleType.ViewContribute);
+      checkViewCollectionIds(view);
       view.setAuthorId(getCurrentUserId());
       view.setLastTimeUsed(ZonedDateTime.now());
       view.setId(null);
@@ -104,9 +101,24 @@ public class ViewFacade extends AbstractFacade {
       return viewDao.createView(view);
    }
 
+   private void checkViewCollectionIds(View view) {
+      List<LinkType> linkTypes = Collections.emptyList();
+      if (!view.getQuery().getLinkTypeIds().isEmpty()) {
+         linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
+         linkTypes.forEach(linkType -> permissionsChecker.checkRoleInLinkType(linkType, RoleType.Read, getCurrentUserId()));
+      }
+
+      final Set<String> queryCollectionIds = QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes);
+      if (!queryCollectionIds.isEmpty()) {
+         collectionDao.getCollectionsByIds(queryCollectionIds).forEach(collection ->
+               permissionsChecker.checkRole(collection, RoleType.Read));
+      }
+   }
+
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
       permissionsChecker.checkRole(storedView, RoleType.Manage);
+      checkViewCollectionIds(view);
 
       // TODO partial update
       keepStoredPermissions(view, storedView.getPermissions());
@@ -129,7 +141,7 @@ public class ViewFacade extends AbstractFacade {
 
       viewDao.deleteView(view.getId());
 
-      favoriteItemDao.removeFavoriteViewFromUsers(getCurrentProject().getId(), id);
+      favoriteItemDao.removeFavoriteViewFromUsers(getProject().getId(), id);
    }
 
    public View getViewById(final String id) {
@@ -173,8 +185,8 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.Read);
 
-      String projectId = getCurrentProject().getId();
-      String userId = getCurrentUser().getId();
+      String projectId = getProject().getId();
+      String userId = getCurrentUserId();
       favoriteItemDao.addFavoriteView(userId, projectId, id);
    }
 
@@ -182,7 +194,7 @@ public class ViewFacade extends AbstractFacade {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.Read);
 
-      String userId = getCurrentUser().getId();
+      String userId = getCurrentUserId();
       favoriteItemDao.removeFavoriteView(userId, id);
    }
 
@@ -246,16 +258,5 @@ public class ViewFacade extends AbstractFacade {
       config.setUserId(getCurrentUserId());
 
       return defaultViewConfigDao.updateConfig(config);
-   }
-
-   private Project getCurrentProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-      return workspaceKeeper.getProject().get();
-   }
-
-   private User getCurrentUser() {
-      return authenticatedUser.getCurrentUser();
    }
 }

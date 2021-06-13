@@ -36,7 +36,7 @@ class DataFiltersJsParserTest {
     private val collection2 = Collection("c2", "c2", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
         id = "c2"
     }
-    private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf(), Permissions(), LinkPermissionsType.CUSTOM).apply { id = "lt1" }
+    private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf(), Permissions(), LinkPermissionsType.Custom).apply { id = "lt1" }
 
     @Test
     fun test() {
@@ -134,7 +134,7 @@ class DataFiltersJsParserTest {
         private val collection2 = Collection("c2", "c2", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
             id = "c2"
         }
-        private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf(), Permissions(), LinkPermissionsType.CUSTOM).apply { id = "lt1" }
+        private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf(), Permissions(), LinkPermissionsType.Custom).apply { id = "lt1" }
 
         override fun run() {
             val c1AttributeId = collection1.attributes.first().id

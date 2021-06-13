@@ -27,6 +27,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.BadFormatException;
@@ -99,14 +101,14 @@ public class UserFacadeIT extends IntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Organization.ROLES));
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig))));
       organization = organizationDao.createOrganization(organization1);
       organizationId1 = organization.getId();
 
       Organization organization2 = new Organization();
       organization2.setCode("MRL");
       organization2.setPermissions(new Permissions());
-      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Organization.ROLES));
+      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig))));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
 
       Organization organization3 = new Organization();

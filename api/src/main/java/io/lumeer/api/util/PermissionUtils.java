@@ -84,7 +84,7 @@ public class PermissionUtils {
          return Collections.emptySet();
       }
 
-      if (linkType.getPermissionsType() == LinkPermissionsType.CUSTOM) {
+      if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
          return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user));
       }
       var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);

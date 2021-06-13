@@ -22,6 +22,7 @@ import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.function.Function;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Attribute implements HealthChecking {
@@ -92,6 +93,11 @@ public class Attribute implements HealthChecking {
 
    public void setFunction(final Function function) {
       this.function = function;
+   }
+
+   @JsonIgnore
+   public boolean isFunctionDefined() {
+      return getFunction() != null && getFunction().getJs() != null && !getFunction().getJs().isEmpty();
    }
 
    public Integer getUsageCount() {

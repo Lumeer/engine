@@ -27,6 +27,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
@@ -44,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -95,7 +98,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      Permission userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -104,7 +107,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES));
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute))));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 

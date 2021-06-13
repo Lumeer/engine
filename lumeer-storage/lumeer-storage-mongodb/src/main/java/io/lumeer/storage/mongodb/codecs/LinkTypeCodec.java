@@ -105,7 +105,7 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
           .append(ATTRIBUTES, value.getAttributes())
           .append(LAST_ATTRIBUTE_NUM, value.getLastAttributeNum())
           .append(ROLES, value.getPermissions())
-          .append(ROLES_TYPE, value.getPermissionsType() != null ? value.getPermissionsType().toString() : null)
+          .append(ROLES_TYPE, value.getPermissionsType() != null ? value.getPermissionsType().getValue() : null)
           .append(RULES, value.getRules());
 
       documentCodec.encode(writer, bson, encoderContext);

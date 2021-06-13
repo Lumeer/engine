@@ -82,6 +82,10 @@ public class RoleUtils {
       }
    }
 
+   public static Set<Role> linkTypeResourceRoles() {
+      return collectionResourceRoles();
+   }
+
    public static Set<Role> collectionResourceRoles() {
       return Arrays.stream(RoleOld.values()).map(RoleUtils::collectionResourceRoles).flatMap(Set::stream).collect(Collectors.toSet());
    }

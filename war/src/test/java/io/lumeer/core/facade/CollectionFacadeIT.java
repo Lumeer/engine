@@ -41,6 +41,7 @@ import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.task.ContextualTaskFactory;
 import io.lumeer.core.task.ListCollectionsIn10SecondsTask;
@@ -70,7 +71,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -177,22 +177,22 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      User user = new User(USER);
-      this.user = userDao.createUser(user);
+      user = userDao.createUser(new User(USER));
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       Permissions organizationPermissions = new Permissions();
-      userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
+      userPermission = Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)));
       organizationPermissions.updateUserPermissions(userPermission);
       organization.setPermissions(organizationPermissions);
-      this.organization = organizationFacade.createOrganization(organization);
+      this.organization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
       favoriteItemDao.setOrganization(this.organization);
-      Group group = new Group(GROUP);
-      this.group = groupDao.createGroup(group);
+      group = groupDao.createGroup(new Group(GROUP));
+      user.setGroups(Collections.singletonMap(this.organization.getId(), Set.of(group.getId())));
+      user = userDao.updateUser(user.getId(), user);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
       groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(RoleType.Read)));
@@ -201,7 +201,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.UserConfig))));
       project.setPermissions(projectPermissions);
       this.project = projectDao.createProject(project);
 
@@ -246,6 +246,13 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testCreateCollection() {
       Collection collection = prepareCollection(CODE);
 
+      setProjectUserRoles(Set.of(new Role(RoleType.Read)));
+
+      assertThatThrownBy(() -> collectionFacade.createCollection(collection))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute)));
+
       Collection returnedCollection = collectionFacade.createCollection(collection);
       assertThat(returnedCollection).isNotNull();
       assertThat(returnedCollection.getId()).isNotNull();
@@ -263,12 +270,22 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertions.assertAll();
    }
 
+   private void setProjectUserRoles(final Set<Role> roles) {
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), roles));
+      project.setPermissions(projectPermissions);
+      projectDao.updateProject(project.getId(), project);
+      workspaceCache.clear();
+   }
+
    @Test
    public void testUpdateCollection() {
       String collectionId = createCollection(CODE).getId();
 
       Collection updatedCollection = prepareCollection(CODE2);
       updatedCollection.getPermissions().removeUserPermission(USER);
+
+      setCollectionGroupRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.Manage)));
 
       collectionFacade.updateCollection(collectionId, updatedCollection);
 
@@ -281,6 +298,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Test
    public void testDeleteCollection() {
       String collectionId = createCollection(CODE).getId();
+
+      setCollectionGroupRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.Manage)));
 
       collectionFacade.deleteCollection(collectionId);
 
@@ -320,6 +339,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
+      setCollectionGroupRoles(collection, Set.of(new Role(RoleType.AttributeEdit)));
+
       Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, "", ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       final Attribute createdAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
 
@@ -340,6 +361,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testCreateCollectionAttribute() {
       final Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
+
+      setCollectionGroupRoles(collection, Set.of(new Role(RoleType.AttributeEdit)));
 
       final var attributeIds = new HashSet<String>();
 
@@ -377,6 +400,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
+      setCollectionGroupRoles(collection, Set.of(new Role(RoleType.AttributeEdit)));
+
       Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, updatedAttribute);
 
@@ -399,11 +424,30 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
+      final String collectionId = collection.getId();
+      assertThatThrownBy(() -> collectionFacade.deleteCollectionAttribute(collectionId, ATTRIBUTE_ID))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setCollectionGroupRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.AttributeEdit)));
       collectionFacade.deleteCollectionAttribute(collection.getId(), ATTRIBUTE_ID);
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
       assertThat(collection.getAttributes()).isEmpty();
+   }
+
+   private Collection setCollectionUserRoles(Collection collection, final Set<Role> roles) {
+      Permissions permissions = collection.getPermissions();
+      permissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), roles));
+      collection.setPermissions(permissions);
+      return collectionDao.updateCollection(collection.getId(), collection, null);
+   }
+
+   private Collection setCollectionGroupRoles(Collection collection, final Set<Role> roles) {
+      Permissions permissions = collection.getPermissions();
+      permissions.updateGroupPermissions(Permission.buildWithRoles(this.group.getId(), roles));
+      collection.setPermissions(permissions);
+      return collectionDao.updateCollection(collection.getId(), collection, null);
    }
 
    @Test
@@ -418,6 +462,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Collection collection2 = createCollection(CODE2, attribute, rules);
       assertThat(collection2.getRules().get("A")).isNotNull();
+
+      setCollectionGroupRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.AttributeEdit)));
 
       collectionFacade.deleteCollectionAttribute(collection.getId(), attribute.getId());
       collection = collectionFacade.getCollection(collection.getId());
@@ -453,9 +499,14 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testGetCollectionPermissions() {
       String collectionId = createCollection(CODE).getId();
 
+      assertThatThrownBy(() -> collectionFacade.getCollectionPermissions(collectionId))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setCollectionUserRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.UserConfig)));
+
       Permissions permissions = collectionFacade.getCollectionPermissions(collectionId);
       assertThat(permissions).isNotNull();
-      assertPermissions(permissions.getUserPermissions(), this.userPermission);
+      assertPermissions(permissions.getUserPermissions(), new Permission(user.getId(), Set.of(new Role(RoleType.UserConfig))));
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
    }
 
@@ -470,7 +521,13 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       final Collection collection = createCollection(CODE);
       final String collectionId = collection.getId();
 
-      Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Manage)));
+      final Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.UserConfig), new Role(RoleType.Manage)));
+
+      assertThatThrownBy(() -> collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission)))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setCollectionUserRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.UserConfig)));
+
       collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -478,10 +535,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       assertPermissions(permissions.getUserPermissions(), userPermission);
       assertPermissions(permissions.getGroupPermissions(), this.groupPermission);
 
-      userPermission = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read)));
-      organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission));
-      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
-      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
+      Permission userPermission2 = Permission.buildWithRoles(USER2, Set.of(new Role(RoleType.Read)));
+      organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission2));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission2));
+      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission2));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).hasSize(3).anyMatch(n ->
@@ -498,10 +555,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
                   && n.getUserId().equals(USER2)
                   && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
 
-      userPermission = Permission.buildWithRoles(USER2, Collections.emptySet());
-      organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission));
-      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission));
-      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission));
+      userPermission2 = Permission.buildWithRoles(USER2, Collections.emptySet());
+      organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission2));
+      projectFacade.updateUserPermissions(project.getId(), Set.of(userPermission2));
+      collectionFacade.updateUserPermissions(collectionId, Set.of(userPermission2));
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).isEmpty();
@@ -511,6 +568,10 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testRemoveUserPermission() {
       String collectionId = createCollection(CODE).getId();
 
+      assertThatThrownBy(() -> collectionFacade.removeUserPermission(collectionId, user.getId()))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setCollectionUserRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.UserConfig)));
       collectionFacade.removeUserPermission(collectionId, user.getId());
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -522,6 +583,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Test
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
+
+      setCollectionGroupRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.UserConfig)));
 
       Permission groupPermission = Permission.buildWithRoles(group.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Manage)));
       collectionFacade.updateGroupPermissions(collectionId, Set.of(groupPermission));
@@ -536,6 +599,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    public void testRemoveGroupPermission() {
       String collectionId = createCollection(CODE).getId();
 
+      setCollectionGroupRoles(collectionDao.getCollectionById(collectionId), Set.of(new Role(RoleType.UserConfig)));
       collectionFacade.removeGroupPermission(collectionId, group.getId());
 
       Permissions permissions = collectionDao.getCollectionByCode(CODE).getPermissions();
@@ -632,23 +696,19 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionDao.createCollection(prepareCollection("CD1"));
       collectionDao.createCollection(prepareCollection("CD2"));
 
-      assertThat(collectionFacade.getCollections()).hasSize(2);
-
-      Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
-      project.setPermissions(projectPermissions);
-      projectDao.updateProject(project.getId(), project);
-      workspaceCache.clear();
-
-      assertThat(collectionFacade.getCollections()).hasSize(2);
-
-      Permissions organizationPermissions = new Permissions();
-      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
-      organization.setPermissions(organizationPermissions);
-      organizationDao.updateOrganization(organization.getId(), organization);
-      workspaceCache.clear();
-
       assertThat(collectionFacade.getCollections()).isEmpty();
+
+      setProjectUserRoles(Set.of(new Role(RoleType.Read, true)));
+      assertThat(collectionFacade.getCollections()).hasSize(2);
+
+      setProjectUserRoles(Set.of(new Role(RoleType.Read)));
+      assertThat(collectionFacade.getCollections()).isEmpty();
+
+      setCollectionGroupRoles(collectionDao.getCollectionByCode("CD1"), Set.of(new Role(RoleType.Read)));
+      assertThat(collectionFacade.getCollections()).hasSize(1);
+
+      setCollectionGroupRoles(collectionDao.getCollectionByCode("CD2"), Set.of(new Role(RoleType.Read)));
+      assertThat(collectionFacade.getCollections()).hasSize(2);
    }
 
    @Test

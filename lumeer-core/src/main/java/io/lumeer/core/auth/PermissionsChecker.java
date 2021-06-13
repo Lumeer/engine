@@ -19,6 +19,7 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
@@ -54,8 +55,10 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -233,8 +236,8 @@ public class PermissionsChecker {
       return permissionAdapter.hasRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
    }
 
-   public boolean hasRoleInLinkType(LinkType linkType, RoleType role, String userId) {
-      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, userId);
+   public void checkRoleInLinkType(LinkType linkType, RoleType role, String userId) {
+      permissionAdapter.checkRoleInLinkType(getOrganization(), getProject(), linkType, role, userId);
    }
 
    /**
@@ -385,8 +388,16 @@ public class PermissionsChecker {
       }
    }
 
+   public void checkAttributesFunctionAccess(final java.util.Collection<Attribute> attributes) {
+      Objects.requireNonNullElse(attributes, new ArrayList<Attribute>()).stream().filter(Attribute::isFunctionDefined).forEach(attribute -> {
+         checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
+      });
+   }
+
    public void checkFunctionRuleAccess(final String js, final RoleType role) {
-      permissionAdapter.checkFunctionRuleAccess(getOrganization(), getProject(), js, role, authenticatedUser.getCurrentUserId());
+      if (!Utils.isEmpty(js)) {
+         permissionAdapter.checkFunctionRuleAccess(getOrganization(), getProject(), js, role, authenticatedUser.getCurrentUserId());
+      }
    }
 
    /**

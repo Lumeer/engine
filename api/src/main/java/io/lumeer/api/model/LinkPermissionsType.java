@@ -22,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum LinkPermissionsType {
 
-   CUSTOM("custom"),
-   MERGE("merge");
+   Custom("Custom"),
+   Merge("Merge");
 
    private final String value;
 
@@ -41,7 +41,7 @@ public enum LinkPermissionsType {
          return null;
       }
       try {
-         return LinkPermissionsType.valueOf(value);
+         return valueOf(value);
       } catch (IllegalArgumentException exception) {
          return null;
       }

@@ -136,8 +136,15 @@ public class CollectionFacade extends AbstractFacade {
       }
       permissionsChecker.checkRulesPermissions(collection.getRules());
 
+      final Set<Attribute> attributes = collection.getAttributes();
+
+      collection.setAttributes(null);
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
+
+      if (attributes.size() > 0) {
+         storedCollection.setAttributes(createCollectionAttributesWithoutPushNotification(storedCollection, attributes));
+      }
 
       return storedCollection;
    }
@@ -156,6 +163,7 @@ public class CollectionFacade extends AbstractFacade {
          permissionsChecker.checkFunctionsLimit(collection);
       }
       permissionsChecker.checkRulesPermissions(collection.getRules());
+      permissionsChecker.checkAttributesFunctionAccess(collection.getAttributes());
 
       // TODO partial update
       keepUnmodifiableFields(collection, storedCollection);
@@ -306,6 +314,7 @@ public class CollectionFacade extends AbstractFacade {
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
+      permissionsChecker.checkAttributesFunctionAccess(attributes);
 
       final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collectionId, collection, attributes.size());
 
@@ -326,8 +335,13 @@ public class CollectionFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
+      return createCollectionAttributesWithoutPushNotification(collection, attributes);
+   }
+
+   public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final Collection collection, final java.util.Collection<Attribute> attributes) {
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
+      permissionsChecker.checkAttributesFunctionAccess(attributes);
 
       for (Attribute attribute : attributes) {
          attribute.setUsageCount(0);
@@ -364,15 +378,14 @@ public class CollectionFacade extends AbstractFacade {
 
       collection.updateAttribute(attributeId, attribute);
       collection.setLastTimeUsed(ZonedDateTime.now());
-      if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
+      if (!attribute.isFunctionDefined()) {
          attribute.setFunction(null);
       }
 
-      if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
-         if (!skipFceLimits) {
-            permissionsChecker.checkFunctionsLimit(collection);
-         }
-
+      if (!skipFceLimits) {
+         permissionsChecker.checkFunctionsLimit(collection);
+      }
+      if (attribute.isFunctionDefined()) {
          permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
       }
 

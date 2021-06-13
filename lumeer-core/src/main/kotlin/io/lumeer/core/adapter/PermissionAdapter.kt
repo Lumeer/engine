@@ -65,12 +65,12 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    fun invalidateUserCache() {
-      for (key in usersCache.keys) {
-         usersCache.remove(key)
-      }
-      for (key in userCache.keys) {
-         userCache.remove(key)
-      }
+      usersCache.clear()
+      userCache.clear()
+   }
+
+   fun invalidateCollectionCache() {
+      collectionCache.clear()
    }
 
    fun invalidateCache(resource: Resource) {

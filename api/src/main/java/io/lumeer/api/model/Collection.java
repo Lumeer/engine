@@ -120,7 +120,7 @@ public class Collection extends Resource implements HealthChecking {
    }
 
    public Set<Attribute> getAttributes() {
-      return Collections.unmodifiableSet(attributes);
+      return attributes != null ? Collections.unmodifiableSet(attributes) : Collections.emptySet();
    }
 
    public void setAttributes(final java.util.Collection<Attribute> attributes) {

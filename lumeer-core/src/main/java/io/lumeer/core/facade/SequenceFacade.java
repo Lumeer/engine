@@ -33,6 +33,8 @@ public class SequenceFacade extends AbstractFacade {
    private SequenceDao sequenceDao;
 
    public int getNextSequenceNumber(final String sequenceName) {
+      // method is not called by service so we don't need to check permissions
+
       return sequenceDao.getNextSequenceNo(sequenceName);
    }
 
@@ -50,6 +52,7 @@ public class SequenceFacade extends AbstractFacade {
 
    public void deleteSequence(final String id) {
       checkProjectRole();
+
       sequenceDao.deleteSequence(id);
    }
 

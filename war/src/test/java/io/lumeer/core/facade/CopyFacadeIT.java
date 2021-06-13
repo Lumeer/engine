@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -31,9 +32,12 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -108,7 +112,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       Permissions organizationPermissions = new Permissions();
-      organizationPermissions.updateUserPermissions(new Permission(user.getId(), Organization.ROLES));
+      organizationPermissions.updateUserPermissions(new Permission(user.getId(),  Set.of(new Role(RoleType.Read))));
       organization.setPermissions(organizationPermissions);
       organization = organizationDao.createOrganization(organization);
 
@@ -118,7 +122,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(user.getId(), Project.ROLES));
+      projectPermissions.updateUserPermissions(new Permission(user.getId(),  Set.of(new Role(RoleType.Read))));
       project.setPermissions(projectPermissions);
       project = projectDao.createProject(project);
 
@@ -155,6 +159,11 @@ public class CopyFacadeIT extends IntegrationTestBase {
    @Test
    @SuppressWarnings("unchecked")
    public void testTemplateImportLocal() {
+      assertThatThrownBy(() -> templateFacade.installTemplate(project, TEMPLATE, Language.EN))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.ViewContribute), new Role(RoleType.LinkContribute)));
+
       templateFacade.installTemplate(project, TEMPLATE, Language.EN);
 
       var collections = collectionFacade.getCollections();
@@ -250,6 +259,14 @@ public class CopyFacadeIT extends IntegrationTestBase {
 
       assertThat(okrInitiatives.getQuery().getStems()).hasSize(1);
       assertThat(okrInitiatives.getQuery().getStems().get(0).getCollectionId()).isEqualTo(keyResultsCollection.getId());
+   }
+
+   private void setProjectUserRoles(final Set<Role> roles) {
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), roles));
+      project.setPermissions(projectPermissions);
+      projectDao.updateProject(project.getId(), project);
+      workspaceCache.clear();
    }
 
    private Attribute getAttribute(final java.util.Collection<Attribute> attributes, final String id) {

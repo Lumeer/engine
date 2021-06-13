@@ -34,7 +34,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
    }
 
    fun mapLinkType(organization: Organization, project: Project?, linkType: LinkType, user: User): LinkType {
-      if (linkType.permissionsType == LinkPermissionsType.MERGE) {
+      if (linkType.permissionsType == LinkPermissionsType.Merge) {
          return linkType.apply { permissions = Permissions() }
       }
       return if (getUserAdmins(organization, project, linkType).contains(user.id)) {

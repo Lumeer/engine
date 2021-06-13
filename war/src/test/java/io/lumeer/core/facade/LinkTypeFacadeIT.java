@@ -23,6 +23,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Group;
+import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -33,8 +35,12 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -65,12 +71,17 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    private static final String COLLECTION_COLOR = "#00ee00";
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
+   private static final String GROUP = "testGroup";
 
    private static final String NAME = "Connection";
    private static final String NAME2 = "Whuaaaa";
 
    private List<String> collectionIds = new ArrayList<>();
    private String collectionIdNoPerm;
+   private Organization organization;
+   private Project project;
+   private User user;
+   private Group group;
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
@@ -91,46 +102,55 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    @Before
    public void configureLinkTypes() {
-      User user = new User(USER);
-      final User createdUser = userDao.createUser(user);
+      user = userDao.createUser(new User(USER));
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
-      Organization storedOrganization = organizationDao.createOrganization(organization);
+      this.organization = organizationDao.createOrganization(organization);
 
-      projectDao.setOrganization(storedOrganization);
+      projectDao.setOrganization(this.organization);
+      groupDao.setOrganization(this.organization);
+      group = groupDao.createGroup(new Group(GROUP));
+      user.setGroups(Collections.singletonMap(this.organization.getId(), Set.of(group.getId())));
+      user = userDao.updateUser(user.getId(), user);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(new Role(RoleType.Read)));
+      Permission userPermission = Permission.buildWithRoles(user.getId(), Collections.singleton(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
-      storedOrganization.setPermissions(organizationPermissions);
-      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+      this.organization.setPermissions(organizationPermissions);
+      this.organization = organizationDao.updateOrganization(this.organization.getId(), this.organization);
 
       Project project = new Project();
       project.setPermissions(new Permissions());
       project.setCode(PROJECT_CODE);
-      Project storedProject = projectDao.createProject(project);
+      this.project = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.LinkContribute)));
+      Permission userProjectPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.LinkContribute)));
       projectPermissions.updateUserPermissions(userProjectPermission);
-      storedProject.setPermissions(projectPermissions);
-      storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
+      this.project.setPermissions(projectPermissions);
+      this.project = projectDao.updateProject(this.project.getId(), this.project);
 
-      workspaceKeeper.setWorkspaceIds(storedOrganization.getId(), storedProject.getId());
+      workspaceKeeper.setWorkspaceIds(this.organization.getId(), this.project.getId());
 
-      collectionDao.setProject(storedProject);
+      collectionDao.setProject(this.project);
 
       collectionIds.clear();
 
       for (String name : COLLECTION_NAMES) {
          Permissions collectionPermissions = new Permissions();
-         collectionPermissions.updateUserPermissions(new Permission(createdUser.getId(), Collection.ROLES));
+         collectionPermissions.updateUserPermissions(new Permission(user.getId(), Collections.singleton(new Role(RoleType.Read))));
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
          collectionIds.add(collectionDao.createCollection(collection).getId());
       }
@@ -143,6 +163,13 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    public void testCreateLinkType() {
       LinkType linkType = prepareLinkType();
 
+      setProjectUserRoles(Set.of(new Role(RoleType.Read)));
+
+      assertThatThrownBy(() -> linkTypeFacade.createLinkType(linkType))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.LinkContribute)));
+
       String id = linkTypeFacade.createLinkType(linkType).getId();
       assertThat(id).isNotNull().isNotEmpty();
       assertThat(ObjectId.isValid(id)).isTrue();
@@ -153,6 +180,14 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       assertThat(storedLinkType.getCollectionIds()).containsOnly(collectionIds.get(0), collectionIds.get(1));
    }
 
+   private void setProjectUserRoles(final Set<Role> roles) {
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), roles));
+      project.setPermissions(projectPermissions);
+      projectDao.updateProject(project.getId(), project);
+      workspaceCache.clear();
+   }
+
    @Test
    public void testUpdateLinkType() {
       LinkType linkType = prepareLinkType();
@@ -161,17 +196,57 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       LinkType updateLinkedType = prepareLinkType();
       updateLinkedType.setName(NAME2);
 
+      assertThatThrownBy(() -> linkTypeFacade.updateLinkType(id, updateLinkedType))
+            .isInstanceOf(NoPermissionException.class);
+
+      setCollectionsGroupRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
+
       linkTypeFacade.updateLinkType(id, updateLinkedType);
 
       LinkType storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME2);
+
+      setCollectionsGroupRoles(Set.of(new Role(RoleType.Read)));
+
+      assertThatThrownBy(() -> linkTypeFacade.updateLinkType(id, updateLinkedType))
+            .isInstanceOf(NoPermissionException.class);
+
+      setLinkTypePermissions(storedLinkType, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
+
+      linkTypeFacade.updateLinkType(id, updateLinkedType);
+   }
+
+   private void setCollectionsGroupRoles(final Set<Role> roles) {
+      for (String collectionId : collectionIds) {
+         Permissions collectionPermissions = new Permissions();
+         collectionPermissions.updateGroupPermissions(new Permission(group.getId(), roles));
+         Collection collection = collectionDao.getCollectionById(collectionId);
+         collection.setPermissions(collectionPermissions);
+         collectionDao.updateCollection(collectionId, collection, null);
+      }
+      permissionsChecker.getPermissionAdapter().invalidateCollectionCache();
+   }
+
+   private LinkType setLinkTypePermissions(LinkType linkType, final Set<Role> roles) {
+      if (roles.isEmpty()) {
+         linkType.setPermissions(null);
+         linkType.setPermissionsType(LinkPermissionsType.Merge);
+      } else {
+         Permissions permissions = new Permissions();
+         permissions.updateUserPermissions(new Permission(user.getId(), roles));
+         linkType.setPermissions(permissions);
+         linkType.setPermissionsType(LinkPermissionsType.Custom);
+      }
+      return linkTypeDao.updateLinkType(linkType.getId(), linkType, null);
    }
 
    @Test
    public void testDeleteLinkType() {
       LinkType created = linkTypeFacade.createLinkType(prepareLinkType());
       assertThat(created.getId()).isNotNull();
+
+      setLinkTypePermissions(created, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
 
       linkTypeFacade.deleteLinkType(created.getId());
 
@@ -200,10 +275,12 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testAddAttribute(){
+   public void testAddAttribute() {
       String id = linkTypeFacade.createLinkType(prepareLinkType()).getId();
       LinkType linkType = linkTypeFacade.getLinkType(id);
       assertThat(linkType.getAttributes()).isEmpty();
+
+      setCollectionsGroupRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.AttributeEdit)));
 
       linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
       linkType = linkTypeFacade.getLinkType(id);
@@ -212,10 +289,12 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testUpdateAttribute(){
+   public void testUpdateAttribute() {
       String id = linkTypeFacade.createLinkType(prepareLinkType()).getId();
       LinkType linkType = linkTypeFacade.getLinkType(id);
       assertThat(linkType.getAttributes()).isEmpty();
+
+      setLinkTypePermissions(linkType, Set.of(new Role(RoleType.Read), new Role(RoleType.AttributeEdit)));
 
       linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
       linkType = linkTypeFacade.getLinkType(id);
@@ -229,10 +308,12 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testDeleteAttribute(){
+   public void testDeleteAttribute() {
       String id = linkTypeFacade.createLinkType(prepareLinkType()).getId();
       LinkType linkType = linkTypeFacade.getLinkType(id);
       assertThat(linkType.getAttributes()).isEmpty();
+
+      setCollectionsGroupRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.AttributeEdit)));
 
       linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
       linkType = linkTypeFacade.getLinkType(id);

@@ -23,7 +23,9 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.util.CollectionUtil;
@@ -42,7 +44,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -94,10 +95,27 @@ public class LinkTypeFacade extends AbstractFacade {
       permissionsChecker.checkFunctionsLimit(linkType);
       permissionsChecker.checkRulesLimit(linkType);
       permissionsChecker.checkRulesPermissions(linkType.getRules());
+      permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
 
+      if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
+         Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), LinkType.ROLES);
+         linkType.getPermissions().updateUserPermissions(defaultUserPermission);
+      }
+
+      List<Attribute> attributes = linkType.getAttributes();
+
+      linkType.setAttributes(null);
       linkType.setLastAttributeNum(0);
       linkType.setLinksCount(0L);
-      return linkTypeDao.createLinkType(linkType);
+
+      LinkType storedLinkType = linkTypeDao.createLinkType(linkType);
+      linkDataDao.createDataRepository(storedLinkType.getId());
+
+      if (attributes.size() > 0) {
+         storedLinkType.setAttributes(createLinkTypeAttributes(storedLinkType, attributes, false));
+      }
+
+      return storedLinkType;
    }
 
    public LinkType updateLinkType(String id, LinkType linkType) {
@@ -116,7 +134,9 @@ public class LinkTypeFacade extends AbstractFacade {
          permissionsChecker.checkRulesLimit(linkType);
       }
       permissionsChecker.checkRulesPermissions(linkType.getRules());
+      permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
 
+      // TODO partial update
       keepUnmodifiableFields(linkType, storedLinkType);
 
       return mapLinkTypeData(linkTypeDao.updateLinkType(id, linkType, originalLinkType));
@@ -205,13 +225,19 @@ public class LinkTypeFacade extends AbstractFacade {
 
    private List<LinkType> mapLinkTypesData(List<LinkType> linkTypes) {
       return adapter.mapLinkTypesComputedProperties(linkTypes)
-            .stream()
-            .peek(this::mapLinkType)
-            .collect(Collectors.toList());
+                    .stream()
+                    .peek(this::mapLinkType)
+                    .collect(Collectors.toList());
    }
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
       LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
+      return createLinkTypeAttributes(linkType, attributes, true);
+   }
+
+   public java.util.Collection<Attribute> createLinkTypeAttributes(final LinkType linkType, final java.util.Collection<Attribute> attributes, boolean pushNotification) {
+      permissionsChecker.checkAttributesFunctionAccess(attributes);
+      permissionsChecker.checkRoleInLinkTypeWithView(linkType, RoleType.AttributeEdit);
       LinkType originalLinkType = new LinkType(linkType);
 
       for (Attribute attribute : attributes) {
@@ -223,7 +249,7 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       permissionsChecker.checkFunctionsLimit(linkType);
-      linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
+      linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, pushNotification);
 
       return attributes;
    }
@@ -245,17 +271,17 @@ public class LinkTypeFacade extends AbstractFacade {
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
       LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
       LinkType originalLinkType = new LinkType(linkType);
-      final Optional<Attribute> originalAttribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
 
       linkType.updateAttribute(attributeId, attribute);
-      if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
+      if (!attribute.isFunctionDefined()) {
          attribute.setFunction(null);
       }
 
       if (!skipFceLimits) {
-         if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
-            permissionsChecker.checkFunctionsLimit(linkType);
-         }
+         permissionsChecker.checkFunctionsLimit(linkType);
+      }
+      if (attribute.isFunctionDefined()) {
+         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
       }
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);

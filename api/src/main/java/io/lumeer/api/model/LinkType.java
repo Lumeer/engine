@@ -22,6 +22,7 @@ package io.lumeer.api.model;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,10 +37,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkType implements WithId, HealthChecking {
+
+   public static Set<Role> ROLES = RoleUtils.linkTypeResourceRoles();
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -74,6 +78,7 @@ public class LinkType implements WithId, HealthChecking {
       this.attributes = attributes;
       this.rules = rules;
       this.permissions = permissions;
+      this.permissionsType = permissionsType;
    }
 
    public LinkType(LinkType linkType) {
@@ -132,7 +137,7 @@ public class LinkType implements WithId, HealthChecking {
    }
 
    public List<Attribute> getAttributes() {
-      return Collections.unmodifiableList(attributes);
+      return attributes != null ? Collections.unmodifiableList(attributes) : Collections.emptyList();
    }
 
    public void setAttributes(final java.util.Collection<Attribute> attributes) {
@@ -194,6 +199,10 @@ public class LinkType implements WithId, HealthChecking {
 
    public void setRules(final Map<String, Rule> rules) {
       this.rules = rules;
+   }
+
+   public void setPermissionsType(final LinkPermissionsType permissionsType) {
+      this.permissionsType = permissionsType;
    }
 
    public LinkPermissionsType getPermissionsType() {
