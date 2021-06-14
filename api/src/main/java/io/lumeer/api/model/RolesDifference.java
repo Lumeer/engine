@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class RolesDifference {
@@ -36,5 +37,19 @@ public class RolesDifference {
 
    public Set<String> getRemovedUsers() {
       return removedUsers;
+   }
+
+   public Set<String> changedUsers() {
+      Set<String> changed = new HashSet<>(addedUsers);
+      changed.addAll(removedUsers);
+      return changed;
+   }
+
+   @Override
+   public String toString() {
+      return "RolesDifference{" +
+            "addedUsers=" + addedUsers +
+            ", removedUsers=" + removedUsers +
+            '}';
    }
 }

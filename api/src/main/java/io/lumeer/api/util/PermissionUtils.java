@@ -75,6 +75,10 @@ public class PermissionUtils {
    }
 
    public static Set<RoleType> getUserRolesInLinkType(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, User user) {
+      if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
+         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user));
+      }
+
       var linkTypeCollections = collections.stream().filter(collection -> linkType.getCollectionIds().contains(collection.getId())).collect(Collectors.toList());
       var canReadCollections = linkTypeCollections.size() == 2;
       for (Collection collection : linkTypeCollections) {
@@ -84,9 +88,6 @@ public class PermissionUtils {
          return Collections.emptySet();
       }
 
-      if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
-         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user));
-      }
       var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);
       var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user);
       roles1.retainAll(roles2);
