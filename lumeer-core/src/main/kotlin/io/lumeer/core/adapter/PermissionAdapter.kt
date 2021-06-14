@@ -167,6 +167,10 @@ class PermissionAdapter(private val userDao: UserDao,
       return emptySet()
    }
 
+   fun getUserRolesInLinkType(organization: Organization?, project: Project?, linkType: LinkType, userId: String): Set<RoleType> {
+      return getUserRolesInLinkType(organization, project, linkType, getUser(userId))
+   }
+
    fun getUserRolesInLinkType(organization: Organization?, project: Project?, linkType: LinkType, user: User): Set<RoleType> {
       return getUserRolesInLinkType(organization, project, linkType, getLinkTypeCollections(linkType), user)
    }

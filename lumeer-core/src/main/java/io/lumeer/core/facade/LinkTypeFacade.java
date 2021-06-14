@@ -123,8 +123,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
-      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Manage);
-      LinkType originalLinkType = new LinkType(storedLinkType);
+      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Read);
       if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
          checkLinkTypePermission(linkType, RoleType.Manage);
       }
@@ -136,15 +135,19 @@ public class LinkTypeFacade extends AbstractFacade {
       permissionsChecker.checkRulesPermissions(linkType.getRules());
       permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
 
-      // TODO partial update
-      keepUnmodifiableFields(linkType, storedLinkType);
+      LinkType updatingLinkType = new LinkType(storedLinkType);
+      updatingLinkType.patch(linkType, permissionsChecker.getActualRoles(storedLinkType));
+      keepUnmodifiableFields(updatingLinkType, storedLinkType);
 
-      return mapLinkTypeData(linkTypeDao.updateLinkType(id, linkType, originalLinkType));
+      if (storedLinkType.equals(updatingLinkType)) {
+         return mapLinkTypeData(storedLinkType);
+      }
+
+      return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
    }
 
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
-      keepStoredPermissions(linkType, storedLinkType.getPermissions());
-
+      linkType.setId(storedLinkType.getId());
       linkType.setAttributes(storedLinkType.getAttributes());
       linkType.setLastAttributeNum(storedLinkType.getLastAttributeNum());
       linkType.setCollectionIds(storedLinkType.getCollectionIds());
@@ -191,8 +194,8 @@ public class LinkTypeFacade extends AbstractFacade {
          return mapLinkTypeData(linkType);
       }
 
-      var viewsLinkTypes = resourceAdapter.getViewsLinkTypes(getOrganization(), getProject(), getCurrentUserId());
-      if (viewsLinkTypes.stream().anyMatch(lt -> lt.getId().equals(linkTypeId))) {
+      var linkTypeReadersInViews = resourceAdapter.getLinkTypeReadersInViews(getOrganization(), getProject(), linkTypeId);
+      if (linkTypeReadersInViews.contains(getCurrentUserId())) {
          return mapLinkTypeData(linkType);
       }
 

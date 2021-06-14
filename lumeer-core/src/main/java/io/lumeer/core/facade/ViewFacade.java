@@ -39,7 +39,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -75,8 +74,8 @@ public class ViewFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      adapter = new ViewAdapter(favoriteItemDao);
       resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
+      adapter = new ViewAdapter(resourceAdapter, favoriteItemDao);
    }
 
    public ViewAdapter getAdapter() {
@@ -96,9 +95,8 @@ public class ViewFacade extends AbstractFacade {
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
-      view.setAuthorRights(getViewAuthorRights(view));
 
-      return viewDao.createView(view);
+      return mapView(viewDao.createView(view));
    }
 
    private void checkViewCollectionIds(View view) {
@@ -117,22 +115,24 @@ public class ViewFacade extends AbstractFacade {
 
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
-      permissionsChecker.checkRole(storedView, RoleType.Manage);
+      permissionsChecker.checkRole(storedView, RoleType.Read);
       checkViewCollectionIds(view);
 
-      // TODO partial update
-      keepStoredPermissions(view, storedView.getPermissions());
-      view.setAuthorId(storedView.getAuthorId());
-      view.setLastTimeUsed(ZonedDateTime.now());
+      View updatingView = storedView.copy();
+      updatingView.patch(view, permissionsChecker.getActualRoles(view));
+      updatingView.setAuthorId(storedView.getAuthorId());
+      updatingView.setLastTimeUsed(ZonedDateTime.now());
+      keepUnmodifiableFields(updatingView, storedView);
 
-      View updatedView = viewDao.updateView(storedView.getId(), view);
-      updatedView.setAuthorRights(getViewAuthorRights(updatedView));
+      if (storedView.equals(updatingView)) {
+         return mapView(storedView);
+      }
 
-      return mapView(updatedView);
+      return mapView(viewDao.updateView(id, updatingView));
    }
 
    private View mapView(View view) {
-      return adapter.mapViewData(mapResource(view), getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapViewData(getOrganization(), getProject(), mapResource(view), getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void deleteView(final String id) {
@@ -148,8 +148,6 @@ public class ViewFacade extends AbstractFacade {
       final View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.Read);
 
-      view.setAuthorRights(getViewAuthorRights(view));
-
       return mapView(view);
    }
 
@@ -162,13 +160,12 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private List<View> mapViews(List<View> views) {
-      return adapter.mapViewsData(views, getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapViewsData(getOrganization(), getProject(), views, getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public List<View> getViews() {
       return mapViews(resourceAdapter.getViews(getOrganization(), getProject(), getCurrentUserId())
                                      .stream()
-                                     .peek(view -> view.setAuthorRights(getViewAuthorRights(view)))
                                      .map(this::mapResource)
                                      .collect(Collectors.toList())
       );
@@ -244,10 +241,6 @@ public class ViewFacade extends AbstractFacade {
    private String generateViewCode(String viewName) {
       Set<String> existingCodes = viewDao.getAllViewCodes();
       return CodeGenerator.generate(existingCodes, viewName);
-   }
-
-   public Map<String, Set<RoleType>> getViewAuthorRights(final View view) {
-      return resourceAdapter.getViewAuthorRights(getOrganization(), getProject(), view);
    }
 
    public List<DefaultViewConfig> getDefaultConfigs() {

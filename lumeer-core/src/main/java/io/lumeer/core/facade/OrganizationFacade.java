@@ -106,12 +106,18 @@ public class OrganizationFacade extends AbstractFacade {
 
    public Organization updateOrganization(final String organizationId, final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
-      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleType.Manage);
+      Organization storedOrganization = checkRoleAndGetOrganization(organizationId, RoleType.Read);
 
-      keepStoredPermissions(organization, storedOrganization.getPermissions());
-      keepUnmodifiableFields(organization, storedOrganization);
-      Organization updatedOrganization = organizationDao.updateOrganization(storedOrganization.getId(), organization, storedOrganization);
-      workspaceCache.updateOrganization(updatedOrganization.getId(), updatedOrganization);
+      Organization updatingOrganization = storedOrganization.copy();
+      updatingOrganization.patch(organization, permissionsChecker.getActualRoles(storedOrganization));
+      keepUnmodifiableFields(updatingOrganization, storedOrganization);
+
+      if (storedOrganization.equals(updatingOrganization)) {
+         return mapResource(storedOrganization);
+      }
+
+      Organization updatedOrganization = organizationDao.updateOrganization(organizationId, updatingOrganization, storedOrganization);
+      workspaceCache.updateOrganization(organizationId, updatedOrganization);
 
       return mapResource(updatedOrganization);
    }

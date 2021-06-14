@@ -41,7 +41,7 @@ import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Collection extends Resource implements HealthChecking {
+public class Collection extends Resource implements HealthChecking, Updatable<Collection> {
 
    public static Set<Role> ROLES = RoleUtils.collectionResourceRoles();
 
@@ -257,6 +257,23 @@ public class Collection extends Resource implements HealthChecking {
       }
       if (rules != null) {
          rules.forEach((k, v) -> v.checkHealth());
+      }
+   }
+
+   @Override
+   public void patch(final Collection resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+
+      if(roles.contains(RoleType.Manage)) {
+         setDataDescription(resource.getDataDescription());
+      }
+      if (roles.contains(RoleType.AttributeEdit)) {
+         setAttributes(resource.getAttributes());
+         setDefaultAttributeId(resource.getDefaultAttributeId());
+      }
+      if (roles.contains(RoleType.TechConfig)) {
+         setPurpose(resource.getPurpose());
+         setRules(resource.getRules());
       }
    }
 }

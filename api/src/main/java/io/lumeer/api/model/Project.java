@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Project extends Resource {
+public class Project extends Resource implements Updatable<Project> {
 
    public static Set<Role> ROLES = RoleUtils.projectResourceRoles();
 
@@ -107,7 +107,21 @@ public class Project extends Resource {
       return isPublic;
    }
 
+   public void setPublic(final boolean aPublic) {
+      isPublic = aPublic;
+   }
+
    public void setCollectionsCount(final int collectionsCount) {
       this.collectionsCount = collectionsCount;
+   }
+
+   @Override
+   public void patch(final Project resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+
+      if (roles.contains(RoleType.TechConfig)) {
+         setPublic(resource.isPublic);
+         setTemplateMetadata(resource.getTemplateMetadata());
+      }
    }
 }

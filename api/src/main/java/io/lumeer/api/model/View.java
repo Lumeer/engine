@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class View extends Resource {
+public class View extends Resource implements Updatable<View> {
 
    public static Set<Role> ROLES = RoleUtils.viewResourceRoles();
 
@@ -206,4 +206,20 @@ public class View extends Resource {
             '}';
    }
 
+   @Override
+   public void patch(final View resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+
+      if (roles.contains(RoleType.Manage)) {
+         setFolders(resource.getFolders());
+      }
+      if (roles.contains(RoleType.QueryConfig)) {
+         setQuery(resource.getQuery());
+      }
+      if (roles.contains(RoleType.PerspectiveConfig)) {
+         setConfig(resource.getConfig());
+         setPerspective(resource.getPerspective());
+         setSettings(resource.getSettings());
+      }
+   }
 }

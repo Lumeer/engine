@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LinkType implements WithId, HealthChecking {
+public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
 
    public static Set<Role> ROLES = RoleUtils.linkTypeResourceRoles();
 
@@ -246,7 +246,24 @@ public class LinkType implements WithId, HealthChecking {
    public void checkHealth() throws InsaneObjectException {
       checkStringLength("name", name, MAX_STRING_LENGTH);
 
-      if (attributes != null) attributes.forEach(Attribute::checkHealth);
-      if (rules != null) rules.forEach((k, v) -> v.checkHealth());
+      if (attributes != null) {
+         attributes.forEach(Attribute::checkHealth);
+      }
+      if (rules != null) {
+         rules.forEach((k, v) -> v.checkHealth());
+      }
+   }
+
+   @Override
+   public void patch(final LinkType resource, final Set<RoleType> roles) {
+      if (roles.contains(RoleType.Manage)) {
+         setName(resource.getName());
+      }
+      if (roles.contains(RoleType.TechConfig)) {
+         setRules(resource.getRules());
+      }
+      if (roles.contains(RoleType.AttributeEdit)) {
+         setAttributes(resource.getAttributes());
+      }
    }
 }

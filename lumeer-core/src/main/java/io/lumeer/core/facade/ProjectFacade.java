@@ -149,10 +149,16 @@ public class ProjectFacade extends AbstractFacade {
       final Project storedProject = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(storedProject, RoleType.Manage);
 
-      keepStoredPermissions(project, storedProject.getPermissions());
-      keepUnmodifiableFields(project, storedProject);
-      Project updatedProject = projectDao.updateProject(storedProject.getId(), project, storedProject);
-      workspaceCache.updateProject(projectId, project);
+      Project updatingProject = storedProject.copy();
+      updatingProject.patch(project, permissionsChecker.getActualRoles(storedProject));
+      keepUnmodifiableFields(updatingProject, storedProject);
+
+      if (storedProject.equals(updatingProject)) {
+         return mapResource(storedProject);
+      }
+
+      Project updatedProject = projectDao.updateProject(projectId, updatingProject, storedProject);
+      workspaceCache.updateProject(projectId, updatedProject);
 
       return mapResource(updatedProject);
    }

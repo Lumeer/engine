@@ -184,7 +184,7 @@ public class PusherFacade extends AbstractFacade {
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
       resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
       linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
-      viewAdapter = new ViewAdapter(favoriteItemDao);
+      viewAdapter = new ViewAdapter(resourceAdapter, favoriteItemDao);
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
@@ -395,14 +395,13 @@ public class PusherFacade extends AbstractFacade {
 
    private void sendViewNotifications(final View view, final String event) {
       Set<String> userIds = resourceAdapter.getViewReaders(getOrganization(), getProject(), view);
-      view.setAuthorRights(resourceAdapter.getViewAuthorRights(getOrganization(), getProject(), view));
       sendNotificationsBatch(userIds.stream()
                                     .map(userId -> createEvent(new ObjectWithParent(createViewForUser(view, userId), getOrganization().getId(), getProject().getId()), event, userId))
                                     .collect(Collectors.toList()));
    }
 
    private View createViewForUser(final View view, final String userId) {
-      return viewAdapter.mapViewData(view.copy(), userId, workspaceKeeper.getProjectId());
+      return viewAdapter.mapViewData(getOrganization(), getProject(), view.copy(), userId, workspaceKeeper.getProjectId());
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {

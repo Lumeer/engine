@@ -155,8 +155,7 @@ public class CollectionFacade extends AbstractFacade {
 
    public Collection updateCollection(final String collectionId, final Collection collection, final boolean skipFceLimits) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
-      final Collection originalCollection = storedCollection.copy();
-      permissionsChecker.checkRole(storedCollection, RoleType.Manage);
+      permissionsChecker.checkRole(storedCollection, RoleType.Read);
 
       if (!skipFceLimits) {
          permissionsChecker.checkRulesLimit(collection);
@@ -165,10 +164,16 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRulesPermissions(collection.getRules());
       permissionsChecker.checkAttributesFunctionAccess(collection.getAttributes());
 
-      // TODO partial update
-      keepUnmodifiableFields(collection, storedCollection);
-      collection.setLastTimeUsed(ZonedDateTime.now());
-      return mapCollection(collectionDao.updateCollection(storedCollection.getId(), collection, originalCollection));
+      Collection updatingCollection = storedCollection.copy();
+      updatingCollection.patch(collection, permissionsChecker.getActualRoles(storedCollection));
+      updatingCollection.setLastTimeUsed(ZonedDateTime.now());
+      keepUnmodifiableFields(updatingCollection, storedCollection);
+
+      if (storedCollection.equals(updatingCollection)) {
+         return mapCollection(storedCollection);
+      }
+
+      return mapCollection(collectionDao.updateCollection(storedCollection.getId(), updatingCollection, storedCollection));
    }
 
    private Collection mapCollection(Collection collection) {
@@ -176,12 +181,10 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
-      keepStoredPermissions(collection, storedCollection.getPermissions());
+      super.keepUnmodifiableFields(collection, storedCollection);
 
       collection.setAttributes(storedCollection.getAttributes());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
-      collection.setDefaultAttributeId(storedCollection.getDefaultAttributeId());
-      collection.setPurpose(storedCollection.getPurpose());
    }
 
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {

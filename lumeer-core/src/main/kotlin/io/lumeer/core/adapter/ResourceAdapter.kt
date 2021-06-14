@@ -149,7 +149,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       return views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()
    }
 
-   fun filterViewsByUser(organization: Organization?, project: Project?, views: List<View>, userId: String): List<View> {
+   private fun filterViewsByUser(organization: Organization?, project: Project?, views: List<View>, userId: String): List<View> {
       return views.filter { permissionAdapter.hasRole(organization, project, it, RoleType.Read, userId) }
    }
 }

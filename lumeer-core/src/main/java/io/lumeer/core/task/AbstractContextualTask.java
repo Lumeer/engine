@@ -108,7 +108,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       collectionAdapter = new CollectionAdapter(daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
       permissionAdapter = new PermissionAdapter(daoContextSnapshot.getUserDao(), daoContextSnapshot.getGroupDao(),daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
       resourceAdapter = new ResourceAdapter(permissionAdapter, daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getUserDao());
-      viewAdapter = new ViewAdapter(daoContextSnapshot.getFavoriteItemDao());
+      viewAdapter = new ViewAdapter(resourceAdapter, daoContextSnapshot.getFavoriteItemDao());
       documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
@@ -180,7 +180,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
    public void sendPushNotifications(final View originalView, final View view, final String suffix) {
       if (getPusherClient() != null) {
          final Set<String> users = getViewReaders(view);
-         view.setAuthorRights(resourceAdapter.getViewAuthorRights(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), view));
          final List<Event> events = users.stream().map(user ->
                createEventForView(view, user, suffix)
          ).collect(Collectors.toList());
@@ -234,7 +233,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    private Event createEventForView(final View view, final String userId, final String suffix) {
       final String projectId = daoContextSnapshot.getSelectedWorkspace().getProject().map(Project::getId).orElse("");
 
-      final View mappedView = viewAdapter.mapViewData(view.copy(), userId, projectId);
+      final View mappedView = viewAdapter.mapViewData(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), view.copy(), userId, projectId);
 
       final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedView, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);

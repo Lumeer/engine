@@ -358,6 +358,10 @@ public class PermissionsChecker {
       return permissionAdapter.getUserRolesInResource(getOrganization(), getProject(), resource, userId);
    }
 
+   public Set<RoleType> getActualRoles(final LinkType linkType) {
+      return permissionAdapter.getUserRolesInLinkType(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
+   }
+
    public Map<String, AllowedPermissions> getCollectionsPermissions(final java.util.Collection<Collection> collection) {
       return collection.stream().collect(Collectors.toMap(Resource::getId, this::getCollectionPermissions));
    }

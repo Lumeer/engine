@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Organization extends Resource {
+public class Organization extends Resource implements Updatable<Organization> {
 
    public static Set<Role> ROLES = RoleUtils.organizationResourceRoles();
 
@@ -83,4 +83,8 @@ public class Organization extends Resource {
             '}';
    }
 
+   @Override
+   public void patch(final Organization resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+   }
 }

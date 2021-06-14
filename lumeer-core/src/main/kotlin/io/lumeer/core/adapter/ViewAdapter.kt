@@ -18,24 +18,28 @@
  */
 package io.lumeer.core.adapter
 
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Project
 import io.lumeer.api.model.View
 import io.lumeer.storage.api.dao.FavoriteItemDao
 
-class ViewAdapter(private val favoriteItemDao: FavoriteItemDao) {
+class ViewAdapter(private val resourceAdapter: ResourceAdapter, private val favoriteItemDao: FavoriteItemDao) {
 
    fun getFavoriteViewIds(userId: String, projectId: String): Set<String> = favoriteItemDao.getFavoriteViewIds(userId, projectId)
 
    fun isFavorite(viewId: String, userId: String, projectId: String): Boolean = getFavoriteViewIds(userId, projectId).contains(viewId)
 
-   fun mapViewsData(views: List<View>, userId: String, projectId: String): List<View>  {
+   fun mapViewsData(organization: Organization, project: Project, views: List<View>, userId: String, projectId: String): List<View> {
       val favoriteIds = getFavoriteViewIds(userId, projectId);
       return views.onEach {
-        it.isFavorite = favoriteIds.contains(it.id)
+         it.isFavorite = favoriteIds.contains(it.id)
+         it.authorRights = resourceAdapter.getViewAuthorRights(organization, project, it)
       }
    }
 
-   fun mapViewData(view: View, userId: String, projectId: String): View = view.apply {
+   fun mapViewData(organization: Organization, project: Project, view: View, userId: String, projectId: String): View = view.apply {
       isFavorite = isFavorite(view.id, userId, projectId)
+      authorRights = resourceAdapter.getViewAuthorRights(organization, project, view)
    }
 
 }
