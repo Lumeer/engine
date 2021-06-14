@@ -25,6 +25,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -37,12 +38,14 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.NoDocumentPermissionException;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -76,7 +79,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    private static final String COLLECTION_COLOR = "#00ee00";
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
+   private static final String GROUP = "testGroup";
    private User user;
+   private Group group;
 
    private static final String KEY1 = "A";
    private static final String KEY2 = "B";
@@ -114,6 +119,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private ResourceCommentFacade resourceCommentFacade;
 
    @Inject
@@ -133,6 +141,10 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
+      groupDao.setOrganization(storedOrganization);
+      group = groupDao.createGroup(new Group(GROUP));
+      user.setGroups(Collections.singletonMap(storedOrganization.getId(), Set.of(group.getId())));
+      this.user = userDao.updateUser(user.getId(), user);
 
       Permissions organizationPermissions = new Permissions();
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
@@ -154,7 +166,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       collectionDao.createRepository(storedProject);
 
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES));
+      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
       Collection collection = new Collection("123456789", COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection.setLastAttributeNum(0);
       this.collection = collectionDao.createCollection(collection);
@@ -193,6 +205,12 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Document document = prepareDocument();
 
       ZonedDateTime beforeTime = ZonedDateTime.now();
+
+      assertThatThrownBy(() -> documentFacade.createDocument(collection.getId(), document))
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setCollectionGroupRoles(storedCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       String id = documentFacade.createDocument(collection.getId(), document).getId();
       assertThat(id).isNotNull();
 
@@ -232,6 +250,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
          return doc;
       }).collect(Collectors.toList());
 
+      setCollectionGroupRoles(storedCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       var createdDocuments = documentFacade.createDocuments(storedCollection.getId(), documents, false);
       var duplicatedDocuments = documentFacade.duplicateDocuments(storedCollection.getId(), createdDocuments.stream().map(Document::getId).collect(Collectors.toList()));
 
@@ -245,11 +265,13 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateDocumentData() {
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
+      setCollectionUserRoles(storedCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       Document document = createDocument();
       String id = document.getId();
 
-      Collection storedCollection = collectionFacade.getCollection(collection.getId());
-
+      storedCollection = collectionFacade.getCollection(collection.getId());
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
 
       DataDocument data = new DataDocument(KEY1, VALUE2);
@@ -284,6 +306,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testPatchTaskData() {
+      setCollectionGroupRoles(collectionFacade.getCollection(taskCollection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      setCollectionUserRoles(collectionFacade.getCollection(taskCollection.getId()), Collections.emptySet());
+
       Document myDocument = prepareDocument();
       myDocument.getData().append(KEY1, USER);
       myDocument = documentFacade.createDocument(taskCollection.getId(), myDocument);
@@ -292,14 +317,16 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       otherDocument.getData().append(KEY1, "another.user@email.com");
       otherDocument = documentFacade.createDocument(taskCollection.getId(), otherDocument);
 
-      collectionFacade.removeUserPermission(taskCollection.getId(), this.user.getId());
+      setCollectionGroupRoles(collectionFacade.getCollection(taskCollection.getId()), Collections.emptySet());
+      final Document finalOtherDocument = otherDocument;
+      assertThatThrownBy(() -> documentFacade.createDocument(taskCollection.getId(), finalOtherDocument))
+            .isInstanceOf(NoResourcePermissionException.class);
 
       DataDocument patchData = new DataDocument(KEY2, "value");
       documentFacade.patchDocumentData(taskCollection.getId(), myDocument.getId(), patchData);
       assertThat(documentFacade.getDocument(taskCollection.getId(), myDocument.getId()).getData().get(KEY2)).isEqualTo("value");
 
       // Patch data
-      final Document finalOtherDocument = otherDocument;
       assertThatThrownBy(() -> documentFacade.patchDocumentData(taskCollection.getId(), finalOtherDocument.getId(), patchData))
             .isInstanceOf(NoDocumentPermissionException.class);
       assertThatThrownBy(() -> documentFacade.getDocument(taskCollection.getId(), finalOtherDocument.getId()))
@@ -325,6 +352,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testPatchDocumentData() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      setCollectionUserRoles(collectionFacade.getCollection(collection.getId()), Set.of());
+
       Document document = createDocument();
       String id = document.getId();
 
@@ -363,7 +393,32 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testDeleteDocumentByContributor() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      setCollectionUserRoles(collectionFacade.getCollection(collection.getId()), Set.of());
+
+      String id = createDocument().getId();
+
+      Collection storedCollection = collectionFacade.getCollection(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+
+      documentFacade.deleteDocument(collection.getId(), id);
+
+      assertThatThrownBy(() -> documentDao.getDocumentById(id))
+            .isInstanceOf(ResourceNotFoundException.class);
+      assertThat(dataDao.getData(collection.getId(), id)).isEqualTo(new DataDocument());
+
+      storedCollection = collectionFacade.getCollection(collection.getId());
+
+      assertThat(storedCollection.getDocumentsCount()).isEqualTo(0);
+   }
+
+   @Test
    public void testDeleteDocument() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      setCollectionUserRoles(collectionFacade.getCollection(collection.getId()), Set.of());
+
       String id = createDocument().getId();
 
       Collection storedCollection = collectionFacade.getCollection(collection.getId());
@@ -383,9 +438,28 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testGetDocument() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       String id = createDocument().getId();
 
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read)));
+
+      assertThatThrownBy(() -> documentFacade.getDocument(collection.getId(), id))
+            .isInstanceOf(NoDocumentPermissionException.class);
+
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+
       Document document = documentFacade.getDocument(collection.getId(), id);
+      assertThat(document).isNotNull();
+
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read)));
+
+      assertThatThrownBy(() -> documentFacade.getDocument(collection.getId(), id))
+            .isInstanceOf(NoDocumentPermissionException.class);
+
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
+      document = documentFacade.getDocument(collection.getId(), id);
       assertThat(document).isNotNull();
 
       SoftAssertions assertions = new SoftAssertions();
@@ -405,6 +479,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testAddFavoriteDocument() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       List<String> ids = new LinkedList<>();
       for (int i = 0; i < 10; i++) {
          ids.add(createDocument().getId());
@@ -424,7 +500,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testRemoveFavoriteCollection() {
+   public void testRemoveFavoriteDocument() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       List<String> ids = new LinkedList<>();
       for (int i = 0; i < 10; i++) {
          ids.add(createDocument().getId());
@@ -444,6 +522,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDocumentComments() {
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+
       final String firstMessage = "hello this is a cool comment";
       final String secondMessage = "Hello, I fixed this!";
       final Document doc = createDocument();
@@ -485,5 +565,19 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       final List<ResourceComment> comments3 = resourceCommentFacade.getComments(ResourceType.DOCUMENT, doc.getId(), 0, 0);
       assertThat(comments3).hasSize(0);
+   }
+
+   private Collection setCollectionUserRoles(Collection collection, final Set<Role> roles) {
+      Permissions permissions = collection.getPermissions();
+      permissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), roles));
+      collection.setPermissions(permissions);
+      return collectionDao.updateCollection(collection.getId(), collection, null);
+   }
+
+   private Collection setCollectionGroupRoles(Collection collection, final Set<Role> roles) {
+      Permissions permissions = collection.getPermissions();
+      permissions.updateGroupPermissions(Permission.buildWithRoles(this.group.getId(), roles));
+      collection.setPermissions(permissions);
+      return collectionDao.updateCollection(collection.getId(), collection, null);
    }
 }

@@ -19,6 +19,7 @@
 
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.ActionRoleType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
@@ -26,7 +27,6 @@ import io.lumeer.api.model.DocumentLinks;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.RoleType;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -381,12 +381,12 @@ public class LinkInstanceFacade extends AbstractFacade {
             throw new IllegalStateException("Rule not found");
          }
          var roleString = config.get("role").toString();
-         var role = RoleType.fromString(roleString);
+         var role = ActionRoleType.fromString(roleString);
 
-         if (role == RoleType.Read) {
+         if (role == ActionRoleType.Read) {
             var linkInstance = checkReadLink(linkType, linkInstanceId);
             taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
-         } else if (role == RoleType.DataWrite) {
+         } else if (role == ActionRoleType.Write) {
             var linkInstance = checkEditLink(linkType, linkInstanceId);
             taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
          }
@@ -395,15 +395,6 @@ public class LinkInstanceFacade extends AbstractFacade {
 
    public LinkInstance mapLinkInstanceData(final LinkInstance linkInstance) {
       return adapter.mapLinkInstanceData(linkInstance);
-   }
-
-   public java.util.Collection<LinkInstance> mapLinkInstancesData(final java.util.Collection<LinkInstance> linkInstances) {
-      Set<String> linkInstanceIds = linkInstances.stream().map(LinkInstance::getId).collect(Collectors.toSet());
-      Map<String, Integer> commentCounts = getCommentsCounts(linkInstanceIds);
-      linkInstances.forEach(document -> {
-         document.setCommentsCount((long) commentCounts.getOrDefault(document.getId(), 0));
-      });
-      return linkInstances;
    }
 
    public List<LinkInstance> setDocumentLinks(final String linkTypeId, final DocumentLinks documentLinks) {
@@ -426,10 +417,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       }
 
       return createdLinkInstances;
-   }
-
-   public Map<String, Integer> getCommentsCounts(final Set<String> linkInstanceIds) {
-      return adapter.getCommentsCounts(linkInstanceIds);
    }
 
    private LinkType checkCreateLinks(String linkTypeId) {

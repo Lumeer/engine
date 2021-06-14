@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.ActionRoleType;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
@@ -28,8 +29,6 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
@@ -472,7 +471,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public boolean isFavorite(String documentId) {
-      return isFavorite(documentId, getCurrentUser().getId());
+      return isFavorite(documentId, getCurrentUserId());
    }
 
    public boolean isFavorite(String documentId, String userId) {
@@ -480,7 +479,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    public Set<String> getFavoriteDocumentsIds() {
-      return getFavoriteDocumentsIds(getCurrentUser().getId());
+      return getFavoriteDocumentsIds(getCurrentUserId());
    }
 
    public Set<String> getFavoriteDocumentsIds(String userId) {
@@ -492,14 +491,13 @@ public class DocumentFacade extends AbstractFacade {
    public void addFavoriteDocument(String collectionId, String documentId) {
       checkReadDocument(documentId);
 
-      favoriteItemDao.addFavoriteDocument(getCurrentUser().getId(), getCurrentProject().getId(), collectionId, documentId);
+      favoriteItemDao.addFavoriteDocument(getCurrentUserId(), getCurrentProject().getId(), collectionId, documentId);
    }
 
    public void removeFavoriteDocument(String collectionId, String documentId) {
       checkReadDocument(documentId);
 
-      String userId = getCurrentUser().getId();
-      favoriteItemDao.removeFavoriteDocument(userId, documentId);
+      favoriteItemDao.removeFavoriteDocument(getCurrentUserId(), documentId);
    }
 
    public List<Document> duplicateDocuments(final String collectionId, final List<String> documentIds) {
@@ -606,12 +604,12 @@ public class DocumentFacade extends AbstractFacade {
             throw new IllegalStateException("Rule not found");
          }
          var roleString = config.get("role").toString();
-         var role = RoleType.fromString(roleString);
+         var role = ActionRoleType.fromString(roleString);
 
-         if (role == RoleType.Read) {
+         if (role == ActionRoleType.Read) {
             var document = checkReadDocument(collection, documentId);
             taskProcessingFacade.runRule(collection, rule, document, actionName);
-         } else if (role == RoleType.DataWrite) {
+         } else if (role == ActionRoleType.Write) {
             var document = checkEditDocument(collection, documentId);
             taskProcessingFacade.runRule(collection, rule, document, actionName);
          }
@@ -645,10 +643,6 @@ public class DocumentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
       return workspaceKeeper.getProject().get();
-   }
-
-   private User getCurrentUser() {
-      return authenticatedUser.getCurrentUser();
    }
 
    private Collection checkCreateDocuments(String collectionId) {
