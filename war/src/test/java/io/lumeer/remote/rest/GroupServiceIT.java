@@ -8,6 +8,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -60,6 +61,8 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
       groupDao.setOrganization(organization);
 
       this.urlPrefix = organizationPath(organization) + "groups";
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    @Test

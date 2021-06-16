@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
@@ -30,7 +29,6 @@ import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
 
-import java.util.Set;
 import javax.inject.Inject;
 
 abstract class AbstractFacade {
@@ -63,14 +61,6 @@ abstract class AbstractFacade {
       return authenticatedUser.getCurrentUserId();
    }
 
-   protected Set<String> getCurrentUserGroups() {
-      return authenticatedUserGroups.getCurrentUserGroups();
-   }
-
-   protected boolean canReadAllInWorkspace() {
-      return permissionsChecker.canReadAllInWorkspace();
-   }
-
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
       if (authenticatedUser.getCurrentUserId().equals(userId)) {
          return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());
@@ -85,14 +75,6 @@ abstract class AbstractFacade {
 
    protected LinkType mapLinkType(final LinkType linkType) {
       return getFacadeAdapter().mapLinkType(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUser());
-   }
-
-   protected void keepStoredPermissions(final Resource resource, final Permissions storedPermissions) {
-      getFacadeAdapter().keepStoredPermissions(resource, storedPermissions);
-   }
-
-   protected void keepStoredPermissions(final LinkType linkType, final Permissions storedPermissions) {
-      getFacadeAdapter().keepStoredPermissions(linkType, storedPermissions);
    }
 
    protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {

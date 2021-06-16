@@ -35,6 +35,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
@@ -157,6 +158,8 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
       Collection collection = new Collection("noPerm", "noPerm", COLLECTION_ICON, COLLECTION_COLOR, new Permissions());
       collectionIdNoPerm = collectionDao.createCollection(collection).getId();
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    @Test
@@ -196,25 +199,19 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       LinkType updateLinkedType = prepareLinkType();
       updateLinkedType.setName(NAME2);
 
-      assertThatThrownBy(() -> linkTypeFacade.updateLinkType(id, updateLinkedType))
-            .isInstanceOf(NoPermissionException.class);
+      linkTypeFacade.updateLinkType(id, updateLinkedType);
+
+      LinkType storedLinkType = linkTypeDao.getLinkType(id);
+      assertThat(storedLinkType).isNotNull();
+      assertThat(storedLinkType.getName()).isEqualTo(NAME);
 
       setCollectionsGroupRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
 
       linkTypeFacade.updateLinkType(id, updateLinkedType);
 
-      LinkType storedLinkType = linkTypeDao.getLinkType(id);
+      storedLinkType = linkTypeDao.getLinkType(id);
       assertThat(storedLinkType).isNotNull();
       assertThat(storedLinkType.getName()).isEqualTo(NAME2);
-
-      setCollectionsGroupRoles(Set.of(new Role(RoleType.Read)));
-
-      assertThatThrownBy(() -> linkTypeFacade.updateLinkType(id, updateLinkedType))
-            .isInstanceOf(NoPermissionException.class);
-
-      setLinkTypePermissions(storedLinkType, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
-
-      linkTypeFacade.updateLinkType(id, updateLinkedType);
    }
 
    private void setCollectionsGroupRoles(final Set<Role> roles) {

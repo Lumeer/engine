@@ -35,6 +35,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
@@ -162,6 +163,8 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       query = new Query(new QueryStem(collection.getId()));
 
       viewsUrl = projectPath(storedOrganization, storedProject) + "views";
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    private View prepareView(String code) {
@@ -207,6 +210,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       final View view = createView(CODE);
 
       View updatedView = prepareView(CODE2);
+      updatedView.setPermissions(new Permissions(Set.of(userPermission), Set.of(groupPermission)));
       Entity<View> entity = Entity.json(updatedView);
 
       Response response = client.target(viewsUrl).path(view.getId())
@@ -217,7 +221,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedView.getCode()).isEqualTo(CODE);
+      assertions.assertThat(returnedView.getCode()).isEqualTo(CODE2);
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
@@ -228,11 +232,11 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
-      View storedView = viewDao.getViewByCode(CODE);
+      View storedView = viewDao.getViewByCode(CODE2);
       assertThat(storedView).isNotNull();
 
       assertions = new SoftAssertions();
-      assertions.assertThat(storedView.getCode()).isEqualTo(CODE);
+      assertions.assertThat(storedView.getCode()).isEqualTo(CODE2);
       assertions.assertThat(storedView.getName()).isEqualTo(NAME);
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);

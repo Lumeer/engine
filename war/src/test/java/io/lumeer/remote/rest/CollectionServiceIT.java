@@ -37,6 +37,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -147,6 +148,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
       this.organization = storedOrganization;
       this.project = storedProject;
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    private Collection prepareCollection(String code) {
@@ -203,6 +206,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       String collectionId = createCollection(CODE).getId();
 
       Collection updatedCollection = prepareCollection(CODE2);
+      updatedCollection.setPermissions(new Permissions(Set.of(userPermission), Set.of(groupPermission)));
       Entity entity = Entity.json(updatedCollection);
 
       Response response = client.target(collectionsUrl).path(collectionId)

@@ -32,6 +32,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentGatewayFacade;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -106,6 +107,8 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
 
       organizationUrl = basePath() + "organizations";
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    @Test
@@ -211,7 +214,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateOrganization() {
       final Organization organization = createOrganization(CODE1);
 
-      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, new Permissions(Set.of(userPermission), Set.of()));
       Entity entity = Entity.json(updatedOrganization);
 
       Response response = client.target(organizationUrl).path(organization.getId())

@@ -30,6 +30,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -105,6 +106,8 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       projectUrl = organizationPath(storedOrganization) + "projects";
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    private Project createProject(String code) {
@@ -212,7 +215,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateProject() {
       final Project project = createProject(CODE1);
 
-      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, null, false, null);
+      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, new Permissions(Set.of(userPermission), Set.of(groupPermission)), false, null);
       Entity entity = Entity.json(updatedProject);
 
       Response response = client.target(projectUrl).path(project.getId())
