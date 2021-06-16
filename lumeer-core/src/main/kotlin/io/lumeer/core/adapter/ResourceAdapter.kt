@@ -46,34 +46,11 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    }
 
    fun getAllCollections(organization: Organization, project: Project, userId: String): List<Collection> {
-      return getCollections(organization, project, userId).toMutableSet().plus(getViewsCollections(organization, project, userId)).toList()
+      return getAllCollections(organization, project, linkTypeDao.allLinkTypes, viewDao.allViews, collectionDao.allCollections, userId)
    }
 
    fun getAllLinkTypes(organization: Organization, project: Project, userId: String): List<LinkType> {
-      return getLinkTypes(organization, project, userId).toMutableSet().plus(getViewsLinkTypes(organization, project, userId)).toList()
-   }
-
-   fun getViewsLinkTypes(organization: Organization, project: Project, userId: String): List<LinkType> {
-      val views = getViews(organization, project, userId)
-      return getViewsLinkTypes(views)
-   }
-
-   private fun getViewsLinkTypes(views: List<View>): List<LinkType> {
-      val linkTypesIds = views.flatMap { it.query?.linkTypeIds.orEmpty() }.toSet()
-      return linkTypeDao.getLinkTypesByIds(linkTypesIds)
-   }
-
-   fun getViewsCollections(organization: Organization, project: Project, userId: String): List<Collection> {
-      val views = getViews(organization, project, userId)
-      return getViewsCollections(views)
-   }
-
-   private fun getViewsCollections(views: List<View>): List<Collection> {
-      val linkTypesIds = views.flatMap { it.query?.linkTypeIds.orEmpty() }.toSet()
-      val linkTypes = linkTypeDao.getLinkTypesByIds(linkTypesIds)
-
-      val collectionIds = QueryUtils.getViewsCollectionIds(views, linkTypes)
-      return collectionDao.getCollectionsByIds(collectionIds)
+      return getAllLinkTypes(organization, project, linkTypeDao.allLinkTypes, viewDao.allViews, collectionDao.allCollections, userId)
    }
 
    fun getAllLinkTypes(organization: Organization, project: Project?, linkTypes: List<LinkType>, views: List<View>, collections: List<Collection>, userId: String): List<LinkType> {
@@ -85,7 +62,12 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    fun getAllCollections(organization: Organization, project: Project?, linkTypes: List<LinkType>, views: List<View>, collections: List<Collection>, userId: String): List<Collection> {
       val viewsByUser = filterViewsByUser(organization, project, views, userId)
       val collectionIdsInViews = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes)
-      return collections.filter { collectionIdsInViews.contains(it.id) || permissionAdapter.hasRole(organization, project, it, RoleType.Read, userId) }
+
+      // when user can read link type by custom permission, than we have to send him both collections
+      val linkTypesByCustomRead = linkTypes.filter { it.permissionsType == LinkPermissionsType.Custom && permissionAdapter.hasRoleInLinkType(organization, project, it, RoleType.Read, userId) }
+      val collectionIdsInLinkTypes = linkTypesByCustomRead.flatMap { it.collectionIds.orEmpty() }
+
+      return collections.filter { collectionIdsInViews.contains(it.id) || collectionIdsInLinkTypes.contains(it.id) || permissionAdapter.hasRole(organization, project, it, RoleType.Read, userId) }
    }
 
    fun getOrganizationReaders(organization: Organization): Set<String> {
@@ -128,8 +110,15 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
 
    fun getViewAuthorRights(organization: Organization?, project: Project?, view: View): Map<String, Set<RoleType>> {
       val user = userDao.getUserById(view.authorId) ?: User(view.authorId, "", "", emptyMap())
-      val collections = getViewsCollections(listOf(view))
+      val collections = getViewCollections(view)
       return collections.associate { it.id to getCollectionRoles(organization, project, it, user) }
+   }
+
+   private fun getViewCollections(view: View): List<Collection> {
+      val linkTypeIds = view.query?.linkTypeIds.orEmpty()
+      val linkTypes = if (linkTypeIds.isEmpty()) listOf() else linkTypeDao.getLinkTypesByIds(linkTypeIds)
+      val collectionIds = QueryUtils.getQueryCollectionIds(view.query, linkTypes)
+      return collectionDao.getCollectionsByIds(collectionIds)
    }
 
    private fun getCollectionRoles(organization: Organization?, project: Project?, collection: Collection, user: User): Set<RoleType> {

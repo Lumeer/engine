@@ -249,13 +249,6 @@ public class CollectionFacade extends AbstractFacade {
                                                .collect(Collectors.toList()));
    }
 
-   public List<Collection> getViewsCollections() {
-      return mapCollectionsData(resourceAdapter.getViewsCollections(getOrganization(), getProject(), getCurrentUserId())
-                                               .stream()
-                                               .map(this::mapResource)
-                                               .collect(Collectors.toList()));
-   }
-
    public List<Collection> getAllCollections() {
       return mapCollectionsData(resourceAdapter.getAllCollections(getOrganization(), getProject(), getCurrentUserId())
                                                .stream()

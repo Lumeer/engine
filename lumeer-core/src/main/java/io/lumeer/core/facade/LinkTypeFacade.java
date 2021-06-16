@@ -206,10 +206,6 @@ public class LinkTypeFacade extends AbstractFacade {
       return mapLinkTypesData(resourceAdapter.getLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
    }
 
-   public List<LinkType> getViewsLinkTypes() {
-      return mapLinkTypesData(resourceAdapter.getViewsLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
-   }
-
    public List<LinkType> getAllLinkTypes() {
       return mapLinkTypesData(resourceAdapter.getAllLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
    }

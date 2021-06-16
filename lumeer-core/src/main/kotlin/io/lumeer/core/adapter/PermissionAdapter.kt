@@ -351,7 +351,9 @@ class PermissionAdapter(private val userDao: UserDao,
       return hasRole(organization, project, linkType, collections, role, userId) || hasRoleInLinkTypeViaView(organization, project, linkType, collections, role, role, userId, activeView())
    }
 
-   private fun getLinkTypeCollections(linkType: LinkType) = linkType.collectionIds.orEmpty().subList(0, 2).map { getCollection(it) }
+   private fun getLinkTypeCollections(linkType: LinkType) =
+         // on custom permissions collections are not needed
+         if (linkType.permissionsType == LinkPermissionsType.Custom) listOf() else linkType.collectionIds.orEmpty().subList(0, 2).map { getCollection(it) }
 
    private fun hasRoleInLinkTypeViaView(organization: Organization?, project: Project?, linkType: LinkType, collections: List<Collection>, role: RoleType, viewRole: RoleType, userId: String, view: View?): Boolean {
       if (view != null && hasRole(organization, project, view, viewRole, userId)) { // does user have access to the view?
