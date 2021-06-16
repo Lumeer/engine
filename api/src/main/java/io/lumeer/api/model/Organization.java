@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 
@@ -86,5 +87,12 @@ public class Organization extends Resource implements Updatable<Organization> {
    @Override
    public void patch(final Organization resource, final Set<RoleType> roles) {
       patchResource(this, resource, roles);
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      super.checkHealth();
+
+      checkStringLength("code", code, 5);
    }
 }

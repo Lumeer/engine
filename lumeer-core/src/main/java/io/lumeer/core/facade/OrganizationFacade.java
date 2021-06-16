@@ -112,10 +112,6 @@ public class OrganizationFacade extends AbstractFacade {
       updatingOrganization.patch(organization, permissionsChecker.getActualRoles(storedOrganization));
       keepUnmodifiableFields(updatingOrganization, storedOrganization);
 
-      if (storedOrganization.equals(updatingOrganization)) {
-         return mapResource(storedOrganization);
-      }
-
       Organization updatedOrganization = organizationDao.updateOrganization(organizationId, updatingOrganization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, updatedOrganization);
 

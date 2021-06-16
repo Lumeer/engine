@@ -217,7 +217,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedView.getCode()).isEqualTo(CODE2);
+      assertions.assertThat(returnedView.getCode()).isEqualTo(CODE);
       assertions.assertThat(returnedView.getName()).isEqualTo(NAME);
       assertions.assertThat(returnedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(returnedView.getColor()).isEqualTo(COLOR);
@@ -228,11 +228,11 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(returnedView.getPermissions().getGroupPermissions()).containsOnly(groupPermission);
       assertions.assertAll();
 
-      View storedView = viewDao.getViewByCode(CODE2);
+      View storedView = viewDao.getViewByCode(CODE);
       assertThat(storedView).isNotNull();
 
       assertions = new SoftAssertions();
-      assertions.assertThat(storedView.getCode()).isEqualTo(CODE2);
+      assertions.assertThat(storedView.getCode()).isEqualTo(CODE);
       assertions.assertThat(storedView.getName()).isEqualTo(NAME);
       assertions.assertThat(storedView.getIcon()).isEqualTo(ICON);
       assertions.assertThat(storedView.getColor()).isEqualTo(COLOR);

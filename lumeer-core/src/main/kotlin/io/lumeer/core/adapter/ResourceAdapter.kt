@@ -64,10 +64,14 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       val collectionIdsInViews = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes)
 
       // when user can read link type by custom permission, than we have to send him both collections
-      val linkTypesByCustomRead = linkTypes.filter { it.permissionsType == LinkPermissionsType.Custom && permissionAdapter.hasRoleInLinkType(organization, project, it, RoleType.Read, userId) }
+      val linkTypesByCustomRead = filterLinkTypesByCustomPermission(organization, project, linkTypes, userId)
       val collectionIdsInLinkTypes = linkTypesByCustomRead.flatMap { it.collectionIds.orEmpty() }
 
       return collections.filter { collectionIdsInViews.contains(it.id) || collectionIdsInLinkTypes.contains(it.id) || permissionAdapter.hasRole(organization, project, it, RoleType.Read, userId) }
+   }
+
+   private fun filterLinkTypesByCustomPermission(organization: Organization, project: Project?, linkTypes: List<LinkType>, userId: String): List<LinkType> {
+      return linkTypes.filter { it.permissionsType == LinkPermissionsType.Custom && permissionAdapter.hasRoleInLinkType(organization, project, it, RoleType.Read, userId) }
    }
 
    fun getOrganizationReaders(organization: Organization): Set<String> {
@@ -92,12 +96,12 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    }
 
    fun getCollectionReaders(organization: Organization, project: Project, collection: Collection): Set<String> {
-      val viewReaders = getCollectionReadersInViews(organization, project, collection.id)
+      val viewReaders = getCollectionTransitiveReaders(organization, project, collection.id)
       return permissionAdapter.getResourceUsersByRole(organization, project, collection, RoleType.Read).plus(viewReaders)
    }
 
    fun getLinkTypeReaders(organization: Organization, project: Project, linkType: LinkType): Set<String> {
-      val viewReaders = getLinkTypeReadersInViews(organization, project, linkType.id)
+      val viewReaders = getLinkTypeTransitiveReaders(organization, project, linkType.id)
       return permissionAdapter.getLinkTypeUsersByRole(organization, project, linkType, RoleType.Read).plus(viewReaders)
    }
 
@@ -125,14 +129,18 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       return permissionAdapter.getUserRolesInResource(organization, project, collection, user)
    }
 
-   fun getCollectionReadersInViews(organization: Organization, project: Project, collectionId: String): Set<String> {
+   fun getCollectionTransitiveReaders(organization: Organization, project: Project, collectionId: String): Set<String> {
       val linkTypes = linkTypeDao.allLinkTypes
       val views = viewDao.allViews.filter { QueryUtils.getQueryCollectionIds(it.query, linkTypes).contains(collectionId) }
+      val linkTypesByCustomPermissions = linkTypes.filter { it.permissionsType == LinkPermissionsType.Custom && it.collectionIds.orEmpty().contains(collectionId) }
 
-      return views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()
+      val viewsReaders = views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()
+      val linkTypeReaders = linkTypesByCustomPermissions.flatMap { permissionAdapter.getLinkTypeUsersByRole(organization, project, it, RoleType.Read)  }.toSet()
+
+      return viewsReaders.plus(linkTypeReaders)
    }
 
-   fun getLinkTypeReadersInViews(organization: Organization, project: Project, linkTypeId: String): Set<String> {
+   fun getLinkTypeTransitiveReaders(organization: Organization, project: Project, linkTypeId: String): Set<String> {
       val views = viewDao.allViews.filter { it.query?.linkTypeIds.orEmpty().contains(linkTypeId) }
 
       return views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()

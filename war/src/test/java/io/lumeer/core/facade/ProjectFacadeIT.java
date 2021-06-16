@@ -33,6 +33,8 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -72,6 +74,9 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String STRANGER_USER = "stranger@nowhere.com";
@@ -153,6 +158,8 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(this.organization);
 
       workspaceKeeper.setOrganizationId(this.organization.getId());
+
+      PermissionCheckerUtil.allowGroups(permissionsChecker);
    }
 
    @Test
@@ -269,8 +276,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
    public void testUpdateProject() {
       String id = createProject(CODE1).getId();
 
-      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, null, false, null);
-      updatedProject.getPermissions().removeUserPermission(this.user.getId());
+      Project updatedProject = new Project(CODE2, NAME, ICON, COLOR, null, null, new Permissions(Set.of(userPermissions), Set.of(groupPermissions)), false, null);
 
       projectFacade.updateProject(id, updatedProject);
 

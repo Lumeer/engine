@@ -31,4 +31,8 @@ public abstract class PermissionCheckerUtil {
    public static String getViewId(final PermissionsChecker permissionsChecker) {
       return permissionsChecker.testGetViewId();
    }
+
+   public static void allowGroups(final PermissionsChecker permissionsChecker) {
+      permissionsChecker.allowGroups();
+   }
 }

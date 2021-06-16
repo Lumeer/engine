@@ -169,10 +169,6 @@ public class CollectionFacade extends AbstractFacade {
       updatingCollection.setLastTimeUsed(ZonedDateTime.now());
       keepUnmodifiableFields(updatingCollection, storedCollection);
 
-      if (storedCollection.equals(updatingCollection)) {
-         return mapCollection(storedCollection);
-      }
-
       return mapCollection(collectionDao.updateCollection(storedCollection.getId(), updatingCollection, storedCollection));
    }
 
@@ -234,7 +230,7 @@ public class CollectionFacade extends AbstractFacade {
          return mapCollection(collection);
       }
 
-      var userIdsInViews = resourceAdapter.getCollectionReadersInViews(getOrganization(), getProject(), collectionId);
+      var userIdsInViews = resourceAdapter.getCollectionTransitiveReaders(getOrganization(), getProject(), collectionId);
       if (userIdsInViews.contains(getCurrentUserId())) {
          return mapCollection(collection);
       }

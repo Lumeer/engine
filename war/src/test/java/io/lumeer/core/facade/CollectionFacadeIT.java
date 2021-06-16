@@ -41,6 +41,8 @@ import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.task.ContextualTaskFactory;
@@ -175,6 +177,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Inject
    private ZapierFacade zapierFacade;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    @Before
    public void configureProject() {
       user = userDao.createUser(new User(USER));
@@ -208,6 +213,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       workspaceKeeper.setWorkspaceIds(this.organization.getId(), this.project.getId());
 
       collectionDao.setProject(project);
+
+      PermissionCheckerUtil.allowGroups(permissionsChecker);
    }
 
    private Collection prepareCollection(String code) {
@@ -518,7 +525,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       var notifications = userNotificationFacade.getNotifications();
       assertThat(notifications).isEmpty();
 
-      final Collection collection = createCollection(CODE);
+      Collection collection = createCollection(CODE);
       final String collectionId = collection.getId();
 
       final Permission userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.UserConfig), new Role(RoleType.Manage)));
@@ -542,18 +549,19 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).hasSize(3).anyMatch(n ->
-            n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR)
-                  && n.getUserId().equals(USER2)
-                  && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
+            COLOR.equals(n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR))
+                  && USER2.equals(n.getUserId())
+                  && collectionId.equals(n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID)));
 
+      collection = collectionDao.getCollectionById(collection.getId());
       collection.setColor(COLOR2);
       collectionFacade.updateCollection(collectionId, collection);
 
       notifications = userNotificationDao.getRecentNotifications(USER2);
       assertThat(notifications).hasSize(3).anyMatch(n ->
-            n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR).equals(COLOR2)
-                  && n.getUserId().equals(USER2)
-                  && n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID).equals(collectionId));
+            COLOR2.equals(n.getData().getString(UserNotification.CollectionShared.COLLECTION_COLOR))
+                  && USER2.equals(n.getUserId())
+                  && collectionId.equals(n.getData().getString(UserNotification.CollectionShared.COLLECTION_ID)));
 
       userPermission2 = Permission.buildWithRoles(USER2, Collections.emptySet());
       organizationFacade.updateUserPermissions(organization.getId(), Set.of(userPermission2));

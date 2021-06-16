@@ -176,8 +176,8 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
    @Test
    public void viewLinkTypesLostOrGainedTest() {
-      String aCollection = createCollection("A", READ_ROLES, EMPTY_ROLES).getId();
-      String bCollection = createCollection("B", EMPTY_ROLES, EMPTY_ROLES).getId();
+      String aCollection = createCollection("A", EMPTY_ROLES, EMPTY_ROLES).getId();
+      String bCollection = createCollection("B", READ_ROLES, EMPTY_ROLES).getId();
       String cCollection = createCollection("C", READ_ROLES, EMPTY_ROLES).getId();
       String aLinkType = createLinkType("A", Arrays.asList(aCollection, bCollection), EMPTY_ROLES, EMPTY_ROLES).getId();
       String bLinkType = createLinkType("B", Arrays.asList(bCollection, cCollection), EMPTY_ROLES, READ_ROLES).getId();
@@ -190,26 +190,26 @@ public class PusherAdapterIT extends IntegrationTestBase {
       List<Event> events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, view, viewWithUser);
       assertThat(events).hasSize(2);
       assertThat(events).extracting("name").containsOnly("Collection:update", "LinkType:update");
-      assertThat(events).extracting("data").extracting("object").extracting("id").containsOnly(bCollection, aLinkType);
+      assertThat(events).extracting("data").extracting("object").extracting("id").containsOnly(aCollection, aLinkType);
 
       // check gained by group roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, view, viewWithGroup);
       assertThat(events).hasSize(2);
       assertThat(events).extracting("name").containsOnly("Collection:update", "LinkType:update");
-      assertThat(events).extracting("data").extracting("object").extracting("id").containsOnly(bCollection, aLinkType);
+      assertThat(events).extracting("data").extracting("object").extracting("id").containsOnly(aCollection, aLinkType);
 
       // check lost by user roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, viewWithUser, view);
       assertThat(events).hasSize(2);
       assertThat(events).extracting("name").containsOnly("Collection:remove", "LinkType:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(bCollection, aLinkType);
+      assertThat(events).extracting("data").extracting("id").containsOnly(aCollection, aLinkType);
 
 
       // check lost by group roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, viewWithGroup, view);
       assertThat(events).hasSize(2);
       assertThat(events).extracting("name").containsOnly("Collection:remove", "LinkType:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(bCollection, aLinkType);
+      assertThat(events).extracting("data").extracting("id").containsOnly(aCollection, aLinkType);
    }
 
    @Test
@@ -234,6 +234,30 @@ public class PusherAdapterIT extends IntegrationTestBase {
       assertThat(events).hasSize(2);
       assertThat(events).extracting("name").containsOnly("LinkType:remove");
       assertThat(events).extracting("data").extracting("id").containsOnly(aLinkType, bLinkType);
+   }
+
+   @Test
+   public void linkTypeCollectionsLostOrGainedTest() {
+      String aCollection = createCollection("A", EMPTY_ROLES, EMPTY_ROLES).getId();
+      String bCollection = createCollection("B", EMPTY_ROLES, EMPTY_ROLES).getId();
+      String cCollection = createCollection("C", EMPTY_ROLES, EMPTY_ROLES).getId();
+      String aLinkTypeId = createLinkType("A", Arrays.asList(aCollection, bCollection), Set.of(), Set.of()).getId();
+      String bLinkTypeId = createLinkType("B", Arrays.asList(bCollection, cCollection), Set.of(), Set.of()).getId();
+
+      LinkType linkType = linkTypeDao.getLinkType(bLinkTypeId);
+      LinkType linkTypeWithRead = updateLinkTypeRoles(bLinkTypeId, Set.of(), Set.of(new Role(RoleType.Read)));
+
+      // check gained
+      List<Event> events = pusherAdapter.checkLinkTypePermissionsChange(organization, project, otherUser, linkType, linkTypeWithRead);
+      assertThat(events).hasSize(2);
+      assertThat(events).extracting("name").containsOnly("Collection:update");
+      assertThat(events).extracting("data").extracting("object").extracting("id").containsOnly(bCollection, cCollection);
+
+      // check lost
+      events = pusherAdapter.checkLinkTypePermissionsChange(organization, project, otherUser, linkTypeWithRead, linkType);
+      assertThat(events).hasSize(2);
+      assertThat(events).extracting("name").containsOnly("Collection:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(bCollection, cCollection);
    }
 
    private Collection createCollection(String name, Set<Role> userRoles, Set<Role> groupRoles) {

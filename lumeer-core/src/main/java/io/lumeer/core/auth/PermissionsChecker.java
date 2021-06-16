@@ -112,6 +112,8 @@ public class PermissionsChecker {
    private CollectionAdapter collectionAdapter;
    private PermissionAdapter permissionAdapter;
 
+   private boolean allowGroups = false;
+
    @PostConstruct
    public void init() {
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
@@ -408,7 +410,7 @@ public class PermissionsChecker {
     * Checks whether current plan includes groups handling.
     */
    public void checkGroupsHandle() {
-      if (skipLimits()) {
+      if (skipLimits() || allowGroups) {
          return;
       }
 
@@ -553,7 +555,7 @@ public class PermissionsChecker {
    }
 
    private ServiceLimits getServiceLimits() {
-      return paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      return paymentFacade.getCurrentServiceLimits(getOrganization());
    }
 
    public long countDocuments() {
@@ -603,6 +605,9 @@ public class PermissionsChecker {
    void testSetViewId(final String viewId) {
       this.permissionAdapter.setViewId(viewId);
    }
+
+   // For testing purposes to allow manipulate with groups
+   void allowGroups() { this.allowGroups = true; }
 
    String testGetViewId() {
       return this.permissionAdapter.getViewId();

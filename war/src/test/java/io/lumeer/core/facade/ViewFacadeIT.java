@@ -161,10 +161,12 @@ public class ViewFacadeIT extends IntegrationTestBase {
             new Collection("abc", "abc random", ICON, COLOR, projectPermissions));
       collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)))));
       query = new Query(new QueryStem(collection.getId()));
+
+      PermissionCheckerUtil.allowGroups(permissionsChecker);
    }
 
    private View prepareView(String code) {
-      return new View(code, NAME, ICON, COLOR, null, null, null, query, PERSPECTIVE.toString(), CONFIG, null, this.user.getId(), Collections.emptyList());
+      return new View(code, NAME, ICON, COLOR, null, null, null, query, PERSPECTIVE, CONFIG, null, this.user.getId(), Collections.emptyList());
    }
 
    private View createView(String code) {
@@ -202,19 +204,22 @@ public class ViewFacadeIT extends IntegrationTestBase {
    public void testUpdateView() {
       final View view = createView(CODE);
 
-      View updatedView = prepareView(CODE2);
-      updatedView.getPermissions().removeUserPermission(this.user.getId());
+      View updatedView = prepareView(CODE);
+      updatedView.setName("Some other name");
 
-      assertThatThrownBy(() -> viewFacade.updateView(view.getId(), updatedView))
-            .isInstanceOf(NoResourcePermissionException.class);
+      viewFacade.updateView(view.getId(), updatedView);
+
+      View storedView = viewDao.getViewById(view.getId());
+      assertThat(storedView).isNotNull();
+      assertThat(storedView.getName()).isEqualTo(NAME);
 
       setViewGroupRoles(view, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
 
       viewFacade.updateView(view.getId(), updatedView);
 
-      View storedView = viewDao.getViewByCode(CODE2);
+      storedView = viewDao.getViewById(view.getId());
       assertThat(storedView).isNotNull();
-      assertThat(storedView.getName()).isEqualTo(NAME);
+      assertThat(storedView.getName()).isEqualTo("Some other name");
       assertThat(storedView.getPermissions().getUserPermissions()).containsOnly(userPermission);
    }
 

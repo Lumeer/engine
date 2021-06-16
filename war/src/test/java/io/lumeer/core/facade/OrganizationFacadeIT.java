@@ -32,6 +32,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
@@ -101,6 +102,8 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       userReadonlyPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
       userStrangerPermission = Permission.buildWithRoles(this.strangerUser.getId(), Collections.singleton(new Role(RoleType.Read)));
       groupPermission = Permission.buildWithRoles(GROUP, Collections.singleton(new Role(RoleType.Read)));
+
+      PermissionCheckerUtil.allowGroups(permissionsChecker);
    }
 
    @Test
@@ -244,7 +247,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    public void testUpdateOrganization() {
       String id = createOrganization(CODE1);
 
-      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, new Permissions(Set.of(userPermission), Set.of(groupPermission)));
 
       organizationFacade.updateOrganization(id, updatedOrganization);
 

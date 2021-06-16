@@ -153,10 +153,6 @@ public class ProjectFacade extends AbstractFacade {
       updatingProject.patch(project, permissionsChecker.getActualRoles(storedProject));
       keepUnmodifiableFields(updatingProject, storedProject);
 
-      if (storedProject.equals(updatingProject)) {
-         return mapResource(storedProject);
-      }
-
       Project updatedProject = projectDao.updateProject(projectId, updatingProject, storedProject);
       workspaceCache.updateProject(projectId, updatedProject);
 

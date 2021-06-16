@@ -139,10 +139,6 @@ public class LinkTypeFacade extends AbstractFacade {
       updatingLinkType.patch(linkType, permissionsChecker.getActualRoles(storedLinkType));
       keepUnmodifiableFields(updatingLinkType, storedLinkType);
 
-      if (storedLinkType.equals(updatingLinkType)) {
-         return mapLinkTypeData(storedLinkType);
-      }
-
       return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
    }
 
@@ -194,7 +190,7 @@ public class LinkTypeFacade extends AbstractFacade {
          return mapLinkTypeData(linkType);
       }
 
-      var linkTypeReadersInViews = resourceAdapter.getLinkTypeReadersInViews(getOrganization(), getProject(), linkTypeId);
+      var linkTypeReadersInViews = resourceAdapter.getLinkTypeTransitiveReaders(getOrganization(), getProject(), linkTypeId);
       if (linkTypeReadersInViews.contains(getCurrentUserId())) {
          return mapLinkTypeData(linkType);
       }

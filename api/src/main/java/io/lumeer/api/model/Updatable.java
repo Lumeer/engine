@@ -29,7 +29,8 @@ public interface Updatable<T> {
    default void patchResource(final Resource updatingResource, final Resource resource, final Set<RoleType> roles) {
       if (roles.contains(RoleType.Manage)) {
          updatingResource.setIcon(resource.getIcon());
-         updatingResource.setCode(resource.getColor());
+         updatingResource.setColor(resource.getColor());
+         updatingResource.setCode(resource.getCode());
          updatingResource.setName(resource.getName());
          updatingResource.setDescription(resource.getDescription());
          updatingResource.setPriority(resource.getPriority());
