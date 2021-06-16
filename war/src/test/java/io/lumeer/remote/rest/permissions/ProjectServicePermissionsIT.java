@@ -31,6 +31,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -98,6 +99,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
       workspaceKeeper.setOrganizationId(storedOrganization.getId());
 
       projectsUrl = organizationPath(storedOrganization) + "projects/";
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    private Project createProject(String code, String name) {

@@ -42,7 +42,6 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.task.ContextualTaskFactory;
@@ -177,9 +176,6 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Inject
    private ZapierFacade zapierFacade;
 
-   @Inject
-   private PermissionsChecker permissionsChecker;
-
    @Before
    public void configureProject() {
       user = userDao.createUser(new User(USER));
@@ -214,7 +210,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       collectionDao.setProject(project);
 
-      PermissionCheckerUtil.allowGroups(permissionsChecker);
+      PermissionCheckerUtil.allowGroups();
    }
 
    private Collection prepareCollection(String code) {

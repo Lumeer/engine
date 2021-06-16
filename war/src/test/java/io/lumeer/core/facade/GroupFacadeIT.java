@@ -31,7 +31,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionCheckerUtil;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -82,9 +81,6 @@ public class GroupFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
-   @Inject
-   private PermissionsChecker permissionsChecker;
-
    @Before
    public void configure() {
       User user = new User(USER);
@@ -100,7 +96,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       groupDao.createRepository(organization);
       groupDao.setOrganization(organization);
 
-      PermissionCheckerUtil.allowGroups(permissionsChecker);
+      PermissionCheckerUtil.allowGroups();
    }
 
    @Test

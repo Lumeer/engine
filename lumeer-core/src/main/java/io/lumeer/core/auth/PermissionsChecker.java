@@ -112,7 +112,7 @@ public class PermissionsChecker {
    private CollectionAdapter collectionAdapter;
    private PermissionAdapter permissionAdapter;
 
-   private boolean allowGroups = false;
+   private static boolean allowGroups = false;
 
    @PostConstruct
    public void init() {
@@ -607,7 +607,9 @@ public class PermissionsChecker {
    }
 
    // For testing purposes to allow manipulate with groups
-   void allowGroups() { this.allowGroups = true; }
+   static void allowGroups() {
+      PermissionsChecker.allowGroups = true;
+   }
 
    String testGetViewId() {
       return this.permissionAdapter.getViewId();

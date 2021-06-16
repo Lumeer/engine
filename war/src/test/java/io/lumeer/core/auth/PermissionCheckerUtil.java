@@ -32,7 +32,7 @@ public abstract class PermissionCheckerUtil {
       return permissionsChecker.testGetViewId();
    }
 
-   public static void allowGroups(final PermissionsChecker permissionsChecker) {
-      permissionsChecker.allowGroups();
+   public static void allowGroups() {
+      PermissionsChecker.allowGroups();
    }
 }

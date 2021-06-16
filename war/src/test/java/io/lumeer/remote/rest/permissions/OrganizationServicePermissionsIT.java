@@ -28,7 +28,6 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
-import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.remote.rest.ServiceIntegrationTestBase;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -62,9 +61,6 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
    @Inject
    private UserDao userDao;
 
-   @Inject
-   private PermissionsChecker permissionsChecker;
-
    private String userId;
 
    private String organizationsUrl;
@@ -76,7 +72,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
 
       organizationsUrl = basePath() + "organizations/";
 
-      PermissionCheckerUtil.allowGroups(permissionsChecker);
+      PermissionCheckerUtil.allowGroups();
    }
 
    @Test

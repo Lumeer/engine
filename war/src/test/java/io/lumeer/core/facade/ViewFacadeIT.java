@@ -162,7 +162,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       collectionFacade.updateUserPermissions(collection.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)))));
       query = new Query(new QueryStem(collection.getId()));
 
-      PermissionCheckerUtil.allowGroups(permissionsChecker);
+      PermissionCheckerUtil.allowGroups();
    }
 
    private View prepareView(String code) {
