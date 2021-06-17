@@ -37,7 +37,6 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.auth.PermissionsChecker;
-import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.CollectionDao;

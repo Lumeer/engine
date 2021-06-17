@@ -198,6 +198,13 @@ public class SearchFacadeIT extends IntegrationTestBase {
       return createdCollection;
    }
 
+   private Collection setCollectionUserRoles(Collection collection, final Set<Role> roles) {
+      Permissions permissions = collection.getPermissions();
+      permissions.updateUserPermissions(Permission.buildWithRoles(userId, roles));
+      collection.setPermissions(permissions);
+      return collectionDao.updateCollection(collection.getId(), collection, null);
+   }
+
    private Collection createTaskCollection(String name, CollectionPurpose purpose, Attribute... attributes) {
       Collection collection = createCollection(name, attributes);
       collection.setPurpose(purpose);
@@ -371,18 +378,13 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchTasks() {
-      var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
-      Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
-      Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, 1);
-      var stateAttributeId = stateAttribute.getId();
-      Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
-      Attribute assigneeAttribute = new Attribute("a2", "a2", null,  assigneeConstraint, null, 1);
-      var assigneeAttributeId = assigneeAttribute.getId();
-      var purposeMetadata = new DataDocument(CollectionPurpose.META_STATE_ATTRIBUTE_ID, stateAttributeId)
-            .append(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
-            .append(CollectionPurpose.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
-      CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
-      String taskCollectionId = createTaskCollection("taskCollection", purpose, stateAttribute, assigneeAttribute).getId();
+      Collection taskCollection = createTaskCollectionWithAttributes("taskCollection");
+      String taskCollectionId = taskCollection.getId();
+      Attribute stateAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a1")).findFirst().get();
+      String stateAttributeId = stateAttribute.getId();
+      Attribute assigneeAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a2")).findFirst().get();
+      String assigneeAttributeId = assigneeAttribute.getId();
+
       String otherCollectionId = createCollection("otherCollection", stateAttribute, assigneeAttribute).getId();
 
       String id1 = createDocument(taskCollectionId, Map.of(stateAttributeId, "a", assigneeAttributeId, USER)).getId();
@@ -409,6 +411,109 @@ public class SearchFacadeIT extends IntegrationTestBase {
       query = createSimpleQueryWithAttributeFilter(otherCollectionId, CollectionAttributeFilter.createFromValues(otherCollectionId, stateAttributeId, ConditionType.HAS_SOME, Arrays.asList("a", "c", "d")));
       documents = searchFacade.searchTasksDocumentsAndLinks(query, true).getFirst();
       assertThat(documents).extracting(Document::getId).isEmpty();
+   }
+
+   private Collection createTaskCollectionWithAttributes(String name) {
+      var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
+      Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
+      Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, 1);
+      var stateAttributeId = stateAttribute.getId();
+      Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
+      Attribute assigneeAttribute = new Attribute("a2", "a2", null, assigneeConstraint, null, 1);
+      var assigneeAttributeId = assigneeAttribute.getId();
+      var purposeMetadata = new DataDocument(CollectionPurpose.META_STATE_ATTRIBUTE_ID, stateAttributeId)
+            .append(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
+            .append(CollectionPurpose.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
+      CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
+      Constraint numberConstraint = new Constraint(ConstraintType.Number, new DataDocument());
+      Attribute otherAttribute = new Attribute("a3", "a3", null, numberConstraint, null, 3);
+      return createTaskCollection(name, purpose, stateAttribute, assigneeAttribute, otherAttribute);
+   }
+
+   @Test
+   public void testSearchContributors() {
+      Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument());
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Collection collection = createCollection("numberCollection", attribute);
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read)));
+
+      String id1 = createDocument(collection.getId(), "10").getId();
+      String id2 = createDocumentWithOtherUser(collection.getId(), "20").getId();
+      String id3 = createDocument(collection.getId(), "30").getId();
+      String id4 = createDocumentWithOtherUser(collection.getId(), 40).getId();
+      String id5 = createDocument(collection.getId(), "50").getId();
+      String id6 = createDocumentWithOtherUser(collection.getId(), "60").getId();
+      String id7 = createDocumentWithOtherUser(collection.getId(), 70).getId();
+      String id8 = createDocument(collection.getId(), 80).getId();
+
+      Query query = new Query();
+      List<Document> documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).isEmpty();
+
+      // contributor
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id5, id8);
+
+      // read all data
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8);
+
+      // contributor with filters
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.LOWER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3);
+
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.GREATER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id5, id8);
+
+      // reader with filters
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.LOWER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3);
+
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.GREATER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id5, id6, id7, id8);
+
+   }
+
+   @Test
+   public void testSearchTasksAndContributors() {
+      Collection taskCollection = createTaskCollectionWithAttributes("taskCollection");
+      Attribute stateAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a1")).findFirst().get();
+      Attribute assigneeAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a2")).findFirst().get();
+
+      String id1 = createDocumentWithOtherUser(taskCollection.getId(), Map.of(stateAttribute.getId(), "a", assigneeAttribute.getId(), USER)).getId();
+      String id2 = createDocumentWithOtherUser(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "b")).getId();
+      String id3 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "c")).getId();
+      String id4 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "d")).getId();
+      String id5 = createDocumentWithOtherUser(taskCollection.getId(), Map.of(stateAttribute.getId(), Arrays.asList("a", "b"),  assigneeAttribute.getId(), USER)).getId();
+      String id6 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("b", "c"))).getId();
+      String id7 = createDocumentWithOtherUser(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("c", "d"))).getId();
+      String id8 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("d", "a"))).getId();
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read)));
+      Query query = new Query();
+      List<Document> documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id5);
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4, id5, id6, id8);
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8);
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      query = createSimpleQueryWithAttributeFilter(taskCollection.getId(), CollectionAttributeFilter.createFromValues(taskCollection.getId(), stateAttribute.getId(), ConditionType.HAS_SOME, Arrays.asList("a", "b")));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id5, id6, id8);
    }
 
    @Test
@@ -535,7 +640,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testUserConstraint() {
       Constraint constraint = new Constraint(ConstraintType.User, new DataDocument("multi", true));
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY,null,  constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
       String collectionId = createCollection("userCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, Collections.singletonList(USER)).getId();
@@ -668,6 +773,21 @@ public class SearchFacadeIT extends IntegrationTestBase {
       return createDocument(collectionId, Collections.singletonMap(DOCUMENT_KEY, value));
    }
 
+   private Document createDocumentWithOtherUser(String collectionId, Object value) {
+      return createDocumentWithOtherUser(collectionId, Collections.singletonMap(DOCUMENT_KEY, value));
+   }
+
+   private Document createDocumentWithOtherUser(String collectionId, Map<String, Object> values) {
+      Document document = createDocument(collectionId, values);
+
+      Document updatingDocument = new Document(document);
+      updatingDocument.setCreatedBy(collectionId);
+
+      Document updatedDocument = documentDao.updateDocument(document.getId(), updatingDocument);
+      updatedDocument.setData(document.getData());
+      return updatedDocument;
+   }
+
    private Document createDocument(String collectionId, Map<String, Object> values) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       values.forEach((attributeId, value) -> {
@@ -683,7 +803,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       Document document = new Document(new DataDocument(values));
       document.setCollectionId(collectionId);
-      document.setCreatedBy(USER);
+      document.setCreatedBy(userId);
       document.setCreationDate(ZonedDateTime.now());
       Document storedDocument = documentDao.createDocument(document);
 
