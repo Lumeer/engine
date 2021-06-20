@@ -47,7 +47,8 @@ public class View extends Resource implements Updatable<View> {
    private Object config;
    private Object settings;
    private String authorId;
-   private Map<String, Set<RoleType>> authorRights;
+   private Map<String, Set<RoleType>> authorCollectionsRights;
+   private Map<String, Set<RoleType>> authorLinkTypesRights;
    private List<String> folders;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
@@ -99,7 +100,8 @@ public class View extends Resource implements Updatable<View> {
       o.config = this.config;
       o.settings = this.settings;
       o.authorId = this.authorId;
-      o.authorRights = this.authorRights;
+      o.authorCollectionsRights = this.authorCollectionsRights;
+      o.authorLinkTypesRights = this.authorLinkTypesRights;
       o.version = this.version;
       o.lastTimeUsed = this.lastTimeUsed;
       o.favorite = this.favorite;
@@ -145,12 +147,20 @@ public class View extends Resource implements Updatable<View> {
       this.authorId = authorId;
    }
 
-   public Map<String, Set<RoleType>> getAuthorRights() {
-      return authorRights;
+   public Map<String, Set<RoleType>> getAuthorCollectionsRights() {
+      return authorCollectionsRights;
    }
 
-   public void setAuthorRights(final Map<String, Set<RoleType>> authorRights) {
-      this.authorRights = authorRights;
+   public void setAuthorCollectionsRights(final Map<String, Set<RoleType>> authorCollectionsRights) {
+      this.authorCollectionsRights = authorCollectionsRights;
+   }
+
+   public Map<String, Set<RoleType>> getAuthorLinkTypesRights() {
+      return authorLinkTypesRights;
+   }
+
+   public void setAuthorLinkTypesRights(final Map<String, Set<RoleType>> authorLinkTypesRights) {
+      this.authorLinkTypesRights = authorLinkTypesRights;
    }
 
    public ZonedDateTime getLastTimeUsed() {
@@ -199,7 +209,7 @@ public class View extends Resource implements Updatable<View> {
             ", config=" + config + '\'' +
             ", settings=" + settings + '\'' +
             ", authorId='" + authorId + '\'' +
-            ", authorRights=" + authorRights +
+            ", authorRights=" + authorCollectionsRights +
             ", lastTimeUsed=" + lastTimeUsed +
             ", query=" + query + '\'' +
             ", folders=" + folders + '\'' +

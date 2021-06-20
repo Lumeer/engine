@@ -372,6 +372,7 @@ public class PermissionsChecker {
       User user = authenticatedUser.getCurrentUser();
       Set<RoleType> roles = permissionAdapter.getUserRolesInResource(getOrganization(), getProject(), collection, user);
       Set<RoleType> rolesWithView = permissionAdapter.getUserRolesInCollectionWithView(getOrganization(), getProject(), collection, user);
+      rolesWithView.addAll(roles);
       return new AllowedPermissions(roles, rolesWithView);
    }
 
@@ -383,6 +384,7 @@ public class PermissionsChecker {
       User user = authenticatedUser.getCurrentUser();
       Set<RoleType> roles = permissionAdapter.getUserRolesInLinkType(getOrganization(), getProject(), linkType, user);
       Set<RoleType> rolesWithView = permissionAdapter.getUserRolesInLinkTypeWithView(getOrganization(), getProject(), linkType, user);
+      rolesWithView.addAll(roles);
       return new AllowedPermissions(roles, rolesWithView);
    }
 

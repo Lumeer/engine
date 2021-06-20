@@ -33,13 +33,15 @@ class ViewAdapter(private val resourceAdapter: ResourceAdapter, private val favo
       val favoriteIds = getFavoriteViewIds(userId, projectId);
       return views.onEach {
          it.isFavorite = favoriteIds.contains(it.id)
-         it.authorRights = resourceAdapter.getViewAuthorRights(organization, project, it)
+         it.authorCollectionsRights = resourceAdapter.getViewAuthorCollectionsRoles(organization, project, it)
+         it.authorLinkTypesRights = resourceAdapter.getViewAuthorLinkTypesRoles(organization, project, it)
       }
    }
 
    fun mapViewData(organization: Organization, project: Project, view: View, userId: String, projectId: String): View = view.apply {
       isFavorite = isFavorite(view.id, userId, projectId)
-      authorRights = resourceAdapter.getViewAuthorRights(organization, project, view)
+      authorCollectionsRights = resourceAdapter.getViewAuthorCollectionsRoles(organization, project, view)
+      authorLinkTypesRights = resourceAdapter.getViewAuthorLinkTypesRoles(organization, project, view)
    }
 
 }

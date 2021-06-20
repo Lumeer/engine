@@ -317,7 +317,7 @@ public class ViewServiceIT extends ServiceIntegrationTestBase {
 
       View returnedView = response.readEntity(View.class);
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(returnedView.getAuthorRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), Set.of(RoleType.DataWrite)));
+      assertions.assertThat(returnedView.getAuthorCollectionsRights()).containsOnly(new HashMap.SimpleEntry<>(collection.getId(), Set.of(RoleType.DataWrite)));
       assertions.assertAll();
    }
 

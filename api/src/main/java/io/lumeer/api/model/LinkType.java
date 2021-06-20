@@ -256,6 +256,10 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
 
    @Override
    public void patch(final LinkType resource, final Set<RoleType> roles) {
+      if (roles.contains(RoleType.UserConfig)) {
+         setPermissionsType(resource.getPermissionsType());
+         setPermissions(resource.getPermissions());
+      }
       if (roles.contains(RoleType.Manage)) {
          setName(resource.getName());
       }

@@ -112,10 +112,16 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       return getCollectionReaders(organization, project, collection).plus(assigneeIds)
    }
 
-   fun getViewAuthorRights(organization: Organization?, project: Project?, view: View): Map<String, Set<RoleType>> {
+   fun getViewAuthorCollectionsRoles(organization: Organization?, project: Project?, view: View): Map<String, Set<RoleType>> {
       val user = userDao.getUserById(view.authorId) ?: User(view.authorId, "", "", emptyMap())
       val collections = getViewCollections(view)
       return collections.associate { it.id to getCollectionRoles(organization, project, it, user) }
+   }
+
+   fun getViewAuthorLinkTypesRoles(organization: Organization?, project: Project?, view: View): Map<String, Set<RoleType>> {
+      val user = userDao.getUserById(view.authorId) ?: User(view.authorId, "", "", emptyMap())
+      val linkTypes = getViewLinkTypes(view)
+      return linkTypes.associate { it.id to getLinkTypesRoles(organization, project, it, user) }
    }
 
    private fun getViewCollections(view: View): List<Collection> {
@@ -125,8 +131,17 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       return collectionDao.getCollectionsByIds(collectionIds)
    }
 
+   private fun getViewLinkTypes(view: View): List<LinkType> {
+      val linkTypeIds = view.query?.linkTypeIds.orEmpty()
+      return if (linkTypeIds.isEmpty()) listOf() else linkTypeDao.getLinkTypesByIds(linkTypeIds)
+   }
+
    private fun getCollectionRoles(organization: Organization?, project: Project?, collection: Collection, user: User): Set<RoleType> {
       return permissionAdapter.getUserRolesInResource(organization, project, collection, user)
+   }
+
+   private fun getLinkTypesRoles(organization: Organization?, project: Project?, linkType: LinkType, user: User): Set<RoleType> {
+      return permissionAdapter.getUserRolesInLinkType(organization, project, linkType, user)
    }
 
    fun getCollectionTransitiveReaders(organization: Organization, project: Project, collectionId: String): Set<String> {
