@@ -338,22 +338,25 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testUpdateCollectionAttributeAdd() {
+   public void testUpdateCollectionAttribute() {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).isEmpty();
 
       setCollectionGroupRoles(collection, Set.of(new Role(RoleType.AttributeEdit)));
 
       Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, "", ATTRIBUTE_CONSTRAINT, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
-      final Attribute createdAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
+      collectionFacade.createCollectionAttributes(collection.getId(), Set.of(attribute));
 
       collection = collectionDao.getCollectionByCode(CODE);
       assertThat(collection).isNotNull();
       assertThat(collection.getAttributes()).hasSize(1);
 
+      attribute.setName("Updated name");
+      Attribute updatedAttribute = collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, attribute);
+
       Attribute storedAttribute = collection.getAttributes().iterator().next();
       SoftAssertions assertions = new SoftAssertions();
-      assertions.assertThat(storedAttribute.getId()).isEqualTo(createdAttribute.getId());
+      assertions.assertThat(storedAttribute.getId()).isEqualTo(updatedAttribute.getId());
       assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME);
       assertions.assertThat(storedAttribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);

@@ -127,7 +127,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
-      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Manage);
+      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Read);
       if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
          throw new BadFormatException("Can not change LinkType collectionIds property");
       }
