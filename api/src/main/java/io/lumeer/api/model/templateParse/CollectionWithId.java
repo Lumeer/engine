@@ -56,7 +56,6 @@ public class CollectionWithId extends Collection {
       setId(id);
       setDefaultAttributeId(defaultAttributeId);
       setLastAttributeNum(lastAttributeNum);
-      System.out.println("kolekce jede");
    }
 
    public CollectionWithId(final Collection collection) {

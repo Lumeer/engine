@@ -300,9 +300,17 @@ public class TaskProcessingFacade {
       return Collections.emptyList();
    }
 
-   private List<RuleTask> createLinkInstanceUpdateRuleTasks(final LinkType linkType, final UpdateLinkInstance updateLinkInstance) {
+   private List<RuleTask> createLinkInstanceUpdateRuleTasks(final LinkType linkType, final UpdateLinkInstance updateLinkInstance, final String skipTask) {
       if (updateLinkInstance.getOriginalLinkInstance() != null && updateLinkInstance.getLinkInstance() != null) {
-         return createRuleTasks(linkType, new LinkInstance(updateLinkInstance.getOriginalLinkInstance()), new LinkInstance(updateLinkInstance.getLinkInstance()), Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(
+               linkType,
+               new LinkInstance(updateLinkInstance.getOriginalLinkInstance()),
+               new LinkInstance(updateLinkInstance.getLinkInstance()),
+               Arrays.asList(Rule.RuleTiming.UPDATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL)
+         ).stream()
+          .filter(ruleTask -> skipTask == null || StringUtils.isEmpty(ruleTask.getRule().getName()) || !ruleTask.getRule().getName().equals(skipTask)) // skipTask is checked for null for performance reason
+          .filter(ruleTask -> ruleTask.getRecursionDepth() == 0 || ruleTask.getRule().getType() != Rule.RuleType.BLOCKLY || new BlocklyRule(ruleTask.getRule()).isRecursive()) // either this is not recursion, or it is not blockly, or recursion is allowed
+          .collect(Collectors.toList());
       }
       return Collections.emptyList();
    }
@@ -374,13 +382,17 @@ public class TaskProcessingFacade {
    }
 
    public void onUpdateLink(@Observes final UpdateLinkInstance updateLinkEvent) {
+      onUpdateLink(updateLinkEvent, null);
+   }
+
+   public void onUpdateLink(final UpdateLinkInstance updateLinkEvent, final String skipTask) {
       LinkType linkType = getLinkTypeForEvent(updateLinkEvent);
       if (linkType == null) {
          return;
       }
 
       FunctionTask functionTask = functionFacade.creatTaskForChangedLink(linkType, new LinkInstance(updateLinkEvent.getOriginalLinkInstance()), new LinkInstance(updateLinkEvent.getLinkInstance()));
-      List<RuleTask> tasks = createLinkInstanceUpdateRuleTasks(linkType, updateLinkEvent);
+      List<RuleTask> tasks = createLinkInstanceUpdateRuleTasks(linkType, updateLinkEvent, skipTask);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       processTasks(functionTask, ruleTask);

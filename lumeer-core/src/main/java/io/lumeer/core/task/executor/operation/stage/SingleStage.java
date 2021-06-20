@@ -58,6 +58,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.engine.api.event.UpdateLinkInstance;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -105,7 +106,12 @@ public class SingleStage extends Stage {
          return List.of();
       }
 
-      final List<Document> documents = operations.stream().map(DocumentCreationOperation::getEntity).collect(toList());
+      final List<Document> documents = operations.stream().map(DocumentCreationOperation::getEntity).map(document -> {
+         document.setCreatedBy(task.getInitiator().getId());
+         document.setCreationDate(ZonedDateTime.now());
+
+         return document;
+      }).collect(toList());
 
       return task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
    }
@@ -132,7 +138,10 @@ public class SingleStage extends Stage {
       // aggregate all operations to individual documents
       final Map<String, List<DocumentOperation>> changesByDocumentId = Utils.categorize(operations.stream(), change -> change.getEntity().getId());
 
+      final Set<String> unprocessedCreatedDocuments = createdDocuments.stream().map(Document::getId).collect(toSet());
+
       changesByDocumentId.forEach((id, changeList) -> {
+         unprocessedCreatedDocuments.remove(id);
          final Document document = changeList.get(0).getEntity();
          final Document originalDocument =
                (task instanceof RuleTask) ? ((RuleTask) task).getOldDocument() :
@@ -227,6 +236,12 @@ public class SingleStage extends Stage {
                          .add(updatedDocument);
       });
 
+      unprocessedCreatedDocuments.forEach(id -> {
+         createdDocuments.stream().filter(d -> d.getId().equals(id)).findFirst().ifPresent(document -> {
+            taskProcessingFacade.onCreateDocument(new CreateDocument(document));
+         });
+      });
+
       changesTracker.addCollections(collectionsChanged.stream().map(collectionsMap::get).collect(toSet()));
       changesTracker.addUpdatedDocuments(updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toSet()));
       changesTracker.updateCollectionsMap(collectionsMapForCreatedDocuments);
@@ -304,12 +319,19 @@ public class SingleStage extends Stage {
          return List.of();
       }
 
-      final List<LinkInstance> linkInstances = operations.stream().map(LinkCreationOperation::getEntity).collect(toList());
+      final List<LinkInstance> linkInstances = operations.stream().map(LinkCreationOperation::getEntity).map(link -> {
+         link.setCreatedBy(task.getInitiator().getId());
+         link.setCreationDate(ZonedDateTime.now());
+
+         return link;
+      }).collect(toList());
 
       return task.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances, false);
    }
 
-   private List<LinkInstance> commitLinkOperations(final TaskExecutor taskExecutor, final List<LinkOperation> changes,
+   private List<LinkInstance> commitLinkOperations(
+         final TaskExecutor taskExecutor,
+         final List<LinkOperation> changes,
          final List<LinkInstance> createdLinks,
          final Map<String, LinkType> linkTypeMapForCreatedLinks) {
       if (changes.isEmpty() && linkTypeMapForCreatedLinks.isEmpty()) {
@@ -329,7 +351,10 @@ public class SingleStage extends Stage {
       // aggregate all changes to individual link instances
       final Map<String, List<LinkOperation>> changesByLinkTypeId = Utils.categorize(changes.stream(), change -> change.getEntity().getId());
 
+      final Set<String> unprocessedCreatedLinks = createdLinks.stream().map(LinkInstance::getId).collect(toSet());
+
       changesByLinkTypeId.forEach((id, changeList) -> {
+         unprocessedCreatedLinks.remove(id);
          final LinkInstance linkInstance = changeList.get(0).getEntity();
          final LinkInstance originalLinkInstance = (task instanceof RuleTask) ? ((RuleTask) task).getOldLinkInstance() :
                ((task instanceof FunctionTask) ? ((FunctionTask) task).getOriginalLinkInstanceOrDefault(id, changeList.get(0).getOriginalLinkInstance()) :
@@ -384,7 +409,22 @@ public class SingleStage extends Stage {
             if (created) {
                taskProcessingFacade.onCreateLink(new CreateLinkInstance(updatedLink));
             } else {
-               taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+               if (task.getRecursionDepth() == 0) {
+                  // there are now 3 versions of the document:
+                  // 1) the document before user triggered an update - original document (null when triggered by action button)
+                  // 2) the document with the new user entered value - before patch
+                  // 3) the document with the value computed by the rule based on the previous two - updated document
+                  // this rule got executed because of change from 1 to 2
+                  // for the recursive rules, we need to trigger rules for changes between 2 and 3
+                  final UpdateLinkInstance updateLinkInstanceEvent;
+                  final LinkInstance orig = new LinkInstance(linkInstance);
+                  orig.setData(beforePatch);
+                  updateLinkInstanceEvent = new UpdateLinkInstance(updatedLink, orig);
+
+                  taskProcessingFacade.onUpdateLink(updateLinkInstanceEvent, ((RuleTask) task).getRule().getName());
+               } else {
+                  taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+               }
             }
          }
 
@@ -393,6 +433,12 @@ public class SingleStage extends Stage {
 
          updatedLinks.computeIfAbsent(linkInstance.getLinkTypeId(), key -> new ArrayList<>())
                      .add(updatedLink);
+      });
+
+      unprocessedCreatedLinks.forEach(id -> {
+         createdLinks.stream().filter(l -> l.getId().equals(id)).findFirst().ifPresent(link -> {
+            taskProcessingFacade.onCreateLink(new CreateLinkInstance(link));
+         });
       });
 
       linkTypeMapForCreatedLinks.forEach((id, linkType) -> linkTypesChanged.add(id));
@@ -468,7 +514,8 @@ public class SingleStage extends Stage {
       changesTracker.getCreatedDocuments().removeAll(unusedCreatedDocuments);
 
       // create new links
-      final List<LinkInstance> createdLinks = createLinks(operations.stream().filter(operation -> operation instanceof LinkCreationOperation && operation.isComplete()).map(operation -> (LinkCreationOperation) operation).collect(toList()));
+      final List<LinkCreationOperation> linkCreationOperations = operations.stream().filter(operation -> operation instanceof LinkCreationOperation && operation.isComplete()).map(operation -> (LinkCreationOperation) operation).collect(toList());
+      final List<LinkInstance> createdLinks = createLinks(linkCreationOperations);
       final Map<String, List<LinkInstance>> linksByType = LinkTypeUtils.getLinksByType(createdLinks);
       final Map<String, LinkType> linkTypesMap = task.getDaoContextSnapshot().getLinkTypeDao().getLinkTypesByIds(linksByType.keySet()).stream().collect(Collectors.toMap(LinkType::getId, Function.identity()));
       final Map<String, String> linkCorrelationIdsToIds = createdLinks.stream().collect(Collectors.toMap(LinkInstance::getTemplateId, LinkInstance::getId));
