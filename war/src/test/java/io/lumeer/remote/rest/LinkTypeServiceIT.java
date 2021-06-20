@@ -184,7 +184,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       LinkType updateLinkedType = prepareLinkType();
       updateLinkedType.setName(NAME2);
-      updateLinkedType.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
 
       Entity entity = Entity.json(updateLinkedType);
       Response response = client.target(linkTypesUrl).path(id)
