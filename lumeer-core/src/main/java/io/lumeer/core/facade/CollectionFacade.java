@@ -311,10 +311,14 @@ public class CollectionFacade extends AbstractFacade {
       final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collectionId, collection, attributes.size());
 
       int lastAttributeNum = bookedAttributesCollection.getLastAttributeNum() - attributes.size() + 1;
+      var canEditFunction = permissionsChecker.hasRole(collection, RoleType.TechConfig);
 
       for (Attribute attribute : attributes) {
          attribute.setId(Collection.ATTRIBUTE_PREFIX + lastAttributeNum++);
          attribute.setUsageCount(0);
+         if (!canEditFunction) {
+            attribute.setFunction(null);
+         }
          bookedAttributesCollection.createAttribute(attribute);
       }
 
@@ -335,8 +339,13 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
       permissionsChecker.checkAttributesFunctionAccess(attributes);
 
+      var canEditFunction = permissionsChecker.hasRole(collection, RoleType.TechConfig);
+
       for (Attribute attribute : attributes) {
          attribute.setUsageCount(0);
+         if (!canEditFunction) {
+            attribute.setFunction(null);
+         }
          collection.createAttribute(attribute);
       }
       collection.setLastAttributeNum(attributes.size() - 1);
@@ -365,21 +374,29 @@ public class CollectionFacade extends AbstractFacade {
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Optional<Attribute> originalAttribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
+      if (originalAttribute.isEmpty()) {
+         return attribute;
+      }
+
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
 
-      collection.updateAttribute(attributeId, attribute);
-      collection.setLastTimeUsed(ZonedDateTime.now());
-      if (!attribute.isFunctionDefined()) {
+      if (!permissionsChecker.hasRole(collection, RoleType.TechConfig)) {
+         attribute.setFunction(originalAttribute.get().getFunction());
+      }
+
+      if (attribute.isFunctionDefined()) {
+         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
+      } else {
          attribute.setFunction(null);
       }
 
       if (!skipFceLimits) {
          permissionsChecker.checkFunctionsLimit(collection);
       }
-      if (attribute.isFunctionDefined()) {
-         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
-      }
+
+      collection.updateAttribute(attributeId, attribute);
+      collection.setLastTimeUsed(ZonedDateTime.now());
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
@@ -497,7 +514,6 @@ public class CollectionFacade extends AbstractFacade {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, RoleType.UserConfig);
-      permissionsChecker.invalidateCache(collection);
 
       final Collection updatedCollection = handler.apply(collection);
 

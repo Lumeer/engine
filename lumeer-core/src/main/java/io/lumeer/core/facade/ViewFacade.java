@@ -194,7 +194,6 @@ public class ViewFacade extends AbstractFacade {
    public Set<Permission> updateUserPermissions(final String id, final Set<Permission> userPermissions) {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.UserConfig);
-      permissionsChecker.invalidateCache(view);
 
       final View originalView = view.copy();
       view.getPermissions().clearUserPermissions();
@@ -207,7 +206,6 @@ public class ViewFacade extends AbstractFacade {
    public void removeUserPermission(final String id, final String userId) {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.UserConfig);
-      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().removeUserPermission(userId);
       viewDao.updateView(view.getId(), view);
@@ -216,7 +214,6 @@ public class ViewFacade extends AbstractFacade {
    public Set<Permission> updateGroupPermissions(final String id, final Set<Permission> groupPermissions) {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.UserConfig);
-      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().clearGroupPermissions();
       view.getPermissions().updateGroupPermissions(groupPermissions);
@@ -228,7 +225,6 @@ public class ViewFacade extends AbstractFacade {
    public void removeGroupPermission(final String id, final String groupId) {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.UserConfig);
-      permissionsChecker.invalidateCache(view);
 
       view.getPermissions().removeGroupPermission(groupId);
       viewDao.updateView(view.getId(), view);

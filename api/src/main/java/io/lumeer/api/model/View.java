@@ -209,7 +209,8 @@ public class View extends Resource implements Updatable<View> {
             ", config=" + config + '\'' +
             ", settings=" + settings + '\'' +
             ", authorId='" + authorId + '\'' +
-            ", authorRights=" + authorCollectionsRights +
+            ", authorCollectionsRights=" + authorCollectionsRights +
+            ", authorLinkTypesRights=" + authorLinkTypesRights +
             ", lastTimeUsed=" + lastTimeUsed +
             ", query=" + query + '\'' +
             ", folders=" + folders + '\'' +

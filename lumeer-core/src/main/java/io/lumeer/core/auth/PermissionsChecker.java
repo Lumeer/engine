@@ -56,6 +56,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -194,6 +195,10 @@ public class PermissionsChecker {
       permissionAdapter.checkAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
+   public void checkAnyRole(Resource resource, Set<RoleType> roles) {
+      permissionAdapter.checkAnyRole(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   }
+
    /**
     * Checks whether it is possible to delete the given resource.
     *
@@ -236,6 +241,14 @@ public class PermissionsChecker {
 
    public boolean hasRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
       return permissionAdapter.hasRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRoleInLinkType(LinkType linkType, RoleType role) {
+      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkRoleInLinkType(LinkType linkType, RoleType role) {
+      checkRoleInLinkType(linkType, role, authenticatedUser.getCurrentUserId());
    }
 
    public void checkRoleInLinkType(LinkType linkType, RoleType role, String userId) {
@@ -321,15 +334,6 @@ public class PermissionsChecker {
    }
 
    /**
-    * Invalidates a bit of cache when the information changes.
-    *
-    * @param resource Resource being updated.
-    */
-   public void invalidateCache(final Resource resource) {
-      permissionAdapter.invalidateCache(resource);
-   }
-
-   /**
     * Gets the active view provided in X-Lumeer-View-Id HTTP header through REST endpoint.
     *
     * @return The active View when exists, null otherwise.
@@ -371,7 +375,7 @@ public class PermissionsChecker {
    public AllowedPermissions getCollectionPermissions(final Collection collection) {
       User user = authenticatedUser.getCurrentUser();
       Set<RoleType> roles = permissionAdapter.getUserRolesInResource(getOrganization(), getProject(), collection, user);
-      Set<RoleType> rolesWithView = permissionAdapter.getUserRolesInCollectionWithView(getOrganization(), getProject(), collection, user);
+      Set<RoleType> rolesWithView = new HashSet<>(permissionAdapter.getUserRolesInCollectionWithView(getOrganization(), getProject(), collection, user));
       rolesWithView.addAll(roles);
       return new AllowedPermissions(roles, rolesWithView);
    }
@@ -383,7 +387,7 @@ public class PermissionsChecker {
    public AllowedPermissions getLinkTypePermissions(final LinkType linkType) {
       User user = authenticatedUser.getCurrentUser();
       Set<RoleType> roles = permissionAdapter.getUserRolesInLinkType(getOrganization(), getProject(), linkType, user);
-      Set<RoleType> rolesWithView = permissionAdapter.getUserRolesInLinkTypeWithView(getOrganization(), getProject(), linkType, user);
+      Set<RoleType> rolesWithView = new HashSet<>(permissionAdapter.getUserRolesInLinkTypeWithView(getOrganization(), getProject(), linkType, user));
       rolesWithView.addAll(roles);
       return new AllowedPermissions(roles, rolesWithView);
    }

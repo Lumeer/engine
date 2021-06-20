@@ -399,7 +399,6 @@ public class ViewFacadeIT extends IntegrationTestBase {
       viewPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
       view.setPermissions(viewPermissions);
       viewDao.updateView(view.getId(), view); // since we lost manage rights, we can only do it directly
-      permissionsChecker.invalidateCache(view);
 
       // now this should be all possible
       viewFacade.getViewById(view.getId());

@@ -40,7 +40,6 @@ class PermissionAdapter(private val userDao: UserDao,
                         private val collectionDao: CollectionDao) {
 
    private val usersCache = mutableMapOf<String, List<User>>()
-   private val hasRoleCache = mutableMapOf<String, Boolean>()
    private val viewCache = mutableMapOf<String, View>()
    private val collectionCache = mutableMapOf<String, Collection>()
    private val userCache = mutableMapOf<String, User>()
@@ -71,12 +70,6 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun invalidateCollectionCache() {
       collectionCache.clear()
-   }
-
-   fun invalidateCache(resource: Resource) {
-      for (role in RoleType.values()) {
-         hasRoleCache.remove("${resource.type}:${resource.id}:$role")
-      }
    }
 
    fun isPublic(organization: Organization?, project: Project?) = project?.isPublic ?: false
@@ -197,6 +190,12 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun hasAllRoles(organization: Organization?, project: Project?, resource: Resource, roles: Set<RoleType>, userId: String): Boolean {
       return roles.all { hasRole(organization, project, resource, it, userId) }
+   }
+
+   fun checkAnyRole(organization: Organization?, project: Project?, resource: Resource, roles: Set<RoleType>, userId: String) {
+      if (!hasAnyRole(organization, project, resource, roles, userId)) {
+         throw NoResourcePermissionException(resource)
+      }
    }
 
    fun hasAnyRole(organization: Organization?, project: Project?, resource: Resource, roles: Set<RoleType>, userId: String): Boolean {
@@ -384,12 +383,10 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun hasRole(organization: Organization?, project: Project?, resource: Resource, role: RoleType, userId: String): Boolean {
       return getUserRolesInResource(organization, project, resource, userId).contains(role)
-      // TODO return hasRoleCache.computeIfAbsent("${resource.type}:${resource.id}:$role") { getUserRolesInResource(organization, project, resource, userId).contains(role) }
    }
 
    fun hasRole(organization: Organization?, project: Project?, linkType: LinkType, collection: List<Collection>, role: RoleType, userId: String): Boolean {
       return getUserRolesInLinkType(organization, project, linkType, collection, userId).contains(role)
-      // TODO return hasRoleCache.computeIfAbsent("${ResourceType.LINK_TYPE}:${linkType.id}:$role") { getUserRolesInLinkType(organization, project, linkType, collection, userId).contains(role) }
    }
 
    fun checkFunctionRuleAccess(organization: Organization, project: Project?, js: String, role: RoleType, userId: String) {
