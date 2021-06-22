@@ -473,6 +473,59 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings("unused")
+   public Value getDocumentCreationDate(final DocumentBridge d) {
+      try {
+         return Value.asValue(d.getDocument().getCreationDate());
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   private String getUser(final String userId) {
+      if (task.getInitiator().getId().equals(userId)) {
+         return task.getInitiator().getEmail();
+      } else {
+         final User user = task.getDaoContextSnapshot().getUserDao().getUserById(userId);
+         if (user != null) {
+            return user.getEmail();
+         }
+      }
+
+      return "";
+   }
+
+   @SuppressWarnings("unused")
+   public String getDocumentCreatedBy(final DocumentBridge d) {
+      try {
+         return getUser(d.getDocument().getCreatedBy());
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public Value getDocumentUpdateDate(final DocumentBridge d) {
+      try {
+         return Value.asValue(d.getDocument().getUpdateDate());
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public String getDocumentUpdatedBy(final DocumentBridge d) {
+      try {
+         return getUser(d.getDocument().getUpdatedBy());
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
    public List<DocumentBridge> getLinkedDocuments(DocumentBridge d, String linkTypeId) {
       try {
          final LinkType linkType = task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(linkTypeId);
