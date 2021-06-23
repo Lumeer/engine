@@ -28,7 +28,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return if (getUserAdmins(organization, project, resource).contains(user.id)) {
          resource
       } else resource.apply {
-         val groups = if (resource is Organization) PermissionUtils.getUserGroups(resource, user) else PermissionUtils.getUserGroups(organization, user)
+         val groups = if (resource is Organization) PermissionUtils.getUserGroups(resource, user, permissionAdapter.getGroups(resource.id)) else PermissionUtils.getUserGroups(organization, user, permissionAdapter.getGroups(organization!!.id))
          permissions = keepOnlyNecessaryPermissions(resource.permissions, resource.type, user, groups)
       }
    }
@@ -40,7 +40,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return if (getUserAdmins(organization, project, linkType).contains(user.id)) {
          linkType
       } else linkType.apply {
-         val groups = PermissionUtils.getUserGroups(organization, user)
+         val groups = PermissionUtils.getUserGroups(organization, user, permissionAdapter.getGroups(organization.id))
          permissions = keepOnlyNecessaryPermissions(linkType.permissions, ResourceType.LINK_TYPE, user, groups)
       }
    }
@@ -103,7 +103,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
 
    private fun filterOnlyNecessaryPermissions(permissions: Set<Permission>?, keepRoleTypes: Set<RoleType>): Set<Permission> {
       return permissions.orEmpty()
-            .map { it.apply { roles.filter { role -> role.isTransitive || keepRoleTypes.contains(role.roleType) } } }
+            .map { it.apply { roles.filter { role -> role.isTransitive || keepRoleTypes.contains(role.type) } } }
             .filter { it.roles.isNotEmpty() }
             .toSet()
    }

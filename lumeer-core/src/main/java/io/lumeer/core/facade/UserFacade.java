@@ -40,6 +40,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -51,10 +52,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -66,6 +65,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
 
    @Inject
    private UserLoginDao userLoginDao;
@@ -120,7 +122,7 @@ public class UserFacade extends AbstractFacade {
 
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
-      return keepOnlyOrganizationGroups(updatedUser, organizationId);
+      return keepOnlyCurrentOrganization(updatedUser, organizationId);
    }
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
@@ -172,7 +174,7 @@ public class UserFacade extends AbstractFacade {
 
          User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
-         return keepOnlyOrganizationGroups(updatedUser, organizationId);
+         return keepOnlyCurrentOrganization(updatedUser, organizationId);
       }).collect(Collectors.toList());
    }
 
@@ -205,14 +207,17 @@ public class UserFacade extends AbstractFacade {
             }
          case READ_WRITE:
             if (resourceType == ResourceType.ORGANIZATION) {
-               roles.addAll(Set.of(new Role(RoleType.DataContribute)));
+               roles.addAll(Set.of(new Role(RoleType.ProjectContribute)));
             } else if (resourceType == ResourceType.PROJECT) {
                roles.addAll(Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.CollectionContribute), new Role(RoleType.LinkContribute)));
             }
+            roles.add(new Role(RoleType.Read, true));
+            roles.add(new Role(RoleType.DataRead, true));
             roles.add(new Role(RoleType.DataWrite, true));
             roles.add(new Role(RoleType.DataContribute, true));
+            roles.add(new Role(RoleType.DataDelete, true));
          case READ_ONLY:
-            roles.add(new Role(RoleType.Read));
+            roles.add(new Role(RoleType.Read, true));
       }
 
       return roles;
@@ -246,7 +251,7 @@ public class UserFacade extends AbstractFacade {
       User storedUser = userDao.getUserById(userId);
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
-      return keepOnlyOrganizationGroups(updatedUser, organizationId);
+      return keepOnlyCurrentOrganization(updatedUser, organizationId);
    }
 
    public DataDocument updateHints(final DataDocument hints) {
@@ -279,7 +284,8 @@ public class UserFacade extends AbstractFacade {
    public void deleteUser(String organizationId, String userId) {
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
-      userDao.deleteUserGroups(organizationId, userId);
+      groupDao.setOrganization(getOrganization());
+      groupDao.deleteUserFromGroups(userId);
       User storedUser = userDao.getUserById(userId);
 
       if (removeUserEvent != null) {
@@ -293,7 +299,7 @@ public class UserFacade extends AbstractFacade {
       checkOrganizationPermissions(organizationId, RoleType.Read);
 
       return userDao.getAllUsers(organizationId).stream()
-                    .map(user -> keepOnlyOrganizationGroups(user, organizationId))
+                    .map(user -> keepOnlyCurrentOrganization(user, organizationId))
                     .collect(Collectors.toList());
    }
 
@@ -414,13 +420,8 @@ public class UserFacade extends AbstractFacade {
       return userDao.getUserById(userId).isAffiliatePartner();
    }
 
-   private User keepOnlyOrganizationGroups(User user, String organizationId) {
-      if (user.getGroups().containsKey(organizationId)) {
-         Set<String> groups = user.getGroups().get(organizationId);
-         user.setGroups(Collections.singletonMap(organizationId, groups));
-         return user;
-      }
-      user.setGroups(new HashMap<>());
+   private User keepOnlyCurrentOrganization(User user, String organizationId) {
+      user.setOrganizations(Collections.singleton(organizationId));
       return user;
    }
 
@@ -455,16 +456,17 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void installOrganizationInUser(final String organizationId, final User user) {
-      if (user.getGroups() == null || user.getGroups().isEmpty()) {
-         user.setGroups(Map.of(organizationId, Collections.emptySet()));
+      if (user.getOrganizations() == null) {
+         user.setOrganizations(new HashSet<>());
       }
+      user.getOrganizations().add(organizationId);
    }
 
    private boolean checkOrganizationInUser(String organizationId, User user) {
-      if (user.getGroups() == null || user.getGroups().isEmpty()) {
+      if (user.getOrganizations() == null || user.getOrganizations().isEmpty()) {
          return false;
       } else {
-         if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
+         if (user.getOrganizations().size() != 1 || !user.getOrganizations().contains(organizationId)) {
             throw new BadFormatException("User " + user + " is in incorrect format");
          }
       }

@@ -97,11 +97,8 @@ import io.lumeer.storage.api.dao.ViewDao;
 import org.marvec.pusher.data.Event;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -744,9 +741,7 @@ public class PusherFacade extends AbstractFacade {
    private User cleanUserFromUserEvent(UserEvent event) {
       String organizationId = event.getOrganizationId();
       User user = event.getUser();
-      Map<String, Set<String>> groups = new HashMap<>();
-      groups.put(organizationId, Objects.requireNonNullElse(user.getGroups().get(organizationId), Collections.emptySet()));
-      return new User(user.getId(), user.getName(), user.getEmail(), groups);
+      return new User(user.getId(), user.getName(), user.getEmail(), Collections.singleton(organizationId));
    }
 
    public void createRemoveUserNotification(@Observes final RemoveUser removeUser) {

@@ -158,8 +158,8 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group("testGroup"));
-      user.setGroups(Collections.singletonMap(storedOrganization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group("testGroup", Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       user = userDao.updateUser(user.getId(), user);
 
       Permissions organizationPermissions = new Permissions();
@@ -205,6 +205,7 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
       for (int i = 0; i < 3; i++) {
          documentIdsColl2.add(createDocument(collection2Id).getId());
       }
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    @Test

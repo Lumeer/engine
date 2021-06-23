@@ -25,7 +25,6 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.FacadeAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
 
@@ -41,9 +40,6 @@ abstract class AbstractFacade {
 
    @Inject
    protected UserCache userCache;
-
-   @Inject
-   protected AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
    protected WorkspaceKeeper workspaceKeeper;

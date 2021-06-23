@@ -42,6 +42,7 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.task.ContextualTaskFactory;
@@ -176,6 +177,9 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Inject
    private ZapierFacade zapierFacade;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    @Before
    public void configureProject() {
       user = userDao.createUser(new User(USER));
@@ -191,8 +195,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
       favoriteItemDao.setOrganization(this.organization);
-      group = groupDao.createGroup(new Group(GROUP));
-      user.setGroups(Collections.singletonMap(this.organization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(this.organization.getId()));
       user = userDao.updateUser(user.getId(), user);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
@@ -211,6 +215,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionDao.setProject(project);
 
       PermissionCheckerUtil.allowGroups();
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    private Collection prepareCollection(String code) {
@@ -519,7 +524,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
    @Test
    public void testUpdateUserPermissions() {
       String USER2 = "aaa" + user.getId().substring(3);
-      userDao.createUser(new User(USER2, USER2, USER2, Collections.singletonMap(organization.getId(), Collections.emptySet())));
+      userDao.createUser(new User(USER2, USER2, USER2, Collections.singleton(organization.getId())));
 
       var notifications = userNotificationFacade.getNotifications();
       assertThat(notifications).isEmpty();

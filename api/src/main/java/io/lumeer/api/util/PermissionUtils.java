@@ -21,6 +21,7 @@ package io.lumeer.api.util;
 import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -47,49 +48,49 @@ public class PermissionUtils {
    private PermissionUtils() {
    }
 
-   public static boolean hasRole(Organization organization, @Nullable Project project, Resource resource, RoleType role, User user) {
-      return getUserRolesInResource(organization, project, resource, user).contains(role);
+   public static boolean hasRole(Organization organization, @Nullable Project project, Resource resource, RoleType role, User user, List<Group> groups) {
+      return getUserRolesInResource(organization, project, resource, user, groups).contains(role);
    }
 
-   public static Set<String> getOrganizationUsersByRole(Organization organization, List<User> users, RoleType roleType) {
-      return getResourceUsersByRole(organization, null, organization, users, roleType);
+   public static Set<String> getOrganizationUsersByRole(Organization organization, List<User> users, List<Group> groups, RoleType roleType) {
+      return getResourceUsersByRole(organization, null, organization, users, groups, roleType);
    }
 
-   public static Set<String> getProjectUsersByRole(Organization organization, Project project, List<User> users, RoleType roleType) {
-      return getResourceUsersByRole(organization, project, project, users, roleType);
+   public static Set<String> getProjectUsersByRole(Organization organization, Project project, List<User> users, List<Group> groups, RoleType roleType) {
+      return getResourceUsersByRole(organization, project, project, users, groups, roleType);
    }
 
-   public static Set<String> getResourceUsersByRole(Organization organization, @Nullable Project project, Resource resource, List<User> users, RoleType roleType) {
-      return users.stream().filter(user -> getUserRolesInResource(organization, project, resource, user).contains(roleType)).map(User::getId).collect(Collectors.toSet());
+   public static Set<String> getResourceUsersByRole(Organization organization, @Nullable Project project, Resource resource, List<User> users, List<Group> groups, RoleType roleType) {
+      return users.stream().filter(user -> getUserRolesInResource(organization, project, resource, user, groups).contains(roleType)).map(User::getId).collect(Collectors.toSet());
    }
 
-   public static Set<String> getLinkTypeUsersByRole(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, List<User> users, RoleType roleType) {
-      return users.stream().filter(user -> getUserRolesInLinkType(organization, project, linkType, collections, user).contains(roleType)).map(User::getId).collect(Collectors.toSet());
+   public static Set<String> getLinkTypeUsersByRole(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, List<User> users, List<Group> groups, RoleType roleType) {
+      return users.stream().filter(user -> getUserRolesInLinkType(organization, project, linkType, collections, user, groups).contains(roleType)).map(User::getId).collect(Collectors.toSet());
    }
 
-   public static Set<RoleType> getUserRolesInResource(@Nullable Organization organization, @Nullable Project project, Resource resource, User user) {
+   public static Set<RoleType> getUserRolesInResource(@Nullable Organization organization, @Nullable Project project, Resource resource, User user, List<Group> groups) {
       if (resource instanceof Organization) {
-         return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups((Organization) resource, user));
+         return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups((Organization) resource, user, groups));
       }
-      return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups(organization, user));
+      return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups(organization, user, groups));
    }
 
-   public static Set<RoleType> getUserRolesInLinkType(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, User user) {
+   public static Set<RoleType> getUserRolesInLinkType(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, User user, List<Group> groups) {
       if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
-         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user));
+         return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user, groups));
       }
 
       var linkTypeCollections = collections.stream().filter(collection -> linkType.getCollectionIds().contains(collection.getId())).collect(Collectors.toList());
       var canReadCollections = linkTypeCollections.size() == 2;
       for (Collection collection : linkTypeCollections) {
-         canReadCollections = canReadCollections && hasRole(organization, project, collection, RoleType.Read, user);
+         canReadCollections = canReadCollections && hasRole(organization, project, collection, RoleType.Read, user, groups);
       }
       if (!canReadCollections) {
          return Collections.emptySet();
       }
 
-      var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user);
-      var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user);
+      var roles1 = getUserRolesInResource(organization, project, linkTypeCollections.get(0), user, groups);
+      var roles2 = getUserRolesInResource(organization, project, linkTypeCollections.get(1), user, groups);
       roles1.retainAll(roles2);
       return roles1;
    }
@@ -100,7 +101,7 @@ public class PermissionUtils {
 
       if (organization != null && resourceType != ResourceType.ORGANIZATION) {
          // It's necessary to have read permission in organization in order to process resource (project, collection, view, link)
-         if (organizationRoles.stream().noneMatch(role -> role.getRoleType() == RoleType.Read)) {
+         if (organizationRoles.stream().noneMatch(role -> role.getType() == RoleType.Read)) {
             return Collections.emptySet();
          }
 
@@ -112,8 +113,8 @@ public class PermissionUtils {
          final Set<Role> projectRoles = getUserRolesInResource(project, user, userGroups);
 
          // It's necessary to have read permission in project (or transitive in organization) in order to process resource (collection, view, link)
-         if (organizationRoles.stream().noneMatch(role -> role.getRoleType() == RoleType.Read && role.isTransitive())
-               && projectRoles.stream().noneMatch(role -> role.getRoleType() == RoleType.Read)) {
+         if (organizationRoles.stream().noneMatch(role -> role.getType() == RoleType.Read && role.isTransitive())
+               && projectRoles.stream().noneMatch(role -> role.getType() == RoleType.Read)) {
             return Collections.emptySet();
          }
 
@@ -121,33 +122,33 @@ public class PermissionUtils {
          actualRoles.addAll(projectTransitiveRoles);
       }
 
-      return actualRoles.stream().map(Role::getRoleType).collect(Collectors.toSet());
+      return actualRoles.stream().map(Role::getType).collect(Collectors.toSet());
    }
 
-   public static RolesDifference getOrganizationUsersDifferenceByRole(Organization organization1, Organization organization2, List<User> users, RoleType roleType) {
-      Set<String> users1 = getOrganizationUsersByRole(organization1, users, roleType);
-      Set<String> users2 = getOrganizationUsersByRole(organization2, users, roleType);
+   public static RolesDifference getOrganizationUsersDifferenceByRole(Organization organization1, Organization organization2, List<User> users, List<Group> groups, RoleType roleType) {
+      Set<String> users1 = getOrganizationUsersByRole(organization1, users, groups, roleType);
+      Set<String> users2 = getOrganizationUsersByRole(organization2, users, groups, roleType);
 
       return getUsersDifference(users1, users2);
    }
 
-   public static RolesDifference getProjectUsersDifferenceByRole(Organization organization, Project project1, Project project2, List<User> users, RoleType roleType) {
-      Set<String> users1 = getProjectUsersByRole(organization, project1, users, roleType);
-      Set<String> users2 = getProjectUsersByRole(organization, project2, users, roleType);
+   public static RolesDifference getProjectUsersDifferenceByRole(Organization organization, Project project1, Project project2, List<User> users, List<Group> groups, RoleType roleType) {
+      Set<String> users1 = getProjectUsersByRole(organization, project1, users, groups, roleType);
+      Set<String> users2 = getProjectUsersByRole(organization, project2, users, groups, roleType);
 
       return getUsersDifference(users1, users2);
    }
 
-   public static RolesDifference getResourceUsersDifferenceByRole(Organization organization, @Nullable Project project, Resource resource1, Resource resource2, List<User> users, RoleType roleType) {
-      Set<String> users1 = getResourceUsersByRole(organization, project, resource1, users, roleType);
-      Set<String> users2 = getResourceUsersByRole(organization, project, resource2, users, roleType);
+   public static RolesDifference getResourceUsersDifferenceByRole(Organization organization, @Nullable Project project, Resource resource1, Resource resource2, List<User> users, List<Group> groups, RoleType roleType) {
+      Set<String> users1 = getResourceUsersByRole(organization, project, resource1, users, groups, roleType);
+      Set<String> users2 = getResourceUsersByRole(organization, project, resource2, users, groups, roleType);
 
       return getUsersDifference(users1, users2);
    }
 
-   public static RolesDifference getLinkTypeUsersDifferenceByRole(Organization organization, @Nullable Project project, LinkType resource1, LinkType resource2, List<Collection> collections, List<User> users, RoleType roleType) {
-      Set<String> users1 = getLinkTypeUsersByRole(organization, project, resource1, collections, users, roleType);
-      Set<String> users2 = getLinkTypeUsersByRole(organization, project, resource2, collections, users, roleType);
+   public static RolesDifference getLinkTypeUsersDifferenceByRole(Organization organization, @Nullable Project project, LinkType resource1, LinkType resource2, List<Collection> collections, List<User> users, List<Group> groups, RoleType roleType) {
+      Set<String> users1 = getLinkTypeUsersByRole(organization, project, resource1, collections, users, groups, roleType);
+      Set<String> users2 = getLinkTypeUsersByRole(organization, project, resource2, collections, users, groups, roleType);
 
       return getUsersDifference(users1, users2);
    }
@@ -190,11 +191,11 @@ public class PermissionUtils {
                        .collect(toSet());
    }
 
-   public static Set<String> getUserGroups(final Organization organization, final User user) {
+   public static Set<String> getUserGroups(final Organization organization, final User user, final List<Group> groups) {
       if (organization == null || user == null || "".equals(user.getId())) {
          return Collections.emptySet();
       }
 
-      return Objects.requireNonNullElse(user.getGroups().get(organization.getId()), Collections.emptySet());
+      return groups.stream().filter(group -> group.getUsers().contains(user.getId())).map(Group::getId).collect(Collectors.toSet());
    }
 }

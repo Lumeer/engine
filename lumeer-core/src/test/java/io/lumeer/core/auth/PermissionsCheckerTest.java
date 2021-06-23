@@ -21,6 +21,7 @@ package io.lumeer.core.auth;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -60,7 +61,7 @@ public class PermissionsCheckerTest {
    public void preparePermissionsChecker() {
       User user = Mockito.mock(User.class);
       Mockito.when(user.getId()).thenReturn(USER);
-      Mockito.when(user.getGroups()).thenReturn(Collections.singletonMap("LMR", Collections.singleton(GROUP)));
+      Mockito.when(user.getOrganizations()).thenReturn(Collections.singleton("LMR"));
 
       AuthenticatedUser authenticatedUser = Mockito.mock(AuthenticatedUser.class);
       Mockito.when(authenticatedUser.getCurrentUserId()).thenReturn(USER);
@@ -82,8 +83,14 @@ public class PermissionsCheckerTest {
       LinkTypeDao linkTypeDao = Mockito.mock(LinkTypeDao.class);
       ViewDao viewDao = Mockito.mock(ViewDao.class);
       UserDao userDao = Mockito.mock(UserDao.class);
-      GroupDao groupDao = Mockito.mock(GroupDao.class);
       Mockito.when(userDao.getUserById(USER)).thenReturn(user);
+
+      GroupDao groupDao = Mockito.mock(GroupDao.class);
+      Group group = Mockito.mock(Group.class);
+      Mockito.when(group.getId()).thenReturn(GROUP);
+      Mockito.when(group.getUsers()).thenReturn(Collections.singleton(USER));
+      Mockito.when(groupDao.getAllGroups()).thenReturn(Collections.singletonList(group));
+
       FavoriteItemDao favoriteItemDao = Mockito.mock(FavoriteItemDao.class);
       DocumentDao documentDao = Mockito.mock(DocumentDao.class);
 

@@ -31,14 +31,6 @@ public interface UserDao {
 
    void deleteUser(String userId);
 
-   void deleteUserGroups(String organizationId, String userId);
-
-   void deleteUsersGroups(String organizationId);
-
-   void addGroupToUsers(String organizationId, String group, Set<String> userIds);
-
-   void deleteGroupFromUsers(String organizationId, String group);
-
    User getUserByEmail(String email);
 
    List<User> getUsersByEmails(Set<String> email);

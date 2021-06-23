@@ -57,7 +57,7 @@ public class RoleCodec implements Codec<Role> {
 
    @Override
    public void encode(final BsonWriter writer, final Role value, final EncoderContext encoderContext) {
-      Document document = new Document(TYPE, value.getRoleType())
+      Document document = new Document(TYPE, value.getType())
             .append(TRANSITIVE, value.isTransitive());
 
       documentCodec.encode(writer, document, encoderContext);

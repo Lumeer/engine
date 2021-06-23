@@ -23,7 +23,6 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.User;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.UserCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
@@ -34,11 +33,7 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
-import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -54,7 +49,6 @@ import javax.enterprise.context.ApplicationScoped;
 public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
 
    private static final String COLLECTION_NAME = "users";
-   private static final String ELEMENT_NAME = "group";
 
    @PostConstruct
    public void checkRepository() {
@@ -105,55 +99,6 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
       if (result.getDeletedCount() != 1) {
          throw new StorageException("User '" + id + "' has not been deleted.");
       }
-   }
-
-   @Override
-   public void deleteUserGroups(final String organizationId, final String userId) {
-      Bson pullUser = Updates.pull(UserCodec.ALL_GROUPS, Filters.eq(UserCodec.ORGANIZATION_ID, organizationId));
-      try {
-         UpdateResult result = databaseCollection().updateOne(idFilter(userId), pullUser);
-         if (result.getModifiedCount() != 1) {
-            throw new StorageException("User '" + userId + "' has not been deleted.");
-         }
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot remove organization " + organizationId + "from user " + userId, ex);
-      }
-   }
-
-   @Override
-   public void deleteUsersGroups(final String organizationId) {
-      Bson pullUser = Updates.pull(UserCodec.ALL_GROUPS, Filters.eq(UserCodec.ORGANIZATION_ID, organizationId));
-      try {
-         databaseCollection().updateMany(new BsonDocument(), pullUser);
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot remove organization " + organizationId + " from users", ex);
-      }
-   }
-
-   @Override
-   public void addGroupToUsers(final String organizationId, final String group, final Set<String> userIds) {
-      String key = MongoUtils.concatParams(UserCodec.ALL_GROUPS, "$[" + ELEMENT_NAME + "]", UserCodec.GROUPS);
-      Bson pushGroup = Updates.push(key, group);
-      UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters(organizationId));
-
-      Bson filter = MongoFilters.idsFilter(userIds);
-      if (filter != null) {
-         databaseCollection().updateMany(filter, pushGroup, options);
-      }
-   }
-
-   @Override
-   public void deleteGroupFromUsers(final String organizationId, final String group) {
-      String key = MongoUtils.concatParams(UserCodec.ALL_GROUPS, "$[" + ELEMENT_NAME + "]", UserCodec.GROUPS);
-      Bson pullGroup = Updates.pull(key, group);
-      UpdateOptions options = new UpdateOptions().arrayFilters(arrayFilters(organizationId));
-
-      databaseCollection().updateMany(new BsonDocument(), pullGroup, options);
-   }
-
-   private List<Bson> arrayFilters(final String organizationId) {
-      Bson filter = Filters.eq(MongoUtils.concatParams(ELEMENT_NAME, UserCodec.ORGANIZATION_ID), organizationId);
-      return Collections.singletonList(filter);
    }
 
    @Override
@@ -212,7 +157,7 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
    }
 
    private Bson organizationIdFilter(final String organizationId) {
-      return Filters.elemMatch(UserCodec.ALL_GROUPS, Filters.eq(UserCodec.ORGANIZATION_ID, organizationId));
+      return Filters.in(UserCodec.ORGANIZATIONS, organizationId);
    }
 
    String databaseCollectionName() {

@@ -34,6 +34,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -73,6 +74,9 @@ public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String STRANGER_USER = "stranger@nowhere.com";
@@ -146,8 +150,8 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       this.organization = organizationDao.createOrganization(organization);
 
       groupDao.setOrganization(this.organization);
-      group = this.groupDao.createGroup(new Group(GROUP));
-      user.setGroups(Collections.singletonMap(this.organization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(this.organization.getId()));
       user = userDao.updateUser(user.getId(), user);
       groupPermissions = Permission.buildWithRoles(group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
@@ -156,6 +160,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       workspaceKeeper.setOrganizationId(this.organization.getId());
 
       PermissionCheckerUtil.allowGroups();
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    @Test

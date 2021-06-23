@@ -37,6 +37,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoDocumentPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
@@ -127,6 +128,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    private Collection collection;
    private Collection taskCollection;
 
@@ -142,8 +146,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group(GROUP));
-      user.setGroups(Collections.singletonMap(storedOrganization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       this.user = userDao.updateUser(user.getId(), user);
 
       Permissions organizationPermissions = new Permissions();
@@ -178,6 +182,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       taskCollection.setLastAttributeNum(0);
       taskCollection.setAttributes(Collections.singleton(new Attribute(KEY1)));
       this.taskCollection = collectionDao.createCollection(taskCollection);
+
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    private Document prepareDocument() {

@@ -31,7 +31,11 @@ public interface GroupDao extends OrganizationScopedDao {
 
    void deleteGroup(String id);
 
+   void deleteUserFromGroups(String userId);
+
    List<Group> getAllGroups();
+
+   List<Group> getAllGroups(String organizationId);
 
    Group getGroup(String id);
 }

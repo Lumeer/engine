@@ -31,6 +31,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -41,10 +42,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -81,6 +78,9 @@ public class GroupFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    @Before
    public void configure() {
       User user = new User(USER);
@@ -97,6 +97,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       groupDao.setOrganization(organization);
 
       PermissionCheckerUtil.allowGroups();
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    @Test
@@ -168,39 +169,6 @@ public class GroupFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testDeleteGroupWithUsers() {
-      String id1 = groupFacade.createGroup(new Group(GROUP1)).getId();
-      String id2 = groupFacade.createGroup(new Group(GROUP2)).getId();
-      String id3 = groupFacade.createGroup(new Group(GROUP3)).getId();
-
-      userDao.createUser(prepareUser(USER1, new HashSet<>(Arrays.asList(id1, id2, id3))));
-      userDao.createUser(prepareUser(USER2, new HashSet<>(Arrays.asList(id1, id2))));
-      userDao.createUser(prepareUser(USER3, new HashSet<>(Arrays.asList(id2, id3))));
-
-      assertThat(getUser(organization.getId(), USER1).getGroups().get(organization.getId())).containsOnly(id1, id2, id3);
-      assertThat(getUser(organization.getId(), USER2).getGroups().get(organization.getId())).containsOnly(id1, id2);
-      assertThat(getUser(organization.getId(), USER3).getGroups().get(organization.getId())).containsOnly(id2, id3);
-
-      groupFacade.deleteGroup(id1);
-
-      assertThat(getUser(organization.getId(), USER1).getGroups().get(organization.getId())).containsOnly(id2, id3);
-      assertThat(getUser(organization.getId(), USER2).getGroups().get(organization.getId())).containsOnly(id2);
-      assertThat(getUser(organization.getId(), USER3).getGroups().get(organization.getId())).containsOnly(id2, id3);
-
-      groupFacade.deleteGroup(id2);
-
-      assertThat(getUser(organization.getId(), USER1).getGroups().get(organization.getId())).containsOnly(id3);
-      assertThat(getUser(organization.getId(), USER2).getGroups().get(organization.getId())).isEmpty();
-      assertThat(getUser(organization.getId(), USER3).getGroups().get(organization.getId())).containsOnly(id3);
-
-      groupFacade.deleteGroup(id3);
-
-      assertThat(getUser(organization.getId(), USER1).getGroups().get(organization.getId())).isEmpty();
-      assertThat(getUser(organization.getId(), USER2).getGroups().get(organization.getId())).isEmpty();
-      assertThat(getUser(organization.getId(), USER3).getGroups().get(organization.getId())).isEmpty();
-   }
-
-   @Test
    public void testDeleteGroupNoPermission() {
       String id = groupFacade.createGroup(new Group(GROUP1)).getId();
 
@@ -229,18 +197,6 @@ public class GroupFacadeIT extends IntegrationTestBase {
    private Group getGroup(String group) {
       Optional<Group> groupOptional = groupDao.getAllGroups().stream().filter(g -> g.getName().equals(group)).findFirst();
       return groupOptional.orElse(null);
-   }
-
-   private User getUser(String organizationId, String user) {
-      Optional<User> userOptional = userDao.getAllUsers(organizationId).stream().filter(u -> u.getEmail().equals(user)).findFirst();
-      return userOptional.orElse(null);
-   }
-
-   private User prepareUser(String user, Set<String> groups) {
-      User u = new User(user);
-      u.setName(user);
-      u.setGroups(Collections.singletonMap(organization.getId(), groups));
-      return u;
    }
 
    private void setOrganizationWithoutPermissions() {

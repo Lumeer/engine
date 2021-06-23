@@ -31,9 +31,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -44,7 +43,7 @@ public class User implements HealthChecking {
    public static final String ID = "id";
    public static final String NAME = "name";
    public static final String EMAIL = "email";
-   public static final String GROUPS = "groups";
+   public static final String ORGANIZATIONS = "organizations";
    public static final String WISHES = "wishes";
    public static final String AGREEMENT = "agreement";
    public static final String AGREEMENT_DATE = "agreementDate";
@@ -69,7 +68,7 @@ public class User implements HealthChecking {
    private Set<String> authIds;
 
    @JsonView(UserViews.DefaultView.class)
-   private Map<String, Set<String>> groups;
+   private Set<String> organizations;
 
    @JsonView(UserViews.FullView.class)
    private DefaultWorkspace defaultWorkspace;
@@ -114,21 +113,21 @@ public class User implements HealthChecking {
 
    public User(final String email) {
       this.email = email;
-      this.groups = new HashMap<>();
+      this.organizations = new HashSet<>();
    }
 
-   public User(final String id, final String name, final String email, final Map<String, Set<String>> groups){
+   public User(final String id, final String name, final String email, final Set<String> organizations){
       this.id = id;
       this.name = name;
       this.email = email;
-      this.groups = groups;
+      this.organizations = organizations;
    }
 
    @JsonCreator
    public User(@JsonProperty(ID) final String id,
          @JsonProperty(NAME) final String name,
          @JsonProperty(EMAIL) final String email,
-         @JsonProperty(GROUPS) final Map<String, Set<String>> groups,
+         @JsonProperty(ORGANIZATIONS) final Set<String> organizations,
          @JsonProperty(WISHES) final List<String> wishes,
          @JsonProperty(AGREEMENT) final Boolean agreement,
          @JsonProperty(AGREEMENT_DATE) final ZonedDateTime agreementDate,
@@ -140,7 +139,7 @@ public class User implements HealthChecking {
       this.id = id;
       this.name = name;
       this.email = email;
-      this.groups = groups;
+      this.organizations = organizations;
       this.wishes = wishes;
       this.agreement = agreement;
       this.agreementDate = agreementDate;
@@ -183,12 +182,12 @@ public class User implements HealthChecking {
       this.authIds = authIds;
    }
 
-   public Map<String, Set<String>> getGroups() {
-      return groups;
+   public Set<String> getOrganizations() {
+      return organizations;
    }
 
-   public void setGroups(final Map<String, Set<String>> groups) {
-      this.groups = groups;
+   public void setOrganizations(final Set<String> organizations) {
+      this.organizations = organizations;
    }
 
    public DefaultWorkspace getDefaultWorkspace() {
@@ -300,7 +299,7 @@ public class User implements HealthChecking {
             ", name='" + name + '\'' +
             ", email='" + email + '\'' +
             ", authIds=" + authIds +
-            ", groups=" + groups +
+            ", organizations=" + organizations +
             ", defaultWorkspace=" + defaultWorkspace +
             ", agreement=" + agreement +
             ", agreementDate=" + agreementDate +

@@ -37,9 +37,12 @@ import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 
+import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +67,7 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    }
 
    @Override
-   public Group createGroup( final Group group) {
+   public Group createGroup(final Group group) {
       try {
          databaseCollection().insertOne(group);
          return group;
@@ -96,8 +99,23 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    }
 
    @Override
+   public void deleteUserFromGroups(final String userId) {
+      Bson pullUser = Updates.pull(GroupCodec.USERS, userId);
+      try {
+         databaseCollection().updateMany(new BsonDocument(), pullUser);
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot remove user " + userId + " from groups", ex);
+      }
+   }
+
+   @Override
    public List<Group> getAllGroups() {
       return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
+   public List<Group> getAllGroups(final String organizationId) {
+      return database.getCollection(databaseCollectionName(organizationId), Group.class).find().into(new ArrayList<>());
    }
 
    @Override
@@ -121,6 +139,10 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    }
 
    private String databaseCollectionName(Organization organization) {
-      return PREFIX + organization.getId();
+      return databaseCollectionName(organization.getId());
+   }
+
+   private String databaseCollectionName(String organizationId) {
+      return PREFIX + organizationId;
    }
 }

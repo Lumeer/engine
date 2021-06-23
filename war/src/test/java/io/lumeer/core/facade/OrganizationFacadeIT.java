@@ -127,8 +127,8 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group(GROUP));
-      user.setGroups(Collections.singletonMap(storedOrganization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       user = userDao.updateUser(user.getId(), user);
 
       groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(roleType)));
@@ -191,7 +191,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
       assertPermissions(storedOrganization.getPermissions().getGroupPermissions(), groupPermission);
 
-      userDao.deleteGroupFromUsers(storedOrganization.getId(), group.getId());
+      groupDao.deleteGroup(group.getId());
       permissionsChecker.getPermissionAdapter().invalidateUserCache();
 
       assertThatThrownBy(() -> organizationFacade.getOrganizationById(organizationId))

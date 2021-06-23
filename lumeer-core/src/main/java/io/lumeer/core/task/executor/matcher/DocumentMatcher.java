@@ -105,8 +105,8 @@ public class DocumentMatcher {
    }
 
    private void initializePermissions() {
-      Set<RoleType> thisCollectionRoles = PermissionUtils.getUserRolesInResource(this.organization, this.project, this.thisCollection, this.ruleTask.getInitiator());
-      Set<RoleType> thatCollectionRoles = PermissionUtils.getUserRolesInResource(this.organization, this.project, this.thatCollection, this.ruleTask.getInitiator());
+      Set<RoleType> thisCollectionRoles = PermissionUtils.getUserRolesInResource(this.organization, this.project, this.thisCollection, this.ruleTask.getInitiator(), this.ruleTask.getGroups());
+      Set<RoleType> thatCollectionRoles = PermissionUtils.getUserRolesInResource(this.organization, this.project, this.thatCollection, this.ruleTask.getInitiator(), this.ruleTask.getGroups());
 
       AllowedPermissions thisCollectionPermissions = new AllowedPermissions(thisCollectionRoles);
       AllowedPermissions thatCollectionPermissions = new AllowedPermissions(thatCollectionRoles);

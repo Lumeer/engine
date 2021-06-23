@@ -93,7 +93,6 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
       assertThat(storedUser.getId()).isEqualTo(returnedUser.getId());
       assertThat(storedUser.getName()).isEqualTo(USER1);
       assertThat(storedUser.getEmail()).isEqualTo(USER1);
-      assertThat(storedUser.getGroups().get(organizationId1)).isEqualTo(GROUPS);
 
    }
 
@@ -169,7 +168,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
    private User prepareUser(String organizationId, String user) {
       User u = new User(user);
       u.setName(user);
-      u.setGroups(Collections.singletonMap(organizationId, GROUPS));
+      u.setOrganizations(Set.of(organizationId));
       return u;
    }
 

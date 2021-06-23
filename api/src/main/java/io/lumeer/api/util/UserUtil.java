@@ -21,8 +21,7 @@ package io.lumeer.api.util;
 
 import io.lumeer.api.model.User;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Set;
 
 public class UserUtil {
@@ -34,7 +33,7 @@ public class UserUtil {
       user.setName(updatedUser.getName() != null ? updatedUser.getName() : existingUser.getName());
       user.setEmail(updatedUser.getEmail() != null ? updatedUser.getEmail() : existingUser.getEmail());
       user.setAuthIds(updatedUser.getAuthIds() != null ? updatedUser.getAuthIds() : existingUser.getAuthIds());
-      user.setGroups(UserUtil.mergeUserGroups(existingUser.getGroups(), updatedUser.getGroups()));
+      user.setOrganizations(UserUtil.mergeOrganizations(existingUser.getOrganizations(), updatedUser.getOrganizations()));
       user.setDefaultWorkspace(updatedUser.getDefaultWorkspace() != null ? updatedUser.getDefaultWorkspace() : existingUser.getDefaultWorkspace());
       user.setAgreement(updatedUser.hasAgreement() != null ? updatedUser.hasAgreement() : existingUser.hasAgreement());
       user.setAgreementDate(updatedUser.getAgreementDate() != null ? updatedUser.getAgreementDate() : existingUser.getAgreementDate());
@@ -47,7 +46,7 @@ public class UserUtil {
       return user;
    }
 
-   public static Map<String, Set<String>> mergeUserGroups(final Map<String, Set<String>> existingGroups, final Map<String, Set<String>> newGroups) {
+   public static Set<String> mergeOrganizations(final Set<String> existingGroups, final Set<String> newGroups) {
       if (existingGroups == null) {
          return newGroups;
       }
@@ -56,9 +55,9 @@ public class UserUtil {
          return existingGroups;
       }
 
-      final var groups = new HashMap<String, Set<String>>();
-      groups.putAll(existingGroups);
-      groups.putAll(newGroups);
+      final var groups = new HashSet<String>();
+      groups.addAll(existingGroups);
+      groups.addAll(newGroups);
       return groups;
    }
 

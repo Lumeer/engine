@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -39,10 +38,8 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -252,18 +249,11 @@ public class OrganizationFacade extends AbstractFacade {
    private void createOrganizationInUser(final String organizationId) {
       User currentUser = authenticatedUser.getCurrentUser();
 
-      Map<String, Set<String>> groups = currentUser.getGroups() != null ? new HashMap<>(currentUser.getGroups()) : new HashMap<>();
-      groups.put(organizationId, new HashSet<>());
-      currentUser.setGroups(groups);
+      Set<String> groups = currentUser.getOrganizations() != null ? new HashSet<>(currentUser.getOrganizations()) : new HashSet<>();
+      groups.add(organizationId);
+      currentUser.setOrganizations(groups);
 
       userDao.updateUser(currentUser.getId(), currentUser);
-   }
-
-   public void addUsersToGroup(final String organizationId, final String groupId, final Set<String> userIds) {
-      checkRoleAndGetOrganization(organizationId, RoleType.UserConfig);
-
-      Group group = groupDao.getGroup(groupId);
-      userDao.addGroupToUsers(organizationId, group.getId(), userIds);
    }
 
    private void createOrganizationScopedRepositories(Organization organization) {
@@ -281,7 +271,6 @@ public class OrganizationFacade extends AbstractFacade {
       paymentDao.deleteRepository(organization);
       favoriteItemDao.deleteRepository(organization);
 
-      userDao.deleteUsersGroups(organization.getId());
       userCache.clear();
 
       delayedActionDao.deleteAllScheduledActions(organization.getId());

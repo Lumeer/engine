@@ -121,8 +121,8 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
-      group = groupDao.createGroup(new Group(GROUP));
-      user.setGroups(Collections.singletonMap(this.organization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(this.organization.getId()));
       user = userDao.updateUser(user.getId(), user);
 
       Permissions organizationPermissions = new Permissions();
@@ -159,6 +159,8 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       collectionIdNoPerm = collectionDao.createCollection(collection).getId();
 
       PermissionCheckerUtil.allowGroups();
+
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    @Test

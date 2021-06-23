@@ -10,23 +10,23 @@ public class Role {
    private static final String TYPE = "type";
    private static final String TRANSITIVE = "transitive";
 
-   private final RoleType roleType;
+   private final RoleType type;
    private final boolean transitive;
 
    @JsonCreator
-   public Role(@JsonProperty(TYPE) final RoleType roleType,
+   public Role(@JsonProperty(TYPE) final RoleType type,
          @JsonProperty(TRANSITIVE) final Boolean transitive) {
-      this.roleType = roleType;
+      this.type = type;
       this.transitive = transitive;
    }
 
-   public Role(final RoleType roleType) {
-      this.roleType = roleType;
+   public Role(final RoleType type) {
+      this.type = type;
       this.transitive = false;
    }
 
-   public RoleType getRoleType() {
-      return roleType;
+   public RoleType getType() {
+      return type;
    }
 
    public boolean isTransitive() {
@@ -42,18 +42,18 @@ public class Role {
          return false;
       }
       final Role role = (Role) o;
-      return transitive == role.transitive && roleType == role.roleType;
+      return transitive == role.transitive && type == role.type;
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(roleType, transitive);
+      return Objects.hash(type, transitive);
    }
 
    @Override
    public String toString() {
       return "Role{" +
-            "roleType=" + roleType +
+            "type=" + type +
             ", transitive=" + transitive +
             '}';
    }

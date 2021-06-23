@@ -32,10 +32,19 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class GroupCodec implements CollectibleCodec<Group> {
 
    public static final String ID = "_id";
    public static final String NAME = "name";
+   public static final String ICON = "icon";
+   public static final String COLOR = "color";
+   public static final String DESCRIPTION = "description";
+   public static final String USERS = "users";
 
    private final Codec<Document> documentCodec;
 
@@ -71,14 +80,23 @@ public class GroupCodec implements CollectibleCodec<Group> {
 
       String id = bson.getObjectId(ID).toHexString();
       String name = bson.getString(NAME);
+      String description = bson.getString(DESCRIPTION);
+      String icon = bson.getString(ICON);
+      String color = bson.getString(COLOR);
+      List<String> usersList = bson.getList(USERS, String.class);
+      Set<String> users = usersList != null ? new HashSet<>(usersList) : Collections.emptySet();
 
-      return new Group(id, name);
+      return new Group(id, name, description, icon, color, users);
    }
 
    @Override
    public void encode(final BsonWriter bsonWriter, final Group group, final EncoderContext encoderContext) {
       Document bson = group.getId() != null ? new Document(ID, new ObjectId(group.getId())) : new Document();
-      bson.append(NAME, group.getName());
+      bson.append(NAME, group.getName())
+          .append(DESCRIPTION, group.getDescription())
+          .append(ICON, group.getIcon())
+          .append(COLOR, group.getColor())
+          .append(USERS, group.getUsers());
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }

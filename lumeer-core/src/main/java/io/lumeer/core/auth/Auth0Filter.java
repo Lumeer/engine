@@ -316,7 +316,7 @@ public class Auth0Filter implements Filter {
 
          if (authUserInfo.user == null) {
             final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
-            newAuthUserInfo.user = new User(userId, userId, userId, Collections.emptyMap());
+            newAuthUserInfo.user = new User(userId, userId, userId, Collections.emptySet());
             newAuthUserInfo.user.setAuthIds(Set.of("TEST:" + userId));
             newAuthUserInfo.user.setEmailVerified(true);
             newAuthUserInfo.accessToken = userId;

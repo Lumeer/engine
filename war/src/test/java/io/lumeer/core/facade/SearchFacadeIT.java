@@ -44,6 +44,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.IntegrationTestBase;
@@ -68,7 +69,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -131,6 +131,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    private ConstraintManager constraintManager;
 
    @Before
@@ -171,19 +174,16 @@ public class SearchFacadeIT extends IntegrationTestBase {
       for (String name : COLLECTION_CODES) {
          collectionIds.add(createCollection(name).getId());
       }
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    private User createUser(String email, String organizationId) {
-      var groupsMap = new HashMap<String, Set<String>>();
-      groupsMap.put(organizationId, Collections.emptySet());
-      User user = new User(null, email, email, groupsMap);
+      User user = new User(null, email, email, Collections.singleton(organizationId));
       return userDao.createUser(user);
    }
 
    private User updateOrganizationInUser(String userId, String email, String organizationId) {
-      var groupsMap = new HashMap<String, Set<String>>();
-      groupsMap.put(organizationId, Collections.emptySet());
-      User user = new User(userId, email, email, groupsMap);
+      User user = new User(userId, email, email, Collections.singleton(organizationId));
       return userDao.updateUser(userId, user);
    }
 

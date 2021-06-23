@@ -23,7 +23,6 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.dao.GroupDao;
-import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.List;
@@ -35,9 +34,6 @@ public class GroupFacade extends AbstractFacade {
 
    @Inject
    private GroupDao groupDao;
-
-   @Inject
-   private UserDao userDao;
 
    public Group createGroup(Group group) {
       checkPermissions();
@@ -57,24 +53,12 @@ public class GroupFacade extends AbstractFacade {
       checkPermissions();
 
       groupDao.deleteGroup(groupId);
-      deleteGroupFromUsers(groupId);
    }
 
    public List<Group> getGroups() {
       checkPermissions();
 
       return groupDao.getAllGroups();
-   }
-
-   private void deleteGroupFromUsers(String groupId) {
-      if (workspaceKeeper.getOrganization().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-
-      Organization organization = workspaceKeeper.getOrganization().get();
-      userDao.deleteGroupFromUsers(organization.getId(), groupId);
-
-      userCache.clear();
    }
 
    private void checkPermissions() {

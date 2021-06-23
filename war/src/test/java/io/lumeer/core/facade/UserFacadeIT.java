@@ -31,6 +31,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
@@ -50,7 +51,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -67,8 +67,6 @@ public class UserFacadeIT extends IntegrationTestBase {
    private static final String USER4 = "user4@gmail.com";
 
    private static final String USER1_NAME = "User 1";
-
-   private static final Set<String> GROUPS = new HashSet<>(Arrays.asList("group1", "group2", "group3"));
 
    private Organization organization;
    private String organizationId1;
@@ -92,6 +90,9 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    @Inject
    private FeedbackDao feedbackDao;
+
+   @Inject
+   private PermissionsChecker permissionsChecker;
 
    @Before
    public void configure() {
@@ -122,6 +123,8 @@ public class UserFacadeIT extends IntegrationTestBase {
       project.setPermissions(new Permissions());
       project.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
       this.project = projectDao.createProject(project);
+
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    @Test
@@ -133,7 +136,7 @@ public class UserFacadeIT extends IntegrationTestBase {
       assertThat(stored).isNotNull();
       assertThat(stored.getName()).isEqualTo(USER1);
       assertThat(stored.getEmail()).isEqualTo(USER1);
-      assertThat(stored.getGroups().get(organizationId1)).isEqualTo(GROUPS);
+      assertThat(stored.getOrganizations()).containsOnly(organizationId1);
    }
 
    @Test
@@ -147,7 +150,7 @@ public class UserFacadeIT extends IntegrationTestBase {
          assertThat(stored).isNotNull();
          assertThat(stored.getName()).isEqualTo(user);
          assertThat(stored.getEmail()).isEqualTo(user);
-         assertThat(stored.getGroups().get(organizationId1)).isEqualTo(GROUPS);
+         assertThat(stored.getOrganizations()).containsOnly(organizationId1);
       });
 
       var organization = organizationDao.getOrganizationById(organizationId1);
@@ -180,27 +183,27 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateExistingUserInNewOrganization() {
-      final var user = new User(null, USER1_NAME, USER1, Collections.singletonMap(organizationId1, GROUPS));
+      final var user = new User(null, USER1_NAME, USER1, Collections.singleton(organizationId1));
       final var createdUser = userFacade.createUser(organizationId1, user);
       assertThat(createdUser).isNotNull();
       assertThat(createdUser.getId()).isNotNull();
 
-      final var updatedUser = new User(null, null, USER1, Collections.singletonMap(organizationId2, GROUPS));
+      final var updatedUser = new User(null, null, USER1, Collections.singleton(organizationId2));
       final var returnedUser = userFacade.createUser(organizationId2, updatedUser);
       assertThat(returnedUser).isNotNull();
       assertThat(returnedUser.getId()).isEqualTo(createdUser.getId());
       assertThat(returnedUser.getName()).isEqualTo(USER1_NAME);
       assertThat(returnedUser.getEmail()).isEqualTo(USER1);
-      assertThat(returnedUser.getGroups()).containsEntry(organizationId2, GROUPS);
-      assertThat(returnedUser.getGroups()).doesNotContainKey(organizationId1);
+      assertThat(returnedUser.getOrganizations()).containsOnly(organizationId2);
+      assertThat(returnedUser.getOrganizations()).doesNotContain(organizationId1);
 
       final var storedUser = userDao.getUserById(createdUser.getId());
       assertThat(storedUser).isNotNull();
       assertThat(storedUser.getId()).isEqualTo(createdUser.getId());
       assertThat(storedUser.getName()).isEqualTo(USER1_NAME);
       assertThat(storedUser.getEmail()).isEqualTo(USER1);
-      assertThat(storedUser.getGroups()).containsEntry(organizationId1, GROUPS);
-      assertThat(storedUser.getGroups()).containsEntry(organizationId2, GROUPS);
+      assertThat(storedUser.getOrganizations()).contains(organizationId1);
+      assertThat(storedUser.getOrganizations()).contains(organizationId2);
 
    }
 
@@ -234,22 +237,6 @@ public class UserFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testUpdateGroups() {
-      String userId = createUser(organizationId1, USER1).getId();
-
-      Set<String> newGroups = new HashSet<>(Arrays.asList("g1", "g2"));
-      User toUpdate = prepareUser(organizationId1, USER1);
-      toUpdate.setGroups(Collections.singletonMap(organizationId1, newGroups));
-
-      userFacade.updateUser(organizationId1, userId, toUpdate);
-
-      User stored = getUser(organizationId1, USER1);
-      assertThat(stored).isNotNull();
-      assertThat(stored.getName()).isEqualTo(USER1);
-      assertThat(stored.getGroups().get(organizationId1)).isEqualTo(newGroups);
-   }
-
-   @Test
    public void testUpdateUserNotPermission() {
       String userId = createUser(organizationId1, USER1).getId();
 
@@ -263,22 +250,6 @@ public class UserFacadeIT extends IntegrationTestBase {
 
       assertThatThrownBy(() -> userFacade.updateUser(organizationId2, userId, prepareUser(organizationId1, USER3)))
             .isInstanceOf(BadFormatException.class);
-   }
-
-   @Test
-   public void testDeleteUserGroups() {
-      String id = userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1)).getId();
-      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER2));
-      userFacade.createUser(organizationId2, prepareUser(organizationId2, USER1));
-      userFacade.createUser(organizationId2, prepareUser(organizationId2, USER3));
-
-      assertThat(userDao.getUserByEmail(USER1).getGroups()).containsOnlyKeys(organizationId1, organizationId2);
-
-      userFacade.deleteUser(organizationId1, id);
-      assertThat(userDao.getUserByEmail(USER1).getGroups()).containsOnlyKeys(organizationId2);
-
-      userFacade.deleteUser(organizationId2, id);
-      assertThat(userDao.getUserByEmail(USER1).getGroups()).isEmpty();
    }
 
    @Test
@@ -413,7 +384,7 @@ public class UserFacadeIT extends IntegrationTestBase {
    private User prepareUser(String organizationId, String user) {
       User u = new User(user);
       u.setName(user);
-      u.setGroups(Collections.singletonMap(organizationId, GROUPS));
+      u.setOrganizations(Collections.singleton(organizationId));
       return u;
    }
 }

@@ -20,6 +20,7 @@ package io.lumeer.core.task;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
@@ -135,6 +136,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public User getInitiator() {
       return initiator;
+   }
+
+   @Override
+   public List<Group> getGroups() {
+      return permissionAdapter.getGroups(daoContextSnapshot.getOrganizationId());
    }
 
    @Override

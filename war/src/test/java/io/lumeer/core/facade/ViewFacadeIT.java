@@ -129,8 +129,8 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group(GROUP));
-      user.setGroups(Collections.singletonMap(storedOrganization.getId(), Set.of(group.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      user.setOrganizations(Collections.singleton(this.organization.getId()));
       this.user = userDao.updateUser(user.getId(), user);
 
       Permissions organizationPermissions = new Permissions();
@@ -163,6 +163,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       query = new Query(new QueryStem(collection.getId()));
 
       PermissionCheckerUtil.allowGroups();
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    private View prepareView(String code) {

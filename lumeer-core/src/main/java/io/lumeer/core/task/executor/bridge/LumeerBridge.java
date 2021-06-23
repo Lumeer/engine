@@ -246,7 +246,7 @@ public class LumeerBridge {
          final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
          final Language language = Language.fromString(task.getCurrentLocale());
 
-         final Set<RoleType> roles = PermissionUtils.getUserRolesInResource(task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(), view, task.getInitiator());
+         final Set<RoleType> roles = PermissionUtils.getUserRolesInResource(task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(), view, task.getInitiator(), task.getGroups());
          final AllowedPermissions permissions = new AllowedPermissions(roles);
 
          final List<Document> documents = DocumentUtils.getDocuments(task.getDaoContextSnapshot(), query, task.getInitiator(), language, permissions, task.getTimeZone());
@@ -646,7 +646,7 @@ public class LumeerBridge {
             final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
             if (view != null) {
                // can the initiator share the view?
-               if (PermissionUtils.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, RoleType.UserConfig, task.getInitiator())) {
+               if (PermissionUtils.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, RoleType.UserConfig, task.getInitiator(), task.getGroups())) {
                   final User newUser = task.getDaoContextSnapshot().getUserDao().getUserByEmail(userEmail);
                      final Set<RoleType> userRoles = StringUtils.isNotEmpty(roles) && !"none".equals(roles) ? Arrays.stream(roles.split(",")).map(RoleType::fromString).collect(toSet()) : Set.of();
 

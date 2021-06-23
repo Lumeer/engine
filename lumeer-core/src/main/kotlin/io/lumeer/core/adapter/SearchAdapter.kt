@@ -128,7 +128,7 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return permissionAdapter.hasRoleInCollectionWithView(organization, project, collection, RoleType.DataContribute, userId)
    }
 
-   fun getLinkInstances(organization: Organization?, project: Project?, linkType: LinkType, documentIds: Set<String>, userId: String): List<LinkInstance> {
+   fun getLinkInstances(organization: Organization, project: Project?, linkType: LinkType, documentIds: Set<String>, userId: String): List<LinkInstance> {
       val linkInstances = mutableListOf<LinkInstance>()
       if (canReadAllLinkInstances(organization, project, linkType, userId)) {
          return getAllLinkInstances(linkType, documentIds)
@@ -149,11 +149,11 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return mapLinkData(linkType, documents)
    }
 
-   fun getLinkInstances(organization: Organization?, project: Project?, linkType: LinkType, userId: String): List<LinkInstance> {
+   fun getLinkInstances(organization: Organization, project: Project?, linkType: LinkType, userId: String): List<LinkInstance> {
       return getLinkInstances(organization, project, linkType, null, null, userId)
    }
 
-   fun getLinkInstances(organization: Organization?, project: Project?, linkType: LinkType, skip: Int?, limit: Int?, userId: String): List<LinkInstance> {
+   fun getLinkInstances(organization: Organization, project: Project?, linkType: LinkType, skip: Int?, limit: Int?, userId: String): List<LinkInstance> {
       val linkInstances = mutableListOf<LinkInstance>()
       if (canReadAllLinkInstances(organization, project, linkType, userId)) {
          return getAllLinkInstances(linkType, skip, limit)
@@ -187,11 +187,11 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return linkInstances
    }
 
-   private fun canReadAllLinkInstances(organization: Organization?, project: Project?, linkType: LinkType, userId: String): Boolean {
+   private fun canReadAllLinkInstances(organization: Organization, project: Project?, linkType: LinkType, userId: String): Boolean {
       return permissionAdapter.hasRoleInLinkTypeWithView(organization, project, linkType, RoleType.DataRead, userId)
    }
 
-   private fun canReadContributionLinkInstances(organization: Organization?, project: Project?, linkType: LinkType, userId: String): Boolean {
+   private fun canReadContributionLinkInstances(organization: Organization, project: Project?, linkType: LinkType, userId: String): Boolean {
       return permissionAdapter.hasRoleInLinkTypeWithView(organization, project, linkType, RoleType.DataContribute, userId)
    }
 

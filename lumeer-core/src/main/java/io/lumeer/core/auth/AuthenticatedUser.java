@@ -173,12 +173,12 @@ public class AuthenticatedUser implements Serializable {
    }
 
    private void createDemoWorkspaceIfNeeded(User user) {
-      if (user.getGroups() != null && !user.getGroups().isEmpty()) {
+      if (user.getOrganizations() != null && !user.getOrganizations().isEmpty()) {
          return;
       }
 
       Organization organization = createDemoOrganization(user);
-      user.setGroups(Collections.singletonMap(organization.getId(), new HashSet<>()));
+      user.setOrganizations(Collections.singleton(organization.getId()));
 
       ((WorkspaceKeeper) selectedWorkspace).setOrganizationId(organization.getId());
 
@@ -302,6 +302,6 @@ public class AuthenticatedUser implements Serializable {
    }
 
    public static User getMachineUser() {
-      return new User("", DEFAULT_USER_FULL_NAME, DEFAULT_EMAIL, Map.of());
+      return new User("", DEFAULT_USER_FULL_NAME, DEFAULT_EMAIL, Set.of());
    }
 }
