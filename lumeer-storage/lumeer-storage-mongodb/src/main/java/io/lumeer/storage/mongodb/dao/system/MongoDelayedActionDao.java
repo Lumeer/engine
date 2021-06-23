@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -120,6 +121,7 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
    public List<DelayedAction> getActionsForProcessing(final boolean skipDelay) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       final List<DelayedAction> result = new ArrayList<>();
+      final String signature = UUID.randomUUID().toString(); // generate unique signature
 
       DelayedAction action;
       do {
@@ -127,9 +129,17 @@ public class MongoDelayedActionDao extends MongoSystemScopedDao implements Delay
                Filters.and(
                      Filters.not(Filters.exists(DelayedAction.STARTED_PROCESSING)),
                      Filters.lt(DelayedAction.CHECK_AFTER, Date.from((skipDelay ? ZonedDateTime.now() : ZonedDateTime.now().minus(PROCESSING_DELAY_MINUTES, ChronoUnit.MINUTES)).toInstant()))
-               ), Updates.set(DelayedAction.STARTED_PROCESSING, Date.from(ZonedDateTime.now().toInstant())), options);
+               ),
+               Updates.combine(
+                     Updates.set(DelayedAction.STARTED_PROCESSING, Date.from(ZonedDateTime.now().toInstant())),
+                     Updates.set(DelayedAction.PROCESSOR, signature)
+               ),
+               options
+         );
          if (action != null) {
-            result.add(action);
+            if (signature.equals(action.getProcessor())) { // otherwise it has been taken by another node in cluster
+               result.add(action);
+            }
          }
       } while (action != null);
 

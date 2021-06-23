@@ -95,6 +95,7 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
          action.setCompleted(completed);
       }
 
+      action.setProcessor(bson.getString(DelayedAction.PROCESSOR));
       action.setProgress(bson.getInteger(DelayedAction.PROGRESS));
       action.setResourcePath(bson.getString(DelayedAction.RESOURCE_PATH));
       action.setInitiator(bson.getString(DelayedAction.INITIATOR));
@@ -129,7 +130,8 @@ public class DelayedActionCodec implements CollectibleCodec<DelayedAction> {
          bson.append(DelayedAction.COMPLETED, new Date(value.getCompleted().toInstant().toEpochMilli()));
       }
 
-      bson.append(DelayedAction.PROGRESS, value.getProgress())
+      bson.append(DelayedAction.PROCESSOR, value.getProcessor())
+          .append(DelayedAction.PROGRESS, value.getProgress())
           .append(DelayedAction.RESOURCE_PATH, value.getResourcePath())
           .append(DelayedAction.INITIATOR, value.getInitiator())
           .append(DelayedAction.RECEIVER, value.getReceiver());
