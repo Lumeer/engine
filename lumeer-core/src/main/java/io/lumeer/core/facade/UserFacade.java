@@ -288,6 +288,11 @@ public class UserFacade extends AbstractFacade {
       groupDao.deleteUserFromGroups(userId);
       User storedUser = userDao.getUserById(userId);
 
+      var organizations = new HashSet<>(storedUser.getOrganizations());
+      organizations.remove(organizationId);
+      storedUser.setOrganizations(organizations);
+      storedUser = userDao.updateUser(userId, storedUser);
+
       if (removeUserEvent != null) {
          removeUserEvent.fire(new RemoveUser(organizationId, storedUser));
       }

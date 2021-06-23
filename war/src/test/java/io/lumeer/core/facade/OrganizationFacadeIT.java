@@ -131,6 +131,8 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       user = userDao.updateUser(user.getId(), user);
 
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
+
       groupPermission = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(roleType)));
       storedOrganization.getPermissions().updateGroupPermissions(groupPermission);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);

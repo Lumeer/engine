@@ -136,6 +136,8 @@ public class PusherAdapterIT extends IntegrationTestBase {
       FacadeAdapter facadeAdapter = new FacadeAdapter(permissionsChecker.getPermissionAdapter());
       ResourceAdapter resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
       pusherAdapter = new PusherAdapter(facadeAdapter, resourceAdapter, permissionsChecker.getPermissionAdapter(), viewDao, linkTypeDao, collectionDao);
+
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    @Test
