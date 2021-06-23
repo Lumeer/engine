@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -201,6 +202,7 @@ public class MongoUserDaoTest extends MongoDbTestBase {
    private User prepareUser(String email) {
       User user = new User(email);
       user.setName(USERNAME);
+      user.setOrganizations(Collections.singleton(organization.getId()));
       return user;
    }
 
