@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.CompanyContact;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
@@ -35,6 +36,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentGatewayFacade;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -79,6 +81,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
+   private Group group;
 
    private String organizationUrl;
 
@@ -97,6 +100,9 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
 
    @Before
    public void prepare() {
@@ -327,9 +333,17 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
+      Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups").path(GROUP)
+      Group group = new Group(GROUP);
+      groupDao.setOrganization(organization);
+      this.group = groupDao.createGroup(group);
+
+      organization.getPermissions().removeGroupPermission(GROUP);
+      organization.getPermissions().updateGroupPermissions(new Permission(group.getId(), GROUP_ROLES));
+      organization = organizationDao.updateOrganization(organization.getId(), organization);
+
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups").path(this.group.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
