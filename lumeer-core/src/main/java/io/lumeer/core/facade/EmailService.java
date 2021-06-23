@@ -65,7 +65,7 @@ public class EmailService {
    private Session session;
 
    private Map<String, String> subjectLines = new HashMap<>();
-   private Map<EmailTemplate, String> templates = new HashMap<>();
+   private Map<String, String> templates = new HashMap<>();
    private Engine templateEngine = Engine.createEngine();
 
    public enum EmailTemplate {
@@ -118,7 +118,7 @@ public class EmailService {
          final MimeMessage message = new MimeMessage(session);
          message.setFrom(new InternetAddress(SMTP_FROM, "Lumeer"));
          message.addRecipient(Message.RecipientType.TO,  new InternetAddress(to));
-         message.setSubject(subject);
+         message.setSubject(subject, StandardCharsets.UTF_8.name());
          message.setContent(body, "text/html; charset=utf-8");
          message.saveChanges();
 
@@ -169,7 +169,7 @@ public class EmailService {
    private String loadTemplate(final EmailTemplate emailTemplate, final Language language) {
       final String templateName = "/email-templates/" + emailTemplate.toString().toLowerCase() + "." + language.toString().toLowerCase() + ".html";
 
-      return templates.computeIfAbsent(emailTemplate, key -> {
+      return templates.computeIfAbsent(templateName, key -> {
          try {
             return IOUtils.resourceToString(templateName, StandardCharsets.UTF_8);
          } catch (IOException e) {
