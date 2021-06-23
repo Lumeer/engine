@@ -50,7 +50,7 @@
       <version.puppycrawl>8.32</version.puppycrawl>
       <version.mongo.driver>3.12.7</version.mongo.driver>
       <version.commons.io>2.8.0</version.commons.io>
-      <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
+      <version.embedded.mongodb>3.0.0</version.embedded.mongodb>
       <version.arquillian>1.6.0.Final</version.arquillian>
       <version.arquillian-container>3.0.1.Final</version.arquillian-container>
 
