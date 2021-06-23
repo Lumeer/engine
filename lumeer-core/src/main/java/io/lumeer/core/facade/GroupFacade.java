@@ -25,7 +25,9 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -37,16 +39,33 @@ public class GroupFacade extends AbstractFacade {
 
    public Group createGroup(Group group) {
       checkPermissions();
+      checkGroupName(group.getName());
 
       group.setId(null);
-      return groupDao.createGroup(group);
+      if (group.getUsers() == null) {
+         group.setUsers(new HashSet<>());
+      }
+      return mapGroupData(groupDao.createGroup(group));
    }
 
    public Group updateGroup(String groupId, Group group) {
       checkPermissions();
+      Group storedGroup = groupDao.getGroup(groupId);
+      if (!storedGroup.getName().equals(group.getName())) {
+         checkGroupName(group.getName());
+      }
 
       group.setId(groupId);
-      return groupDao.updateGroup(groupId, group);
+      if (group.getUsers() == null) {
+         group.setUsers(new HashSet<>());
+      }
+      return mapGroupData(groupDao.updateGroup(groupId, group));
+   }
+
+   private void checkGroupName(String name) {
+      if (groupDao.getGroupByName(name) != null) {
+         throw new IllegalArgumentException("Group with name " + name + " already exists");
+      }
    }
 
    public void deleteGroup(String groupId) {
@@ -58,7 +77,12 @@ public class GroupFacade extends AbstractFacade {
    public List<Group> getGroups() {
       checkPermissions();
 
-      return groupDao.getAllGroups();
+      return groupDao.getAllGroups().stream().peek(this::mapGroupData).collect(Collectors.toList());
+   }
+
+   private Group mapGroupData(Group group) {
+      group.setOrganizationId(workspaceKeeper.getOrganizationId());
+      return group;
    }
 
    private void checkPermissions() {

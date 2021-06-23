@@ -40,6 +40,7 @@ public class Group implements HealthChecking {
    private String description;
    private String icon;
    private String color;
+   private String organizationId;
    private Set<String> users;
 
    public Group(String name){
@@ -117,6 +118,14 @@ public class Group implements HealthChecking {
 
    public void setUsers(final Set<String> users) {
       this.users = users;
+   }
+
+   public String getOrganizationId() {
+      return organizationId;
+   }
+
+   public void setOrganizationId(final String organizationId) {
+      this.organizationId = organizationId;
    }
 
    @Override

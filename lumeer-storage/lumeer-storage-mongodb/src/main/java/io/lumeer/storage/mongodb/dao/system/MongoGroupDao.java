@@ -33,6 +33,7 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -125,6 +126,15 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
          throw new StorageException("Group '" + id + "' could not be found.");
       }
       return mongoCursor.next();
+   }
+
+   @Override
+   public Group getGroupByName(final String name) {
+      MongoCursor<Group> mongoCursor = databaseCollection().find(Filters.eq(GroupCodec.NAME, name)).iterator();
+      if (mongoCursor.hasNext()) {
+         return mongoCursor.next();
+      }
+      return null;
    }
 
    MongoCollection<Group> databaseCollection() {

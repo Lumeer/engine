@@ -157,7 +157,10 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
    }
 
    private Bson organizationIdFilter(final String organizationId) {
-      return Filters.in(UserCodec.ORGANIZATIONS, organizationId);
+      return Filters.or(
+            Filters.in(UserCodec.ORGANIZATIONS, organizationId),
+            Filters.elemMatch(UserCodec.ALL_GROUPS, Filters.eq("organizationId", organizationId))
+      );
    }
 
    String databaseCollectionName() {

@@ -38,4 +38,6 @@ public interface GroupDao extends OrganizationScopedDao {
    List<Group> getAllGroups(String organizationId);
 
    Group getGroup(String id);
+
+   Group getGroupByName(String name);
 }

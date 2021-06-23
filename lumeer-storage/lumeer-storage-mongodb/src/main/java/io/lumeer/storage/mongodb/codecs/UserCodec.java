@@ -56,6 +56,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String NAME = "name";
    public static final String EMAIL = "email";
    public static final String ORGANIZATIONS = "organizations";
+   public static final String ALL_GROUPS = "allGroups";
    public static final String WISHES = "wishes";
    public static final String AUTH_IDS = "authIds";
    public static final String AGREEMENT = "agreement";
@@ -112,8 +113,8 @@ public class UserCodec implements CollectibleCodec<User> {
 
       // old style
       Set<String> organizations;
-      if (bson.containsKey("allGroups")) {
-         List<Document> documentList = bson.get("allGroups", List.class);
+      if (bson.containsKey(ALL_GROUPS)) {
+         List<Document> documentList = bson.get(ALL_GROUPS, List.class);
          organizations = convertGroupsMapToOrganizations(documentList);
       } else {
          List<String> organizationsList = bson.getList(ORGANIZATIONS, String.class);
