@@ -89,7 +89,7 @@ public class PermissionsCheckerTest {
       Group group = Mockito.mock(Group.class);
       Mockito.when(group.getId()).thenReturn(GROUP);
       Mockito.when(group.getUsers()).thenReturn(Collections.singleton(USER));
-      Mockito.when(groupDao.getAllGroups()).thenReturn(Collections.singletonList(group));
+      Mockito.when(groupDao.getAllGroups("LMR")).thenReturn(Collections.singletonList(group));
 
       FavoriteItemDao favoriteItemDao = Mockito.mock(FavoriteItemDao.class);
       DocumentDao documentDao = Mockito.mock(DocumentDao.class);
