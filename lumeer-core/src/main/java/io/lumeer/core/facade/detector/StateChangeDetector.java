@@ -46,7 +46,7 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
          if (!(documentEvent instanceof CreateDocument)) {
             // delete previous due date and assignee events on the document
             if (documentEvent instanceof RemoveDocument || doneState) {
-               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.STATE_UPDATE, NotificationType.DUE_DATE_CHANGED));
+               delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.TASK_REOPENED, NotificationType.STATE_UPDATE, NotificationType.DUE_DATE_CHANGED));
             }
          }
 
@@ -66,7 +66,7 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
                   }
                }
 
-               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus()));
+               delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REOPENED, nowPlus()));
             }
          }
 

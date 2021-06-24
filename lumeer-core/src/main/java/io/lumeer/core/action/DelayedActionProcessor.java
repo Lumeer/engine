@@ -55,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -234,6 +235,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
          case DUE_DATE_CHANGED:
          case TASK_COMMENTED:
          case TASK_MENTIONED:
+         case TASK_REOPENED:
          default:
             return additionalData.get(DelayedAction.DATA_TASK_NAME) != null ? additionalData.get(DelayedAction.DATA_TASK_NAME).toString() : "";
       }
@@ -261,6 +263,8 @@ public class DelayedActionProcessor extends WorkspaceContext {
             return EmailService.EmailTemplate.TASK_COMMENTED;
          case TASK_MENTIONED:
             return EmailService.EmailTemplate.TASK_MENTIONED;
+         case TASK_REOPENED:
+            return EmailService.EmailTemplate.TASK_REOPENED;
          default:
             return null;
       }

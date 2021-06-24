@@ -199,6 +199,7 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Internal, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
@@ -215,6 +216,7 @@ public class DelayedActionIT extends IntegrationTestBase {
             new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Email, NotificationFrequency.Immediately),
             new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
@@ -359,7 +361,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(6); // assignment and past due actions are back
       assertThat(actions.size()).isEqualTo(6);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_REOPENED)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
 
       // Setting due date in the future again so expecting new notifications
@@ -370,7 +372,7 @@ public class DelayedActionIT extends IntegrationTestBase {
       assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(10); // we can even have due soon + due date changed
       assertThat(actions.size()).isEqualTo(10);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_REOPENED)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_SOON)).isEqualTo(2);
       assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_CHANGED)).isEqualTo(2);

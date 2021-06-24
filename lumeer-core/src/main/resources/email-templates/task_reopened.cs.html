@@ -1,9 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<html lang="en">
+<html lang="cs">
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
    <meta name="viewport" content="width=device-width" initial-scale="1.0" user-scalable="yes">
-   <meta http-equiv="Content-Language" content="en-US">
+   <meta http-equiv="Content-Language" content="cs-CZ">
    <title>${title}</title>
    <style>
        a:link {
@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   A (z) ${taskName} kioszott feladatot elvették tőled...
+   Váš úkol ${taskName} byl znovu otevřen...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -44,37 +44,36 @@
    <tr>
       <td style="font-size: 14px; line-height: 21px; font-family: Tahoma;">
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Üdvözlünk!
+            Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            a (z) ${collectionName} nevű <em>${taskName}</em> feladatot${ ,userName,} visszavonta tőled.
+            Váš dokončený úkol${ <em>,taskName,</em>} z ${collectionName} byl znovu otevřen.${ Úkol otevřel ,userName,.}
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Feladat állapota: <em>${taskState (nincs beállítva állapot)}</em>
+            Stav úkolu: <em>${taskState(stav není nastaven)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Határidő: <em>${taskDueDate(az esedékesség dátuma nincs megadva)}</em>
+            Termín dokončení: <em>${taskDueDate(nenastaven)}</em>
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            <a href="https://get.lumeer.io/hu/w/${organizationCode}/${projectCode}/document/${collectionId}/${documentId}/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Nézd meg</span></a>.
+            <a href="https://get.lumeer.io/cs/w/${organizationCode}/${projectCode}/document/${collectionId}/${documentId}/" target="_blank" style="color: #00B388;"><span style="color: #00B388;">Zkontrolujte jej prosím</span></a>.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">&nbsp;</p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Minden jót,
+            S přáním pěkného dne,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Lumeer csapat
+            Tým Lumeer
          </p>
          <hr style="color: #ccc; background-color: #ccc; height: 1px; border: 0; margin: 15px 0px 20px 0px; ">
          <h6 style="font-size: 11px; font-weight: normal; line-height: 150%; margin-bottom: 10px;margin-top: 0px; ">
-            <strong>Lumeer.io</strong> | Purkyňova 127, Brno, Czech Republic<br>
-            Ezt az e-mailt a
+            <strong>Lumeer.io</strong> | Purkyňova 127, Brno<br>
+            Tento email byl odeslaný na
             <a href="mailto:${recipient}" style="color: #00B388;">
                <span style="color: #00B388;">
                   <strong>${recipient}</strong>
                </span>
             </a>
-            címre küldtük
          </h6>
       </td>
    </tr>
