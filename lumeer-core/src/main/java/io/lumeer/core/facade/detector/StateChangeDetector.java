@@ -66,7 +66,6 @@ public class StateChangeDetector extends AbstractPurposeChangeDetector {
                   }
                }
 
-               System.out.println("@@@@ dávám reopened");
                delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REOPENED, nowPlus()));
             }
          }
