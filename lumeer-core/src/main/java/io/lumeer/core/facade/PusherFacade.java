@@ -54,6 +54,7 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.CreateLinkType;
+import io.lumeer.engine.api.event.CreateOrUpdateGroup;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
 import io.lumeer.engine.api.event.CreateOrUpdateSequence;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
@@ -65,6 +66,7 @@ import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveFavoriteItem;
+import io.lumeer.engine.api.event.RemoveGroup;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
@@ -712,6 +714,20 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
+   public void createAddOrUpdateGroupNotification(@Observes final CreateOrUpdateGroup createOrUpdateGroup) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(createOrUpdateGroup.getOrganizationId());
+            ObjectWithParent object = new ObjectWithParent(createOrUpdateGroup.getGroup(), organization.getId());
+            Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
+            List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
    public void createChainNotification(@Observes final CreateDocumentsAndLinks createDocumentsAndLinks) {
       if (isEnabled()) {
          try {
@@ -751,6 +767,21 @@ public class PusherFacade extends AbstractFacade {
             ResourceId resourceId = new ResourceId(removeUser.getUser().getId(), organization.getId());
             String className = removeUser.getUser().getClass().getSimpleName();
             Set<String> users = resourceAdapter.getOrganizationReaders(organization);
+            List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createRemoveGroupNotification(@Observes final RemoveGroup removeGroup) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(removeGroup.getOrganizationId());
+            ResourceId resourceId = new ResourceId(removeGroup.getGroup().getId(), organization.getId());
+            String className = removeGroup.getGroup().getClass().getSimpleName();
+            Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
             List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {

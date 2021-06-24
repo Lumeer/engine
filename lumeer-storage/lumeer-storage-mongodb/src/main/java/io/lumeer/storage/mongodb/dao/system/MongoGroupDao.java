@@ -23,6 +23,8 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.engine.api.event.CreateOrUpdateGroup;
+import io.lumeer.engine.api.event.RemoveGroup;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -48,11 +50,19 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
 
 @RequestScoped
 public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDao {
 
    private static final String PREFIX = "groups_o-";
+
+   @Inject
+   private Event<CreateOrUpdateGroup> createOrUpdateGroupEvent;
+
+   @Inject
+   private Event<RemoveGroup> removeGroupEvent;
 
    @Override
    public void createRepository(Organization organization) {
@@ -71,6 +81,11 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    public Group createGroup(final Group group) {
       try {
          databaseCollection().insertOne(group);
+
+         if (createOrUpdateGroupEvent != null) {
+            group.setOrganizationId(getOrganization().get().getId());
+            createOrUpdateGroupEvent.fire(new CreateOrUpdateGroup(getOrganization().get().getId(), group));
+         }
          return group;
       } catch (MongoException ex) {
          throw new StorageException("Cannot create group " + group, ex);
@@ -85,6 +100,10 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
          if (returnedGroup == null) {
             throw new StorageException("Group '" + id + "' has not been updated.");
          }
+         if (createOrUpdateGroupEvent != null) {
+            returnedGroup.setOrganizationId(getOrganization().get().getId());
+            createOrUpdateGroupEvent.fire(new CreateOrUpdateGroup(getOrganization().get().getId(), returnedGroup));
+         }
          return returnedGroup;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update group " + group, ex);
@@ -93,9 +112,14 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
 
    @Override
    public void deleteGroup(final String id) {
+      Group group = getGroup(id);
       DeleteResult result = databaseCollection().deleteOne(idFilter(id));
       if (result.getDeletedCount() != 1) {
          throw new StorageException("Group '" + id + "' has not been deleted.");
+      }
+      if (removeGroupEvent != null) {
+         group.setOrganizationId(getOrganization().get().getId());
+         removeGroupEvent.fire(new RemoveGroup(getOrganization().get().getId(), group));
       }
    }
 

@@ -110,6 +110,7 @@ public class UserFacade extends AbstractFacade {
 
    public User createUser(String organizationId, User user) {
       user.setEmail(user.getEmail().toLowerCase());
+      user.setOrganizations(Collections.singleton(organizationId));
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
       checkUsersCreate(organizationId, 1);

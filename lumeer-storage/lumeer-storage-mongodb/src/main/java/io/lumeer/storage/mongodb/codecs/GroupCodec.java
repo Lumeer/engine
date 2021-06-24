@@ -32,6 +32,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -84,7 +85,7 @@ public class GroupCodec implements CollectibleCodec<Group> {
       String icon = bson.getString(ICON);
       String color = bson.getString(COLOR);
       List<String> usersList = bson.getList(USERS, String.class);
-      Set<String> users = usersList != null ? new HashSet<>(usersList) : Collections.emptySet();
+      List<String> users = usersList != null ? new ArrayList<>(usersList) : Collections.emptyList();
 
       return new Group(id, name, description, icon, color, users);
    }

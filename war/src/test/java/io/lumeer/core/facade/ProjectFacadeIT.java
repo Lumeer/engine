@@ -150,7 +150,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       this.organization = organizationDao.createOrganization(organization);
 
       groupDao.setOrganization(this.organization);
-      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
       user.setOrganizations(Collections.singleton(this.organization.getId()));
       user = userDao.updateUser(user.getId(), user);
       groupPermissions = Permission.buildWithRoles(group.getId(), Collections.singleton(new Role(RoleType.Read)));

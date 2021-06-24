@@ -115,7 +115,7 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
-      group = groupDao.createGroup(new Group(GROUP, Set.of(user.getId(), otherUser.getId())));
+      group = groupDao.createGroup(new Group(GROUP, List.of(user.getId(), otherUser.getId())));
       user.setOrganizations(Collections.singleton(this.organization.getId()));
       user = userDao.updateUser(user.getId(), user);
       otherUser.setOrganizations(Collections.singleton(this.organization.getId()));

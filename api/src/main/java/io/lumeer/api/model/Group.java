@@ -23,6 +23,7 @@ import io.lumeer.api.exception.InsaneObjectException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,13 +42,13 @@ public class Group implements HealthChecking {
    private String icon;
    private String color;
    private String organizationId;
-   private Set<String> users;
+   private List<String> users;
 
    public Group(String name){
       this.name = name;
    }
 
-   public Group(String name, Set<String> users){
+   public Group(String name, List<String> users){
       this.name = name;
       this.users = users;
    }
@@ -63,7 +64,7 @@ public class Group implements HealthChecking {
          @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(ICON) final String icon,
          @JsonProperty(COLOR) final String color,
-         @JsonProperty(USERS) final Set<String> users) {
+         @JsonProperty(USERS) final List<String> users) {
       this.id = id;
       this.name = name;
       this.description = description;
@@ -112,11 +113,11 @@ public class Group implements HealthChecking {
       this.color = color;
    }
 
-   public Set<String> getUsers() {
+   public List<String> getUsers() {
       return users;
    }
 
-   public void setUsers(final Set<String> users) {
+   public void setUsers(final List<String> users) {
       this.users = users;
    }
 

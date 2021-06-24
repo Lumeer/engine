@@ -127,7 +127,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
       user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       user = userDao.updateUser(user.getId(), user);
 

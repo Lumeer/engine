@@ -158,7 +158,7 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group("testGroup", Collections.singleton(user.getId())));
+      group = groupDao.createGroup(new Group("testGroup", Collections.singletonList(user.getId())));
       user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       user = userDao.updateUser(user.getId(), user);
 

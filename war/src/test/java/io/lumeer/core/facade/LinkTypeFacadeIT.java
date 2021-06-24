@@ -121,7 +121,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
-      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
       user.setOrganizations(Collections.singleton(this.organization.getId()));
       user = userDao.updateUser(user.getId(), user);
 

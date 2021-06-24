@@ -104,11 +104,11 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
    @Test
    public void testDeleteUsers() {
       Group group = new Group(GROUP);
-      group.setUsers(Set.of("A", "B", "C"));
+      group.setUsers(List.of("A", "B", "C"));
       String id = mongoGroupDao.createGroup(group).getId();
 
       Group group2 = new Group(GROUP2);
-      group2.setUsers(Set.of("B", "C", "D"));
+      group2.setUsers(List.of("B", "C", "D"));
       String id2 = mongoGroupDao.createGroup(group2).getId();
 
       mongoGroupDao.deleteUserFromGroups("A");

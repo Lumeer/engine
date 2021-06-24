@@ -129,7 +129,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
 
       projectDao.setOrganization(storedOrganization);
       groupDao.setOrganization(storedOrganization);
-      group = groupDao.createGroup(new Group(GROUP, Collections.singleton(user.getId())));
+      group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
       user.setOrganizations(Collections.singleton(storedOrganization.getId()));
       this.user = userDao.updateUser(user.getId(), user);
 

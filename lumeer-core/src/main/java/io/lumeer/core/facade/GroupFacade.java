@@ -25,6 +25,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,8 +44,9 @@ public class GroupFacade extends AbstractFacade {
 
       group.setId(null);
       if (group.getUsers() == null) {
-         group.setUsers(new HashSet<>());
+         group.setUsers(new ArrayList<>());
       }
+      group.setUsers(new ArrayList<>(new HashSet<>(group.getUsers())));
       return mapGroupData(groupDao.createGroup(group));
    }
 
@@ -57,8 +59,9 @@ public class GroupFacade extends AbstractFacade {
 
       group.setId(groupId);
       if (group.getUsers() == null) {
-         group.setUsers(new HashSet<>());
+         group.setUsers(new ArrayList<>());
       }
+      group.setUsers(new ArrayList<>(new HashSet<>(group.getUsers())));
       return mapGroupData(groupDao.updateGroup(groupId, group));
    }
 
