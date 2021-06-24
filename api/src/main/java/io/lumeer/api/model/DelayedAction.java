@@ -31,6 +31,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 public class DelayedAction {
    public static final String CHECK_AFTER = "checkAfter";
    public static final String STARTED_PROCESSING = "startedProcessing";
+   public static final String PROCESSOR = "processor";
    public static final String COMPLETED = "completed";
    public static final String PROGRESS = "progress";
    public static final String RESOURCE_PATH = "resourcePath";
@@ -81,6 +82,11 @@ public class DelayedAction {
     */
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
    private ZonedDateTime startedProcessing;
+
+   /**
+    * Signature of who started processing the action.
+    */
+   private String processor;
 
    /**
     * Timestamp of action completion.
@@ -150,6 +156,14 @@ public class DelayedAction {
 
    public void setStartedProcessing(final ZonedDateTime startedProcessing) {
       this.startedProcessing = startedProcessing;
+   }
+
+   public String getProcessor() {
+      return processor;
+   }
+
+   public void setProcessor(final String processor) {
+      this.processor = processor;
    }
 
    public ZonedDateTime getCompleted() {
@@ -255,6 +269,7 @@ public class DelayedAction {
             "id='" + id + '\'' +
             ", checkAfter=" + checkAfter +
             ", startedProcessing=" + startedProcessing +
+            ", processor=" + processor +
             ", completed=" + completed +
             ", progress=" + progress +
             ", resourcePath='" + resourcePath + '\'' +
