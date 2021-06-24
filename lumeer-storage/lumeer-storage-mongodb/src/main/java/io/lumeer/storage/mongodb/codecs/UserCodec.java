@@ -146,6 +146,13 @@ public class UserCodec implements CollectibleCodec<User> {
             notificationSettings.add(new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Internal, NotificationFrequency.Immediately));
             notificationSettings.add(new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Internal, NotificationFrequency.Immediately));
          }
+         if (notificationSettings.stream().filter(ns -> ns.getNotificationType() == NotificationType.TASK_REOPENED && ns.getNotificationChannel() == NotificationChannel.Internal).findFirst().isEmpty()) {
+            notificationSettings.add(new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Internal, NotificationFrequency.Immediately));
+         }
+         if (notificationSettings.stream().anyMatch(ns -> ns.getNotificationType() == NotificationType.TASK_ASSIGNED && ns.getNotificationChannel() == NotificationChannel.Email) &&
+               notificationSettings.stream().filter(ns -> ns.getNotificationType() == NotificationType.TASK_REOPENED && ns.getNotificationChannel() == NotificationChannel.Email).findFirst().isEmpty()) {
+            notificationSettings.add(new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Email, NotificationFrequency.Immediately));
+         }
       } else  {
          notificationSettings = List.of(
                new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
@@ -154,6 +161,7 @@ public class UserCodec implements CollectibleCodec<User> {
                new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Internal, NotificationFrequency.Immediately),
@@ -170,6 +178,7 @@ public class UserCodec implements CollectibleCodec<User> {
                new NotificationSetting(NotificationType.VIEW_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.BULK_ACTION, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_ASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
+               new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_UPDATED, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_REMOVED, NotificationChannel.Email, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.TASK_UNASSIGNED, NotificationChannel.Email, NotificationFrequency.Immediately),
