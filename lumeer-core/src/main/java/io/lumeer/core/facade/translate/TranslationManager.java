@@ -154,4 +154,27 @@ public class TranslationManager {
       return Arrays.asList(".", ".", ".", ".");
    }
 
+   public String getDefaultDateFormat(@Nullable Language language) {
+      switch (language != null ? language : Language.EN) {
+         case CS:
+         case HU:
+            return "DD.MM.YYYY";
+         case JA:
+         default:
+            return "MM/DD/YYYY";
+      }
+   }
+
+   public String getUnknownTaskName(@Nullable Language language) {
+      switch (language != null ? language : Language.EN) {
+         case CS:
+            return "úkol bez názvu";
+         case HU:
+            return "feladat név nélkül";
+         case JA:
+            return "タスク名なし";
+         default:
+            return "no task name";
+      }
+   }
 }

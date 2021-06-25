@@ -33,6 +33,7 @@ import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
@@ -89,6 +90,9 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
+
+   @Inject
+   private TranslationManager translationManager;
 
    private PusherClient pusherClient;
 
@@ -177,14 +181,18 @@ public class DelayedActionProcessor extends WorkspaceContext {
    }
 
    private void executeActions(final List<DelayedAction> actions) {
-      final Map<String, User> users = getUsers(actions); // id -> user
-      final Map<String, Language> userLanguages = initializeLanguages(users.values());
-      final Map<String, String> userIds = getUserIds(users.values()); // email -> id
-
+      final Map<String, List<User>> userCache = new HashMap<>(); // org id -> users
       organizations.clear();
       projects.clear();
 
       aggregateActions(actions).forEach(action -> {
+         final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
+         final List<User> allUsers = userCache.computeIfAbsent(organizationId, orgId -> userDao.getAllUsers(orgId));
+
+         final Map<String, User> users = getUsers(allUsers); // id -> user
+         final Map<String, Language> userLanguages = initializeLanguages(users.values());
+         final Map<String, String> userIds = getUserIds(users.values()); // email -> id
+
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
          if (actionResourceExists(action)) {
@@ -200,7 +208,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
                   final String recipient = action.getReceiver();
                   final Map<String, Object> additionalData = processData(action.getData(), lang);
 
-                  emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, from, recipient, getEmailSubjectPart(action, additionalData), additionalData);
+                  emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, from, recipient, getEmailSubjectPart(action, additionalData, lang), additionalData);
                } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
                   UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
                   notification = userNotificationDao.createNotification(notification);
@@ -286,7 +294,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
       if (originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE) != null) {
 
-         String format = language == Language.EN ? "MM/DD/YYYY" : "DD.MM.YYYY";
+         String format = translationManager.getDefaultDateFormat(language);
          if (StringUtils.isNotEmpty(originalData.getString(DelayedAction.DATA_DUE_DATE_FORMAT))) {
             format = originalData.getString(DelayedAction.DATA_DUE_DATE_FORMAT);
          }
@@ -317,7 +325,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
       return data;
    }
 
-   private String getEmailSubjectPart(final DelayedAction action, final Map<String, Object> additionalData) {
+   private String getEmailSubjectPart(final DelayedAction action, final Map<String, Object> additionalData, final Language language) {
       final StringBuilder subject = new StringBuilder();
 
       switch (action.getNotificationType()) {
@@ -334,14 +342,16 @@ public class DelayedActionProcessor extends WorkspaceContext {
          case TASK_REOPENED:
          case TASK_CHANGED:
          default:
-            if (additionalData.get(DelayedAction.DATA_TASK_NAME) != null) {
+            if (StringUtils.isNotEmpty((String) additionalData.get(DelayedAction.DATA_TASK_NAME))) {
                subject.append(additionalData.get(DelayedAction.DATA_TASK_NAME).toString());
+            } else {
+               subject.append(translationManager.getUnknownTaskName(language));
             }
       }
 
       if (additionalData.containsKey(DelayedAction.DATA_ORGANIZATION_CODE)) {
          if (subject.length() > 0) {
-            subject.append(" ");
+            subject.append(" [");
          }
 
          subject.append(additionalData.get(DelayedAction.DATA_ORGANIZATION_CODE));
@@ -349,6 +359,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
          if (additionalData.containsKey(DelayedAction.DATA_PROJECT_CODE)) {
             subject.append("/");
             subject.append(additionalData.get(DelayedAction.DATA_PROJECT_CODE));
+            subject.append("]");
          }
       }
 
@@ -400,12 +411,8 @@ public class DelayedActionProcessor extends WorkspaceContext {
    }
 
    // get map of user id -> user
-   private Map<String, User> getUsers(final List<DelayedAction> actions) {
-      return actions.stream()
-             .map(DelayedAction::getReceiver)
-             .distinct()
-             .map(userDao::getUserByEmail)
-             .filter(Objects::nonNull)
+   private Map<String, User> getUsers(final List<User> users) {
+      return users.stream()
              .collect(Collectors.toMap(User::getId, Function.identity()));
    }
 
