@@ -289,6 +289,10 @@ public class User implements HealthChecking {
       this.hints = hints;
    }
 
+   public boolean hasNotificationEnabled(final NotificationType type, final NotificationChannel channel) {
+      return notifications.getSettings().stream().anyMatch(n -> n.getNotificationType() == type && n.getNotificationChannel() == channel);
+   }
+
    @Override
    public String toString() {
       return "User{" +

@@ -255,6 +255,7 @@ public class UserNotificationFacade extends AbstractFacade {
                              getEmailTemplate(resource),
                              languages.getOrDefault(user, Language.EN),
                              emailService.formatUserReference(authenticatedUser.getCurrentUser()),
+                             emailService.formatFrom(authenticatedUser.getCurrentUser()),
                              users.get(user).getEmail(),
                              StringUtils.isNotEmpty(resource.getName()) ? resource.getName() : resource.getCode(),
                              getResourceDescription(resource))

@@ -68,6 +68,8 @@ public class DelayedAction {
    public static final String DATA_COLLECTION_QUERY = "collectionQuery";
    public static final String DATA_DOCUMENT_CURSOR = "documentCursor";
    public static final String DATA_VIEW_CODE = "viewCode";
+   public static final String DATA_ORIGINAL_ACTION_IDS = "originalActionIds";
+   public static final String DATA_ORIGINAL_ACTION_TYPES = "originalActionTypes";
 
    private String id;
 
@@ -244,6 +246,36 @@ public class DelayedAction {
       }
 
       return data;
+   }
+
+   private static void mergeData(final DelayedAction target, final DelayedAction source, final String key) {
+      if (source.data.containsKey(key)) {
+         target.data.put(key, source.data.get(key));
+      }
+   }
+
+   public DelayedAction merge(final DelayedAction other) {
+      final DelayedAction da = new DelayedAction();
+      da.checkAfter = checkAfter;
+      da.startedProcessing = startedProcessing;
+      da.processor = processor;
+      da.completed = completed;
+      da.progress = progress;
+      da.resourcePath = resourcePath;
+      da.initiator = initiator;
+      da.receiver = receiver;
+      da.notificationType = notificationType;
+      da.notificationChannel = notificationChannel;
+      da.correlationId = correlationId;
+      da.data = new DataDocument(data);
+
+      mergeData(da, other, DATA_TASK_NAME);
+      mergeData(da, other, DATA_TASK_DUE_DATE);
+      mergeData(da, other, DATA_TASK_STATE);
+      mergeData(da, other, DATA_TASK_COMPLETED);
+      mergeData(da, other, DATA_ASSIGNEE);
+
+      return da;
    }
 
    @Override

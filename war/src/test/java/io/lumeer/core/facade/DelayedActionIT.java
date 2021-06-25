@@ -262,52 +262,63 @@ public class DelayedActionIT extends IntegrationTestBase {
       Document doc = createDocument("My cool task", List.of("evžen@vystrčil.cz", user2.getEmail()), new Date(ZonedDateTime.now().minus(DelayedActionDao.PROCESSING_DELAY_MINUTES, ChronoUnit.MINUTES).toInstant().toEpochMilli()), "To Do", List.of(), "so just another task");
 
       List<DelayedAction> actions = delayedActionDao.getActions();
+      // now we should have:
+      // evžen@vystrčil.cz - PAST_DUE_DATE x 3 channels
+      // rspath@lumeerio.com (USER2 - observer) - PAST_DUE_DATE x 3 channels
+      // evžen@vystrčil.cz - TASK_ASSIGNED x 3 channels
+      // rspath@lumeerio.com (USER2 - observer) - TASK_ASSIGNED x 3 channels
+      // evžen@vystrčil.cz - STATE_UPDATE x 3 channels
+      // rspath@lumeerio.com (USER2 - observer) - STATE_UPDATE x 3 channels
       var types = countOccurrences(actions, DelayedAction::getNotificationType);
-      assertThat(types.get(NotificationType.STATE_UPDATE)).isEqualTo(2);
-      assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
-      assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
+      assertThat(types.get(NotificationType.STATE_UPDATE)).isEqualTo(6);
+      assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(6);
+      assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(6);
 
-      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).get(null)).isEqualTo(6);
-      assertThat(countOccurrences(actions, DelayedAction::getCompleted).get(null)).isEqualTo(6);
+      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).get(null)).isEqualTo(18);
+      assertThat(countOccurrences(actions, DelayedAction::getCompleted).get(null)).isEqualTo(18);
 
-      assertThat(countOccurrences(actions, (action) -> action.getCheckAfter().isBefore(ZonedDateTime.now())).get(true)).isEqualTo(6);
+      assertThat(countOccurrences(actions, (action) -> action.getCheckAfter().isBefore(ZonedDateTime.now())).get(true)).isEqualTo(18);
 
       var channels = countOccurrences(actions, DelayedAction::getNotificationChannel);
-      assertThat(channels.get(NotificationChannel.Email)).isEqualTo(3);
-      assertThat(channels.get(NotificationChannel.Internal)).isEqualTo(3);
+      assertThat(channels.get(NotificationChannel.Email)).isEqualTo(6);
+      assertThat(channels.get(NotificationChannel.Internal)).isEqualTo(6);
+      assertThat(channels.get(NotificationChannel.Slack)).isEqualTo(6);
 
-      assertThat(countOccurrences(actions, DelayedAction::getInitiator).get(user.getEmail())).isEqualTo(6);
-      assertThat(countOccurrences(actions, DelayedAction::getReceiver).get(user2.getEmail())).isEqualTo(6);
+      assertThat(countOccurrences(actions, DelayedAction::getInitiator).get(user.getEmail())).isEqualTo(18);
+      assertThat(countOccurrences(actions, DelayedAction::getReceiver).get(user2.getEmail())).isEqualTo(9);
 
       delayedActionProcessor.process();
 
       notifications = userNotificationDao.getRecentNotifications(user2.getId());
-
-      assertThat(notifications.size()).isEqualTo(3);
+      // now TASK_ASSIGNED and STATE_UPDATE got aggregated to TASK_ASSIGNED
+      // each user receives 2 internal notifications - aggregated TASK_ASSIGNED and PAST_DUE_DATE
+      assertThat(notifications.size()).isEqualTo(2);
       types = countOccurrences(notifications, UserNotification::getType);
-      assertThat(types.get(NotificationType.STATE_UPDATE)).isEqualTo(1);
       assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(1);
       assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(1);
 
       actions = delayedActionDao.getActions();
-      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).getOrDefault(null, 0)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getCompleted).getOrDefault(null, 0)).isEqualTo(2);
+      // each user (2) has 3 channels and one PAST_DUE_DATE message scheduled for future = 6
+      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).getOrDefault(null, 0)).isEqualTo(6);
+      assertThat(countOccurrences(actions, DelayedAction::getCompleted).getOrDefault(null, 0)).isEqualTo(6);
 
       // Removing USER2 user from assignees
       Document patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a1", List.of("evžen@vystrčil.cz")));
       delayedActionProcessor.process();
       actions = delayedActionDao.getActions();
+      // USER2 has TASK_UNASSIGNED for each channel (3) = 3
+      // evžen@vystrčil.cz has previous PAST_DUE_DATE on each channel = 3
 
       types = countOccurrences(actions, DelayedAction::getNotificationType);
       assertThat(types.getOrDefault(NotificationType.STATE_UPDATE, 0)).isEqualTo(0);
       assertThat(types.getOrDefault(NotificationType.TASK_ASSIGNED, 0)).isEqualTo(0);
-      assertThat(types.getOrDefault(NotificationType.TASK_UNASSIGNED, 0)).isEqualTo(2);
-      assertThat(types.getOrDefault(NotificationType.PAST_DUE_DATE, 0)).isEqualTo(0);
+      assertThat(types.getOrDefault(NotificationType.TASK_UNASSIGNED, 0)).isEqualTo(3);
+      assertThat(types.getOrDefault(NotificationType.PAST_DUE_DATE, 0)).isEqualTo(3);
 
-      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).getOrDefault(null, 0)).isEqualTo(0);
-      assertThat(countOccurrences(actions, DelayedAction::getCompleted).getOrDefault(null, 0)).isEqualTo(0);
+      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).getOrDefault(null, 0)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getCompleted).getOrDefault(null, 0)).isEqualTo(3);
 
-      assertThat(countOccurrences(actions, (action) -> action.getCheckAfter().isBefore(ZonedDateTime.now())).get(true)).isEqualTo(2);
+      assertThat(countOccurrences(actions, (action) -> action.getCheckAfter().isBefore(ZonedDateTime.now())).get(true)).isEqualTo(3);
 
       // Adding USER2 user back to assignees
       patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a1", List.of(user2.getEmail())));
@@ -315,31 +326,31 @@ public class DelayedActionIT extends IntegrationTestBase {
       actions = delayedActionDao.getActions();
 
       types = countOccurrences(actions, DelayedAction::getNotificationType);
-      assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
-      assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(2);
+      assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(3);
+      assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(3);
 
-      assertThat(countOccurrences(actions, DelayedAction::getReceiver).get(user2.getEmail())).isEqualTo(4);
+      assertThat(countOccurrences(actions, DelayedAction::getReceiver).get(user2.getEmail())).isEqualTo(6);
 
       notifications = userNotificationDao.getRecentNotifications(user2.getId());
 
-      assertThat(notifications.size()).isEqualTo(3 + 3); // there should be three additional notifications
+      assertThat(notifications.size()).isEqualTo(2 + 3); // there should be three additional notifications - TASK_UNASSIGNED, TASK_ASSIGNED, PAST_DUE_DATE
       types = countOccurrences(notifications, UserNotification::getType);
-      assertThat(types.get(NotificationType.STATE_UPDATE)).isEqualTo(1);
+      assertThat(types.containsKey(NotificationType.STATE_UPDATE)).isFalse(); // this was aggregated under ASSIGNED
       assertThat(types.get(NotificationType.PAST_DUE_DATE)).isEqualTo(1 + 1);
       assertThat(types.get(NotificationType.TASK_ASSIGNED)).isEqualTo(1 + 1);
       assertThat(types.get(NotificationType.TASK_UNASSIGNED)).isEqualTo(1);
 
-      assertThat(actions.size()).isEqualTo(4); // three previously processed actions are removed
-      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).getOrDefault(null, 0)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
+      assertThat(actions.size()).isEqualTo(9); // three previously processed actions are removed
+      assertThat(countOccurrences(actions, DelayedAction::getStartedProcessing).getOrDefault(null, 0)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(3);
 
       // Setting state to completed
       patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a3", "Done"));
       actions = delayedActionDao.getActions();
 
       var newActions = actions.stream().filter(action -> action.getStartedProcessing() == null).collect(Collectors.toList());
-      assertThat(newActions.size()).isEqualTo(2); // past due date actions were replaced with state update
-      assertThat(countOccurrences(newActions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
+      assertThat(newActions.size()).isEqualTo(3); // past due date actions were replaced with state update
+      assertThat(countOccurrences(newActions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(3);
 
       delayedActionProcessor.process();
 
@@ -348,8 +359,8 @@ public class DelayedActionIT extends IntegrationTestBase {
       actions = delayedActionDao.getActions();
 
       assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(0);
-      assertThat(actions.size()).isEqualTo(2); // not assigned to user, nothing has changed, except for the fact that the actions were processed
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
+      assertThat(actions.size()).isEqualTo(3); // not assigned to user, nothing has changed, except for the fact that the actions were processed
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(3);
 
       delayedActionProcessor.process();
 
@@ -358,24 +369,31 @@ public class DelayedActionIT extends IntegrationTestBase {
 
       actions = delayedActionDao.getActions();
 
-      assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(6); // assignment and past due actions are back
-      assertThat(actions.size()).isEqualTo(6);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_REOPENED)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
+      assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(9); // assignment and past due actions are back
+      assertThat(actions.size()).isEqualTo(9);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_REOPENED)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(3);
 
       // Setting due date in the future again so expecting new notifications
       patched = documentFacade.patchDocumentData(collection.getId(), doc.getId(), new DataDocument("a2", new Date(ZonedDateTime.now().plus(4, ChronoUnit.DAYS).toInstant().toEpochMilli())));
 
       actions = delayedActionDao.getActions();
 
-      assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(10); // we can even have due soon + due date changed
-      assertThat(actions.size()).isEqualTo(10);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_REOPENED)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_SOON)).isEqualTo(2);
-      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_CHANGED)).isEqualTo(2);
+      assertThat(actions.stream().filter(action -> action.getStartedProcessing() == null).count()).isEqualTo(15); // we can even have due soon + due date changed
+      assertThat(actions.size()).isEqualTo(15);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.STATE_UPDATE)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.TASK_REOPENED)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.PAST_DUE_DATE)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_SOON)).isEqualTo(3);
+      assertThat(countOccurrences(actions, DelayedAction::getNotificationType).get(NotificationType.DUE_DATE_CHANGED)).isEqualTo(3);
+
+      notifications = userNotificationDao.getRecentNotifications(user2.getId());
+      assertThat(countOccurrences(notifications, UserNotification::getType).getOrDefault(NotificationType.TASK_CHANGED, 0)).isEqualTo(0);
+
+      delayedActionProcessor.process();
+      notifications = userNotificationDao.getRecentNotifications(user2.getId());
+      assertThat(countOccurrences(notifications, UserNotification::getType).getOrDefault(NotificationType.TASK_CHANGED, 0)).isEqualTo(1);
 
       delayedActionDao.deleteAllScheduledActions(organizationId);
       actions = delayedActionDao.getActions();
