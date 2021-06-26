@@ -53,7 +53,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -188,6 +187,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
       aggregateActions(actions).forEach(action -> {
          final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
          final List<User> allUsers = userCache.computeIfAbsent(organizationId, orgId -> userDao.getAllUsers(orgId));
+         allUsers.addAll(getUsersFromActions(actions, allUsers)); // mix in users from actions
 
          final Map<String, User> users = getUsers(allUsers); // id -> user
          final Map<String, Language> userLanguages = initializeLanguages(users.values());
@@ -414,6 +414,17 @@ public class DelayedActionProcessor extends WorkspaceContext {
    private Map<String, User> getUsers(final List<User> users) {
       return users.stream()
              .collect(Collectors.toMap(User::getId, Function.identity()));
+   }
+
+   private List<User> getUsersFromActions(final List<DelayedAction> actions, final List<User> loadedUsers) {
+      var loadedEmails = loadedUsers.stream().map(User::getEmail).collect(Collectors.toList());
+      return actions.stream()
+             .map(DelayedAction::getReceiver)
+             .distinct()
+             .filter(email -> !loadedEmails.contains(email))
+             .map(userDao::getUserByEmail)
+             .filter(Objects::nonNull)
+             .collect(Collectors.toList());
    }
 
    // get map of user email -> user language
