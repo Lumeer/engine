@@ -109,12 +109,12 @@ public class UserFacade extends AbstractFacade {
    private UserAuth0Utils userAuth0Utils;
 
    public User createUser(String organizationId, User user) {
-      user.setEmail(user.getEmail().toLowerCase());
-      user.setOrganizations(Collections.singleton(organizationId));
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
       checkUsersCreate(organizationId, 1);
 
+      user.setEmail(user.getEmail().toLowerCase());
+      user.setOrganizations(Collections.singleton(organizationId));
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
       if (storedUser == null) {

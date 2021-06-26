@@ -214,12 +214,6 @@ public class UserFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   public void testCreateUserBadFormat() {
-      assertThatThrownBy(() -> userFacade.createUser(organizationId1, prepareUser(organizationId2, USER1)))
-            .isInstanceOf(BadFormatException.class);
-   }
-
-   @Test
    public void testUpdateNameAndEmail() {
       String userId = createUser(organizationId1, USER1).getId();
 

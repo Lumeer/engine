@@ -15,7 +15,7 @@ public class Role {
 
    @JsonCreator
    public Role(@JsonProperty(TYPE) final RoleType type,
-         @JsonProperty(TRANSITIVE) final Boolean transitive) {
+         @JsonProperty(TRANSITIVE) final boolean transitive) {
       this.type = type;
       this.transitive = transitive;
    }
