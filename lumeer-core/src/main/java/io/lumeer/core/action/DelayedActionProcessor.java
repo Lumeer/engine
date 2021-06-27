@@ -33,6 +33,7 @@ import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
@@ -50,8 +51,11 @@ import org.marvec.pusher.data.Event;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,12 +90,17 @@ public class DelayedActionProcessor extends WorkspaceContext {
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
+   @Inject
+   private TranslationManager translationManager;
+
    private PusherClient pusherClient;
 
    private boolean skipDelay = false;
 
    private Map<String, Organization> organizations = new HashMap<>();
    private Map<String, Project> projects = new HashMap<>();
+
+   final private static Set<NotificationType> AGGREGATION_TYPES = Set.of(NotificationType.TASK_ASSIGNED, NotificationType.TASK_REOPENED, NotificationType.DUE_DATE_CHANGED, NotificationType.STATE_UPDATE, NotificationType.TASK_UPDATED, NotificationType.TASK_COMMENTED);
 
    @PostConstruct
    public void init() {
@@ -106,43 +115,132 @@ public class DelayedActionProcessor extends WorkspaceContext {
       executeActions(delayedActionDao.getActionsForProcessing(skipDelay));
    }
 
-   private void executeActions(final List<DelayedAction> actions) {
-      final Map<String, User> users = getUsers(actions);
-      final Map<String, Language> userLanguages = initializeLanguages(users.values());
-      final Map<String, String> userIds = getUserIds(users.values());
+   private Map<String, List<DelayedAction>> getActionsByTask(final List<DelayedAction> actions, final NotificationChannel notificationChannel) {
+      return actions.stream().filter(a -> AGGREGATION_TYPES.contains(a.getNotificationType()) && a.getNotificationChannel() == notificationChannel).collect(Collectors.groupingBy(a -> a.getReceiver() + "/" + a.getData().getString(DelayedAction.DATA_DOCUMENT_ID)));
+   }
 
+   private List<DelayedAction> aggregateActions(final List<DelayedAction> actions) {
+      var actionsByIds = actions.stream().collect(Collectors.toMap(DelayedAction::getId, Function.identity()));
+      final List<DelayedAction> newActions = new ArrayList<>();
+
+      for (final NotificationChannel channel: NotificationChannel.values()) {
+        var actionsByUserAndTask = getActionsByTask(actions, channel);
+         actionsByUserAndTask.forEach((k, v) -> {
+            // for all chunks where there are more notifications than 1 for the same user
+            if (v.size() > 1) {
+               // check that we have the receiver and task id
+               if (v.stream().allMatch(a -> a.getReceiver() != null && a.getData().getString(DelayedAction.DATA_DOCUMENT_ID) != null)) {
+                  // sort the actions from oldest to newest to merge them together in the right order
+                  v.sort(Comparator.comparing(DelayedAction::getCheckAfter));
+
+                  // merge the actions
+                  DelayedAction action = v.get(0);
+                  boolean wasAssignee = action.getNotificationType() == NotificationType.TASK_ASSIGNED;
+                  final Set<NotificationType> originalTypes = new HashSet<>();
+                  final List<String> originalIds = new ArrayList<>();
+                  originalTypes.add(action.getNotificationType());
+                  originalIds.add(action.getId());
+                  actionsByIds.remove(action.getId());
+                  for (int i = 1; i < v.size(); i++) {
+                     final DelayedAction other = v.get(i);
+                     action = action.merge(other);
+                     wasAssignee = wasAssignee || (other.getNotificationType() == NotificationType.TASK_ASSIGNED);
+                     originalTypes.add(other.getNotificationType());
+                     originalIds.add(other.getId());
+                     actionsByIds.remove(other.getId());
+                  }
+
+                  // set the correct type of the new aggregated action
+                  if (wasAssignee) {
+                     action.setNotificationType(NotificationType.TASK_ASSIGNED);
+                  } else {
+                     action.setNotificationType(NotificationType.TASK_CHANGED);
+                  }
+
+                  action.getData()
+                        .append(DelayedAction.DATA_ORIGINAL_ACTION_TYPES, new ArrayList(originalTypes))
+                        .append(DelayedAction.DATA_ORIGINAL_ACTION_IDS, originalIds);
+                  newActions.add(action);
+               }
+            }
+         });
+      }
+
+      newActions.addAll(actionsByIds.values());
+
+      return newActions;
+   }
+
+   private boolean isNotificationEnabled(final DelayedAction action, final User user) {
+      if (action.getNotificationType() != NotificationType.TASK_CHANGED) {
+         return user.hasNotificationEnabled(action.getNotificationType(), action.getNotificationChannel());
+      }
+
+      return action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_TYPES, NotificationType.class).stream().anyMatch(type -> user.hasNotificationEnabled(type, action.getNotificationChannel()));
+   }
+
+   private void executeActions(final List<DelayedAction> actions) {
+      final Map<String, List<User>> userCache = new HashMap<>(); // org id -> users
       organizations.clear();
       projects.clear();
 
-      actions.forEach(action -> {
+      aggregateActions(actions).forEach(action -> {
+         final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
+         final List<User> allUsers = userCache.computeIfAbsent(organizationId, orgId -> userDao.getAllUsers(orgId));
+         allUsers.addAll(getUsersFromActions(actions, allUsers)); // mix in users from actions
+
+         final Map<String, User> users = getUsers(allUsers); // id -> user
+         final Map<String, Language> userLanguages = initializeLanguages(users.values());
+         final Map<String, String> userIds = getUserIds(users.values()); // email -> id
+
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
          if (actionResourceExists(action)) {
+            final User receiverUser = userIds.containsKey(action.getReceiver()) ? users.get(userIds.get(action.getReceiver())) : null;
 
-            if (action.getNotificationChannel() == NotificationChannel.Email) {
-               final String sender = userIds.containsKey(action.getInitiator()) ? emailService.formatUserReference(users.get(userIds.get(action.getInitiator()))) : "";
-               final String recipient = action.getReceiver();
-               final Map<String, Object> additionalData = processData(action.getData(), lang);
+            // if we do not know anything about the user, make sure to send the notification; otherwise check the user settings
+            if (receiverUser == null || isNotificationEnabled(action, receiverUser)) {
 
-               emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, recipient, getEmailSubjectPart(action, additionalData), additionalData);
-            } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
-               UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
-               notification = userNotificationDao.createNotification(notification);
-               if (pusherClient != null) {
-                  pusherClient.trigger(List.of(createUserNotificationEvent(notification, PusherFacade.CREATE_EVENT_SUFFIX, userIds.get(action.getReceiver()))));
+               if (action.getNotificationChannel() == NotificationChannel.Email) {
+                  final User user = userIds.containsKey(action.getInitiator()) ? users.get(userIds.get(action.getInitiator())) : null;
+                  final String sender = user != null ? emailService.formatUserReference(user) : "";
+                  final String from = user != null ? emailService.formatFrom(user) : "";
+                  final String recipient = action.getReceiver();
+                  final Map<String, Object> additionalData = processData(action.getData(), lang);
+
+                  emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, from, recipient, getEmailSubjectPart(action, additionalData, lang), additionalData);
+               } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
+                  UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
+                  notification = userNotificationDao.createNotification(notification);
+                  if (pusherClient != null) {
+                     pusherClient.trigger(List.of(createUserNotificationEvent(notification, PusherFacade.CREATE_EVENT_SUFFIX, userIds.get(action.getReceiver()))));
+                  }
                }
             }
 
             // reschedule past due actions
             if (!rescheduleDueDateAction(action)) {
-               action.setCompleted(ZonedDateTime.now());
+               markActionAsCompleted(actions, action);
             }
          } else {
-            action.setCompleted(ZonedDateTime.now());
+            markActionAsCompleted(actions, action);
          }
-
-         delayedActionDao.updateAction(action);
       });
+   }
+
+   private void markActionAsCompleted(final List<DelayedAction> actions, final DelayedAction action) {
+      if (action.getId() == null && action.getData().containsKey(DelayedAction.DATA_ORIGINAL_ACTION_IDS)) {
+         var ids = action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_IDS, String.class);
+         actions.forEach(a -> {
+            if (ids.contains(a.getId())) {
+               a.setCompleted(ZonedDateTime.now());
+               delayedActionDao.updateAction(a);
+            }
+         });
+      } else {
+         action.setCompleted(ZonedDateTime.now());
+         delayedActionDao.updateAction(action);
+      }
    }
 
    private boolean actionResourceExists(final DelayedAction action) {
@@ -181,6 +279,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
          if (completed != null && !completed) {
             action.setStartedProcessing(null);
             action.setCheckAfter(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+            delayedActionDao.updateAction(action);
 
             return true;
          }
@@ -195,7 +294,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
       if (originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE) != null) {
 
-         String format = language == Language.EN ? "MM/DD/YYYY" : "DD.MM.YYYY";
+         String format = translationManager.getDefaultDateFormat(language);
          if (StringUtils.isNotEmpty(originalData.getString(DelayedAction.DATA_DUE_DATE_FORMAT))) {
             format = originalData.getString(DelayedAction.DATA_DUE_DATE_FORMAT);
          }
@@ -207,6 +306,9 @@ public class DelayedActionProcessor extends WorkspaceContext {
                      language.toString().toLowerCase()
                )
          );
+
+         data.remove(DelayedAction.DATA_ORIGINAL_ACTION_IDS);
+         data.remove(DelayedAction.DATA_ORIGINAL_ACTION_TYPES);
       }
 
       final String query = new Query(List.of(new QueryStem(originalData.getString(DelayedAction.DATA_COLLECTION_ID))), null, null, null).toQueryString();
@@ -223,7 +325,9 @@ public class DelayedActionProcessor extends WorkspaceContext {
       return data;
    }
 
-   private String getEmailSubjectPart(final DelayedAction action, final Map<String, Object> additionalData) {
+   private String getEmailSubjectPart(final DelayedAction action, final Map<String, Object> additionalData, final Language language) {
+      final StringBuilder subject = new StringBuilder();
+
       switch (action.getNotificationType()) {
          case TASK_ASSIGNED:
          case DUE_DATE_SOON:
@@ -236,9 +340,30 @@ public class DelayedActionProcessor extends WorkspaceContext {
          case TASK_COMMENTED:
          case TASK_MENTIONED:
          case TASK_REOPENED:
+         case TASK_CHANGED:
          default:
-            return additionalData.get(DelayedAction.DATA_TASK_NAME) != null ? additionalData.get(DelayedAction.DATA_TASK_NAME).toString() : "";
+            if (StringUtils.isNotEmpty((String) additionalData.get(DelayedAction.DATA_TASK_NAME))) {
+               subject.append(additionalData.get(DelayedAction.DATA_TASK_NAME).toString());
+            } else {
+               subject.append(translationManager.getUnknownTaskName(language));
+            }
       }
+
+      if (additionalData.containsKey(DelayedAction.DATA_ORGANIZATION_CODE)) {
+         if (subject.length() > 0) {
+            subject.append(" [");
+         }
+
+         subject.append(additionalData.get(DelayedAction.DATA_ORGANIZATION_CODE));
+
+         if (additionalData.containsKey(DelayedAction.DATA_PROJECT_CODE)) {
+            subject.append("/");
+            subject.append(additionalData.get(DelayedAction.DATA_PROJECT_CODE));
+            subject.append("]");
+         }
+      }
+
+      return subject.toString();
    }
 
    private EmailService.EmailTemplate getEmailTemplate(final DelayedAction action) {
@@ -265,6 +390,12 @@ public class DelayedActionProcessor extends WorkspaceContext {
             return EmailService.EmailTemplate.TASK_MENTIONED;
          case TASK_REOPENED:
             return EmailService.EmailTemplate.TASK_REOPENED;
+         case TASK_CHANGED:
+            return action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_TYPES, NotificationType.class).contains(NotificationType.TASK_ASSIGNED) ?
+                  EmailService.EmailTemplate.TASK_ASSIGNED :
+                  (action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_TYPES, NotificationType.class).contains(NotificationType.TASK_REOPENED) ?
+                        EmailService.EmailTemplate.TASK_REOPENED :
+                        EmailService.EmailTemplate.TASK_UPDATED);
          default:
             return null;
       }
@@ -280,13 +411,20 @@ public class DelayedActionProcessor extends WorkspaceContext {
    }
 
    // get map of user id -> user
-   private Map<String, User> getUsers(final List<DelayedAction> actions) {
+   private Map<String, User> getUsers(final List<User> users) {
+      return users.stream()
+             .collect(Collectors.toMap(User::getId, Function.identity()));
+   }
+
+   private List<User> getUsersFromActions(final List<DelayedAction> actions, final List<User> loadedUsers) {
+      var loadedEmails = loadedUsers.stream().map(User::getEmail).collect(Collectors.toList());
       return actions.stream()
              .map(DelayedAction::getReceiver)
              .distinct()
+             .filter(email -> !loadedEmails.contains(email))
              .map(userDao::getUserByEmail)
              .filter(Objects::nonNull)
-             .collect(Collectors.toMap(User::getId, Function.identity()));
+             .collect(Collectors.toList());
    }
 
    // get map of user email -> user language

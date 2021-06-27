@@ -68,10 +68,11 @@ public class EmailService {
    private Map<String, String> templates = new HashMap<>();
    private Engine templateEngine = Engine.createEngine();
 
-   public enum EmailTemplate {
-      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, DUE_DATE_CHANGED, TASK_COMMENTED, TASK_MENTIONED, TASK_REOPENED
-   }
 
+
+   public enum EmailTemplate {
+      INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, DUE_DATE_CHANGED, TASK_COMMENTED, TASK_MENTIONED, TASK_REOPENED;
+   }
    @PostConstruct
    public void init() {
       SMTP_USER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_USER)).orElse("");
@@ -113,10 +114,10 @@ public class EmailService {
                   StringUtils.isNotEmpty(SMTP_FROM);
    }
 
-   private void sendEmail(final String subject, final String to, final String body) {
+   private void sendEmail(final String subject, final String to, final String body, final String from) {
       try {
          final MimeMessage message = new MimeMessage(session);
-         message.setFrom(new InternetAddress(SMTP_FROM, "Lumeer"));
+         message.setFrom(new InternetAddress(SMTP_FROM, StringUtils.isNotEmpty(from) ? from + " (Lumeer)" : "Lumeer"));
          message.addRecipient(Message.RecipientType.TO,  new InternetAddress(to));
          message.setSubject(subject, StandardCharsets.UTF_8.name());
          message.setContent(body, "text/html; charset=utf-8");
@@ -131,11 +132,11 @@ public class EmailService {
       }
    }
 
-   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String recipient, final String subjectPart) {
-      sendEmailFromTemplate(emailTemplate, language, sender, recipient, subjectPart, null);
+   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String from, final String recipient, final String subjectPart) {
+      sendEmailFromTemplate(emailTemplate, language, sender, from, recipient, subjectPart, null);
    }
 
-   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String recipient, final String subjectPart, final Map<String, Object> additionalData) {
+   public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String from, final String recipient, final String subjectPart, final Map<String, Object> additionalData) {
       if (session != null) {
          final String subject = String.format(subjectLines.getOrDefault(emailTemplate.toString().toLowerCase() + "_" + language.toString().toLowerCase(), language == Language.EN ? "Hi" : "Dobrý den"), subjectPart);
          final String template = loadTemplate(emailTemplate, language);
@@ -152,7 +153,7 @@ public class EmailService {
 
             final String body = templateEngine.transform(template, values);
 
-            sendEmail(subject, recipient, body);
+            sendEmail(subject, recipient, body, from);
          }
       }
    }
@@ -164,6 +165,13 @@ public class EmailService {
       return StringUtils.isNotEmpty(userName) ?
             userName + " (<a href=\"mailto:" + userEmail + "\" style=\"color: #00B388;\"><span style=\"color: #00B388;\">" + userEmail + "</span></a>)" :
             "<a href=\"mailto:" + userEmail + "\" style=\"color: #00B388;\"><span style=\"color: #00B388;\">" + userEmail + "</span></a>";
+   }
+
+   public String formatFrom(final User user) {
+      final String userName = user.getName();
+      final String userEmail = user.getEmail();
+
+      return StringUtils.isNotEmpty(userName) ? userName : userEmail;
    }
 
    private String loadTemplate(final EmailTemplate emailTemplate, final Language language) {

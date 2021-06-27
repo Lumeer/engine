@@ -27,6 +27,7 @@ import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
@@ -247,20 +248,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       return "";
    }
 
-   @SuppressWarnings("unused")
-   protected List<NotificationSetting> getChannels(final DocumentEvent documentEvent, final Collection collection, final NotificationType notificationType, final String assignee) {
-      List<NotificationSetting> notifications;
-
-      if (assignee.equals(currentUser.getEmail())) {
-         notifications = currentUser.getNotificationsSettingsList();
-      } else {
-         final User user = userDao.getUserByEmail(assignee);
-         notifications = user != null ? user.getNotificationsSettingsList() : List.of();
-      }
-
-      return notifications.stream().filter(notification -> notification.getNotificationType() == notificationType).collect(Collectors.toList());
-   }
-
    protected ZonedDateTime roundTime(final ZonedDateTime dueDate, final NotificationFrequency notificationFrequency) {
       switch (notificationFrequency) {
          case Immediately:
@@ -284,22 +271,20 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
                      notificationType == NotificationType.PAST_DUE_DATE ||
                      !assignee.equals(currentUser.getEmail().toLowerCase()) && StringUtils.isNotEmpty(assignee))
          ).forEach(assignee -> {
-            final List<NotificationSetting> channels = getChannels(documentEvent, collection, notificationType, assignee);
-
-            channels.forEach(settings -> {
+            for (NotificationChannel channel: NotificationChannel.values()) {
                final DelayedAction action = new DelayedAction();
 
                action.setInitiator(currentUser.getEmail());
                action.setReceiver(assignee);
                action.setResourcePath(getResourcePath(documentEvent));
                action.setNotificationType(notificationType);
-               action.setCheckAfter(roundTime(when, settings.getNotificationFrequency()));
-               action.setNotificationChannel(settings.getNotificationChannel());
+               action.setCheckAfter(roundTime(when, NotificationFrequency.Immediately)); // in the future, this can be removed and checked in DelayedActionProcessor
+               action.setNotificationChannel(channel);
                action.setCorrelationId(StringUtils.isNotBlank(requestDataKeeper.getSecondaryCorrelationId()) ? requestDataKeeper.getSecondaryCorrelationId() : requestDataKeeper.getCorrelationId());
                action.setData(getData(documentEvent, collection, assignees));
 
                actions.add(action);
-            });
+            }
          });
       }
 
