@@ -49,6 +49,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -126,10 +127,15 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
    @Override
    public void deleteUserFromGroups(final String userId) {
       Bson pullUser = Updates.pull(GroupCodec.USERS, userId);
-      try {
-         databaseCollection().updateMany(new BsonDocument(), pullUser);
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot remove user " + userId + " from groups", ex);
+      databaseCollection().updateMany(new BsonDocument(), pullUser);
+   }
+
+   @Override
+   public void addUserToGroups(final String userId, final Set<String> groups) {
+      Bson pushUser = Updates.push(GroupCodec.USERS, userId);
+      Bson filter = MongoFilters.idsFilter(groups);
+      if (filter != null) {
+         databaseCollection().updateMany(filter, pushUser);
       }
    }
 

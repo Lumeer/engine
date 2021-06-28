@@ -36,6 +36,7 @@ import io.lumeer.remote.rest.annotation.PATCH;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.List;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -101,6 +102,15 @@ public class UserService extends AbstractService {
    public User updateUserInOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId, User user) {
       return userFacade.updateUser(organizationId, userId, user);
+   }
+
+   @POST
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}/groups")
+   public Response updateUserGroups(@PathParam("organizationId") String organizationId,
+         @PathParam("userId") String userId, Set<String> groups) {
+      workspaceKeeper.setOrganizationId(organizationId);
+      userFacade.setUserGroups(organizationId, userId, groups);
+      return Response.ok().build();
    }
 
    @DELETE

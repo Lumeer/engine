@@ -37,6 +37,7 @@ import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
+import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.FeedbackDao;
@@ -98,6 +99,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private Event<RemoveUser> removeUserEvent;
+
+   @Inject
+   private Event<ReloadGroups> reloadGroupsEvent;
 
    @Inject
    private EmailFacade emailFacade;
@@ -280,6 +284,17 @@ public class UserFacade extends AbstractFacade {
          this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, updated));
       }
       return updated;
+   }
+
+   public void setUserGroups(String organizationId, String userId, Set<String> groups) {
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
+
+      groupDao.deleteUserFromGroups(userId);
+      groupDao.addUserToGroups(userId, groups);
+
+      if (reloadGroupsEvent != null) {
+         reloadGroupsEvent.fire(new ReloadGroups(organizationId));
+      }
    }
 
    public void deleteUser(String organizationId, String userId) {

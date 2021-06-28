@@ -16,31 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Group;
-import io.lumeer.api.model.Organization;
+package io.lumeer.engine.api.event;
 
-import java.util.List;
-import java.util.Set;
+public class ReloadGroups {
 
-public interface GroupDao extends OrganizationScopedDao {
+   private String organizationId;
 
-   Group createGroup(Group group);
+   public ReloadGroups(String organizationId) {
+      this.organizationId = organizationId;
+   }
 
-   Group updateGroup(String id, Group group);
-
-   void deleteGroup(String id);
-
-   void deleteUserFromGroups(String userId);
-
-   void addUserToGroups(String userId, Set<String> groups);
-
-   List<Group> getAllGroups();
-
-   List<Group> getAllGroups(String organizationId);
-
-   Group getGroup(String id);
-
-   Group getGroupByName(String name);
+   public String getOrganizationId() {
+      return organizationId;
+   }
 }

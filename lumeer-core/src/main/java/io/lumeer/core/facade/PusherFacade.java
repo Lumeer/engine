@@ -20,6 +20,7 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -63,6 +64,7 @@ import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.CreateResourceComment;
 import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
+import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveFavoriteItem;
@@ -721,6 +723,20 @@ public class PusherFacade extends AbstractFacade {
             ObjectWithParent object = new ObjectWithParent(createOrUpdateGroup.getGroup(), organization.getId());
             Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void reloadGroups(@Observes final ReloadGroups reloadGroups) {
+      if (isEnabled()) {
+         try {
+            ObjectWithParent object = new ObjectWithParent(reloadGroups.getOrganizationId(), reloadGroups.getOrganizationId());
+            Organization organization = organizationDao.getOrganizationById(reloadGroups.getOrganizationId());
+            Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
+            List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), Group.class.getSimpleName() + RELOAD_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
