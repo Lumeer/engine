@@ -223,6 +223,7 @@ public class UserFacade extends AbstractFacade {
             roles.add(new Role(RoleType.DataDelete, true));
          case READ_ONLY:
             roles.add(new Role(RoleType.Read, true));
+            roles.add(new Role(RoleType.DataRead, true));
       }
 
       return roles;
@@ -232,6 +233,7 @@ public class UserFacade extends AbstractFacade {
       workspaceKeeper.setOrganizationId(organization.getId());
       var project = projectDao.getProjectById(projectId);
       var newPermissions = buildUserPermission(project, users, invitationType);
+      System.out.println(newPermissions);
       projectFacade.updateUserPermissions(projectId, newPermissions);
    }
 
