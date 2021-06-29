@@ -81,7 +81,11 @@ class PusherAdapter(
       }
    }
 
-   fun checkViewPermissionsChange(organization: Organization, project: Project?, user: User, originalView: View, updatedView: View): List<Event> {
+   fun checkViewPermissionsChange(organization: Organization, project: Project?, user: User, originalView: View?, updatedView: View): List<Event> {
+      if (originalView == null) {
+         return listOf()
+      }
+
       val rolesDifference = permissionAdapter.getResourceReadersDifference(organization, project, originalView, updatedView)
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
