@@ -79,6 +79,7 @@ import io.lumeer.engine.api.event.RemoveUserNotification;
 import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
+import io.lumeer.engine.api.event.UpdateCurrentUser;
 import io.lumeer.engine.api.event.UpdateDefaultViewConfig;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
@@ -86,7 +87,7 @@ import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateResourceComment;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
-import io.lumeer.engine.api.event.UserEvent;
+import io.lumeer.engine.api.event.OrganizationUserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -744,6 +745,19 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
+   public void updateCurrentUserNotification(@Observes final UpdateCurrentUser updateCurrentUser) {
+      if (isEnabled()) {
+         try {
+            // we use RELOAD event to differentiate from general user updates
+            sendNotificationsBatch(List.of(
+                  createEventForObject(updateCurrentUser.getUser(), RELOAD_EVENT_SUFFIX, updateCurrentUser.getUser().getId())
+            ));
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
    public void createChainNotification(@Observes final CreateDocumentsAndLinks createDocumentsAndLinks) {
       if (isEnabled()) {
          try {
@@ -770,7 +784,7 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
-   private User cleanUserFromUserEvent(UserEvent event) {
+   private User cleanUserFromUserEvent(OrganizationUserEvent event) {
       String organizationId = event.getOrganizationId();
       User user = event.getUser();
       return new User(user.getId(), user.getName(), user.getEmail(), Collections.singleton(organizationId));

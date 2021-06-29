@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationFrequency;
 import io.lumeer.api.model.NotificationSetting;

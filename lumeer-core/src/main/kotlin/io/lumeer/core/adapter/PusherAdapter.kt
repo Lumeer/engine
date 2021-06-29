@@ -60,6 +60,29 @@ class PusherAdapter(
       }
    }
 
+   fun checkViewPermissionsChange(organization: Organization?, project: Project?, user: User, originalView: View?, updatedView: View): List<Event> {
+      val projectManagers = ResourceUtils.getProjectManagers(organization, project)
+      val removedUsers = ResourceUtils.getRemovedPermissions(originalView, updatedView)
+      removedUsers.removeAll(projectManagers)
+      removedUsers.remove(user.id)
+
+      if (changedUsers.isEmpty()) {
+         return listOf()
+      }
+
+      val allLinkTypes = linkTypeDao.allLinkTypes.filter { it.id != originalLinkType.id }
+      val allViews = viewDao.allViews
+      val allCollections = collectionDao.allCollections
+
+      val linkTypesBefore = allLinkTypes.plus(originalLinkType)
+      val linkTypesAfter = allLinkTypes.plus(updatedLinkType)
+
+      return changedUsers.fold(mutableListOf()) { notifications, userId ->
+         notifications.addAll(createCollectionsChangeNotifications(organization, project, Pair(linkTypesBefore, linkTypesAfter), Pair(allCollections, allCollections), Pair(allViews, allViews), userId))
+         return notifications
+      }
+   }
+
    fun checkCollectionsPermissionsChange(organization: Organization, project: Project?, user: User, originalCollection: Collection, updatedCollection: Collection): List<Event> {
       val rolesDifference = permissionAdapter.getResourceReadersDifference(organization, project, originalCollection, updatedCollection)
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)

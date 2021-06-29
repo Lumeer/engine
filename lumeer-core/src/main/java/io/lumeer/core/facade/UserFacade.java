@@ -38,6 +38,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.RemoveUser;
+import io.lumeer.engine.api.event.UpdateCurrentUser;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -95,6 +96,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private Event<CreateOrUpdateUser> createOrUpdateUserEvent;
+
+   @Inject
+   private Event<UpdateCurrentUser> updateCurrentUserEvent;
 
    @Inject
    private Event<RemoveUser> removeUserEvent;
@@ -251,7 +255,11 @@ public class UserFacade extends AbstractFacade {
    private User updateUserAndSendNotification(String organizationId, String userId, User user) {
       User updated = userDao.updateUser(userId, user);
       if (createOrUpdateUserEvent != null) {
-         this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, updated));
+         if (organizationId == null && authenticatedUser.getCurrentUserId().equals(userId)) {
+            this.updateCurrentUserEvent.fire(new UpdateCurrentUser(updated));
+         } else {
+            this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, updated));
+         }
       }
       return updated;
    }
@@ -364,7 +372,7 @@ public class UserFacade extends AbstractFacade {
 
       final User updatedUser;
       if (sendPushNotification) {
-         updatedUser = updateUserAndSendNotification(workspaceKeeper.getOrganizationId(), currentUser.getId(), currentUser);
+         updatedUser = updateUserAndSendNotification(null, currentUser.getId(), currentUser);
       } else {
          updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
       }

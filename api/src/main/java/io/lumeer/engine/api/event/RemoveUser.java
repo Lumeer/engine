@@ -20,7 +20,7 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.User;
 
-public class RemoveUser extends UserEvent {
+public class RemoveUser extends OrganizationUserEvent {
 
    public RemoveUser(final String organizationId, final User user) {
       super(organizationId, user);
