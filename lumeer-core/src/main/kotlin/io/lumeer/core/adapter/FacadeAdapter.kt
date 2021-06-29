@@ -33,14 +33,14 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       }
    }
 
-   fun mapLinkType(organization: Organization, project: Project?, linkType: LinkType, user: User): LinkType {
+   fun mapLinkType(organization: Organization?, project: Project?, linkType: LinkType, user: User): LinkType {
       if (linkType.permissionsType == LinkPermissionsType.Merge) {
          return linkType.apply { permissions = Permissions() }
       }
-      return if (getUserAdmins(organization, project, linkType).contains(user.id)) {
+      return if (getUserAdmins(organization!!, project, linkType).contains(user.id)) {
          linkType
       } else linkType.apply {
-         val groups = PermissionUtils.getUserGroups(organization, user, permissionAdapter.getGroups(organization.id))
+         val groups = PermissionUtils.getUserGroups(organization, user, permissionAdapter.getGroups(organization!!.id))
          permissions = keepOnlyNecessaryPermissions(linkType.permissions, ResourceType.LINK_TYPE, user, groups)
       }
    }

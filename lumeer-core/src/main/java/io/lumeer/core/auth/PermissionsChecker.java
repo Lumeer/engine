@@ -592,6 +592,10 @@ public class PermissionsChecker {
       return System.getenv("SKIP_LIMITS") != null;
    }
 
+   public boolean skipPayments() {
+      return System.getenv("SKIP_PAYMENTS") != null;
+   }
+
    /**
     * Sets the view id that is being worked with. This allows us to execute queries under a different user supposing we have access to the view and the owner of the view can still execute it. For security reasons, the view id cannot be changed along the way.
     *

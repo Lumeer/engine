@@ -158,8 +158,8 @@ public class PaymentFacade extends AbstractFacade {
       return null;
    }
 
-   public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations){
-       return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
+   public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations) {
+      return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
    }
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
@@ -182,6 +182,10 @@ public class PaymentFacade extends AbstractFacade {
             workspaceKeeper.setServiceLimits(organization, serviceLimits);
             return serviceLimits;
          }
+      }
+
+      if (permissionsChecker.skipPayments()) {
+         return ServiceLimits.BASIC_LIMITS;
       }
 
       workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);

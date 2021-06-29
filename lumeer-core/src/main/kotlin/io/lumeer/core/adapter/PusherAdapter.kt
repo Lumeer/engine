@@ -148,7 +148,7 @@ class PusherAdapter(
       return createCollectionsChangeNotifications(organization, project, linkTypes, collections, views, userId).plus(createLinksChangeNotifications(organization, project, linkTypes, collections, views, userId))
    }
 
-   fun createEvent(organization: Organization, project: Project?, any: Any, event: String, userId: String): Event {
+   fun createEvent(organization: Organization?, project: Project?, any: Any, event: String, userId: String): Event {
       return if (any is Document) {
          createEventForWorkspaceObject(organization, project, any, any.id, event, userId)
       } else if (any is LinkType) {
@@ -170,8 +170,8 @@ class PusherAdapter(
       }
    }
 
-   fun createEventForWorkspaceObject(organization: Organization, project: Project?, any: Any, id: String, event: String, userId: String): Event {
-      val organizationId = organization.id.orEmpty()
+   fun createEventForWorkspaceObject(organization: Organization?, project: Project?, any: Any, id: String, event: String, userId: String): Event {
+      val organizationId = organization?.id.orEmpty()
       val projectId = project?.id.orEmpty()
       if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
          return createEventForRemove(any.javaClass.simpleName, ResourceId(id, organizationId, projectId), userId)
@@ -201,7 +201,7 @@ class PusherAdapter(
       return Event(PusherFacade.eventChannel(userId), className + PusherFacade.REMOVE_EVENT_SUFFIX, any, null)
    }
 
-   fun createEventForResource(organization: Organization, project: Project?, resource: Resource, event: String, userId: String): Event {
+   fun createEventForResource(organization: Organization?, project: Project?, resource: Resource, event: String, userId: String): Event {
       return if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
          createEventForRemove(resource.javaClass.simpleName, getResourceId(organization, project, resource), userId)
       } else createEventForObject(filterUserRoles(organization, project, userId, resource), getResourceId(organization, project, resource), event, userId)
@@ -215,7 +215,7 @@ class PusherAdapter(
       return BackupDataEvent(eventChannel(userId), `object`.javaClass.simpleName + event, `object`, backupObject, null)
    }
 
-   private fun createEventForNestedResource(organization: Organization, project: Project?, objectWithParent: ObjectWithParent, event: String, userId: String): Event {
+   private fun createEventForNestedResource(organization: Organization?, project: Project?, objectWithParent: ObjectWithParent, event: String, userId: String): Event {
       val resource = objectWithParent.`object` as Resource
       if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
          return createEventForRemove(resource.javaClass.simpleName, getResourceId(organization, project, resource), userId)
@@ -243,11 +243,11 @@ class PusherAdapter(
       return ResourceId(resource.id, organization?.id.orEmpty(), project?.id.orEmpty())
    }
 
-   private fun <T : Resource> filterUserRoles(organization: Organization, project: Project?, userId: String, resource: T): T {
+   private fun <T : Resource> filterUserRoles(organization: Organization?, project: Project?, userId: String, resource: T): T {
       return facadeAdapter.mapResource(organization, project, resource.copy(), permissionAdapter.getUser(userId))
    }
 
-   private fun filterUserRoles(organization: Organization, project: Project?, userId: String, linkType: LinkType): LinkType {
+   private fun filterUserRoles(organization: Organization?, project: Project?, userId: String, linkType: LinkType): LinkType {
       return facadeAdapter.mapLinkType(organization, project, LinkType(linkType), permissionAdapter.getUser(userId))
    }
 
