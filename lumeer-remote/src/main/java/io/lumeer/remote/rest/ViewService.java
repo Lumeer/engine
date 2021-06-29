@@ -100,6 +100,12 @@ public class ViewService extends AbstractService {
    }
 
    @PUT
+   @Path("{viewId:[0-9a-fA-F]{24}}/permissions")
+   public Permissions updatePermissions(@PathParam("viewId") String id, Permissions permissions) {
+      return viewFacade.updatePermissions(id, permissions);
+   }
+
+   @PUT
    @Path("{viewId:[0-9a-fA-F]{24}}/permissions/users")
    public Set<Permission> updateUserPermission(@PathParam("viewId") String id, Set<Permission> userPermission) {
       return viewFacade.updateUserPermissions(id, userPermission);

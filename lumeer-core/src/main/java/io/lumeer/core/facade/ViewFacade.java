@@ -191,6 +191,20 @@ public class ViewFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteView(userId, id);
    }
 
+   public Permissions updatePermissions(final String id, final Permissions permissions) {
+      View view = viewDao.getViewById(id);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
+
+      final View originalView = view.copy();
+      view.getPermissions().clearUserPermissions();
+      view.getPermissions().clearGroupPermissions();
+      view.getPermissions().updateUserPermissions(permissions.getUserPermissions());
+      view.getPermissions().updateGroupPermissions(permissions.getGroupPermissions());
+      viewDao.updateView(view.getId(), view, originalView);
+
+      return view.getPermissions();
+   }
+
    public Set<Permission> updateUserPermissions(final String id, final Set<Permission> userPermissions) {
       View view = viewDao.getViewById(id);
       permissionsChecker.checkRole(view, RoleType.UserConfig);

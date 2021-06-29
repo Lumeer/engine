@@ -19,15 +19,23 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Group;
+import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -37,6 +45,15 @@ public class GroupFacade extends AbstractFacade {
 
    @Inject
    private GroupDao groupDao;
+
+   @Inject
+   private ProjectDao projectDao;
+
+   @Inject
+   private OrganizationFacade organizationFacade;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    public Group createGroup(Group group) {
       checkPermissions();
@@ -65,6 +82,41 @@ public class GroupFacade extends AbstractFacade {
       return mapGroupData(groupDao.updateGroup(groupId, group));
    }
 
+   public List<Group> addGroupsToWorkspace(final String organizationId, final String projectId, final List<Group> groups, final InvitationType invitationType) {
+      // we need at least project management rights
+      checkProjectPermissions(organizationId, projectId);
+
+      Organization organization = organizationFacade.getOrganizationById(organizationId);
+      
+      addGroupsToOrganization(organization, groups);
+      addGroupsToProject(organization, projectId, groups, invitationType);
+
+      return groups;
+   }
+
+   private void addGroupsToOrganization(Organization organization, List<Group> groups) {
+      var newPermissions = buildGroupPermission(organization, groups, InvitationType.JOIN_ONLY);
+      organizationFacade.updateUserPermissions(organization.getId(), newPermissions);
+   }
+
+   private void addGroupsToProject(Organization organization, final String projectId, final List<Group> groups, final InvitationType invitationType) {
+      workspaceKeeper.setOrganizationId(organization.getId());
+      var project = projectDao.getProjectById(projectId);
+      var newPermissions = buildGroupPermission(project, groups, invitationType);
+      projectFacade.updateUserPermissions(projectId, newPermissions);
+   }
+
+   private Set<Permission> buildGroupPermission(final Resource resource, final List<Group> groups, final InvitationType invitationType) {
+      return groups.stream()
+                   .map(group -> {
+                      var existingPermissions = resource.getPermissions().getGroupPermissions().stream().filter(permission -> permission.getId().equals(group.getId())).findFirst();
+                      var minimalSet = new HashSet<>(Set.of(new Role(RoleType.Read)));
+                      existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
+                      return Permission.buildWithRoles(group.getId(), RoleUtils.getInvitationRoles(invitationType, resource.getType(), minimalSet));
+                   })
+                   .collect(Collectors.toSet());
+   }
+
    private void checkGroupName(String name) {
       if (groupDao.getGroupByName(name) != null) {
          throw new IllegalArgumentException("Group with name " + name + " already exists");
@@ -88,7 +140,7 @@ public class GroupFacade extends AbstractFacade {
       return group;
    }
 
-   private void checkPermissions() {
+   private Organization checkPermissions() {
       permissionsChecker.checkGroupsHandle();
 
       if (workspaceKeeper.getOrganization().isEmpty()) {
@@ -97,6 +149,17 @@ public class GroupFacade extends AbstractFacade {
 
       Organization organization = workspaceKeeper.getOrganization().get();
       permissionsChecker.checkRole(organization, RoleType.UserConfig);
+      return organization;
+   }
+
+   private Project checkProjectPermissions(final String organizationId, final String projectId) {
+      permissionsChecker.checkGroupsHandle();
+
+      workspaceKeeper.setOrganizationId(organizationId);
+      Project project = projectDao.getProjectById(projectId);
+      permissionsChecker.checkRole(project, RoleType.UserConfig);
+
+      return project;
    }
 
 }

@@ -25,7 +25,6 @@ import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
@@ -194,46 +193,15 @@ public class UserFacade extends AbstractFacade {
                      var existingPermissions = resource.getPermissions().getUserPermissions().stream().filter(permission -> permission.getId().equals(user.getId())).findFirst();
                      var minimalSet = new HashSet<>(Set.of(new Role(RoleType.Read)));
                      existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
-                     // TODO should we remove group roles?
-                     return Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, resource.getType(), minimalSet));
+                     return Permission.buildWithRoles(user.getId(), RoleUtils.getInvitationRoles(invitationType, resource.getType(), minimalSet));
                   })
                   .collect(Collectors.toSet());
-   }
-
-   private Set<Role> getInvitationRoles(final InvitationType invitationType, final ResourceType resourceType, Set<Role> minimalSet) {
-      final Set<Role> roles = new HashSet<>(minimalSet);
-
-      switch (invitationType) {
-         case MANAGE:
-            if (resourceType == ResourceType.ORGANIZATION) {
-               roles.addAll(RoleUtils.organizationResourceRoles());
-            } else if (resourceType == ResourceType.PROJECT) {
-               roles.addAll(RoleUtils.projectResourceRoles());
-            }
-         case READ_WRITE:
-            if (resourceType == ResourceType.ORGANIZATION) {
-               roles.addAll(Set.of(new Role(RoleType.ProjectContribute)));
-            } else if (resourceType == ResourceType.PROJECT) {
-               roles.addAll(Set.of(new Role(RoleType.ViewContribute), new Role(RoleType.CollectionContribute), new Role(RoleType.LinkContribute)));
-            }
-            roles.add(new Role(RoleType.Read, true));
-            roles.add(new Role(RoleType.DataRead, true));
-            roles.add(new Role(RoleType.DataWrite, true));
-            roles.add(new Role(RoleType.DataContribute, true));
-            roles.add(new Role(RoleType.DataDelete, true));
-         case READ_ONLY:
-            roles.add(new Role(RoleType.Read, true));
-            roles.add(new Role(RoleType.DataRead, true));
-      }
-
-      return roles;
    }
 
    private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final InvitationType invitationType) {
       workspaceKeeper.setOrganizationId(organization.getId());
       var project = projectDao.getProjectById(projectId);
       var newPermissions = buildUserPermission(project, users, invitationType);
-      System.out.println(newPermissions);
       projectFacade.updateUserPermissions(projectId, newPermissions);
    }
 
