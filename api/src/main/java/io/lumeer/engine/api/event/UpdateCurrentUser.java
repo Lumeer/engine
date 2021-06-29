@@ -20,10 +20,9 @@ package io.lumeer.engine.api.event;
 
 import io.lumeer.api.model.User;
 
-public class CreateOrUpdateUser extends OrganizationUserEvent {
+public class UpdateCurrentUser extends UserEvent {
 
-   public CreateOrUpdateUser(final String organizationId, final User user) {
-      super(organizationId, user);
+   public UpdateCurrentUser(final User user) {
+      super(user);
    }
-
 }

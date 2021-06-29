@@ -307,8 +307,6 @@ public class DelayedActionProcessor extends WorkspaceContext {
                )
          );
 
-         data.remove(DelayedAction.DATA_ORIGINAL_ACTION_IDS);
-         data.remove(DelayedAction.DATA_ORIGINAL_ACTION_TYPES);
       }
 
       final String query = new Query(List.of(new QueryStem(originalData.getString(DelayedAction.DATA_COLLECTION_ID))), null, null, null).toQueryString();
@@ -321,6 +319,9 @@ public class DelayedActionProcessor extends WorkspaceContext {
             null,
             originalData.getString(DelayedAction.DATA_TASK_NAME_ATTRIBUTE), true).toQueryString();
       data.put(DelayedAction.DATA_DOCUMENT_CURSOR, Utils.encodeQueryParam(cursor));
+
+      data.remove(DelayedAction.DATA_ORIGINAL_ACTION_IDS);
+      data.remove(DelayedAction.DATA_ORIGINAL_ACTION_TYPES);
 
       return data;
    }
