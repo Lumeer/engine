@@ -40,7 +40,7 @@ class PusherAdapter(
       private val collectionDao: CollectionDao,
 ) {
 
-   fun checkViewPermissionsChange(organization: Organization?, project: Project?, user: User, originalView: View, updatedView: View): List<Event> {
+   fun checkViewPermissionsChange(organization: Organization?, project: Project?, user: User, originalView: View?, updatedView: View): List<Event> {
       val projectManagers = ResourceUtils.getProjectManagers(organization, project)
       val removedUsers = ResourceUtils.getRemovedPermissions(originalView, updatedView)
       removedUsers.removeAll(projectManagers)

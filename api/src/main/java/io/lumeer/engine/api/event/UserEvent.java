@@ -22,16 +22,10 @@ import io.lumeer.api.model.User;
 
 public abstract class UserEvent {
 
-   private String organizationId;
-   private User user;
+   private final User user;
 
-   public UserEvent(final String organizationId, final User user) {
-      this.organizationId = organizationId;
+   public UserEvent(final User user) {
       this.user = user;
-   }
-
-   public String getOrganizationId() {
-      return organizationId;
    }
 
    public User getUser() {
