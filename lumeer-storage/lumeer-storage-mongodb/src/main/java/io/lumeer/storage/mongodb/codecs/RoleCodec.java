@@ -50,7 +50,7 @@ public class RoleCodec implements Codec<Role> {
 
    public static Role convertFromDocument(Document bson) {
       RoleType type = RoleType.fromString(bson.getString(TYPE));
-      Boolean transitive = bson.getBoolean(TRANSITIVE);
+      boolean transitive = bson.getBoolean(TRANSITIVE, false);
 
       return new Role(type, transitive);
    }
