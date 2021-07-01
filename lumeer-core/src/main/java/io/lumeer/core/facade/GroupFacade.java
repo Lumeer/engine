@@ -56,7 +56,7 @@ public class GroupFacade extends AbstractFacade {
    private ProjectFacade projectFacade;
 
    public Group createGroup(Group group) {
-      checkPermissions();
+      checkPermissions(RoleType.UserConfig);
       checkGroupName(group.getName());
 
       group.setId(null);
@@ -68,7 +68,7 @@ public class GroupFacade extends AbstractFacade {
    }
 
    public Group updateGroup(String groupId, Group group) {
-      checkPermissions();
+      checkPermissions(RoleType.UserConfig);
       Group storedGroup = groupDao.getGroup(groupId);
       if (!storedGroup.getName().equals(group.getName())) {
          checkGroupName(group.getName());
@@ -87,7 +87,7 @@ public class GroupFacade extends AbstractFacade {
       checkProjectPermissions(organizationId, projectId);
 
       Organization organization = organizationFacade.getOrganizationById(organizationId);
-      
+
       addGroupsToOrganization(organization, groups);
       addGroupsToProject(organization, projectId, groups, invitationType);
 
@@ -124,13 +124,13 @@ public class GroupFacade extends AbstractFacade {
    }
 
    public void deleteGroup(String groupId) {
-      checkPermissions();
+      checkPermissions(RoleType.UserConfig);
 
       groupDao.deleteGroup(groupId);
    }
 
    public List<Group> getGroups() {
-      checkPermissions();
+      checkPermissions(RoleType.Read);
 
       return groupDao.getAllGroups().stream().peek(this::mapGroupData).collect(Collectors.toList());
    }
@@ -140,7 +140,7 @@ public class GroupFacade extends AbstractFacade {
       return group;
    }
 
-   private Organization checkPermissions() {
+   private Organization checkPermissions(RoleType roleType) {
       permissionsChecker.checkGroupsHandle();
 
       if (workspaceKeeper.getOrganization().isEmpty()) {
@@ -148,7 +148,7 @@ public class GroupFacade extends AbstractFacade {
       }
 
       Organization organization = workspaceKeeper.getOrganization().get();
-      permissionsChecker.checkRole(organization, RoleType.UserConfig);
+      permissionsChecker.checkRole(organization, roleType);
       return organization;
    }
 

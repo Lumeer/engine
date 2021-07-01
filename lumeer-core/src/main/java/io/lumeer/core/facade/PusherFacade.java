@@ -722,7 +722,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Organization organization = organizationDao.getOrganizationById(createOrUpdateGroup.getOrganizationId());
             ObjectWithParent object = new ObjectWithParent(createOrUpdateGroup.getGroup(), organization.getId());
-            Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
+            Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
@@ -736,7 +736,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             ObjectWithParent object = new ObjectWithParent(reloadGroups.getOrganizationId(), reloadGroups.getOrganizationId());
             Organization organization = organizationDao.getOrganizationById(reloadGroups.getOrganizationId());
-            Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
+            Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), Group.class.getSimpleName() + RELOAD_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
