@@ -72,6 +72,9 @@ public enum RoleType {
 
    public static @Nullable
    RoleType fromString(String role) {
+      if (role == null) {
+         return null;
+      }
       try {
          return RoleType.valueOf(role);
       } catch (IllegalArgumentException exception) {

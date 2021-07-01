@@ -379,10 +379,16 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       final Collection originalCollection = collection.copy();
-      permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
+      permissionsChecker.checkAnyRole(collection, Set.of(RoleType.AttributeEdit, RoleType.TechConfig));
 
       if (!permissionsChecker.hasRole(collection, RoleType.TechConfig)) {
          attribute.setFunction(originalAttribute.get().getFunction());
+      }
+
+      if (!permissionsChecker.hasRole(collection, RoleType.AttributeEdit)) {
+         attribute.setName(originalAttribute.get().getName());
+         attribute.setDescription(originalAttribute.get().getDescription());
+         attribute.setConstraint(originalAttribute.get().getConstraint());
       }
 
       if (attribute.isFunctionDefined()) {
