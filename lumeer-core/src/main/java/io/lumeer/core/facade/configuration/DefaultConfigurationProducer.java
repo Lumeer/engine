@@ -90,6 +90,8 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String SAMPLE_DATA_ORG_EN = "sample_data_org_en";
    public static final String SAMPLE_DATA_ORG_CS = "sample_data_org_cs";
 
+   public static final String EVENT_LOG_URL = "event_log_url";
+
    public DefaultConfigurationProducer() {
       synchronized (this) {
          if (defaultConfiguration == null) {

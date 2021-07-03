@@ -25,6 +25,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
+import io.lumeer.core.facade.EventLogFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.util.Colors;
 import io.lumeer.core.util.Icons;
@@ -80,6 +81,9 @@ public class AuthenticatedUser implements Serializable {
    @Inject
    private FreshdeskFacade freshdeskFacade;
 
+   @Inject
+   private EventLogFacade eventLogFacade;
+
    private AuthUserInfo authUserInfo = new AuthUserInfo();
 
    private Random rnd = new Random();
@@ -134,6 +138,7 @@ public class AuthenticatedUser implements Serializable {
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          }
          userLoginDao.userLoggedIn(userByAuthId.getId());
+         eventLogFacade.logEvent(userByAuthId, "Logged in");
       } else {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
@@ -148,6 +153,7 @@ public class AuthenticatedUser implements Serializable {
             createDemoWorkspaceIfNeeded(userByEmail);
             userDao.updateUser(userByEmail.getId(), userByEmail);
             userLoginDao.userLoggedIn(userByEmail.getId());
+            eventLogFacade.logEvent(userByEmail, "Logged in");
          } else {
             User createdUser = createNewUser(email, authId);
             createdUser.setName(name);
@@ -155,6 +161,7 @@ public class AuthenticatedUser implements Serializable {
             createDemoWorkspaceIfNeeded(createdUser);
             userDao.updateUser(createdUser.getId(), createdUser);
             userLoginDao.userLoggedIn(createdUser.getId());
+            eventLogFacade.logEvent(createdUser, "Logged in");
          }
       }
    }

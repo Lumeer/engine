@@ -38,8 +38,10 @@ import com.mongodb.client.model.Sorts;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,10 +159,18 @@ public class MongoUserNotificationDao extends MongoSystemScopedDao implements Us
 
    @Override
    public UserNotification createNotification(final UserNotification notification) {
+      boolean wasEmpty = false;
       try {
+         if (StringUtils.isEmpty(notification.getId())) {
+            wasEmpty = true;
+            notification.setId(new ObjectId().toString());
+         }
          databaseCollection().insertOne(notification);
          return notification;
       } catch (MongoException ex) {
+         if (wasEmpty) {
+            notification.setId(null);
+         }
          throw new StorageException("Cannot create user notification: " + notification, ex);
       }
    }
