@@ -115,6 +115,9 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private UserAuth0Utils userAuth0Utils;
 
+   @Inject
+   private EventLogFacade eventLogFacade;
+
    public User createUser(String organizationId, User user) {
       user.setEmail(user.getEmail().toLowerCase());
       checkOrganizationInUser(organizationId, user);
@@ -171,6 +174,17 @@ public class UserFacade extends AbstractFacade {
       // in case of manage rights, we add them at the project level only
       if (invitationType != null && invitationType != InvitationType.JOIN_ONLY && invitationType != InvitationType.MANAGE) {
          shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
+      }
+
+      if (newUsers != null && newUsers.size() > 0) {
+         eventLogFacade.logEvent(
+               authenticatedUser.getCurrentUser(),
+               String.format(
+                     "Added users to organization %s: %s",
+                     organization.getCode(),
+                     newUsers.stream().map(User::getEmail).collect(Collectors.joining(", "))
+               )
+         );
       }
 
       return newUsers;
@@ -271,6 +285,7 @@ public class UserFacade extends AbstractFacade {
 
       User storedUser = userDao.getUserById(userId);
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
+      logUserVerified(storedUser, updatedUser);
 
       return keepOnlyOrganizationGroups(updatedUser, organizationId);
    }
@@ -289,9 +304,16 @@ public class UserFacade extends AbstractFacade {
       final var mergedUser = UserUtil.mergeUsers(storedUser, user);
       final var updatedUser = updateUserAndSendNotification(organizationId, storedUser.getId(), mergedUser);
 
+      logUserVerified(storedUser, updatedUser);
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return updatedUser;
+   }
+
+   private void logUserVerified(final User storedUser, final User updatedUser) {
+      if (!storedUser.isEmailVerified() && updatedUser.isEmailVerified()) {
+         eventLogFacade.logEvent(updatedUser, "Got verified.");
+      }
    }
 
    private User updateUserAndSendNotification(String organizationId, String userId, User user) {
