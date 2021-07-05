@@ -42,23 +42,25 @@ public class UserUtil {
       user.setWishes(updatedUser.getWishes() != null ? updatedUser.getWishes() : existingUser.getWishes());
       user.setNotifications(updatedUser.getNotifications() != null ? updatedUser.getNotifications() : existingUser.getNotifications());
       user.setHints(updatedUser.getHints() != null ? updatedUser.getHints() : existingUser.getHints());
+      user.setEmailVerified(existingUser.isEmailVerified());
+      user.setAffiliatePartner(existingUser.isAffiliatePartner());
 
       return user;
    }
 
-   public static Set<String> mergeOrganizations(final Set<String> existingGroups, final Set<String> newGroups) {
-      if (existingGroups == null) {
-         return newGroups;
+   public static Set<String> mergeOrganizations(final Set<String> existingOrganizations, final Set<String> newOrganizations) {
+      if (existingOrganizations == null) {
+         return newOrganizations;
       }
 
-      if (newGroups == null) {
-         return existingGroups;
+      if (newOrganizations == null) {
+         return existingOrganizations;
       }
 
-      final var groups = new HashSet<String>();
-      groups.addAll(existingGroups);
-      groups.addAll(newGroups);
-      return groups;
+      final var organizations = new HashSet<String>();
+      organizations.addAll(existingOrganizations);
+      organizations.addAll(newOrganizations);
+      return organizations;
    }
 
 }

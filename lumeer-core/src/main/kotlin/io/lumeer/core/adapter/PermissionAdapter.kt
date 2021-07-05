@@ -415,7 +415,7 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun getUser(userId: String): User {
       if (userCache.containsKey(userId)) {
-         return userCache.get(userId)!!
+         return userCache[userId]!!
       }
       val user = userDao.getUserById(userId)
       if (user != null) userCache[userId] = user

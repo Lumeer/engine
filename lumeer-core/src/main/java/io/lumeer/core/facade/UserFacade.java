@@ -121,7 +121,6 @@ public class UserFacade extends AbstractFacade {
       checkUsersCreate(organizationId, 1);
 
       user.setEmail(user.getEmail().toLowerCase());
-      user.setOrganizations(Collections.singleton(organizationId));
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
       if (storedUser == null) {
@@ -210,7 +209,6 @@ public class UserFacade extends AbstractFacade {
    }
 
    private User createUserAndSendNotification(String organizationId, User user) {
-      user.setEmail(user.getEmail().toLowerCase());
       User created = userDao.createUser(user);
       if (this.createOrUpdateUserEvent != null) {
          this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, created));
