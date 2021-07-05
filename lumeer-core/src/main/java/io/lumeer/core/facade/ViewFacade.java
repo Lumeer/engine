@@ -116,7 +116,9 @@ public class ViewFacade extends AbstractFacade {
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
       permissionsChecker.checkRole(storedView, RoleType.Read);
-      checkViewCollectionIds(view);
+      if (permissionsChecker.hasRole(storedView, RoleType.QueryConfig)) {
+         checkViewCollectionIds(view);
+      }
 
       View updatingView = storedView.copy();
       updatingView.patch(view, permissionsChecker.getActualRoles(storedView));
