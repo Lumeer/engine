@@ -116,6 +116,9 @@ public class ProjectFacade extends AbstractFacade {
    @Inject
    private AuditDao auditDao;
 
+   @Inject
+   private EventLogFacade eventLogFacade;
+
    void init(DaoContextSnapshot daoContextSnapshot) {
       this.collectionDao = daoContextSnapshot.getCollectionDao();
       this.documentDao = daoContextSnapshot.getDocumentDao();
@@ -140,6 +143,8 @@ public class ProjectFacade extends AbstractFacade {
       Project storedProject = projectDao.createProject(project);
 
       createProjectScopedRepositories(storedProject);
+
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Created project " + project.getCode());
 
       return storedProject;
    }

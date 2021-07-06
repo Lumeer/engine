@@ -54,6 +54,9 @@ public class CopyFacade extends AbstractFacade {
    @Inject
    private RequestDataKeeper requestDataKeeper;
 
+   @Inject
+   private EventLogFacade eventLogFacade;
+
    private Language language;
 
    @PostConstruct
@@ -98,6 +101,8 @@ public class CopyFacade extends AbstractFacade {
    }
 
    private void copyProject(Project project, String organizationId, java.util.function.Function<ProjectDao, Project> projectFunction) {
+      final StringBuilder sb = new StringBuilder();
+
       var fromOrganization = organizationDao.getOrganizationById(organizationId);
       workspaceKeeper.push();
       workspaceKeeper.setOrganization(fromOrganization);
@@ -106,6 +111,7 @@ public class CopyFacade extends AbstractFacade {
       var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
       workspaceKeeper.setWorkspace(fromOrganization, fromProject);
+      sb.append("Copied project from ").append(fromOrganization.getCode()).append("/").append(fromProject.getCode());
 
       storage = dataStorageProvider.getUserStorage();
       contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
@@ -119,6 +125,8 @@ public class CopyFacade extends AbstractFacade {
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
 
       templateFacade.installTemplate(project, fromOrganization.getId(), content, relativeDate);
+
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), sb.toString());
    }
 
    private void checkProjectContribute(final Project project) {
