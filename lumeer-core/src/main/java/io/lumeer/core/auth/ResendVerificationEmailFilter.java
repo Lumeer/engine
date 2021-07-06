@@ -18,6 +18,9 @@
  */
 package io.lumeer.core.auth;
 
+import io.lumeer.api.model.User;
+import io.lumeer.core.facade.EventLogFacade;
+
 import com.auth0.exception.Auth0Exception;
 
 import java.io.IOException;
@@ -36,6 +39,9 @@ public class ResendVerificationEmailFilter implements AuthFilter, Serializable {
    private AuthenticatedUser authenticatedUser;
 
    @Inject
+   private EventLogFacade eventLogFacade;
+
+   @Inject
    private UserAuth0Utils userAuth0Utils;
 
    @Override
@@ -48,6 +54,8 @@ public class ResendVerificationEmailFilter implements AuthFilter, Serializable {
    @Override
    public FilterResult doFilter(final HttpServletRequest req, final HttpServletResponse res) throws IOException, ServletException {
       if (req.getPathInfo() != null && req.getPathInfo().startsWith("/users/current/resend")) {
+         logResendEvent(authenticatedUser);
+
          if (authenticatedUser != null && authenticatedUser.getAuthUserInfo() != null) {
             if (authenticatedUser.getAuthUserInfo().user != null &&
                !authenticatedUser.getAuthUserInfo().user.isEmailVerified() && authenticatedUser.getAuthUserInfo().user.getAuthIds() != null &&
@@ -71,5 +79,13 @@ public class ResendVerificationEmailFilter implements AuthFilter, Serializable {
       }
 
       return FilterResult.CONTINUE;
+   }
+
+   private void logResendEvent(final AuthenticatedUser authenticatedUser) {
+      final User user =
+            authenticatedUser == null || authenticatedUser.getAuthUserInfo() == null || authenticatedUser.getAuthUserInfo().user == null ?
+            null : authenticatedUser.getCurrentUser();
+
+      eventLogFacade.logEvent(user, "Requested resend of verification email.");
    }
 }

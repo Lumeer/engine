@@ -312,7 +312,7 @@ public class UserFacade extends AbstractFacade {
 
    private void logUserVerified(final User storedUser, final User updatedUser) {
       if (!storedUser.isEmailVerified() && updatedUser.isEmailVerified()) {
-         eventLogFacade.logEvent(updatedUser, "Got verified.");
+         eventLogFacade.logEvent(updatedUser, "Email verified.");
       }
    }
 
@@ -424,6 +424,8 @@ public class UserFacade extends AbstractFacade {
          updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
       }
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      logUserVerified(currentUser, updatedUser);
 
       return updatedUser;
    }
