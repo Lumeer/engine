@@ -169,7 +169,7 @@ public class UserFacade extends AbstractFacade {
 
       addUsersToOrganization(organization, newUsers);
       addUsersToProject(organization, projectId, newUsers, invitationType);
-      
+
       if (newUsers != null && newUsers.size() > 0) {
          eventLogFacade.logEvent(
                authenticatedUser.getCurrentUser(),

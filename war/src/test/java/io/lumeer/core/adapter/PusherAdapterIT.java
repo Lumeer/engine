@@ -164,16 +164,15 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
       // check lost by user roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, viewWithUser, view);
-      assertThat(events).hasSize(3);
-      assertThat(events).extracting("name").containsOnly("Collection:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(aCollection, bCollection, cCollection);
-
+      assertThat(events).hasSize(4);
+      assertThat(events).extracting("name").containsOnly("View:remove", "Collection:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(view.getId(), aCollection, bCollection, cCollection);
 
       // check lost by group roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, viewWithGroup, view);
-      assertThat(events).hasSize(3);
-      assertThat(events).extracting("name").containsOnly("Collection:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(aCollection, bCollection, cCollection);
+      assertThat(events).hasSize(4);
+      assertThat(events).extracting("name").containsOnly("View:remove", "Collection:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(view.getId(), aCollection, bCollection, cCollection);
    }
 
    @Test
@@ -202,16 +201,15 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
       // check lost by user roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, viewWithUser, view);
-      assertThat(events).hasSize(2);
-      assertThat(events).extracting("name").containsOnly("Collection:remove", "LinkType:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(aCollection, aLinkType);
-
+      assertThat(events).hasSize(3);
+      assertThat(events).extracting("name").containsOnly("View:remove", "Collection:remove", "LinkType:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(view.getId(), aCollection, aLinkType);
 
       // check lost by group roles
       events = pusherAdapter.checkViewPermissionsChange(organization, project, otherUser, viewWithGroup, view);
-      assertThat(events).hasSize(2);
-      assertThat(events).extracting("name").containsOnly("Collection:remove", "LinkType:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(aCollection, aLinkType);
+      assertThat(events).hasSize(3);
+      assertThat(events).extracting("name").containsOnly("View:remove", "Collection:remove", "LinkType:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(view.getId(), aCollection, aLinkType);
    }
 
    @Test
@@ -233,9 +231,9 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
       // check lost
       events = pusherAdapter.checkCollectionsPermissionsChange(organization, project, otherUser, collectionWithRead, collection);
-      assertThat(events).hasSize(2);
-      assertThat(events).extracting("name").containsOnly("LinkType:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(aLinkType, bLinkType);
+      assertThat(events).hasSize(3);
+      assertThat(events).extracting("name").containsOnly("Collection:remove", "LinkType:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(bCollection, aLinkType, bLinkType);
    }
 
    @Test
@@ -257,9 +255,9 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
       // check lost
       events = pusherAdapter.checkLinkTypePermissionsChange(organization, project, otherUser, linkTypeWithRead, linkType);
-      assertThat(events).hasSize(2);
-      assertThat(events).extracting("name").containsOnly("Collection:remove");
-      assertThat(events).extracting("data").extracting("id").containsOnly(bCollection, cCollection);
+      assertThat(events).hasSize(3);
+      assertThat(events).extracting("name").containsOnly("LinkType:remove", "Collection:remove");
+      assertThat(events).extracting("data").extracting("id").containsOnly(bLinkTypeId, bCollection, cCollection);
    }
 
    private Collection createCollection(String name, Set<Role> userRoles, Set<Role> groupRoles) {
@@ -301,7 +299,6 @@ public class PusherAdapterIT extends IntegrationTestBase {
       view.getPermissions().updateGroupPermissions(groupPermission);
       return viewDao.updateView(id, view, null);
    }
-
 
    private LinkType createLinkType(String name, List<String> collectionIds, Set<Role> userRoles, Set<Role> groupRoles) {
       LinkType linkType = new LinkType(name, collectionIds, null, null, new Permissions(), LinkPermissionsType.Custom);
