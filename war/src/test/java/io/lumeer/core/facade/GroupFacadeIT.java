@@ -89,7 +89,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Set.of(new Role(RoleType.UserConfig))));
+      organization1.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig))));
       organization = organizationDao.createOrganization(organization1);
 
       workspaceKeeper.setOrganizationId(organization.getId());
@@ -203,7 +203,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
       Organization organization3 = new Organization();
       organization3.setCode("RML");
       organization3.setPermissions(new Permissions());
-      organization3.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.ProjectContribute))));
+      organization3.getPermissions().updateUserPermissions(new Permission(this.user.getId(), Set.of(new Role(RoleType.ProjectContribute))));
       Organization organizationNotPermission = organizationDao.createOrganization(organization3);
 
       workspaceKeeper.setOrganizationId(organizationNotPermission.getId());
