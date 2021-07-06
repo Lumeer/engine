@@ -220,6 +220,7 @@ public class Auth0Filter implements Filter {
                (authUserInfo.lastUpdated + TOKEN_REFRESH_PERIOD <= System.currentTimeMillis()) ||
                (!authUserInfo.user.isEmailVerified() && authUserInfo.lastUpdated + UNVERIFIED_TOKEN_REFRESH_PERIOD <= System.currentTimeMillis())) {
             final Semaphore s = semaphores.computeIfAbsent(accessToken, key -> new Semaphore(1));
+            final boolean firstLogin = authUserInfo.user == null;
             if (s.tryAcquire()) { // only one thread must do that at the same time
                try {
                   final AuthenticatedUser.AuthUserInfo newAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
@@ -248,7 +249,7 @@ public class Auth0Filter implements Filter {
                   newAuthUserInfo.lastUpdated = System.currentTimeMillis();
                   authUserCache.put(accessToken, newAuthUserInfo);
                   authenticatedUser.setAuthUserInfo(newAuthUserInfo);
-                  authenticatedUser.checkUser();
+                  authenticatedUser.checkUser(firstLogin);
                } finally {
                   s.release();
                }
@@ -323,7 +324,7 @@ public class Auth0Filter implements Filter {
             newAuthUserInfo.lastUpdated = System.currentTimeMillis();
             authUserCache.put(userId, newAuthUserInfo);
             authenticatedUser.setAuthUserInfo(newAuthUserInfo);
-            authenticatedUser.checkUser();
+            authenticatedUser.checkUser(true);
          }
       }
    }

@@ -88,12 +88,12 @@ public class AuthenticatedUser implements Serializable {
 
    private Random rnd = new Random();
 
-   void checkUser() {
+   void checkUser(final boolean firstLogin) {
       Set<String> authIds = authUserInfo.user != null && authUserInfo.user.getAuthIds() != null ? authUserInfo.user.getAuthIds() : Collections.emptySet();
       String authId = authIds.isEmpty() ? null : authIds.iterator().next();
 
       if (authId != null) { // production
-         checkUserInProduction(authId, getUserEmail(), getUserName(), getUserEmailVerified());
+         checkUserInProduction(authId, getUserEmail(), getUserName(), getUserEmailVerified(), firstLogin);
       } else {
          checkLocalUser(DEFAULT_EMAIL);
       }
@@ -120,13 +120,19 @@ public class AuthenticatedUser implements Serializable {
       return getCurrentUser().getId();
    }
 
-   private void checkUserInProduction(String authId, String email, String name, boolean emailVerified) {
+   private void checkUserInProduction(String authId, String email, String name, boolean emailVerified, boolean firstLogin) {
       User userByAuthId = userDao.getUserByAuthId(authId);
       if (userByAuthId != null) {
          if (!userByAuthId.getEmail().equalsIgnoreCase(email)) {
             userByAuthId.setName(name);
             userByAuthId.setEmail(email.toLowerCase());
+
+            if (!userByAuthId.isEmailVerified() && emailVerified) {
+               eventLogFacade.logEvent(userByAuthId, "Email verified.");
+            }
+
             userByAuthId.setEmailVerified(emailVerified);
+
             createDemoWorkspaceIfNeeded(userByAuthId);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          } else {
@@ -134,16 +140,28 @@ public class AuthenticatedUser implements Serializable {
             if (userByAuthId.getName() == null || !userByAuthId.getName().equals(name)) {
                userByAuthId.setName(name);
             }
+
+            if (!userByAuthId.isEmailVerified() && emailVerified) {
+               eventLogFacade.logEvent(userByAuthId, "Email verified.");
+            }
+
             userByAuthId.setEmailVerified(emailVerified);
             userDao.updateUser(userByAuthId.getId(), userByAuthId);
          }
-         userLoginDao.userLoggedIn(userByAuthId.getId());
-         eventLogFacade.logEvent(userByAuthId, "Logged in");
+         if (firstLogin) {
+            userLoginDao.userLoggedIn(userByAuthId.getId());
+            eventLogFacade.logEvent(userByAuthId, "Logged in");
+         }
       } else {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
             userByEmail.setName(name);
             userByEmail.setEmail(userByEmail.getEmail().toLowerCase());
+
+            if (!userByEmail.isEmailVerified() && emailVerified) {
+               eventLogFacade.logEvent(userByEmail, "Email verified.");
+            }
+
             userByEmail.setEmailVerified(emailVerified);
             if (userByEmail.getAuthIds() != null) {
                userByEmail.getAuthIds().add(authId);
@@ -152,16 +170,25 @@ public class AuthenticatedUser implements Serializable {
             }
             createDemoWorkspaceIfNeeded(userByEmail);
             userDao.updateUser(userByEmail.getId(), userByEmail);
-            userLoginDao.userLoggedIn(userByEmail.getId());
-            eventLogFacade.logEvent(userByEmail, "Logged in");
+            if (firstLogin) {
+               userLoginDao.userLoggedIn(userByEmail.getId());
+               eventLogFacade.logEvent(userByEmail, "Logged in");
+            }
          } else {
             User createdUser = createNewUser(email, authId);
             createdUser.setName(name);
+
+            if (!createdUser.isEmailVerified() && emailVerified) {
+               eventLogFacade.logEvent(createdUser, "Email verified.");
+            }
+
             createdUser.setEmailVerified(emailVerified);
             createDemoWorkspaceIfNeeded(createdUser);
             userDao.updateUser(createdUser.getId(), createdUser);
-            userLoginDao.userLoggedIn(createdUser.getId());
-            eventLogFacade.logEvent(createdUser, "Logged in");
+            if (firstLogin) {
+               userLoginDao.userLoggedIn(createdUser.getId());
+               eventLogFacade.logEvent(createdUser, "Logged in");
+            }
          }
       }
    }
