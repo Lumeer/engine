@@ -483,6 +483,7 @@ public class UserFacade extends AbstractFacade {
 
    private boolean checkOrganizationInUser(String organizationId, User user) {
       if (user.getOrganizations() == null || user.getOrganizations().isEmpty()) {
+         user.setOrganizations(Set.of(organizationId));
          return false;
       } else {
          if (user.getOrganizations().size() != 1 || !user.getOrganizations().contains(organizationId)) {
