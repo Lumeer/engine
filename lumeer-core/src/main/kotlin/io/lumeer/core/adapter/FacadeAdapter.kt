@@ -40,7 +40,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return if (getUserAdmins(organization!!, project, linkType).contains(user.id)) {
          linkType
       } else linkType.apply {
-         val groups = PermissionUtils.getUserGroups(organization, user, permissionAdapter.getGroups(organization!!.id))
+         val groups = PermissionUtils.getUserGroups(organization, user, permissionAdapter.getGroups(organization.id))
          permissions = keepOnlyNecessaryPermissions(linkType.permissions, ResourceType.LINK_TYPE, user, groups)
       }
    }

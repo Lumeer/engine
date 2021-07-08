@@ -26,6 +26,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.function.Function;
@@ -40,6 +41,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -83,6 +85,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
+   private Group group;
    private Organization organization;
    private Project project;
 
@@ -111,6 +114,9 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private CollectionDao collectionDao;
 
    @Before
@@ -124,6 +130,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
+      groupDao.setOrganization(storedOrganization);
+      group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
 
       Permissions organizationPermissions = new Permissions();
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
@@ -132,7 +140,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
-      groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
+      groupPermission = Permission.buildWithRoles(group.getId(), GROUP_ROLES);
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
@@ -452,7 +460,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Read))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(this.group.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Read))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups")
@@ -476,7 +484,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testRemoveGroupPermission() {
       String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups").path(GROUP)
+      Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups").path(this.group.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
