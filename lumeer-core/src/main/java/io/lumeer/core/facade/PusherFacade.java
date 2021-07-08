@@ -36,7 +36,6 @@ import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.core.action.DelayedActionProcessor;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
@@ -64,6 +63,7 @@ import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.CreateResourceComment;
 import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
+import io.lumeer.engine.api.event.OrganizationUserEvent;
 import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.RemoveDocument;
@@ -87,7 +87,6 @@ import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateResourceComment;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
-import io.lumeer.engine.api.event.OrganizationUserEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -109,11 +108,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-@ApplicationScoped
+@RequestScoped
 public class PusherFacade extends AbstractFacade {
 
    public static final String PRIVATE_CHANNEL_PREFIX = "private-";
@@ -124,9 +123,6 @@ public class PusherFacade extends AbstractFacade {
    public static final String RELOAD_EVENT_SUFFIX = ":reload";
 
    private PusherClient pusherClient = null;
-
-   @Inject
-   private DelayedActionProcessor delayedActionProcessor;
 
    @Inject
    private Logger log;
@@ -167,6 +163,9 @@ public class PusherFacade extends AbstractFacade {
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
+   @Inject
+   private PusherHelperFacade pusherHelperFacade;
+
    private ConstraintManager constraintManager;
    private CollectionAdapter collectionAdapter;
    private LinkTypeAdapter linkTypeAdapter;
@@ -180,8 +179,7 @@ public class PusherFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-      pusherClient = PusherClient.getInstance(configurationProducer);
-      delayedActionProcessor.setPusherClient(pusherClient);
+      pusherClient = pusherHelperFacade.getPusherClient();
       permissionAdapter = permissionsChecker.getPermissionAdapter();
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
       resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
