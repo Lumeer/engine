@@ -289,6 +289,7 @@ public class UserFacade extends AbstractFacade {
 
       groupDao.deleteUserFromGroups(userId);
       groupDao.addUserToGroups(userId, groups);
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
 
       if (reloadGroupsEvent != null) {
          reloadGroupsEvent.fire(new ReloadGroups(organizationId));

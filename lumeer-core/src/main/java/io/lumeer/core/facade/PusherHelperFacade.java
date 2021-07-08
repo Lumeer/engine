@@ -27,7 +27,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class PusherHelperFacade extends AbstractFacade {
+public class PusherHelperFacade {
 
    private PusherClient pusherClient = null;
 

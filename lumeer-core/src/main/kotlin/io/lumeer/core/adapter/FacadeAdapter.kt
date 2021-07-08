@@ -103,7 +103,7 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
 
    private fun filterOnlyNecessaryPermissions(permissions: Set<Permission>?, keepRoleTypes: Set<RoleType>): Set<Permission> {
       return permissions.orEmpty()
-            .map { it.apply { roles.filter { role -> role.isTransitive || keepRoleTypes.contains(role.type) } } }
+            .map { Permission(it.id, it.roles.filter { role -> role.isTransitive || keepRoleTypes.contains(role.type) }.toSet() ) }
             .filter { it.roles.isNotEmpty() }
             .toSet()
    }
