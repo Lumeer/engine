@@ -285,6 +285,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    public void setUserGroups(String organizationId, String userId, Set<String> groups) {
+      permissionsChecker.checkGroupsHandle();
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
       groupDao.deleteUserFromGroups(userId);
