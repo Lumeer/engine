@@ -56,6 +56,7 @@ public class GroupFacade extends AbstractFacade {
    private ProjectFacade projectFacade;
 
    public Group createGroup(Group group) {
+      permissionsChecker.checkGroupsHandle();
       checkPermissions(RoleType.UserConfig);
       checkGroupName(group.getName());
 
@@ -68,6 +69,7 @@ public class GroupFacade extends AbstractFacade {
    }
 
    public Group updateGroup(String groupId, Group group) {
+      permissionsChecker.checkGroupsHandle();
       checkPermissions(RoleType.UserConfig);
       Group storedGroup = groupDao.getGroup(groupId);
       if (!storedGroup.getName().equals(group.getName())) {
@@ -85,6 +87,7 @@ public class GroupFacade extends AbstractFacade {
    }
 
    public List<Group> addGroupsToWorkspace(final String organizationId, final String projectId, final List<Group> groups, final InvitationType invitationType) {
+      permissionsChecker.checkGroupsHandle();
       // we need at least project management rights
       checkProjectPermissions(organizationId, projectId);
 
@@ -126,6 +129,7 @@ public class GroupFacade extends AbstractFacade {
    }
 
    public void deleteGroup(String groupId) {
+      permissionsChecker.checkGroupsHandle();
       checkPermissions(RoleType.UserConfig);
 
       groupDao.deleteGroup(groupId);
@@ -143,8 +147,6 @@ public class GroupFacade extends AbstractFacade {
    }
 
    private Organization checkPermissions(RoleType roleType) {
-      permissionsChecker.checkGroupsHandle();
-
       if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
@@ -155,8 +157,6 @@ public class GroupFacade extends AbstractFacade {
    }
 
    private Project checkProjectPermissions(final String organizationId, final String projectId) {
-      permissionsChecker.checkGroupsHandle();
-
       workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, RoleType.UserConfig);
