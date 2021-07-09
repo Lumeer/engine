@@ -20,21 +20,20 @@ package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-public class View extends Resource {
+public class View extends Resource implements Updatable<View> {
 
-   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.CLONE, Role.READ, Role.SHARE, Role.WRITE));
+   public static Set<Role> ROLES = RoleUtils.viewResourceRoles();
 
    public static final String QUERY = "query";
    public static final String PERSPECTIVE = "perspective";
@@ -48,7 +47,8 @@ public class View extends Resource {
    private Object config;
    private Object settings;
    private String authorId;
-   private Map<String, Set<Role>> authorRights;
+   private Map<String, Set<RoleType>> authorCollectionsRights;
+   private Map<String, Set<RoleType>> authorLinkTypesRights;
    private List<String> folders;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
@@ -100,7 +100,8 @@ public class View extends Resource {
       o.config = this.config;
       o.settings = this.settings;
       o.authorId = this.authorId;
-      o.authorRights = this.authorRights;
+      o.authorCollectionsRights = this.authorCollectionsRights;
+      o.authorLinkTypesRights = this.authorLinkTypesRights;
       o.version = this.version;
       o.lastTimeUsed = this.lastTimeUsed;
       o.favorite = this.favorite;
@@ -146,12 +147,20 @@ public class View extends Resource {
       this.authorId = authorId;
    }
 
-   public Map<String, Set<Role>> getAuthorRights() {
-      return authorRights;
+   public Map<String, Set<RoleType>> getAuthorCollectionsRights() {
+      return authorCollectionsRights;
    }
 
-   public void setAuthorRights(final Map<String, Set<Role>> authorRights) {
-      this.authorRights = authorRights;
+   public void setAuthorCollectionsRights(final Map<String, Set<RoleType>> authorCollectionsRights) {
+      this.authorCollectionsRights = authorCollectionsRights;
+   }
+
+   public Map<String, Set<RoleType>> getAuthorLinkTypesRights() {
+      return authorLinkTypesRights;
+   }
+
+   public void setAuthorLinkTypesRights(final Map<String, Set<RoleType>> authorLinkTypesRights) {
+      this.authorLinkTypesRights = authorLinkTypesRights;
    }
 
    public ZonedDateTime getLastTimeUsed() {
@@ -200,11 +209,28 @@ public class View extends Resource {
             ", config=" + config + '\'' +
             ", settings=" + settings + '\'' +
             ", authorId='" + authorId + '\'' +
-            ", authorRights=" + authorRights +
+            ", authorCollectionsRights=" + authorCollectionsRights +
+            ", authorLinkTypesRights=" + authorLinkTypesRights +
             ", lastTimeUsed=" + lastTimeUsed +
             ", query=" + query + '\'' +
             ", folders=" + folders + '\'' +
             '}';
    }
 
+   @Override
+   public void patch(final View resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+
+      if (roles.contains(RoleType.Manage)) {
+         setFolders(resource.getFolders());
+      }
+      if (roles.contains(RoleType.QueryConfig)) {
+         setQuery(resource.getQuery());
+      }
+      if (roles.contains(RoleType.PerspectiveConfig)) {
+         setConfig(resource.getConfig());
+         setPerspective(resource.getPerspective());
+         setSettings(resource.getSettings());
+      }
+   }
 }

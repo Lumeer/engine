@@ -55,6 +55,10 @@ public class QueryStem {
       this(null, collectionId, null, null, null, null);
    }
 
+   public QueryStem(final String collectionId, final List<String> linkTypeIds) {
+      this(null, collectionId, linkTypeIds, null, null, null);
+   }
+
    public String getId() {
       return id;
    }

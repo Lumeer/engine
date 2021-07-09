@@ -181,6 +181,8 @@ public abstract class Resource implements WithId, HealthChecking {
 
    @Override
    public void checkHealth() throws InsaneObjectException {
+      checkStringLength("icon", code, MAX_STRING_LENGTH);
+      checkStringLength("color", code, MAX_STRING_LENGTH);
       checkStringLength("code", code, MAX_STRING_LENGTH);
       checkStringLength("name", name, MAX_STRING_LENGTH);
       checkStringLength("description", description, MAX_LONG_STRING_LENGTH);

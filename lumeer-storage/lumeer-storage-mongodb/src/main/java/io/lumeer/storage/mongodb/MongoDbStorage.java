@@ -33,7 +33,7 @@ import io.lumeer.engine.api.data.Query;
 import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.mongodb.codecs.BigDecimalCodec;
-import io.lumeer.storage.mongodb.codecs.RoleCodec;
+import io.lumeer.storage.mongodb.codecs.RoleTypeCodec;
 import io.lumeer.storage.mongodb.codecs.providers.AttributeCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.AttributeFilterCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.AuditRecordCodecProvider;
@@ -63,6 +63,7 @@ import io.lumeer.storage.mongodb.codecs.providers.QueryCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.QueryStemCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ReferralPaymentCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ResourceCommentCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.RoleCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.RuleCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.SequenceCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.TemplateMetadataCodecProvider;
@@ -147,7 +148,7 @@ public class MongoDbStorage implements DataStorage {
          }
 
          final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
-         final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleCodec());
+         final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleTypeCodec());
          final CodecRegistry providersRegistry = CodecRegistries.fromProviders(
                new PermissionsCodecProvider(), new PermissionCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider(),
                new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider(), new UserCodecProvider(),
@@ -157,7 +158,8 @@ public class MongoDbStorage implements DataStorage {
                new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
                new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(),
                new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider(),
-               new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider(), new AuditRecordCodecProvider()
+               new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider(), new AuditRecordCodecProvider(),
+               new RoleCodecProvider()
          );
          final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

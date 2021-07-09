@@ -22,7 +22,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.provider.DataStorageProvider;
@@ -31,6 +31,7 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import java.util.Date;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -64,21 +65,21 @@ public class CopyFacade extends AbstractFacade {
    }
 
    public void deepCopySampleData(Project project, SampleDataType sampleType) {
-      permissionsChecker.checkRole(project, Role.WRITE);
+      checkProjectContribute(project);
 
       var organizationId = templateFacade.getSampleDataOrganizationId(language);
       this.copyProjectByCode(project, organizationId, sampleType.toString());
    }
 
    public void deepCopyTemplate(Project project, String templateId) {
-      permissionsChecker.checkRole(project, Role.WRITE);
+      checkProjectContribute(project);
 
       var organizationId = templateFacade.getTemplateOrganizationId(language);
       this.copyProjectById(project, organizationId, templateId);
    }
 
    public void deepCopyProject(Project project, String organizationId, String projectId) {
-      permissionsChecker.checkRole(project, Role.WRITE);
+      checkProjectContribute(project);
 
       this.copyProjectById(project, organizationId, projectId);
    }
@@ -94,7 +95,7 @@ public class CopyFacade extends AbstractFacade {
    }
 
    public void installProjectContent(final Project project, final String organizationId, final ProjectContent projectContent) {
-      permissionsChecker.checkRole(project, Role.MANAGE);
+      checkProjectContribute(project);
 
       templateFacade.installTemplate(project, organizationId, projectContent, new Date());
    }
@@ -109,11 +110,6 @@ public class CopyFacade extends AbstractFacade {
       var storage = dataStorageProvider.getUserStorage();
       var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
-      if (!fromProject.isPublic()) {
-         permissionsChecker.checkRole(fromOrganization, Role.READ);
-         permissionsChecker.checkRole(fromProject, Role.READ);
-      }
-
       workspaceKeeper.setWorkspace(fromOrganization, fromProject);
       sb.append("Copied project from ").append(fromOrganization.getCode()).append("/").append(fromProject.getCode());
 
@@ -131,6 +127,10 @@ public class CopyFacade extends AbstractFacade {
       templateFacade.installTemplate(project, fromOrganization.getId(), content, relativeDate);
 
       eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), sb.toString());
+   }
+
+   private void checkProjectContribute(final Project project) {
+      permissionsChecker.checkAllRoles(project, Set.of(RoleType.LinkContribute, RoleType.ViewContribute, RoleType.CollectionContribute));
    }
 
 }

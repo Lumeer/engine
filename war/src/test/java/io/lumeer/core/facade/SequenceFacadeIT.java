@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Group;
@@ -27,10 +28,12 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -43,6 +46,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
 
@@ -57,6 +61,8 @@ public class SequenceFacadeIT extends IntegrationTestBase {
 
    private Permission userPermission;
    private Permission groupPermission;
+   private Project project;
+   private User user;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -81,12 +87,12 @@ public class SequenceFacadeIT extends IntegrationTestBase {
 
    @Before
    public void configureProject() {
-      User user = userDao.createUser(new User(USER));
+      user = userDao.createUser(new User(USER));
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       Permissions organizationPermissions = new Permissions();
-      userPermission = Permission.buildWithRoles(user.getId(), Organization.ROLES);
+      userPermission = Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       organization.setPermissions(organizationPermissions);
       organization = organizationDao.createOrganization(organization);
@@ -96,17 +102,17 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       Group group = groupDao.createGroup(new Group(GROUP));
 
       userPermission = Permission.buildWithRoles(user.getId(), Collection.ROLES);
-      groupPermission = Permission.buildWithRoles(group.getId(), Collections.singleton(Role.READ));
+      groupPermission = Permission.buildWithRoles(group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(Permission.buildWithRoles(user.getId(), Project.ROLES));
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.Read))));
       project.setPermissions(projectPermissions);
-      Project storedProject = projectDao.createProject(project);
+      this.project = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspaceIds(organization.getId(), storedProject.getId());
+      workspaceKeeper.setWorkspaceIds(organization.getId(), this.project.getId());
    }
 
    @Test
@@ -115,6 +121,11 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       assertThat(sequenceFacade.getNextSequenceNumber("s2")).isEqualTo(0);
       assertThat(sequenceFacade.getNextSequenceNumber("s1")).isEqualTo(1);
       assertThat(sequenceFacade.getNextSequenceNumber("s1")).isEqualTo(2);
+
+      assertThatThrownBy(() -> sequenceFacade.getAllSequences())
+            .isInstanceOf(NoResourcePermissionException.class);
+
+      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.TechConfig)));
 
       var sequences = sequenceFacade.getAllSequences();
 
@@ -126,6 +137,14 @@ public class SequenceFacadeIT extends IntegrationTestBase {
       sequences = sequenceFacade.getAllSequences();
       assertThat(sequences).hasSize(1);
       assertThat(sequences.stream().map(Sequence::getName).collect(Collectors.toSet())).contains("s1");
+   }
+
+   private void setProjectUserRoles(final Set<Role> roles) {
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), roles));
+      project.setPermissions(projectPermissions);
+      projectDao.updateProject(project.getId(), project);
+      workspaceCache.clear();
    }
 
 }

@@ -19,6 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.LinkTypeFacade;
 
 import org.json.simple.JSONArray;
@@ -65,6 +66,8 @@ public class LinkTypeCreator extends WithIdCreator {
             (String) o.get(LinkType.NAME),
             collections,
             new ArrayList<>(),
+            null,
+            new Permissions(),
             null
       );
    }

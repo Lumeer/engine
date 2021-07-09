@@ -27,6 +27,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.DatabaseQuery;
@@ -41,7 +42,6 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MongoProjectDaoTest extends MongoDbTestBase {
 
@@ -63,9 +63,9 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
    private static final Permission GROUP_PERMISSION;
 
    static {
-      Permission userPermission = new Permission(USER, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet()));
+      Permission userPermission = new Permission(USER, Project.ROLES);
 
-      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(new Role(RoleType.Read)));
 
       PERMISSIONS = new Permissions();
       PERMISSIONS.updateUserPermissions(userPermission);
@@ -167,12 +167,12 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
    @Test
    public void testGetProjectsNoReadRole() {
       Project project = prepareProject(CODE1);
-      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.DataWrite)));
       project.getPermissions().updateUserPermissions(userPermission);
       projectDao.databaseCollection().insertOne(project);
 
       Project project2 = prepareProject(CODE2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.Manage)));
       project2.getPermissions().updateGroupPermissions(groupPermission);
       projectDao.databaseCollection().insertOne(project2);
 

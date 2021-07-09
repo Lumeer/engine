@@ -31,6 +31,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.function.FunctionRow;
@@ -132,7 +133,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       Group group = groupDao.createGroup(new Group(GROUP));
 
       userPermission = Permission.buildWithRoles(user.getId(), Collection.ROLES);
-      groupPermission = Permission.buildWithRoles(group.getId(), Collections.singleton(Role.READ));
+      groupPermission = Permission.buildWithRoles(group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
@@ -420,8 +421,8 @@ public class FunctionFacadeIT extends IntegrationTestBase {
       List<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
             new Attribute(attributeId, attributeId, null, null, new Function("const lumeerko", "", "", 0, false), 1))
                                          .collect(Collectors.toList());
-      LinkType linKType = new LinkType(name, collectionIds, attributes, null);
-      return linkTypeDao.createLinkType(linKType);
+      LinkType linkType = new LinkType(name, collectionIds, attributes, null, null, null);
+      return linkTypeDao.createLinkType(linkType);
    }
 
    private List<Document> createDocumentsForCollection(Collection collection) {

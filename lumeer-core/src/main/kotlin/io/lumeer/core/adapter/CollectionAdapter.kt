@@ -33,12 +33,12 @@ class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: F
 
    fun getDocumentsCount() = getDocumentsCounts().values.sum()
 
-   fun mapCollectionData(collection: Collection, userId: String, projectId: String) = collection.apply {
+   fun mapCollectionComputedProperties(collection: Collection, userId: String, projectId: String) = collection.apply {
       isFavorite = isFavorite(collection.id, userId, projectId)
        documentsCount = getDocumentsCountByCollection(collection.id)
    }
 
-   fun mapCollectionsData(collections: List<Collection>, userId: String, projectId: String): List<Collection> {
+   fun mapCollectionsComputedProperties(collections: List<Collection>, userId: String, projectId: String): List<Collection> {
       val favoriteCollectionIds = getFavoriteCollectionIds(userId, projectId)
       val documentsCounts = getDocumentsCounts()
 

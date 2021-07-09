@@ -49,8 +49,4 @@ abstract class AbstractService {
       String parentPath = fullPath.replaceFirst(regex, "");
       return UriBuilder.fromUri(parentPath).build();
    }
-
-   protected boolean isManager() {
-      return permissionsChecker.isManager();
-   }
 }

@@ -207,7 +207,7 @@ public class FunctionFacade extends AbstractFacade {
       Set<String> linkTypeIds = queue.stream().filter(q -> q.getType() == FunctionResourceType.LINK && q.getLinkType() == null).map(FunctionParameter::getResourceId).collect(Collectors.toSet());
 
       Map<String, Collection> collectionMap = collectionIds.size() > 0 ? collectionDao.getCollectionsByIds(collectionIds).stream().collect(Collectors.toMap(Resource::getId, c -> c)) : new HashMap<>();
-      List<LinkType> linkTypes = linkTypeIds.size() > 0 ? linkTypeAdapter.mapLinkTypesData(linkTypeDao.getLinkTypesByIds(linkTypeIds)) : new ArrayList<>();
+      List<LinkType> linkTypes = linkTypeIds.size() > 0 ? linkTypeAdapter.mapLinkTypesComputedProperties(linkTypeDao.getLinkTypesByIds(linkTypeIds)) : new ArrayList<>();
       Map<String, LinkType> linkTypeMap = linkTypes.stream().collect(Collectors.toMap(LinkType::getId, c -> c));
 
       FunctionTask task = null;
@@ -313,7 +313,7 @@ public class FunctionFacade extends AbstractFacade {
    }
 
    public Deque<FunctionParameterDocuments> createQueueForCreatedDocument(Collection collection, Document document) {
-      List<Attribute> attributes = collection.getAttributes().stream().filter(this::functionIsDefined).collect(Collectors.toList());
+      List<Attribute> attributes = collection.getAttributes().stream().filter(Attribute::isFunctionDefined).collect(Collectors.toList());
 
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
 
@@ -331,10 +331,6 @@ public class FunctionFacade extends AbstractFacade {
       });
 
       return orderFunctions(parametersMap);
-   }
-
-   private boolean functionIsDefined(Attribute attribute) {
-      return attribute.getFunction() != null && attribute.getFunction().getJs() != null && !attribute.getFunction().getJs().isEmpty();
    }
 
    public FunctionTask createTaskForUpdateDocument(final Collection collection, final Document originalDocument, final Document newDocument, final java.util.Collection<String> changedAttributeIds) {
@@ -428,7 +424,7 @@ public class FunctionFacade extends AbstractFacade {
    }
 
    public Deque<FunctionParameterDocuments> createQueueForCreatedLinks(LinkType linkType, Set<LinkInstance> linkInstances, final List<String> skipCollectionIds) {
-      List<Attribute> attributes = linkType.getAttributes().stream().filter(this::functionIsDefined).collect(Collectors.toList());
+      List<Attribute> attributes = linkType.getAttributes().stream().filter(Attribute::isFunctionDefined).collect(Collectors.toList());
 
       Map<FunctionParameterDocuments, List<FunctionParameterDocuments>> parametersMap = new HashMap<>();
 

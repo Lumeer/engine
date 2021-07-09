@@ -18,7 +18,7 @@
  */
 package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.View;
 
 import java.util.Set;
@@ -27,7 +27,7 @@ public class ViewPermissionsOperation extends ResourceOperation<View> {
 
    public View originalView;
 
-   public ViewPermissionsOperation(final View entity, final String userId, final Set<Role> value) {
+   public ViewPermissionsOperation(final View entity, final String userId, final Set<RoleType> value) {
       super(entity, userId, value);
       originalView = entity.copy();
    }
@@ -37,8 +37,8 @@ public class ViewPermissionsOperation extends ResourceOperation<View> {
    }
 
    @SuppressWarnings("unchecked")
-   public Set<Role> getRoles() {
-      return (Set<Role>) getValue();
+   public Set<RoleType> getRoles() {
+      return (Set<RoleType>) getValue();
    }
 
    public View getOriginalView() {

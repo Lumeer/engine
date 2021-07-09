@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.*;
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ConstraintData;
 import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
@@ -35,17 +36,13 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
-import io.lumeer.engine.api.exception.InvalidDocumentKeyException;
-import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,92 +55,8 @@ public class DocumentUtils {
    private DocumentUtils() {
    }
 
-   public static DataDocument checkDocumentKeysValidity(DataDocument dataDocument) throws InvalidDocumentKeyException {
-      DataDocument ndd = new DataDocument();
-      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
-         String attributeName = entry.getKey().trim();
-         if (!isAttributeNameValid(attributeName)) {
-            throw new InvalidDocumentKeyException(attributeName);
-         }
-         Object value = entry.getValue();
-         if (isDataDocument(value)) {
-            ndd.put(attributeName, checkDocumentKeysValidity((DataDocument) value));
-         } else if (isList(value)) {
-            List l = (List) entry.getValue();
-            if (!l.isEmpty() && isDataDocument(l.get(0))) {
-               ArrayList<DataDocument> docs = new ArrayList<>();
-               ndd.put(attributeName, docs);
-               for (Object o : l) {
-                  docs.add(checkDocumentKeysValidity((DataDocument) o));
-               }
-            } else {
-               ndd.put(attributeName, l);
-            }
-         } else {
-            ndd.put(attributeName, value);
-         }
-      }
-      return ndd;
-   }
-
-   public static DataDocument cleanInvalidAttributes(final DataDocument dataDocument) {
-      final DataDocument ndd = new DataDocument();
-
-      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
-         final String attributeName = entry.getKey().trim();
-         if (isAttributeNameValid(attributeName)) {
-            final Object value = entry.getValue();
-
-            if (isDataDocument(value)) {
-               ndd.put(attributeName, cleanInvalidAttributes((DataDocument) value));
-            } else if (isList(value)) {
-               List l = (List) entry.getValue();
-               if (!l.isEmpty() && isDataDocument(l.get(0))) {
-                  ArrayList<DataDocument> docs = new ArrayList<>();
-                  ndd.put(attributeName, docs);
-                  for (Object o : l) {
-                     docs.add(cleanInvalidAttributes((DataDocument) o));
-                  }
-               } else {
-                  ndd.put(attributeName, l);
-               }
-            } else {
-               ndd.put(attributeName, value);
-            }
-         }
-      }
-      return ndd;
-   }
-
-   public static boolean isAttributeNameValid(String attributeName) {
-      return attributeName.equals("_id") || !(attributeName.startsWith("$") || attributeName.startsWith("_") || attributeName.contains("."));
-   }
-
    public static Map<String, List<Document>> getDocumentsByCollection(final List<Document> documents) {
       return documents.stream().collect(Collectors.groupingBy(Document::getCollectionId, mapping(d -> d, toList())));
-   }
-
-   public static Map<String, Collection> getCollectionsMap(final CollectionDao collectionDao, final List<Document> documents) {
-      Map<String, List<Document>> documentsByCollection = getDocumentsByCollection(documents);
-      return collectionDao.getCollectionsByIds(documentsByCollection.keySet())
-                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
-   }
-
-   public static Map<String, Collection> getCollectionsMap(final CollectionDao collectionDao, final Map<String, List<Document>> documentsByCollection) {
-      return collectionDao.getCollectionsByIds(documentsByCollection.keySet())
-                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
-   }
-
-   public static Set<String> getDocumentAttributes(DataDocument dataDocument, String prefix) {
-      Set<String> attrs = new HashSet<>();
-      for (Map.Entry<String, Object> entry : dataDocument.entrySet()) {
-         String attributeName = prefix + entry.getKey().trim();
-         attrs.add(attributeName);
-         if (isDataDocument(entry.getValue())) {
-            attrs.addAll(getDocumentAttributes((DataDocument) entry.getValue(), attributeName + "."));
-         }
-      }
-      return attrs;
    }
 
    // gets encoded documents
@@ -196,6 +109,14 @@ public class DocumentUtils {
       return documents;
    }
 
+   public static boolean isDocumentOwner(final Collection collection, final Document document, String userId) {
+      return document.getCreatedBy().equals(userId);
+   }
+
+   public static boolean isDocumentOwnerByPurpose(final Collection collection, final Document document, final User user) {
+      return DocumentUtils.isTaskAssignedByUser(collection, document, user.getEmail());
+   }
+
    public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
       return isTaskAssignedByUser(collection, document.getData(), userEmail);
    }
@@ -209,10 +130,12 @@ public class DocumentUtils {
    }
 
    public static Set<String> getUsersAssigneeEmails(final Collection collection, final DataDocument data) {
-      final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
-      final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
-      if (assigneeAttribute != null) {
-         return getUsersList(data, assigneeAttribute.getId());
+      if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
+         final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
+         final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
+         if (assigneeAttribute != null) {
+            return getUsersList(data, assigneeAttribute.getId());
+         }
       }
       return Collections.emptySet();
    }
@@ -276,14 +199,6 @@ public class DocumentUtils {
       encodeDocumentDataForFce(collection, documents, constraintManager, encodeForFce);
 
       return documents;
-   }
-
-   private static boolean isDataDocument(Object obj) {
-      return obj != null && obj instanceof DataDocument;
-   }
-
-   private static boolean isList(Object obj) {
-      return obj != null && obj instanceof List;
    }
 
 }

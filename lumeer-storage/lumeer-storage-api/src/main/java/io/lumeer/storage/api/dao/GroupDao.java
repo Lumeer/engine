@@ -22,6 +22,7 @@ import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 
 import java.util.List;
+import java.util.Set;
 
 public interface GroupDao extends OrganizationScopedDao {
 
@@ -31,6 +32,15 @@ public interface GroupDao extends OrganizationScopedDao {
 
    void deleteGroup(String id);
 
+   void deleteUserFromGroups(String userId);
+
+   void addUserToGroups(String userId, Set<String> groups);
+
    List<Group> getAllGroups();
 
+   List<Group> getAllGroups(String organizationId);
+
+   Group getGroup(String id);
+
+   Group getGroupByName(String name);
 }

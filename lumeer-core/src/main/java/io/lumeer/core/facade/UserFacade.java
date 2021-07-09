@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.InvitationType;
@@ -27,19 +26,22 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
-import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.auth.UserAuth0Utils;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateOrUpdateUser;
+import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.UpdateCurrentUser;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -51,10 +53,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -66,6 +66,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
 
    @Inject
    private UserLoginDao userLoginDao;
@@ -81,12 +84,6 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private ProjectFacade projectFacade;
-
-   @Inject
-   private CollectionFacade collectionFacade;
-
-   @Inject
-   private ViewFacade viewFacade;
 
    @Inject
    private FeedbackDao feedbackDao;
@@ -107,6 +104,9 @@ public class UserFacade extends AbstractFacade {
    private Event<RemoveUser> removeUserEvent;
 
    @Inject
+   private Event<ReloadGroups> reloadGroupsEvent;
+
+   @Inject
    private EmailFacade emailFacade;
 
    @Inject
@@ -119,11 +119,11 @@ public class UserFacade extends AbstractFacade {
    private EventLogFacade eventLogFacade;
 
    public User createUser(String organizationId, User user) {
-      user.setEmail(user.getEmail().toLowerCase());
       checkOrganizationInUser(organizationId, user);
-      checkOrganizationPermissions(organizationId, Role.MANAGE);
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
       checkUsersCreate(organizationId, 1);
 
+      user.setEmail(user.getEmail().toLowerCase());
       User storedUser = userDao.getUserByEmail(user.getEmail());
 
       if (storedUser == null) {
@@ -132,12 +132,12 @@ public class UserFacade extends AbstractFacade {
 
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
-      return keepOnlyOrganizationGroups(updatedUser, organizationId);
+      return keepOnlyCurrentOrganization(updatedUser, organizationId);
    }
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
       // we need at least project management rights
-      checkProjectPermissions(organizationId, projectId, Role.MANAGE);
+      checkProjectPermissions(organizationId, projectId, RoleType.UserConfig);
 
       users.forEach(u -> u.setEmail(u.getEmail().toLowerCase()));
 
@@ -151,7 +151,7 @@ public class UserFacade extends AbstractFacade {
 
       // we need to add new users in the organization
       if (!orgUserEmails.containsAll(usersInRequest)) {
-         organization = checkOrganizationPermissions(organizationId, Role.MANAGE);
+         organization = checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
          users.forEach(user -> {
             if (!checkOrganizationInUser(organizationId, user)) {
@@ -162,19 +162,13 @@ public class UserFacade extends AbstractFacade {
          checkUsersCreate(organizationId, users.size());
 
          newUsers = createUsersInOrganization(organizationId, users);
-         addUsersToOrganization(organization, newUsers);
       } else { // we will just amend the rights at the project level
          organization = organizationFacade.getOrganizationById(organizationId);
          newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
-         addUsersToOrganization(organization, newUsers);
       }
 
+      addUsersToOrganization(organization, newUsers);
       addUsersToProject(organization, projectId, newUsers, invitationType);
-
-      // in case of manage rights, we add them at the project level only
-      if (invitationType != null && invitationType != InvitationType.JOIN_ONLY && invitationType != InvitationType.MANAGE) {
-         shareResources(organization, projectDao.getProjectById(projectId), newUsers, invitationType);
-      }
 
       if (newUsers != null && newUsers.size() > 0) {
          eventLogFacade.logEvent(
@@ -190,43 +184,6 @@ public class UserFacade extends AbstractFacade {
       return newUsers;
    }
 
-   private Set<Role> getInvitationRoles(final InvitationType invitationType) {
-      return getInvitationRoles(invitationType, new HashSet<>());
-   }
-
-   private Set<Role> getInvitationRoles(final InvitationType invitationType, Set<Role> minimalSet) {
-      final Set<Role> roles = new HashSet<>(minimalSet);
-
-      // do not wonder - there isn't the return statement on purpose so that we collect the roles on the way
-      switch (invitationType) {
-         case MANAGE:
-            roles.add(Role.MANAGE);
-         case READ_WRITE:
-            roles.add(Role.WRITE);
-         case READ_ONLY:
-            roles.add(Role.READ);
-      }
-
-      return roles;
-   }
-
-   private void shareResources(final Organization organization, final Project project, final List<User> users, final InvitationType invitationType) {
-      workspaceKeeper.setWorkspaceIds(organization.getId(), project.getId());
-
-      final Set<Role> roles = getInvitationRoles(invitationType);
-
-      final Set<Permission> permissionSet = new HashSet<>();
-      users.forEach(user -> {
-         permissionSet.add(Permission.buildWithRoles(user.getId(), roles));
-      });
-
-      final List<Collection> collections = collectionFacade.getCollections();
-      collections.forEach(c -> collectionFacade.updateUserPermissions(c.getId(), permissionSet));
-
-      final List<View> views = viewFacade.getViews();
-      views.forEach(v -> viewFacade.updateUserPermissions(v.getId(), permissionSet));
-   }
-
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {
       return users.stream().map(user -> {
          user.setEmail(user.getEmail().toLowerCase());
@@ -238,7 +195,7 @@ public class UserFacade extends AbstractFacade {
 
          User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
-         return keepOnlyOrganizationGroups(updatedUser, organizationId);
+         return keepOnlyCurrentOrganization(updatedUser, organizationId);
       }).collect(Collectors.toList());
    }
 
@@ -251,9 +208,9 @@ public class UserFacade extends AbstractFacade {
       return users.stream()
                   .map(user -> {
                      var existingPermissions = resource.getPermissions().getUserPermissions().stream().filter(permission -> permission.getId().equals(user.getId())).findFirst();
-                     var minimalSet = new HashSet<>(Set.of(Role.READ));
+                     var minimalSet = new HashSet<>(Set.of(new Role(RoleType.Read)));
                      existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
-                     return Permission.buildWithRoles(user.getId(), getInvitationRoles(invitationType, minimalSet));
+                     return Permission.buildWithRoles(user.getId(), RoleUtils.getInvitationRoles(invitationType, resource.getType(), minimalSet));
                   })
                   .collect(Collectors.toSet());
    }
@@ -266,7 +223,6 @@ public class UserFacade extends AbstractFacade {
    }
 
    private User createUserAndSendNotification(String organizationId, User user) {
-      user.setEmail(user.getEmail().toLowerCase());
       User created = userDao.createUser(user);
       if (this.createOrUpdateUserEvent != null) {
          this.createOrUpdateUserEvent.fire(new CreateOrUpdateUser(organizationId, created));
@@ -281,13 +237,13 @@ public class UserFacade extends AbstractFacade {
 
    public User updateUser(String organizationId, String userId, User user) {
       checkOrganizationInUser(organizationId, user);
-      checkOrganizationPermissions(organizationId, Role.MANAGE);
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
       User storedUser = userDao.getUserById(userId);
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
       logUserVerified(storedUser, updatedUser);
 
-      return keepOnlyOrganizationGroups(updatedUser, organizationId);
+      return keepOnlyCurrentOrganization(updatedUser, organizationId);
    }
 
    public DataDocument updateHints(final DataDocument hints) {
@@ -328,11 +284,29 @@ public class UserFacade extends AbstractFacade {
       return updated;
    }
 
-   public void deleteUser(String organizationId, String userId) {
-      checkOrganizationPermissions(organizationId, Role.MANAGE);
+   public void setUserGroups(String organizationId, String userId, Set<String> groups) {
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
-      userDao.deleteUserGroups(organizationId, userId);
+      groupDao.deleteUserFromGroups(userId);
+      groupDao.addUserToGroups(userId, groups);
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
+
+      if (reloadGroupsEvent != null) {
+         reloadGroupsEvent.fire(new ReloadGroups(organizationId));
+      }
+   }
+
+   public void deleteUser(String organizationId, String userId) {
+      checkOrganizationPermissions(organizationId, RoleType.UserConfig);
+
+      groupDao.setOrganization(getOrganization());
+      groupDao.deleteUserFromGroups(userId);
       User storedUser = userDao.getUserById(userId);
+
+      var organizations = new HashSet<>(storedUser.getOrganizations());
+      organizations.remove(organizationId);
+      storedUser.setOrganizations(organizations);
+      storedUser = userDao.updateUser(userId, storedUser);
 
       if (removeUserEvent != null) {
          removeUserEvent.fire(new RemoveUser(organizationId, storedUser));
@@ -342,10 +316,10 @@ public class UserFacade extends AbstractFacade {
    }
 
    public List<User> getUsers(String organizationId) {
-      checkOrganizationPermissions(organizationId, Role.READ);
+      checkOrganizationPermissions(organizationId, RoleType.Read);
 
       return userDao.getAllUsers(organizationId).stream()
-                    .map(user -> keepOnlyOrganizationGroups(user, organizationId))
+                    .map(user -> keepOnlyCurrentOrganization(user, organizationId))
                     .collect(Collectors.toList());
    }
 
@@ -433,16 +407,16 @@ public class UserFacade extends AbstractFacade {
    public void setDefaultWorkspace(DefaultWorkspace workspace) {
       Organization organization;
       if (workspace.getOrganizationId() != null) {
-         organization = checkOrganizationPermissions(workspace.getOrganizationId(), Role.READ);
+         organization = checkOrganizationPermissions(workspace.getOrganizationId(), RoleType.Read);
       } else {
-         organization = checkOrganizationPermissionsByCode(workspace.getOrganizationCode(), Role.READ);
+         organization = checkOrganizationPermissionsByCode(workspace.getOrganizationCode(), RoleType.Read);
       }
 
       Project project;
       if (workspace.getProjectId() != null) {
-         project = checkProjectPermissions(organization.getId(), workspace.getProjectId(), Role.READ);
+         project = checkProjectPermissions(organization.getId(), workspace.getProjectId(), RoleType.Read);
       } else {
-         project = checkProjectPermissionsByCode(organization.getId(), workspace.getProjectCode(), Role.READ);
+         project = checkProjectPermissionsByCode(organization.getId(), workspace.getProjectCode(), RoleType.Read);
       }
 
       DefaultWorkspace defaultWorkspace = new DefaultWorkspace(organization.getId(), project.getId());
@@ -468,31 +442,26 @@ public class UserFacade extends AbstractFacade {
       return userDao.getUserById(userId).isAffiliatePartner();
    }
 
-   private User keepOnlyOrganizationGroups(User user, String organizationId) {
-      if (user.getGroups().containsKey(organizationId)) {
-         Set<String> groups = user.getGroups().get(organizationId);
-         user.setGroups(Collections.singletonMap(organizationId, groups));
-         return user;
-      }
-      user.setGroups(new HashMap<>());
+   private User keepOnlyCurrentOrganization(User user, String organizationId) {
+      user.setOrganizations(Collections.singleton(organizationId));
       return user;
    }
 
-   private Organization checkOrganizationPermissions(final String organizationId, final Role role) {
+   private Organization checkOrganizationPermissions(final String organizationId, final RoleType role) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
       permissionsChecker.checkRole(organization, role);
 
       return organization;
    }
 
-   private Organization checkOrganizationPermissionsByCode(final String organizationCode, final Role role) {
+   private Organization checkOrganizationPermissionsByCode(final String organizationCode, final RoleType role) {
       Organization organization = organizationDao.getOrganizationByCode(organizationCode);
       permissionsChecker.checkRole(organization, role);
 
       return organization;
    }
 
-   private Project checkProjectPermissions(final String organizationId, final String projectId, final Role role) {
+   private Project checkProjectPermissions(final String organizationId, final String projectId, final RoleType role) {
       workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
@@ -500,7 +469,7 @@ public class UserFacade extends AbstractFacade {
       return project;
    }
 
-   private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final Role role) {
+   private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final RoleType role) {
       workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, role);
@@ -509,16 +478,18 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void installOrganizationInUser(final String organizationId, final User user) {
-      if (user.getGroups() == null || user.getGroups().isEmpty()) {
-         user.setGroups(Map.of(organizationId, Collections.emptySet()));
+      if (user.getOrganizations() == null) {
+         user.setOrganizations(new HashSet<>());
       }
+      user.getOrganizations().add(organizationId);
    }
 
    private boolean checkOrganizationInUser(String organizationId, User user) {
-      if (user.getGroups() == null || user.getGroups().isEmpty()) {
+      if (user.getOrganizations() == null || user.getOrganizations().isEmpty()) {
+         user.setOrganizations(Set.of(organizationId));
          return false;
       } else {
-         if (user.getGroups().entrySet().size() != 1 || !user.getGroups().containsKey(organizationId)) {
+         if (user.getOrganizations().size() != 1 || !user.getOrganizations().contains(organizationId)) {
             throw new BadFormatException("User " + user + " is in incorrect format");
          }
       }

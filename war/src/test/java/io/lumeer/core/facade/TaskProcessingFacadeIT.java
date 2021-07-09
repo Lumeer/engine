@@ -31,6 +31,7 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.rule.AutoLinkRule;
@@ -131,20 +132,20 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       this.stranger = userDao.createUser(new User(STRANGER_USER));
 
       userPermissions = Permission.buildWithRoles(this.user.getId(), Project.ROLES);
-      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ));
-      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(Role.READ));
+      userReadonlyPermissions = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
+      userStrangerPermissions = Permission.buildWithRoles(this.stranger.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
       organization.setPermissions(new Permissions());
-      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(Role.READ)));
+      organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read))));
       this.organization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(this.organization);
       groupDao.setOrganization(this.organization);
       Group group = new Group(GROUP);
       this.group = groupDao.createGroup(group);
-      groupPermissions = Permission.buildWithRoles(this.group.getId(), Collections.singleton(Role.READ));
+      groupPermissions = Permission.buildWithRoles(this.group.getId(), Collections.singleton(new Role(RoleType.Read)));
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
@@ -175,7 +176,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       final String ruleName = "blocklyRule";
       final Collection c1 = createCollection("c1", "name1", Map.of("a0", "A", "a1", "B"));
       final Collection c2 = createCollection("c2", "name2", Map.of("a0", "C", "a1", "D"));
-      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null, null, null));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));
@@ -321,7 +322,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       final String ruleName = "autoLinkRule";
       final Collection c1 = createCollection("ac1", "auto1", Map.of("a0", "A", "a1", "B"));
       final Collection c2 = createCollection("ac2", "auto2", Map.of("a0", "C", "a1", "D"));
-      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null));
+      final LinkType l = linkTypeFacade.createLinkType(new LinkType("link1", List.of(c1.getId(), c2.getId()), Collections.emptyList(), null, null, null));
 
       final Document c1d1 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line1").append("a1", 10)));
       final Document c1d2 = documentFacade.createDocument(c1.getId(), new Document(new DataDocument("a0", "line2").append("a1", 20)));

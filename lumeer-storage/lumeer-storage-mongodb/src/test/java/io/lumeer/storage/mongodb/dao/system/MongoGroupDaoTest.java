@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Set;
 
 public class MongoGroupDaoTest extends MongoDbTestBase {
 
@@ -89,7 +90,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
    @Test
    public void testUpdateGroup() {
       Group group = new Group(GROUP);
-      String id = mongoGroupDao.createGroup( group).getId();
+      String id = mongoGroupDao.createGroup(group).getId();
 
       group.setName(GROUP2);
       mongoGroupDao.updateGroup(id, group);
@@ -98,6 +99,30 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
       assertThat(storedGroup).isNotNull();
       assertThat(storedGroup.getId()).isEqualTo(id);
       assertThat(storedGroup.getName()).isEqualTo(GROUP2);
+   }
+
+   @Test
+   public void testDeleteUsers() {
+      Group group = new Group(GROUP);
+      group.setUsers(List.of("A", "B", "C"));
+      String id = mongoGroupDao.createGroup(group).getId();
+
+      Group group2 = new Group(GROUP2);
+      group2.setUsers(List.of("B", "C", "D"));
+      String id2 = mongoGroupDao.createGroup(group2).getId();
+
+      mongoGroupDao.deleteUserFromGroups("A");
+      assertThat(mongoGroupDao.getGroup(id).getUsers()).containsOnly("B", "C");
+      assertThat(mongoGroupDao.getGroup(id2).getUsers()).containsOnly("B", "C", "D");
+
+      mongoGroupDao.deleteUserFromGroups("B");
+      assertThat(mongoGroupDao.getGroup(id).getUsers()).containsOnly("C");
+      assertThat(mongoGroupDao.getGroup(id2).getUsers()).containsOnly("C", "D");
+
+      mongoGroupDao.deleteUserFromGroups("C");
+      assertThat(mongoGroupDao.getGroup(id).getUsers()).isEmpty();
+      assertThat(mongoGroupDao.getGroup(id2).getUsers()).containsOnly("D");
+
    }
 
    @Test
@@ -138,8 +163,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
       mongoGroupDao.createGroup(new Group(GROUP));
 
       Group group = new Group(GROUP2);
-      mongoGroupDao.createGroup( group);
-
+      mongoGroupDao.createGroup(group);
 
       List<Group> groupList = mongoGroupDao.getAllGroups();
       assertThat(groupList).extracting(Group::getName).containsOnly(GROUP, GROUP2);
@@ -151,6 +175,5 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
       List<Group> groupList = mongoGroupDao.getAllGroups();
       assertThat(groupList).isEmpty();
    }
-
 
 }

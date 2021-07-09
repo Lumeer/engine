@@ -27,11 +27,14 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.CollectionUtil;
-import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.api.util.PermissionUtils;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.util.Tuple;
@@ -54,6 +57,9 @@ import java.util.stream.Collectors;
 public class DocumentMatcher {
    private final DaoContextSnapshot dao;
    private final RuleTask ruleTask;
+
+   private final Organization organization;
+   private final Project project;
 
    private LinkType linkType;
 
@@ -81,6 +87,8 @@ public class DocumentMatcher {
    public DocumentMatcher(final DaoContextSnapshot dao, final RuleTask ruleTask) {
       this.dao = dao;
       this.ruleTask = ruleTask;
+      this.organization = dao.getOrganization();
+      this.project = dao.getProject();
    }
 
    private void initializeLocalizationData() {
@@ -88,7 +96,7 @@ public class DocumentMatcher {
       final String timeZone = ruleTask.getTimeZone();
       final TranslationManager translationManager = new TranslationManager();
       constraintData = new ConstraintData(
-            dao.getUserDao().getAllUsers(dao.getSelectedWorkspace().getOrganization().get().getId()),
+            dao.getUserDao().getAllUsers(this.organization.getId()),
             ruleTask.getInitiator(),
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
@@ -97,27 +105,15 @@ public class DocumentMatcher {
    }
 
    private void initializePermissions() {
-      final boolean isManager = ResourceUtils.userIsManagerInWorkspace(
-            ruleTask.getInitiator().getId(),
-            ruleTask.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().orElse(null),
-            ruleTask.getDaoContextSnapshot().getSelectedWorkspace().getProject().orElse(null)
-      );
+      Set<RoleType> thisCollectionRoles = PermissionUtils.getUserRolesInResource(this.organization, this.project, this.thisCollection, this.ruleTask.getInitiator(), this.ruleTask.getGroups());
+      Set<RoleType> thatCollectionRoles = PermissionUtils.getUserRolesInResource(this.organization, this.project, this.thatCollection, this.ruleTask.getInitiator(), this.ruleTask.getGroups());
 
-      if (isManager) {
-         collectionPermissions = Map.of(thisCollection.getId(), AllowedPermissions.getAllAllowed(), thatCollection.getId(), AllowedPermissions.getAllAllowed());
-         linkTypePermissions = Map.of(linkType.getId(), AllowedPermissions.getAllAllowed());
-      } else {
-         final AllowedPermissions thisCollectionPermissions = AllowedPermissions.getAllowedPermissions(ruleTask.getInitiator().getId(), thisCollection.getPermissions());
-         final AllowedPermissions thatCollectionPermissions = AllowedPermissions.getAllowedPermissions(ruleTask.getInitiator().getId(), thatCollection.getPermissions());
-         final AllowedPermissions linkTypePermission = new AllowedPermissions(
-               thisCollectionPermissions.getRead() && thatCollectionPermissions.getRead(),
-               thisCollectionPermissions.getWrite() && thatCollectionPermissions.getWrite(),
-               thisCollectionPermissions.getManage() && thatCollectionPermissions.getManage()
-         );
+      AllowedPermissions thisCollectionPermissions = new AllowedPermissions(thisCollectionRoles);
+      AllowedPermissions thatCollectionPermissions = new AllowedPermissions(thatCollectionRoles);
+      AllowedPermissions linkTypePermission = AllowedPermissions.merge(thisCollectionPermissions, thatCollectionPermissions);
 
-         collectionPermissions = Map.of(thisCollection.getId(), thisCollectionPermissions, thatCollection.getId(), thatCollectionPermissions);
-         linkTypePermissions = Map.of(linkType.getId(), linkTypePermission);
-      }
+      collectionPermissions = Map.of(thisCollection.getId(), thisCollectionPermissions, thatCollection.getId(), thatCollectionPermissions);
+      linkTypePermissions = Map.of(linkType.getId(), linkTypePermission);
    }
 
    private void initializeQueryProvider() {

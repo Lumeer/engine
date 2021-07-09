@@ -23,16 +23,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.CompanyContact;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentGatewayFacade;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -46,10 +50,8 @@ import org.junit.runner.RunWith;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -74,11 +76,12 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    private static final String ICON = "fa-search";
 
    private static final Set<Role> USER_ROLES = Organization.ROLES;
-   private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
+   private static final Set<Role> GROUP_ROLES = Collections.singleton(new Role(RoleType.Read));
 
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
+   private Group group;
 
    private String organizationUrl;
 
@@ -98,6 +101,9 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    @Inject
    private UserDao userDao;
 
+   @Inject
+   private GroupDao groupDao;
+
    @Before
    public void prepare() {
       User user = new User(USER);
@@ -107,6 +113,8 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
       groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
 
       organizationUrl = basePath() + "organizations";
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    @Test
@@ -212,7 +220,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateOrganization() {
       final Organization organization = createOrganization(CODE1);
 
-      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, null);
+      Organization updatedOrganization = new Organization(CODE2, NAME, ICON, COLOR, null, null, new Permissions(Set.of(userPermission), Set.of()));
       Entity entity = Entity.json(updatedOrganization);
 
       Response response = client.target(organizationUrl).path(organization.getId())
@@ -263,7 +271,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
+      Permission[] userPermission = { Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.TechConfig, true), new Role(RoleType.DataWrite))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("users")
@@ -303,7 +311,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, Set.of(new Role(RoleType.Manage), new Role(RoleType.DataWrite, true))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups")
@@ -325,9 +333,17 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermission() {
-      final Organization organization = createOrganizationWithSpecificPermissions(CODE1);
+      Organization organization = createOrganizationWithSpecificPermissions(CODE1);
 
-      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups").path(GROUP)
+      Group group = new Group(GROUP);
+      groupDao.setOrganization(organization);
+      this.group = groupDao.createGroup(group);
+
+      organization.getPermissions().removeGroupPermission(GROUP);
+      organization.getPermissions().updateGroupPermissions(new Permission(group.getId(), GROUP_ROLES));
+      organization = organizationDao.updateOrganization(organization.getId(), organization);
+
+      Response response = client.target(organizationUrl).path(organization.getId()).path("permissions").path("groups").path(this.group.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();

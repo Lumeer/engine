@@ -44,7 +44,7 @@ public abstract class Utils {
    }
 
    public static boolean isEmpty(final String str) {
-      return str == null || "".equals(str);
+      return str == null || "".equals(str.trim());
    }
 
    public static <T> T firstNotNullElement(List<T> list) {

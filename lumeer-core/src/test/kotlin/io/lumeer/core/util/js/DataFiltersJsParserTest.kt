@@ -36,7 +36,7 @@ class DataFiltersJsParserTest {
     private val collection2 = Collection("c2", "c2", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
         id = "c2"
     }
-    private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf()).apply { id = "lt1" }
+    private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf(), Permissions(), LinkPermissionsType.Custom).apply { id = "lt1" }
 
     @Test
     fun test() {
@@ -59,7 +59,7 @@ class DataFiltersJsParserTest {
             collectionId = collection2.id
         }
 
-        val permissions = AllowedPermissions(true, true, true)
+        val permissions = AllowedPermissions.allAllowed()
         val collectionsPermissions = mapOf(collection1.id to permissions, collection2.id to permissions)
         val linkTypPermissions = mapOf(linkType.id to permissions)
         val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()), "Europe/Bratislava")
@@ -134,7 +134,7 @@ class DataFiltersJsParserTest {
         private val collection2 = Collection("c2", "c2", "", "", "", null, Permissions(), setOf(Attribute("a1")), mapOf(), "", null).apply {
             id = "c2"
         }
-        private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf()).apply { id = "lt1" }
+        private val linkType = LinkType("lt1", listOf(collection1.id, collection2.id), listOf(), mapOf(), Permissions(), LinkPermissionsType.Custom).apply { id = "lt1" }
 
         override fun run() {
             val c1AttributeId = collection1.attributes.first().id
@@ -156,7 +156,7 @@ class DataFiltersJsParserTest {
                 collectionId = collection2.id
             }
 
-            val permissions = AllowedPermissions(true, true, true)
+            val permissions = AllowedPermissions.allAllowed()
             val collectionsPermissions = mapOf(collection1.id to permissions, collection2.id to permissions)
             val linkTypPermissions = mapOf(linkType.id to permissions)
             val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()), "Europe/Bratislava")

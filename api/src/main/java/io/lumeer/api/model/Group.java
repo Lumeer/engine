@@ -23,25 +23,54 @@ import io.lumeer.api.exception.InsaneObjectException;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class Group implements HealthChecking {
 
    public static final String ID = "id";
    public static final String NAME = "name";
+   public static final String ICON = "icon";
+   public static final String COLOR = "color";
+   public static final String DESCRIPTION = "description";
+   public static final String USERS = "users";
 
    private String id;
    private String name;
+   private String description;
+   private String icon;
+   private String color;
+   private String organizationId;
+   private List<String> users;
 
    public Group(String name){
       this.name = name;
    }
 
-   @JsonCreator
-   public Group(@JsonProperty(ID) final String id,
-         @JsonProperty(NAME) final String name) {
+   public Group(String name, List<String> users){
+      this.name = name;
+      this.users = users;
+   }
+
+   public Group(String id, String name){
       this.id = id;
       this.name = name;
+   }
+
+   @JsonCreator
+   public Group(@JsonProperty(ID) final String id,
+         @JsonProperty(NAME) final String name,
+         @JsonProperty(DESCRIPTION) final String description,
+         @JsonProperty(ICON) final String icon,
+         @JsonProperty(COLOR) final String color,
+         @JsonProperty(USERS) final List<String> users) {
+      this.id = id;
+      this.name = name;
+      this.description = description;
+      this.icon = icon;
+      this.color = color;
+      this.users = users;
    }
 
    public String getId() {
@@ -60,22 +89,61 @@ public class Group implements HealthChecking {
       this.name = name;
    }
 
+   public String getDescription() {
+      return description;
+   }
+
+   public void setDescription(final String description) {
+      this.description = description;
+   }
+
+   public String getIcon() {
+      return icon;
+   }
+
+   public void setIcon(final String icon) {
+      this.icon = icon;
+   }
+
+   public String getColor() {
+      return color;
+   }
+
+   public void setColor(final String color) {
+      this.color = color;
+   }
+
+   public List<String> getUsers() {
+      return users;
+   }
+
+   public void setUsers(final List<String> users) {
+      this.users = users;
+   }
+
+   public String getOrganizationId() {
+      return organizationId;
+   }
+
+   public void setOrganizationId(final String organizationId) {
+      this.organizationId = organizationId;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
          return true;
       }
-      if (!(o instanceof Group)) {
+      if (o == null || getClass() != o.getClass()) {
          return false;
       }
       final Group group = (Group) o;
-      return Objects.equals(getId(), group.getId()) &&
-            Objects.equals(getName(), group.getName());
+      return Objects.equals(id, group.id) && Objects.equals(name, group.name) && Objects.equals(description, group.description) && Objects.equals(icon, group.icon) && Objects.equals(color, group.color) && Objects.equals(users, group.users);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(getId(), getName());
+      return Objects.hash(id, name, description, icon, color, users);
    }
 
    @Override
@@ -83,11 +151,18 @@ public class Group implements HealthChecking {
       return "Group{" +
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
+            ", description='" + description + '\'' +
+            ", icon='" + icon + '\'' +
+            ", color='" + color + '\'' +
+            ", users=" + users +
             '}';
    }
 
    @Override
    public void checkHealth() throws InsaneObjectException {
+      checkStringLength("icon", name, MAX_STRING_LENGTH);
+      checkStringLength("color", name, MAX_STRING_LENGTH);
       checkStringLength("name", name, MAX_STRING_LENGTH);
+      checkStringLength("description", description, MAX_LONG_STRING_LENGTH);
    }
 }

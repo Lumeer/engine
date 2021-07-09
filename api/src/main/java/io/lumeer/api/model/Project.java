@@ -18,20 +18,20 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Project extends Resource {
+public class Project extends Resource implements Updatable<Project> {
 
-   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.READ));
+   public static Set<Role> ROLES = RoleUtils.projectResourceRoles();
 
    private TemplateMetadata templateMetadata;
    private int collectionsCount;
@@ -108,7 +108,28 @@ public class Project extends Resource {
       return isPublic;
    }
 
+   public void setPublic(final boolean aPublic) {
+      isPublic = aPublic;
+   }
+
    public void setCollectionsCount(final int collectionsCount) {
       this.collectionsCount = collectionsCount;
+   }
+
+   @Override
+   public void patch(final Project resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+
+      if (roles.contains(RoleType.TechConfig)) {
+         setPublic(resource.isPublic);
+         setTemplateMetadata(resource.getTemplateMetadata());
+      }
+   }
+
+   @Override
+   public void checkHealth() throws InsaneObjectException {
+      super.checkHealth();
+
+      checkStringLength("code", code, 5);
    }
 }

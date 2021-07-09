@@ -19,11 +19,11 @@ package io.lumeer.api.model;/*
 
 public class ProjectDescription {
 
-   private long collections;
-   private long documents;
+   private final long collections;
+   private final long documents;
 
-   private long maxFunctionPerResource;
-   private long maxRulesPerResource;
+   private final long maxFunctionPerResource;
+   private final long maxRulesPerResource;
 
    public ProjectDescription(final long collections, final long documents, final long maxFunctionPerResource, final long maxRulesPerResource) {
       this.collections = collections;

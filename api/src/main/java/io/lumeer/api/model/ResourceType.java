@@ -24,6 +24,7 @@ public enum ResourceType {
    PROJECT,
    COLLECTION,
    VIEW,
+   LINK_TYPE,
    DOCUMENT,
    LINK;
 

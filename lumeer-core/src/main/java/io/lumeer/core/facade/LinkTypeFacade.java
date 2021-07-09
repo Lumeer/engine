@@ -22,15 +22,17 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkPermissionsType;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
-import io.lumeer.core.auth.AuthenticatedUserGroups;
-import io.lumeer.core.exception.NoResourcePermissionException;
+import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -38,7 +40,6 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.Collections;
 import java.util.List;
@@ -60,9 +61,6 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private CollectionDao collectionDao;
-
-   @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
    private LinkDataDao linkDataDao;
@@ -88,7 +86,7 @@ public class LinkTypeFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       adapter = new LinkTypeAdapter(linkInstanceDao);
-      resourceAdapter = new ResourceAdapter(collectionDao, linkTypeDao, viewDao, userDao);
+      resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
    }
 
    public LinkTypeAdapter getAdapter() {
@@ -96,13 +94,32 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType createLinkType(LinkType linkType) {
+      checkProjectRole(RoleType.LinkContribute);
+      checkLinkTypeCollections(linkType);
       permissionsChecker.checkFunctionsLimit(linkType);
       permissionsChecker.checkRulesLimit(linkType);
-      checkLinkTypePermission(linkType);
+      permissionsChecker.checkRulesPermissions(linkType.getRules());
+      permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
 
+      if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
+         Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), LinkType.ROLES);
+         linkType.getPermissions().updateUserPermissions(defaultUserPermission);
+      }
+
+      List<Attribute> attributes = linkType.getAttributes();
+
+      linkType.setAttributes(null);
       linkType.setLastAttributeNum(0);
       linkType.setLinksCount(0L);
-      return linkTypeDao.createLinkType(linkType);
+
+      LinkType storedLinkType = linkTypeDao.createLinkType(linkType);
+      linkDataDao.createDataRepository(storedLinkType.getId());
+
+      if (attributes.size() > 0) {
+         storedLinkType.setAttributes(createLinkTypeAttributes(storedLinkType, attributes, false));
+      }
+
+      return storedLinkType;
    }
 
    public LinkType updateLinkType(String id, LinkType linkType) {
@@ -110,37 +127,43 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType updateLinkType(String id, LinkType linkType, final boolean skipFceLimits) {
-      LinkType storedLinkType = checkLinkTypePermission(id);
-      LinkType originalLinkType = new LinkType(storedLinkType);
+      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.Read);
       if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
-         checkLinkTypePermission(linkType);
+         throw new BadFormatException("Can not change LinkType collectionIds property");
       }
 
       if (!skipFceLimits) {
          permissionsChecker.checkFunctionsLimit(linkType);
          permissionsChecker.checkRulesLimit(linkType);
       }
-      keepUnmodifiableFields(linkType, storedLinkType);
+      permissionsChecker.checkRulesPermissions(linkType.getRules());
+      permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
 
-      return mapLinkTypeData(linkTypeDao.updateLinkType(id, linkType, originalLinkType));
+      LinkType updatingLinkType = new LinkType(storedLinkType);
+      updatingLinkType.patch(linkType, permissionsChecker.getActualRoles(storedLinkType));
+      keepUnmodifiableFields(updatingLinkType, storedLinkType);
+
+      return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
    }
 
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
+      linkType.setId(storedLinkType.getId());
       linkType.setAttributes(storedLinkType.getAttributes());
       linkType.setLastAttributeNum(storedLinkType.getLastAttributeNum());
       linkType.setCollectionIds(storedLinkType.getCollectionIds());
    }
 
    public void deleteLinkType(String id) {
-      LinkType linkType = checkLinkTypePermission(id);
+      LinkType linkType = linkTypeDao.getLinkType(id);
+      permissionsChecker.checkCanDelete(linkType);
+
       linkTypeDao.deleteLinkType(id);
       deleteLinkTypeBasedData(linkType.getId());
    }
 
    private void deleteLinkTypeBasedData(final String linkTypeId) {
-      linkInstanceDao.getLinkInstancesByLinkType(linkTypeId).forEach(linkInstance -> {
-         resourceCommentDao.deleteComments(ResourceType.LINK, linkInstance.getId());
-      });
+      var linkInstanceIds = linkInstanceDao.getLinkInstancesByLinkType(linkTypeId).stream().map(LinkInstance::getId).collect(Collectors.toSet());
+      resourceCommentDao.deleteComments(ResourceType.LINK, linkInstanceIds);
 
       linkInstanceDao.deleteLinkInstancesByLinkTypesIds(Collections.singleton(linkTypeId));
       linkDataDao.deleteDataRepository(linkTypeId);
@@ -166,38 +189,25 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType getLinkType(final String linkTypeId) {
-      checkProjectRole(Role.READ);
       var linkType = linkTypeDao.getLinkType(linkTypeId);
-      var collections = collectionDao.getCollectionsByIds(linkType.getCollectionIds());
-      if (collections.size() == 2 && collections.stream().allMatch(collection -> permissionsChecker.hasRoleWithView(collection, Role.READ, Role.READ))) {
+      if (permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleType.Read)) {
          return mapLinkTypeData(linkType);
       }
 
-      var viewsLinkTypes = resourceAdapter.getViewsLinkTypes(getCurrentUserId(), authenticatedUserGroups.getCurrentUserGroups(), permissionsChecker.isManager());
-      if (viewsLinkTypes.stream().anyMatch(lt -> lt.getId().equals(linkTypeId))) {
+      var linkTypeReadersInViews = resourceAdapter.getLinkTypeTransitiveReaders(getOrganization(), getProject(), linkTypeId);
+      if (linkTypeReadersInViews.contains(getCurrentUserId())) {
          return mapLinkTypeData(linkType);
       }
 
-      throw new NoResourcePermissionException(collections.get(0));
+      throw new NoPermissionException(ResourceType.LINK_TYPE.toString());
    }
 
    public List<LinkType> getLinkTypes() {
-      checkProjectRole(Role.READ);
-      return mapLinkTypesData(resourceAdapter.getLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
-   }
-
-   public List<LinkType> getViewsLinkTypes() {
-      checkProjectRole(Role.READ);
-      return mapLinkTypesData(resourceAdapter.getViewsLinkTypes(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager()));
+      return mapLinkTypesData(resourceAdapter.getLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
    }
 
    public List<LinkType> getAllLinkTypes() {
-      checkProjectRole(Role.READ);
-      var linkTypes = getLinkTypes();
-      if (!isWorkspaceManager()) {
-         linkTypes.addAll(getViewsLinkTypes());
-      }
-      return linkTypes;
+      return mapLinkTypesData(resourceAdapter.getAllLinkTypes(getOrganization(), getProject(), getCurrentUserId()));
    }
 
    public List<LinkType> getLinkTypesPublic() {
@@ -208,32 +218,42 @@ public class LinkTypeFacade extends AbstractFacade {
       return List.of();
    }
 
-   public List<LinkType> getLinkTypesByIds(Set<String> ids) {
-      return mapLinkTypesData(linkTypeDao.getLinkTypesByIds(ids));
-   }
-
    private LinkType mapLinkTypeData(LinkType linkType) {
-      return adapter.mapLinkTypeData(linkType);
+      return mapLinkType(adapter.mapLinkTypeComputedProperties(linkType));
    }
 
    private List<LinkType> mapLinkTypesData(List<LinkType> linkTypes) {
-      return adapter.mapLinkTypesData(linkTypes);
+      return adapter.mapLinkTypesComputedProperties(linkTypes)
+                    .stream()
+                    .peek(this::mapLinkType)
+                    .collect(Collectors.toList());
    }
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
-      LinkType linkType = checkLinkTypePermission(linkTypeId);
+      LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
+      return createLinkTypeAttributes(linkType, attributes, true);
+   }
+
+   public java.util.Collection<Attribute> createLinkTypeAttributes(final LinkType linkType, final java.util.Collection<Attribute> attributes, boolean pushNotification) {
+      permissionsChecker.checkAttributesFunctionAccess(attributes);
+      permissionsChecker.checkRoleInLinkType(linkType, RoleType.AttributeEdit);
       LinkType originalLinkType = new LinkType(linkType);
+
+      var canEditFunction = permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig);
 
       for (Attribute attribute : attributes) {
          final Integer freeNum = getFreeAttributeNum(linkType);
          attribute.setId(LinkType.ATTRIBUTE_PREFIX + freeNum);
          attribute.setUsageCount(0);
+         if (!canEditFunction) {
+            attribute.setFunction(null);
+         }
          linkType.createAttribute(attribute);
          linkType.setLastAttributeNum(freeNum);
       }
 
       permissionsChecker.checkFunctionsLimit(linkType);
-      linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
+      linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, pushNotification);
 
       return attributes;
    }
@@ -253,20 +273,29 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
-      LinkType linkType = checkLinkTypePermission(linkTypeId);
-      LinkType originalLinkType = new LinkType(linkType);
+      LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
       final Optional<Attribute> originalAttribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
+      if (originalAttribute.isEmpty()) {
+         return attribute;
+      }
 
-      linkType.updateAttribute(attributeId, attribute);
-      if (attribute.getFunction() != null && attribute.getFunction().getJs() != null && attribute.getFunction().getJs().isEmpty()) {
+      LinkType originalLinkType = new LinkType(linkType);
+
+      if (!permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig)) {
+         attribute.setFunction(originalAttribute.get().getFunction());
+      }
+
+      if (attribute.isFunctionDefined()) {
+         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
+      } else {
          attribute.setFunction(null);
       }
 
       if (!skipFceLimits) {
-         if (originalAttribute.isPresent() && originalAttribute.get().getFunction() == null && attribute.getFunction() != null) {
-            permissionsChecker.checkFunctionsLimit(linkType);
-         }
+         permissionsChecker.checkFunctionsLimit(linkType);
       }
+
+      linkType.updateAttribute(attributeId, attribute);
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
 
@@ -274,7 +303,7 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public void deleteLinkTypeAttribute(final String linkTypeId, final String attributeId) {
-      LinkType linkType = checkLinkTypePermission(linkTypeId);
+      LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
       LinkType originalLinkType = new LinkType(linkType);
 
       linkDataDao.deleteAttribute(linkTypeId, attributeId);
@@ -285,26 +314,27 @@ public class LinkTypeFacade extends AbstractFacade {
       fileAttachmentFacade.removeAllFileAttachments(linkTypeId, attributeId, FileAttachment.AttachmentType.LINK);
    }
 
-   private void checkLinkTypePermission(LinkType linkType) {
-      permissionsChecker.checkLinkTypeRoleWithView(linkType, Role.WRITE, true);
+   private void checkLinkTypeCollections(LinkType linkType) {
+      if (linkType.getCollectionIds() == null || linkType.getCollectionIds().size() != 2) {
+         throw new BadFormatException("Invalid number of collectionIds in LinkType.");
+      }
+      linkType.getCollectionIds().forEach(collectionId ->
+            permissionsChecker.checkAnyRole(collectionDao.getCollectionById(collectionId), Set.of(RoleType.Read))
+      );
    }
 
-   private LinkType checkLinkTypePermission(String linkTypeId) {
+   private void checkLinkTypePermission(LinkType linkType, RoleType role) {
+      permissionsChecker.checkRoleInLinkType(linkType, role);
+   }
+
+   private LinkType checkLinkTypePermission(String linkTypeId, RoleType role) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      checkLinkTypePermission(linkType);
+      checkLinkTypePermission(linkType, role);
       return linkType;
    }
 
-   private void checkProjectRole(Role role) {
-      Project project = getCurrentProject();
-      permissionsChecker.checkRole(project, role);
-   }
-
-   private Project getCurrentProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-      return workspaceKeeper.getProject().get();
+   private void checkProjectRole(RoleType role) {
+      permissionsChecker.checkRole(getProject(), role);
    }
 
 }

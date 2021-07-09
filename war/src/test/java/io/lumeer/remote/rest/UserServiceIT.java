@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.UserFacade;
@@ -18,7 +17,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -62,13 +60,13 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
       Organization organization1 = new Organization();
       organization1.setCode("LMR");
       organization1.setPermissions(new Permissions());
-      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization1.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Organization.ROLES));
       organizationId1 = organizationDao.createOrganization(organization1).getId();
 
       Organization organization2 = new Organization();
       organization2.setCode("MRL");
       organization2.setPermissions(new Permissions());
-      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Role.toStringRoles(new HashSet<>(Arrays.asList(Role.WRITE, Role.READ, Role.MANAGE)))));
+      organization2.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Organization.ROLES));
       organizationId2 = organizationDao.createOrganization(organization2).getId();
 
       this.usersUrl = basePath() + "users/organizations/";
@@ -94,7 +92,6 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
       assertThat(storedUser.getId()).isEqualTo(returnedUser.getId());
       assertThat(storedUser.getName()).isEqualTo(USER1);
       assertThat(storedUser.getEmail()).isEqualTo(USER1);
-      assertThat(storedUser.getGroups().get(organizationId1)).isEqualTo(GROUPS);
 
    }
 
@@ -170,7 +167,7 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
    private User prepareUser(String organizationId, String user) {
       User u = new User(user);
       u.setName(user);
-      u.setGroups(Collections.singletonMap(organizationId, GROUPS));
+      u.setOrganizations(Set.of(organizationId));
       return u;
    }
 

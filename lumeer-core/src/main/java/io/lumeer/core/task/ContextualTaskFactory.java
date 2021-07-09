@@ -22,7 +22,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.ConfigurationFacade;
-import io.lumeer.core.facade.PusherFacade;
+import io.lumeer.core.facade.PusherHelperFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
@@ -42,7 +42,7 @@ public class ContextualTaskFactory {
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
    @Inject
-   private PusherFacade pusherFacade;
+   private PusherHelperFacade pusherHelperFacade;
 
    @Inject
    private RequestDataKeeper requestDataKeeper;
@@ -66,7 +66,7 @@ public class ContextualTaskFactory {
    public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
       try {
          T t = clazz.getConstructor().newInstance();
-         t.initialize(authenticatedUser.getCurrentUser(), daoContextSnapshotFactory.getInstance(), pusherFacade.getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, configurationProducer.getEnvironment(), 0);
+         t.initialize(authenticatedUser.getCurrentUser(), daoContextSnapshotFactory.getInstance(), pusherHelperFacade.getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, configurationProducer.getEnvironment(), 0);
 
          return t;
       } catch (Exception e) {

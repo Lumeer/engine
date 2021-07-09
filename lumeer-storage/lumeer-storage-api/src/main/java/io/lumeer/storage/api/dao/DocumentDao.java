@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.engine.api.data.DataDocument;
 
 import java.util.Collection;
@@ -46,11 +47,19 @@ public interface DocumentDao extends ProjectScopedDao {
 
    List<Document> getDocumentsByIds(String... ids);
 
+   List<Document> getDocumentsByCreator(String collectionId, String userId, Set<String> ids);
+
+   List<Document> getDocumentsByCreator(String collectionId, String userId, Pagination pagination);
+
    List<Document> getDocumentsByIds(Set<String> ids);
 
    List<Document> getDocumentsByParentId(final String parentId);
 
    List<Document> getDocumentsByCollection(String collectionId);
+
+   List<Document> getDocumentsByCollection(String collectionId, Set<String> ids);
+
+   List<Document> getDocumentsByCollection(String collectionId, Pagination pagination);
 
    List<Document> getDocumentsWithTemplateId();
 

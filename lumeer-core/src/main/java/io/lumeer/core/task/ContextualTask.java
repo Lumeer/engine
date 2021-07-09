@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -28,6 +29,8 @@ import io.lumeer.core.facade.detector.PurposeChangeProcessor;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
+import java.util.List;
+
 public interface ContextualTask extends Task {
 
    ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment, final int recursionDepth);
@@ -35,6 +38,7 @@ public interface ContextualTask extends Task {
    DaoContextSnapshot getDaoContextSnapshot();
    PusherClient getPusherClient();
    User getInitiator();
+   List<Group> getGroups();
    ConstraintManager getConstraintManager();
    String getCurrentLocale();
    String getCorrelationId();

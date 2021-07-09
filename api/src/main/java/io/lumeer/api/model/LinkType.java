@@ -22,6 +22,7 @@ package io.lumeer.api.model;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -36,16 +37,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LinkType implements WithId, HealthChecking {
+public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
+
+   public static Set<Role> ROLES = RoleUtils.linkTypeResourceRoles();
 
    public static final String ID = "id";
    public static final String NAME = "name";
    public static final String COLLECTION_IDS = "collectionIds";
    public static final String ATTRIBUTES = "attributes";
    public static final String RULES = "rules";
+   public static final String PERMISSIONS_TYPE = "permissionsType";
+   public static final String PERMISSIONS = "permissions";
 
    public static final String ATTRIBUTE_PREFIX = "a";
 
@@ -57,16 +63,22 @@ public class LinkType implements WithId, HealthChecking {
    private Integer lastAttributeNum;
    private Long linksCount;
    private Map<String, Rule> rules;
+   private LinkPermissionsType permissionsType;
+   private Permissions permissions;
 
    @JsonCreator
    public LinkType(@JsonProperty(NAME) final String name,
          @JsonProperty(COLLECTION_IDS) final List<String> collectionIds,
          @JsonProperty(ATTRIBUTES) final List<Attribute> attributes,
-         @JsonProperty(RULES) final Map<String, Rule> rules) {
+         @JsonProperty(RULES) final Map<String, Rule> rules,
+         @JsonProperty(PERMISSIONS) final Permissions permissions,
+         @JsonProperty(PERMISSIONS_TYPE) final LinkPermissionsType permissionsType) {
       this.name = name;
       this.collectionIds = collectionIds;
       this.attributes = attributes;
       this.rules = rules;
+      this.permissions = permissions;
+      this.permissionsType = permissionsType;
    }
 
    public LinkType(LinkType linkType) {
@@ -78,6 +90,8 @@ public class LinkType implements WithId, HealthChecking {
       this.lastAttributeNum = linkType.getLastAttributeNum();
       this.linksCount = linkType.getLinksCount();
       this.rules = linkType.rules != null ? linkType.rules.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new Rule(e.getValue()))) : null;
+      this.permissions = linkType.getPermissions() != null ? new Permissions(linkType.getPermissions()) : new Permissions();
+      this.permissionsType = linkType.getPermissionsType();
    }
 
    public String getId() {
@@ -114,8 +128,16 @@ public class LinkType implements WithId, HealthChecking {
       this.collectionIds = collectionIds;
    }
 
+   public Permissions getPermissions() {
+      return permissions;
+   }
+
+   public void setPermissions(final Permissions permissions) {
+      this.permissions = permissions;
+   }
+
    public List<Attribute> getAttributes() {
-      return Collections.unmodifiableList(attributes);
+      return attributes != null ? Collections.unmodifiableList(attributes) : Collections.emptyList();
    }
 
    public void setAttributes(final java.util.Collection<Attribute> attributes) {
@@ -179,6 +201,14 @@ public class LinkType implements WithId, HealthChecking {
       this.rules = rules;
    }
 
+   public void setPermissionsType(final LinkPermissionsType permissionsType) {
+      this.permissionsType = permissionsType;
+   }
+
+   public LinkPermissionsType getPermissionsType() {
+      return permissionsType;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -216,7 +246,28 @@ public class LinkType implements WithId, HealthChecking {
    public void checkHealth() throws InsaneObjectException {
       checkStringLength("name", name, MAX_STRING_LENGTH);
 
-      if (attributes != null) attributes.forEach(Attribute::checkHealth);
-      if (rules != null) rules.forEach((k, v) -> v.checkHealth());
+      if (attributes != null) {
+         attributes.forEach(Attribute::checkHealth);
+      }
+      if (rules != null) {
+         rules.forEach((k, v) -> v.checkHealth());
+      }
+   }
+
+   @Override
+   public void patch(final LinkType resource, final Set<RoleType> roles) {
+      if (roles.contains(RoleType.UserConfig)) {
+         setPermissionsType(resource.getPermissionsType());
+         setPermissions(resource.getPermissions());
+      }
+      if (roles.contains(RoleType.Manage)) {
+         setName(resource.getName());
+      }
+      if (roles.contains(RoleType.TechConfig)) {
+         setRules(resource.getRules());
+      }
+      if (roles.contains(RoleType.AttributeEdit)) {
+         setAttributes(resource.getAttributes());
+      }
    }
 }

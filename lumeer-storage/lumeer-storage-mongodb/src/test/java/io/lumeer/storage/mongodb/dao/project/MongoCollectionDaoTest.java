@@ -27,11 +27,12 @@ import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.engine.api.data.DataDocument;
@@ -108,10 +109,10 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       USER_PERMISSION = Permission.buildWithRoles(USER, Collection.ROLES);
       PERMISSIONS.updateUserPermissions(USER_PERMISSION);
 
-      Permission userManagePermission = Permission.buildWithRoles(USER, Collections.singleton(Role.MANAGE));
+      Permission userManagePermission = Permission.buildWithRoles(USER,  Collections.singleton(new Role(RoleType.Manage)));
       MANAGE_PERMISSIONS.updateUserPermissions(userManagePermission);
 
-      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(Role.READ.toString()));
+      GROUP_PERMISSION = new Permission(GROUP, Collections.singleton(new Role(RoleType.Read)));
       PERMISSIONS.updateGroupPermissions(GROUP_PERMISSION);
 
       Attribute attribute1 = new Attribute(ATTRIBUTE1_NAME);
@@ -131,12 +132,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
       collectionDao.setProject(project);
       collectionDao.createRepository(project);
-   }
-
-   private Collection prepareManageCollection(String code, String name) {
-      Collection collection = prepareCollection(code, name);
-      collection.setPermissions(MANAGE_PERMISSIONS);
-      return collection;
    }
 
    private Collection prepareCollection(String code, String name) {
@@ -271,12 +266,12 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
    @Test
    public void testGetCollectionsNoReadRole() {
       Collection collection = prepareCollection(CODE, NAME);
-      Permission userPermission = new Permission(USER2, Collections.singleton(Role.CLONE.toString()));
+      Permission userPermission = new Permission(USER2, Collections.singleton(new Role(RoleType.Manage)));
       collection.getPermissions().updateUserPermissions(userPermission);
       collectionDao.databaseCollection().insertOne(collection);
 
       Collection collection2 = prepareCollection(CODE2, NAME2);
-      Permission groupPermission = new Permission(GROUP2, Collections.singleton(Role.SHARE.toString()));
+      Permission groupPermission = new Permission(GROUP2, Collections.singleton(new Role(RoleType.PerspectiveConfig)));
       collection2.getPermissions().updateGroupPermissions(groupPermission);
       collectionDao.databaseCollection().insertOne(collection2);
 
@@ -409,16 +404,6 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       createCollection(CODE3, NAME3);
 
       assertThat(collectionDao.getAllCollectionNames()).contains(NAME, NAME2, NAME3);
-   }
-
-   @Test
-   public void testGetCollectionsByManagePermission(){
-      collectionDao.createCollection(prepareManageCollection(CODE, NAME));
-      collectionDao.createCollection(prepareCollection(CODE2, NAME));
-      collectionDao.createCollection(prepareManageCollection(CODE3, NAME));
-
-      DatabaseQuery query = DatabaseQuery.createBuilder(USER).build();
-      assertThat(collectionDao.getCollections(query)).extracting(Collection::getCode).containsOnly(CODE, CODE2, CODE3);
    }
 
 }

@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.dao.project;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
@@ -33,6 +34,7 @@ import io.lumeer.storage.mongodb.codecs.DocumentCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
@@ -44,7 +46,6 @@ import com.mongodb.client.model.Sorts;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
-import java.security.spec.ECField;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -176,6 +177,32 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
+   public List<Document> getDocumentsByCreator(final String collectionId, final String userId, final Set<String> ids) {
+      Bson idsFilter = MongoFilters.idsFilter(ids);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      Bson filter = Filters.and(idsFilter, creatorFilter(collectionId, userId));
+      return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<Document> getDocumentsByCreator(final String collectionId, final String userId, final Pagination pagination) {
+      Bson filter = creatorFilter(collectionId, userId);
+      return getDocumentsPaginated(filter, pagination);
+   }
+
+   private Bson creatorFilter(final String collectionId, final String userId) {
+      return Filters.and(Filters.eq(DocumentCodec.CREATED_BY, userId), Filters.eq(DocumentCodec.COLLECTION_ID, collectionId));
+   }
+
+   private List<Document> getDocumentsPaginated(final Bson filter, final Pagination pagination) {
+      FindIterable<Document> iterable = databaseCollection().find(filter);
+      addPaginationToQuery(iterable, pagination);
+      return iterable.into(new ArrayList<>());
+   }
+
+   @Override
    public List<Document> getDocumentsByIds(final Set<String> ids) {
       Bson idsFilter = MongoFilters.idsFilter(ids);
       if (idsFilter == null) {
@@ -190,9 +217,24 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
+   public List<Document> getDocumentsByCollection(final String collectionId, final Set<String> ids) {
+      Bson idsFilter = MongoFilters.idsFilter(ids);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+      Bson filter = Filters.and(idsFilter, Filters.eq(DocumentCodec.COLLECTION_ID, collectionId));
+      return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<Document> getDocumentsByCollection(final String collectionId, final Pagination pagination) {
+      Bson filter = Filters.eq(DocumentCodec.COLLECTION_ID, collectionId);
+      return getDocumentsPaginated(filter, pagination);
+   }
+
+   @Override
    public List<Document> getDocumentsWithTemplateId() {
       return databaseCollection().find(Filters.exists(DocumentCodec.META_DATA + "." + Document.META_TEMPLATE_ID)).into(new ArrayList<>());
-
    }
 
    @Override

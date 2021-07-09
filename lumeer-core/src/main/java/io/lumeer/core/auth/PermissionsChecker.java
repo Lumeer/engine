@@ -18,47 +18,50 @@
  */
 package io.lumeer.core.auth;
 
-import static java.util.stream.Collectors.toMap;
-
 import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
+import io.lumeer.core.exception.FeatureNotAllowedException;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
-import io.lumeer.core.util.FunctionRuleJsParser;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -69,9 +72,6 @@ public class PermissionsChecker {
 
    @Inject
    private AuthenticatedUser authenticatedUser;
-
-   @Inject
-   private AuthenticatedUserGroups authenticatedUserGroups;
 
    @Inject
    private PaymentFacade paymentFacade;
@@ -101,6 +101,9 @@ public class PermissionsChecker {
    private UserDao userDao;
 
    @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private FreshdeskFacade freshdeskFacade;
 
    @Inject
@@ -110,20 +113,22 @@ public class PermissionsChecker {
    private CollectionAdapter collectionAdapter;
    private PermissionAdapter permissionAdapter;
 
+   private static boolean allowGroups = false;
+
    @PostConstruct
    public void init() {
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
-      permissionAdapter = new PermissionAdapter(userDao, viewDao, linkTypeDao, collectionDao);
+      permissionAdapter = new PermissionAdapter(userDao, groupDao, viewDao, linkTypeDao, collectionDao);
    }
 
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(AuthenticatedUser authenticatedUser, AuthenticatedUserGroups authenticatedUserGroups, WorkspaceKeeper workspaceKeeper, UserDao userDao, CollectionDao collectionDao, ViewDao viewDao, LinkTypeDao linkTypeDao, FavoriteItemDao favoriteItemDao, DocumentDao documentDao) {
+   PermissionsChecker(AuthenticatedUser authenticatedUser, WorkspaceKeeper workspaceKeeper, UserDao userDao, GroupDao groupDao, CollectionDao collectionDao, ViewDao viewDao, LinkTypeDao linkTypeDao, FavoriteItemDao favoriteItemDao, DocumentDao documentDao) {
       this.authenticatedUser = authenticatedUser;
-      this.authenticatedUserGroups = authenticatedUserGroups;
       this.workspaceKeeper = workspaceKeeper;
       this.userDao = userDao;
+      this.groupDao = groupDao;
       this.collectionDao = collectionDao;
       this.viewDao = viewDao;
       this.linkTypeDao = linkTypeDao;
@@ -136,87 +141,31 @@ public class PermissionsChecker {
    }
 
    /**
-    * Checks if the user has the given role on the given resource (either directly or through group membership).
-    *
-    * @param resource any resource with defined permissions.
-    * @param role     role to be checked.
-    * @throws NoResourcePermissionException when the user does not have the permission.
-    */
-   public void checkRole(Resource resource, Role role) {
-      permissionAdapter.checkRole(getOrganization(), getProject(), resource, role, authenticatedUser.getCurrentUserId());
-   }
-
-   /**
-    * Checks if user is manager in organization or project
+    * Checks if user can read all collections, link types and views in organization or project
     *
     * @return whether the current user is a manager.
     */
-   public boolean isManager() {
-      return isManager(authenticatedUser.getCurrentUserId());
+   public boolean canReadAllInWorkspace() {
+      return canReadAllInWorkspace(authenticatedUser.getCurrentUserId());
    }
 
-   public boolean isManager(String userId) {
-      return permissionAdapter.isManager(getOrganization(), getProject(), userId);
+   public boolean canReadAllInWorkspace(String userId) {
+      return permissionAdapter.canReadAllInWorkspace(getOrganization(), getProject(), userId);
    }
 
    public boolean isPublic() {
       return permissionAdapter.isPublic(getOrganization(), getProject());
    }
 
-   public void checkLinkTypeRoleWithView(final java.util.Collection<String> collectionIds, final Role role, final boolean strict) {
-      permissionAdapter.checkLinkTypeRoleWithView(getOrganization(), getProject(), collectionIds, role, authenticatedUser.getCurrentUserId(), strict);
-   }
-
-   public void checkLinkTypeRoleWithView(LinkType linkType, Role role, boolean strict) {
-      checkLinkTypeRoleWithView(linkType.getCollectionIds(), role, strict);
-   }
-
-   public boolean hasLinkTypeRoleWithView(LinkType linkType, Role role) {
-      return permissionAdapter.hasLinkTypeRoleWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean hasLinkTypeRole(LinkType linkType, Map<String, Collection> collectionMap, Role role, String userId) {
-      return permissionAdapter.hasLinkTypeRole(getOrganization(), getProject(), linkType, collectionMap, role, userId);
-   }
-
    /**
-    * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
+    * Checks if the user has the given role on the given resource (either directly or through group membership).
     *
-    * @param collection collection resource
-    * @param role       role to be checked.
-    * @param viewRole   role needed at the view.
+    * @param resource any resource with defined permissions.
+    * @param role     role to be checked.
     * @throws NoResourcePermissionException when the user does not have the permission.
     */
-   public void checkRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
-   }
-
-   /**
-    * Checks whether the current user has the given role on the document.
-    *
-    * @param document   The document to be checked.
-    * @param collection Parent collection.
-    * @param role       The required role.
-    * @return True if and only if the user has the given role ont he document.
-    */
-   public boolean hasRole(Document document, Collection collection, Role role) {
-      return permissionAdapter.hasRole(getOrganization(), getProject(), document, collection, role, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean hasRoleWithView(Document document, Collection collection, Role role, Role viewRole) {
-      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), document, collection, role, viewRole, authenticatedUser.getCurrentUserId());
-   }
-
-   public void checkRole(Document document, Collection collection, Role role) {
-      permissionAdapter.checkRole(getOrganization(), getProject(), document, collection, role, authenticatedUser.getCurrentUserId());
-   }
-
-   public void checkRoleWithView(Document document, Collection collection, Role role, Role viewRole) {
-      permissionAdapter.checkRoleWithView(getOrganization(), getProject(), document, collection, role, viewRole, authenticatedUser.getCurrentUserId());
-   }
-
-   public boolean hasRoleInDocument(Document document, Collection collection, Role role) {
-      return permissionAdapter.hasRoleInDocument(document, collection, role, authenticatedUser.getCurrentUserId());
+   public void checkRole(Resource resource, RoleType role) {
+      permissionAdapter.checkRole(getOrganization(), getProject(), resource, role, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -226,33 +175,42 @@ public class PermissionsChecker {
     * @param role     The required role.
     * @return True if and only if the user has the given role on the resource.
     */
-   public boolean hasRole(Resource resource, Role role) {
+   public boolean hasRole(Resource resource, RoleType role) {
       return hasRole(resource, role, authenticatedUser.getCurrentUserId());
    }
 
-   public boolean hasRole(Resource resource, Role role, String userId) {
+   public boolean hasRole(Resource resource, RoleType role, String userId) {
       return permissionAdapter.hasRole(getOrganization(), getProject(), resource, role, userId);
    }
 
-   public static boolean hasRole(final Organization organization, final Project project, final Resource resource, final Role role, final User user) {
-      return ResourceUtils.userIsManagerInWorkspace(user.getId(), organization, project) || hasRoleInResource(organization, resource, role, user);
+   public boolean hasAnyRole(Resource resource, Set<RoleType> roles) {
+      return permissionAdapter.hasAnyRole(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
-   public boolean hasAnyRoleInResource(Resource resource, Set<Role> roles) {
-      return permissionAdapter.hasAnyRoleInResource(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   public boolean hasAllRoles(Resource resource, Set<RoleType> roles) {
+      return permissionAdapter.hasAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
-   private static boolean hasRoleInResource(final Organization organization, final Resource resource, final Role role, final User user) {
-      return getActualRolesInResource(organization, resource, user).contains(role);
+   public void checkAllRoles(Resource resource, Set<RoleType> roles) {
+      permissionAdapter.checkAllRoles(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkAnyRole(Resource resource, Set<RoleType> roles) {
+      permissionAdapter.checkAnyRole(getOrganization(), getProject(), resource, roles, authenticatedUser.getCurrentUserId());
    }
 
    /**
-    * Invalidates a bit of cache when the information changes.
+    * Checks whether it is possible to delete the given resource.
     *
-    * @param resource Resource being updated.
+    * @param resource Resource to check.
+    * @throws NoResourcePermissionException When it is not possible to delete the resource.
     */
-   public void invalidateCache(final Resource resource) {
-      permissionAdapter.invalidateCache(resource);
+   public void checkCanDelete(Resource resource) {
+      permissionAdapter.checkCanDelete(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkCanDelete(LinkType linkType) {
+      permissionAdapter.checkCanDelete(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -260,11 +218,119 @@ public class PermissionsChecker {
     *
     * @param collection collection resource
     * @param role       role to be checked.
-    * @param viewRole   role needed at the view.
     * @return true if and only if the user has the given role ont he resource.
     */
-   public boolean hasRoleWithView(final Collection collection, final Role role, final Role viewRole) {
-      return permissionAdapter.hasRoleWithView(getOrganization(), getProject(), collection, role, viewRole, authenticatedUser.getCurrentUserId());
+   public boolean hasRoleInCollectionWithView(final Collection collection, final RoleType role) {
+      return permissionAdapter.hasRoleInCollectionWithView(getOrganization(), getProject(), collection, role, authenticatedUser.getCurrentUserId());
+   }
+
+   /**
+    * Checks if the user has the given role on the given resource or the user has access to a view whose author has the given role.
+    *
+    * @param collection collection resource
+    * @param role       role to be checked.
+    * @throws NoResourcePermissionException when the user does not have the permission.
+    */
+   public void checkRoleInCollectionWithView(final Collection collection, final RoleType role) {
+      permissionAdapter.checkRoleInCollectionWithView(getOrganization(), getProject(), collection, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
+      permissionAdapter.checkRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
+      return permissionAdapter.hasRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRoleInLinkType(LinkType linkType, RoleType role) {
+      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkRoleInLinkType(LinkType linkType, RoleType role) {
+      checkRoleInLinkType(linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkRoleInLinkType(LinkType linkType, RoleType role, String userId) {
+      permissionAdapter.checkRoleInLinkType(getOrganization(), getProject(), linkType, role, userId);
+   }
+
+   /**
+    * Checks if user can create documents in the given collection
+    *
+    * @param collection collection resource
+    * @throws NoResourcePermissionException when the user does not have the permission.
+    */
+
+   public void checkCreateDocuments(final Collection collection) {
+      permissionAdapter.checkCanCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canCreateDocuments(final Collection collection) {
+      return permissionAdapter.canCreateDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkReadDocument(final Collection collection, final Document document) {
+      permissionAdapter.checkCanReadDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canReadDocument(final Collection collection, final Document document) {
+      return permissionAdapter.canReadDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkEditDocument(final Collection collection, final Document document) {
+      permissionAdapter.checkCanEditDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canEditDocument(final Collection collection, final Document document) {
+      return permissionAdapter.canEditDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkDeleteDocument(final Collection collection, final Document document) {
+      permissionAdapter.checkCanDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canDeleteDocuments(final Collection collection, final Document document) {
+      return permissionAdapter.canDeleteDocument(getOrganization(), getProject(), document, collection, authenticatedUser.getCurrentUserId());
+   }
+
+   /**
+    * Checks if user can create link instances in the given lnk type
+    *
+    * @param linkType linkType resource
+    * @throws NoPermissionException when the user does not have the permission.
+    */
+
+   public void checkCreateLinkInstances(final LinkType linkType) {
+      permissionAdapter.checkCanCreateLinkInstances(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canCreateLinkInstances(final LinkType linkType) {
+      return permissionAdapter.canCreateLinkInstances(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkReadLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      permissionAdapter.checkCanReadLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canReadLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      return permissionAdapter.canReadLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkEditLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      permissionAdapter.checkCanEditLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canEditLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      return permissionAdapter.canEditLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public void checkDeleteLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      permissionAdapter.checkCanDeleteLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean canDeleteLinkInstance(final LinkType linkType, final LinkInstance linkInstance) {
+      return permissionAdapter.canDeleteLinkInstance(getOrganization(), getProject(), linkInstance, linkType, authenticatedUser.getCurrentUserId());
    }
 
    /**
@@ -282,7 +348,7 @@ public class PermissionsChecker {
     * @param resource any resource with defined permissions
     * @return set of actual roles
     */
-   public Set<Role> getActualRoles(Resource resource) {
+   public Set<RoleType> getActualRoles(Resource resource) {
       String userId = authenticatedUser.getCurrentUserId();
       return getActualRoles(resource, userId);
    }
@@ -294,60 +360,12 @@ public class PermissionsChecker {
     * @param userId   user ID to get the roles of.
     * @return set of actual roles
     */
-   public Set<Role> getActualRoles(final Resource resource, final String userId) {
-      if (isManager(userId)) {
-         return getAllRoles(resource);
-      }
-      return getActualRolesInResource(resource, userId);
+   public Set<RoleType> getActualRoles(final Resource resource, final String userId) {
+      return permissionAdapter.getUserRolesInResource(getOrganization(), getProject(), resource, userId);
    }
 
-   public static Set<Role> getActualRoles(final Organization organization, final Project project, final Resource resource, final User user) {
-      if (ResourceUtils.userIsManagerInWorkspace(user.getId(), organization, project)) {
-         return getAllRoles(resource);
-      }
-
-      return getActualRolesInResource(organization, resource, user);
-   }
-
-   private static Set<Role> getAllRoles(final Resource resource) {
-      return ResourceUtils.getAllResourceRoles(resource);
-   }
-
-   private Set<Role> getActualRolesInResource(final Resource resource, final String userId) {
-      final Set<String> groups = authenticatedUser.getCurrentUserId().equals(userId) ? getUserGroups(resource) : getUserGroups(resource, userId);
-
-      final Set<Role> actualRoles = getActualUserRoles(resource.getPermissions().getUserPermissions(), userId);
-      actualRoles.addAll(getActualGroupRoles(resource.getPermissions().getGroupPermissions(), groups));
-      return Role.withTransitionRoles(actualRoles);
-   }
-
-   private static Set<Role> getActualRolesInResource(final Organization organization, final Resource resource, final User user) {
-      return ResourceUtils.getRolesInResource(organization, resource, user);
-   }
-
-   private Set<String> getUserGroups(Resource resource) {
-      if (resource instanceof Organization) {
-         return Collections.emptySet();
-      }
-      return authenticatedUserGroups.getCurrentUserGroups();
-   }
-
-   private Set<String> getUserGroups(final Resource resource, final String userId) {
-      final User user = userDao.getUserById(userId);
-      final Organization organization = workspaceKeeper.getOrganization().orElse(null);
-      return getUserGroups(organization, resource, user);
-   }
-
-   private static Set<String> getUserGroups(final Organization organization, final Resource resource, final User user) {
-      return ResourceUtils.getUserGroupsInResource(organization, resource, user);
-   }
-
-   private static Set<Role> getActualUserRoles(Set<Permission> userRoles, String userId) {
-      return ResourceUtils.getRolesByUser(userRoles, userId);
-   }
-
-   private static Set<Role> getActualGroupRoles(Set<Permission> groupRoles, Set<String> groupIds) {
-      return ResourceUtils.getRolesByGroups(groupRoles, groupIds);
+   public Set<RoleType> getActualRoles(final LinkType linkType) {
+      return permissionAdapter.getUserRolesInLinkType(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
    }
 
    public Map<String, AllowedPermissions> getCollectionsPermissions(final java.util.Collection<Collection> collection) {
@@ -355,54 +373,57 @@ public class PermissionsChecker {
    }
 
    public AllowedPermissions getCollectionPermissions(final Collection collection) {
-      var userId = authenticatedUser.getCurrentUserId();
-      return new AllowedPermissions(
-            permissionAdapter.hasRoleInResource(getOrganization(), getProject(), collection, Role.READ, userId),
-            permissionAdapter.hasRoleInResource(getOrganization(), getProject(), collection, Role.WRITE, userId),
-            permissionAdapter.hasRoleInResource(getOrganization(), getProject(), collection, Role.MANAGE, userId),
-            hasRoleWithView(collection, Role.READ, Role.READ),
-            hasRoleWithView(collection, Role.WRITE, Role.WRITE),
-            hasRoleWithView(collection, Role.MANAGE, Role.MANAGE)
-      );
+      User user = authenticatedUser.getCurrentUser();
+      Set<RoleType> roles = permissionAdapter.getUserRolesInResource(getOrganization(), getProject(), collection, user);
+      Set<RoleType> rolesWithView = new HashSet<>(permissionAdapter.getUserRolesInCollectionWithView(getOrganization(), getProject(), collection, user));
+      rolesWithView.addAll(roles);
+      return new AllowedPermissions(roles, rolesWithView);
    }
 
-   public Map<String, AllowedPermissions> getLinkTypesPermissions(final java.util.Collection<LinkType> linkTypes, final Map<String, AllowedPermissions> collectionsPermissions) {
-      return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, linkType ->
-            mergePermissions(collectionsPermissions.get(linkType.getFirstCollectionId()), collectionsPermissions.get(linkType.getSecondCollectionId()))));
+   public Map<String, AllowedPermissions> getLinkTypesPermissions(final java.util.Collection<LinkType> linkTypes) {
+      return linkTypes.stream().collect(Collectors.toMap(LinkType::getId, this::getLinkTypePermissions));
    }
 
-   private AllowedPermissions mergePermissions(AllowedPermissions a1, AllowedPermissions a2) {
-      if (a1 == null || a2 == null) {
-         return a1 != null ? a1 : a2;
+   public AllowedPermissions getLinkTypePermissions(final LinkType linkType) {
+      User user = authenticatedUser.getCurrentUser();
+      Set<RoleType> roles = permissionAdapter.getUserRolesInLinkType(getOrganization(), getProject(), linkType, user);
+      Set<RoleType> rolesWithView = new HashSet<>(permissionAdapter.getUserRolesInLinkTypeWithView(getOrganization(), getProject(), linkType, user));
+      rolesWithView.addAll(roles);
+      return new AllowedPermissions(roles, rolesWithView);
+   }
+
+   public void checkRulesPermissions(Map<String, Rule> ruleMap) {
+      if (ruleMap != null) {
+         ruleMap.values().stream().filter(r -> r.getType() == Rule.RuleType.BLOCKLY).forEach(rule ->
+               checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.DataWrite)
+         );
       }
-      return new AllowedPermissions(
-            a1.getRead() && a2.getRead(),
-            a1.getWrite() && a2.getWrite(),
-            a1.getManage() && a2.getManage(),
-            a1.getReadWithView() && a2.getReadWithView(),
-            a1.getWriteWithView() && a2.getWriteWithView(),
-            a1.getManageWithView() && a2.getManageWithView()
-      );
    }
 
-   public void checkFunctionRuleAccess(final Collection collection, final String js, final Role role) {
-      final Map<String, Collection> collections = collectionDao.getAllCollections().stream().collect(toMap(Resource::getId, Function.identity()));
-      final Set<String> collectionIds = collections.keySet();
-      final Map<String, LinkType> linkTypes = linkTypeDao.getAllLinkTypes().stream().collect(toMap(LinkType::getId, Function.identity()));
-      final Set<String> linkTypeIds = linkTypes.keySet();
-
-      final List<FunctionRuleJsParser.ResourceReference> references = FunctionRuleJsParser.parseRuleFunctionJs(js, collectionIds, linkTypeIds);
-
-      references.forEach(reference -> {
-         if (reference.getResourceType() == ResourceType.COLLECTION) {
-            checkRole(collections.get(reference.getId()), role);
-         } else if (reference.getResourceType() == ResourceType.LINK) {
-            final LinkType linkType = linkTypes.get(reference.getId());
-            linkType.getCollectionIds().forEach(c -> checkRole(collections.get(c), role));
-         } else {
-            throw new NoResourcePermissionException(collection);
-         }
+   public void checkAttributesFunctionAccess(final java.util.Collection<Attribute> attributes) {
+      Objects.requireNonNullElse(attributes, new ArrayList<Attribute>()).stream().filter(Attribute::isFunctionDefined).forEach(attribute -> {
+         checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
       });
+   }
+
+   public void checkFunctionRuleAccess(final String js, final RoleType role) {
+      if (!Utils.isEmpty(js)) {
+         permissionAdapter.checkFunctionRuleAccess(getOrganization(), getProject(), js, role, authenticatedUser.getCurrentUserId());
+      }
+   }
+
+   /**
+    * Checks whether current plan includes groups handling.
+    */
+   public void checkGroupsHandle() {
+      if (skipLimits() || allowGroups) {
+         return;
+      }
+
+      final ServiceLimits limits = getServiceLimits();
+      if (!limits.isGroups()) {
+         throw new FeatureNotAllowedException("groups");
+      }
    }
 
    /**
@@ -540,7 +561,7 @@ public class PermissionsChecker {
    }
 
    private ServiceLimits getServiceLimits() {
-      return paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      return paymentFacade.getCurrentServiceLimits(getOrganization());
    }
 
    public long countDocuments() {
@@ -571,6 +592,10 @@ public class PermissionsChecker {
       return System.getenv("SKIP_LIMITS") != null;
    }
 
+   public boolean skipPayments() {
+      return System.getenv("SKIP_PAYMENTS") != null;
+   }
+
    /**
     * Sets the view id that is being worked with. This allows us to execute queries under a different user supposing we have access to the view and the owner of the view can still execute it. For security reasons, the view id cannot be changed along the way.
     *
@@ -591,6 +616,11 @@ public class PermissionsChecker {
       this.permissionAdapter.setViewId(viewId);
    }
 
+   // For testing purposes to allow manipulate with groups
+   static void allowGroups() {
+      PermissionsChecker.allowGroups = true;
+   }
+
    String testGetViewId() {
       return this.permissionAdapter.getViewId();
    }
@@ -601,43 +631,5 @@ public class PermissionsChecker {
 
    private Project getProject() {
       return workspaceKeeper.getProject().orElse(null);
-   }
-
-   /**
-    * Checks whether it is possible to delete the given resource.
-    *
-    * @param resource Resource to check.
-    * @throws NoResourcePermissionException When it is not possible to delete the resource.
-    */
-   public void checkCanDelete(Resource resource) {
-      if (resource.isNonRemovable()) {
-         throw new NoResourcePermissionException(resource);
-      }
-   }
-
-   /**
-    * Get managers of current organization.
-    *
-    * @return Set of user IDs of all managers of the current organization.
-    */
-   public Set<String> getOrganizationManagers() {
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         Organization organization = workspaceKeeper.getOrganization().get();
-         return ResourceUtils.getOrganizationManagers(organization);
-      }
-      return Collections.emptySet();
-   }
-
-   /**
-    * Get managers in current workspace (both organization and project).
-    *
-    * @return Set of IDs of all managers of current organization and project.
-    */
-   public Set<String> getWorkspaceManagers() {
-      if (workspaceKeeper.getOrganization().isPresent() && workspaceKeeper.getProject().isPresent()) {
-         Project project = workspaceKeeper.getProject().get();
-         return ResourceUtils.getProjectManagers(workspaceKeeper.getOrganization().get(), project);
-      }
-      return Collections.emptySet();
    }
 }

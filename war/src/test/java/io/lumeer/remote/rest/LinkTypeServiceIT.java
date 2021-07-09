@@ -30,6 +30,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -50,7 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
@@ -111,7 +112,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Permissions organizationPermissions = new Permissions();
-      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(Role.READ));
+      Permission userPermission = Permission.buildWithRoles(createdUser.getId(), Set.of(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
@@ -122,7 +123,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       Project storedProject = projectDao.createProject(project);
 
       Permissions projectPermissions = new Permissions();
-      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Collections.singleton(Role.READ));
+      Permission userProjectPermission = Permission.buildWithRoles(createdUser.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.LinkContribute)));
       projectPermissions.updateUserPermissions(userProjectPermission);
       storedProject.setPermissions(projectPermissions);
       storedProject = projectDao.updateProject(storedProject.getId(), storedProject);
@@ -134,7 +135,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       collectionIds.clear();
 
       Permissions userPermissions = new Permissions();
-      userPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      userPermissions.updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
 
       for (String name : COLLECTION_NAMES) {
          Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, userPermissions);
@@ -183,7 +184,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
 
       LinkType updateLinkedType = prepareLinkType();
       updateLinkedType.setName(NAME2);
-      updateLinkedType.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
 
       Entity entity = Entity.json(updateLinkedType);
       Response response = client.target(linkTypesUrl).path(id)
@@ -225,7 +225,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       String id1 = linkTypeDao.createLinkType(prepareLinkType()).getId();
 
       LinkType linkType2 = prepareLinkType();
-      linkType2.setCollectionIds(Arrays.asList(collectionIdNoPerm, collectionIds.get(2)));
+      linkType2.setCollectionIds(Arrays.asList(collectionIds.get(1), collectionIds.get(2)));
       String id2 = linkTypeDao.createLinkType(linkType2).getId();
 
       LinkType linkType3 = prepareLinkType();
@@ -250,6 +250,6 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
    }
 
    private LinkType prepareLinkType() {
-      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
+      return new LinkType(NAME, Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null, null);
    }
 }

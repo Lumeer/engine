@@ -19,8 +19,12 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Group;
+import io.lumeer.api.model.InvitationType;
+import io.lumeer.api.view.UserViews;
 import io.lumeer.core.facade.GroupFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
+
+import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -78,5 +82,13 @@ public class GroupService extends AbstractService {
       groupFacade.deleteGroup(groupId);
 
       return Response.ok().link(getParentUri(groupId), "parent").build();
+   }
+
+   @POST
+   @Path("projects/{projectId:[0-9a-fA-F]{24}}/groups/{invitationType}")
+   @JsonView(UserViews.DefaultView.class)
+   @HealthCheck
+   public List<Group> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, @PathParam("invitationType") final InvitationType invitationType, final List<Group> groups) {
+      return groupFacade.addGroupsToWorkspace(organizationId, projectId, groups, invitationType != null ? invitationType : InvitationType.JOIN_ONLY);
    }
 }

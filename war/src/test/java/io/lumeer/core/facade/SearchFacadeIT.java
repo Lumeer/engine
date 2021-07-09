@@ -40,9 +40,11 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.IntegrationTestBase;
@@ -67,7 +69,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +131,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
+   @Inject
+   private PermissionsChecker permissionsChecker;
+
    private ConstraintManager constraintManager;
 
    @Before
@@ -140,7 +144,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       Organization organization = new Organization();
       organization.setCode(ORGANIZATION_CODE);
-      organization.setPermissions(new Permissions());
+      Permissions organizationPermissions = new Permissions();
+      organizationPermissions.updateUserPermissions(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read))));
+      organization.setPermissions(organizationPermissions);
       Organization storedOrganization = organizationDao.createOrganization(organization);
       updateOrganizationInUser(userId, USER, organization.getId());
       createUser(USER1, organization.getId());
@@ -149,7 +155,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       Project project = new Project();
-      project.setPermissions(new Permissions());
+      Permissions projectPermissions = new Permissions();
+      projectPermissions.updateUserPermissions(Permission.buildWithRoles(userId, Set.of(new Role(RoleType.Read))));
+      project.setPermissions(projectPermissions);
       project.setCode(PROJECT_CODE);
       Project storedProject = projectDao.createProject(project);
 
@@ -166,31 +174,35 @@ public class SearchFacadeIT extends IntegrationTestBase {
       for (String name : COLLECTION_CODES) {
          collectionIds.add(createCollection(name).getId());
       }
+      permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
 
    private User createUser(String email, String organizationId) {
-      var groupsMap = new HashMap<String, Set<String>>();
-      groupsMap.put(organizationId, Collections.emptySet());
-      User user = new User(null, email, email, groupsMap);
+      User user = new User(null, email, email, Collections.singleton(organizationId));
       return userDao.createUser(user);
    }
 
    private User updateOrganizationInUser(String userId, String email, String organizationId) {
-      var groupsMap = new HashMap<String, Set<String>>();
-      groupsMap.put(organizationId, Collections.emptySet());
-      User user = new User(userId, email, email, groupsMap);
+      User user = new User(userId, email, email, Collections.singleton(organizationId));
       return userDao.updateUser(userId, user);
    }
 
    private Collection createCollection(String name, Attribute... attributes) {
       Permissions collectionPermissions = new Permissions();
-      collectionPermissions.updateUserPermissions(new Permission(userId, Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      collectionPermissions.updateUserPermissions(new Permission(userId, Collection.ROLES));
       Collection collection = new Collection(name, name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       collection.setAttributes(Arrays.asList(attributes));
 
       Collection createdCollection = collectionDao.createCollection(collection);
       dataDao.createDataRepository(createdCollection.getId());
       return createdCollection;
+   }
+
+   private Collection setCollectionUserRoles(Collection collection, final Set<Role> roles) {
+      Permissions permissions = collection.getPermissions();
+      permissions.updateUserPermissions(Permission.buildWithRoles(userId, roles));
+      collection.setPermissions(permissions);
+      return collectionDao.updateCollection(collection.getId(), collection, null);
    }
 
    private Collection createTaskCollection(String name, CollectionPurpose purpose, Attribute... attributes) {
@@ -366,18 +378,13 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchTasks() {
-      var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
-      Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
-      Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, 1);
-      var stateAttributeId = stateAttribute.getId();
-      Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
-      Attribute assigneeAttribute = new Attribute("a2", "a2", null,  assigneeConstraint, null, 1);
-      var assigneeAttributeId = assigneeAttribute.getId();
-      var purposeMetadata = new DataDocument(CollectionPurpose.META_STATE_ATTRIBUTE_ID, stateAttributeId)
-            .append(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
-            .append(CollectionPurpose.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
-      CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
-      String taskCollectionId = createTaskCollection("taskCollection", purpose, stateAttribute, assigneeAttribute).getId();
+      Collection taskCollection = createTaskCollectionWithAttributes("taskCollection");
+      String taskCollectionId = taskCollection.getId();
+      Attribute stateAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a1")).findFirst().get();
+      String stateAttributeId = stateAttribute.getId();
+      Attribute assigneeAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a2")).findFirst().get();
+      String assigneeAttributeId = assigneeAttribute.getId();
+
       String otherCollectionId = createCollection("otherCollection", stateAttribute, assigneeAttribute).getId();
 
       String id1 = createDocument(taskCollectionId, Map.of(stateAttributeId, "a", assigneeAttributeId, USER)).getId();
@@ -404,6 +411,109 @@ public class SearchFacadeIT extends IntegrationTestBase {
       query = createSimpleQueryWithAttributeFilter(otherCollectionId, CollectionAttributeFilter.createFromValues(otherCollectionId, stateAttributeId, ConditionType.HAS_SOME, Arrays.asList("a", "c", "d")));
       documents = searchFacade.searchTasksDocumentsAndLinks(query, true).getFirst();
       assertThat(documents).extracting(Document::getId).isEmpty();
+   }
+
+   private Collection createTaskCollectionWithAttributes(String name) {
+      var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
+      Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
+      Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, 1);
+      var stateAttributeId = stateAttribute.getId();
+      Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
+      Attribute assigneeAttribute = new Attribute("a2", "a2", null, assigneeConstraint, null, 1);
+      var assigneeAttributeId = assigneeAttribute.getId();
+      var purposeMetadata = new DataDocument(CollectionPurpose.META_STATE_ATTRIBUTE_ID, stateAttributeId)
+            .append(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
+            .append(CollectionPurpose.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
+      CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
+      Constraint numberConstraint = new Constraint(ConstraintType.Number, new DataDocument());
+      Attribute otherAttribute = new Attribute("a3", "a3", null, numberConstraint, null, 3);
+      return createTaskCollection(name, purpose, stateAttribute, assigneeAttribute, otherAttribute);
+   }
+
+   @Test
+   public void testSearchContributors() {
+      Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument());
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Collection collection = createCollection("numberCollection", attribute);
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read)));
+
+      String id1 = createDocument(collection.getId(), "10").getId();
+      String id2 = createDocumentWithOtherUser(collection.getId(), "20").getId();
+      String id3 = createDocument(collection.getId(), "30").getId();
+      String id4 = createDocumentWithOtherUser(collection.getId(), 40).getId();
+      String id5 = createDocument(collection.getId(), "50").getId();
+      String id6 = createDocumentWithOtherUser(collection.getId(), "60").getId();
+      String id7 = createDocumentWithOtherUser(collection.getId(), 70).getId();
+      String id8 = createDocument(collection.getId(), 80).getId();
+
+      Query query = new Query();
+      List<Document> documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).isEmpty();
+
+      // contributor
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id5, id8);
+
+      // read all data
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8);
+
+      // contributor with filters
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.LOWER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3);
+
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.GREATER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id5, id8);
+
+      // reader with filters
+      setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.LOWER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3);
+
+      query = createSimpleQueryWithAttributeFilter(collection.getId(), CollectionAttributeFilter.createFromValues(collection.getId(), DOCUMENT_KEY, ConditionType.GREATER_THAN, "40"));
+      documents = searchFacade.searchDocuments(query, true);
+      assertThat(documents).extracting(Document::getId).containsOnly(id5, id6, id7, id8);
+
+   }
+
+   @Test
+   public void testSearchTasksAndContributors() {
+      Collection taskCollection = createTaskCollectionWithAttributes("taskCollection");
+      Attribute stateAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a1")).findFirst().get();
+      Attribute assigneeAttribute = taskCollection.getAttributes().stream().filter(a -> a.getId().equals("a2")).findFirst().get();
+
+      String id1 = createDocumentWithOtherUser(taskCollection.getId(), Map.of(stateAttribute.getId(), "a", assigneeAttribute.getId(), USER)).getId();
+      String id2 = createDocumentWithOtherUser(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "b")).getId();
+      String id3 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "c")).getId();
+      String id4 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "d")).getId();
+      String id5 = createDocumentWithOtherUser(taskCollection.getId(), Map.of(stateAttribute.getId(), Arrays.asList("a", "b"),  assigneeAttribute.getId(), USER)).getId();
+      String id6 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("b", "c"))).getId();
+      String id7 = createDocumentWithOtherUser(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("c", "d"))).getId();
+      String id8 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("d", "a"))).getId();
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read)));
+      Query query = new Query();
+      List<Document> documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id5);
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id3, id4, id5, id6, id8);
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataRead)));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id2, id3, id4, id5, id6, id7, id8);
+
+      setCollectionUserRoles(taskCollection, Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      query = createSimpleQueryWithAttributeFilter(taskCollection.getId(), CollectionAttributeFilter.createFromValues(taskCollection.getId(), stateAttribute.getId(), ConditionType.HAS_SOME, Arrays.asList("a", "b")));
+      documents = searchFacade.searchDocumentsAndLinks(query, true).getFirst();
+      assertThat(documents).extracting(Document::getId).containsOnly(id1, id5, id6, id8);
    }
 
    @Test
@@ -530,7 +640,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testUserConstraint() {
       Constraint constraint = new Constraint(ConstraintType.User, new DataDocument("multi", true));
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY,null,  constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
       String collectionId = createCollection("userCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, Collections.singletonList(USER)).getId();
@@ -562,9 +672,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id11 = createDocument(collectionIds.get(2), "mr lumr").getId();
       String id12 = createDocument(collectionIds.get(2), "lol").getId();
       String linkType01Id = linkTypeDao.createLinkType(new LinkType("lmr",
-            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null)).getId();
+            Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null, null)).getId();
       String linkType12Id = linkTypeDao.createLinkType(new LinkType("lmrr",
-            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList(), null)).getId();
+            Arrays.asList(collectionIds.get(1), collectionIds.get(2)), Collections.emptyList(), null, null, null)).getId();
       createLinkInstance(linkType01Id, Arrays.asList(id1, id6));
       createLinkInstance(linkType01Id, Arrays.asList(id1, id7));
       createLinkInstance(linkType01Id, Arrays.asList(id2, id8));
@@ -663,6 +773,21 @@ public class SearchFacadeIT extends IntegrationTestBase {
       return createDocument(collectionId, Collections.singletonMap(DOCUMENT_KEY, value));
    }
 
+   private Document createDocumentWithOtherUser(String collectionId, Object value) {
+      return createDocumentWithOtherUser(collectionId, Collections.singletonMap(DOCUMENT_KEY, value));
+   }
+
+   private Document createDocumentWithOtherUser(String collectionId, Map<String, Object> values) {
+      Document document = createDocument(collectionId, values);
+
+      Document updatingDocument = new Document(document);
+      updatingDocument.setCreatedBy(collectionId);
+
+      Document updatedDocument = documentDao.updateDocument(document.getId(), updatingDocument);
+      updatedDocument.setData(document.getData());
+      return updatedDocument;
+   }
+
    private Document createDocument(String collectionId, Map<String, Object> values) {
       Collection collection = collectionDao.getCollectionById(collectionId);
       values.forEach((attributeId, value) -> {
@@ -678,7 +803,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       Document document = new Document(new DataDocument(values));
       document.setCollectionId(collectionId);
-      document.setCreatedBy(USER);
+      document.setCreatedBy(userId);
       document.setCreationDate(ZonedDateTime.now());
       Document storedDocument = documentDao.createDocument(document);
 
@@ -698,9 +823,9 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSearchLinkInstances() {
-      LinkType linkType = new LinkType("nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
+      LinkType linkType = new LinkType("nm", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null, null);
       String linkTypeId1 = linkTypeDao.createLinkType(linkType).getId();
-      LinkType linkType2 = new LinkType("nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null);
+      LinkType linkType2 = new LinkType("nm2", Arrays.asList(collectionIds.get(0), collectionIds.get(1)), Collections.emptyList(), null, null, null);
       String linkTypeId2 = linkTypeDao.createLinkType(linkType2).getId();
 
       String id10 = createDocument(collectionIds.get(0), "lumeer").getId();

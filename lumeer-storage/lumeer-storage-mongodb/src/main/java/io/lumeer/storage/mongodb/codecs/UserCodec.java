@@ -45,10 +45,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,7 +55,8 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String ID = "_id";
    public static final String NAME = "name";
    public static final String EMAIL = "email";
-   public static final String GROUPS = "groups";
+   public static final String ORGANIZATIONS = "organizations";
+   public static final String ALL_GROUPS = "allGroups";
    public static final String WISHES = "wishes";
    public static final String AUTH_IDS = "authIds";
    public static final String AGREEMENT = "agreement";
@@ -73,9 +72,6 @@ public class UserCodec implements CollectibleCodec<User> {
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
-
-   public static final String ALL_GROUPS = "allGroups";
-   public static final String ORGANIZATION_ID = "organizationId";
 
    private final Codec<Document> documentCodec;
 
@@ -115,8 +111,15 @@ public class UserCodec implements CollectibleCodec<User> {
       String email = bson.getString(EMAIL);
       List<String> authIds = bson.get(AUTH_IDS, List.class);
 
-      List<Document> documentList = bson.get(ALL_GROUPS, List.class);
-      Map<String, Set<String>> allGroups = convertGroupsListToMap(documentList);
+      // old style
+      Set<String> organizations;
+      if (bson.containsKey(ALL_GROUPS)) {
+         List<Document> documentList = bson.get(ALL_GROUPS, List.class);
+         organizations = convertGroupsMapToOrganizations(documentList);
+      } else {
+         List<String> organizationsList = bson.getList(ORGANIZATIONS, String.class);
+         organizations = organizationsList != null ? new HashSet<>(organizationsList) : Collections.emptySet();
+      }
 
       String defaultOrganizationId = bson.getString(DEFAULT_ORGANIZATION_ID);
       String defaultProjectId = bson.getString(DEFAULT_PROJECT_ID);
@@ -194,7 +197,7 @@ public class UserCodec implements CollectibleCodec<User> {
       Document hints = bson.get(HINTS, Document.class);
       NotificationsSettings settings = new NotificationsSettings(notificationSettings, notificationsLanguage);
 
-      User user = new User(id, name, email, allGroups, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, settings, new DataDocument(hints == null ? new Document() : hints));
+      User user = new User(id, name, email, organizations, wishes, agreement, agreementDate, newsletter, wizardDismissed, referral, settings, new DataDocument(hints == null ? new Document() : hints));
       user.setAuthIds(authIds != null ? new HashSet<>(authIds) : new HashSet<>());
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
@@ -209,6 +212,7 @@ public class UserCodec implements CollectibleCodec<User> {
       bson.append(NAME, user.getName())
           .append(EMAIL, user.getEmail())
           .append(AUTH_IDS, user.getAuthIds())
+          .append(ORGANIZATIONS, user.getOrganizations())
           .append(WISHES, user.getWishes())
           .append(REFERRAL, user.getReferral())
           .append(AFFILIATE_PARTNER, user.isAffiliatePartner())
@@ -220,12 +224,6 @@ public class UserCodec implements CollectibleCodec<User> {
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());
          bson.append(DEFAULT_PROJECT_ID, user.getDefaultWorkspace().getProjectId());
-      }
-
-      if (user.getGroups() != null) {
-         bson.append(ALL_GROUPS, convertGroupsMapToList(user.getGroups()));
-      } else {
-         bson.append(ALL_GROUPS, Collections.emptyList());
       }
 
       bson.append(AGREEMENT, user.hasAgreement());
@@ -243,28 +241,15 @@ public class UserCodec implements CollectibleCodec<User> {
       return User.class;
    }
 
-   private List<Document> convertGroupsMapToList(Map<String, Set<String>> map) {
-      return map.entrySet().stream().map(entry -> new Document(ORGANIZATION_ID, entry.getKey())
-            .append(GROUPS, entry.getValue())
-      ).collect(Collectors.toList());
-   }
-
-   private Map<String, Set<String>> convertGroupsListToMap(List<Document> documentList) {
+   @Deprecated
+   private Set<String> convertGroupsMapToOrganizations(List<Document> documentList) {
       if (documentList == null) {
-         return new HashMap<>();
+         return new HashSet<>();
       }
 
       return documentList.stream()
-                         .collect(Collectors.toMap(document -> document.getString(ORGANIZATION_ID), this::convertGroupsListToSet));
-   }
-
-   @SuppressWarnings("unchecked")
-   private Set<String> convertGroupsListToSet(Document document) {
-      List<String> groups = document.get(GROUPS, List.class);
-      if (groups == null) {
-         return new HashSet<>();
-      }
-      return new HashSet<>(groups);
+                         .map(document -> document.getString("organizationId"))
+                         .collect(Collectors.toSet());
    }
 }
 

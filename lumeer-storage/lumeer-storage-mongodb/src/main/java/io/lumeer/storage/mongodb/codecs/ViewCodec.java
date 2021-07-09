@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Query;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
@@ -55,7 +56,7 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
    @Override
    public View decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      SimpleResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson, ResourceType.VIEW);
 
       Query query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
       String perspective = bson.getString(PERSPECTIVE);

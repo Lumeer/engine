@@ -260,7 +260,7 @@ public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements 
    }
 
    private String favoriteCollectionsDBName() {
-      if (!getOrganization().isPresent()) {
+      if (getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       return favoriteCollectionsDBName(getOrganization().get());
@@ -275,7 +275,7 @@ public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements 
    }
 
    private String favoriteDocumentsDBName() {
-      if (!getOrganization().isPresent()) {
+      if (getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       return favoriteDocumentsDBName(getOrganization().get());

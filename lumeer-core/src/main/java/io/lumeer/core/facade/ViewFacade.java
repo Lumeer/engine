@@ -19,28 +19,26 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.DefaultViewConfig;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.User;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.View;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.QueryUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -76,8 +74,8 @@ public class ViewFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      adapter = new ViewAdapter(favoriteItemDao);
-      resourceAdapter = new ResourceAdapter(collectionDao, linkTypeDao, viewDao, userDao);
+      resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
+      adapter = new ViewAdapter(resourceAdapter, favoriteItemDao);
    }
 
    public ViewAdapter getAdapter() {
@@ -85,10 +83,8 @@ public class ViewFacade extends AbstractFacade {
    }
 
    public View createView(View view) {
-      if (view.getQuery().getCollectionIds() != null) {
-         collectionDao.getCollectionsByIds(view.getQuery().getCollectionIds()).forEach(collection ->
-               permissionsChecker.checkRole(collection, Role.READ));
-      }
+      permissionsChecker.checkRole(getProject(), RoleType.ViewContribute);
+      checkViewCollectionIds(view);
       view.setAuthorId(getCurrentUserId());
       view.setLastTimeUsed(ZonedDateTime.now());
       view.setId(null);
@@ -99,43 +95,56 @@ public class ViewFacade extends AbstractFacade {
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
-      view.setAuthorRights(getViewAuthorRights(view));
 
-      return viewDao.createView(view);
+      return mapView(viewDao.createView(view));
+   }
+
+   private void checkViewCollectionIds(View view) {
+      List<LinkType> linkTypes = Collections.emptyList();
+      if (!view.getQuery().getLinkTypeIds().isEmpty()) {
+         linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
+         linkTypes.forEach(linkType -> permissionsChecker.checkRoleInLinkType(linkType, RoleType.Read, getCurrentUserId()));
+      }
+
+      final Set<String> queryCollectionIds = QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes);
+      if (!queryCollectionIds.isEmpty()) {
+         collectionDao.getCollectionsByIds(queryCollectionIds).forEach(collection ->
+               permissionsChecker.checkRole(collection, RoleType.Read));
+      }
    }
 
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
-      permissionsChecker.checkRole(storedView, Role.MANAGE);
+      permissionsChecker.checkRole(storedView, RoleType.Read);
+      if (permissionsChecker.hasRole(storedView, RoleType.QueryConfig)) {
+         checkViewCollectionIds(view);
+      }
 
-      keepStoredPermissions(view, storedView.getPermissions());
-      view.setAuthorId(storedView.getAuthorId());
-      view.setLastTimeUsed(ZonedDateTime.now());
+      View updatingView = storedView.copy();
+      updatingView.patch(view, permissionsChecker.getActualRoles(storedView));
+      updatingView.setAuthorId(storedView.getAuthorId());
+      updatingView.setLastTimeUsed(ZonedDateTime.now());
+      keepUnmodifiableFields(updatingView, storedView);
 
-      View updatedView = viewDao.updateView(storedView.getId(), view);
-      updatedView.setAuthorRights(getViewAuthorRights(updatedView));
-
-      return mapView(updatedView);
+      return mapView(viewDao.updateView(id, updatingView));
    }
 
    private View mapView(View view) {
-      return adapter.mapViewData(mapResource(view), getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapViewData(getOrganization(), getProject(), mapResource(view), getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public void deleteView(final String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkCanDelete(view);
 
       viewDao.deleteView(view.getId());
 
-      favoriteItemDao.removeFavoriteViewFromUsers(getCurrentProject().getId(), id);
+      favoriteItemDao.removeFavoriteViewFromUsers(getProject().getId(), id);
    }
 
    public View getViewById(final String id) {
       final View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.READ);
-
-      view.setAuthorRights(getViewAuthorRights(view));
+      permissionsChecker.checkRole(view, RoleType.Read);
 
       return mapView(view);
    }
@@ -149,14 +158,12 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private List<View> mapViews(List<View> views) {
-      return adapter.mapViewsData(views, getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapViewsData(getOrganization(), getProject(), views, getCurrentUserId(), workspaceKeeper.getProjectId());
    }
 
    public List<View> getViews() {
-      checkProjectRole(Role.READ);
-      return mapViews(resourceAdapter.getViews(getCurrentUserId(), getCurrentUserGroups(), isWorkspaceManager())
+      return mapViews(resourceAdapter.getViews(getOrganization(), getProject(), getCurrentUserId())
                                      .stream()
-                                     .peek(view -> view.setAuthorRights(getViewAuthorRights(view)))
                                      .map(this::mapResource)
                                      .collect(Collectors.toList())
       );
@@ -164,32 +171,45 @@ public class ViewFacade extends AbstractFacade {
 
    public Permissions getViewPermissions(final String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       return view.getPermissions();
    }
 
    public void addFavoriteView(String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.READ);
+      permissionsChecker.checkRole(view, RoleType.Read);
 
-      String projectId = getCurrentProject().getId();
-      String userId = getCurrentUser().getId();
+      String projectId = getProject().getId();
+      String userId = getCurrentUserId();
       favoriteItemDao.addFavoriteView(userId, projectId, id);
    }
 
    public void removeFavoriteView(String id) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.READ);
+      permissionsChecker.checkRole(view, RoleType.Read);
 
-      String userId = getCurrentUser().getId();
+      String userId = getCurrentUserId();
       favoriteItemDao.removeFavoriteView(userId, id);
+   }
+
+   public Permissions updatePermissions(final String id, final Permissions permissions) {
+      View view = viewDao.getViewById(id);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
+
+      final View originalView = view.copy();
+      view.getPermissions().clearUserPermissions();
+      view.getPermissions().clearGroupPermissions();
+      view.getPermissions().updateUserPermissions(permissions.getUserPermissions());
+      view.getPermissions().updateGroupPermissions(permissions.getGroupPermissions());
+      viewDao.updateView(view.getId(), view, originalView);
+
+      return view.getPermissions();
    }
 
    public Set<Permission> updateUserPermissions(final String id, final Set<Permission> userPermissions) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
-      permissionsChecker.invalidateCache(view);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       final View originalView = view.copy();
       view.getPermissions().clearUserPermissions();
@@ -201,8 +221,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void removeUserPermission(final String id, final String userId) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
-      permissionsChecker.invalidateCache(view);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       view.getPermissions().removeUserPermission(userId);
       viewDao.updateView(view.getId(), view);
@@ -210,8 +229,7 @@ public class ViewFacade extends AbstractFacade {
 
    public Set<Permission> updateGroupPermissions(final String id, final Set<Permission> groupPermissions) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
-      permissionsChecker.invalidateCache(view);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       view.getPermissions().clearGroupPermissions();
       view.getPermissions().updateGroupPermissions(groupPermissions);
@@ -222,8 +240,7 @@ public class ViewFacade extends AbstractFacade {
 
    public void removeGroupPermission(final String id, final String groupId) {
       View view = viewDao.getViewById(id);
-      permissionsChecker.checkRole(view, Role.MANAGE);
-      permissionsChecker.invalidateCache(view);
+      permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       view.getPermissions().removeGroupPermission(groupId);
       viewDao.updateView(view.getId(), view);
@@ -234,10 +251,6 @@ public class ViewFacade extends AbstractFacade {
       return CodeGenerator.generate(existingCodes, viewName);
    }
 
-   public Map<String, Set<Role>> getViewAuthorRights(final View view) {
-      return resourceAdapter.getViewAuthorRights(view, workspaceKeeper.getOrganization().orElse(null), workspaceKeeper.getProject().orElse(null));
-   }
-
    public List<DefaultViewConfig> getDefaultConfigs() {
       return defaultViewConfigDao.getConfigs(getCurrentUserId());
    }
@@ -246,21 +259,5 @@ public class ViewFacade extends AbstractFacade {
       config.setUserId(getCurrentUserId());
 
       return defaultViewConfigDao.updateConfig(config);
-   }
-
-   private void checkProjectRole(Role role) {
-      Project project = getCurrentProject();
-      permissionsChecker.checkRole(project, role);
-   }
-
-   private Project getCurrentProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
-         throw new ResourceNotFoundException(ResourceType.PROJECT);
-      }
-      return workspaceKeeper.getProject().get();
-   }
-
-   private User getCurrentUser() {
-      return authenticatedUser.getCurrentUser();
    }
 }

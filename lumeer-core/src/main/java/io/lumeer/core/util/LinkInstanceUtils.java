@@ -25,11 +25,15 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 
 public class LinkInstanceUtils {
 
-   public static LinkInstance loadLinkInstanceWithData(final LinkInstanceDao linkInstanceDao, final LinkDataDao linkDataDao, final LinkType linkType, final String linkInstanceId) {
+   public static LinkInstance loadLinkInstanceWithData(final LinkInstanceDao linkInstanceDao, final LinkDataDao linkDataDao, final String linkInstanceId) {
       final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(linkInstanceId);
-      linkInstance.setData(linkDataDao.getData(linkType.getId(), linkInstanceId));
+      linkInstance.setData(linkDataDao.getData(linkInstance.getLinkTypeId(), linkInstanceId));
 
       return linkInstance;
+   }
+
+   public static boolean isLinkInstanceOwner(final LinkType linkType, final LinkInstance linkInstance, String userId) {
+      return userId.equals(linkInstance.getCreatedBy());
    }
 
 }

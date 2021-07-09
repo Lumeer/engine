@@ -143,7 +143,7 @@ public class OrganizationService extends AbstractService {
    }
 
    @DELETE
-   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/groups/{groupId}")
+   @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/groups/{groupId:[0-9a-fA-F]{24}}")
    public Response removeGroupPermission(@PathParam("organizationId") String organizationId, @PathParam("groupId") String groupId) {
       workspaceKeeper.setOrganizationId(organizationId);
       organizationFacade.removeGroupPermission(organizationId, groupId);

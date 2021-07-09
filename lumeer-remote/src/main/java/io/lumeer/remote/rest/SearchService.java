@@ -22,10 +22,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.DocumentsAndLinks;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Query;
-import io.lumeer.api.model.SuggestionQuery;
-import io.lumeer.api.model.Suggestions;
 import io.lumeer.core.facade.SearchFacade;
-import io.lumeer.core.facade.SuggestionFacade;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.QueryProcessor;
@@ -57,22 +54,9 @@ public class SearchService extends AbstractService {
    @Inject
    private SearchFacade searchFacade;
 
-   @Inject
-   private SuggestionFacade suggestionFacade;
-
    @PostConstruct
    public void init() {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
-   }
-
-   @POST
-   @Path("suggestions")
-   public Suggestions getSuggestions(SuggestionQuery suggestionQuery) {
-      if (suggestionQuery.getText() == null || suggestionQuery.getText().isEmpty()) {
-         return Suggestions.emptySuggestions();
-      }
-
-      return suggestionFacade.suggest(suggestionQuery);
    }
 
    @POST

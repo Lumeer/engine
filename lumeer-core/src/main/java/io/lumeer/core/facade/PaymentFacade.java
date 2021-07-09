@@ -25,7 +25,7 @@ import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.ReferralPayment;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -158,8 +158,8 @@ public class PaymentFacade extends AbstractFacade {
       return null;
    }
 
-   public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations){
-       return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
+   public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations) {
+      return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
    }
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
@@ -178,10 +178,14 @@ public class PaymentFacade extends AbstractFacade {
             serviceLimits = new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
                   ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
-                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection());
+                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
             workspaceKeeper.setServiceLimits(organization, serviceLimits);
             return serviceLimits;
          }
+      }
+
+      if (permissionsChecker.skipPayments()) {
+         return ServiceLimits.BASIC_LIMITS;
       }
 
       workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
@@ -218,7 +222,7 @@ public class PaymentFacade extends AbstractFacade {
             return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
                   ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
-                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection());
+                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
          }
       }
 
@@ -313,7 +317,7 @@ public class PaymentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, Role.MANAGE);
+      permissionsChecker.checkRole(organization, RoleType.Manage);
    }
 
    private void checkReadPermissions(final Organization organization) {
@@ -321,6 +325,6 @@ public class PaymentFacade extends AbstractFacade {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      permissionsChecker.checkRole(organization, Role.READ);
+      permissionsChecker.checkRole(organization, RoleType.Read);
    }
 }

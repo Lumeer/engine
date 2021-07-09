@@ -20,6 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.TemplateMetadata;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
@@ -45,7 +46,7 @@ public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Proj
    @Override
    public Project decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
-      SimpleResource resource = decodeResource(bson);
+      SimpleResource resource = decodeResource(bson, ResourceType.PROJECT);
       TemplateMetadata templateMetadata;
       if (bson.containsKey(TEMPLATE_METADATA)) {
          templateMetadata = TemplateMetadataCodec.convertFromDocument(bson.get(TEMPLATE_METADATA, Document.class));

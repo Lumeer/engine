@@ -31,12 +31,11 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.api.util.ResourceUtils;
-import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.api.util.PermissionUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.ContextualTask;
@@ -95,7 +94,6 @@ public class LumeerBridge {
    private Exception cause = null;
    private boolean dryRun = false;
    private boolean printed = false;
-   private Boolean isManager = null;
 
    public LumeerBridge(final ContextualTask task) {
       this.task = task;
@@ -148,15 +146,6 @@ public class LumeerBridge {
          }
       } else {
          return null;
-      }
-   }
-
-   private void initIsManager() {
-      if (isManager == null) {
-         isManager = ResourceUtils.userIsManagerInWorkspace(
-               task.getInitiator().getId(),
-               task.getDaoContextSnapshot().getSelectedWorkspace().getOrganization().orElse(null),
-               task.getDaoContextSnapshot().getSelectedWorkspace().getProject().orElse(null));
       }
    }
 
@@ -257,13 +246,8 @@ public class LumeerBridge {
          final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
          final Language language = Language.fromString(task.getCurrentLocale());
 
-         initIsManager();
-         final AllowedPermissions permissions;
-         if (isManager) {
-            permissions = AllowedPermissions.getAllAllowed();
-         } else {
-            permissions = AllowedPermissions.getAllowedPermissions(task.getInitiator().getId(), view.getPermissions());
-         }
+         final Set<RoleType> roles = PermissionUtils.getUserRolesInResource(task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(), view, task.getInitiator(), task.getGroups());
+         final AllowedPermissions permissions = new AllowedPermissions(roles);
 
          final List<Document> documents = DocumentUtils.getDocuments(task.getDaoContextSnapshot(), query, task.getInitiator(), language, permissions, task.getTimeZone());
 
@@ -653,6 +637,7 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings("unused")
    public void shareView(final String viewId, final String userEmail, final String roles) {
       try {
          final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
@@ -660,16 +645,12 @@ public class LumeerBridge {
 
             final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
             if (view != null) {
-               // can the initiator manage the view?
-               if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, Role.MANAGE, task.getInitiator())) {
+               // can the initiator share the view?
+               if (PermissionUtils.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), view, RoleType.UserConfig, task.getInitiator(), task.getGroups())) {
                   final User newUser = task.getDaoContextSnapshot().getUserDao().getUserByEmail(userEmail);
-
-                  // can the user being added read the project?
-                  if (PermissionsChecker.hasRole(workspace.getOrganization().get(), workspace.getProject().get(), workspace.getProject().get(), Role.READ, newUser)) {
-                     final Set<Role> userRoles = StringUtils.isNotEmpty(roles) && !"none".equals(roles) ? Arrays.stream(roles.split(",")).map(Role::fromString).collect(toSet()) : Set.of();
+                     final Set<RoleType> userRoles = StringUtils.isNotEmpty(roles) && !"none".equals(roles) ? Arrays.stream(roles.split(",")).map(RoleType::fromString).collect(toSet()) : Set.of();
 
                      operations.add(new ViewPermissionsOperation(view, newUser.getId(), userRoles));
-                  }
                }
             }
          }

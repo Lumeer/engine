@@ -22,7 +22,9 @@ import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.exception.LumeerException;
 import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.exception.BadFormatException;
+import io.lumeer.core.exception.FeatureNotAllowedException;
 import io.lumeer.core.exception.NoDocumentPermissionException;
+import io.lumeer.core.exception.NoLinkInstancePermissionException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
@@ -84,7 +86,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
 
       // 403 - FORBIDDEN
       if (e instanceof NoResourcePermissionException || e instanceof NoPermissionException || e instanceof NoSystemPermissionException ||
-            e instanceof AccessForbiddenException || e instanceof NoDocumentPermissionException) {
+            e instanceof AccessForbiddenException || e instanceof NoDocumentPermissionException || e instanceof NoLinkInstancePermissionException) {
          return Response.status(Response.Status.FORBIDDEN).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 
@@ -109,7 +111,7 @@ public class LumeerExceptionMapper implements ExceptionMapper<LumeerException> {
          return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Error while communicating with the payment gateway.").type(MediaType.TEXT_PLAIN).build();
       }
 
-      if (e instanceof ServiceLimitsExceededException) {
+      if (e instanceof ServiceLimitsExceededException || e instanceof FeatureNotAllowedException) {
          return Response.status(Response.Status.PAYMENT_REQUIRED).entity(e.getLocalizedMessage()).type(MediaType.TEXT_PLAIN).build();
       }
 

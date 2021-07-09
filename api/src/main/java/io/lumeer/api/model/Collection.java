@@ -22,6 +22,7 @@ import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.util.RoleUtils;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,16 +41,15 @@ import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Collection extends Resource implements HealthChecking {
+public class Collection extends Resource implements HealthChecking, Updatable<Collection> {
 
-   public static Set<Role> ROLES = new HashSet<>(Arrays.asList(Role.MANAGE, Role.WRITE, Role.SHARE, Role.READ));
+   public static Set<Role> ROLES = RoleUtils.collectionResourceRoles();
 
    public static String ATTRIBUTE_PREFIX = "a";
 
    public static final String ATTRIBUTES = "attributes";
    public static final String DATA_DESCRIPTION = "dataDescription";
    public static final String PURPOSE = "purpose";
-   public static final String META_DATA = "metaData";
 
    public static final String RULES = "rules";
 
@@ -121,7 +120,7 @@ public class Collection extends Resource implements HealthChecking {
    }
 
    public Set<Attribute> getAttributes() {
-      return Collections.unmodifiableSet(attributes);
+      return attributes != null ? Collections.unmodifiableSet(attributes) : Collections.emptySet();
    }
 
    public void setAttributes(final java.util.Collection<Attribute> attributes) {
@@ -258,6 +257,23 @@ public class Collection extends Resource implements HealthChecking {
       }
       if (rules != null) {
          rules.forEach((k, v) -> v.checkHealth());
+      }
+   }
+
+   @Override
+   public void patch(final Collection resource, final Set<RoleType> roles) {
+      patchResource(this, resource, roles);
+
+      if(roles.contains(RoleType.Manage)) {
+         setDataDescription(resource.getDataDescription());
+      }
+      if (roles.contains(RoleType.AttributeEdit)) {
+         setAttributes(resource.getAttributes());
+         setDefaultAttributeId(resource.getDefaultAttributeId());
+      }
+      if (roles.contains(RoleType.TechConfig)) {
+         setPurpose(resource.getPurpose());
+         setRules(resource.getRules());
       }
    }
 }

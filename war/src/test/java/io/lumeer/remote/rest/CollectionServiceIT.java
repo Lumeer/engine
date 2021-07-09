@@ -26,18 +26,22 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.Group;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.ZapierFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -50,9 +54,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -79,10 +81,11 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private static final String COLOR = "#00ff00";
 
    private static final Set<Role> USER_ROLES = View.ROLES;
-   private static final Set<Role> GROUP_ROLES = Collections.singleton(Role.READ);
+   private static final Set<Role> GROUP_ROLES = Collections.singleton(new Role(RoleType.Read));
    private Permission userPermission;
    private Permission groupPermission;
    private User user;
+   private Group group;
    private Organization organization;
    private Project project;
 
@@ -111,6 +114,9 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private CollectionDao collectionDao;
 
    @Before
@@ -124,6 +130,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
       projectDao.setOrganization(storedOrganization);
+      groupDao.setOrganization(storedOrganization);
+      group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
 
       Permissions organizationPermissions = new Permissions();
       userPermission = Permission.buildWithRoles(this.user.getId(), Organization.ROLES);
@@ -132,13 +140,13 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
 
       userPermission = Permission.buildWithRoles(this.user.getId(), USER_ROLES);
-      groupPermission = Permission.buildWithRoles(GROUP, GROUP_ROLES);
+      groupPermission = Permission.buildWithRoles(group.getId(), GROUP_ROLES);
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
 
       Permissions projectPermissions = new Permissions();
-      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES.stream().map(Role::toString).collect(Collectors.toSet())));
+      projectPermissions.updateUserPermissions(new Permission(this.user.getId(), Project.ROLES));
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
@@ -148,6 +156,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
       this.organization = storedOrganization;
       this.project = storedProject;
+
+      PermissionCheckerUtil.allowGroups();
    }
 
    private Collection prepareCollection(String code) {
@@ -204,6 +214,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       String collectionId = createCollection(CODE).getId();
 
       Collection updatedCollection = prepareCollection(CODE2);
+      updatedCollection.setPermissions(new Permissions(Set.of(userPermission), Set.of(groupPermission)));
       Entity entity = Entity.json(updatedCollection);
 
       Response response = client.target(collectionsUrl).path(collectionId)
@@ -410,7 +421,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateUserPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] userPermission = { Permission.buildWithRoles(user.getId(), new HashSet<>(Arrays.asList(Role.MANAGE, Role.READ))) };
+      Permission[] userPermission = { Permission.buildWithRoles(user.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Manage))) };
       Entity entity = Entity.json(userPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("users")
@@ -449,7 +460,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testUpdateGroupPermissions() {
       String collectionId = createCollection(CODE).getId();
 
-      Permission[] groupPermission = { Permission.buildWithRoles(GROUP, new HashSet<>(Arrays.asList(Role.SHARE, Role.READ))) };
+      Permission[] groupPermission = { Permission.buildWithRoles(this.group.getId(), Set.of(new Role(RoleType.DataWrite), new Role(RoleType.Read))) };
       Entity entity = Entity.json(groupPermission);
 
       Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups")
@@ -473,7 +484,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    public void testRemoveGroupPermission() {
       String collectionId = createCollection(CODE).getId();
 
-      Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups").path(GROUP)
+      Response response = client.target(collectionsUrl).path(collectionId).path("permissions").path("groups").path(this.group.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();

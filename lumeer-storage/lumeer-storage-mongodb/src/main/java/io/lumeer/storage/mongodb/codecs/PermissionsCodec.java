@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.ResourceType;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -53,6 +54,22 @@ public class PermissionsCodec implements Codec<Permissions> {
       return PermissionsCodec.convertFromDocument(document);
    }
 
+   @Deprecated
+   public static Permissions convertFromDocumentLegacy(final Document document, final ResourceType resourceType) {
+      if (document == null) {
+         return new Permissions();
+      }
+
+      Set<Permission> userPermissions = new ArrayList<Document>(document.get(USER_ROLES, List.class)).stream()
+                                                                                                     .map(doc -> PermissionCodec.convertFromDocumentLegacy(doc, resourceType))
+                                                                                                     .collect(Collectors.toSet());
+      Set<Permission> groupPermissions = new ArrayList<Document>(document.get(GROUP_ROLES, List.class)).stream()
+                                                                                                       .map(doc -> PermissionCodec.convertFromDocumentLegacy(doc, resourceType))
+                                                                                                       .collect(Collectors.toSet());
+
+      return new Permissions(userPermissions, groupPermissions);
+   }
+
    public static Permissions convertFromDocument(final Document document) {
       if (document == null) {
          return new Permissions();
@@ -62,11 +79,10 @@ public class PermissionsCodec implements Codec<Permissions> {
                                                                                                   .map(PermissionCodec::convertFromDocument)
                                                                                                   .collect(Collectors.toSet());
       Set<Permission> groupPermissions = new ArrayList<Document>(document.get(GROUP_ROLES, List.class)).stream()
-                                                                                                    .map(PermissionCodec::convertFromDocument)
+                                                                                                       .map(PermissionCodec::convertFromDocument)
                                                                                                     .collect(Collectors.toSet());
 
-      Permissions permissions = new Permissions(userPermissions, groupPermissions);
-      return permissions;
+      return new Permissions(userPermissions, groupPermissions);
    }
 
    @Override
