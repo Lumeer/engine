@@ -124,7 +124,6 @@ public class ViewFacade extends AbstractFacade {
       updatingView.patch(view, permissionsChecker.getActualRoles(storedView));
       updatingView.setAuthorId(storedView.getAuthorId());
       updatingView.setLastTimeUsed(ZonedDateTime.now());
-      keepUnmodifiableFields(updatingView, storedView);
 
       return mapView(viewDao.updateView(id, updatingView));
    }

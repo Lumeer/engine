@@ -35,8 +35,8 @@ public interface Updatable<T> {
          updatingResource.setDescription(resource.getDescription());
          updatingResource.setPriority(resource.getPriority());
       }
-      if (roles.contains(RoleType.UserConfig)) {
-         updatingResource.setPermissions(resource.getPermissions());
-      }
+      // if (roles.contains(RoleType.UserConfig)) {
+      //   updatingResource.setPermissions(resource.getPermissions());
+      // }
    }
 }

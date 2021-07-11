@@ -58,21 +58,6 @@ class FacadeAdapter(private val permissionAdapter: PermissionAdapter) {
       return permissionAdapter.getLinkTypeUsersByRole(organization, project, linkType, RoleType.UserConfig)
    }
 
-   fun <T : Resource> keepStoredPermissions(resource: T, storedPermissions: Permissions) {
-      resource.permissions?.updateUserPermissions(storedPermissions.userPermissions)
-      resource.permissions?.updateGroupPermissions(storedPermissions.groupPermissions)
-   }
-
-   fun keepStoredPermissions(linkType: LinkType, storedPermissions: Permissions) {
-      linkType.permissions?.updateUserPermissions(storedPermissions.userPermissions)
-      linkType.permissions?.updateGroupPermissions(storedPermissions.groupPermissions)
-   }
-
-   fun <T : Resource> keepUnmodifiableFields(destinationResource: T, originalResource: T) {
-      destinationResource.id = originalResource.id
-      destinationResource.isNonRemovable = originalResource.isNonRemovable
-   }
-
    fun <T : Resource> setupPublicPermissions(resource: T, userId: String): T {
       val userPermission = Permission(userId, HashSet())
       val currentUserPermission = resource.permissions.userPermissions.firstOrNull { it.id == userId } ?: userPermission
