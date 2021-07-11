@@ -156,7 +156,6 @@ public class ProjectFacade extends AbstractFacade {
 
       Project updatingProject = storedProject.copy();
       updatingProject.patch(project, permissionsChecker.getActualRoles(storedProject));
-      keepUnmodifiableFields(updatingProject, storedProject);
 
       Project updatedProject = projectDao.updateProject(projectId, updatingProject, storedProject);
       workspaceCache.updateProject(projectId, updatedProject);

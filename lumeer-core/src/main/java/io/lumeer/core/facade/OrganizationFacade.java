@@ -107,7 +107,6 @@ public class OrganizationFacade extends AbstractFacade {
 
       Organization updatingOrganization = storedOrganization.copy();
       updatingOrganization.patch(organization, permissionsChecker.getActualRoles(storedOrganization));
-      keepUnmodifiableFields(updatingOrganization, storedOrganization);
 
       Organization updatedOrganization = organizationDao.updateOrganization(organizationId, updatingOrganization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, updatedOrganization);

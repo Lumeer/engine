@@ -73,10 +73,6 @@ abstract class AbstractFacade {
       return getFacadeAdapter().mapLinkType(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUser());
    }
 
-   protected void keepUnmodifiableFields(final Resource destinationResource, final Resource originalResource) {
-      getFacadeAdapter().keepUnmodifiableFields(destinationResource, originalResource);
-   }
-
    protected Organization getOrganization() {
       return workspaceKeeper.getOrganization().orElse(null);
    }

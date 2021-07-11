@@ -177,8 +177,6 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
-      super.keepUnmodifiableFields(collection, storedCollection);
-
       collection.setAttributes(storedCollection.getAttributes());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
    }
