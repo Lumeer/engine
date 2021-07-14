@@ -153,11 +153,7 @@ public class UserFacade extends AbstractFacade {
       if (!orgUserEmails.containsAll(usersInRequest)) {
          organization = checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
-         users.forEach(user -> {
-            if (!checkOrganizationInUser(organizationId, user)) {
-               installOrganizationInUser(organizationId, user);
-            }
-         });
+         users.forEach(user -> checkOrganizationInUser(organizationId, user));
 
          checkUsersCreate(organizationId, users.size());
 
@@ -478,16 +474,11 @@ public class UserFacade extends AbstractFacade {
       return project;
    }
 
-   private void installOrganizationInUser(final String organizationId, final User user) {
-      if (user.getOrganizations() == null) {
-         user.setOrganizations(new HashSet<>());
-      }
-      user.getOrganizations().add(organizationId);
-   }
-
    private boolean checkOrganizationInUser(String organizationId, User user) {
       if (user.getOrganizations() == null || user.getOrganizations().isEmpty()) {
-         user.setOrganizations(Set.of(organizationId));
+         var organizations = new HashSet<String>();
+         organizations.add(organizationId);
+         user.setOrganizations(organizations);
          return false;
       } else {
          if (user.getOrganizations().size() != 1 || !user.getOrganizations().contains(organizationId)) {
