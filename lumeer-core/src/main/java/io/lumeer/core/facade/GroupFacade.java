@@ -101,14 +101,14 @@ public class GroupFacade extends AbstractFacade {
 
    private void addGroupsToOrganization(Organization organization, List<Group> groups) {
       var newPermissions = buildGroupPermission(organization, groups, InvitationType.JOIN_ONLY);
-      organizationFacade.updateUserPermissions(organization.getId(), newPermissions);
+      organizationFacade.updateGroupPermissions(organization.getId(), newPermissions);
    }
 
    private void addGroupsToProject(Organization organization, final String projectId, final List<Group> groups, final InvitationType invitationType) {
       workspaceKeeper.setOrganizationId(organization.getId());
       var project = projectDao.getProjectById(projectId);
       var newPermissions = buildGroupPermission(project, groups, invitationType);
-      projectFacade.updateUserPermissions(projectId, newPermissions);
+      projectFacade.updateGroupPermissions(projectId, newPermissions);
    }
 
    private Set<Permission> buildGroupPermission(final Resource resource, final List<Group> groups, final InvitationType invitationType) {
