@@ -28,7 +28,9 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
 
-import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.text.translate.CharSequenceTranslator;
+import org.apache.commons.text.translate.EntityArrays;
+import org.apache.commons.text.translate.LookupTranslator;
 
 import java.io.StringReader;
 import java.time.ZonedDateTime;
@@ -48,6 +50,8 @@ public class ImportFacade extends AbstractFacade {
    public static final String FORMAT_CSV = "csv";
 
    private static final int MAX_PARSED_DOCUMENTS = 1000;
+
+   private static final CharSequenceTranslator TRANSLATOR = new LookupTranslator(EntityArrays.BASIC_ESCAPE);
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -170,7 +174,7 @@ public class ImportFacade extends AbstractFacade {
 
       for (int i = 0; i < Math.min(headers.length, row.length); i++) {
          if (row[i] != null) {
-            d.append(headers[i], StringEscapeUtils.escapeHtml4(row[i]));
+            d.append(headers[i], TRANSLATOR.translate(row[i]));
             counts[i]++;
          }
       }
