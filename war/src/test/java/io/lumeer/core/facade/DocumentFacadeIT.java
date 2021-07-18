@@ -528,7 +528,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDocumentComments() {
-      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute)));
+      setCollectionGroupRoles(collectionFacade.getCollection(collection.getId()), Set.of(new Role(RoleType.Read), new Role(RoleType.DataContribute), new Role(RoleType.CommentContribute)));
 
       final String firstMessage = "hello this is a cool comment";
       final String secondMessage = "Hello, I fixed this!";
