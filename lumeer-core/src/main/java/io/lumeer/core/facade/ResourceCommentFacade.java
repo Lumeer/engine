@@ -28,15 +28,11 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
-import io.lumeer.core.util.DocumentUtils;
-import io.lumeer.core.util.LinkInstanceUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
-import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
@@ -67,16 +63,10 @@ public class ResourceCommentFacade extends AbstractFacade {
    private DocumentDao documentDao;
 
    @Inject
-   private DataDao dataDao;
-
-   @Inject
    private LinkTypeDao linkTypeDao;
 
    @Inject
    private LinkInstanceDao linkInstanceDao;
-
-   @Inject
-   private LinkDataDao linkDataDao;
 
    private ResourceCommentAdapter adapter;
 
@@ -179,21 +169,15 @@ public class ResourceCommentFacade extends AbstractFacade {
             break;
          }
          case LINK: {
-            final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, resourceId);
+            final LinkInstance linkInstance = linkInstanceDao.getLinkInstance(resourceId);
             final LinkType linkType = getLinkType(linkInstance.getLinkTypeId());
-
-            if (!permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleType.CommentContribute)) {
-               permissionsChecker.checkReadLinkInstance(linkType, linkInstance);
-            }
+            permissionsChecker.checkRoleInLinkTypeWithView(linkType, RoleType.CommentContribute);
             break;
          }
          case DOCUMENT: {
-            Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, resourceId);
+            Document document = documentDao.getDocumentById(resourceId);
             Collection collection = collectionDao.getCollectionById(document.getCollectionId());
-
-            if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.CommentContribute)) {
-               permissionsChecker.checkReadDocument(collection, document);
-            }
+            permissionsChecker.checkRoleInCollectionWithView(collection, RoleType.CommentContribute);
             break;
          }
          default: {
