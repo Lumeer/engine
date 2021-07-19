@@ -298,7 +298,7 @@ public class SearchFacade extends AbstractFacade {
 
       while (hasMoreDocuments) {
          var previousCollection = allCollections.get(0);
-         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page * FETCH_SIZE, FETCH_SIZE);
+         var firstCollectionDocuments = getDocumentsByCollection(previousCollection, page, FETCH_SIZE);
          var previousDocuments = filterDocumentsByDocumentFilter(firstCollectionDocuments, documentFilter);
          final Set<Document> currentDocuments = new HashSet<>(previousDocuments);
          final Set<LinkInstance> currentLinkInstances = new HashSet<>();
@@ -395,7 +395,7 @@ public class SearchFacade extends AbstractFacade {
          var hasMoreDocuments = true;
          var page = 0;
          while (hasMoreDocuments) {
-            final List<Document> pagedDocuments = getDocumentsByCollection(collection, page * fetchSize, fetchSize);
+            final List<Document> pagedDocuments = getDocumentsByCollection(collection, page, fetchSize);
             final List<Document> filteredDocuments = filterDocumentsByDocumentFilter(pagedDocuments, documentFilter);
             if (!filteredDocuments.isEmpty()) {
                var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(filteredDocuments), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, language);
@@ -415,7 +415,7 @@ public class SearchFacade extends AbstractFacade {
          var hasMoreLinks = true;
          var page = 0;
          while (hasMoreLinks) {
-            final List<LinkInstance> linkInstances = getLinkInstancesByLinkType(linkType, page * fetchSize, fetchSize);
+            final List<LinkInstance> linkInstances = getLinkInstancesByLinkType(linkType, page, fetchSize);
             if (!linkInstances.isEmpty()) {
                var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, language);
                allLinkInstances.addAll(result.getSecond());
@@ -521,8 +521,8 @@ public class SearchFacade extends AbstractFacade {
       return filterDocumentsByDocumentFilter(documents, documentFilter);
    }
 
-   private List<Document> getDocumentsByCollection(Collection collection, Integer skip, Integer limit) {
-      return searchAdapter.getDocuments(getOrganization(), getProject(), collection, skip, limit, authenticatedUser.getCurrentUserId());
+   private List<Document> getDocumentsByCollection(Collection collection, Integer page, Integer limit) {
+      return searchAdapter.getDocuments(getOrganization(), getProject(), collection, page, limit, authenticatedUser.getCurrentUserId());
    }
 
    private List<Document> filterDocumentsByDocumentFilter(final List<Document> documents, @Nullable final Function<Document, Boolean> documentFilter) {
@@ -540,7 +540,7 @@ public class SearchFacade extends AbstractFacade {
       return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, documentIds, authenticatedUser.getCurrentUserId());
    }
 
-   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, Integer skip, Integer limit) {
-      return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, skip, limit, authenticatedUser.getCurrentUserId());
+   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, Integer page, Integer limit) {
+      return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, page, limit, authenticatedUser.getCurrentUserId());
    }
 }
