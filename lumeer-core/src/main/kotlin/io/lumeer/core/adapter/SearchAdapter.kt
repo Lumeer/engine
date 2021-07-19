@@ -67,27 +67,27 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return getDocuments(organization, project, collection, null, null, userId)
    }
 
-   fun getDocuments(organization: Organization?, project: Project?, collection: Collection, skip: Int?, limit: Int?, userId: String): List<Document> {
+   fun getDocuments(organization: Organization?, project: Project?, collection: Collection, page: Int?, limit: Int?, userId: String): List<Document> {
       val documents = mutableListOf<Document>()
       if (canReadAllDocuments(organization, project, collection, userId)) {
-         return getAllDocuments(collection, skip, limit)
+         return getAllDocuments(collection, page, limit)
       }
       if (canReadContributionDocuments(organization, project, collection, userId)) {
-         documents.addAll(getContributionDocuments(collection, skip, limit, userId))
+         documents.addAll(getContributionDocuments(collection, page, limit, userId))
       }
       if (collection.purposeType == CollectionPurposeType.Tasks) {
-         documents.addAll(getAssigneeDocuments(collection, skip, limit, null, userId))
+         documents.addAll(getAssigneeDocuments(collection, page, limit, null, userId))
       }
       return documents
    }
 
-   private fun getAllDocuments(collection: Collection, skip: Int?, limit: Int?): List<Document> {
-      val documents = documentDao.getDocumentsByCollection(collection.id, Pagination(skip, limit))
+   private fun getAllDocuments(collection: Collection, page: Int?, limit: Int?): List<Document> {
+      val documents = documentDao.getDocumentsByCollection(collection.id, Pagination(page, limit))
       return mapDocumentsData(collection, documents)
    }
 
-   private fun getContributionDocuments(collection: Collection, skip: Int?, limit: Int?, userId: String): List<Document> {
-      val documents = documentDao.getDocumentsByCreator(collection.id, userId, Pagination(skip, limit))
+   private fun getContributionDocuments(collection: Collection, page: Int?, limit: Int?, userId: String): List<Document> {
+      val documents = documentDao.getDocumentsByCreator(collection.id, userId, Pagination(page, limit))
       return mapDocumentsData(collection, documents)
    }
 
@@ -104,14 +104,14 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return documents
    }
 
-   private fun getAssigneeDocuments(collection: Collection, skip: Int?, limit: Int?, documentIds: Set<String>?, userId: String): List<Document> {
+   private fun getAssigneeDocuments(collection: Collection, page: Int?, limit: Int?, documentIds: Set<String>?, userId: String): List<Document> {
       val assigneeAttribute = ResourceUtils.findAttribute(collection.attributes, collection.purpose?.assigneeAttributeId)
       if (assigneeAttribute != null) {
          val user = permissionAdapter.getUser(userId)
          val searchQuery = SearchQueryStem.createBuilder(collection.id)
                .filters(setOf(CollectionSearchAttributeFilter(collection.id, ConditionType.HAS_SOME, assigneeAttribute.id, user.email)))
                .build()
-         val data = if (documentIds != null) dataDao.searchDataByIds(searchQuery, documentIds, collection) else dataDao.searchData(searchQuery, Pagination(skip, limit), collection)
+         val data = if (documentIds != null) dataDao.searchDataByIds(searchQuery, documentIds, collection) else dataDao.searchData(searchQuery, Pagination(page, limit), collection)
          if (data.isNotEmpty()) {
             val documentsMap = documentDao.getDocumentsByCollection(collection.id).associateBy { it.id }
             return data.mapNotNull { documentsMap[it.id]?.apply { setData(constraintManager.decodeDataTypes(collection, it)) } }
@@ -153,24 +153,24 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return getLinkInstances(organization, project, linkType, null, null, userId)
    }
 
-   fun getLinkInstances(organization: Organization, project: Project?, linkType: LinkType, skip: Int?, limit: Int?, userId: String): List<LinkInstance> {
+   fun getLinkInstances(organization: Organization, project: Project?, linkType: LinkType, page: Int?, limit: Int?, userId: String): List<LinkInstance> {
       val linkInstances = mutableListOf<LinkInstance>()
       if (canReadAllLinkInstances(organization, project, linkType, userId)) {
-         return getAllLinkInstances(linkType, skip, limit)
+         return getAllLinkInstances(linkType, page, limit)
       }
       if (canReadContributionLinkInstances(organization, project, linkType, userId)) {
-         linkInstances.addAll(getContributionLinkInstances(linkType, skip, limit, userId))
+         linkInstances.addAll(getContributionLinkInstances(linkType, page, limit, userId))
       }
       return linkInstances
    }
 
-   private fun getAllLinkInstances(linkType: LinkType, skip: Int?, limit: Int?): List<LinkInstance> {
-      val linkInstances = linkInstanceDao.getLinkInstancesByLinkType(linkType.id, Pagination(skip, limit))
+   private fun getAllLinkInstances(linkType: LinkType, page: Int?, limit: Int?): List<LinkInstance> {
+      val linkInstances = linkInstanceDao.getLinkInstancesByLinkType(linkType.id, Pagination(page, limit))
       return mapLinkData(linkType, linkInstances)
    }
 
-   private fun getContributionLinkInstances(linkType: LinkType, skip: Int?, limit: Int?, userId: String): List<LinkInstance> {
-      val documents = linkInstanceDao.getLinkInstancesByCreator(linkType.id, userId, Pagination(skip, limit))
+   private fun getContributionLinkInstances(linkType: LinkType, page: Int?, limit: Int?, userId: String): List<LinkInstance> {
+      val documents = linkInstanceDao.getLinkInstancesByCreator(linkType.id, userId, Pagination(page, limit))
       return mapLinkData(linkType, documents)
    }
 
