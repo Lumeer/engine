@@ -82,7 +82,7 @@ public class MailerLiteFacade implements MailerService {
 
    @Override
    public void setUserTemplate(final User user, final String template) {
-      if (user != null && StringUtils.isNotEmpty(user.getEmail())) {
+      if (StringUtils.isNotEmpty(MAILERLITE_APIKEY) && user != null && StringUtils.isNotEmpty(user.getEmail())) {
          setUserTemplate(user.getEmail(), template);
       }
    }
