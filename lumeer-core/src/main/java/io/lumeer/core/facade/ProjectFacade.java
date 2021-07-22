@@ -56,6 +56,8 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -119,6 +121,9 @@ public class ProjectFacade extends AbstractFacade {
    @Inject
    private EventLogFacade eventLogFacade;
 
+   @Inject
+   private MailerService mailerService;
+
    void init(DaoContextSnapshot daoContextSnapshot) {
       this.collectionDao = daoContextSnapshot.getCollectionDao();
       this.documentDao = daoContextSnapshot.getDocumentDao();
@@ -145,6 +150,8 @@ public class ProjectFacade extends AbstractFacade {
       createProjectScopedRepositories(storedProject);
 
       eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Created project " + project.getCode());
+
+      mailerService.setUserTemplate(authenticatedUser.getCurrentUser(), StringUtils.stripEnd(project.getCode().toLowerCase(), "0123456789"));
 
       return storedProject;
    }

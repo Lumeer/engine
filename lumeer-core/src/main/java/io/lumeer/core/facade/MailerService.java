@@ -22,5 +22,6 @@ import io.lumeer.api.model.User;
 public interface MailerService {
 
    void setUserSubscription(final User user, final boolean enSite);
+   void setUserTemplate(final User user, final String template);
 
 }

@@ -26,6 +26,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -46,6 +47,8 @@ public class MailerLiteFacade implements MailerService {
 
    @Inject
    private Logger log;
+
+   final private static String ERROR_MESSAGE = "Unable to communicate with MailerLite:";
 
    private static String MAILERLITE_APIKEY;
    private static String MAILERLITE_GROUP_CS;
@@ -77,6 +80,13 @@ public class MailerLiteFacade implements MailerService {
       }
    }
 
+   @Override
+   public void setUserTemplate(final User user, final String template) {
+      if (user != null && StringUtils.isNotEmpty(user.getEmail())) {
+         setUserTemplate(user.getEmail(), template);
+      }
+   }
+
    private static String encodeValue(String value) {
       try {
          return URLEncoder.encode(value, StandardCharsets.UTF_8.toString());
@@ -86,7 +96,7 @@ public class MailerLiteFacade implements MailerService {
    }
 
    private boolean userSubscribed(final String userEmail) {
-      String response = mailerLiteClient("subscribers/" + encodeValue(userEmail), null, false);
+      String response = mailerLiteClient("subscribers/" + encodeValue(userEmail), null, false, true);
 
       return response.startsWith("{\"id\":") && response.contains("\"email\":\"" + userEmail + "\"");
    }
@@ -97,14 +107,18 @@ public class MailerLiteFacade implements MailerService {
 
    private void subscribeUser(final String groupId, final String name, final String email, final boolean active) {
       mailerLiteClient("groups/" + groupId + "/subscribers", "{\"email\": \"" + email + "\", \"name\":\"" + name + "\", \"type\": \"" + (active ? "active" : "unsubscribed") +
-            "\"}", false);
+            "\"}", false, false);
    }
 
    private void updateUser(final String userEmail, boolean subscribed) {
-      mailerLiteClient("subscribers/" + encodeValue(userEmail), "{\"type\": \"" + (subscribed ? "active" : "unsubscribed") + "\"}", true);
+      mailerLiteClient("subscribers/" + encodeValue(userEmail), "{\"type\": \"" + (subscribed ? "active" : "unsubscribed") + "\"}", true, false);
    }
 
-   private String mailerLiteClient(final String path, final String body, final boolean put) {
+   private void setUserTemplate(final String userEmail, final String template) {
+      mailerLiteClient("subscribers/" + encodeValue(userEmail), "{\"fields\": { \"template\": \"" + encodeValue(template) + "\" } }", true, false);
+   }
+
+   private String mailerLiteClient(final String path, final String body, final boolean put, final boolean blocking) {
       final Client client = ClientBuilder.newBuilder().build();
       final Invocation.Builder builder = client.target("https://api.mailerlite.com/api/v2/" + path)
                                                .request(MediaType.APPLICATION_JSON)
@@ -122,16 +136,43 @@ public class MailerLiteFacade implements MailerService {
          invocation = builder.buildGet();
       }
 
-      Response response = invocation.invoke();
+      if (blocking) {
+         return blockingCall(invocation, client);
+      } else {
+         asyncCall(invocation, client);
+         return null;
+      }
+   }
+
+   private String blockingCall(final Invocation invocation, final Client client) {
+      final Response response = invocation.invoke();
+
       try {
          return response.readEntity(String.class);
       } catch (Exception e) {
-         log.log(Level.WARNING, "Unable to communicate with MailerLite:", e);
+         log.log(Level.WARNING, ERROR_MESSAGE, e);
       } finally {
          client.close();
       }
 
       return "";
+   }
+
+   private void asyncCall(final Invocation invocation, final Client client) {
+      final Future<Response> response = invocation.submit();
+
+      new Thread(() -> {
+         try {
+            final Response resp = response.get();
+            if (!resp.getStatusInfo().equals(Response.Status.OK)) {
+               throw new IllegalStateException("Response status is not ok: " + resp.getStatusInfo().toString());
+            }
+         } catch (Exception e) {
+            log.log(Level.WARNING, ERROR_MESSAGE, e);
+         } finally {
+            client.close();
+         }
+      }).start();
    }
 
 }
