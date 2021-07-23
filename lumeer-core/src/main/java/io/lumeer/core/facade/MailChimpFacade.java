@@ -78,6 +78,11 @@ public class MailChimpFacade implements MailerService {
       }
    }
 
+   @Override
+   public void setUserTemplate(final User user, final String template) {
+
+   }
+
    private String md5sum(final String original) {
       try {
          MessageDigest md = MessageDigest.getInstance("MD5");
