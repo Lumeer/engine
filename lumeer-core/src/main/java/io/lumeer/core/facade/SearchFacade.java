@@ -151,7 +151,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      return searchDocumentsAndLinks(query, includeChildDocuments, true, collectionsMap, linkTypesMap, null).getSecond();
+      return searchDocumentsAndLinks(query, includeChildDocuments, true, collectionsMap, linkTypesMap, null, isPublic).getSecond();
    }
 
    public List<Document> searchDocumentsPublic(final Query query) {
@@ -166,7 +166,7 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      return searchDocumentsAndLinks(query, includeChildDocuments, true, collectionsMap, linkTypesMap, null).getFirst();
+      return searchDocumentsAndLinks(query, includeChildDocuments, true, collectionsMap, linkTypesMap, null, isPublic).getFirst();
    }
 
    private Map<String, Collection> getCollectionsMap(java.util.Collection<Collection> collections) {
@@ -196,7 +196,7 @@ public class SearchFacade extends AbstractFacade {
       final Map<String, Collection> collectionsMap = getCollectionsMap(collections);
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(linkTypes);
       final Function<Document, Boolean> documentFilter = query.isEmpty() ? document -> !CollectionPurposeUtils.isDoneState(document.getData(), collectionsMap.get(document.getCollectionId())) : null;
-      return searchDocumentsAndLinks(tasksQuery, includeChildDocuments, !isPublic && query.isEmpty(), collectionsMap, linkTypesMap, documentFilter);
+      return searchDocumentsAndLinks(tasksQuery, includeChildDocuments, !isPublic && query.isEmpty(), collectionsMap, linkTypesMap, documentFilter, isPublic);
    }
 
    private Query modifyQueryForTasks(boolean isPublic, final Query query, final List<Collection> collections) {
@@ -232,10 +232,10 @@ public class SearchFacade extends AbstractFacade {
       var resources = getReadResources(isPublic, query);
       final Map<String, Collection> collectionsMap = getCollectionsMap(resources.getFirst());
       final Map<String, LinkType> linkTypesMap = getLinkTypeMap(resources.getSecond());
-      return searchDocumentsAndLinks(query, includeChildDocuments, true, collectionsMap, linkTypesMap, null);
+      return searchDocumentsAndLinks(query, includeChildDocuments, true, collectionsMap, linkTypesMap, null, isPublic);
    }
 
-   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, boolean includeChildDocuments, boolean shouldCheckQuery, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter) {
+   private Tuple<List<Document>, List<LinkInstance>> searchDocumentsAndLinks(final Query query, boolean includeChildDocuments, boolean shouldCheckQuery, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter, boolean isPublic) {
       final Query encodedQuery = checkQuery(query, collectionsMap, linkTypesMap, shouldCheckQuery);
 
       final Set<Document> allDocuments = new HashSet<>();
@@ -246,7 +246,7 @@ public class SearchFacade extends AbstractFacade {
          encodedQuery.getStems().forEach(stem -> {
             var result = stem.containsAnyFilter() || encodedQuery.getFulltexts().size() > 0
                   ? searchDocumentsAndLinksInStem(stem, encodedQuery.getFulltexts(), collectionsMap, linkTypesMap, documentFilter, constraintData, includeChildDocuments)
-                  : searchDocumentsAndLinksInStemWithoutFilters(stem, collectionsMap, linkTypesMap, documentFilter);
+                  : searchDocumentsAndLinksInStemWithoutFilters(stem, collectionsMap, linkTypesMap, documentFilter, isPublic);
             allDocuments.addAll(result.getFirst());
             allLinkInstances.addAll(result.getSecond());
          });
@@ -255,7 +255,7 @@ public class SearchFacade extends AbstractFacade {
          allDocuments.addAll(result.getFirst());
          allLinkInstances.addAll(result.getSecond());
       } else {
-         var result = searchDocumentsAndLinksByEmptyQuery(collectionsMap, linkTypesMap, documentFilter);
+         var result = searchDocumentsAndLinksByEmptyQuery(collectionsMap, linkTypesMap, documentFilter, isPublic);
          allDocuments.addAll(result.getFirst());
          allLinkInstances.addAll(result.getSecond());
       }
@@ -352,21 +352,21 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(allCollections, allLinkTypes);
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStemWithoutFilters(final QueryStem stem, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksInStemWithoutFilters(final QueryStem stem, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter, boolean isPublic) {
       var previousCollection = collectionsMap.get(stem.getCollectionId());
       if (previousCollection == null) {
          return new Tuple<>(new HashSet<>(), new HashSet<>());
       }
 
-      final Set<Document> allDocuments = new HashSet<>(getDocumentsByCollection(previousCollection, documentFilter));
+      final Set<Document> allDocuments = new HashSet<>(getDocumentsByCollection(previousCollection, documentFilter, isPublic));
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
       for (String linkTypeId : stem.getLinkTypeIds()) {
          var linkType = linkTypesMap.get(linkTypeId);
          var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
          if (linkType != null && collection != null) {
-            var links = getLinkInstancesByLinkType(linkType);
-            var documents = getDocumentsByCollection(collection, documentFilter);
+            var links = getLinkInstancesByLinkType(linkType, isPublic);
+            var documents = getDocumentsByCollection(collection, documentFilter, isPublic);
 
             allDocuments.addAll(documents);
             allLinkInstances.addAll(links);
@@ -428,13 +428,13 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(allDocuments, allLinkInstances);
    }
 
-   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByEmptyQuery(final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter) {
+   private Tuple<? extends java.util.Collection<Document>, ? extends java.util.Collection<LinkInstance>> searchDocumentsAndLinksByEmptyQuery(final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, @Nullable final Function<Document, Boolean> documentFilter, boolean isPublic) {
       final Set<Document> allDocuments = new HashSet<>();
       final Set<LinkInstance> allLinkInstances = new HashSet<>();
 
-      collectionsMap.values().forEach(collection -> allDocuments.addAll(getDocumentsByCollection(collection, documentFilter)));
+      collectionsMap.values().forEach(collection -> allDocuments.addAll(getDocumentsByCollection(collection, documentFilter, isPublic)));
 
-      linkTypesMap.values().forEach(linkType -> allLinkInstances.addAll(getLinkInstancesByLinkType(linkType)));
+      linkTypesMap.values().forEach(linkType -> allLinkInstances.addAll(getLinkInstancesByLinkType(linkType, isPublic)));
 
       return new Tuple<>(allDocuments, allLinkInstances);
    }
@@ -511,8 +511,8 @@ public class SearchFacade extends AbstractFacade {
       return new Tuple<>(filteredCollections, filteredLinkTypes);
    }
 
-   private List<Document> getDocumentsByCollection(Collection collection, @Nullable final Function<Document, Boolean> documentFilter) {
-      var documents = searchAdapter.getDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
+   private List<Document> getDocumentsByCollection(Collection collection, @Nullable final Function<Document, Boolean> documentFilter, boolean isPublic) {
+      var documents = isPublic ? searchAdapter.getAllDocuments(collection, null, null) : searchAdapter.getDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
       return filterDocumentsByDocumentFilter(documents, documentFilter);
    }
 
@@ -532,7 +532,10 @@ public class SearchFacade extends AbstractFacade {
       return documents;
    }
 
-   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType) {
+   private List<LinkInstance> getLinkInstancesByLinkType(LinkType linkType, boolean isPublic) {
+      if (isPublic) {
+         return searchAdapter.getAllLinkInstances(linkType, null, null);
+      }
       return searchAdapter.getLinkInstances(getOrganization(), getProject(), linkType, authenticatedUser.getCurrentUserId());
    }
 
