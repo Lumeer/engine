@@ -81,7 +81,7 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return documents
    }
 
-   private fun getAllDocuments(collection: Collection, page: Int?, limit: Int?): List<Document> {
+   fun getAllDocuments(collection: Collection, page: Int?, limit: Int?): List<Document> {
       val documents = documentDao.getDocumentsByCollection(collection.id, Pagination(page, limit))
       return mapDocumentsData(collection, documents)
    }
@@ -164,7 +164,7 @@ class SearchAdapter(private val permissionAdapter: PermissionAdapter,
       return linkInstances
    }
 
-   private fun getAllLinkInstances(linkType: LinkType, page: Int?, limit: Int?): List<LinkInstance> {
+   fun getAllLinkInstances(linkType: LinkType, page: Int?, limit: Int?): List<LinkInstance> {
       val linkInstances = linkInstanceDao.getLinkInstancesByLinkType(linkType.id, Pagination(page, limit))
       return mapLinkData(linkType, linkInstances)
    }
