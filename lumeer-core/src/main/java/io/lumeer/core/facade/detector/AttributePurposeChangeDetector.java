@@ -19,7 +19,6 @@
 package io.lumeer.core.facade.detector;
 
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.engine.api.event.ResourceEvent;

@@ -24,6 +24,7 @@ import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.User;
@@ -52,7 +53,6 @@ import org.marvec.pusher.data.Event;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,6 +99,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    private Map<String, Organization> organizations = new HashMap<>();
    private Map<String, Project> projects = new HashMap<>();
+   private Map<String, Collection> collections = new HashMap<>();
 
    final private static Set<NotificationType> AGGREGATION_TYPES = Set.of(NotificationType.TASK_ASSIGNED, NotificationType.TASK_REOPENED, NotificationType.DUE_DATE_CHANGED, NotificationType.STATE_UPDATE, NotificationType.TASK_UPDATED, NotificationType.TASK_COMMENTED);
 
@@ -123,8 +124,8 @@ public class DelayedActionProcessor extends WorkspaceContext {
       var actionsByIds = actions.stream().collect(Collectors.toMap(DelayedAction::getId, Function.identity()));
       final List<DelayedAction> newActions = new ArrayList<>();
 
-      for (final NotificationChannel channel: NotificationChannel.values()) {
-        var actionsByUserAndTask = getActionsByTask(actions, channel);
+      for (final NotificationChannel channel : NotificationChannel.values()) {
+         var actionsByUserAndTask = getActionsByTask(actions, channel);
          actionsByUserAndTask.forEach((k, v) -> {
             // for all chunks where there are more notifications than 1 for the same user
             if (v.size() > 1) {
@@ -195,7 +196,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
-         if (actionResourceExists(action)) {
+         if (checkActionResourceExistsAndFillData(action)) {
             final User receiverUser = userIds.containsKey(action.getReceiver()) ? users.get(userIds.get(action.getReceiver())) : null;
 
             // if we do not know anything about the user, make sure to send the notification; otherwise check the user settings
@@ -243,24 +244,42 @@ public class DelayedActionProcessor extends WorkspaceContext {
       }
    }
 
-   private boolean actionResourceExists(final DelayedAction action) {
-      final String orgId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
-      final String projId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
-      final String docId = action.getData().getString(DelayedAction.DATA_DOCUMENT_ID);
+   private boolean checkActionResourceExistsAndFillData(final DelayedAction action) {
+      final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
+      final String projectId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
+      final String collectionId = action.getData().getString(DelayedAction.DATA_COLLECTION_ID);
+      final String documentId = action.getData().getString(DelayedAction.DATA_DOCUMENT_ID);
 
       try {
-         if (orgId != null) {
-            final DataStorage userDataStorage = getDataStorage(orgId);
-            final Organization organization = organizations.computeIfAbsent(orgId, id -> organizationDao.getOrganizationById(orgId));
+         if (organizationId != null) {
+            final DataStorage userDataStorage = getDataStorage(organizationId);
+            final Organization organization = organizations.computeIfAbsent(organizationId, id -> organizationDao.getOrganizationById(organizationId));
 
-            final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
+            action.getData().append(DelayedAction.DATA_ORGANIZATION_NAME, organization.getName());
+            action.getData().append(DelayedAction.DATA_ORGANIZATION_CODE, organization.getCode());
+            action.getData().append(DelayedAction.DATA_ORGANIZATION_ICON, organization.getIcon());
+            action.getData().append(DelayedAction.DATA_ORGANIZATION_COLOR, organization.getColor());
 
-            if (projId != null) {
-               final Project project = projects.computeIfAbsent(projId, id -> orgDao.getProjectDao().getProjectById(projId));
-               final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
+            final DaoContextSnapshot organizationDaoSnapshot = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
 
-               if (docId != null) {
-                  projDao.getDocumentDao().getDocumentById(docId);
+            if (projectId != null) {
+               final Project project = projects.computeIfAbsent(projectId, id -> organizationDaoSnapshot.getProjectDao().getProjectById(projectId));
+               action.getData().append(DelayedAction.DATA_PROJECT_NAME, project.getName());
+               action.getData().append(DelayedAction.DATA_PROJECT_CODE, project.getCode());
+               action.getData().append(DelayedAction.DATA_PROJECT_ICON, project.getIcon());
+               action.getData().append(DelayedAction.DATA_PROJECT_COLOR, project.getColor());
+
+               final DaoContextSnapshot projectDaoSnapshot = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
+
+               if (collectionId != null) {
+                  final Collection collection = collections.computeIfAbsent(collectionId, id -> projectDaoSnapshot.getCollectionDao().getCollectionById(collectionId));
+                  action.getData().append(DelayedAction.DATA_COLLECTION_NAME, collection.getName());
+                  action.getData().append(DelayedAction.DATA_COLLECTION_ICON, collection.getIcon());
+                  action.getData().append(DelayedAction.DATA_COLLECTION_COLOR, collection.getColor());
+               }
+
+               if (documentId != null) {
+                  projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
                }
             }
          }
@@ -414,37 +433,37 @@ public class DelayedActionProcessor extends WorkspaceContext {
    // get map of user id -> user
    private Map<String, User> getUsers(final List<User> users) {
       return users.stream()
-             .collect(Collectors.toMap(User::getId, Function.identity()));
+                  .collect(Collectors.toMap(User::getId, Function.identity()));
    }
 
    private List<User> getUsersFromActions(final List<DelayedAction> actions, final List<User> loadedUsers) {
       var loadedEmails = loadedUsers.stream().map(User::getEmail).collect(Collectors.toList());
       return actions.stream()
-             .map(DelayedAction::getReceiver)
-             .distinct()
-             .filter(email -> !loadedEmails.contains(email))
-             .map(userDao::getUserByEmail)
-             .filter(Objects::nonNull)
-             .collect(Collectors.toList());
+                    .map(DelayedAction::getReceiver)
+                    .distinct()
+                    .filter(email -> !loadedEmails.contains(email))
+                    .map(userDao::getUserByEmail)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
    }
 
    // get map of user email -> user language
-   private Map<String, Language> initializeLanguages(final Collection<User> users) {
+   private Map<String, Language> initializeLanguages(final java.util.Collection<User> users) {
       return users.stream()
-                   .collect(
-                         Collectors.toMap(
-                               User::getEmail,
-                               user -> Language.valueOf((user.getNotificationsLanguage() != null ? user.getNotificationsLanguage() : "en").toUpperCase())
-                         )
-                   );
+                  .collect(
+                        Collectors.toMap(
+                              User::getEmail,
+                              user -> Language.valueOf((user.getNotificationsLanguage() != null ? user.getNotificationsLanguage() : "en").toUpperCase())
+                        )
+                  );
    }
 
    // get map of user email -> user id
-   private Map<String, String> getUserIds(final Collection<User> users) {
+   private Map<String, String> getUserIds(final java.util.Collection<User> users) {
       return users.stream()
-            .collect(
-                  Collectors.toMap(User::getEmail, User::getId)
-            );
+                  .collect(
+                        Collectors.toMap(User::getEmail, User::getId)
+                  );
    }
 
    private Event createUserNotificationEvent(final UserNotification notification, final String event, final String userId) {

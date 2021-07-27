@@ -297,19 +297,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       if (selectedWorkspace.getOrganization().isPresent()) {
          final Organization organization = selectedWorkspace.getOrganization().get();
          data.append(DelayedAction.DATA_ORGANIZATION_ID, organization.getId());
-         data.append(DelayedAction.DATA_ORGANIZATION_NAME, organization.getName());
-         data.append(DelayedAction.DATA_ORGANIZATION_CODE, organization.getCode());
-         data.append(DelayedAction.DATA_ORGANIZATION_ICON, organization.getIcon());
-         data.append(DelayedAction.DATA_ORGANIZATION_COLOR, organization.getColor());
       }
 
       if (selectedWorkspace.getProject().isPresent()) {
          final Project project = selectedWorkspace.getProject().get();
          data.append(DelayedAction.DATA_PROJECT_ID, project.getId());
-         data.append(DelayedAction.DATA_PROJECT_NAME, project.getName());
-         data.append(DelayedAction.DATA_PROJECT_CODE, project.getCode());
-         data.append(DelayedAction.DATA_PROJECT_ICON, project.getIcon());
-         data.append(DelayedAction.DATA_PROJECT_COLOR, project.getColor());
       }
 
       data.append(DelayedAction.DATA_TASK_COMPLETED, isDoneState(documentEvent, collection));
@@ -325,10 +317,6 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       data.append(DelayedAction.DATA_ASSIGNEE, String.join(", ", assignees));
 
       data.append(DelayedAction.DATA_COLLECTION_ID, collection.getId());
-      data.append(DelayedAction.DATA_COLLECTION_NAME, collection.getName());
-      data.append(DelayedAction.DATA_COLLECTION_ICON, collection.getIcon());
-      data.append(DelayedAction.DATA_COLLECTION_COLOR, collection.getColor());
-
       data.append(DelayedAction.DATA_DOCUMENT_ID, documentEvent.getDocument().getId());
 
       if (documentEvent instanceof DocumentCommentedEvent) {
