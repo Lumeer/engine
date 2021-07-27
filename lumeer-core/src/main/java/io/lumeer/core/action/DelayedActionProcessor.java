@@ -297,10 +297,6 @@ public class DelayedActionProcessor extends WorkspaceContext {
                   action.getData().append(DelayedAction.DATA_COLLECTION_ICON, collection.getIcon());
                   action.getData().append(DelayedAction.DATA_COLLECTION_COLOR, collection.getColor());
 
-                  if (!permissionAdapter.hasRole(organization, project, collection, RoleType.Read, action.getReceiver())) {
-                     return false;
-                  }
-
                   if (documentId != null) {
                      final Document document = projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
                      if (!permissionAdapter.canReadDocument(organization, project, document, collection, action.getReceiver())) {
