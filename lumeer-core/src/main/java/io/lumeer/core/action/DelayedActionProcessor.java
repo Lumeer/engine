@@ -28,7 +28,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
-import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
@@ -188,7 +187,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    private void executeActions(final List<DelayedAction> actions) {
       final Map<String, List<User>> userCache = new HashMap<>(); // org id -> users
-      this.clearCache();
+      clearCache();
 
       aggregateActions(actions).forEach(action -> {
          final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
@@ -201,8 +200,8 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
-         if (checkActionResourceExistsAndFillData(action)) {
-            final User receiverUser = userIds.containsKey(action.getReceiver()) ? users.get(userIds.get(action.getReceiver())) : null;
+         final User receiverUser = userIds.containsKey(action.getReceiver()) ? users.get(userIds.get(action.getReceiver())) : null;
+         if (checkActionResourceExistsAndFillData(action, receiverUser)) {
 
             // if we do not know anything about the user, make sure to send the notification; otherwise check the user settings
             if (receiverUser == null || isNotificationEnabled(action, receiverUser)) {
@@ -258,7 +257,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
       }
    }
 
-   private boolean checkActionResourceExistsAndFillData(final DelayedAction action) {
+   private boolean checkActionResourceExistsAndFillData(final DelayedAction action, final User receiver) {
       final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
       final String projectId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
       final String collectionId = action.getData().getString(DelayedAction.DATA_COLLECTION_ID);
@@ -287,7 +286,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
                final DaoContextSnapshot projectDaoSnapshot = projectDaoSnapshots.computeIfAbsent(projectKey, key -> getDaoContextSnapshot(userDataStorage, new Workspace(organization, project)));
 
                final PermissionAdapter permissionAdapter = permissionAdapters.computeIfAbsent(projectKey, key -> new PermissionAdapter(projectDaoSnapshot.getUserDao(), projectDaoSnapshot.getGroupDao(), projectDaoSnapshot.getViewDao(), projectDaoSnapshot.getLinkTypeDao(), projectDaoSnapshot.getCollectionDao()));
-               if (!permissionAdapter.canReadWorkspace(organization, project, action.getReceiver())) {
+               if (receiver != null && !permissionAdapter.canReadWorkspace(organization, project, receiver.getId())) {
                   return false;
                }
 
@@ -299,7 +298,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
                   if (documentId != null) {
                      final Document document = projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
-                     if (!permissionAdapter.canReadDocument(organization, project, document, collection, action.getReceiver())) {
+                     if (receiver != null && !permissionAdapter.canReadDocument(organization, project, document, collection, receiver.getId())) {
                         return false;
                      }
                   }
