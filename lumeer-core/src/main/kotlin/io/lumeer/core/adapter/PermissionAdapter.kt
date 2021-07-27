@@ -276,7 +276,7 @@ class PermissionAdapter(private val userDao: UserDao,
       return canReadWorkspace(organization, project, userId) && hasRoleInCollectionWithView(organization, project, collection, RoleType.DataContribute, userId)
    }
 
-   private fun canReadWorkspace(organization: Organization, project: Project?, userId: String): Boolean {
+   fun canReadWorkspace(organization: Organization, project: Project?, userId: String): Boolean {
       return project != null && hasRole(organization, project, project, RoleType.Read, userId)
    }
 

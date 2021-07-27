@@ -19,6 +19,7 @@
 package io.lumeer.core.action;
 
 import io.lumeer.api.model.DelayedAction;
+import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
@@ -27,10 +28,12 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
 import io.lumeer.core.WorkspaceContext;
+import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -97,9 +100,12 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    private boolean skipDelay = false;
 
-   private Map<String, Organization> organizations = new HashMap<>();
-   private Map<String, Project> projects = new HashMap<>();
-   private Map<String, Collection> collections = new HashMap<>();
+   private final Map<String, Organization> organizations = new HashMap<>();
+   private final Map<String, Project> projects = new HashMap<>();
+   private final Map<String, Collection> collections = new HashMap<>();
+   private final Map<String, PermissionAdapter> permissionAdapters = new HashMap<>();
+   private final Map<String, DaoContextSnapshot> organizationDaoSnapshots = new HashMap<>();
+   private final Map<String, DaoContextSnapshot> projectDaoSnapshots = new HashMap<>();
 
    final private static Set<NotificationType> AGGREGATION_TYPES = Set.of(NotificationType.TASK_ASSIGNED, NotificationType.TASK_REOPENED, NotificationType.DUE_DATE_CHANGED, NotificationType.STATE_UPDATE, NotificationType.TASK_UPDATED, NotificationType.TASK_COMMENTED);
 
@@ -182,8 +188,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    private void executeActions(final List<DelayedAction> actions) {
       final Map<String, List<User>> userCache = new HashMap<>(); // org id -> users
-      organizations.clear();
-      projects.clear();
+      this.clearCache();
 
       aggregateActions(actions).forEach(action -> {
          final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
@@ -229,6 +234,15 @@ public class DelayedActionProcessor extends WorkspaceContext {
       });
    }
 
+   private void clearCache() {
+      organizations.clear();
+      projects.clear();
+      collections.clear();
+      permissionAdapters.clear();
+      organizationDaoSnapshots.clear();
+      projectDaoSnapshots.clear();
+   }
+
    private void markActionAsCompleted(final List<DelayedAction> actions, final DelayedAction action) {
       if (action.getId() == null && action.getData().containsKey(DelayedAction.DATA_ORIGINAL_ACTION_IDS)) {
          var ids = action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_IDS, String.class);
@@ -260,7 +274,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
             action.getData().append(DelayedAction.DATA_ORGANIZATION_ICON, organization.getIcon());
             action.getData().append(DelayedAction.DATA_ORGANIZATION_COLOR, organization.getColor());
 
-            final DaoContextSnapshot organizationDaoSnapshot = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
+            final DaoContextSnapshot organizationDaoSnapshot = organizationDaoSnapshots.computeIfAbsent(organizationId, id -> getDaoContextSnapshot(userDataStorage, new Workspace(organization, null)));
 
             if (projectId != null) {
                final Project project = projects.computeIfAbsent(projectId, id -> organizationDaoSnapshot.getProjectDao().getProjectById(projectId));
@@ -269,18 +283,32 @@ public class DelayedActionProcessor extends WorkspaceContext {
                action.getData().append(DelayedAction.DATA_PROJECT_ICON, project.getIcon());
                action.getData().append(DelayedAction.DATA_PROJECT_COLOR, project.getColor());
 
-               final DaoContextSnapshot projectDaoSnapshot = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
+               final String projectKey = organizationId + ":" + projectId;
+               final DaoContextSnapshot projectDaoSnapshot = projectDaoSnapshots.computeIfAbsent(projectKey, key -> getDaoContextSnapshot(userDataStorage, new Workspace(organization, project)));
+
+               final PermissionAdapter permissionAdapter = permissionAdapters.computeIfAbsent(projectKey, key -> new PermissionAdapter(projectDaoSnapshot.getUserDao(), projectDaoSnapshot.getGroupDao(), projectDaoSnapshot.getViewDao(), projectDaoSnapshot.getLinkTypeDao(), projectDaoSnapshot.getCollectionDao()));
+               if (!permissionAdapter.canReadWorkspace(organization, project, action.getReceiver())) {
+                  return false;
+               }
 
                if (collectionId != null) {
                   final Collection collection = collections.computeIfAbsent(collectionId, id -> projectDaoSnapshot.getCollectionDao().getCollectionById(collectionId));
                   action.getData().append(DelayedAction.DATA_COLLECTION_NAME, collection.getName());
                   action.getData().append(DelayedAction.DATA_COLLECTION_ICON, collection.getIcon());
                   action.getData().append(DelayedAction.DATA_COLLECTION_COLOR, collection.getColor());
+
+                  if (!permissionAdapter.hasRole(organization, project, collection, RoleType.Read, action.getReceiver())) {
+                     return false;
+                  }
+
+                  if (documentId != null) {
+                     final Document document = projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
+                     if (!permissionAdapter.canReadDocument(organization, project, document, collection, action.getReceiver())) {
+                        return false;
+                     }
+                  }
                }
 
-               if (documentId != null) {
-                  projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
-               }
             }
          }
       } catch (ResourceNotFoundException e) {
