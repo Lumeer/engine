@@ -26,6 +26,7 @@ import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
@@ -78,6 +79,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
@@ -116,6 +118,20 @@ public class LumeerBridge {
    public String getCurrentUser() {
       final String email = task.getInitiator().getEmail();
       return email == null ? "" : email;
+   }
+
+   @SuppressWarnings("unused")
+   public String[] getUserTeams() {
+      return task.getDaoContextSnapshot().getGroupDao().getAllGroups().stream().filter(group ->
+            group.getUsers().stream().anyMatch(user -> user.equals(task.getInitiator().getId()))
+      ).map(Group::getName).toArray(String[]::new);
+   }
+
+   @SuppressWarnings("unused")
+   public boolean isUserInTeam(final String team) {
+      final Optional<Group> group = task.getDaoContextSnapshot().getGroupDao().getAllGroups().stream().filter(g -> g.getName().equals(team)).findFirst();
+
+      return group.map(value -> value.getUsers().stream().anyMatch(user -> user.equals(task.getInitiator().getId()))).orElse(false);
    }
 
    @SuppressWarnings("unused")
