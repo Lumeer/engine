@@ -18,6 +18,7 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -25,7 +26,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class Rule implements HealthChecking {
 
@@ -48,6 +51,8 @@ public class Rule implements HealthChecking {
    private String name;
    private RuleType type;
    private RuleTiming timing;
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime createdAt;
    protected DataDocument configuration;
 
    @JsonCreator
@@ -87,6 +92,14 @@ public class Rule implements HealthChecking {
 
    public void setId(final String id) {
       this.id = id;
+   }
+
+   public ZonedDateTime getCreatedAt() {
+      return createdAt;
+   }
+
+   public void setCreatedAt(final ZonedDateTime createdAt) {
+      this.createdAt = createdAt;
    }
 
    @Override

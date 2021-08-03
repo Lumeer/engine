@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.task;
 
-import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
@@ -27,22 +26,18 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.facade.SystemDatabaseConfigurationFacade;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.CronTaskChecker;
 import io.lumeer.core.util.DocumentUtils;
-import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.storage.api.DataStorageFactory;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
@@ -58,6 +53,8 @@ public class CronTaskProcessor extends WorkspaceContext  {
 
    @Inject
    private TaskExecutor taskExecutor;
+
+   private final CronTaskChecker checker = new CronTaskChecker();
 
    @Schedule(hour = "*") // every single hour
    public void process() {
@@ -82,7 +79,7 @@ public class CronTaskProcessor extends WorkspaceContext  {
    private void processRules(final DaoContextSnapshot dao, final Collection collection, final ContextualTaskFactory taskFactory) {
       collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).forEach(entry -> {
          final CronRule rule = new CronRule(entry.getValue());
-         if (shouldExecute(rule)) {
+         if (checker.shouldExecute(rule)) {
             final String signature = UUID.randomUUID().toString();
             rule.setLastRun(ZonedDateTime.now());
             rule.setExecuting(signature);
@@ -114,7 +111,9 @@ public class CronTaskProcessor extends WorkspaceContext  {
 
    private List<Document> getDocuments(final CronRule rule, final Collection collection, final DaoContextSnapshot dao) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         final Query query = rule.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
+         // TODO
+         final View view = dao.getViewDao().getViewById(rule.getViewId());
+         final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
          final User user = AuthenticatedUser.getMachineUser();
          final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
@@ -122,21 +121,6 @@ public class CronTaskProcessor extends WorkspaceContext  {
       }
 
       return List.of();
-   }
-
-   private boolean shouldExecute(final CronRule rule) {
-      final ZonedDateTime lastRun = rule.getLastRun();
-      final ZonedDateTime since = rule.getSince();
-      final ZonedDateTime start = lastRun != null && lastRun.isAfter(since) ? lastRun : since;
-
-      if (start != null) {
-         final ZonedDateTime now = ZonedDateTime.now();
-         start.plus(rule.getInterval(), rule.getUnit());
-
-         return start.isBefore(now) && now.getHour() >= rule.getWhen();
-      }
-
-      return false;
    }
 
    private Task getTask(final ContextualTaskFactory taskFactory, final String name, final Rule rule, final Collection collection, final List<Document> documents) {

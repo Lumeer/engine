@@ -19,7 +19,6 @@
 package io.lumeer.api.model.rule;
 
 import io.lumeer.api.model.Language;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
 
 import java.time.ZoneOffset;
@@ -29,46 +28,47 @@ import java.util.Date;
 
 public class CronRule extends BlocklyRule {
 
-   public static final String CRON_SINCE = "since";
-   public static final String CRON_UNTIL = "until";
-   public static final String CRON_WHEN = "when";
+   public static final String CRON_STARTS_ON = "startsOn";
+   public static final String CRON_ENDS_ON = "endsOn";
+   public static final String CRON_EXECUTIONS_LEFT = "executionsLeft";
+   public static final String CRON_HOUR = "hour";
    public static final String CRON_INTERVAL = "interval";
    public static final String CRON_LAST_RUN = "lastRun";
    public static final String CRON_UNIT = "unit";
    public static final String CRON_EXECUTING = "executing";
-   public static final String CRON_QUERY = "query";
+   public static final String CRON_VIEW_ID = "viewId";
    public static final String CRON_LANGUAGE = "language";
-   public static final String CRON_DOW = "dow"; // days of week - stored as binary number starting with Monday as the least significant bit
+   public static final String CRON_DAYS_OF_WEEK = "daysOfWeek"; // stored as binary number starting with Monday as the least significant bit
    public static final String CRON_OCCURRENCE = "occurrence";
 
    public CronRule(final Rule rule) {
       super(rule, Rule.RuleType.CRON);
    }
 
-   public ZonedDateTime getSince() {
-      final Date since = rule.getConfiguration().getDate(CRON_SINCE);
+   public ZonedDateTime getStartsOn() {
+      final Date since = rule.getConfiguration().getDate(CRON_STARTS_ON);
       return since == null ? null : ZonedDateTime.ofInstant(since.toInstant(), ZoneOffset.UTC);
    }
 
-   public void setSince(final ZonedDateTime since) {
-      rule.getConfiguration().put(CRON_SINCE, new Date(since.toInstant().toEpochMilli()));
+   public void setStartsOn(final ZonedDateTime startsOn) {
+      rule.getConfiguration().put(CRON_STARTS_ON, new Date(startsOn.toInstant().toEpochMilli()));
    }
 
-   public ZonedDateTime getUntil() {
-      final Date until = rule.getConfiguration().getDate(CRON_UNTIL);
+   public ZonedDateTime getEndsOn() {
+      final Date until = rule.getConfiguration().getDate(CRON_ENDS_ON);
       return until == null ? null : ZonedDateTime.ofInstant(until.toInstant(), ZoneOffset.UTC);
    }
 
-   public void setUntil(final ZonedDateTime until) {
-      rule.getConfiguration().put(CRON_UNTIL, new Date(until.toInstant().toEpochMilli()));
+   public void setEndsOn(final ZonedDateTime endsOn) {
+      rule.getConfiguration().put(CRON_ENDS_ON, new Date(endsOn.toInstant().toEpochMilli()));
    }
 
-   public int getWhen() {
-      return rule.getConfiguration().getInteger(CRON_WHEN);
+   public int getHour() {
+      return rule.getConfiguration().getInteger(CRON_HOUR);
    }
 
-   public void setWhen(final int when) {
-      rule.getConfiguration().put(CRON_WHEN, when);
+   public void setHour(final int hour) {
+      rule.getConfiguration().put(CRON_HOUR, hour);
    }
 
    public int getInterval() {
@@ -105,12 +105,12 @@ public class CronRule extends BlocklyRule {
       rule.getConfiguration().put(CRON_EXECUTING, executing);
    }
 
-   public Query getQuery() {
-      return (Query) rule.getConfiguration().get(CRON_QUERY);
+   public String getViewId() {
+      return rule.getConfiguration().getString(CRON_VIEW_ID);
    }
 
-   public void setQuery(final Query query) {
-      rule.getConfiguration().put(CRON_QUERY, query);
+   public void setViewId(final String viewId) {
+      rule.getConfiguration().put(CRON_VIEW_ID, viewId);
    }
 
    public Language getLanguage() {
@@ -121,12 +121,12 @@ public class CronRule extends BlocklyRule {
       rule.getConfiguration().put(CRON_LANGUAGE, language.toString());
    }
 
-   public int getDow() {
-      return rule.getConfiguration().getInteger(CRON_DOW);
+   public int getDaysOfWeek() {
+      return rule.getConfiguration().getInteger(CRON_DAYS_OF_WEEK);
    }
 
-   public void setDow(final int dow) {
-      rule.getConfiguration().put(CRON_DOW, dow);
+   public void setDaysOfWeek(final int dow) {
+      rule.getConfiguration().put(CRON_DAYS_OF_WEEK, dow);
    }
 
    public int getOccurrence() {
@@ -135,5 +135,13 @@ public class CronRule extends BlocklyRule {
 
    public void setOccurrence(final int occurrence) {
       rule.getConfiguration().put(CRON_OCCURRENCE, occurrence);
+   }
+
+   public Integer getExecutionsLeft() {
+      return rule.getConfiguration().getInteger(CRON_EXECUTIONS_LEFT);
+   }
+
+   public void setExecutionsLeft(final Integer executions) {
+      rule.getConfiguration().put(CRON_EXECUTIONS_LEFT, executions);
    }
 }

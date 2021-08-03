@@ -23,11 +23,10 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Rule;
 import io.lumeer.core.facade.CollectionFacade;
-import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +42,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -138,6 +136,12 @@ public class CollectionService extends AbstractService {
       collectionFacade.deleteCollectionAttribute(collectionId, attributeId);
 
       return Response.ok().link(getParentUri(attributeId), "parent").build();
+   }
+
+   @PUT
+   @Path("{collectionId:[0-9a-fA-F]{24}}/rule/{ruleId}")
+   public Collection upsertRule(@PathParam("collectionId") String collectionId, @PathParam("ruleId") final String ruleId, Rule rule) {
+      return collectionFacade.upsertRule(collectionId, ruleId, rule);
    }
 
    @POST

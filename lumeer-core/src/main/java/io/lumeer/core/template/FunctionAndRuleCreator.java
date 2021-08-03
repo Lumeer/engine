@@ -146,10 +146,10 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       if (type == Rule.RuleType.CRON) {
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_XML, cureXml(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML)));
-         rule.getConfiguration().put(CronRule.CRON_SINCE, rule.getConfiguration().getDate(CronRule.CRON_SINCE));
-         rule.getConfiguration().put(CronRule.CRON_UNTIL, rule.getConfiguration().getDate(CronRule.CRON_UNTIL));
+         rule.getConfiguration().put(CronRule.CRON_STARTS_ON, rule.getConfiguration().getDate(CronRule.CRON_STARTS_ON));
+         rule.getConfiguration().put(CronRule.CRON_ENDS_ON, rule.getConfiguration().getDate(CronRule.CRON_ENDS_ON));
          rule.getConfiguration().put(CronRule.CRON_LAST_RUN, rule.getConfiguration().getDate(CronRule.CRON_LAST_RUN));
-         rule.getConfiguration().put(CronRule.CRON_WHEN, rule.getConfiguration().getLong(CronRule.CRON_WHEN));
+         rule.getConfiguration().put(CronRule.CRON_HOUR, rule.getConfiguration().getLong(CronRule.CRON_HOUR));
          rule.getConfiguration().put(CronRule.CRON_INTERVAL, rule.getConfiguration().getInteger(CronRule.CRON_INTERVAL));
          rule.getConfiguration().put(CronRule.CRON_UNIT, rule.getConfiguration().getString(CronRule.CRON_UNIT));
       }
