@@ -80,7 +80,7 @@ public class CronTaskProcessor extends WorkspaceContext {
    private void processRules(final DaoContextSnapshot dao, final Collection collection, final ContextualTaskFactory taskFactory) {
       collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).forEach(entry -> {
          final CronRule rule = new CronRule(entry.getValue());
-         if (checker.shouldExecute(rule)) {
+         if (checker.shouldExecute(rule, ZonedDateTime.now())) {
             final String signature = UUID.randomUUID().toString();
             rule.setLastRun(ZonedDateTime.now());
             rule.setExecuting(signature);
