@@ -1,7 +1,9 @@
 package io.lumeer.core.util
 
 import io.lumeer.api.model.rule.CronRule
+import java.time.DayOfWeek
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.min
@@ -38,17 +40,16 @@ class CronTaskChecker {
    }
 
    private fun checkDailyCron(rule: CronRule): Boolean {
-      val now = ZonedDateTime.now()
       if (rule.lastRun == null) {
-         val createdAt = rule.rule.createdAt ?: ZonedDateTime.now()
-         val shouldBeExecutedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).withHour(rule.hour)
-         return createdAt.isBefore(shouldBeExecutedAt) && rule.hour <= now.hour
+         return shouldRunToday(rule)
       }
 
-      var runOn = rule.lastRun
-      runOn = runOn.plusDays(rule.interval.toLong())
+      val now = ZonedDateTime.now()
+      val runOn = rule.lastRun
+            .plusDays(rule.interval.toLong())
+            .truncatedTo(ChronoUnit.HOURS)
 
-      return runOn.isBefore(now) && rule.hour <= now.hour
+      return shouldRunByHour(runOn, rule)
    }
 
    private fun checkMonthlyCron(rule: CronRule): Boolean {
@@ -56,27 +57,68 @@ class CronTaskChecker {
       val lastDayOfMonth = now.with(TemporalAdjusters.lastDayOfMonth()).dayOfMonth
       val dayOfMonth = min(lastDayOfMonth, rule.occurrence)
 
-      if (rule.lastRun == null) {
-         val createdAt = rule.rule.createdAt ?: ZonedDateTime.now()
-         val shouldBeExecutedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).withHour(rule.hour)
-         return createdAt.isBefore(shouldBeExecutedAt) && dayOfMonth == now.dayOfMonth && rule.hour <= now.hour
+      if (dayOfMonth != now.dayOfMonth) {
+         return false
       }
 
-      var runOn = rule.lastRun
-      runOn = runOn.plusMonths(rule.interval.toLong())
-      runOn = runOn.withDayOfMonth(dayOfMonth)
+      if (rule.lastRun == null) {
+         return shouldRunToday(rule)
+      }
 
-      return runOn.isBefore(now) && rule.hour <= now.hour
+      val runOn = rule.lastRun
+            .plusMonths(rule.interval.toLong())
+            .withDayOfMonth(dayOfMonth)
+            .truncatedTo(ChronoUnit.HOURS)
+
+      return shouldRunByHour(runOn, rule)
    }
 
    private fun checkWeeklyCron(rule: CronRule): Boolean {
       val now = ZonedDateTime.now()
-      var runOn = rule.lastRun
+      val dayOfWeeks = getDayOfWeeks(rule)
 
-      if (runOn == null) {
-
+      if (!dayOfWeeks.contains(now.dayOfWeek)) {
+         return false
       }
 
-      return false
+      if (rule.lastRun == null) {
+         return shouldRunToday(rule)
+      }
+
+      if (areSameWeeks(rule.lastRun, now)) {
+         val runOn = rule.lastRun
+               .with(ChronoField.DAY_OF_WEEK, now.dayOfWeek.value.toLong())
+               .truncatedTo(ChronoUnit.HOURS)
+
+         return rule.lastRun.dayOfWeek != now.dayOfWeek && shouldRunByHour(runOn, rule)
+      }
+
+      val runOn = rule.lastRun
+            .plusWeeks(rule.interval.toLong())
+            .with(ChronoField.DAY_OF_WEEK, now.dayOfWeek.value.toLong())
+            .truncatedTo(ChronoUnit.HOURS)
+
+      return shouldRunByHour(runOn, rule)
    }
+
+   private fun shouldRunByHour(runOn: ZonedDateTime, rule: CronRule): Boolean {
+      val now = ZonedDateTime.now()
+      return (runOn.isBefore(now) || runOn.isEqual(now)) && rule.hour <= now.hour
+   }
+
+   private fun areSameWeeks(d1: ZonedDateTime, d2: ZonedDateTime): Boolean = d1.year == d2.year && d1.get(ChronoField.ALIGNED_WEEK_OF_YEAR) == d2.get(ChronoField.ALIGNED_WEEK_OF_YEAR)
+
+   private fun shouldRunToday(rule: CronRule): Boolean {
+      val now = ZonedDateTime.now()
+      val createdAt = rule.rule.createdAt ?: ZonedDateTime.now()
+      val shouldBeExecutedAt = ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS).withHour(rule.hour)
+      return createdAt.isBefore(shouldBeExecutedAt) && rule.hour <= now.hour
+   }
+
+   private fun getDayOfWeeks(rule: CronRule): List<DayOfWeek> {
+      return (1..7).filter { isNthBitSet(rule.daysOfWeek, it - 1) }.map { DayOfWeek.of(it) }
+
+   }
+
+   private fun isNthBitSet(num: Int, n: Int) = (num and (1 shl n)) > 0
 }

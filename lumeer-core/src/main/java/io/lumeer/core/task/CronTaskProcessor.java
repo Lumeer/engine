@@ -23,7 +23,6 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
@@ -35,8 +34,10 @@ import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import javax.ejb.Schedule;
@@ -46,7 +47,7 @@ import javax.inject.Inject;
 
 @Singleton
 @Startup
-public class CronTaskProcessor extends WorkspaceContext  {
+public class CronTaskProcessor extends WorkspaceContext {
 
    @Inject
    private OrganizationDao organizationDao;
@@ -111,13 +112,16 @@ public class CronTaskProcessor extends WorkspaceContext  {
 
    private List<Document> getDocuments(final CronRule rule, final Collection collection, final DaoContextSnapshot dao) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         // TODO
-         final View view = dao.getViewDao().getViewById(rule.getViewId());
-         final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
-         final User user = AuthenticatedUser.getMachineUser();
-         final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
+         try {
+            final View view = dao.getViewDao().getViewById(rule.getViewId());
+            final User user = AuthenticatedUser.getMachineUser();
+            final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
-         return DocumentUtils.getDocuments(dao, query, user, rule.getLanguage(), allowedPermissions, null);
+            return DocumentUtils.getDocuments(dao, view.getQuery(), user, rule.getLanguage(), allowedPermissions, null);
+         } catch (ResourceNotFoundException e) {
+            return List.of();
+         }
+
       }
 
       return List.of();
