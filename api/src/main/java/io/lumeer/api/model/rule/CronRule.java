@@ -126,7 +126,7 @@ public class CronRule extends BlocklyRule {
    }
 
    public int getDaysOfWeek() {
-      return rule.getConfiguration().getInteger(CRON_DAYS_OF_WEEK);
+      return rule.getConfiguration().getInteger(CRON_DAYS_OF_WEEK, 0);
    }
 
    public void setDaysOfWeek(final int dow) {
@@ -134,7 +134,7 @@ public class CronRule extends BlocklyRule {
    }
 
    public int getOccurrence() {
-      return rule.getConfiguration().getInteger(CRON_OCCURRENCE);
+      return rule.getConfiguration().getInteger(CRON_OCCURRENCE, 1);
    }
 
    public void setOccurrence(final int occurrence) {
