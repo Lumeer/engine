@@ -60,7 +60,11 @@ public class CronRule extends BlocklyRule {
    }
 
    public void setEndsOn(final ZonedDateTime endsOn) {
-      rule.getConfiguration().put(CRON_ENDS_ON, new Date(endsOn.toInstant().toEpochMilli()));
+      if (endsOn != null) {
+         rule.getConfiguration().put(CRON_ENDS_ON, new Date(endsOn.toInstant().toEpochMilli()));
+      } else {
+         rule.getConfiguration().remove(CRON_ENDS_ON);
+      }
    }
 
    public int getHour() {
@@ -90,7 +94,7 @@ public class CronRule extends BlocklyRule {
 
    public ChronoUnit getUnit() {
       final String unit = rule.getConfiguration().getString(CRON_UNIT);
-      return unit != null ? ChronoUnit.valueOf(unit) : null;
+      return unit != null ? ChronoUnit.valueOf(unit.toUpperCase()) : null;
    }
 
    public void setUnit(final ChronoUnit unit) {

@@ -2,15 +2,27 @@ package io.lumeer.core.util
 
 import io.lumeer.api.model.rule.CronRule
 import java.time.DayOfWeek
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+import java.util.*
 import kotlin.math.min
 
 class CronTaskChecker {
 
-   fun shouldExecute(rule: CronRule, on: ZonedDateTime): Boolean {
+   companion object {
+
+      @JvmStatic
+      fun now(): ZonedDateTime {
+         val now = ZonedDateTime.now()
+         val date = Date(now.toInstant().toEpochMilli())
+         return ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC)
+      }
+   }
+
+   fun shouldExecute(rule: CronRule, on: ZonedDateTime = now()): Boolean {
       if (!checkInterval(rule, on)) return false
 
       return when (rule.unit) {
@@ -33,7 +45,7 @@ class CronTaskChecker {
          return rule.executionsLeft > 0
       }
       if (rule.endsOn != null) {
-         return rule.endsOn.isBefore(date)
+         return rule.endsOn.isAfter(date)
       }
 
       return true
@@ -46,6 +58,7 @@ class CronTaskChecker {
 
       val runOn = rule.lastRun
             .plusDays(rule.interval.toLong())
+            .withHour(rule.hour)
             .truncatedTo(ChronoUnit.HOURS)
 
       return shouldRunByHour(runOn, rule, date)
@@ -66,6 +79,7 @@ class CronTaskChecker {
       val runOn = rule.lastRun
             .plusMonths(rule.interval.toLong())
             .withDayOfMonth(dayOfMonth)
+            .withHour(rule.hour)
             .truncatedTo(ChronoUnit.HOURS)
 
       return shouldRunByHour(runOn, rule, date)
@@ -85,6 +99,7 @@ class CronTaskChecker {
       if (areSameWeeks(rule.lastRun, date)) {
          val runOn = rule.lastRun
                .with(ChronoField.DAY_OF_WEEK, date.dayOfWeek.value.toLong())
+               .withHour(rule.hour)
                .truncatedTo(ChronoUnit.HOURS)
 
          return rule.lastRun.dayOfWeek != date.dayOfWeek && shouldRunByHour(runOn, rule, date)
@@ -93,6 +108,7 @@ class CronTaskChecker {
       val runOn = rule.lastRun
             .plusWeeks(rule.interval.toLong())
             .with(ChronoField.DAY_OF_WEEK, date.dayOfWeek.value.toLong())
+            .withHour(rule.hour)
             .truncatedTo(ChronoUnit.HOURS)
 
       return shouldRunByHour(runOn, rule, date)
@@ -106,7 +122,8 @@ class CronTaskChecker {
 
    private fun shouldRunOnDay(rule: CronRule, date: ZonedDateTime): Boolean {
       val createdAt = rule.rule.createdAt ?: date
-      val shouldBeExecutedAt = date.truncatedTo(ChronoUnit.HOURS).withHour(rule.hour)
+      val shouldBeExecutedAt = date.withHour(rule.hour)
+            .truncatedTo(ChronoUnit.HOURS)
       return createdAt.isBefore(shouldBeExecutedAt) && rule.hour <= date.hour
    }
 
