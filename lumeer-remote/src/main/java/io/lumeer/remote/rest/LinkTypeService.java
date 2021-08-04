@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Rule;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
@@ -91,6 +92,12 @@ public class LinkTypeService extends AbstractService {
    @GET
    public List<LinkType> getLinkTypes() {
       return linkTypeFacade.getAllLinkTypes();
+   }
+
+   @PUT
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/rule/{ruleId}")
+   public LinkType upsertRule(@PathParam("linkTypeId") String linkTypeId, @PathParam("ruleId") String ruleId, Rule rule) {
+      return linkTypeFacade.upsertRule(linkTypeId, ruleId, rule);
    }
 
    @POST

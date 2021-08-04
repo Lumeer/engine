@@ -28,6 +28,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
@@ -41,7 +42,9 @@ import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -266,6 +269,23 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       return last.get();
+   }
+
+   public LinkType upsertRule(final String linkTypeId, final String ruleId, final Rule rule) {
+      final LinkType storedLinkType = checkLinkTypePermission(linkTypeId, RoleType.TechConfig);
+
+      LinkType originalLinkType = new LinkType(storedLinkType);
+
+      Map<String, Rule> rules = Objects.requireNonNullElse(storedLinkType.getRules(), new HashMap<>());
+      if (!rules.containsKey(ruleId)) {
+         rule.setCreatedAt(ZonedDateTime.now());
+      }
+
+      rules.put(ruleId, rule);
+      storedLinkType.setRules(rules);
+
+      final LinkType updatedLinkType = linkTypeDao.updateLinkType(storedLinkType.getId(), storedLinkType, originalLinkType);
+      return mapLinkTypeData(updatedLinkType);
    }
 
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute) {

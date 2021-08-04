@@ -169,7 +169,7 @@ public class TaskProcessingFacade {
 
    private List<RuleTask> createDocumentCreateRuleTasks(final Collection collection, final Document document) {
       if (document != null) {
-         return createRuleTasks(collection, null, document, Arrays.asList(Rule.RuleTiming.CREATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasksAfterDocumentEvent(collection, null, document, Arrays.asList(Rule.RuleTiming.CREATE, Rule.RuleTiming.CREATE_UPDATE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }
@@ -194,17 +194,32 @@ public class TaskProcessingFacade {
                        }).findFirst();
    }
 
-   private List<RuleTask> createRuleTasks(final Collection collection, final Document originalDocument, final Document document, final List<Rule.RuleTiming> timings) {
+   private List<RuleTask> createRuleTasksAfterDocumentEvent(final Collection collection, final Document originalDocument, final Document document, final List<Rule.RuleTiming> timings) {
       if (collection.getRules() == null) {
          return Collections.emptyList();
       }
       return collection.getRules().entrySet().stream()
-                       .filter(entry -> timings == null || timings.contains(entry.getValue().getTiming()))
+                       .filter(entry -> shouldExecuteRuleAfterDocumentEvent(entry.getValue(), timings))
                        .map(entry -> {
                           final RuleTask ruleTask = contextualTaskFactory.getInstance(RuleTask.class);
                           ruleTask.setRule(StringUtils.isNotEmpty(entry.getValue().getName()) ? entry.getValue().getName() : entry.getKey(), entry.getValue(), collection, originalDocument, document);
                           return ruleTask;
                        }).collect(Collectors.toList());
+   }
+
+   private boolean shouldExecuteRuleAfterDocumentEvent(final Rule rule, final List<Rule.RuleTiming> timings) {
+      if (rule == null) {
+         return false;
+      }
+      switch (rule.getType()) {
+         case AUTO_LINK:
+         case ZAPIER:
+         case WIZARD:
+         case BLOCKLY:
+            return timings.contains(rule.getTiming());
+         default:
+            return false;
+      }
    }
 
    private Optional<RuleTask> createRuleTask(final LinkType linkType, final String ruleName, final LinkInstance originalLinkInstance, final LinkInstance linkInstance) {
@@ -287,7 +302,7 @@ public class TaskProcessingFacade {
 
    private List<RuleTask> createDocumentUpdateRuleTasks(final Collection collection, final UpdateDocument updateDocument, final String skipTask) {
       if (updateDocument.getOriginalDocument() != null && updateDocument.getDocument() != null) {
-         return createRuleTasks(
+         return createRuleTasksAfterDocumentEvent(
                collection,
                new Document(updateDocument.getOriginalDocument()),
                new Document(updateDocument.getDocument()),
@@ -330,7 +345,7 @@ public class TaskProcessingFacade {
 
    private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final Document removeDocument) {
       if (removeDocument != null) {
-         return createRuleTasks(collection, new Document(removeDocument), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasksAfterDocumentEvent(collection, new Document(removeDocument), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
       }
       return Collections.emptyList();
    }

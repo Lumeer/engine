@@ -56,8 +56,10 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -179,6 +181,24 @@ public class CollectionFacade extends AbstractFacade {
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
       collection.setAttributes(storedCollection.getAttributes());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
+   }
+
+   public Collection upsertRule(final String collectionId, final String ruleId, final Rule rule) {
+      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(storedCollection, RoleType.TechConfig);
+
+      final Collection originalCollection = storedCollection.copy();
+
+      Map<String, Rule> rules = Objects.requireNonNullElse(storedCollection.getRules(), new HashMap<>());
+      if (!rules.containsKey(ruleId)) {
+         rule.setCreatedAt(ZonedDateTime.now());
+      }
+
+      rules.put(ruleId, rule);
+      storedCollection.setRules(rules);
+
+      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
+      return mapCollection(updatedCollection);
    }
 
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {

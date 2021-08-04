@@ -29,9 +29,14 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
+
 public class RuleCodec implements Codec<Rule> {
 
    public static final String NAME = "name";
+   public static final String CREATED_AT = "createdAt";
    public static final String TYPE = "type";
    public static final String TIMING = "timing";
    public static final String CONFIGURATION = "configuration";
@@ -59,6 +64,9 @@ public class RuleCodec implements Codec<Rule> {
       if (rule.getTiming() != null) {
          bson.append(TIMING, rule.getTiming().ordinal());
       }
+      if (rule.getCreatedAt() != null) {
+         bson.append(CREATED_AT, Date.from(rule.getCreatedAt().toInstant()));
+      }
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }
@@ -72,7 +80,14 @@ public class RuleCodec implements Codec<Rule> {
       final Rule.RuleTiming timing = timingInt != null ? Rule.RuleTiming.values()[timingInt] : null;
       final Document configuration = bson.get(CONFIGURATION, org.bson.Document.class);
 
-      return new Rule(name, type, timing, new DataDocument(configuration));
+      final Rule rule = new Rule(name, type, timing, new DataDocument(configuration));
+
+      final Date createdAt = bson.getDate(CREATED_AT);
+      if (createdAt != null) {
+         rule.setCreatedAt(ZonedDateTime.ofInstant(createdAt.toInstant(), ZoneOffset.UTC));
+      }
+
+      return rule;
    }
 
    @Override
