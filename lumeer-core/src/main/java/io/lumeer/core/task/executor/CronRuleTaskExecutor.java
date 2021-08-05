@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task.executor;
 
+import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.executor.bridge.DocumentBridge;
 
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 public class CronRuleTaskExecutor extends BlocklyRuleTaskExecutor {
 
    public CronRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
-      super(ruleName, ruleTask);
+      super(ruleName, ruleTask, new CronRule(ruleTask.getRule()));
    }
 
    @Override

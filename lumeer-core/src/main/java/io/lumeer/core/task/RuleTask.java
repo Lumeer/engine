@@ -111,7 +111,7 @@ public class RuleTask extends AbstractContextualTask {
          executor.execute();
       } else if (rule.getType() == Rule.RuleType.CRON) {
          final CronRuleTaskExecutor executor = new CronRuleTaskExecutor(ruleName, this);
-         executor.execute(taskExecutor);
+         changesTracker.merge(executor.execute(taskExecutor));
       }
 
       if (parent != null) {
