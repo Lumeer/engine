@@ -104,8 +104,12 @@ public class Rule implements HealthChecking {
    }
 
    public void setCreatedAt(final ZonedDateTime createdAt) {
-      var date = new Date(createdAt.toInstant().toEpochMilli());
-      this.createdAt = ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC);
+      if (createdAt != null) {
+         var date = new Date(createdAt.toInstant().toEpochMilli());
+         this.createdAt = ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC);
+      } else {
+         this.createdAt = null;
+      }
    }
 
    @Override
@@ -160,7 +164,7 @@ public class Rule implements HealthChecking {
    }
 
    public void keepInternalConfiguration(Rule originalRule) {
-      if(originalRule == null) {
+      if (originalRule == null) {
          return;
       }
 

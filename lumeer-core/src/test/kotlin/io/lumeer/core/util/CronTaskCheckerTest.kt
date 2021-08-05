@@ -180,14 +180,14 @@ class CronTaskCheckerTest {
       Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
-
    @Test
    fun checkWeeklyCronOtherDay() {
       val createdAt = CronTaskChecker.now().minusDays(10)
+      val daysOfWeek = 2f.pow(CronTaskChecker.now().dayOfWeek.value - 1).toInt()
       val rule = createRule(createdAt)
       rule.unit = ChronoUnit.WEEKS
       rule.hour = 9
-      rule.daysOfWeek = (CronTaskChecker.now().dayOfWeek.value - 1).toFloat().pow(2).toInt() - 1
+      rule.daysOfWeek = daysOfWeek - 1
       rule.interval = 3
       rule.startsOn = createdAt
 
@@ -196,7 +196,7 @@ class CronTaskCheckerTest {
       Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       // check execution this day
-      rule.daysOfWeek = (CronTaskChecker.now().dayOfWeek.value - 1).toFloat().pow(2).toInt()
+      rule.daysOfWeek = daysOfWeek
       Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
