@@ -281,6 +281,11 @@ public class LinkTypeFacade extends AbstractFacade {
          rule.setCreatedAt(ZonedDateTime.now());
       }
 
+      rule.parseConfiguration();
+
+      Rule originalRule = rules.get(ruleId);
+      rule.keepInternalConfiguration(originalRule);
+
       rules.put(ruleId, rule);
       storedLinkType.setRules(rules);
 

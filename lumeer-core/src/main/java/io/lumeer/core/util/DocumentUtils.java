@@ -29,6 +29,7 @@ import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.User;
 import io.lumeer.api.util.ResourceUtils;
@@ -36,8 +37,10 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.apache.commons.lang3.StringUtils;
@@ -61,12 +64,20 @@ public class DocumentUtils {
 
    // gets encoded documents
    public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
-      if (dao.getSelectedWorkspace().getOrganization().isPresent() && query.getCollectionIds().size() > 0) {
+      if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
+         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getSelectedWorkspace().getOrganization().get(), query, user, language, permissions, timeZone);
+      }
+
+      return List.of();
+   }
+
+   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final Organization organization, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
+      if (organization != null && query.getCollectionIds().size() > 0) {
          final String collectionId = query.getCollectionIds().iterator().next();
-         final Collection collection = dao.getCollectionDao().getCollectionById(collectionId);
-         final List<Document> documents = dao.getDocumentDao().getDocumentsByCollection(collectionId);
+         final Collection collection = collectionDao.getCollectionById(collectionId);
+         final List<Document> documents = documentDao.getDocumentsByCollection(collectionId);
          final Map<String, Document> documentsByIds = documents.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
-         dao.getDataDao().getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet())).forEach(data -> {
+         dataDao.getData(collectionId, documents.stream().map(Document::getId).collect(Collectors.toSet())).forEach(data -> {
             final Document doc = documentsByIds.get(data.getId());
             if (doc != null) {
                doc.setData(data);
@@ -75,7 +86,7 @@ public class DocumentUtils {
 
          final TranslationManager translationManager = new TranslationManager();
          final ConstraintData constraintData = new ConstraintData(
-               dao.getUserDao().getAllUsers(dao.getSelectedWorkspace().getOrganization().get().getId()),
+               userDao.getAllUsers(organization.getId()),
                user,
                translationManager.translateDurationUnitsMap(language),
                new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),

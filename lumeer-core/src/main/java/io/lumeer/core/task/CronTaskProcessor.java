@@ -37,9 +37,9 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -57,7 +57,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
    private final CronTaskChecker checker = new CronTaskChecker();
 
-   @Schedule(hour = "*") // every single hour
+   @Schedule(hour = "*", minute = "*/2") // every single hour
    public void process() {
       final List<Organization> organizations = organizationDao.getAllOrganizations();
 
@@ -80,7 +80,7 @@ public class CronTaskProcessor extends WorkspaceContext {
    private void processRules(final DaoContextSnapshot dao, final Collection collection, final ContextualTaskFactory taskFactory) {
       collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).forEach(entry -> {
          final CronRule rule = new CronRule(entry.getValue());
-         if (checker.shouldExecute(rule, CronTaskChecker.now())) {
+         if (checker.shouldExecute(rule, ZonedDateTime.now())) {
             final String signature = UUID.randomUUID().toString();
             rule.setLastRun(ZonedDateTime.now());
             rule.setExecuting(signature);
@@ -111,13 +111,14 @@ public class CronTaskProcessor extends WorkspaceContext {
    }
 
    private List<Document> getDocuments(final CronRule rule, final Collection collection, final DaoContextSnapshot dao) {
-      if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
+      if (dao.getSelectedWorkspace().getOrganization().isPresent() && rule.getViewId() != null) {
          try {
             final View view = dao.getViewDao().getViewById(rule.getViewId());
             final User user = AuthenticatedUser.getMachineUser();
             final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
-            return DocumentUtils.getDocuments(dao, view.getQuery(), user, rule.getLanguage(), allowedPermissions, null);
+            final List<Document> documents = DocumentUtils.getDocuments(dao, view.getQuery(), user, rule.getLanguage(), allowedPermissions, null);
+            return documents.stream().filter(document -> document.getCollectionId().equals(collection.getId())).collect(Collectors.toList());
          } catch (ResourceNotFoundException e) {
             return List.of();
          }
