@@ -13,11 +13,13 @@ import kotlin.math.pow
 
 class CronTaskCheckerTest {
 
+   private val checker = CronTaskChecker()
+
    @Test
    fun checkRunningRule() {
       val (rule, now) = createRunningRuleData()
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
    @Test
@@ -25,7 +27,7 @@ class CronTaskCheckerTest {
       val (rule, now) = createRunningRuleData()
       rule.unit = ChronoUnit.DECADES
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
    }
 
    @Test
@@ -33,7 +35,7 @@ class CronTaskCheckerTest {
       val (rule, now) = createRunningRuleData()
       rule.startsOn = now.plusDays(2)
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
    }
 
    @Test
@@ -41,7 +43,7 @@ class CronTaskCheckerTest {
       val (rule, now) = createRunningRuleData()
       rule.endsOn = now.minusDays(2)
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
    }
 
    @Test
@@ -49,10 +51,10 @@ class CronTaskCheckerTest {
       val (rule, now) = createRunningRuleData()
       rule.executionsLeft = 2
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       rule.executionsLeft = 0
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
    }
 
    @Test
@@ -66,11 +68,11 @@ class CronTaskCheckerTest {
 
       // created at after execution
       val now = CronTaskChecker.now().withHour(14).truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       // created at before execution
       rule.rule.createdAt = createdAt.withHour(13)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
    @Test
@@ -84,21 +86,21 @@ class CronTaskCheckerTest {
       rule.startsOn = now.minusDays(10)
       rule.lastRun = now.minusDays(1)
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = now.minusDays(2)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       // check with delay
 
       rule.lastRun = now.minusDays(2).plusSeconds(23)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       rule.lastRun = now.minusDays(2).plusMinutes(30)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       rule.lastRun = now.minusDays(2).plusHours(1)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
    @Test
@@ -113,11 +115,11 @@ class CronTaskCheckerTest {
 
       // created at after execution
       val now = CronTaskChecker.now().withDayOfMonth(12).withHour(9).truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       // created at before execution
       rule.rule.createdAt = createdAt.withHour(8)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
    @Test
@@ -132,7 +134,7 @@ class CronTaskCheckerTest {
 
       // created at after execution
       val now = CronTaskChecker.now().withDayOfMonth(3).withHour(9).truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
    }
 
    @Test
@@ -147,16 +149,16 @@ class CronTaskCheckerTest {
       rule.startsOn = now.minusMonths(10)
       rule.lastRun = now.minusMonths(1)
 
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = now.minusMonths(2)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = now.minusMonths(3)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       rule.occurrence = 3
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
    }
 
    @Test
@@ -171,11 +173,11 @@ class CronTaskCheckerTest {
 
       // created at after execution
       val now = createdAt.withHour(9).truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       // created at before execution
       rule.rule.createdAt = createdAt.withHour(8)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
 
@@ -191,11 +193,11 @@ class CronTaskCheckerTest {
 
       // check execution other day
       val now = CronTaskChecker.now().withHour(9).truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       // check execution this day
       rule.daysOfWeek = (CronTaskChecker.now().dayOfWeek.value - 1).toFloat().pow(2).toInt()
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
    @Test
@@ -220,15 +222,15 @@ class CronTaskCheckerTest {
             .with(ChronoField.DAY_OF_WEEK, wednesday)
             .withHour(6)
             .truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       // ran in monday and check if it should run in saturday
       now = now.with(ChronoField.DAY_OF_WEEK, saturday)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
 
       // ran in monday and check if it should run in monday
       now = now.with(ChronoField.DAY_OF_WEEK, monday)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
 
    }
@@ -246,19 +248,19 @@ class CronTaskCheckerTest {
       rule.lastRun = CronTaskChecker.now().minusWeeks(1)
 
       val now = CronTaskChecker.now().withHour(4).truncatedTo(ChronoUnit.HOURS)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = CronTaskChecker.now().minusWeeks(2)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = CronTaskChecker.now().minusWeeks(3)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = CronTaskChecker.now().minusWeeks(4)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isFalse
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isFalse
 
       rule.lastRun = CronTaskChecker.now().minusWeeks(5)
-      Assertions.assertThat(CronTaskChecker().shouldExecute(rule, now)).isTrue
+      Assertions.assertThat(checker.shouldExecute(rule, now)).isTrue
    }
 
    private fun createRule(createdAt: ZonedDateTime? = null): CronRule {

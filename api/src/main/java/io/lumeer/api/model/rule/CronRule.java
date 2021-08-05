@@ -20,11 +20,15 @@ package io.lumeer.api.model.rule;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Rule;
+import io.lumeer.engine.api.data.DataDocument;
 
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Set;
 
 public class CronRule extends BlocklyRule {
 
@@ -43,6 +47,50 @@ public class CronRule extends BlocklyRule {
 
    public CronRule(final Rule rule) {
       super(rule, Rule.RuleType.CRON);
+   }
+
+   public static DataDocument parseConfiguration(DataDocument configuration) {
+      DataDocument parsedConfiguration = new DataDocument(configuration);
+
+      parseDate(parsedConfiguration, CRON_STARTS_ON);
+      parseDate(parsedConfiguration, CRON_ENDS_ON);
+      parseNumber(parsedConfiguration, CRON_EXECUTIONS_LEFT);
+      parseNumber(parsedConfiguration, CRON_INTERVAL);
+      parseNumber(parsedConfiguration, CRON_HOUR);
+      parseNumber(parsedConfiguration, CRON_DAYS_OF_WEEK);
+      parseNumber(parsedConfiguration, CRON_OCCURRENCE);
+
+      return parsedConfiguration;
+   }
+
+   private static void parseDate(DataDocument parsedConfiguration, String param) {
+      if (!parsedConfiguration.containsKey(param)) {
+         return;
+      }
+      try {
+         String string = parsedConfiguration.getString(param, "").trim();
+         Date date = Date.from(Instant.parse(string));
+         parsedConfiguration.put(param, date);
+      } catch (DateTimeParseException ignored) {
+      }
+   }
+
+   private static void parseNumber(DataDocument parsedConfiguration, String param) {
+      if (!parsedConfiguration.containsKey(param)) {
+         return;
+      }
+      try {
+         Object object = parsedConfiguration.get(param);
+         if (object instanceof String) {
+            Integer integer = Integer.parseInt(object.toString());
+            parsedConfiguration.put(param, integer);
+         }
+      } catch (NumberFormatException ignored) {
+      }
+   }
+
+   public static Set<String> internalConfigurationKeys() {
+      return Set.of(CRON_EXECUTING, CRON_LAST_RUN);
    }
 
    public ZonedDateTime getStartsOn() {
