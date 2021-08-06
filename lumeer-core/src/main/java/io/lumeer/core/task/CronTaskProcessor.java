@@ -89,6 +89,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
             // is it us who tried last?
             final String executing = new CronRule(bookedCollection.getRules().get(entry.getKey())).getExecuting();
+            System.out.println("executing: " + executing + " // " + rule.getRule().getName());
             if (executing == null || "".equals(executing)) {
 
                final List<Document> documents = getDocuments(rule, collection, dao);

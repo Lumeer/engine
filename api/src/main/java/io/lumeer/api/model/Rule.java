@@ -56,7 +56,9 @@ public class Rule implements HealthChecking {
    private String name;
    private RuleType type;
    private RuleTiming timing;
+
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonIgnore
    private ZonedDateTime createdAt;
    protected DataDocument configuration;
 
@@ -167,6 +169,8 @@ public class Rule implements HealthChecking {
       if (originalRule == null) {
          return;
       }
+
+      setCreatedAt(originalRule.getCreatedAt());
 
       Set<String> keys;
       switch (getType()) {
