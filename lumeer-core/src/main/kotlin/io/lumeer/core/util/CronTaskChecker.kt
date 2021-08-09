@@ -125,7 +125,6 @@ class CronTaskChecker {
       val createdAt = rule.rule.createdAt ?: date
       val shouldBeExecutedAt = date.withHour(rule.hour)
             .truncatedTo(ChronoUnit.HOURS)
-      println("$createdAt $shouldBeExecutedAt ${rule.hour} ${date.hour}")
       return createdAt.isBefore(shouldBeExecutedAt) && rule.hour <= date.hour
    }
 

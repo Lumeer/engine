@@ -242,7 +242,7 @@ class CronTaskCheckerTest {
       val rule = createRule(createdAt)
       rule.unit = ChronoUnit.WEEKS
       rule.hour = 4
-      rule.daysOfWeek = (CronTaskChecker.now().dayOfWeek.value - 1).toFloat().pow(2).toInt()
+      rule.daysOfWeek = 2f.pow(CronTaskChecker.now().dayOfWeek.value - 1).toInt()
       rule.interval = 5
       rule.startsOn = createdAt
       rule.lastRun = CronTaskChecker.now().minusWeeks(1)
