@@ -18,14 +18,22 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
+import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Objects;
+import java.util.Set;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class Rule implements HealthChecking {
 
@@ -48,6 +56,10 @@ public class Rule implements HealthChecking {
    private String name;
    private RuleType type;
    private RuleTiming timing;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonIgnore
+   private ZonedDateTime createdAt;
    protected DataDocument configuration;
 
    @JsonCreator
@@ -87,6 +99,19 @@ public class Rule implements HealthChecking {
 
    public void setId(final String id) {
       this.id = id;
+   }
+
+   public ZonedDateTime getCreatedAt() {
+      return createdAt;
+   }
+
+   public void setCreatedAt(final ZonedDateTime createdAt) {
+      if (createdAt != null) {
+         var date = new Date(createdAt.toInstant().toEpochMilli());
+         this.createdAt = ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC);
+      } else {
+         this.createdAt = null;
+      }
    }
 
    @Override
@@ -130,6 +155,37 @@ public class Rule implements HealthChecking {
 
    public void setConfiguration(final DataDocument configuration) {
       this.configuration = configuration;
+   }
+
+   public void parseConfiguration() {
+      switch (getType()) {
+         case CRON:
+            setConfiguration(CronRule.parseConfiguration(getConfiguration()));
+            break;
+      }
+   }
+
+   public void keepInternalConfiguration(Rule originalRule) {
+      if (originalRule == null) {
+         return;
+      }
+
+      setCreatedAt(originalRule.getCreatedAt());
+
+      Set<String> keys;
+      switch (getType()) {
+         case CRON:
+            keys = CronRule.internalConfigurationKeys();
+            break;
+         default:
+            keys = Collections.emptySet();
+      }
+
+      keys.forEach(key -> {
+         if (originalRule.getConfiguration().containsKey(key)) {
+            getConfiguration().put(key, originalRule.getConfiguration().get(key));
+         }
+      });
    }
 
    @Override

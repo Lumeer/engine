@@ -20,6 +20,7 @@ package io.lumeer.core.task.executor;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
@@ -42,9 +43,15 @@ public class BlocklyRuleTaskExecutor {
    private static Logger log = Logger.getLogger(BlocklyRuleTaskExecutor.class.getName());
 
    private String ruleName;
-   private BlocklyRule rule;
+   private final BlocklyRule rule;
    protected RuleTask ruleTask;
    private ChangesTracker tracker;
+
+   protected BlocklyRuleTaskExecutor(final String ruleName, final RuleTask ruleTask, final BlocklyRule rule) {
+      this.ruleName = ruleName;
+      this.rule = rule;
+      this.ruleTask = ruleTask;
+   }
 
    public BlocklyRuleTaskExecutor(final String ruleName, final RuleTask ruleTask) {
       this.ruleName = ruleName;

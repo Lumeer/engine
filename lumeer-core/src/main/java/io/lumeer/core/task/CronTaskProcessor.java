@@ -18,32 +18,28 @@
  */
 package io.lumeer.core.task;
 
-import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.facade.SystemDatabaseConfigurationFacade;
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.CronTaskChecker;
 import io.lumeer.core.util.DocumentUtils;
-import io.lumeer.engine.annotation.SystemDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.engine.api.data.StorageConnection;
-import io.lumeer.storage.api.DataStorageFactory;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -51,7 +47,7 @@ import javax.inject.Inject;
 
 @Singleton
 @Startup
-public class CronTaskProcessor extends WorkspaceContext  {
+public class CronTaskProcessor extends WorkspaceContext {
 
    @Inject
    private OrganizationDao organizationDao;
@@ -59,7 +55,9 @@ public class CronTaskProcessor extends WorkspaceContext  {
    @Inject
    private TaskExecutor taskExecutor;
 
-   @Schedule(hour = "*") // every single hour
+   private final CronTaskChecker checker = new CronTaskChecker();
+
+   @Schedule(hour = "*", minute = "*/2") // every single hour
    public void process() {
       final List<Organization> organizations = organizationDao.getAllOrganizations();
 
@@ -82,7 +80,7 @@ public class CronTaskProcessor extends WorkspaceContext  {
    private void processRules(final DaoContextSnapshot dao, final Collection collection, final ContextualTaskFactory taskFactory) {
       collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).forEach(entry -> {
          final CronRule rule = new CronRule(entry.getValue());
-         if (shouldExecute(rule)) {
+         if (checker.shouldExecute(rule, ZonedDateTime.now())) {
             final String signature = UUID.randomUUID().toString();
             rule.setLastRun(ZonedDateTime.now());
             rule.setExecuting(signature);
@@ -113,30 +111,21 @@ public class CronTaskProcessor extends WorkspaceContext  {
    }
 
    private List<Document> getDocuments(final CronRule rule, final Collection collection, final DaoContextSnapshot dao) {
-      if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         final Query query = rule.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
-         final User user = AuthenticatedUser.getMachineUser();
-         final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
+      if (dao.getSelectedWorkspace().getOrganization().isPresent() && rule.getViewId() != null) {
+         try {
+            final View view = dao.getViewDao().getViewById(rule.getViewId());
+            final User user = AuthenticatedUser.getMachineUser();
+            final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
-         return DocumentUtils.getDocuments(dao, query, user, rule.getLanguage(), allowedPermissions, null);
+            final List<Document> documents = DocumentUtils.getDocuments(dao, view.getQuery(), user, rule.getLanguage(), allowedPermissions, null);
+            return documents.stream().filter(document -> document.getCollectionId().equals(collection.getId())).collect(Collectors.toList());
+         } catch (ResourceNotFoundException e) {
+            return List.of();
+         }
+
       }
 
       return List.of();
-   }
-
-   private boolean shouldExecute(final CronRule rule) {
-      final ZonedDateTime lastRun = rule.getLastRun();
-      final ZonedDateTime since = rule.getSince();
-      final ZonedDateTime start = lastRun != null && lastRun.isAfter(since) ? lastRun : since;
-
-      if (start != null) {
-         final ZonedDateTime now = ZonedDateTime.now();
-         start.plus(rule.getInterval(), rule.getUnit());
-
-         return start.isBefore(now) && now.getHour() >= rule.getWhen();
-      }
-
-      return false;
    }
 
    private Task getTask(final ContextualTaskFactory taskFactory, final String name, final Rule rule, final Collection collection, final List<Document> documents) {

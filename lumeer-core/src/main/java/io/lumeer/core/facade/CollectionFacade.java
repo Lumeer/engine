@@ -32,16 +32,21 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.rule.AutoLinkRule;
+import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTaskFactory;
+import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.util.CodeGenerator;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -56,8 +61,11 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -179,6 +187,29 @@ public class CollectionFacade extends AbstractFacade {
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
       collection.setAttributes(storedCollection.getAttributes());
       collection.setLastAttributeNum(storedCollection.getLastAttributeNum());
+   }
+
+   public Collection upsertRule(final String collectionId, final String ruleId, final Rule rule) {
+      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(storedCollection, RoleType.TechConfig);
+
+      final Collection originalCollection = storedCollection.copy();
+
+      Map<String, Rule> rules = Objects.requireNonNullElse(storedCollection.getRules(), new HashMap<>());
+      if (!rules.containsKey(ruleId)) {
+         rule.setCreatedAt(ZonedDateTime.now());
+      }
+
+      rule.parseConfiguration();
+
+      Rule originalRule = rules.get(ruleId);
+      rule.keepInternalConfiguration(originalRule);
+
+      rules.put(ruleId, rule);
+      storedCollection.setRules(rules);
+
+      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
+      return mapCollection(updatedCollection);
    }
 
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
@@ -583,6 +614,27 @@ public class CollectionFacade extends AbstractFacade {
 
          final AutoLinkBatchTask task = taskFactory.getInstance(AutoLinkBatchTask.class);
          task.setupBatch(autoLinkRule, linkType, collection, attribute, otherCollection, otherAttribute, getCurrentUser(), permissions);
+
+         taskExecutor.submitTask(task);
+      } else if (rule != null && rule.getType() == Rule.RuleType.CRON) {
+         final CronRule cronRule = new CronRule(rule);
+
+         List<Document> documents = new ArrayList<>();
+         if (cronRule.getViewId() != null) {
+            try {
+               final View view = viewDao.getViewById(cronRule.getViewId());
+               final User user = AuthenticatedUser.getMachineUser();
+               final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
+
+               documents = DocumentUtils.getDocuments(collectionDao, documentDao, dataDao, userDao, getOrganization(), view.getQuery(), user, cronRule.getLanguage(), allowedPermissions, null);
+               documents = documents.stream().filter(document -> document.getCollectionId().equals(collection.getId())).collect(Collectors.toList());
+            } catch (ResourceNotFoundException ignore) {
+
+            }
+         }
+
+         RuleTask task = taskFactory.getInstance(RuleTask.class);
+         task.setRule(rule.getName(), rule, collection, documents);
 
          taskExecutor.submitTask(task);
       }
