@@ -28,11 +28,12 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 public interface PurposeChangeDetector {
 
-   void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final DefaultConfigurationProducer.DeployEnvironment environment);
+   void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final GroupDao groupDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final DefaultConfigurationProducer.DeployEnvironment environment);
    void detectChanges(final DocumentEvent documentEvent, final Collection collection);
    default void detectChanges(final ResourceComment comment, final Document document, final Collection collection) {}
 }

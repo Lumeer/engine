@@ -27,9 +27,9 @@ import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationFrequency;
-import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
@@ -46,6 +46,7 @@ import io.lumeer.engine.api.event.DocumentCommentedEvent;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import org.apache.commons.lang3.StringUtils;
@@ -66,16 +67,21 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
    protected DelayedActionDao delayedActionDao;
    protected UserDao userDao;
+   protected GroupDao groupDao;
    protected SelectedWorkspace selectedWorkspace;
    protected User currentUser;
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
    protected DefaultConfigurationProducer.DeployEnvironment environment;
 
+   private List<User> users;
+   private List<Group> teams;
+
    @Override
-   public void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final DefaultConfigurationProducer.DeployEnvironment environment) {
+   public void setContext(final DelayedActionDao delayedActionDao, final UserDao userDao, final GroupDao groupDao, final SelectedWorkspace selectedWorkspace, final User currentUser, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, final DefaultConfigurationProducer.DeployEnvironment environment) {
       this.delayedActionDao = delayedActionDao;
       this.userDao = userDao;
+      this.groupDao = groupDao;
       this.selectedWorkspace = selectedWorkspace;
       this.currentUser = currentUser;
       this.requestDataKeeper = requestDataKeeper;
@@ -122,8 +128,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected Set<String> getAssignees(final DocumentEvent documentEvent, final Collection collection) {
       final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
 
-      if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
-         return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId).stream().map(String::toLowerCase).collect(Collectors.toSet());
+      if (StringUtils.isNotEmpty(assigneeAttributeId)) {
+         final Attribute assigneeAttribute = findAttribute(collection.getAttributes(), assigneeAttributeId);
+         if (assigneeAttribute != null) {
+            return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttribute, getTeams(), getUsers()).stream().map(String::toLowerCase).collect(Collectors.toSet());
+         }
       }
 
       return Set.of(currentUser.getEmail().toLowerCase());
@@ -134,13 +143,16 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
          final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
 
-         if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
-            final Set<String> originalUsers = new HashSet<>(DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId));
-            final Set<String> newUsers = DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+         if (StringUtils.isNotEmpty(assigneeAttributeId)) {
+            final Attribute assigneeAttribute = findAttribute(collection.getAttributes(), assigneeAttributeId);
+            if (assigneeAttribute != null) {
+               final Set<String> originalUsers = new HashSet<>(DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttribute, getTeams(), getUsers()));
+               final Set<String> newUsers = DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttribute, getTeams(), getUsers());
 
-            originalUsers.removeAll(newUsers);
+               originalUsers.removeAll(newUsers);
 
-            return originalUsers;
+               return originalUsers;
+            }
          }
       }
 
@@ -150,16 +162,19 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected Set<String> getAddedAssignees(final DocumentEvent documentEvent, final Collection collection) {
       final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
 
-      if (StringUtils.isNotEmpty(assigneeAttributeId) && findAttribute(collection.getAttributes(), assigneeAttributeId) != null) {
-         if (documentEvent instanceof UpdateDocument) {
-               final Set<String> originalUsers = DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttributeId);
-               final Set<String> newUsers = new HashSet<>(DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId));
+      if (StringUtils.isNotEmpty(assigneeAttributeId)) {
+         final Attribute assigneeAttribute = findAttribute(collection.getAttributes(), assigneeAttributeId);
+         if (assigneeAttribute != null) {
+            if (documentEvent instanceof UpdateDocument) {
+               final Set<String> originalUsers = DocumentUtils.getUsersList(((UpdateDocument) documentEvent).getOriginalDocument(), assigneeAttribute, getTeams(), getUsers());
+               final Set<String> newUsers = new HashSet<>(DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttribute, getTeams(), getUsers()));
 
                newUsers.removeAll(originalUsers);
 
                return newUsers;
-         } else if (documentEvent instanceof CreateDocument) {
-            return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttributeId);
+            } else if (documentEvent instanceof CreateDocument) {
+               return DocumentUtils.getUsersList(documentEvent.getDocument(), assigneeAttribute, getTeams(), getUsers());
+            }
          }
       }
 
@@ -169,8 +184,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected Set<String> getObservers(final DocumentEvent documentEvent, final Collection collection) {
       final String observersAttributeId = collection.getPurposeMetaData() != null ? collection.getPurposeMetaData().getString(CollectionPurpose.META_OBSERVERS_ATTRIBUTE_ID) : null;
 
-      if (StringUtils.isNotEmpty(observersAttributeId) && findAttribute(collection.getAttributes(), observersAttributeId) != null) {
-         return DocumentUtils.getUsersList(documentEvent.getDocument(), observersAttributeId).stream().map(String::toLowerCase).collect(Collectors.toSet());
+      if (StringUtils.isNotEmpty(observersAttributeId)) {
+         final Attribute observersAttribute = findAttribute(collection.getAttributes(), observersAttributeId);
+         if (observersAttribute != null) {
+            return DocumentUtils.getUsersList(documentEvent.getDocument(), observersAttribute, getTeams(), getUsers()).stream().map(String::toLowerCase).collect(Collectors.toSet());
+         }
       }
 
       return Set.of();
@@ -271,7 +289,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
                      notificationType == NotificationType.PAST_DUE_DATE ||
                      !assignee.equals(currentUser.getEmail().toLowerCase()) && StringUtils.isNotEmpty(assignee))
          ).forEach(assignee -> {
-            for (NotificationChannel channel: NotificationChannel.values()) {
+            for (NotificationChannel channel : NotificationChannel.values()) {
                final DelayedAction action = new DelayedAction();
 
                action.setInitiator(currentUser.getEmail());
@@ -331,5 +349,19 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
          return ZonedDateTime.now().plus(DelayedActionDao.PROCESSING_DELAY_MINUTES, ChronoUnit.MINUTES);
       }
       return ZonedDateTime.now();
+   }
+
+   private List<User> getUsers() {
+      if (users == null) {
+         users = userDao.getAllUsers(selectedWorkspace.getOrganization().get().getId());
+      }
+      return users;
+   }
+
+   private List<Group> getTeams() {
+      if (teams == null) {
+         teams = groupDao.getAllGroups(selectedWorkspace.getOrganization().get().getId());
+      }
+      return teams;
    }
 }

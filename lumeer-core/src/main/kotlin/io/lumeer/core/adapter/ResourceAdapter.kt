@@ -106,7 +106,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    }
 
    fun getDocumentReaders(organization: Organization, project: Project, collection: Collection, document: Document): Set<String> {
-      val assigneesEmails = DocumentUtils.getUsersAssigneeEmails(collection, document)
+      val assigneesEmails = DocumentUtils.getUsersAssigneeEmails(collection, document, permissionAdapter.getGroups(organization.id), permissionAdapter.getUsers(organization.id))
       val assigneeIds = userDao.getUsersByEmails(assigneesEmails).map { it.id }
 
       return getCollectionReaders(organization, project, collection).plus(assigneeIds)
