@@ -62,7 +62,7 @@ class DataFiltersJsParserTest {
         val permissions = AllowedPermissions.allAllowed()
         val collectionsPermissions = mapOf(collection1.id to permissions, collection2.id to permissions)
         val linkTypPermissions = mapOf(linkType.id to permissions)
-        val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()), "Europe/Bratislava")
+        val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()), "Europe/Bratislava", listOf())
 
         val link1 = LinkInstance(linkType.id, listOf(document1.id, document3.id)).apply { id = "li1" }
         val link2 = LinkInstance(linkType.id, listOf(document2.id, document4.id)).apply { id = "li2" }
@@ -159,7 +159,7 @@ class DataFiltersJsParserTest {
             val permissions = AllowedPermissions.allAllowed()
             val collectionsPermissions = mapOf(collection1.id to permissions, collection2.id to permissions)
             val linkTypPermissions = mapOf(linkType.id to permissions)
-            val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()), "Europe/Bratislava")
+            val constraintData = ConstraintData(listOf(), null, mapOf(), CurrencyData(listOf(), listOf()), "Europe/Bratislava", listOf())
 
             val documents = mutableListOf<Document>()
             val links = mutableListOf<LinkInstance>()

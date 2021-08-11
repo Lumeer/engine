@@ -89,12 +89,14 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
       language = Language.fromString(requestDataKeeper.getUserLocale());
       timeZone = requestDataKeeper.getTimezone();
       final TranslationManager translationManager = new TranslationManager();
+      final String organizationId = daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getId();
       constraintData = new ConstraintData(
-            daoContextSnapshot.getUserDao().getAllUsers(daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getId()),
+            daoContextSnapshot.getUserDao().getAllUsers(organizationId),
             user,
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
-            timeZone != null ? timeZone : TimeZone.getDefault().getID()
+            timeZone != null ? timeZone : TimeZone.getDefault().getID(),
+            daoContextSnapshot.getGroupDao().getAllGroups(organizationId)
       );
 
       matchQuery = MatchQueryFactory.getMatchQuery(attribute, otherCollection, otherAttribute);

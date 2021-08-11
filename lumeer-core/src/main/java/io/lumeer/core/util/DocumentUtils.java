@@ -40,6 +40,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -65,13 +66,13 @@ public class DocumentUtils {
    // gets encoded documents
    public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getSelectedWorkspace().getOrganization().get(), query, user, language, permissions, timeZone);
+         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getGroupDao(), dao.getSelectedWorkspace().getOrganization().get(), query, user, language, permissions, timeZone);
       }
 
       return List.of();
    }
 
-   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final Organization organization, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
+   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final GroupDao groupDao, final Organization organization, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (organization != null && query.getCollectionIds().size() > 0) {
          final String collectionId = query.getCollectionIds().iterator().next();
          final Collection collection = collectionDao.getCollectionById(collectionId);
@@ -90,7 +91,8 @@ public class DocumentUtils {
                user,
                translationManager.translateDurationUnitsMap(language),
                new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
-               timeZone != null ? timeZone : TimeZone.getDefault().getID()
+               timeZone != null ? timeZone : TimeZone.getDefault().getID(),
+               groupDao.getAllGroups(organization.getId())
          );
 
          final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQueryDecodingFromJson(

@@ -100,7 +100,8 @@ public class DocumentMatcher {
             ruleTask.getInitiator(),
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
-            timeZone != null ? timeZone : TimeZone.getDefault().getID()
+            timeZone != null ? timeZone : TimeZone.getDefault().getID(),
+            dao.getGroupDao().getAllGroups(this.organization.getId())
       );
    }
 

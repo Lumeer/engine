@@ -53,6 +53,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
@@ -86,6 +87,9 @@ public class SearchFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
 
    @Inject
    private DocumentDao documentDao;
@@ -272,7 +276,8 @@ public class SearchFacade extends AbstractFacade {
             authenticatedUser.getCurrentUser(),
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
-            timezone
+            timezone,
+            groupDao.getAllGroups(workspaceKeeper.getOrganizationId())
       );
    }
 
