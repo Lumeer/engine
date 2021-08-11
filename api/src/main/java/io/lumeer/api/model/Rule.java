@@ -165,6 +165,19 @@ public class Rule implements HealthChecking {
       }
    }
 
+   public boolean shouldResetCreatedAt(Rule originalRule) {
+      if (originalRule == null) {
+         return true;
+      }
+
+      switch (getType()) {
+         case CRON:
+            return new CronRule(this).shouldResetCreatedAt(new CronRule(originalRule));
+         default:
+            return false;
+      }
+   }
+
    public void keepInternalConfiguration(Rule originalRule) {
       if (originalRule == null) {
          return;

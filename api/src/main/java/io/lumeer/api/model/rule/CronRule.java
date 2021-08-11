@@ -93,6 +93,25 @@ public class CronRule extends BlocklyRule {
       return Set.of(CRON_EXECUTING, CRON_LAST_RUN);
    }
 
+   public boolean shouldResetCreatedAt(CronRule originalRule) {
+      if (getLastRun() == null) {
+         if (getHour() != originalRule.getHour() || !getStartsOn().isEqual(originalRule.getStartsOn()) || !getUnit().equals(originalRule.getUnit())) {
+            return true;
+         }
+
+         switch (getUnit()) {
+            case WEEKS:
+               return getDaysOfWeek() != originalRule.getDaysOfWeek();
+            case MONTHS:
+               return getOccurrence() != originalRule.getOccurrence();
+            default:
+               return false;
+         }
+      }
+
+      return false;
+   }
+
    public ZonedDateTime getStartsOn() {
       final Date since = rule.getConfiguration().getDate(CRON_STARTS_ON);
       return since == null ? null : ZonedDateTime.ofInstant(since.toInstant(), ZoneOffset.UTC);
