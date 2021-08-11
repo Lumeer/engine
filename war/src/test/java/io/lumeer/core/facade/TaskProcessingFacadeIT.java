@@ -347,6 +347,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
       c1.getRules().put(ruleName, rule.getRule());
       collectionFacade.updateCollection(c1.getId(), c1);
+      collectionFacade.upsertRule(c1.getId(), ruleName, rule.getRule());
 
       assertThat(getLinksByType(l.getId())).hasSize(0);
 
