@@ -201,6 +201,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
       c1.getRules().put(ruleName, rule.getRule());
       collectionFacade.updateCollection(c1.getId(), c1);
+      collectionFacade.upsertRule(c1.getId(), ruleName, rule.getRule());
 
       documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 11));
 
@@ -228,6 +229,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       rule.setResultTimestamp(0);
       c1.getRules().put(ruleName, rule.getRule());
       collectionFacade.updateCollection(c1.getId(), c1);
+      collectionFacade.upsertRule(c1.getId(), ruleName, rule.getRule());
 
       documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 12));
 
@@ -265,6 +267,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
       c1.getRules().put(ruleName, rule.getRule());
       collectionFacade.updateCollection(c1.getId(), c1);
+      collectionFacade.upsertRule(c1.getId(), ruleName, rule.getRule());
 
       documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 11));
 
@@ -300,6 +303,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
       c1.getRules().put(ruleName, rule.getRule());
       collectionFacade.updateCollection(c1.getId(), c1);
+      collectionFacade.upsertRule(c1.getId(), ruleName, rule.getRule());
 
       documentFacade.patchDocumentData(c1.getId(), c1d1.getId(), new DataDocument("a1", 11));
 
@@ -343,6 +347,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
       c1.getRules().put(ruleName, rule.getRule());
       collectionFacade.updateCollection(c1.getId(), c1);
+      collectionFacade.upsertRule(c1.getId(), ruleName, rule.getRule());
 
       assertThat(getLinksByType(l.getId())).hasSize(0);
 

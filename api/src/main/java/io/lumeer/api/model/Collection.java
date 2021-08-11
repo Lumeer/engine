@@ -264,7 +264,7 @@ public class Collection extends Resource implements HealthChecking, Updatable<Co
    public void patch(final Collection resource, final Set<RoleType> roles) {
       patchResource(this, resource, roles);
 
-      if(roles.contains(RoleType.Manage)) {
+      if (roles.contains(RoleType.Manage)) {
          setDataDescription(resource.getDataDescription());
       }
       if (roles.contains(RoleType.AttributeEdit)) {
@@ -273,7 +273,6 @@ public class Collection extends Resource implements HealthChecking, Updatable<Co
       }
       if (roles.contains(RoleType.TechConfig)) {
          setPurpose(resource.getPurpose());
-         setRules(resource.getRules());
       }
    }
 }
