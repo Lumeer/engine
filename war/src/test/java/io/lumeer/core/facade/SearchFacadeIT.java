@@ -178,11 +178,12 @@ public class SearchFacadeIT extends IntegrationTestBase {
    }
 
    private User createUser(String email, String organizationId) {
-      User user = new User(null, email, email, Collections.singleton(organizationId));
+      User user = new User(null, email, email, organizationId != null ? Collections.singleton(organizationId) : null);
       return userDao.createUser(user);
    }
 
    private User updateOrganizationInUser(String userId, String email, String organizationId) {
+      assert organizationId != null;
       User user = new User(userId, email, email, Collections.singleton(organizationId));
       return userDao.updateUser(userId, user);
    }
