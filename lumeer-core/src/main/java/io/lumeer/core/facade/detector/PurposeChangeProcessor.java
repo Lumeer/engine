@@ -29,6 +29,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import java.util.Map;
@@ -38,6 +39,7 @@ public class PurposeChangeProcessor {
 
    private final DelayedActionDao delayedActionDao;
    private final UserDao userDao;
+   private final GroupDao groupDao;
    private final SelectedWorkspace selectedWorkspace;
    private final User initiator;
    private final RequestDataKeeper requestDataKeeper;
@@ -48,11 +50,12 @@ public class PurposeChangeProcessor {
    private static final Map<CollectionPurposeType, Set<PurposeChangeDetector>> commentChangeDetectors = Map.of(CollectionPurposeType.Tasks, Set.of(new CommentChangeDetector()), CollectionPurposeType.None, Set.of(new CommentChangeDetector()));
 
    public PurposeChangeProcessor(
-         final DelayedActionDao delayedActionDao, final UserDao userDao, final SelectedWorkspace selectedWorkspace,
+         final DelayedActionDao delayedActionDao, final UserDao userDao, final GroupDao groupDao, final SelectedWorkspace selectedWorkspace,
          final User initiator, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager,
          final DefaultConfigurationProducer.DeployEnvironment environment) {
       this.delayedActionDao = delayedActionDao;
       this.userDao = userDao;
+      this.groupDao = groupDao;
       this.selectedWorkspace = selectedWorkspace;
       this.initiator = initiator;
       this.requestDataKeeper = requestDataKeeper;
@@ -65,7 +68,7 @@ public class PurposeChangeProcessor {
 
       if (detectors != null) {
          detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, userDao, selectedWorkspace, initiator, requestDataKeeper, constraintManager, environment);
+            detector.setContext(delayedActionDao, userDao, groupDao, selectedWorkspace, initiator, requestDataKeeper, constraintManager, environment);
             detector.detectChanges(documentEvent, collection);
          });
       }
@@ -76,7 +79,7 @@ public class PurposeChangeProcessor {
 
       if (detectors != null) {
          detectors.forEach(detector -> {
-            detector.setContext(delayedActionDao, userDao, selectedWorkspace, initiator, requestDataKeeper, constraintManager, environment);
+            detector.setContext(delayedActionDao, userDao, groupDao, selectedWorkspace, initiator, requestDataKeeper, constraintManager, environment);
             detector.detectChanges(comment, document, collection);
          });
       }

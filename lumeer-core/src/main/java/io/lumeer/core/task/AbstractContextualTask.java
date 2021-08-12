@@ -619,7 +619,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public PurposeChangeProcessor getPurposeChangeProcessor() {
       return new PurposeChangeProcessor(
-            getDaoContextSnapshot().getDelayedActionDao(), getDaoContextSnapshot().getUserDao(), getDaoContextSnapshot().getSelectedWorkspace(),
+            getDaoContextSnapshot().getDelayedActionDao(), getDaoContextSnapshot().getUserDao(), getDaoContextSnapshot().getGroupDao(), getDaoContextSnapshot().getSelectedWorkspace(),
             initiator, new RequestDataKeeper(requestDataKeeper), constraintManager, environment);
    }
 

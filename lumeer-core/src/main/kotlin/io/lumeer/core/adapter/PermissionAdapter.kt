@@ -329,7 +329,7 @@ class PermissionAdapter(private val userDao: UserDao,
    }
 
    private fun isDocumentOwner(organization: Organization, project: Project?, document: Document, collection: Collection, userId: String): Boolean {
-      return isDocumentContributor(organization, project, document, collection, userId) || DocumentUtils.isDocumentOwnerByPurpose(collection, document, getUser(userId))
+      return isDocumentContributor(organization, project, document, collection, userId) || DocumentUtils.isDocumentOwnerByPurpose(collection, document, getUser(userId), getGroups(organization.id), getUsers(organization.id))
    }
 
    private fun isDocumentContributor(organization: Organization, project: Project?, document: Document, collection: Collection, userId: String): Boolean {

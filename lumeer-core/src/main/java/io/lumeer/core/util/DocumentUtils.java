@@ -25,8 +25,10 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ConstraintData;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.CurrencyData;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Organization;
@@ -40,14 +42,18 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.function.Function;
@@ -65,13 +71,13 @@ public class DocumentUtils {
    // gets encoded documents
    public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getSelectedWorkspace().getOrganization().get(), query, user, language, permissions, timeZone);
+         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getGroupDao(), dao.getSelectedWorkspace().getOrganization().get(), query, user, language, permissions, timeZone);
       }
 
       return List.of();
    }
 
-   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final Organization organization, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
+   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final GroupDao groupDao, final Organization organization, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (organization != null && query.getCollectionIds().size() > 0) {
          final String collectionId = query.getCollectionIds().iterator().next();
          final Collection collection = collectionDao.getCollectionById(collectionId);
@@ -90,7 +96,8 @@ public class DocumentUtils {
                user,
                translationManager.translateDurationUnitsMap(language),
                new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
-               timeZone != null ? timeZone : TimeZone.getDefault().getID()
+               timeZone != null ? timeZone : TimeZone.getDefault().getID(),
+               groupDao.getAllGroups(organization.getId())
          );
 
          final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQueryDecodingFromJson(
@@ -124,41 +131,61 @@ public class DocumentUtils {
       return document.getCreatedBy().equals(userId);
    }
 
-   public static boolean isDocumentOwnerByPurpose(final Collection collection, final Document document, final User user) {
-      return DocumentUtils.isTaskAssignedByUser(collection, document, user.getEmail());
+   public static boolean isDocumentOwnerByPurpose(final Collection collection, final Document document, final User user, final List<Group> teams, final List<User> users) {
+      return DocumentUtils.isTaskAssignedByUser(collection, document, user.getEmail(), teams, users);
    }
 
-   public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail) {
-      return isTaskAssignedByUser(collection, document.getData(), userEmail);
+   public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail, final List<Group> teams, final List<User> users) {
+      return isTaskAssignedByUser(collection, document.getData(), userEmail, teams, users);
    }
 
-   public static boolean isTaskAssignedByUser(final Collection collection, final DataDocument data, String userEmail) {
-      return getUsersAssigneeEmails(collection, data).stream().anyMatch(s -> StringUtils.compareIgnoreCase(s, userEmail) == 0);
+   public static boolean isTaskAssignedByUser(final Collection collection, final DataDocument data, String userEmail, final List<Group> teams, final List<User> users) {
+      return getUsersAssigneeEmails(collection, data, teams, users).stream().anyMatch(s -> StringUtils.compareIgnoreCase(s, userEmail) == 0);
    }
 
-   public static Set<String> getUsersAssigneeEmails(final Collection collection, final Document document) {
-      return getUsersAssigneeEmails(collection, document.getData());
+   public static Set<String> getUsersAssigneeEmails(final Collection collection, final Document document, final List<Group> teams, final List<User> users) {
+      return getUsersAssigneeEmails(collection, document.getData(), teams, users);
    }
 
-   public static Set<String> getUsersAssigneeEmails(final Collection collection, final DataDocument data) {
+   public static Set<String> getUsersAssigneeEmails(final Collection collection, final DataDocument data, final List<Group> teams, final List<User> users) {
       if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
          final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
          final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
          if (assigneeAttribute != null) {
-            return getUsersList(data, assigneeAttribute.getId());
+            return getUsersList(data, assigneeAttribute, teams, users);
          }
       }
       return Collections.emptySet();
    }
 
    @SuppressWarnings("unchecked")
-   public static Set<String> getUsersList(final Document document, final String attributeId) {
-      return getUsersList(document.getData(), attributeId);
+   public static Set<String> getUsersList(final Document document, final Attribute attribute, final List<Group> teams, final List<User> users) {
+      return getUsersList(document.getData(), attribute, teams, users);
    }
 
    @SuppressWarnings("unchecked")
-   public static Set<String> getUsersList(final DataDocument data, final String attributeId) {
-      final Object usersObject = data != null ? data.getObject(attributeId) : null;
+   public static Set<String> getUsersList(final DataDocument data, final Attribute attribute, final List<Group> teams, final List<User> users) {
+      final Set<String> stringList = getStringList(data, attribute);
+      if (attribute.getConstraint() != null && attribute.getConstraint().getType() == ConstraintType.User) {
+         return stringList.stream().map(value -> {
+            if (value.startsWith("@")) {
+               final String teamId = value.substring(1);
+               final Optional<Group> team = teams.stream().filter(t -> t.getId().equals(teamId)).findFirst();
+               final Map<String, User> usersMap = users.stream().collect(Collectors.toMap(User::getId, user -> user));
+               return team.map(group -> group.getUsers().stream()
+                                             .map(usersMap::get).filter(Objects::nonNull)
+                                             .map(User::getEmail).collect(Collectors.toList()))
+                          .orElseGet(ArrayList::new);
+            }
+            return Collections.singletonList(value);
+         }).flatMap(List::stream).collect(Collectors.toSet());
+      }
+
+      return stringList;
+   }
+
+   public static Set<String> getStringList(final DataDocument data, final Attribute attribute) {
+      final Object usersObject = data != null ? data.getObject(attribute.getId()) : null;
       if (usersObject != null) {
          if (usersObject instanceof String) {
             return Set.of((String) usersObject);

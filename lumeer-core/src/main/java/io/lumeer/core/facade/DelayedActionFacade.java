@@ -40,6 +40,7 @@ import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateResourceComment;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import java.util.List;
@@ -57,6 +58,9 @@ public class DelayedActionFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
 
    @Inject
    private SelectedWorkspace selectedWorkspace;
@@ -83,7 +87,7 @@ public class DelayedActionFacade {
    public void init() {
       final ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
       collectionChangeProcessor = new CollectionChangeProcessor(delayedActionDao, collectionDao, selectedWorkspace);
-      purposeChangeProcessor = new PurposeChangeProcessor(delayedActionDao, userDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationProducer.getEnvironment());
+      purposeChangeProcessor = new PurposeChangeProcessor(delayedActionDao, userDao, groupDao, selectedWorkspace, authenticatedUser.getCurrentUser(), requestDataKeeper, constraintManager, configurationProducer.getEnvironment());
    }
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
