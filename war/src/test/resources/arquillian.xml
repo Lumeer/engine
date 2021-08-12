@@ -18,7 +18,7 @@
    <container qualifier="wildfly-managed">
       <configuration>
          <property name="jbossHome">${project.build.directory}/wildfly-17.0.1.Final</property>
-         <property name="javaVmArguments">-Xmx1g -Xms1g --add-modules=java.se</property>
+         <property name="javaVmArguments">-Xmx1500m -Xms1g --add-modules=java.se</property>
       </configuration>
    </container>
 
