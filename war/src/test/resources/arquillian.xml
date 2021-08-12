@@ -18,14 +18,14 @@
    <container qualifier="wildfly-managed">
       <configuration>
          <property name="jbossHome">${project.build.directory}/wildfly-17.0.1.Final</property>
-         <property name="javaVmArguments">-Xmx2g -Xms1g --add-modules=java.se</property>
+         <property name="javaVmArguments">-Xmx1g -Xms1g --add-modules=java.se</property>
       </configuration>
    </container>
 
    <container qualifier="debug">
       <configuration>
          <property name="jbossHome">${project.build.directory}/wildfly-17.0.1.Final</property>
-         <property name="javaVmArguments">-Xmx2g -Xms1g --add-modules=java.se -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5105</property>
+         <property name="javaVmArguments">-Xmx1g -Xms1g --add-modules=java.se -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5105</property>
       </configuration>
    </container>
 </arquillian>
