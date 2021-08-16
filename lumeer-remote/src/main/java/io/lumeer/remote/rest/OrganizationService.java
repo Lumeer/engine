@@ -139,6 +139,7 @@ public class OrganizationService extends AbstractService {
    @PUT
    @Path("{organizationId:[0-9a-fA-F]{24}}/permissions/groups")
    public Set<Permission> updateGroupPermission(@PathParam("organizationId") String organizationId, Set<Permission> groupPermission) {
+      workspaceKeeper.setOrganizationId(organizationId);
       return organizationFacade.updateGroupPermissions(organizationId, groupPermission);
    }
 
