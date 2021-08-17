@@ -51,11 +51,13 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
@@ -133,6 +135,16 @@ public class UserFacade extends AbstractFacade {
       User updatedUser = updateExistingUser(organizationId, storedUser, user);
 
       return keepOnlyCurrentOrganization(updatedUser, organizationId);
+   }
+
+   public void checkUserTimeZone(final User user, final String timeZone) {
+      if (StringUtils.isNotEmpty(timeZone)) {
+         final TimeZone tz = TimeZone.getTimeZone(timeZone);
+
+         if (user.getTimeZone() == null || !tz.getID().equals(user.getTimeZone())) {
+            userDao.updateUserTimeZone(user.getId(), tz.getID());
+         }
+      }
    }
 
    public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {

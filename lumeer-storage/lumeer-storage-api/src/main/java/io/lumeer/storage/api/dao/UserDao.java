@@ -29,6 +29,8 @@ public interface UserDao {
 
    User updateUser(String userId, User user);
 
+   User updateUserTimeZone(final String id, final String timeZone);
+
    void deleteUser(String userId);
 
    User getUserByEmail(String email);

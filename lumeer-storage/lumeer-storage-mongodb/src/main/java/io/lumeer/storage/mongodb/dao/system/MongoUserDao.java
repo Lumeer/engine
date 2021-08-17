@@ -30,9 +30,11 @@ import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -90,6 +92,20 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
          return returnedUser;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update user " + user, ex);
+      }
+   }
+
+   @Override
+   public User updateUserTimeZone(final String id, final String timeZone) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+      try {
+         User returnedUser = databaseCollection().findOneAndUpdate(idFilter(id), Updates.set(User.TIME_ZONE, timeZone), options);
+         if (returnedUser == null) {
+            throw new StorageException("User '" + id + "' has not been updated.");
+         }
+         return returnedUser;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update user '" + id + "': ", ex);
       }
    }
 
