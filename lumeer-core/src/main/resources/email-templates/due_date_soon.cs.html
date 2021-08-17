@@ -47,7 +47,7 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            Váš úkol${ <em>,taskName,</em>} z ${collectionName} má brzy termín dokončení${ (,taskDueDate,)}.
+            ${if assigneeViaTeamOnly}úkol Vašeho týmu${else}Váš úkol${end}${ <em>,taskName,</em>} z ${collectionName} má brzy termín dokončení${ (,taskDueDate,)}.
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Stav úkolu: <em>${taskState(stav není nastaven)}</em>

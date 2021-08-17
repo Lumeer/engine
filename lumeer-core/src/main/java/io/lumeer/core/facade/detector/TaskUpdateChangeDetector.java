@@ -40,7 +40,7 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
          // delete previous due date and assignee events on the document
          delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.TASK_UPDATED));
          if (!doneState) {
-            final Set<String> observers = getObservers(documentEvent, collection);
+            final Set<Assignee> observers = getObservers(documentEvent, collection);
             delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), observers));
 
             // assignee != initiator, initiator != observer, no change in due date, state, nor assignee => send task update
@@ -50,8 +50,11 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
 
             if (!isAttributeChanged(documentEvent, assigneeAttr) && !isAttributeChanged(documentEvent, dueDateAttr) && !isAttributeChanged(documentEvent, stateAttr)) {
                if (observers != null) { // prevent double notification when assignee is also an observer
-                  final Set<String> assignees = new HashSet<>(getAssignees(documentEvent, collection));
-                  assignees.removeAll(observers);
+                  final Set<Assignee> assignees = new HashSet<>(getAssignees(documentEvent, collection));
+                  observers.forEach(assignee -> {
+                     assignees.remove(new Assignee(assignee.getEmail(), true));
+                     assignees.remove(new Assignee(assignee.getEmail(), false));
+                  });
                   delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), assignees));
                } else {
                   delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));

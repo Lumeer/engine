@@ -37,6 +37,7 @@ import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
+import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
@@ -298,6 +299,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
                   if (documentId != null) {
                      final Document document = projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
+                     document.setData(projectDaoSnapshot.getDataDao().getData(collectionId, documentId));
                      if (receiver != null && !permissionAdapter.canReadDocument(organization, project, document, collection, receiver.getId())) {
                         return false;
                      }
