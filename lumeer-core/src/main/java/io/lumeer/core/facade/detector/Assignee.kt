@@ -19,4 +19,6 @@
 
 package io.lumeer.core.facade.detector
 
-data class Assignee(val email: String, val viaTeam: Boolean)
+data class Assignee(val email: String, val viaTeam: Boolean) {
+   var timeZone: String? = null
+}

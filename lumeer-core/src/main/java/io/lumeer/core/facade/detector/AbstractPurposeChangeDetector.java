@@ -58,7 +58,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 public abstract class AbstractPurposeChangeDetector implements PurposeChangeDetector {
@@ -295,17 +297,33 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
                      notificationType == NotificationType.PAST_DUE_DATE ||
                      !assignee.equals(currentUser.getEmail().toLowerCase()) && StringUtils.isNotEmpty(assignee))
          ).forEach(assignee -> {
+            ZonedDateTime timeZonedWhen = when;
+
+            // when the actions are scheduled way ahead (due date soon, past due date), consider the user's time zone
+            if (notificationType == NotificationType.DUE_DATE_SOON || notificationType == NotificationType.PAST_DUE_DATE) {
+               final Optional<String> userTimeZone = assignees.stream().filter(a -> a.getEmail().equals(assignee) && StringUtils.isNotEmpty(a.getTimeZone())).map(Assignee::getTimeZone).findFirst();
+               if (userTimeZone.isPresent()) {
+                  final TimeZone tz = TimeZone.getTimeZone(userTimeZone.get());
+                  timeZonedWhen = when.withZoneSameInstant(tz.toZoneId());
+               }
+            }
+
+            timeZonedWhen = roundTime(timeZonedWhen, NotificationFrequency.Immediately);  // in the future, this can be removed and checked in DelayedActionProcessor
+            final String resourcePath = getResourcePath(documentEvent);
+            final String correlationId = StringUtils.isNotBlank(requestDataKeeper.getSecondaryCorrelationId()) ? requestDataKeeper.getSecondaryCorrelationId() : requestDataKeeper.getCorrelationId();
+            final DataDocument data = getData(documentEvent, collection, assignee, assignees);
+
             for (NotificationChannel channel : NotificationChannel.values()) {
                final DelayedAction action = new DelayedAction();
 
                action.setInitiator(currentUser.getEmail());
                action.setReceiver(assignee);
-               action.setResourcePath(getResourcePath(documentEvent));
+               action.setResourcePath(resourcePath);
                action.setNotificationType(notificationType);
-               action.setCheckAfter(roundTime(when, NotificationFrequency.Immediately)); // in the future, this can be removed and checked in DelayedActionProcessor
+               action.setCheckAfter(timeZonedWhen);
                action.setNotificationChannel(channel);
-               action.setCorrelationId(StringUtils.isNotBlank(requestDataKeeper.getSecondaryCorrelationId()) ? requestDataKeeper.getSecondaryCorrelationId() : requestDataKeeper.getCorrelationId());
-               action.setData(getData(documentEvent, collection, assignee, assignees));
+               action.setCorrelationId(correlationId);
+               action.setData(data);
 
                actions.add(action);
             }

@@ -174,7 +174,11 @@ public class DocumentUtils {
                final Map<String, User> usersMap = users.stream().collect(toMap(User::getId, user -> user));
                return team.map(group -> group.getUsers().stream()
                                              .map(usersMap::get).filter(Objects::nonNull)
-                                             .map(u -> new Assignee(u.getEmail().toLowerCase(Locale.ROOT), true)).collect(toList()))
+                                             .map(u -> {
+                                                final Assignee a = new Assignee(u.getEmail().toLowerCase(Locale.ROOT), true);
+                                                a.setTimeZone(u.getTimeZone());
+                                                return a;
+                                             }).collect(toList()))
                           .orElseGet(ArrayList::new);
             }
             return Collections.singletonList(new Assignee(value, false));
