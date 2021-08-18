@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Někdo Vás zmiňuje v komentáři u úkolu ${taskName}...
+   Někdo ${if assigneeViaTeamOnly}zmiňuje Váš tým${else}Vás zmiňuje${end} v komentáři u úkolu ${taskName}...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,7 +47,7 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            úkol${ <em>,taskName,</em>} z ${collectionName} má nový komentář, který Vás zmiňuje.${ Úkol komentoval ,userName,.}
+            úkol${ <em>,taskName,</em>} z ${collectionName} má nový komentář, který ${if assigneeViaTeamOnly}zmiňuje Váš tým${else}Vás zmiňuje${end}.${ Úkol komentoval ,userName,.}
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Komentář: <em>${taskComment}</em>

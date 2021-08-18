@@ -16,36 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.User;
+package io.lumeer.core.facade.detector
 
-import java.util.List;
-import java.util.Set;
-
-public interface UserDao {
-
-   User createUser(User user);
-
-   User updateUser(String userId, User user);
-
-   User updateUserTimeZone(final String id, final String timeZone);
-
-   void deleteUser(String userId);
-
-   User getUserByEmail(String email);
-
-   List<User> getUsersByEmails(Set<String> email);
-
-   User getUserByAuthId(String authId);
-
-   User getUserById(String id);
-
-   List<User> getUserByIds(Set<String> ids);
-
-   List<User> getAllUsers(String organizationId);
-
-   long getReferralsCount(final String referral);
-
-   long getAllUsersCount(String organizationId);
+data class Assignee(val email: String, val viaTeam: Boolean) {
+   var timeZone: String? = null
 }

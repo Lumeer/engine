@@ -36,6 +36,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.User;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.detector.Assignee;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
@@ -51,6 +52,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -152,36 +154,38 @@ public class DocumentUtils {
          final String assigneeAttributeId = collection.getPurpose().getAssigneeAttributeId();
          final Attribute assigneeAttribute = ResourceUtils.findAttribute(collection.getAttributes(), assigneeAttributeId);
          if (assigneeAttribute != null) {
-            return getUsersList(data, assigneeAttribute, teams, users);
+            return getUsersList(data, assigneeAttribute, teams, users).stream().map(Assignee::getEmail).collect(toSet());
          }
       }
       return Collections.emptySet();
    }
 
-   @SuppressWarnings("unchecked")
-   public static Set<String> getUsersList(final Document document, final Attribute attribute, final List<Group> teams, final List<User> users) {
+   public static Set<Assignee> getUsersList(final Document document, final Attribute attribute, final List<Group> teams, final List<User> users) {
       return getUsersList(document.getData(), attribute, teams, users);
    }
 
-   @SuppressWarnings("unchecked")
-   public static Set<String> getUsersList(final DataDocument data, final Attribute attribute, final List<Group> teams, final List<User> users) {
+   public static Set<Assignee> getUsersList(final DataDocument data, final Attribute attribute, final List<Group> teams, final List<User> users) {
       final Set<String> stringList = getStringList(data, attribute);
       if (attribute.getConstraint() != null && attribute.getConstraint().getType() == ConstraintType.User) {
          return stringList.stream().map(value -> {
             if (value.startsWith("@")) {
                final String teamId = value.substring(1);
                final Optional<Group> team = teams.stream().filter(t -> t.getId().equals(teamId)).findFirst();
-               final Map<String, User> usersMap = users.stream().collect(Collectors.toMap(User::getId, user -> user));
+               final Map<String, User> usersMap = users.stream().collect(toMap(User::getId, user -> user));
                return team.map(group -> group.getUsers().stream()
                                              .map(usersMap::get).filter(Objects::nonNull)
-                                             .map(User::getEmail).collect(Collectors.toList()))
+                                             .map(u -> {
+                                                final Assignee a = new Assignee(u.getEmail().toLowerCase(Locale.ROOT), true);
+                                                a.setTimeZone(u.getTimeZone());
+                                                return a;
+                                             }).collect(toList()))
                           .orElseGet(ArrayList::new);
             }
-            return Collections.singletonList(value);
+            return Collections.singletonList(new Assignee(value, false));
          }).flatMap(List::stream).collect(Collectors.toSet());
       }
 
-      return stringList;
+      return stringList.stream().map(s -> new Assignee(s, false)).collect(toSet());
    }
 
    public static Set<String> getStringList(final DataDocument data, final Attribute attribute) {

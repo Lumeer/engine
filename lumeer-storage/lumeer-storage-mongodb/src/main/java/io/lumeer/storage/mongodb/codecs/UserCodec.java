@@ -69,6 +69,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String NOTIFICATIONS = "notifications";
    public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
    public static final String HINTS = "hints";
+   public static final String TIME_ZONE = "timeZone";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -138,6 +139,8 @@ public class UserCodec implements CollectibleCodec<User> {
 
       String referral = bson.getString(REFERRAL);
 
+      String timeZone = bson.getString(TIME_ZONE);
+
       List<NotificationSetting> notificationSettings;
       final String notificationsLanguage = bson.getString(NOTIFICATIONS_LANGUAGE);
       List<Document> notifications = bson.getList(NOTIFICATIONS, Document.class);
@@ -202,6 +205,7 @@ public class UserCodec implements CollectibleCodec<User> {
       user.setDefaultWorkspace(new DefaultWorkspace(defaultOrganizationId, defaultProjectId));
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
       user.setEmailVerified(emailVerified != null && emailVerified);
+      user.setTimeZone(timeZone);
 
       return user;
    }
@@ -219,7 +223,8 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(EMAIL_VERIFIED, user.isEmailVerified())
           .append(NOTIFICATIONS, user.getNotificationsSettingsList())
           .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage())
-          .append(HINTS, user.getHints());
+          .append(HINTS, user.getHints())
+          .append(TIME_ZONE, user.getTimeZone());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());

@@ -54,6 +54,7 @@ public class User implements HealthChecking {
    public static final String EMAIL_VERIFIED = "emailVerified";
    public static final String NOTIFICATIONS_SETTINGS = "notifications";
    public static final String HINTS = "hints";
+   public static final String TIME_ZONE = "timeZone";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -110,6 +111,9 @@ public class User implements HealthChecking {
    @JsonView(UserViews.DefaultView.class)
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
    private ZonedDateTime lastLoggedIn;
+
+   @JsonView(UserViews.DefaultView.class)
+   private String timeZone;
 
    public User(final String email) {
       this.email = email;
@@ -292,6 +296,14 @@ public class User implements HealthChecking {
       return notifications.getSettings().stream().anyMatch(n -> n.getNotificationType() == type && n.getNotificationChannel() == channel);
    }
 
+   public String getTimeZone() {
+      return timeZone;
+   }
+
+   public void setTimeZone(final String timeZone) {
+      this.timeZone = timeZone;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -312,6 +324,7 @@ public class User implements HealthChecking {
             ", emailVerified=" + emailVerified +
             ", notifications=" + notifications +
             ", hints=" + hints +
+            ", timeZone=" + timeZone +
             '}';
    }
 
@@ -344,5 +357,6 @@ public class User implements HealthChecking {
    public void checkHealth() throws InsaneObjectException {
       checkStringLength("name", name, MAX_STRING_LENGTH);
       checkStringLength("email", email, MAX_STRING_LENGTH);
+      checkStringLength("timeZone", timeZone, MAX_STRING_LENGTH);
    }
 }

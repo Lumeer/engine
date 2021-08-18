@@ -27,7 +27,7 @@
 </head>
 <body>
 <div style="display: none; max-height: 0px; overflow: hidden;">
-   Byl Vám přidělen úkol ${taskName}...
+   ${if assigneeViaTeamOnly}Vašemu týmu byl${else}Byl Vám${end} přidělen úkol ${taskName}...
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
@@ -47,7 +47,7 @@
             Dobrý den,
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
-            byl Vám přidělen úkol${ <em>,taskName,</em>} z ${collectionName}.${ Úkol přidělil ,userName,.}
+            ${if assigneeViaTeamOnly}Vašemu týmu byl${else}byl Vám${end} přidělen úkol${ <em>,taskName,</em>} z ${collectionName}.${ Úkol přidělil ,userName,.}
          </p>
          <p style="line-height: 150%; margin-top: 0px; margin-bottom: 10px; padding: 0px; ">
             Stav úkolu: <em>${taskState(stav není nastaven)}</em>

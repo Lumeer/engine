@@ -70,6 +70,7 @@ public class DelayedAction {
    public static final String DATA_VIEW_CODE = "viewCode";
    public static final String DATA_ORIGINAL_ACTION_IDS = "originalActionIds";
    public static final String DATA_ORIGINAL_ACTION_TYPES = "originalActionTypes";
+   public static final String DATA_ASSIGNEE_VIA_TEAM_ONLY = "assigneeViaTeamOnly";
 
    private String id;
 
