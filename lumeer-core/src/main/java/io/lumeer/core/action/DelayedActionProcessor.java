@@ -31,6 +31,8 @@ import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
+import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.facade.EmailService;
@@ -53,16 +55,22 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.Event;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TimeZone;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -202,7 +210,9 @@ public class DelayedActionProcessor extends WorkspaceContext {
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
          final User receiverUser = userIds.containsKey(action.getReceiver()) ? users.get(userIds.get(action.getReceiver())) : null;
-         if (checkActionResourceExistsAndFillData(action, receiverUser)) {
+         final Collection collection = checkActionResourceExistsAndFillData(action, receiverUser);
+
+         if (collection != null) {
 
             // if we do not know anything about the user, make sure to send the notification; otherwise check the user settings
             if (receiverUser == null || isNotificationEnabled(action, receiverUser)) {
@@ -212,11 +222,11 @@ public class DelayedActionProcessor extends WorkspaceContext {
                   final String sender = user != null ? emailService.formatUserReference(user) : "";
                   final String from = user != null ? emailService.formatFrom(user) : "";
                   final String recipient = action.getReceiver();
-                  final Map<String, Object> additionalData = processData(action.getData(), lang);
+                  final Map<String, Object> additionalData = processData(action.getData(), lang, receiverUser);
 
                   emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, from, recipient, getEmailSubjectPart(action, additionalData, lang), additionalData);
                } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
-                  UserNotification notification = createUserNotification(userIds.get(action.getReceiver()), action, lang);
+                  UserNotification notification = createUserNotification(users.get(userIds.get(action.getReceiver())), action, lang);
                   notification = userNotificationDao.createNotification(notification);
                   if (pusherClient != null) {
                      pusherClient.trigger(List.of(createUserNotificationEvent(notification, PusherFacade.CREATE_EVENT_SUFFIX, userIds.get(action.getReceiver()))));
@@ -225,7 +235,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
             }
 
             // reschedule past due actions
-            if (!rescheduleDueDateAction(action)) {
+            if (!rescheduleDueDateAction(actions, action, receiverUser, collection)) {
                markActionAsCompleted(actions, action);
             }
          } else {
@@ -258,7 +268,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
       }
    }
 
-   private boolean checkActionResourceExistsAndFillData(final DelayedAction action, final User receiver) {
+   private Collection checkActionResourceExistsAndFillData(final DelayedAction action, final User receiver) {
       final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
       final String projectId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
       final String collectionId = action.getData().getString(DelayedAction.DATA_COLLECTION_ID);
@@ -288,7 +298,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
                final PermissionAdapter permissionAdapter = permissionAdapters.computeIfAbsent(projectKey, key -> new PermissionAdapter(projectDaoSnapshot.getUserDao(), projectDaoSnapshot.getGroupDao(), projectDaoSnapshot.getViewDao(), projectDaoSnapshot.getLinkTypeDao(), projectDaoSnapshot.getCollectionDao()));
                if (receiver != null && !permissionAdapter.canReadWorkspace(organization, project, receiver.getId())) {
-                  return false;
+                  return null;
                }
 
                if (collectionId != null) {
@@ -301,39 +311,74 @@ public class DelayedActionProcessor extends WorkspaceContext {
                      final Document document = projectDaoSnapshot.getDocumentDao().getDocumentById(documentId);
                      document.setData(projectDaoSnapshot.getDataDao().getData(collectionId, documentId));
                      if (receiver != null && !permissionAdapter.canReadDocument(organization, project, document, collection, receiver.getId())) {
-                        return false;
+                        return null;
                      }
+
+                     return collection;
                   }
                }
-
             }
          }
       } catch (ResourceNotFoundException e) {
-         return false;
+         return null;
       }
 
-      return true;
+      return null;
    }
 
    // reschedule past due actions until they are completed
-   private boolean rescheduleDueDateAction(final DelayedAction action) {
-      if (action.getNotificationType() == NotificationType.PAST_DUE_DATE && action.getData().getDate(DelayedAction.DATA_TASK_DUE_DATE) != null) {
-         final Boolean completed = action.getData().getBoolean(DelayedAction.DATA_TASK_COMPLETED);
+   private boolean rescheduleDueDateAction(final List<DelayedAction> actions, final DelayedAction action, final User user, final Collection collection) {
+      if (action.getId() == null && action.getData().containsKey(DelayedAction.DATA_ORIGINAL_ACTION_IDS) && actions != null) {
+         final AtomicBoolean rescheduled = new AtomicBoolean(false);
+         var ids = action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_IDS, String.class);
+         actions.forEach(a -> {
+            if (ids.contains(a.getId())) {
+               rescheduled.set(rescheduled.get() || rescheduleDueDateAction(null, a, user, collection));
+            }
+         });
 
-         if (completed != null && !completed) {
-            action.setStartedProcessing(null);
-            action.setCheckAfter(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
-            delayedActionDao.updateAction(action);
+         return rescheduled.get();
+      } else {
+         final Date date = action.getData().getDate(DelayedAction.DATA_TASK_DUE_DATE);
 
-            return true;
+         if (action.getNotificationType() == NotificationType.PAST_DUE_DATE && date != null) {
+            final Boolean completed = action.getData().getBoolean(DelayedAction.DATA_TASK_COMPLETED);
+
+            if (completed != null && !completed) {
+               action.setStartedProcessing(null);
+               action.setCheckAfter(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+               delayedActionDao.updateAction(action);
+
+               return true;
+            }
+         } else if (action.getNotificationType() == NotificationType.DUE_DATE_SOON && date != null) {
+            final Boolean completed = action.getData().getBoolean(DelayedAction.DATA_TASK_COMPLETED);
+            ZonedDateTime dueDate = ZonedDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC);
+
+            if (completed != null && !completed) {
+               // when there is only date part in the constraint and it is stored in UTC (i.e. we want to ignore time zones),
+               // we need to take the due date (e.g. 2021-08-28T00:00:00.000Z) and pretend that it is in the user's time zone
+               // (e.g. 2021-08-28T00:00:00.000+0200) because checkAfter is stored according to the user's time zone (e.g. 2021-08-27T22:00:00.000Z)
+               if (user != null && StringUtils.isNotEmpty(user.getTimeZone()) && CollectionUtil.isDueDateInUTC(collection) && !CollectionUtil.hasDueDateFormatTimeOptions(collection)) {
+                  dueDate = dueDate.withZoneSameLocal(TimeZone.getTimeZone(user.getTimeZone()).toZoneId());
+               }
+
+               if (action.getCheckAfter().plus(1, ChronoUnit.DAYS).isBefore(dueDate)) {
+                  action.setStartedProcessing(null);
+                  action.setCheckAfter(ZonedDateTime.now().plus(1, ChronoUnit.DAYS));
+                  delayedActionDao.updateAction(action);
+
+                  return true;
+               }
+            }
          }
-      }
 
-      return false;
+         return false;
+      }
    }
 
    // format due date to string according to attribute constraint format and user language
-   private Map<String, Object> processData(final DataDocument originalData, final Language language) {
+   private Map<String, Object> processData(final DataDocument originalData, final Language language, final User receiverUser) {
       final Map<String, Object> data = new HashMap<>(originalData);
 
       if (originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE) != null) {
@@ -343,9 +388,16 @@ public class DelayedActionProcessor extends WorkspaceContext {
             format = originalData.getString(DelayedAction.DATA_DUE_DATE_FORMAT);
          }
 
+         // we get the date in UTC and need to convert it to user's time zone, however, we send the date for parsing as an instant
+         // instant is without a timezone, so we need to get epoch milli, as we were in UTC
+         ZonedDateTime dueDate = ZonedDateTime.ofInstant(originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE).toInstant(), ZoneOffset.UTC);
+         if (receiverUser != null && StringUtils.isNotEmpty(receiverUser.getTimeZone())) {
+            dueDate = dueDate.withZoneSameInstant(TimeZone.getTimeZone(receiverUser.getTimeZone()).toZoneId()).withZoneSameLocal(ZoneOffset.UTC);
+         }
+
          data.put(DelayedAction.DATA_TASK_DUE_DATE,
                JsFunctionsParser.formatMomentJsDate(
-                     originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE).getTime(),
+                     dueDate.toInstant().toEpochMilli(),// originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE).getTime(),
                      format,
                      language.toString().toLowerCase()
                )
@@ -447,8 +499,8 @@ public class DelayedActionProcessor extends WorkspaceContext {
    }
 
    // translate action to user notification
-   private UserNotification createUserNotification(final String userId, final DelayedAction action, final Language language) {
-      return new UserNotification(userId, ZonedDateTime.now(), false, null, action.getNotificationType(), new DataDocument(processData(action.getData(), language)));
+   private UserNotification createUserNotification(final User user, final DelayedAction action, final Language language) {
+      return new UserNotification(user.getId(), ZonedDateTime.now(), false, null, action.getNotificationType(), new DataDocument(processData(action.getData(), language, user)));
    }
 
    public void setPusherClient(final PusherClient pusherClient) {

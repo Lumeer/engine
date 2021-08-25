@@ -24,6 +24,7 @@ import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
@@ -34,6 +35,8 @@ import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
+import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -51,6 +54,7 @@ import io.lumeer.storage.api.dao.UserDao;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -300,11 +304,12 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
             ZonedDateTime timeZonedWhen = when;
 
             // when the actions are scheduled way ahead (due date soon, past due date), consider the user's time zone
-            if (notificationType == NotificationType.DUE_DATE_SOON || notificationType == NotificationType.PAST_DUE_DATE) {
+            // but only when just date is visible
+            if ((notificationType == NotificationType.DUE_DATE_SOON || notificationType == NotificationType.PAST_DUE_DATE) && CollectionUtil.isDueDateInUTC(collection) && !CollectionUtil.hasDueDateFormatTimeOptions(collection)) {
                final Optional<String> userTimeZone = assignees.stream().filter(a -> a.getEmail().equals(assignee) && StringUtils.isNotEmpty(a.getTimeZone())).map(Assignee::getTimeZone).findFirst();
                if (userTimeZone.isPresent()) {
                   final TimeZone tz = TimeZone.getTimeZone(userTimeZone.get());
-                  timeZonedWhen = when.withZoneSameInstant(tz.toZoneId());
+                  timeZonedWhen = when.withZoneSameLocal(tz.toZoneId());
                }
             }
 
@@ -353,6 +358,16 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
       var dueDate = getDueDate(documentEvent, collection);
       if (dueDate != null) {
+
+         // update the time according to the user's time zone if there is also time stored
+         if (!CollectionUtil.isDueDateInUTC(collection)) {
+            final Optional<String> userTimeZone = assignees.stream().filter(a -> a.getEmail().equals(currentAssignee) && StringUtils.isNotEmpty(a.getTimeZone())).map(Assignee::getTimeZone).findFirst();
+            if (userTimeZone.isPresent()) {
+               final TimeZone tz = TimeZone.getTimeZone(userTimeZone.get());
+               dueDate = dueDate.withZoneSameInstant(tz.toZoneId());
+            }
+         }
+
          data.append(DelayedAction.DATA_TASK_DUE_DATE, new Date(dueDate.toInstant().toEpochMilli()));
       }
       data.append(DelayedAction.DATA_DUE_DATE_FORMAT, getDueDateFormat(documentEvent, collection));

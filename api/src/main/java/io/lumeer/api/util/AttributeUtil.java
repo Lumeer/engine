@@ -22,6 +22,7 @@ package io.lumeer.api.util;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import java.util.ArrayList;
@@ -123,6 +124,36 @@ public class AttributeUtil {
          @SuppressWarnings("unchecked")
          final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
          return (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
+      }
+
+      return false;
+   }
+
+   public static boolean isUTC(final Attribute attribute) {
+      if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.DateTime) {
+         @SuppressWarnings("unchecked")
+         final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         final String format = (String) config.get("format");
+         return (Boolean) Objects.requireNonNullElse(config.get("asUtc"), formatHasTimeOptions(format));
+      }
+
+      return false;
+   }
+
+   public static boolean formatHasTimeOptions(final Attribute attribute) {
+      if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.DateTime) {
+         @SuppressWarnings("unchecked")
+         final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         final String format = (String) config.get("format");
+         return formatHasTimeOptions(format);
+      }
+
+      return false;
+   }
+
+   private static boolean formatHasTimeOptions(final String format) {
+      if (StringUtils.isNotEmpty(format)) {
+         return format.toLowerCase().contains("s") || format.toLowerCase().contains("h") || format.contains("k") || format.contains("m") || format.contains("a");
       }
 
       return false;
