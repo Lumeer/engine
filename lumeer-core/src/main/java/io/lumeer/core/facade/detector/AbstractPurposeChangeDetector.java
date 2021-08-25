@@ -24,7 +24,6 @@ import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
-import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
@@ -35,7 +34,6 @@ import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
-import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -54,7 +52,6 @@ import io.lumeer.storage.api.dao.UserDao;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;

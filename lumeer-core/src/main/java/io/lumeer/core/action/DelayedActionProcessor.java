@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.action;
 
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
@@ -25,13 +26,11 @@ import io.lumeer.api.model.NotificationChannel;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
 import io.lumeer.api.model.ViewCursor;
-import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.adapter.PermissionAdapter;
@@ -39,7 +38,6 @@ import io.lumeer.core.facade.EmailService;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
-import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.JsFunctionsParser;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
@@ -55,8 +53,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.data.Event;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
