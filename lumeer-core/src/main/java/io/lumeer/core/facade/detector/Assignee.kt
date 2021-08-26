@@ -19,6 +19,17 @@
 
 package io.lumeer.core.facade.detector
 
+import io.lumeer.api.model.User
+
 data class Assignee(val email: String, val viaTeam: Boolean) {
    var timeZone: String? = null
+
+   companion object {
+      fun fromUser(user: User, viaTeam: Boolean): Assignee {
+         val a = Assignee(user.email.toLowerCase(), viaTeam)
+         a.timeZone = user.timeZone
+
+         return a
+      }
+   }
 }

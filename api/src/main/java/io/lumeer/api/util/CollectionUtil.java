@@ -20,8 +20,13 @@ package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.CollectionPurposeType;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.rule.AutoLinkRule;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -67,5 +72,37 @@ public class CollectionUtil {
 
    public static Attribute getAttribute(final Collection collection, final String attributeId) {
       return ResourceUtils.findAttribute(collection.getAttributes(), attributeId);
+   }
+
+   public static boolean isDueDateInUTC(final Collection collection) {
+      final CollectionPurpose purpose = collection.getPurpose();
+
+      if (purpose != null && purpose.getType() == CollectionPurposeType.Tasks) {
+         if (StringUtils.isNotEmpty(purpose.getDueDateAttributeId())) {
+            final Attribute attribute = getAttribute(collection, purpose.getDueDateAttributeId());
+
+            if (attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getType() == ConstraintType.DateTime) {
+               return AttributeUtil.isUTC(attribute);
+            }
+         }
+      }
+
+      return false;
+   }
+
+   public static boolean hasDueDateFormatTimeOptions(final Collection collection) {
+      final CollectionPurpose purpose = collection.getPurpose();
+
+      if (purpose != null && purpose.getType() == CollectionPurposeType.Tasks) {
+         if (StringUtils.isNotEmpty(purpose.getDueDateAttributeId())) {
+            final Attribute attribute = getAttribute(collection, purpose.getDueDateAttributeId());
+
+            if (attribute != null && attribute.getConstraint() != null && attribute.getConstraint().getType() == ConstraintType.DateTime) {
+               return AttributeUtil.formatHasTimeOptions(attribute);
+            }
+         }
+      }
+
+      return false;
    }
 }

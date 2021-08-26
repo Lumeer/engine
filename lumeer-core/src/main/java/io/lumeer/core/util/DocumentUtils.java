@@ -52,7 +52,6 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -174,18 +173,22 @@ public class DocumentUtils {
                final Map<String, User> usersMap = users.stream().collect(toMap(User::getId, user -> user));
                return team.map(group -> group.getUsers().stream()
                                              .map(usersMap::get).filter(Objects::nonNull)
-                                             .map(u -> {
-                                                final Assignee a = new Assignee(u.getEmail().toLowerCase(Locale.ROOT), true);
-                                                a.setTimeZone(u.getTimeZone());
-                                                return a;
-                                             }).collect(toList()))
+                                             .map(u -> Assignee.Companion.fromUser(u, true)).collect(toList()))
                           .orElseGet(ArrayList::new);
             }
-            return Collections.singletonList(new Assignee(value, false));
+            return Collections.singletonList(lookupAssignee(value, false, users));
          }).flatMap(List::stream).collect(Collectors.toSet());
       }
 
-      return stringList.stream().map(s -> new Assignee(s, false)).collect(toSet());
+      return stringList.stream().map(s -> lookupAssignee(s, false, users)).collect(toSet());
+   }
+
+   private static Assignee lookupAssignee(final String email, final boolean viaTeam, final List<User> users) {
+      return users.stream().filter(u -> u.getEmail().equals(email)).findFirst().map(user ->
+            Assignee.Companion.fromUser(user, viaTeam)
+      ).orElseGet(() ->
+            new Assignee(email, viaTeam)
+      );
    }
 
    public static Set<String> getStringList(final DataDocument data, final Attribute attribute) {
