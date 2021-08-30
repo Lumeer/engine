@@ -22,6 +22,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.ImportedCollection;
+import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 
@@ -97,7 +98,7 @@ public class ImportFacade extends AbstractFacade {
          return;
       }
       CsvParserSettings settings = new CsvParserSettings();
-      settings.setMaxCharsPerColumn(16*1024);
+      settings.setMaxCharsPerColumn(16 * 1024);
       settings.detectFormatAutomatically(',', ';');
       settings.setHeaderExtractionEnabled(true);
 
@@ -155,7 +156,9 @@ public class ImportFacade extends AbstractFacade {
    }
 
    private List<Attribute> createAttributes(String collectionId, String[] headers) {
-      List<Attribute> attributes = Arrays.stream(headers).map(header -> new Attribute(header, header, null, null, null, 0)).collect(Collectors.toList());
+      List<Attribute> attributes = Arrays.stream(headers)
+                                         .map(AttributeUtil::cleanAttributeName)
+                                         .map(header -> new Attribute(header, header, null, null, null, 0)).collect(Collectors.toList());
       return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 

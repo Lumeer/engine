@@ -37,6 +37,16 @@ import java.util.stream.Collectors;
 
 public class AttributeUtil {
 
+   public static String cleanAttributeName(String name) {
+      StringBuilder sb = new StringBuilder();
+      for (char letter : name.toCharArray()) {
+         if (!Attribute.ILLEGAL_CHARS.contains(letter)) {
+            sb.append(letter);
+         }
+      }
+      return sb.toString();
+   }
+
    public static boolean isEqualOrChild(Attribute attribute, String attributeName) {
       return attribute.getName().equals(attributeName) || attribute.getName().startsWith(attributeName + '.');
    }
@@ -121,8 +131,7 @@ public class AttributeUtil {
 
    public static boolean isMultiselect(final Attribute attribute) {
       if (isConstraintWithConfig(attribute) && (attribute.getConstraint().getType() == ConstraintType.Select || attribute.getConstraint().getType() == ConstraintType.User)) {
-         @SuppressWarnings("unchecked")
-         final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
          return (Boolean) Objects.requireNonNullElse(config.get("multi"), false);
       }
 
@@ -131,8 +140,7 @@ public class AttributeUtil {
 
    public static boolean isUTC(final Attribute attribute) {
       if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.DateTime) {
-         @SuppressWarnings("unchecked")
-         final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
          final String format = (String) config.get("format");
          return (Boolean) Objects.requireNonNullElse(config.get("asUtc"), formatHasTimeOptions(format));
       }
@@ -142,8 +150,7 @@ public class AttributeUtil {
 
    public static boolean formatHasTimeOptions(final Attribute attribute) {
       if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.DateTime) {
-         @SuppressWarnings("unchecked")
-         final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
          final String format = (String) config.get("format");
          return formatHasTimeOptions(format);
       }
