@@ -141,8 +141,7 @@ public class AttributeUtil {
    public static boolean isUTC(final Attribute attribute) {
       if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.DateTime) {
          @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
-         final String format = (String) config.get("format");
-         return (Boolean) Objects.requireNonNullElse(config.get("asUtc"), formatHasTimeOptions(format));
+         return (Boolean) Objects.requireNonNullElse(config.get("asUtc"), false);
       }
 
       return false;
