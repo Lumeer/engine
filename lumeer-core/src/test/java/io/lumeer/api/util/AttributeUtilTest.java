@@ -31,7 +31,7 @@ public class AttributeUtilTest {
 
    @Test
    public void testInUTC() {
-      Assert.assertTrue(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", null)));
+      Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", null)));
       Assert.assertTrue(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", true)));
       Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", false)));
       Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY", null)));
