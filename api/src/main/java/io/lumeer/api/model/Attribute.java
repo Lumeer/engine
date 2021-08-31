@@ -25,7 +25,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 public class Attribute implements HealthChecking {
+
+   public static final List<Character> ILLEGAL_CHARS = List.of('.');
 
    public static final String ID = "id";
    public static final String NAME = "name";
@@ -150,5 +154,6 @@ public class Attribute implements HealthChecking {
    public void checkHealth() throws InsaneObjectException {
       checkStringLength("name", name, MAX_STRING_LENGTH);
       checkStringLength("description", description, MAX_LONG_STRING_LENGTH);
+      checkIllegalCharacters("name", name, ILLEGAL_CHARS);
    }
 }

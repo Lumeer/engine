@@ -20,9 +20,10 @@ package io.lumeer.api.model;
 
 import io.lumeer.api.exception.InsaneObjectException;
 
+import java.util.List;
+
 /**
- * Classes with this interface can automatically check their correctness
- * (attribute lengths, content etc.)
+ * Classes with this interface can automatically check their correctness (attribute lengths, content etc.)
  */
 public interface HealthChecking {
 
@@ -31,6 +32,7 @@ public interface HealthChecking {
 
    /**
     * Checks object health.
+    *
     * @throws InsaneObjectException When thee object is not healthy.
     */
    void checkHealth() throws InsaneObjectException;
@@ -38,6 +40,16 @@ public interface HealthChecking {
    default void checkStringLength(final String name, final String value, final int maxLength) throws InsaneObjectException {
       if (value != null && value.length() > maxLength) {
          throw new InsaneObjectException(String.format("Value of %s is longer than %d.", name, maxLength));
+      }
+   }
+
+   default void checkIllegalCharacters(final String name, final String value, final List<Character> invalidChars) throws InsaneObjectException {
+      if (value != null) {
+         for (char letter : value.toCharArray()) {
+            if (invalidChars.contains(letter)) {
+               throw new InsaneObjectException(String.format("Value of %s contains illegal character %c.", name, letter));
+            }
+         }
       }
    }
 }
