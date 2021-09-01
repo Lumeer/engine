@@ -118,8 +118,8 @@ public class LinkTypeFacade extends AbstractFacade {
       LinkType storedLinkType = linkTypeDao.createLinkType(linkType);
       linkDataDao.createDataRepository(storedLinkType.getId());
 
-      if (attributes.size() > 0) {
-         storedLinkType.setAttributes(createLinkTypeAttributes(storedLinkType, attributes, false));
+      if (attributes.size() > 0 && permissionsChecker.hasRoleInLinkType(storedLinkType, RoleType.AttributeEdit)) {
+         storedLinkType.setAttributes(createLinkTypeAttributes(storedLinkType, attributes));
       }
 
       return storedLinkType;
@@ -234,19 +234,45 @@ public class LinkTypeFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createLinkTypeAttributes(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
       LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
-      return createLinkTypeAttributes(linkType, attributes, true);
+      return createLinkTypeAttributes(linkType, attributes);
    }
 
-   public java.util.Collection<Attribute> createLinkTypeAttributes(final LinkType linkType, final java.util.Collection<Attribute> attributes, boolean pushNotification) {
+   public java.util.Collection<Attribute> createLinkTypeAttributes(final LinkType linkType, final java.util.Collection<Attribute> attributes) {
       permissionsChecker.checkAttributesFunctionAccess(attributes);
       permissionsChecker.checkRoleInLinkType(linkType, RoleType.AttributeEdit);
+      final LinkType bookedAttributesLinkType = linkTypeDao.bookAttributesNum(linkType.getId(), linkType, attributes.size());
+
+      int lastAttributeNum = bookedAttributesLinkType.getLastAttributeNum() - attributes.size() + 1;
+      var canEditFunction = permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig);
+
+      for (Attribute attribute : attributes) {
+         attribute.setId(LinkType.ATTRIBUTE_PREFIX + lastAttributeNum++);
+         attribute.setUsageCount(0);
+         if (!canEditFunction) {
+            attribute.setFunction(null);
+         }
+         bookedAttributesLinkType.createAttribute(attribute);
+      }
+
+      permissionsChecker.checkFunctionsLimit(linkType);
+      linkTypeDao.updateLinkType(linkType.getId(), bookedAttributesLinkType, linkType);
+
+      return attributes;
+   }
+
+   public java.util.Collection<Attribute> createLinkTypeAttributesWithoutPushNotification(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
+      LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
+      permissionsChecker.checkAttributesFunctionAccess(attributes);
       LinkType originalLinkType = new LinkType(linkType);
 
       var canEditFunction = permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig);
 
-      for (Attribute attribute : attributes) {
+      var sortedAttributes = attributes.stream().sorted((a, b) -> a.getId().compareToIgnoreCase(b.getId())).collect(Collectors.toList());
+      for (Attribute attribute : sortedAttributes) {
          final Integer freeNum = getFreeAttributeNum(linkType);
-         attribute.setId(LinkType.ATTRIBUTE_PREFIX + freeNum);
+         if (attribute.getId() == null) {
+            attribute.setId(LinkType.ATTRIBUTE_PREFIX + freeNum);
+         }
          attribute.setUsageCount(0);
          if (!canEditFunction) {
             attribute.setFunction(null);
@@ -256,7 +282,7 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       permissionsChecker.checkFunctionsLimit(linkType);
-      linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, pushNotification);
+      linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, false);
 
       return attributes;
    }

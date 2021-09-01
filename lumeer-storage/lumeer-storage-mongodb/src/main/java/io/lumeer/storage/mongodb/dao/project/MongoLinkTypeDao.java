@@ -218,6 +218,22 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
       return databaseCollection().aggregate(aggregates).into(new ArrayList<>());
    }
 
+   @Override
+   public LinkType bookAttributesNum(final String id, final LinkType linkType, final int count) {
+      FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
+
+      try {
+         Bson update = new Document("$inc", new Document(LinkTypeCodec.LAST_ATTRIBUTE_NUM, count));
+         final LinkType updatedLinkType = databaseCollection().findOneAndUpdate(idFilter(id), update, options);
+         if (updatedLinkType == null) {
+            throw new StorageException("LinkType '" + id + "' has not been updated.");
+         }
+         return updatedLinkType;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update linkType: " + linkType, ex);
+      }
+   }
+
    private List<Bson> attributeSuggestionAggregation(final SearchSuggestionQuery query) {
       List<Bson> aggregates = new ArrayList<>();
 
