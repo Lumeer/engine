@@ -154,8 +154,8 @@ public class CollectionFacade extends AbstractFacade {
       Collection storedCollection = createCollectionMetadata(collection);
       dataDao.createDataRepository(storedCollection.getId());
 
-      if (attributes.size() > 0) {
-         storedCollection.setAttributes(createCollectionAttributesWithoutPushNotification(storedCollection, attributes));
+      if (attributes.size() > 0 && permissionsChecker.hasRole(storedCollection, RoleType.AttributeEdit)) {
+         storedCollection.setAttributes(createCollectionAttributes(storedCollection, attributes));
       }
 
       return storedCollection;
@@ -342,10 +342,14 @@ public class CollectionFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
+      return createCollectionAttributes(collection, attributes);
+   }
+
+   public java.util.Collection<Attribute> createCollectionAttributes(final Collection collection, final java.util.Collection<Attribute> attributes) {
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
       permissionsChecker.checkAttributesFunctionAccess(attributes);
 
-      final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collectionId, collection, attributes.size());
+      final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collection.getId(), collection, attributes.size());
 
       int lastAttributeNum = bookedAttributesCollection.getLastAttributeNum() - attributes.size() + 1;
       var canEditFunction = permissionsChecker.hasRole(collection, RoleType.TechConfig);
@@ -368,25 +372,25 @@ public class CollectionFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      return createCollectionAttributesWithoutPushNotification(collection, attributes);
-   }
-
-   public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final Collection collection, final java.util.Collection<Attribute> attributes) {
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
       permissionsChecker.checkAttributesFunctionAccess(attributes);
 
       var canEditFunction = permissionsChecker.hasRole(collection, RoleType.TechConfig);
 
-      for (Attribute attribute : attributes) {
+      var sortedAttributes = attributes.stream().sorted((a, b) -> a.getId().compareToIgnoreCase(b.getId())).collect(Collectors.toList());
+      for (Attribute attribute : sortedAttributes) {
+         final Integer freeNum = getFreeAttributeNum(collection);
+         if (attribute.getId() == null) {
+            attribute.setId(Collection.ATTRIBUTE_PREFIX + freeNum);
+         }
          attribute.setUsageCount(0);
          if (!canEditFunction) {
             attribute.setFunction(null);
          }
          collection.createAttribute(attribute);
+         collection.setLastAttributeNum(freeNum);
       }
-      collection.setLastAttributeNum(attributes.size() - 1);
-      collection.setLastAttributeNum(getFreeAttributeNum(collection) - 1);
 
       permissionsChecker.checkFunctionsLimit(collection);
       collection.setLastTimeUsed(ZonedDateTime.now());

@@ -56,7 +56,7 @@ public class LinkTypeCreator extends WithIdCreator {
    }
 
    private void createAttributes(final LinkType linkType, final JSONObject o) {
-      linkTypeFacade.createLinkTypeAttributes(linkType.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
+      linkTypeFacade.createLinkTypeAttributesWithoutPushNotification(linkType.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
    }
 
    private LinkType getLinkType(final JSONObject o) {
