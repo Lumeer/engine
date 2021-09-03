@@ -57,6 +57,7 @@ public class AttributeFilter {
       return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getValue() : null;
    }
 
+   @JsonIgnore
    public String getType() {
       return conditionValues != null && !conditionValues.isEmpty() ? conditionValues.get(0).getType() : null;
    }
