@@ -273,6 +273,13 @@ public class Collection extends Resource implements HealthChecking, Updatable<Co
       }
       if (roles.contains(RoleType.TechConfig)) {
          setPurpose(resource.getPurpose());
+
+         // remove deleted rules, for inserting rules, upsert is used
+         if (resource.getRules() != null && getRules() != null) {
+            var ruleKeys = new HashSet<>(getRules().keySet());
+            ruleKeys.removeAll(resource.getRules().keySet());
+            ruleKeys.forEach(getRules()::remove);
+         }
       }
    }
 }
