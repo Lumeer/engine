@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -261,6 +262,13 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
       }
       if (roles.contains(RoleType.TechConfig)) {
          setRules(resource.getRules());
+
+         // remove deleted rules, for inserting rules, upsert is used
+         if (resource.getRules() != null && getRules() != null) {
+            var ruleKeys = new HashSet<>(getRules().keySet());
+            ruleKeys.removeAll(resource.getRules().keySet());
+            ruleKeys.forEach(getRules()::remove);
+         }
       }
       if (roles.contains(RoleType.AttributeEdit)) {
          setAttributes(resource.getAttributes());
