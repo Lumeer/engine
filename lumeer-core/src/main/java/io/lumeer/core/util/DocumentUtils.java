@@ -116,9 +116,9 @@ public class DocumentUtils {
       return List.of();
    }
 
-   public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents) {
+   public static List<Document> loadDocumentsData(final DataDao dataDao, final Collection collection, final List<Document> documents) {
       final Map<String, Document> documentMap = documents.stream().collect(toMap(Document::getId, Function.identity()));
-      final List<DataDocument> data = dao.getDataDao().getData(collection.getId(), documentMap.keySet());
+      final List<DataDocument> data = dataDao.getData(collection.getId(), documentMap.keySet());
       data.forEach(dd -> {
          if (documentMap.containsKey(dd.getId())) {
             documentMap.get(dd.getId()).setData(dd);
@@ -129,7 +129,7 @@ public class DocumentUtils {
    }
 
    public static boolean isDocumentOwner(final Collection collection, final Document document, String userId) {
-      return document.getCreatedBy().equals(userId);
+      return document != null && document.getCreatedBy().equals(userId);
    }
 
    public static boolean isDocumentOwnerByPurpose(final Collection collection, final Document document, final User user, final List<Group> teams, final List<User> users) {
@@ -137,7 +137,7 @@ public class DocumentUtils {
    }
 
    public static boolean isTaskAssignedByUser(final Collection collection, final Document document, String userEmail, final List<Group> teams, final List<User> users) {
-      return isTaskAssignedByUser(collection, document.getData(), userEmail, teams, users);
+      return document != null && isTaskAssignedByUser(collection, document.getData(), userEmail, teams, users);
    }
 
    public static boolean isTaskAssignedByUser(final Collection collection, final DataDocument data, String userEmail, final List<Group> teams, final List<User> users) {
@@ -145,7 +145,7 @@ public class DocumentUtils {
    }
 
    public static Set<String> getUsersAssigneeEmails(final Collection collection, final Document document, final List<Group> teams, final List<User> users) {
-      return getUsersAssigneeEmails(collection, document.getData(), teams, users);
+      return document != null ? getUsersAssigneeEmails(collection, document.getData(), teams, users) : Collections.emptySet();
    }
 
    public static Set<String> getUsersAssigneeEmails(final Collection collection, final DataDocument data, final List<Group> teams, final List<User> users) {
@@ -160,7 +160,7 @@ public class DocumentUtils {
    }
 
    public static Set<Assignee> getUsersList(final Document document, final Attribute attribute, final List<Group> teams, final List<User> users) {
-      return getUsersList(document.getData(), attribute, teams, users);
+      return document != null ? getUsersList(document.getData(), attribute, teams, users) : Collections.emptySet();
    }
 
    public static Set<Assignee> getUsersList(final DataDocument data, final Attribute attribute, final List<Group> teams, final List<User> users) {
@@ -219,7 +219,7 @@ public class DocumentUtils {
    }
 
    public static List<Document> loadDocumentsData(final DaoContextSnapshot dao, final Collection collection, final List<Document> documents, final ConstraintManager constraintManager, final boolean encodeForFce) {
-      final List<Document> documentsWithData = loadDocumentsData(dao, collection, documents);
+      final List<Document> documentsWithData = loadDocumentsData(dao.getDataDao(), collection, documents);
       encodeDocumentDataForFce(collection, documentsWithData, constraintManager, encodeForFce);
 
       return documentsWithData;
@@ -236,7 +236,7 @@ public class DocumentUtils {
    }
 
    public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds) {
-      return loadDocumentsData(dao, collection, dao.getDocumentDao().getDocumentsByIds(documentIds));
+      return loadDocumentsData(dao.getDataDao(), collection, dao.getDocumentDao().getDocumentsByIds(documentIds));
    }
 
    public static List<Document> loadDocumentsWithData(final DaoContextSnapshot dao, final Collection collection, final Set<String> documentIds, final ConstraintManager constraintManager, final boolean encodeForFce) {

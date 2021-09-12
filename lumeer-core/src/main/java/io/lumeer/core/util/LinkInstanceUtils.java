@@ -18,10 +18,17 @@
  */
 package io.lumeer.core.util;
 
+import static java.util.stream.Collectors.toMap;
+
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public class LinkInstanceUtils {
 
@@ -30,6 +37,18 @@ public class LinkInstanceUtils {
       linkInstance.setData(linkDataDao.getData(linkInstance.getLinkTypeId(), linkInstanceId));
 
       return linkInstance;
+   }
+
+   public static List<LinkInstance> loadLinkInstancesData(final LinkDataDao dataDao, final LinkType linkType, final List<LinkInstance> linkInstances) {
+      final Map<String, LinkInstance> linkInstanceMap = linkInstances.stream().collect(toMap(LinkInstance::getId, Function.identity()));
+      final List<DataDocument> data = dataDao.getData(linkType.getId(), linkInstanceMap.keySet());
+      data.forEach(dd -> {
+         if (linkInstanceMap.containsKey(dd.getId())) {
+            linkInstanceMap.get(dd.getId()).setData(dd);
+         }
+      });
+
+      return linkInstances;
    }
 
    public static boolean isLinkInstanceOwner(final LinkType linkType, final LinkInstance linkInstance, String userId) {

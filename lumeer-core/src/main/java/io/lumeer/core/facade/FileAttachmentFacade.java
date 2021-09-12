@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -208,23 +209,39 @@ public class FileAttachmentFacade extends AbstractFacade {
               .collect(Collectors.toList());
    }
 
-   public List<FileAttachment> getAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
-      if (!permissionsChecker.isPublic()) {
-         if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
-            // TODO checkCollectionReadPermissions(collectionId);
-         } else {
-            // TODO checkLinkTypeReadPermissions(collectionId);
-         }
-      }
+   public List<FileAttachment> getAllFileAttachments(final String resourceId, final FileAttachment.AttachmentType type) {
+      List<FileAttachment> attachments = fileAttachmentDao.findAllFileAttachments(getOrganization(), getProject(), resourceId, type)
+                                                          .stream()
+                                                          .map(fa -> presignFileAttachment(fa, false))
+                                                          .collect(Collectors.toList());
 
-      return fileAttachmentDao.findAllFileAttachments(
-            getOrganization(),
-            getProject(),
-              collectionId,
-              type)
-              .stream()
-              .map(fa -> presignFileAttachment(fa, false))
-              .collect(Collectors.toList());
+      if (type.equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         return filterDocumentsAttachments(attachments, resourceId);
+      } else {
+         return filterLinkAttachments(attachments, resourceId);
+      }
+   }
+
+   private List<FileAttachment> filterDocumentsAttachments(final List<FileAttachment> attachments, final String collectionId) {
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      Set<String> documentIds = attachments.stream().map(FileAttachment::getDocumentId).collect(Collectors.toSet());
+      List<Document> documents = documentDao.getDocumentsByCollection(collectionId, documentIds);
+      Map<String, Document> documentsMap = DocumentUtils.loadDocumentsData(dataDao, collection, documents).stream().collect(Collectors.toMap(Document::getId, doc -> doc));
+
+      return attachments.stream()
+                        .filter(fileAttachment -> permissionsChecker.canReadDocument(collection, documentsMap.get(fileAttachment.getDocumentId())))
+                        .collect(Collectors.toList());
+   }
+
+   private List<FileAttachment> filterLinkAttachments(final List<FileAttachment> attachments, final String linkTypeId) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      Set<String> linkIds = attachments.stream().map(FileAttachment::getDocumentId).collect(Collectors.toSet());
+      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkIds);
+      Map<String, LinkInstance> linkInstanceMap = LinkInstanceUtils.loadLinkInstancesData(linkDataDao, linkType, linkInstances).stream().collect(Collectors.toMap(LinkInstance::getId, doc -> doc));
+
+      return attachments.stream()
+                        .filter(fileAttachment -> permissionsChecker.canReadLinkInstance(linkType, linkInstanceMap.get(fileAttachment.getDocumentId())))
+                        .collect(Collectors.toList());
    }
 
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
