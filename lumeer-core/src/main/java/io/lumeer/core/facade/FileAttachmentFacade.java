@@ -73,7 +73,7 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 @RequestScoped
 public class FileAttachmentFacade extends AbstractFacade {
 
-   private static final int PRESIGN_TIMEOUT = 60;
+   public static final int PRESIGN_TIMEOUT = 60;
    private String S3_KEY;
    private String S3_SECRET;
    private String S3_BUCKET;
@@ -108,9 +108,6 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    @Inject
    private LinkDataDao linkDataDao;
-
-   @Inject
-   private ConfigurationFacade configurationFacade;
 
    @PostConstruct
    public void init() {
