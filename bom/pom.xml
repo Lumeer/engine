@@ -96,6 +96,8 @@
       <version.annotation>1.3.2</version.annotation>
       <version.ejb>3.2.2</version.ejb>
       <version.mail>1.4.7</version.mail>
+      <version.itext>7.1.16</version.itext>
+      <version.itext.html2pdf>3.0.5</version.itext.html2pdf>
 
       <version.interceptor>1.2.2</version.interceptor>
       <version.pusher>1.0.2</version.pusher>
@@ -491,6 +493,23 @@
             <groupId>com.fasterxml.jackson.module</groupId>
             <artifactId>jackson-module-jaxb-annotations</artifactId>
             <version>${version.jackson}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext7-core</artifactId>
+            <version>${version.itext}</version>
+            <type>pom</type>
+         </dependency>
+         <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>kernel</artifactId>
+            <version>${version.itext}</version>
+         </dependency>
+         <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>html2pdf</artifactId>
+            <version>${version.itext.html2pdf}</version>
          </dependency>
 
          <dependency>
