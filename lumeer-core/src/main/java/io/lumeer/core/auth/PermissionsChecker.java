@@ -22,6 +22,7 @@ import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -181,6 +182,10 @@ public class PermissionsChecker {
 
    public boolean hasRole(Resource resource, RoleType role, String userId) {
       return permissionAdapter.hasRole(getOrganization(), getProject(), resource, role, userId);
+   }
+
+   public boolean hasRole(Resource resource, RoleType role, Group group) {
+      return permissionAdapter.hasRole(getOrganization(), getProject(), resource, role, group);
    }
 
    public boolean hasAnyRole(Resource resource, Set<RoleType> roles) {

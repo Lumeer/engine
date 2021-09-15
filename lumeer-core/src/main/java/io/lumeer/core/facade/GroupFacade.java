@@ -89,14 +89,20 @@ public class GroupFacade extends AbstractFacade {
    public List<Group> addGroupsToWorkspace(final String organizationId, final String projectId, final List<Group> groups, final InvitationType invitationType) {
       permissionsChecker.checkGroupsHandle();
       // we need at least project management rights
-      checkProjectPermissions(organizationId, projectId);
-
+      Project project = checkProjectPermissions(organizationId, projectId);
       Organization organization = organizationFacade.getOrganizationById(organizationId);
 
-      addGroupsToOrganization(organization, groups);
-      addGroupsToProject(organization, projectId, groups, invitationType);
+      Set<String> organizationGroupsIds = groupDao.getAllGroups(organizationId).stream().map(Group::getId).collect(Collectors.toSet());
+      List<Group> validGroups = groups.stream().filter(group -> organizationGroupsIds.contains(group.getId())).collect(Collectors.toList());
 
-      return groups;
+      // we need to filter only group who can't read organization, otherwise organization permissions will be unnecessarily checked
+      List<Group> organizationGroups = validGroups.stream()
+                                                  .filter(group -> !permissionsChecker.hasRole(organization, RoleType.Read, group))
+                                                  .collect(Collectors.toList());
+      addGroupsToOrganization(organization, organizationGroups);
+      addGroupsToProject(organization, project, validGroups, invitationType);
+
+      return validGroups;
    }
 
    private void addGroupsToOrganization(Organization organization, List<Group> groups) {
@@ -104,11 +110,10 @@ public class GroupFacade extends AbstractFacade {
       organizationFacade.updateGroupPermissions(organization.getId(), newPermissions);
    }
 
-   private void addGroupsToProject(Organization organization, final String projectId, final List<Group> groups, final InvitationType invitationType) {
+   private void addGroupsToProject(Organization organization, final Project project, final List<Group> groups, final InvitationType invitationType) {
       workspaceKeeper.setOrganizationId(organization.getId());
-      var project = projectDao.getProjectById(projectId);
       var newPermissions = buildGroupPermission(project, groups, invitationType);
-      projectFacade.updateGroupPermissions(projectId, newPermissions);
+      projectFacade.updateGroupPermissions(project.getId(), newPermissions);
    }
 
    private Set<Permission> buildGroupPermission(final Resource resource, final List<Group> groups, final InvitationType invitationType) {
