@@ -51,8 +51,8 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -161,24 +161,35 @@ public class UserFacade extends AbstractFacade {
       final List<User> newUsers;
       final Organization organization;
 
+      var userEmailsToAdd = new ArrayList<>(usersInRequest);
+      userEmailsToAdd.removeAll(orgUserEmails);
+
       // we need to add new users in the organization
-      if (!orgUserEmails.containsAll(usersInRequest)) {
+      if (userEmailsToAdd.size() > 0) {
          organization = checkOrganizationPermissions(organizationId, RoleType.UserConfig);
+         checkUsersCreate(organizationId, userEmailsToAdd.size());
 
          users.forEach(user -> checkOrganizationInUser(organizationId, user));
-
-         checkUsersCreate(organizationId, users.size());
-
          newUsers = createUsersInOrganization(organizationId, users);
       } else { // we will just amend the rights at the project level
          organization = organizationFacade.getOrganizationById(organizationId);
          newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
       }
 
-      addUsersToOrganization(organization, newUsers);
+      // we need to filter only users who can't read organization, otherwise organization permissions will be unnecessarily checked
+      var organizationUsers = newUsers.stream()
+                                      .filter(user -> !permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
+                                      .collect(Collectors.toList());
+      addUsersToOrganization(organization, organizationUsers);
       addUsersToProject(organization, projectId, newUsers, invitationType);
 
-      if (newUsers != null && newUsers.size() > 0) {
+      logUsersInvitation(newUsers, organization);
+
+      return newUsers;
+   }
+
+   private void logUsersInvitation(List<User> newUsers, Organization organization) {
+      if (newUsers.size() > 0) {
          eventLogFacade.logEvent(
                authenticatedUser.getCurrentUser(),
                String.format(
@@ -188,15 +199,12 @@ public class UserFacade extends AbstractFacade {
                )
          );
       }
-
-      return newUsers;
    }
 
    private List<User> createUsersInOrganization(String organizationId, List<User> users) {
       return users.stream().map(user -> {
-         user.setEmail(user.getEmail().toLowerCase());
-         User storedUser = userDao.getUserByEmail(user.getEmail());
 
+         User storedUser = userDao.getUserByEmail(user.getEmail());
          if (storedUser == null) {
             return createUserAndSendNotification(organizationId, user);
          }
@@ -208,8 +216,10 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void addUsersToOrganization(Organization organization, List<User> users) {
-      var newPermissions = buildUserPermission(organization, users, InvitationType.JOIN_ONLY);
-      organizationFacade.updateUserPermissions(organization.getId(), newPermissions);
+      if (!users.isEmpty()) {
+         var newPermissions = buildUserPermission(organization, users, InvitationType.JOIN_ONLY);
+         organizationFacade.updateUserPermissions(organization.getId(), newPermissions);
+      }
    }
 
    private Set<Permission> buildUserPermission(final Resource resource, final List<User> users, final InvitationType invitationType) {
@@ -224,10 +234,12 @@ public class UserFacade extends AbstractFacade {
    }
 
    private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final InvitationType invitationType) {
-      workspaceKeeper.setOrganizationId(organization.getId());
-      var project = projectDao.getProjectById(projectId);
-      var newPermissions = buildUserPermission(project, users, invitationType);
-      projectFacade.updateUserPermissions(projectId, newPermissions);
+      if (!users.isEmpty()) {
+         workspaceKeeper.setOrganizationId(organization.getId());
+         var project = projectDao.getProjectById(projectId);
+         var newPermissions = buildUserPermission(project, users, invitationType);
+         projectFacade.updateUserPermissions(projectId, newPermissions);
+      }
    }
 
    private User createUserAndSendNotification(String organizationId, User user) {

@@ -75,6 +75,13 @@ public class PermissionUtils {
       return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups(organization, user, groups));
    }
 
+   public static Set<RoleType> getGroupRolesInResource(@Nullable Organization organization, @Nullable Project project, Resource resource, Group group) {
+      return getGroupRolesInResource(resource.getPermissions(), group)
+            .stream()
+            .map(Role::getType)
+            .collect(Collectors.toSet());
+   }
+
    public static Set<RoleType> getUserRolesInLinkType(Organization organization, @Nullable Project project, LinkType linkType, java.util.Collection<Collection> collections, User user, List<Group> groups) {
       if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
          return getUserRolesInResource(organization, project, ResourceType.LINK_TYPE, linkType.getPermissions(), user, getUserGroups(organization, user, groups));
@@ -175,6 +182,13 @@ public class PermissionUtils {
       final Set<Role> actualRoles = getRolesByUser(userPermissions, user.getId());
       actualRoles.addAll(getRolesByGroups(groupPermissions, groups));
       return actualRoles;
+   }
+
+   public static Set<Role> getGroupRolesInResource(Permissions permissions, Group group) {
+      Permissions notNullPermissions = Objects.requireNonNullElse(permissions, new Permissions());
+      Set<Permission> groupPermissions = Objects.requireNonNullElse(notNullPermissions.getGroupPermissions(), Collections.emptySet());
+
+      return getRolesByGroups(groupPermissions, Collections.singleton(group.getId()));
    }
 
    public static Set<Role> getRolesByUser(Set<Permission> userRoles, String userId) {

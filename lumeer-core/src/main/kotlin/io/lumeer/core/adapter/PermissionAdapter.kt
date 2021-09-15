@@ -133,6 +133,10 @@ class PermissionAdapter(private val userDao: UserDao,
       return PermissionUtils.getUserRolesInResource(organization, project, resource, user, getGroups(organization?.id ?: resource.id))
    }
 
+   fun <T : Resource> getUserRolesInResource(organization: Organization?, project: Project?, resource: T, group: Group): Set<RoleType> {
+      return PermissionUtils.getGroupRolesInResource(organization, project, resource, group)
+   }
+
    fun getUserRolesInCollectionWithView(organization: Organization?, project: Project?, collection: Collection, user: User): Set<RoleType> {
       val view = activeView()
       if (view != null) {
@@ -384,6 +388,10 @@ class PermissionAdapter(private val userDao: UserDao,
 
    fun hasRole(organization: Organization?, project: Project?, resource: Resource, role: RoleType, userId: String): Boolean {
       return getUserRolesInResource(organization, project, resource, userId).contains(role)
+   }
+
+   fun hasRole(organization: Organization?, project: Project?, resource: Resource, role: RoleType, group: Group): Boolean {
+      return getUserRolesInResource(organization, project, resource, group).contains(role)
    }
 
    fun hasRole(organization: Organization, project: Project?, linkType: LinkType, collection: List<Collection>, role: RoleType, userId: String): Boolean {
