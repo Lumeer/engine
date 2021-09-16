@@ -66,6 +66,9 @@ public class ProjectContent {
    @JsonProperty("sequences")
    private List<Sequence> sequences;
 
+   @JsonProperty("comments")
+   private List<ResourceComment> comments;
+
    public ProjectMeta getTemplateMeta() {
       return templateMeta;
    }
@@ -152,5 +155,13 @@ public class ProjectContent {
 
    public void setSequences(final List<Sequence> sequences) {
       this.sequences = sequences;
+   }
+
+   public List<ResourceComment> getComments() {
+      return comments;
+   }
+
+   public void setComments(final List<ResourceComment> comments) {
+      this.comments = comments;
    }
 }

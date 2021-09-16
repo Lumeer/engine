@@ -28,7 +28,9 @@ import java.util.Set;
 
 public interface ResourceCommentDao extends ProjectScopedDao {
    ResourceComment createComment(final ResourceComment comment);
+   void createComments(final List<ResourceComment> comments);
    ResourceComment getComment(final String id);
+   List<ResourceComment> getAllComments();
    long getCommentsCount(final ResourceType resourceType, final String resourceId);
    Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final Set<String> resourceIds);
    Map<String, Integer> getCommentsCounts(final ResourceType resourceType, final String parentId);

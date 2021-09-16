@@ -29,6 +29,7 @@ import io.lumeer.core.template.FavoriteItemsCreator;
 import io.lumeer.core.template.FunctionAndRuleCreator;
 import io.lumeer.core.template.LinkInstanceCreator;
 import io.lumeer.core.template.LinkTypeCreator;
+import io.lumeer.core.template.ResourceCommentCreator;
 import io.lumeer.core.template.SequenceCreator;
 import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
@@ -63,6 +64,9 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private SequenceFacade sequenceFacade;
+
+   @Inject
+   private ResourceCommentFacade resourceCommentFacade;
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -139,6 +143,7 @@ public class TemplateFacade extends AbstractFacade {
       FunctionAndRuleCreator.createFunctionAndRules(templateParser, collectionFacade, linkTypeFacade, originalLumeerTemplate);
       FavoriteItemsCreator.createFavoriteItems(templateParser, collectionFacade, viewFacade);
       SequenceCreator.createSequences(templateParser, sequenceFacade);
+      ResourceCommentCreator.createComments(templateParser, resourceCommentFacade, defaultConfigurationProducer);
 
       if (templateCreatedEvent != null) {
          templateCreatedEvent.fire(templateParser.getReport(project));

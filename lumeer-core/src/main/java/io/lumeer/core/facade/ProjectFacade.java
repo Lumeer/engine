@@ -51,6 +51,7 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -117,6 +118,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private AuditDao auditDao;
+
+   @Inject
+   private ResourceCommentDao resourceCommentDao;
 
    @Inject
    private EventLogFacade eventLogFacade;
@@ -387,6 +391,8 @@ public class ProjectFacade extends AbstractFacade {
       });
       content.setDocuments(documents);
       content.setData(documentsData);
+
+      content.setComments(resourceCommentDao.getAllComments());
 
       content.setTemplateMeta(
             new ProjectMeta(

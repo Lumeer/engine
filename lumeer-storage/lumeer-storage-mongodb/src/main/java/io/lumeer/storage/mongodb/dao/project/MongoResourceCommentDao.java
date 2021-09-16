@@ -107,6 +107,11 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
       }
    }
 
+
+   public void createComments(final List<ResourceComment> comments) {
+      databaseCollection().insertMany(comments);
+   }
+
    @Override
    public ResourceComment getComment(final String id) {
       try {
@@ -114,6 +119,11 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
       } catch (MongoException ex) {
          throw new StorageException("Cannot find comment id: " + id, ex);
       }
+   }
+
+   @Override
+   public List<ResourceComment> getAllComments() {
+      return databaseCollection().find().into(new ArrayList<>());
    }
 
    @Override

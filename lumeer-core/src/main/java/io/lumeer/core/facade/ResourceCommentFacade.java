@@ -28,6 +28,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.adapter.ResourceCommentAdapter;
 import io.lumeer.core.exception.AccessForbiddenException;
+import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveResource;
@@ -39,9 +40,11 @@ import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Observes;
@@ -89,6 +92,19 @@ public class ResourceCommentFacade extends AbstractFacade {
       comment.setParentId(getParentIdByComment(comment));
 
       return resourceCommentDao.createComment(comment);
+   }
+
+   public void storeResourceComments(final List<ResourceComment> comments) {
+      final List<ResourceComment> allowedComments = comments.stream().filter(c -> {
+         try {
+            checkPermissions(c.getResourceType(), c.getResourceId());
+            return true;
+         } catch (NoPermissionException e) {
+            return false;
+         }
+      }).collect(Collectors.toList());
+
+      resourceCommentDao.createComments(allowedComments);
    }
 
    private String getParentIdByComment(final ResourceComment comment) {
