@@ -26,7 +26,6 @@ import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.api.model.rule.CronRule;
-import io.lumeer.api.model.rule.WizardRule;
 import io.lumeer.api.model.rule.ZapierRule;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.core.facade.LinkTypeFacade;
@@ -37,6 +36,7 @@ import org.bson.types.ObjectId;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.regex.Pattern;
 
@@ -146,18 +146,28 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       if (type == Rule.RuleType.CRON) {
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_XML, cureXml(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML)));
-         rule.getConfiguration().put(CronRule.CRON_STARTS_ON, rule.getConfiguration().getDate(CronRule.CRON_STARTS_ON));
-         rule.getConfiguration().put(CronRule.CRON_ENDS_ON, rule.getConfiguration().getDate(CronRule.CRON_ENDS_ON));
-         rule.getConfiguration().put(CronRule.CRON_LAST_RUN, rule.getConfiguration().getDate(CronRule.CRON_LAST_RUN));
-         rule.getConfiguration().put(CronRule.CRON_HOUR, rule.getConfiguration().getLong(CronRule.CRON_HOUR));
-         rule.getConfiguration().put(CronRule.CRON_INTERVAL, rule.getConfiguration().getInteger(CronRule.CRON_INTERVAL));
-         rule.getConfiguration().put(CronRule.CRON_UNIT, rule.getConfiguration().getString(CronRule.CRON_UNIT));
+
+         final Long startsOn = rule.getConfiguration().getLong(CronRule.CRON_STARTS_ON);
+         if (startsOn != null) {
+            rule.getConfiguration().put(CronRule.CRON_STARTS_ON, new Date(startsOn));
+         }
+         final Long endsOn = rule.getConfiguration().getLong(CronRule.CRON_ENDS_ON);
+         if (endsOn != null) {
+            rule.getConfiguration().put(CronRule.CRON_ENDS_ON, new Date(endsOn));
+         }
+
+         processLongToInt(CronRule.CRON_EXECUTIONS_LEFT, rule.getConfiguration());
+         processLongToInt(CronRule.CRON_HOUR, rule.getConfiguration());
+         processLongToInt(CronRule.CRON_INTERVAL, rule.getConfiguration());
+         processLongToInt(CronRule.CRON_OCCURRENCE, rule.getConfiguration());
+         processLongToInt(CronRule.CRON_DAYS_OF_WEEK, rule.getConfiguration());
+
+         rule.getConfiguration().put(CronRule.CRON_VIEW_ID, templateParser.getDict().getViewId(rule.getConfiguration().getString(CronRule.CRON_VIEW_ID)));
       }
 
       if (type == Rule.RuleType.WIZARD) {
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_XML, cureXml(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML)));
-         rule.getConfiguration().put(WizardRule.WIZARD_CONFIGURATION, rule.getConfiguration().getString(WizardRule.WIZARD_CONFIGURATION));
       }
 
       if (type == Rule.RuleType.AUTO_LINK) {
@@ -172,6 +182,12 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       }
 
       return rule;
+   }
+
+   private void processLongToInt(final String key, final DataDocument configuration) {
+      if (configuration.get(key) != null) {
+         configuration.put(key, configuration.getLong(key).intValue());
+      }
    }
 
    private String cureJs(final String js) {

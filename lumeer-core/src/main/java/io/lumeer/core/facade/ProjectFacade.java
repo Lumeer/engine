@@ -35,6 +35,7 @@ import io.lumeer.api.model.templateParse.CollectionWithId;
 import io.lumeer.api.model.templateParse.DocumentWithId;
 import io.lumeer.api.model.templateParse.LinkInstanceWithId;
 import io.lumeer.api.model.templateParse.LinkTypeWithId;
+import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.WorkspaceCache;
@@ -392,7 +393,7 @@ public class ProjectFacade extends AbstractFacade {
       content.setDocuments(documents);
       content.setData(documentsData);
 
-      content.setComments(resourceCommentDao.getAllComments());
+      content.setComments(resourceCommentDao.getAllComments().stream().map(ResourceCommentWrapper::new).collect(Collectors.toList()));
 
       content.setTemplateMeta(
             new ProjectMeta(

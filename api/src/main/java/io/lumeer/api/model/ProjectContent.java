@@ -22,6 +22,7 @@ import io.lumeer.api.model.templateParse.CollectionWithId;
 import io.lumeer.api.model.templateParse.DocumentWithId;
 import io.lumeer.api.model.templateParse.LinkInstanceWithId;
 import io.lumeer.api.model.templateParse.LinkTypeWithId;
+import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -67,7 +68,7 @@ public class ProjectContent {
    private List<Sequence> sequences;
 
    @JsonProperty("comments")
-   private List<ResourceComment> comments;
+   private List<ResourceCommentWrapper> comments;
 
    public ProjectMeta getTemplateMeta() {
       return templateMeta;
@@ -157,11 +158,11 @@ public class ProjectContent {
       this.sequences = sequences;
    }
 
-   public List<ResourceComment> getComments() {
+   public List<ResourceCommentWrapper> getComments() {
       return comments;
    }
 
-   public void setComments(final List<ResourceComment> comments) {
+   public void setComments(final List<ResourceCommentWrapper> comments) {
       this.comments = comments;
    }
 }

@@ -57,9 +57,12 @@ public class LinkInstanceCreator extends WithIdCreator {
          var linkTemplateId = TemplateParserUtils.getId(linkObj);
          var linkTypeTemplateId = (String) linkObj.get("linkTypeId");
          var linkInstance = new LinkInstance(templateParser.getDict().getLinkTypeId(linkTypeTemplateId), getDocumentIds(linkObj));
-         linkInstance.setTemplateId(linkTemplateId);
-         getLinkData(linkInstance, linkTemplateId, linkTypeTemplateId);
-         linkInstances.computeIfAbsent(linkTypeTemplateId, id -> new ArrayList<>()).add(linkInstance);
+
+         if (linkInstance.getDocumentIds().size() == 2 && linkInstance.getDocumentIds().get(0) != null && linkInstance.getDocumentIds().get(1) != null) {
+            linkInstance.setTemplateId(linkTemplateId);
+            getLinkData(linkInstance, linkTemplateId, linkTypeTemplateId);
+            linkInstances.computeIfAbsent(linkTypeTemplateId, id -> new ArrayList<>()).add(linkInstance);
+         }
       });
 
       linkInstances.forEach((linkTypeTemplateId, typeInstances) -> {

@@ -19,6 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.ResourceComment;
+import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ResourceCommentFacade;
@@ -70,12 +71,15 @@ public class ResourceCommentCreator extends WithIdCreator {
          comments.forEach(commentObj -> {
             try {
                var commentJson = (JSONObject) commentObj;
-               var resourceComment = mapper.readValue(commentJson.toJSONString(), ResourceComment.class);
+               var resourceComment = mapper.readValue(commentJson.toJSONString(), ResourceCommentWrapper.class);
 
                var translatedParentId = templateParser.translateString(resourceComment.getParentId(), constraintManager);
                resourceComment.setParentId(translatedParentId != null ? translatedParentId.toString() : null);
 
-               result.add(resourceComment);
+               var translatedResourceId = templateParser.translateString(resourceComment.getResourceId(), constraintManager);
+               resourceComment.setResourceId(translatedResourceId != null ? translatedResourceId.toString() : null);
+
+               result.add(resourceComment.getResourceComment());
             } catch (IOException e) {
                throw new TemplateNotAvailableException(e);
             }
