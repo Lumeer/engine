@@ -35,6 +35,7 @@ import io.lumeer.api.model.templateParse.CollectionWithId;
 import io.lumeer.api.model.templateParse.DocumentWithId;
 import io.lumeer.api.model.templateParse.LinkInstanceWithId;
 import io.lumeer.api.model.templateParse.LinkTypeWithId;
+import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.cache.WorkspaceCache;
@@ -51,6 +52,7 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -117,6 +119,9 @@ public class ProjectFacade extends AbstractFacade {
 
    @Inject
    private AuditDao auditDao;
+
+   @Inject
+   private ResourceCommentDao resourceCommentDao;
 
    @Inject
    private EventLogFacade eventLogFacade;
@@ -387,6 +392,8 @@ public class ProjectFacade extends AbstractFacade {
       });
       content.setDocuments(documents);
       content.setData(documentsData);
+
+      content.setComments(resourceCommentDao.getAllComments().stream().map(ResourceCommentWrapper::new).collect(Collectors.toList()));
 
       content.setTemplateMeta(
             new ProjectMeta(
