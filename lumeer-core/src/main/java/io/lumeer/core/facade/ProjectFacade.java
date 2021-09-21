@@ -29,6 +29,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.ProjectMeta;
+import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.templateParse.CollectionWithId;
@@ -140,6 +141,7 @@ public class ProjectFacade extends AbstractFacade {
       this.linkDataDao = daoContextSnapshot.getLinkDataDao();
       this.favoriteItemDao = daoContextSnapshot.getFavoriteItemDao();
       this.sequenceDao = daoContextSnapshot.getSequenceDao();
+      this.resourceCommentDao = daoContextSnapshot.getResourceCommentDao();
    }
 
    public Project createProject(Project project) {
