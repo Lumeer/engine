@@ -109,7 +109,9 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
 
 
    public void createComments(final List<ResourceComment> comments) {
-      databaseCollection().insertMany(comments);
+      if (comments != null && comments.size() > 0) {
+         databaseCollection().insertMany(comments);
+      }
    }
 
    @Override

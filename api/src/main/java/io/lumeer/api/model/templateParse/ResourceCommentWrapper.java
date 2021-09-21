@@ -70,7 +70,7 @@ public class ResourceCommentWrapper implements WithId {
       this.authorEmail = resourceComment.getAuthorEmail();
       this.authorName = resourceComment.getAuthorName();
       this.comment = resourceComment.getComment();
-      this.metaData = new DataDocument(resourceComment.getMetaData());
+      this.metaData = resourceComment.getMetaData() != null ? new DataDocument(resourceComment.getMetaData()) : new DataDocument();
    }
 
    public ResourceComment getResourceComment() {
