@@ -160,8 +160,8 @@ public class Group implements HealthChecking {
 
    @Override
    public void checkHealth() throws InsaneObjectException {
-      checkStringLength("icon", name, MAX_STRING_LENGTH);
-      checkStringLength("color", name, MAX_STRING_LENGTH);
+      checkStringLength("icon", icon, MAX_STRING_LENGTH);
+      checkStringLength("color", color, MAX_STRING_LENGTH);
       checkStringLength("name", name, MAX_STRING_LENGTH);
       checkStringLength("description", description, MAX_LONG_STRING_LENGTH);
    }
