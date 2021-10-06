@@ -21,6 +21,7 @@ package io.lumeer.api.util;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.SelectOption;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -136,6 +137,22 @@ public class AttributeUtil {
       }
 
       return false;
+   }
+
+   public static boolean isSelectWithSelectionList(final Attribute attribute, final String selectionListId) {
+      if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.Select) {
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         return selectionListId.equals(config.get("selectionListId"));
+      }
+
+      return false;
+   }
+
+   public static void setSelectConfigOptions(final Attribute attribute, final List<SelectOption> options) {
+      if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.Select) {
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         config.put("options", options);
+      }
    }
 
    public static boolean isUTC(final Attribute attribute) {

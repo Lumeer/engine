@@ -18,12 +18,18 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.SelectOption;
 import io.lumeer.api.model.SelectionList;
+import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,6 +45,9 @@ public class SelectionListFacade extends AbstractFacade {
    @Inject
    private ProjectDao projectDao;
 
+   @Inject
+   private CollectionDao collectionDao;
+
    public SelectionList createList(SelectionList list) {
       checkProjectPermissions(list.getProjectId());
       list.setId(null);
@@ -50,11 +59,36 @@ public class SelectionListFacade extends AbstractFacade {
       SelectionList currentList = selectionListDao.getList(id);
       checkProjectPermissions(currentList.getProjectId());
 
+      List<SelectOption> previousOptions = new ArrayList<>(list.getOptions());
       currentList.patch(list);
 
-      // TODO check attribute options snapshots
+      SelectionList newList = selectionListDao.updateList(list.getId(), currentList);
+      checkAttributesSelectOptionsSnapshot(newList.getProjectId(), newList.getId(), previousOptions, newList.getOptions());
+      return newList;
+   }
 
-      return selectionListDao.updateList(list.getId(), currentList);
+   private void checkAttributesSelectOptionsSnapshot(final String projectId, final String selectionId, final List<SelectOption> previousOptions, final List<SelectOption> currentOptions) {
+      if (previousOptions == null || currentOptions == null || previousOptions.equals(currentOptions)) {
+         return;
+      }
+
+      workspaceKeeper.setProjectId(projectId);
+      List<Collection> collections = collectionDao.getAllCollections();
+      collections.forEach(collection -> {
+         var shouldUpdate = false;
+         for (Attribute attribute : collection.getAttributes()) {
+            if (AttributeUtil.isSelectWithSelectionList(attribute, selectionId)) {
+               shouldUpdate = true;
+               AttributeUtil.setSelectConfigOptions(attribute, currentOptions);
+            }
+         }
+
+         if (shouldUpdate) {
+            collectionDao.updateCollection(collection.getId(), collection, collection, false);
+         }
+
+      });
+
    }
 
    public void deleteList(String id) {
