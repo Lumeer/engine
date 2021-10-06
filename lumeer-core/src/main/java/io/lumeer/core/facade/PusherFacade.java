@@ -61,6 +61,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.CreateResourceComment;
+import io.lumeer.engine.api.event.CreateSelectionList;
 import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.OrganizationUserEvent;
@@ -73,9 +74,11 @@ import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.RemoveResourceComment;
+import io.lumeer.engine.api.event.RemoveSelectionList;
 import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
+import io.lumeer.engine.api.event.SelectionListEvent;
 import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
@@ -86,6 +89,7 @@ import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateResourceComment;
+import io.lumeer.engine.api.event.UpdateSelectionList;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -94,6 +98,7 @@ import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -144,6 +149,9 @@ public class PusherFacade extends AbstractFacade {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private ProjectDao projectDao;
 
    @Inject
    private UserDao userDao;
@@ -272,7 +280,7 @@ public class PusherFacade extends AbstractFacade {
       if (createResource.getResource() instanceof Organization) {
          checkOrganizationPermissionsChange((Organization) originalResource, (Organization) createResource.getResource());
       } else if (createResource.getResource() instanceof Project) {
-         checkProjectPermissionsChange((Project)originalResource, (Project) createResource.getResource());
+         checkProjectPermissionsChange((Project) originalResource, (Project) createResource.getResource());
       } else if (createResource.getResource() instanceof Collection) {
          checkCollectionsPermissionsChange((Collection) originalResource, (Collection) createResource.getResource());
       } else if (createResource.getResource() instanceof View) {
@@ -562,7 +570,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Organization organization = organizationDao.getOrganizationById(updateCompanyContact.getCompanyContact().getOrganizationId());
-            Set<String> userIds =  permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Manage);
+            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Manage);
             sendNotificationsByUsers(updateCompanyContact.getCompanyContact(), userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -708,6 +716,44 @@ public class PusherFacade extends AbstractFacade {
             ObjectWithParent object = new ObjectWithParent(cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
             Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createSelectionListNotification(@Observes final CreateSelectionList createSelectionList) {
+      createOrUpdateSelectionListNotification(createSelectionList, CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateSelectionListNotification(@Observes final UpdateSelectionList updateSelectionList) {
+      createOrUpdateSelectionListNotification(updateSelectionList, UPDATE_EVENT_SUFFIX);
+   }
+
+   public void createOrUpdateSelectionListNotification(final SelectionListEvent selectionListEvent, final String suffix) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(selectionListEvent.getOrganizationId());
+            Project project = projectDao.getProjectById(selectionListEvent.getSelectionList().getProjectId());
+            ObjectWithParent object = new ObjectWithParent(selectionListEvent.getSelectionList(), organization.getId(), project.getId());
+            Set<String> users = resourceAdapter.getProjectReaders(organization, project);
+            List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, suffix, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void removeSelectionListNotification(@Observes final RemoveSelectionList selectionListEvent) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(selectionListEvent.getOrganizationId());
+            Project project = projectDao.getProjectById(selectionListEvent.getSelectionList().getProjectId());
+            ResourceId resourceId = new ResourceId(selectionListEvent.getSelectionList().getId(), organization.getId());
+            Set<String> users = resourceAdapter.getProjectReaders(organization, project);
+            List<Event> events = users.stream().map(userId -> createEventForRemove(selectionListEvent.getSelectionList().getClass().getSimpleName(), resourceId, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
