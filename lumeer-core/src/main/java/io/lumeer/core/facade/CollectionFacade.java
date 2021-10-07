@@ -57,6 +57,7 @@ import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
@@ -114,6 +115,9 @@ public class CollectionFacade extends AbstractFacade {
 
    @Inject
    private GroupDao groupDao;
+
+   @Inject
+   private SelectionListDao selectionListDao;
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
@@ -638,7 +642,7 @@ public class CollectionFacade extends AbstractFacade {
                final User user = AuthenticatedUser.getMachineUser();
                final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
-               documents = DocumentUtils.getDocuments(collectionDao, documentDao, dataDao, userDao, groupDao, getOrganization(), view.getQuery(), user, cronRule.getLanguage(), allowedPermissions, null);
+               documents = DocumentUtils.getDocuments(collectionDao, documentDao, dataDao, userDao, groupDao,  selectionListDao, getOrganization(), getProject(), view.getQuery(), user, cronRule.getLanguage(), allowedPermissions, null);
                documents = documents.stream().filter(document -> document.getCollectionId().equals(collection.getId())).collect(Collectors.toList());
             } catch (ResourceNotFoundException ignore) {
 
