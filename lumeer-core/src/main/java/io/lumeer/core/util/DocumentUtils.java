@@ -32,6 +32,7 @@ import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.User;
 import io.lumeer.api.util.ResourceUtils;
@@ -44,6 +45,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
@@ -72,13 +74,13 @@ public class DocumentUtils {
    // gets encoded documents
    public static List<Document> getDocuments(final DaoContextSnapshot dao, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (dao.getSelectedWorkspace().getOrganization().isPresent()) {
-         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getGroupDao(), dao.getSelectedWorkspace().getOrganization().get(), query, user, language, permissions, timeZone);
+         return getDocuments(dao.getCollectionDao(), dao.getDocumentDao(), dao.getDataDao(), dao.getUserDao(), dao.getGroupDao(), dao.getSelectionListDao(), dao.getSelectedWorkspace().getOrganization().get(), dao.getSelectedWorkspace().getProject().get(), query, user, language, permissions, timeZone);
       }
 
       return List.of();
    }
 
-   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final GroupDao groupDao, final Organization organization, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
+   public static List<Document> getDocuments(final CollectionDao collectionDao, final DocumentDao documentDao, final DataDao dataDao, final UserDao userDao, final GroupDao groupDao, final SelectionListDao selectionListDao, final Organization organization, final Project project, final Query query, final User user, final Language language, final AllowedPermissions permissions, final String timeZone) {
       if (organization != null && query.getCollectionIds().size() > 0) {
          final String collectionId = query.getCollectionIds().iterator().next();
          final Collection collection = collectionDao.getCollectionById(collectionId);
@@ -98,7 +100,8 @@ public class DocumentUtils {
                translationManager.translateDurationUnitsMap(language),
                new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
                timeZone != null ? timeZone : TimeZone.getDefault().getID(),
-               groupDao.getAllGroups(organization.getId())
+               groupDao.getAllGroups(organization.getId()),
+               SelectionListUtils.appendPredefinedLists(selectionListDao.getAllLists(Collections.singletonList(project.getId())))
          );
 
          final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQueryDecodingFromJson(

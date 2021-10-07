@@ -38,6 +38,7 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
@@ -106,6 +107,8 @@ public interface DaoContextSnapshot {
    DelayedActionDao getDelayedActionDao();
 
    AuditDao getAuditDao();
+
+   SelectionListDao getSelectionListDao();
 
    SelectedWorkspace getSelectedWorkspace();
 

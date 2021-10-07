@@ -40,6 +40,7 @@ import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.SearchAdapter;
+import io.lumeer.core.adapter.SelectionListAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -58,6 +59,7 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import org.jetbrains.annotations.NotNull;
@@ -110,6 +112,9 @@ public class SearchFacade extends AbstractFacade {
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
+   private SelectionListDao selectionListDao;
+
+   @Inject
    private TranslationManager translationManager;
 
    @Inject
@@ -125,6 +130,7 @@ public class SearchFacade extends AbstractFacade {
    private DocumentAdapter documentAdapter;
    private LinkInstanceAdapter linkInstanceAdapter;
    private SearchAdapter searchAdapter;
+   private SelectionListAdapter selectionListAdapter;
 
    @PostConstruct
    public void init() {
@@ -135,6 +141,7 @@ public class SearchFacade extends AbstractFacade {
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
       searchAdapter = new SearchAdapter(permissionsChecker.getPermissionAdapter(), constraintManager, documentDao, dataDao, linkInstanceDao, linkDataDao);
+      selectionListAdapter = new SelectionListAdapter(selectionListDao);
    }
 
    private static final Integer FETCH_SIZE = 200;
@@ -277,7 +284,8 @@ public class SearchFacade extends AbstractFacade {
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timezone,
-            groupDao.getAllGroups(workspaceKeeper.getOrganizationId())
+            groupDao.getAllGroups(workspaceKeeper.getOrganizationId()),
+            selectionListAdapter.getListsWithPredefined(getOrganization(), getProject())
       );
    }
 

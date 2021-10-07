@@ -37,6 +37,7 @@ import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.PermissionUtils;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.task.RuleTask;
+import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.js.DataFilter;
 import io.lumeer.engine.api.data.DataDocument;
@@ -101,7 +102,8 @@ public class DocumentMatcher {
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timeZone != null ? timeZone : TimeZone.getDefault().getID(),
-            dao.getGroupDao().getAllGroups(this.organization.getId())
+            dao.getGroupDao().getAllGroups(this.organization.getId()),
+            SelectionListUtils.appendPredefinedLists(dao.getSelectionListDao().getAllLists(Collections.singletonList(project.getId())))
       );
    }
 
