@@ -19,10 +19,12 @@
 package io.lumeer.remote.rest.init;
 
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -33,6 +35,7 @@ import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -78,7 +81,19 @@ public class StartupFacade implements Serializable {
          log.info("Processing organization " + organization.getCode());
          workspaceKeeper.setOrganization(organization);
 
-         selectionListDao.ensureIndexes(organization);
+         selectionListDao.setOrganization(organization);
+
+         projectDao.switchOrganization();
+         projectDao.getAllProjects().forEach(project -> {
+            log.info("Processing project lists " + project.getCode());
+
+            if (selectionListDao.getAllLists(Collections.singletonList(project.getId())).isEmpty()) {
+               var predefinedLists = SelectionListUtils.getPredefinedLists(Language.EN, organization.getId(), project.getId());
+               selectionListDao.createLists(predefinedLists);
+            }
+
+         });
+
       });
 
       /*final LongAdder orgs = new LongAdder(), projs = new LongAdder(), comments = new LongAdder();

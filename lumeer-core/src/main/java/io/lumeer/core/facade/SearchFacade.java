@@ -40,7 +40,6 @@ import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.SearchAdapter;
-import io.lumeer.core.adapter.SelectionListAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -130,18 +129,16 @@ public class SearchFacade extends AbstractFacade {
    private DocumentAdapter documentAdapter;
    private LinkInstanceAdapter linkInstanceAdapter;
    private SearchAdapter searchAdapter;
-   private SelectionListAdapter selectionListAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-      language = Language.fromString(requestDataKeeper.getUserLocale());
+      language = requestDataKeeper.getUserLanguage();
       timezone = requestDataKeeper.getTimezone();
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
       searchAdapter = new SearchAdapter(permissionsChecker.getPermissionAdapter(), constraintManager, documentDao, dataDao, linkInstanceDao, linkDataDao);
-      selectionListAdapter = new SelectionListAdapter(selectionListDao);
    }
 
    private static final Integer FETCH_SIZE = 200;
@@ -285,7 +282,7 @@ public class SearchFacade extends AbstractFacade {
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timezone,
             groupDao.getAllGroups(workspaceKeeper.getOrganizationId()),
-            selectionListAdapter.getListsWithPredefined(getOrganization(), getProject())
+            selectionListDao.getAllLists(Collections.singletonList(getProject().getId()))
       );
    }
 

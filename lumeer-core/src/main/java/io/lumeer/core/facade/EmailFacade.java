@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.Language;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 
@@ -38,7 +37,6 @@ public class EmailFacade {
    private EmailService emailService;
 
    public void sendInvitation(final String invitedEmail) {
-      final Language language = Language.fromString(requestDataKeeper.getUserLocale());
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, language, emailService.formatUserReference(user.getCurrentUser()), emailService.formatFrom(user.getCurrentUser()), invitedEmail, "");
+      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, requestDataKeeper.getUserLanguage(), emailService.formatUserReference(user.getCurrentUser()), emailService.formatFrom(user.getCurrentUser()), invitedEmail, "");
    }
 }

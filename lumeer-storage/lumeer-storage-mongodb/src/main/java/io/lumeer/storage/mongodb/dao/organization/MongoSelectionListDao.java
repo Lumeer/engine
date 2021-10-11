@@ -99,6 +99,15 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
    }
 
    @Override
+   public void createLists(final List<SelectionList> lists) {
+      try {
+         databaseCollection().insertMany(lists);
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot create selection lists " + lists, ex);
+      }
+   }
+
+   @Override
    public SelectionList updateList(final String id, final SelectionList selection) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {

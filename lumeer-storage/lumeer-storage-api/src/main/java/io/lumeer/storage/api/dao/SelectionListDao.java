@@ -29,6 +29,8 @@ public interface SelectionListDao extends OrganizationScopedDao {
 
    SelectionList createList(SelectionList list);
 
+   void createLists(List<SelectionList> lists);
+
    SelectionList updateList(String id, SelectionList list);
 
    void deleteList(SelectionList list);

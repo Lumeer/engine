@@ -19,6 +19,8 @@
 
 package io.lumeer.core.auth;
 
+import io.lumeer.api.model.Language;
+
 import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
@@ -58,6 +60,10 @@ public class RequestDataKeeper {
 
    public void setUserLocale(String userLocale) {
       this.userLocale = userLocale;
+   }
+
+   public Language getUserLanguage() {
+      return Language.fromString(getUserLocale());
    }
 
    public String getTimezone() {

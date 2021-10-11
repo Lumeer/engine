@@ -101,7 +101,7 @@ public class DocumentUtils {
                new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
                timeZone != null ? timeZone : TimeZone.getDefault().getID(),
                groupDao.getAllGroups(organization.getId()),
-               SelectionListUtils.appendPredefinedLists(selectionListDao.getAllLists(Collections.singletonList(project.getId())))
+               selectionListDao.getAllLists(Collections.singletonList(project.getId()))
          );
 
          final Tuple<List<Document>, List<LinkInstance>> result = DataFilter.filterDocumentsAndLinksByQueryDecodingFromJson(

@@ -33,7 +33,6 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.facade.translate.TranslationManager;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.matcher.MatchQueryFactory;
-import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.core.util.Tuple;
 import io.lumeer.core.util.js.DataFilter;
 
@@ -88,7 +87,7 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
       targetDocuments = daoContextSnapshot.getDocumentDao().getDocumentsByCollection(otherCollection.getId());
       existingLinks = daoContextSnapshot.getLinkInstanceDao().getLinkInstancesByLinkType(linkType.getId());
 
-      language = Language.fromString(requestDataKeeper.getUserLocale());
+      language = requestDataKeeper.getUserLanguage();
       timeZone = requestDataKeeper.getTimezone();
       final TranslationManager translationManager = new TranslationManager();
       final String organizationId = daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getId();
@@ -100,7 +99,7 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timeZone != null ? timeZone : TimeZone.getDefault().getID(),
             daoContextSnapshot.getGroupDao().getAllGroups(organizationId),
-            SelectionListUtils.appendPredefinedLists(daoContextSnapshot.getSelectionListDao().getAllLists(Collections.singletonList(projectId)))
+            daoContextSnapshot.getSelectionListDao().getAllLists(Collections.singletonList(projectId))
       );
 
       matchQuery = MatchQueryFactory.getMatchQuery(attribute, otherCollection, otherAttribute);

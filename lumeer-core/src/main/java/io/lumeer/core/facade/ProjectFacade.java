@@ -29,7 +29,6 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.ProjectMeta;
-import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.templateParse.CollectionWithId;
@@ -39,8 +38,10 @@ import io.lumeer.api.model.templateParse.LinkTypeWithId;
 import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoResourcePermissionException;
+import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.AuditDao;
@@ -54,6 +55,7 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -130,6 +132,12 @@ public class ProjectFacade extends AbstractFacade {
    @Inject
    private MailerService mailerService;
 
+   @Inject
+   private SelectionListDao selectionListDao;
+
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
    void init(DaoContextSnapshot daoContextSnapshot) {
       this.collectionDao = daoContextSnapshot.getCollectionDao();
       this.documentDao = daoContextSnapshot.getDocumentDao();
@@ -155,6 +163,7 @@ public class ProjectFacade extends AbstractFacade {
       Project storedProject = projectDao.createProject(project);
 
       createProjectScopedRepositories(storedProject);
+      addProjectScopedPredefinedData(storedProject);
 
       eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Created project " + project.getCode());
 
@@ -319,6 +328,11 @@ public class ProjectFacade extends AbstractFacade {
       linkTypeDao.createRepository(project);
       sequenceDao.createRepository(project);
       auditDao.createRepository(project);
+   }
+
+   private void addProjectScopedPredefinedData(Project project) {
+      SelectionListUtils.getPredefinedLists(requestDataKeeper.getUserLanguage(), getOrganization().getId(), project.getId())
+                        .forEach(list -> selectionListDao.createList(list));
    }
 
    private void deleteProjectScopedRepositories(Project project) {
