@@ -53,7 +53,7 @@ public class SelectionListUtils {
          case General:
             return "Základní";
          case Kanban:
-            return "Nástenka";
+            return "Nástěnka";
          case Content:
             return "Obsah";
          case Marketing:
@@ -119,13 +119,13 @@ public class SelectionListUtils {
          case InProgress:
             return "Probíhá";
          case Closed:
-            return "Zavřeno";
+            return "Uzavřený";
          case Review:
             return "Posouzení";
          case Ready:
             return "Připraveno";
          case Writing:
-            return "Psaní";
+            return "Píše se";
          case Approved:
             return "Schváleno";
          case Rejected:
@@ -137,7 +137,7 @@ public class SelectionListUtils {
          case Running:
             return "Běží";
          case Completed:
-            return "Dokončeno";
+            return "Hotovo";
          case Pending:
             return "Čekající";
          case InReview:
