@@ -24,6 +24,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.SelectionList;
 import io.lumeer.engine.api.event.CreateSelectionList;
+import io.lumeer.engine.api.event.ReloadSelectionLists;
 import io.lumeer.engine.api.event.RemoveSelectionList;
 import io.lumeer.engine.api.event.UpdateSelectionList;
 import io.lumeer.storage.api.dao.SelectionListDao;
@@ -57,13 +58,16 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
    private static final String PREFIX = "selectionLists_o-";
 
    @Inject
-   private Event<CreateSelectionList> createSelectionListEvent;
+   private Event<CreateSelectionList> createEvent;
 
    @Inject
-   private Event<UpdateSelectionList> updateSelectionListEvent;
+   private Event<ReloadSelectionLists> reloadEvent;
 
    @Inject
-   private Event<RemoveSelectionList> removeSelectionListEvent;
+   private Event<UpdateSelectionList> updateEvent;
+
+   @Inject
+   private Event<RemoveSelectionList> removeEvent;
 
    @Override
    public void createRepository(Organization organization) {
@@ -88,9 +92,9 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
       try {
          databaseCollection().insertOne(selection);
 
-         if (createSelectionListEvent != null) {
+         if (createEvent != null) {
             mapList(selection);
-            createSelectionListEvent.fire(new CreateSelectionList(getOrganization().get().getId(), selection));
+            createEvent.fire(new CreateSelectionList(getOrganization().get().getId(), selection));
          }
          return selection;
       } catch (MongoException ex) {
@@ -99,9 +103,13 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
    }
 
    @Override
-   public void createLists(final List<SelectionList> lists) {
+   public void createLists(final List<SelectionList> lists, final String projectId) {
       try {
          databaseCollection().insertMany(lists);
+
+         if (reloadEvent != null) {
+            reloadEvent.fire(new ReloadSelectionLists(getOrganization().get().getId(), projectId));
+         }
       } catch (MongoException ex) {
          throw new StorageException("Cannot create selection lists " + lists, ex);
       }
@@ -115,9 +123,9 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
          if (returnedList == null) {
             throw new StorageException("Selection list '" + id + "' has not been updated.");
          }
-         if (updateSelectionListEvent != null) {
+         if (updateEvent != null) {
             mapList(returnedList);
-            updateSelectionListEvent.fire(new UpdateSelectionList(getOrganization().get().getId(), returnedList));
+            updateEvent.fire(new UpdateSelectionList(getOrganization().get().getId(), returnedList));
          }
          return returnedList;
       } catch (MongoException ex) {
@@ -131,9 +139,9 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
       if (result.getDeletedCount() != 1) {
          throw new StorageException("Selection list '" + list.getId() + "' has not been deleted.");
       }
-      if (removeSelectionListEvent != null) {
+      if (removeEvent != null) {
          mapList(list);
-         removeSelectionListEvent.fire(new RemoveSelectionList(getOrganization().get().getId(), list));
+         removeEvent.fire(new RemoveSelectionList(getOrganization().get().getId(), list));
       }
    }
 

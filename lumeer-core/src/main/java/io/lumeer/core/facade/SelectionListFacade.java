@@ -25,6 +25,8 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SelectOption;
 import io.lumeer.api.model.SelectionList;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
@@ -48,11 +50,24 @@ public class SelectionListFacade extends AbstractFacade {
    @Inject
    private CollectionDao collectionDao;
 
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
    public SelectionList createList(SelectionList list) {
       checkProjectPermissions(list.getProjectId());
       list.setId(null);
 
       return selectionListDao.createList(list);
+   }
+
+   public void createSampleLists(String projectId) {
+      checkProjectPermissions(projectId);
+
+      if (selectionListDao.getAllLists(List.of(projectId)).isEmpty()) {
+         var predefinedLists = SelectionListUtils.getPredefinedLists(requestDataKeeper.getUserLanguage(), getOrganization().getId(), projectId);
+         selectionListDao.createLists(predefinedLists, projectId);
+      }
+
    }
 
    public SelectionList updateList(final String id, SelectionList list) {
@@ -105,7 +120,7 @@ public class SelectionListFacade extends AbstractFacade {
       return selectionListDao.getAllLists(List.of(projectId));
    }
 
-   public List<SelectionList> getLists() {
+   public List<SelectionList> getAllLists() {
       List<String> readableProjects = projectDao.getAllProjects().stream()
                                                 .filter(project -> permissionsChecker.hasRole(project, RoleType.Read))
                                                 .map(Project::getId)

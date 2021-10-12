@@ -30,6 +30,7 @@ import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.RolesDifference;
+import io.lumeer.api.model.SelectionList;
 import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserNotification;
@@ -67,6 +68,7 @@ import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.OrganizationUserEvent;
 import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.ReloadResourceContent;
+import io.lumeer.engine.api.event.ReloadSelectionLists;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveFavoriteItem;
 import io.lumeer.engine.api.event.RemoveGroup;
@@ -754,6 +756,21 @@ public class PusherFacade extends AbstractFacade {
             ResourceId resourceId = new ResourceId(selectionListEvent.getSelectionList().getId(), organization.getId());
             Set<String> users = resourceAdapter.getProjectReaders(organization, project);
             List<Event> events = users.stream().map(userId -> createEventForRemove(selectionListEvent.getSelectionList().getClass().getSimpleName(), resourceId, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void reloadSelectionListsNotification(@Observes final ReloadSelectionLists reloadSelectionLists) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(reloadSelectionLists.getOrganizationId());
+            Project project = projectDao.getProjectById(reloadSelectionLists.getProjectId());
+            ObjectWithParent object = new ObjectWithParent(organization.getId(), organization.getId(), project.getId());
+            Set<String> users = resourceAdapter.getProjectReaders(organization, project);
+            List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), SelectionList.class.getSimpleName() + RELOAD_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);

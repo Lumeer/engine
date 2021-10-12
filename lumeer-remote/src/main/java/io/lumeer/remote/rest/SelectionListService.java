@@ -56,7 +56,7 @@ public class SelectionListService extends AbstractService {
 
    @GET
    public List<SelectionList> getLists() {
-      return selectionListFacade.getLists();
+      return selectionListFacade.getAllLists();
    }
 
    @POST
@@ -78,5 +78,19 @@ public class SelectionListService extends AbstractService {
       selectionListFacade.deleteList(listId);
 
       return Response.ok().link(getParentUri(listId), "parent").build();
+   }
+
+   @GET
+   @Path("projects/{projectId:[0-9a-fA-F]{24}}")
+   public List<SelectionList> getLists(@PathParam("projectId") String projectId) {
+      return selectionListFacade.getLists(projectId);
+   }
+
+   @POST
+   @Path("projects/{projectId:[0-9a-fA-F]{24}}/sample")
+   public Response createSampleLists(@PathParam("projectId") String projectId) {
+      selectionListFacade.createSampleLists(projectId);
+
+      return Response.ok().build();
    }
 }

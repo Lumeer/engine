@@ -16,28 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.SelectionList;
+package io.lumeer.engine.api.event;
 
-import java.util.List;
+public class ReloadSelectionLists {
 
-public interface SelectionListDao extends OrganizationScopedDao {
+   private final String organizationId;
+   private final String projectId;
 
-   void ensureIndexes(Organization organization);
+   public ReloadSelectionLists(String organizationId, String projectId) {
+      this.organizationId = organizationId;
+      this.projectId = projectId;
+   }
 
-   SelectionList createList(SelectionList list);
+   public String getOrganizationId() {
+      return organizationId;
+   }
 
-   void createLists(List<SelectionList> lists, String projectId);
-
-   SelectionList updateList(String id, SelectionList list);
-
-   void deleteList(SelectionList list);
-
-   List<SelectionList> getAllLists();
-
-   List<SelectionList> getAllLists(List<String> projectIds);
-
-   SelectionList getList(String id);
+   public String getProjectId() {
+      return projectId;
+   }
 }
