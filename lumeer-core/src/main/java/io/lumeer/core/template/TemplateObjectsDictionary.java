@@ -22,6 +22,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.SelectionList;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
 
@@ -41,6 +42,7 @@ public class TemplateObjectsDictionary {
    private final Map<String, View> views = new HashMap<>();
    private final Map<String, Document> documents = new HashMap<>();
    private final Map<String, LinkInstance> linkInstances = new HashMap<>();
+   private final Map<String, SelectionList> selectionLists = new HashMap<>();
 
    public void addCollection(final String templateId, final Collection collection) {
       collections.put(templateId, collection);
@@ -52,6 +54,18 @@ public class TemplateObjectsDictionary {
 
    public Collection getCollection(final String templateId) {
       return collections.get(templateId);
+   }
+
+   public void addSelectionList(final String id, final SelectionList selectionList) {
+      selectionLists.put(id, selectionList);
+   }
+
+   public String getSelectionListId(final String id) {
+      return getSafeId(selectionLists.get(id));
+   }
+
+   public SelectionList getSelectionList(final String id) {
+      return selectionLists.get(id);
    }
 
    public void addLinkType(final String templateId, final LinkType linkType) {

@@ -98,6 +98,13 @@ public class SelectionListFacade extends AbstractFacade {
       selectionListDao.deleteList(currentList);
    }
 
+   public List<SelectionList> getLists(String projectId) {
+      Project project = projectDao.getProjectById(projectId);
+      permissionsChecker.checkRole(project, RoleType.Read);
+
+      return selectionListDao.getAllLists(List.of(projectId));
+   }
+
    public List<SelectionList> getLists() {
       List<String> readableProjects = projectDao.getAllProjects().stream()
                                                 .filter(project -> permissionsChecker.hasRole(project, RoleType.Read))

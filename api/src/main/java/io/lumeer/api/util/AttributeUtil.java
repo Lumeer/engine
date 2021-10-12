@@ -148,6 +148,22 @@ public class AttributeUtil {
       return false;
    }
 
+   public static String getSelectionListId(final Attribute attribute) {
+      if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.Select) {
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         return (String) config.get("selectionListId");
+      }
+
+      return null;
+   }
+
+   public static void setSelectConfigSelectionList(final Attribute attribute, final String selectionListId) {
+      if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.Select) {
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();
+         config.put("selectionListId", selectionListId);
+      }
+   }
+
    public static void setSelectConfigOptions(final Attribute attribute, final List<SelectOption> options) {
       if (isConstraintWithConfig(attribute) && attribute.getConstraint().getType() == ConstraintType.Select) {
          @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) attribute.getConstraint().getConfig();

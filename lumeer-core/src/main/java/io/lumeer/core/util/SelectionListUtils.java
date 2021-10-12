@@ -74,18 +74,19 @@ public class SelectionListUtils {
    private static String optionTypeBackground(OptionType type) {
       switch (type) {
          case Open:
-            return "#616161";
+            return "#9e9e9e";
          case InProgress:
          case Running:
          case Writing:
             return "#fff176";
          case Closed:
          case Completed:
-            return "#9575cd";
+            return "#b39ddb";
          case Review:
-         case Ready:
          case InReview:
             return "#ff8a65";
+         case Ready:
+            return "#a5d6a7";
          case Approved:
          case Accepted:
             return "#81c784";

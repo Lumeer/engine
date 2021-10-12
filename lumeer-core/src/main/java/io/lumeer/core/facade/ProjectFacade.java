@@ -390,6 +390,7 @@ public class ProjectFacade extends AbstractFacade {
          content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(projectId));
       }
       content.setSequences(sequenceDao.getAllSequences());
+      content.setSelectionLists(selectionListDao.getAllLists(List.of(projectId)));
 
       final List<LinkInstanceWithId> linkInstances = new ArrayList<>();
       final Map<String, List<DataDocument>> linksData = new HashMap<>();

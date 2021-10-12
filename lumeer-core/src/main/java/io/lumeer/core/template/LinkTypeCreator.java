@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.LinkTypeFacade;
@@ -56,7 +57,10 @@ public class LinkTypeCreator extends WithIdCreator {
    }
 
    private void createAttributes(final LinkType linkType, final JSONObject o) {
-      linkTypeFacade.createLinkTypeAttributesWithoutPushNotification(linkType.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
+      final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"))
+                                                            .stream().map(attribute -> TemplateParserUtils.mapAttributeConstraintConfig(templateParser, attribute))
+                                                            .collect(Collectors.toList());
+      linkTypeFacade.createLinkTypeAttributesWithoutPushNotification(linkType.getId(), attributes);
    }
 
    private LinkType getLinkType(final JSONObject o) {

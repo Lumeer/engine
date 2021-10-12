@@ -67,6 +67,9 @@ public class ProjectContent {
    @JsonProperty("sequences")
    private List<Sequence> sequences;
 
+   @JsonProperty("selectionLists")
+   private List<SelectionList> selectionLists;
+
    @JsonProperty("comments")
    private List<ResourceCommentWrapper> comments;
 
@@ -164,5 +167,13 @@ public class ProjectContent {
 
    public void setComments(final List<ResourceCommentWrapper> comments) {
       this.comments = comments;
+   }
+
+   public List<SelectionList> getSelectionLists() {
+      return selectionLists;
+   }
+
+   public void setSelectionLists(final List<SelectionList> selectionLists) {
+      this.selectionLists = selectionLists;
    }
 }
