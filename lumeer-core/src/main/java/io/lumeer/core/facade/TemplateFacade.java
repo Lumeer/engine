@@ -30,6 +30,7 @@ import io.lumeer.core.template.FunctionAndRuleCreator;
 import io.lumeer.core.template.LinkInstanceCreator;
 import io.lumeer.core.template.LinkTypeCreator;
 import io.lumeer.core.template.ResourceCommentCreator;
+import io.lumeer.core.template.SelectionListCreator;
 import io.lumeer.core.template.SequenceCreator;
 import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
@@ -64,6 +65,9 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private SequenceFacade sequenceFacade;
+
+   @Inject
+   private SelectionListFacade selectionListFacade;
 
    @Inject
    private ResourceCommentFacade resourceCommentFacade;
@@ -135,6 +139,7 @@ public class TemplateFacade extends AbstractFacade {
    }
 
    private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata, final boolean originalLumeerTemplate) {
+      SelectionListCreator.createLists(templateParser, project, selectionListFacade);
       CollectionCreator.createCollections(templateParser, collectionFacade, defaultConfigurationProducer);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
       DocumentCreator.createDocuments(templateParser, documentFacade, authenticatedUser, templateMetadata, permissionsChecker.getDocumentLimits());

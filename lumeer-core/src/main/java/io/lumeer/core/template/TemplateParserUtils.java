@@ -21,6 +21,7 @@ package io.lumeer.core.template;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.util.AttributeUtil;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
@@ -120,5 +121,14 @@ public class TemplateParserUtils {
       sb.append(text.substring(lastEnd, text.length()));
 
       return sb.toString();
+   }
+
+   public static Attribute mapAttributeConstraintConfig(TemplateParser templateParser, Attribute attribute) {
+      var selectionListId = AttributeUtil.getSelectionListId(attribute);
+      var selectionList = selectionListId != null ? templateParser.getDict().getSelectionList(selectionListId) : null;
+      if (selectionList != null) {
+         AttributeUtil.setSelectConfigSelectionList(attribute, selectionList.getId());
+      }
+      return attribute;
    }
 }

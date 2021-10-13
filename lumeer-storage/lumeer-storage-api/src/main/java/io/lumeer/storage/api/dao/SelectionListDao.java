@@ -16,27 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.facade;
+package io.lumeer.storage.api.dao;
 
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.SelectionList;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import java.util.List;
 
-@ApplicationScoped
-public class EmailFacade {
+public interface SelectionListDao extends OrganizationScopedDao {
 
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
+   void ensureIndexes(Organization organization);
 
-   @Inject
-   private AuthenticatedUser user;
+   SelectionList createList(SelectionList list);
 
-   @Inject
-   private EmailService emailService;
+   void createLists(List<SelectionList> lists, String projectId);
 
-   public void sendInvitation(final String invitedEmail) {
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, requestDataKeeper.getUserLanguage(), emailService.formatUserReference(user.getCurrentUser()), emailService.formatFrom(user.getCurrentUser()), invitedEmail, "");
-   }
+   SelectionList updateList(String id, SelectionList list);
+
+   void deleteList(SelectionList list);
+
+   List<SelectionList> getAllLists();
+
+   List<SelectionList> getAllLists(List<String> projectIds);
+
+   SelectionList getList(String id);
 }

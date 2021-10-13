@@ -38,6 +38,7 @@ import io.lumeer.core.util.js.DataFilter;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -86,17 +87,19 @@ public class AutoLinkBatchTask extends AbstractContextualTask {
       targetDocuments = daoContextSnapshot.getDocumentDao().getDocumentsByCollection(otherCollection.getId());
       existingLinks = daoContextSnapshot.getLinkInstanceDao().getLinkInstancesByLinkType(linkType.getId());
 
-      language = Language.fromString(requestDataKeeper.getUserLocale());
+      language = requestDataKeeper.getUserLanguage();
       timeZone = requestDataKeeper.getTimezone();
       final TranslationManager translationManager = new TranslationManager();
       final String organizationId = daoContextSnapshot.getSelectedWorkspace().getOrganization().get().getId();
+      final String projectId = daoContextSnapshot.getSelectedWorkspace().getProject().get().getId();
       constraintData = new ConstraintData(
             daoContextSnapshot.getUserDao().getAllUsers(organizationId),
             user,
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timeZone != null ? timeZone : TimeZone.getDefault().getID(),
-            daoContextSnapshot.getGroupDao().getAllGroups(organizationId)
+            daoContextSnapshot.getGroupDao().getAllGroups(organizationId),
+            daoContextSnapshot.getSelectionListDao().getAllLists(Collections.singletonList(projectId))
       );
 
       matchQuery = MatchQueryFactory.getMatchQuery(attribute, otherCollection, otherAttribute);

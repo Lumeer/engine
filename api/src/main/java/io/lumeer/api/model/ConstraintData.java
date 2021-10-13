@@ -29,14 +29,16 @@ public class ConstraintData {
    private final CurrencyData currencyData;
    private final String timezone;
    private final List<Group> teams;
+   private final List<SelectionList> selectionLists;
 
-   public ConstraintData(final List<User> users, final User currentUser, final Map<String, String> durationUnitsMap, final CurrencyData currencyData, final String timezone, final List<Group> teams) {
+   public ConstraintData(final List<User> users, final User currentUser, final Map<String, String> durationUnitsMap, final CurrencyData currencyData, final String timezone, final List<Group> teams, final List<SelectionList> selectionLists) {
       this.users = users;
       this.currentUser = currentUser;
       this.durationUnitsMap = durationUnitsMap;
       this.currencyData = currencyData;
       this.timezone = timezone;
       this.teams = teams;
+      this.selectionLists = selectionLists;
    }
 
    public List<User> getUsers() {
@@ -61,5 +63,9 @@ public class ConstraintData {
 
    public List<Group> getTeams() {
       return teams;
+   }
+
+   public List<SelectionList> getSelectionLists() {
+      return selectionLists;
    }
 }

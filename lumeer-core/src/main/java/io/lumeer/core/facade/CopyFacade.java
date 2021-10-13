@@ -61,7 +61,7 @@ public class CopyFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      language = Language.fromString(requestDataKeeper.getUserLocale());
+      language = requestDataKeeper.getUserLanguage();
    }
 
    public void deepCopySampleData(Project project, SampleDataType sampleType) {

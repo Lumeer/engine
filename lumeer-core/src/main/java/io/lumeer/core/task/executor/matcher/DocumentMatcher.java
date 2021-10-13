@@ -101,7 +101,8 @@ public class DocumentMatcher {
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timeZone != null ? timeZone : TimeZone.getDefault().getID(),
-            dao.getGroupDao().getAllGroups(this.organization.getId())
+            dao.getGroupDao().getAllGroups(this.organization.getId()),
+            dao.getSelectionListDao().getAllLists(Collections.singletonList(project.getId()))
       );
    }
 

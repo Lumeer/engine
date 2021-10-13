@@ -16,27 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.facade;
+package io.lumeer.engine.api.event;
 
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.api.model.SelectionList;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+public abstract class SelectionListEvent {
 
-@ApplicationScoped
-public class EmailFacade {
+   private String organizationId;
+   private SelectionList selectionList;
 
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
+   public SelectionListEvent(final String organizationId, final SelectionList selectionList) {
+      this.organizationId = organizationId;
+      this.selectionList = selectionList;
+   }
 
-   @Inject
-   private AuthenticatedUser user;
+   public String getOrganizationId() {
+      return organizationId;
+   }
 
-   @Inject
-   private EmailService emailService;
-
-   public void sendInvitation(final String invitedEmail) {
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, requestDataKeeper.getUserLanguage(), emailService.formatUserReference(user.getCurrentUser()), emailService.formatFrom(user.getCurrentUser()), invitedEmail, "");
+   public SelectionList getSelectionList() {
+      return selectionList;
    }
 }

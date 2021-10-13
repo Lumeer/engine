@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.template;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
@@ -111,7 +112,10 @@ public class CollectionCreator extends WithIdCreator {
    }
 
    private void createAttributes(final Collection collection, final JSONObject o) {
-      collectionFacade.createCollectionAttributesWithoutPushNotification(collection.getId(), TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes")));
+      final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"))
+            .stream().map(attribute -> TemplateParserUtils.mapAttributeConstraintConfig(templateParser, attribute))
+            .collect(Collectors.toList());
+      collectionFacade.createCollectionAttributesWithoutPushNotification(collection.getId(), attributes);
    }
 
    private Collection getCollection(final JSONObject o) {

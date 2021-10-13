@@ -60,7 +60,7 @@ public class TemplateService extends AbstractService {
 
    @GET
    public List<Project> getTemplates() {
-      Language language = Language.fromString(requestDataKeeper.getUserLocale());
+      Language language = requestDataKeeper.getUserLanguage();
       final String organizationId = templateFacade.getTemplateOrganizationId(language);
 
       if (StringUtils.isEmpty(organizationId)) {

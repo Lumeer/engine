@@ -58,6 +58,7 @@ import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import org.jetbrains.annotations.NotNull;
@@ -110,6 +111,9 @@ public class SearchFacade extends AbstractFacade {
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
+   private SelectionListDao selectionListDao;
+
+   @Inject
    private TranslationManager translationManager;
 
    @Inject
@@ -129,7 +133,7 @@ public class SearchFacade extends AbstractFacade {
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
-      language = Language.fromString(requestDataKeeper.getUserLocale());
+      language = requestDataKeeper.getUserLanguage();
       timezone = requestDataKeeper.getTimezone();
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
@@ -277,7 +281,8 @@ public class SearchFacade extends AbstractFacade {
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timezone,
-            groupDao.getAllGroups(workspaceKeeper.getOrganizationId())
+            groupDao.getAllGroups(workspaceKeeper.getOrganizationId()),
+            selectionListDao.getAllLists(Collections.singletonList(getProject().getId()))
       );
    }
 

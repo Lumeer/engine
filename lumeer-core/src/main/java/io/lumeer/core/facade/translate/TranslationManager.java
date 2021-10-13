@@ -32,7 +32,7 @@ import javax.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class TranslationManager {
 
-   public Map<String, String> translateDurationUnitsMap(@Nullable  Language language) {
+   public Map<String, String> translateDurationUnitsMap(@Nullable Language language) {
       switch (language != null ? language : Language.EN) {
          case CS:
             return translateDurationUnitsMapCs();

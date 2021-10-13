@@ -16,27 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.facade;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.api.model.SelectOption;
+import io.lumeer.api.model.SelectionList;
+import io.lumeer.storage.mongodb.codecs.SelectOptionCodec;
+import io.lumeer.storage.mongodb.codecs.SelectionListCodec;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-@ApplicationScoped
-public class EmailFacade {
+public class SelectionCodecProvider implements CodecProvider {
 
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
+   @Override
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == SelectionList.class) {
+         return (Codec<T>) new SelectionListCodec(registry);
+      }
+      if (clazz == SelectOption.class) {
+         return (Codec<T>) new SelectOptionCodec(registry);
+      }
 
-   @Inject
-   private AuthenticatedUser user;
-
-   @Inject
-   private EmailService emailService;
-
-   public void sendInvitation(final String invitedEmail) {
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, requestDataKeeper.getUserLanguage(), emailService.formatUserReference(user.getCurrentUser()), emailService.formatFrom(user.getCurrentUser()), invitedEmail, "");
+      return null;
    }
 }
