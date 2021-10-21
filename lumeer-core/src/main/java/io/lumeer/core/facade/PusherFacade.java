@@ -85,6 +85,7 @@ import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateCurrentUser;
+import io.lumeer.engine.api.event.UpdateDashboardData;
 import io.lumeer.engine.api.event.UpdateDefaultViewConfig;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
@@ -608,6 +609,19 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             ObjectWithParent object = new ObjectWithParent(updateDefaultViewConfig.getConfig(), getOrganization().getId(), getProject().getId());
+            Set<String> userIds = Collections.singleton(getCurrentUserId());
+
+            sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void updateDashboardData(@Observes final UpdateDashboardData updateDashboardData) {
+      if (isEnabled()) {
+         try {
+            ObjectWithParent object = new ObjectWithParent(updateDashboardData.getData(), getOrganization().getId(), getProject().getId());
             Set<String> userIds = Collections.singleton(getCurrentUserId());
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
