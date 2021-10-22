@@ -53,7 +53,13 @@ public class DashboardDataFacade extends AbstractFacade {
    public List<DashboardData> getAll() {
       checkPermissions();
 
-      return dashboardDataDao.getAll(getCurrentUserId());
+      return dashboardDataDao.getByUserId(getCurrentUserId());
+   }
+
+   public DashboardData getByType(String type, String typeId) {
+      checkPermissions();
+
+      return dashboardDataDao.getByTypeId(type, typeId, getCurrentUserId());
    }
 
    private Project checkPermissions() {

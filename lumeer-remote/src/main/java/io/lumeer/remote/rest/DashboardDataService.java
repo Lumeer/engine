@@ -61,6 +61,12 @@ public class DashboardDataService extends AbstractService {
       return dashboardDataFacade.getAll();
    }
 
+   @GET
+   @Path("data/{type}/{typeId}")
+   public DashboardData getByType(@PathParam("type") String type, @PathParam("typeId") String typeId) {
+      return dashboardDataFacade.getByType(type, typeId);
+   }
+
    @POST
    @Path("data")
    public DashboardData update(DashboardData dashboardData) {

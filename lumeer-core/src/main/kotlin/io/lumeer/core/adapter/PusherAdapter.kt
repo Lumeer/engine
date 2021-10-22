@@ -223,7 +223,7 @@ class PusherAdapter(
       return Event(eventChannel(userId), any.javaClass.simpleName + event, any)
    }
 
-   private fun createEventForObject(`object`: Any, backupObject: Any, event: String, userId: String): BackupDataEvent {
+   fun createEventForObject(`object`: Any, backupObject: Any, event: String, userId: String): BackupDataEvent {
       return BackupDataEvent(eventChannel(userId), `object`.javaClass.simpleName + event, `object`, backupObject, null)
    }
 
@@ -242,8 +242,8 @@ class PusherAdapter(
       return Event(eventChannel(userId), objectWithParent.`object`.javaClass.simpleName + event, objectWithParent)
    }
 
-   private fun createEventForObjectWithParent(objectWithParent: ObjectWithParent, resourceId: ResourceId, event: String, userId: String): BackupDataEvent {
-      return BackupDataEvent(eventChannel(userId), objectWithParent.`object`.javaClass.simpleName + event, objectWithParent, resourceId, null)
+   fun createEventForObjectWithParent(objectWithParent: ObjectWithParent, backupObject: Any, event: String, userId: String): BackupDataEvent {
+      return BackupDataEvent(eventChannel(userId), objectWithParent.`object`.javaClass.simpleName + event, objectWithParent, backupObject, null)
    }
 
    private fun getResourceId(organization: Organization?, project: Project?, resource: Resource): ResourceId {

@@ -21,6 +21,7 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SelectOption;
 import io.lumeer.api.model.SelectionList;
@@ -54,14 +55,14 @@ public class SelectionListFacade extends AbstractFacade {
    private RequestDataKeeper requestDataKeeper;
 
    public SelectionList createList(SelectionList list) {
-      checkProjectPermissions(list.getProjectId());
+      checkWritePermissions(list.getProjectId());
       list.setId(null);
 
       return selectionListDao.createList(list);
    }
 
    public void createSampleLists(String projectId) {
-      checkProjectPermissions(projectId);
+      checkWritePermissions(projectId);
 
       if (selectionListDao.getAllLists(List.of(projectId)).isEmpty()) {
          var predefinedLists = SelectionListUtils.getPredefinedLists(requestDataKeeper.getUserLanguage(), getOrganization().getId(), projectId);
@@ -72,7 +73,7 @@ public class SelectionListFacade extends AbstractFacade {
 
    public SelectionList updateList(final String id, SelectionList list) {
       SelectionList currentList = selectionListDao.getList(id);
-      checkProjectPermissions(currentList.getProjectId());
+      checkWritePermissions(currentList.getProjectId());
 
       List<SelectOption> previousOptions = new ArrayList<>(list.getOptions());
       currentList.patch(list);
@@ -108,16 +109,22 @@ public class SelectionListFacade extends AbstractFacade {
 
    public void deleteList(String id) {
       SelectionList currentList = selectionListDao.getList(id);
-      checkProjectPermissions(currentList.getProjectId());
+      checkWritePermissions(currentList.getProjectId());
 
       selectionListDao.deleteList(currentList);
    }
 
    public List<SelectionList> getLists(String projectId) {
-      Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleType.Read);
+      checkReadPermissions(projectId);
 
       return selectionListDao.getAllLists(List.of(projectId));
+   }
+
+   public SelectionList getList(String id) {
+      SelectionList currentList = selectionListDao.getList(id);
+      checkReadPermissions(currentList.getProjectId());
+
+      return currentList;
    }
 
    public List<SelectionList> getAllLists() {
@@ -133,9 +140,17 @@ public class SelectionListFacade extends AbstractFacade {
       return selectionListDao.getAllLists(readableProjects);
    }
 
-   private Project checkProjectPermissions(final String projectId) {
+   private Project checkReadPermissions(final String projectId) {
+      return checkPermissions(projectId, RoleType.Read);
+   }
+
+   private Project checkWritePermissions(final String projectId) {
+      return checkPermissions(projectId, RoleType.TechConfig);
+   }
+
+   private Project checkPermissions(final String projectId, final RoleType roleType) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleType.TechConfig);
+      permissionsChecker.checkRole(project, roleType);
 
       return project;
    }

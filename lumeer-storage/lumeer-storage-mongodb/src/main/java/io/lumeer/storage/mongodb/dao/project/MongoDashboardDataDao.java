@@ -31,6 +31,7 @@ import io.lumeer.storage.mongodb.codecs.DashboardDataCodec;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -88,16 +89,29 @@ public class MongoDashboardDataDao extends MongoProjectScopedDao implements Dash
    }
 
    private Bson dataFilter(final DashboardData data) {
+      return dataFilter(data.getType(), data.getTypeId(), data.getUserId());
+   }
+
+   private Bson dataFilter(final String type, final String typeId, final String userId) {
       return and(
-            eq(DashboardDataCodec.USER_ID, data.getUserId()),
-            eq(DashboardDataCodec.TYPE, data.getType()),
-            eq(DashboardDataCodec.TYPE_ID, data.getTypeId())
+            eq(DashboardDataCodec.USER_ID, userId),
+            eq(DashboardDataCodec.TYPE, type),
+            eq(DashboardDataCodec.TYPE_ID, typeId)
       );
    }
 
    @Override
-   public List<DashboardData> getAll(final String userId) {
+   public List<DashboardData> getByUserId(final String userId) {
       return databaseCollection().find(eq(DashboardDataCodec.USER_ID, userId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public DashboardData getByTypeId(final String type, final String typeId, final String userId) {
+      MongoCursor<DashboardData> mongoCursor = databaseCollection().find(dataFilter(type, typeId, userId)).iterator();
+      if (!mongoCursor.hasNext()) {
+         throw new StorageException("Could not found dashboard data");
+      }
+      return mongoCursor.next();
    }
 
    @Override

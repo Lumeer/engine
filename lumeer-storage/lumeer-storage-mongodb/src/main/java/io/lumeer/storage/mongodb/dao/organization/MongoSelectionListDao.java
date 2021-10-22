@@ -166,7 +166,7 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
       if (!mongoCursor.hasNext()) {
          throw new StorageException("Selection list '" + id + "' could not be found.");
       }
-      return mongoCursor.next();
+      return mapList(mongoCursor.next());
    }
 
    private SelectionList mapList(SelectionList list) {

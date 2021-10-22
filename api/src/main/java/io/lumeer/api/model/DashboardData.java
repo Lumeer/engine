@@ -42,6 +42,11 @@ public class DashboardData  {
       this.data = data;
    }
 
+   public DashboardData(final String type, final String typeId) {
+      this.type = type;
+      this.typeId = typeId;
+   }
+
    public DashboardData(final String type, final String typeId, final String userId, final Object data) {
       this.type = type;
       this.typeId = typeId;

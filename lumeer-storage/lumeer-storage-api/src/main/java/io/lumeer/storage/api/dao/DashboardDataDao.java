@@ -32,5 +32,7 @@ public interface DashboardDataDao extends ProjectScopedDao {
 
    void delete(String type, Set<String> typeIds, String userId);
 
-   List<DashboardData> getAll(String userId);
+   List<DashboardData> getByUserId(String userId);
+
+   DashboardData getByTypeId(String type, String typeId, String userId);
 }
