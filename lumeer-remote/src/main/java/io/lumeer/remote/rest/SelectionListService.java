@@ -72,6 +72,12 @@ public class SelectionListService extends AbstractService {
       return selectionListFacade.updateList(listId, list);
    }
 
+   @GET
+   @Path("{listId:[0-9a-fA-F]{24}}")
+   public SelectionList getList(@PathParam("listId") String listId) {
+      return selectionListFacade.getList(listId);
+   }
+
    @DELETE
    @Path("{listId:[0-9a-fA-F]{24}}")
    public Response deleteList(@PathParam("listId") String listId) {

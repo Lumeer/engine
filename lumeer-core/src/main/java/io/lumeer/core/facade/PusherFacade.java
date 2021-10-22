@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.DashboardData;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.LinkInstance;
@@ -85,6 +86,7 @@ import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.TemplateCreated;
 import io.lumeer.engine.api.event.UpdateCompanyContact;
 import io.lumeer.engine.api.event.UpdateCurrentUser;
+import io.lumeer.engine.api.event.UpdateDashboardData;
 import io.lumeer.engine.api.event.UpdateDefaultViewConfig;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
@@ -617,6 +619,23 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
+   public void updateDashboardData(@Observes final UpdateDashboardData updateDashboardData) {
+      if (isEnabled()) {
+         try {
+            DashboardData dashboardData = updateDashboardData.getData();
+            ObjectWithParent object = new ObjectWithParent(dashboardData, getOrganization().getId(), getProject().getId());
+
+            DashboardData backupData = new DashboardData(dashboardData.getType(), dashboardData.getTypeId());
+            ObjectWithParent backupObject = new ObjectWithParent(backupData, getOrganization().getId(), getProject().getId());
+
+            Event event = pusherAdapter.createEventForObjectWithParent(object, backupObject, UPDATE_EVENT_SUFFIX, getCurrentUserId());
+            sendNotificationsBatch(Collections.singletonList(event));
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
    public void createOrUpdateSequence(@Observes final CreateOrUpdateSequence createOrUpdateSequence) {
       if (isEnabled()) {
          try {
@@ -739,8 +758,9 @@ public class PusherFacade extends AbstractFacade {
             Organization organization = organizationDao.getOrganizationById(selectionListEvent.getOrganizationId());
             Project project = projectDao.getProjectById(selectionListEvent.getSelectionList().getProjectId());
             ObjectWithParent object = new ObjectWithParent(selectionListEvent.getSelectionList(), organization.getId(), project.getId());
+            ResourceId backup = new ResourceId(selectionListEvent.getSelectionList().getId(), organization.getId(), project.getId());
             Set<String> users = resourceAdapter.getProjectReaders(organization, project);
-            List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, suffix, userId)).collect(Collectors.toList());
+            List<Event> events = users.stream().map(userId -> pusherAdapter.createEventForObjectWithParent(object, backup, suffix, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
