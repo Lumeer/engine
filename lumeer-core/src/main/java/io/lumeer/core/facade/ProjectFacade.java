@@ -139,6 +139,8 @@ public class ProjectFacade extends AbstractFacade {
    private RequestDataKeeper requestDataKeeper;
 
    void init(DaoContextSnapshot daoContextSnapshot) {
+      // IMPORTANT!!!!!!!
+      // When injecting a new DAO, please make sure it is also initialized here
       this.collectionDao = daoContextSnapshot.getCollectionDao();
       this.documentDao = daoContextSnapshot.getDocumentDao();
       this.dataDao = daoContextSnapshot.getDataDao();
@@ -150,6 +152,7 @@ public class ProjectFacade extends AbstractFacade {
       this.favoriteItemDao = daoContextSnapshot.getFavoriteItemDao();
       this.sequenceDao = daoContextSnapshot.getSequenceDao();
       this.resourceCommentDao = daoContextSnapshot.getResourceCommentDao();
+      this.selectionListDao = daoContextSnapshot.getSelectionListDao();
    }
 
    public Project createProject(Project project) {
