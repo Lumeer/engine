@@ -142,7 +142,7 @@ class PermissionAdapter(private val userDao: UserDao,
       if (view != null) {
          val viewRoles = getUserRolesInResource(organization, project, view, user)
          val authorId = view.authorId.orEmpty()
-         val collectionIds = QueryUtils.getQueryCollectionIds(view.query, linkTypes.value)
+         val collectionIds = QueryUtils.getViewCollectionIds(view, linkTypes.value)
          if (collectionIds.contains(collection.id) && authorId.isNotEmpty()) { // does the view contain the collection?
             val authorRoles = getUserRolesInResource(organization, project, collection, authorId)
             return viewRoles.intersect(authorRoles)
@@ -156,7 +156,7 @@ class PermissionAdapter(private val userDao: UserDao,
       if (view != null) {
          val viewRoles = getUserRolesInResource(organization, project, view, user)
          val authorId = view.authorId.orEmpty()
-         val linkTypeIds = view.query?.linkTypeIds.orEmpty()
+         val linkTypeIds = view.allLinkTypeIds
          if (linkTypeIds.contains(linkType.id) && authorId.isNotEmpty()) { // does the view contain the linkType?
             val authorRoles = getUserRolesInLinkType(organization, project, linkType, getUser(authorId))
             return viewRoles.intersect(authorRoles)
@@ -232,7 +232,7 @@ class PermissionAdapter(private val userDao: UserDao,
    private fun hasRoleInCollectionViaView(organization: Organization?, project: Project?, collection: Collection, role: RoleType, viewRole: RoleType, userId: String, view: View?): Boolean {
       if (view != null && hasRole(organization, project, view, viewRole, userId)) { // does user have access to the view?
          val authorId = view.authorId.orEmpty()
-         val collectionIds = QueryUtils.getQueryCollectionIds(view.query, linkTypes.value)
+         val collectionIds = QueryUtils.getViewCollectionIds(view, linkTypes.value)
          if (collectionIds.contains(collection.id) && authorId.isNotEmpty()) { // does the view contain the collection?
             if (hasRole(organization, project, collection, role, authorId)) { // has the view author access to the collection?
                return true // grant access
@@ -362,7 +362,7 @@ class PermissionAdapter(private val userDao: UserDao,
    private fun hasRoleInLinkTypeViaView(organization: Organization, project: Project?, linkType: LinkType, collections: List<Collection>, role: RoleType, viewRole: RoleType, userId: String, view: View?): Boolean {
       if (view != null && hasRole(organization, project, view, viewRole, userId)) { // does user have access to the view?
          val authorId = view.authorId.orEmpty()
-         val linkTypeIds = view.query?.linkTypeIds.orEmpty()
+         val linkTypeIds = view.allLinkTypeIds
          if (linkTypeIds.contains(linkType.id) && authorId.isNotEmpty()) { // does the view contain the linkType?
             if (hasRole(organization, project, linkType, collections, role, authorId)) { // has the view author access to the linkType?
                return true // grant access

@@ -23,9 +23,12 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +39,7 @@ public class View extends Resource implements Updatable<View> {
    public static Set<Role> ROLES = RoleUtils.viewResourceRoles();
 
    public static final String QUERY = "query";
+   public static final String ADDITIONAL_QUERIES = "additionalQueries";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
    public static final String SETTINGS = "settings";
@@ -43,6 +47,7 @@ public class View extends Resource implements Updatable<View> {
    public static final String FOLDERS = "folders";
 
    private Query query;
+   private List<Query> additionalQueries;
    private String perspective;
    private Object config;
    private Object settings;
@@ -68,6 +73,7 @@ public class View extends Resource implements Updatable<View> {
          @JsonProperty(PRIORITY) final Long order,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(QUERY) final Query query,
+         @JsonProperty(ADDITIONAL_QUERIES) final List<Query> additionalQueries,
          @JsonProperty(PERSPECTIVE) final String perspective,
          @JsonProperty(CONFIG) final Object config,
          @JsonProperty(SETTINGS) final Object settings,
@@ -76,6 +82,7 @@ public class View extends Resource implements Updatable<View> {
       super(code, name, icon, color, description, order, permissions);
 
       this.query = query;
+      this.additionalQueries = additionalQueries;
       this.perspective = perspective;
       this.config = config;
       this.settings = settings;
@@ -96,6 +103,7 @@ public class View extends Resource implements Updatable<View> {
       o.nonRemovable = this.nonRemovable;
       o.permissions = new Permissions(this.getPermissions());
       o.query = this.query;
+      o.additionalQueries = this.additionalQueries;
       o.perspective = this.perspective;
       o.config = this.config;
       o.settings = this.settings;
@@ -117,6 +125,17 @@ public class View extends Resource implements Updatable<View> {
 
    public Query getQuery() {
       return query;
+   }
+
+   public List<Query> getAdditionalQueries() {
+      return additionalQueries != null ? additionalQueries : Collections.emptyList();
+   }
+
+   @JsonIgnore
+   public Set<String> getAllLinkTypeIds() {
+      Set<String> linkTypeIds = new HashSet<>(getQuery() != null ? getQuery().getLinkTypeIds() : Collections.emptyList());
+      getAdditionalQueries().forEach(query -> linkTypeIds.addAll(query.getLinkTypeIds()));
+      return linkTypeIds;
    }
 
    public String getPerspective() {

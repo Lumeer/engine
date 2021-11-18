@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.IdsBody;
 import io.lumeer.core.facade.FileAttachmentFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
@@ -60,13 +61,21 @@ public class FileAttachmentService extends AbstractService {
 
    @POST
    @HealthCheck
-   public FileAttachment createFileAttachment(final FileAttachment fileAttachment) {
-      return fileAttachmentFacade.createFileAttachment(fileAttachment);
+   public List<FileAttachment> createFileAttachments(final List<FileAttachment> fileAttachment) {
+      return fileAttachmentFacade.createFileAttachments(fileAttachment);
    }
 
    @DELETE
    public Response removeFileAttachment(final FileAttachment fileAttachment) {
       fileAttachmentFacade.removeFileAttachment(fileAttachment);
+
+      return Response.ok().build();
+   }
+
+   @DELETE
+   @Path("multiple")
+   public Response removeFileAttachment(final IdsBody idsBody) {
+      fileAttachmentFacade.removeFileAttachments(idsBody.getIds());
 
       return Response.ok().build();
    }

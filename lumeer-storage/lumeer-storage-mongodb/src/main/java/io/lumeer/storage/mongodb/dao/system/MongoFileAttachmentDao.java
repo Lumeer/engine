@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.dao.system;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.Organization;
@@ -38,6 +39,7 @@ import com.mongodb.client.result.DeleteResult;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.PostConstruct;
 
@@ -71,6 +73,16 @@ public class MongoFileAttachmentDao extends MongoSystemScopedDao implements File
    }
 
    @Override
+   public List<FileAttachment> createFileAttachments(final List<FileAttachment> fileAttachments) {
+      try {
+         databaseCollection().insertMany(fileAttachments);
+         return fileAttachments;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot create FileAttachments " + fileAttachments, ex);
+      }
+   }
+
+   @Override
    public FileAttachment updateFileAttachment(final FileAttachment fileAttachment) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
@@ -92,6 +104,15 @@ public class MongoFileAttachmentDao extends MongoSystemScopedDao implements File
    @Override
    public FileAttachment findFileAttachment(final FileAttachment fileAttachment) {
       return databaseCollection().find(idFilter(fileAttachment.getId())).first();
+   }
+
+   @Override
+   public List<FileAttachment> findFileAttachments(final java.util.Collection<String> fileAttachmentIds) {
+      Bson filter = idsFilter(fileAttachmentIds);
+      if (filter == null) {
+         return Collections.emptyList();
+      }
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override
@@ -141,6 +162,17 @@ public class MongoFileAttachmentDao extends MongoSystemScopedDao implements File
       DeleteResult result = databaseCollection().deleteOne(idFilter(attachmentId));
 
       return result.getDeletedCount() == 1;
+   }
+
+   @Override
+   public boolean removeFileAttachments(final java.util.Collection<String> fileAttachmentIds) {
+      Bson filter = idsFilter(fileAttachmentIds);
+      if (filter == null) {
+         return false;
+      }
+
+      DeleteResult result = databaseCollection().deleteMany(filter);
+      return result.getDeletedCount() == fileAttachmentIds.size();
    }
 
    @Override

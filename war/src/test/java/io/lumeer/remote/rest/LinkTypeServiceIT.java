@@ -152,7 +152,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem = new QueryStem(null, collectionIdNoPerm, Collections.singletonList(linkTypeIdFromView), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(stem);
 
-      View view = new View("code", "name", "", "", "", null, userPermissions, query, "perspective", "", null, createdUser.getId(), Collections.emptyList());
+      View view = new View("code", "name", "", "", "", null, userPermissions, query, Collections.emptyList(), "perspective", "", null, createdUser.getId(), Collections.emptyList());
       viewDao.createView(view);
 
       linkTypesUrl = projectPath(storedOrganization, storedProject) + "link-types";

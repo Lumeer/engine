@@ -106,7 +106,7 @@ public class ViewFacade extends AbstractFacade {
          linkTypes.forEach(linkType -> permissionsChecker.checkRoleInLinkType(linkType, RoleType.Read, getCurrentUserId()));
       }
 
-      final Set<String> queryCollectionIds = QueryUtils.getQueryCollectionIds(view.getQuery(), linkTypes);
+      final Set<String> queryCollectionIds = QueryUtils.getViewCollectionIds(view, linkTypes);
       if (!queryCollectionIds.isEmpty()) {
          collectionDao.getCollectionsByIds(queryCollectionIds).forEach(collection ->
                permissionsChecker.checkRole(collection, RoleType.Read));

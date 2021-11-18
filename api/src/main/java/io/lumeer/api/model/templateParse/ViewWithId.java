@@ -42,18 +42,19 @@ public class ViewWithId extends View {
          @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(QUERY) final Query query,
+         @JsonProperty(ADDITIONAL_QUERIES) final List<Query> additionalQueries,
          @JsonProperty(PERSPECTIVE) final String perspective,
          @JsonProperty(CONFIG) final Object config,
          @JsonProperty(SETTINGS) final Object settings,
          @JsonProperty(AUTHOR_ID) final String authorId,
          @JsonProperty(FOLDERS) final List<String> folders) {
-      super(code, name, icon, color, description, order, permissions, query, perspective, config, settings, authorId, folders);
+      super(code, name, icon, color, description, order, permissions, query, additionalQueries, perspective, config, settings, authorId, folders);
       setId(id);
    }
 
    public ViewWithId(final View view) {
       super(view.getCode(), view.getName(), view.getIcon(), view.getColor(),
-            view.getDescription(), view.getPriority(), view.getPermissions(), view.getQuery(), view.getPerspective(),
+            view.getDescription(), view.getPriority(), view.getPermissions(), view.getQuery(), view.getAdditionalQueries(), view.getPerspective(),
             view.getConfig(), view.getSettings(), view.getAuthorId(), view.getFolders());
       this.setId(view.getId());
    }

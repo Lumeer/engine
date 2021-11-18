@@ -45,6 +45,7 @@ import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -133,6 +134,31 @@ public class FileAttachmentFacade extends AbstractFacade {
             throw new IllegalStateException("Unable to initialize S3 client. Wrong endpoint. Unable to work with file attachments.");
          }
       }
+   }
+
+   public List<FileAttachment> createFileAttachments(final List<FileAttachment> fileAttachments) {
+      checkFileAttachmentsCanEdit(fileAttachments);
+
+      return fileAttachmentDao.createFileAttachments(fileAttachments).stream()
+                              .map(fileAttachment -> presignFileAttachment(fileAttachment, true))
+                              .collect(Collectors.toList());
+   }
+
+   private void checkFileAttachmentsCanEdit(final List<FileAttachment> fileAttachments) {
+      Set<String> checkedDocumentIds = new HashSet<>();
+      Set<String> checkedLinkInstanceIds = new HashSet<>();
+
+      fileAttachments.forEach(fileAttachment -> {
+         if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+            if (!checkedDocumentIds.contains(fileAttachment.getDocumentId())) {
+               checkCanEditDocument(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
+               checkedDocumentIds.add(fileAttachment.getDocumentId());
+            }
+         } else if (!checkedLinkInstanceIds.contains(fileAttachment.getDocumentId())) {
+            checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
+            checkedLinkInstanceIds.add(fileAttachment.getDocumentId());
+         }
+      });
    }
 
    public FileAttachment createFileAttachment(final FileAttachment fileAttachment) {
@@ -262,6 +288,20 @@ public class FileAttachmentFacade extends AbstractFacade {
       storedFileAttachment.setFileName(fileAttachment.getFileName());
 
       return fileAttachmentDao.updateFileAttachment(fileAttachment);
+   }
+
+   public void removeFileAttachments(final java.util.Collection<String> fileAttachmentIds) {
+      final List<FileAttachment> fileAttachments = fileAttachmentDao.findFileAttachments(fileAttachmentIds);
+
+      checkFileAttachmentsCanEdit(fileAttachments);
+
+      if (s3 != null) {
+         fileAttachments.forEach(fileAttachment -> {
+            s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
+         });
+      }
+
+      fileAttachmentDao.removeFileAttachments(fileAttachmentIds);
    }
 
    public void removeFileAttachment(final String fileAttachmentId) {

@@ -281,7 +281,7 @@ public class PusherAdapterIT extends IntegrationTestBase {
    }
 
    private View createView(String name, Query query, Set<Role> userRoles, Set<Role> groupRoles) {
-      View view = new View(name, name, "", "", "", 0L, new Permissions(), query, null, null, null, user.getId(), null);
+      View view = new View(name, name, "", "", "", 0L, new Permissions(), query, Collections.emptyList(), null, null, null, user.getId(), null);
       Permission userPermission = Permission.buildWithRoles(user.getId(), userRoles);
       view.getPermissions().updateUserPermissions(userPermission);
 
