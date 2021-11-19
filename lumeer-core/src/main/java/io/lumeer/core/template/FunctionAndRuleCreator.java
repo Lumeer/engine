@@ -81,10 +81,10 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          if (rules != null) {
             var collectionRules = new HashMap<String, Rule>();
             rules.forEach((k, v) -> {
-               collectionRules.put((String) k, getRule((JSONObject) v));
+               collectionRules.put((String) k, getRule((String) k, (JSONObject) v));
             });
             collection.setRules(collectionRules);
-            collectionFacade.updateCollection(collection.getId(), collection, skipFceLimits);
+            var cup = collectionFacade.updateRules(collection.getId(), collection, skipFceLimits);
          }
       });
 
@@ -110,10 +110,10 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          if (rules != null) {
             var linkTypeRules = new HashMap<String, Rule>();
             rules.forEach((k, v) -> {
-               linkTypeRules.put((String) k, getRule((JSONObject) v));
+               linkTypeRules.put((String) k, getRule((String) k, (JSONObject) v));
             });
             linkType.setRules(linkTypeRules);
-            linkTypeFacade.updateLinkType(linkType.getId(), linkType, skipFceLimits);
+            linkTypeFacade.updateLinkTypeRules(linkType.getId(), linkType, skipFceLimits);
          }
       });
    }
@@ -132,11 +132,12 @@ public class FunctionAndRuleCreator extends WithIdCreator {
       return new Function(cureJs((String) o.get(Function.JS)), cureXml((String) o.get(Function.XML)), null, 0, (Boolean) o.get(Function.EDITABLE));
    }
 
-   private Rule getRule(final JSONObject o) {
+   private Rule getRule(final String id, final JSONObject o) {
       var name = (String) o.get(Rule.NAME);
       var type = Rule.RuleType.valueOf(o.get(Rule.TYPE).toString());
       var timing = Utils.computeIfNotNull(o.get(Rule.TIMING), t -> Rule.RuleTiming.valueOf(t.toString()));
       var rule = new Rule(name, type, timing, new DataDocument((JSONObject) o.get("configuration")));
+      rule.setId(id);
 
       if (type == Rule.RuleType.BLOCKLY) {
          rule.getConfiguration().put(BlocklyRule.BLOCKLY_JS, cureJs(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS)));
