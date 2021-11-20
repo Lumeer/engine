@@ -188,6 +188,23 @@ public class CollectionFacade extends AbstractFacade {
       return mapCollection(collectionDao.updateCollection(storedCollection.getId(), updatingCollection, storedCollection));
    }
 
+   public Collection updateRules(final String collectionId, final Collection collection, final boolean skipFceLimits) {
+      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(storedCollection, RoleType.TechConfig);
+
+      if (!skipFceLimits) {
+         permissionsChecker.checkRulesLimit(collection);
+         permissionsChecker.checkFunctionsLimit(collection);
+      }
+      permissionsChecker.checkRulesPermissions(collection.getRules());
+
+      Collection updatingCollection = storedCollection.copy();
+      updatingCollection.setRules(collection.getRules());
+      keepUnmodifiableFields(updatingCollection, storedCollection);
+
+      return mapCollection(collectionDao.updateCollection(storedCollection.getId(), updatingCollection, storedCollection));
+   }
+
    private Collection mapCollection(Collection collection) {
       return mapResource(adapter.mapCollectionComputedProperties(mapResource(collection), getCurrentUserId(), workspaceKeeper.getProjectId()));
    }

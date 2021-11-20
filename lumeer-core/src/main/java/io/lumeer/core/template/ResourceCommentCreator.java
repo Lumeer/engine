@@ -79,6 +79,8 @@ public class ResourceCommentCreator extends WithIdCreator {
                var translatedResourceId = templateParser.translateString(resourceComment.getResourceId(), constraintManager);
                resourceComment.setResourceId(translatedResourceId != null ? translatedResourceId.toString() : null);
 
+               resourceComment.setId(null);
+
                result.add(resourceComment.getResourceComment());
             } catch (IOException e) {
                throw new TemplateNotAvailableException(e);

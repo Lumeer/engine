@@ -149,6 +149,25 @@ public class LinkTypeFacade extends AbstractFacade {
       return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
    }
 
+   public LinkType updateLinkTypeRules(String id, LinkType linkType, final boolean skipFceLimits) {
+      LinkType storedLinkType = checkLinkTypePermission(id, RoleType.TechConfig);
+      if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
+         throw new BadFormatException("Can not change LinkType collectionIds property");
+      }
+
+      if (!skipFceLimits) {
+         permissionsChecker.checkFunctionsLimit(linkType);
+         permissionsChecker.checkRulesLimit(linkType);
+      }
+      permissionsChecker.checkRulesPermissions(linkType.getRules());
+
+      LinkType updatingLinkType = new LinkType(storedLinkType);
+      updatingLinkType.setRules(linkType.getRules());
+      keepUnmodifiableFields(updatingLinkType, storedLinkType);
+
+      return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
+   }
+
    private void keepUnmodifiableFields(LinkType linkType, LinkType storedLinkType) {
       linkType.setId(storedLinkType.getId());
       linkType.setAttributes(storedLinkType.getAttributes());
