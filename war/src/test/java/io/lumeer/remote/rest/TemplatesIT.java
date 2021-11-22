@@ -54,6 +54,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.ws.rs.client.Entity;
@@ -195,7 +196,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       selectionListDao.setOrganization(organization);
 
       var collectionsList = collectionDao.getAllCollections();
-      assertThat(collectionsList).extracting(Collection::getName).containsExactly("Data", "Tasks");
+      assertThat(collectionsList).extracting(Collection::getName).containsOnly("Data", "Tasks");
 
       var tasksCollection = collectionsList.get(0).getName().equals("Tasks") ? collectionsList.get(0) : collectionsList.get(1);
 
@@ -227,12 +228,11 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       assertThat(sequences.size()).isEqualTo(1);
       assertThat(sequences.get(0).getSeq()).isEqualTo(1);
 
-      var selectionLists = selectionListDao.getAllLists();
+      var selectionLists = selectionListDao.getAllLists(List.of(p1.getId()));
 
       assertThat(selectionLists).extracting(SelectionList::getName).contains("3 states");
 
-      // TODO uncomment once duplicated imports are fixed
-      //assertThat(selectionLists.size()).isEqualTo(4);
+      assertThat(selectionLists.size()).isEqualTo(6);
    }
 
 }
