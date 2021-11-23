@@ -166,6 +166,10 @@ public class View extends Resource implements Updatable<View> {
       this.authorId = authorId;
    }
 
+   public void setAdditionalQueries(final List<Query> additionalQueries) {
+      this.additionalQueries = additionalQueries;
+   }
+
    public Map<String, Set<RoleType>> getAuthorCollectionsRights() {
       return authorCollectionsRights;
    }
@@ -250,6 +254,7 @@ public class View extends Resource implements Updatable<View> {
          setConfig(resource.getConfig());
          setPerspective(resource.getPerspective());
          setSettings(resource.getSettings());
+         setAdditionalQueries(resource.getAdditionalQueries());
       }
    }
 }
