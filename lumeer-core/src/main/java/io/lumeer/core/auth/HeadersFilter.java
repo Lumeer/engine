@@ -34,7 +34,7 @@ public class HeadersFilter implements AuthFilter, Serializable {
 
    private static final String VIEW_ID = "X-Lumeer-View-Id";
    private static final String CORRELATION_ID = "X-Lumeer-Correlation-Id";
-   private static final String SECONDARY_CORRELATION_ID = "X-Lumeer-Correlation-Id-2";
+   private static final String APP_ID = "X-Lumeer-App-Id";
    private static final String TIMESTAMP_HEADER = "X-Lumeer-Start-Timestamp";
    private static final String LOCALE_HEADER = "X-Lumeer-Locale";
    private static final String TIMEZONE_HEADER = "X-Lumeer-Timezone";
@@ -112,10 +112,10 @@ public class HeadersFilter implements AuthFilter, Serializable {
 
    private void parseRequestData(final HttpServletRequest req) {
       final String correlationId = req.getHeader(CORRELATION_ID);
-      final String secondaryCorrelationId = req.getHeader(SECONDARY_CORRELATION_ID);
+      final String appId = req.getHeader(APP_ID);
 
       this.requestDataKeeper.setCorrelationId(Objects.requireNonNullElse(correlationId, ""));
-      this.requestDataKeeper.setSecondaryCorrelationId(Objects.requireNonNullElse(secondaryCorrelationId, ""));
+      this.requestDataKeeper.setAppId(Objects.requireNonNullElse(appId, ""));
    }
 
 }

@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.AppId;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.DashboardData;
 import io.lumeer.api.model.Document;
@@ -200,7 +201,7 @@ public class PusherFacade extends AbstractFacade {
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
-      pusherAdapter = new PusherAdapter(getFacadeAdapter(), resourceAdapter, permissionAdapter, viewDao, linkTypeDao, collectionDao);
+      pusherAdapter = new PusherAdapter(getAppId(), getFacadeAdapter(), resourceAdapter, permissionAdapter, viewDao, linkTypeDao, collectionDao);
    }
 
    public String getPusherKey() {
@@ -213,6 +214,10 @@ public class PusherFacade extends AbstractFacade {
 
    public PusherClient getPusherClient() {
       return pusherClient;
+   }
+
+   public AppId getAppId() {
+      return this.requestDataKeeper.getAppId();
    }
 
    public void createResource(@Observes final CreateResource createResource) {
@@ -270,7 +275,7 @@ public class PusherFacade extends AbstractFacade {
    public void templateCreated(@Observes final TemplateCreated templateCreated) {
       if (isEnabled()) {
          Set<String> userIds = resourceAdapter.getProjectReaders(getOrganization(), templateCreated.getProject());
-         sendNotificationsByUsers(new ObjectWithParent(templateCreated, getOrganization().getId(), templateCreated.getProject().getId()), userIds, CREATE_EVENT_SUFFIX);
+         sendNotificationsByUsers(new ObjectWithParent(this.getAppId(), templateCreated, getOrganization().getId(), templateCreated.getProject().getId()), userIds, CREATE_EVENT_SUFFIX);
       }
    }
 
@@ -402,13 +407,13 @@ public class PusherFacade extends AbstractFacade {
 
    private void sendProjectNotifications(final Project project, final String event) {
       Set<String> userIds = resourceAdapter.getProjectReaders(getOrganization(), project);
-      sendNotificationsByUsers(new ObjectWithParent(project, getOrganization().getId()), userIds, event);
+      sendNotificationsByUsers(new ObjectWithParent(getAppId(), project, getOrganization().getId()), userIds, event);
    }
 
    private void sendViewNotifications(final View view, final String event) {
       Set<String> userIds = resourceAdapter.getViewReaders(getOrganization(), getProject(), view);
       sendNotificationsBatch(userIds.stream()
-                                    .map(userId -> createEvent(new ObjectWithParent(createViewForUser(view, userId), getOrganization().getId(), getProject().getId()), event, userId))
+                                    .map(userId -> createEvent(new ObjectWithParent(getAppId(), createViewForUser(view, userId), getOrganization().getId(), getProject().getId()), event, userId))
                                     .collect(Collectors.toList()));
    }
 
@@ -419,7 +424,7 @@ public class PusherFacade extends AbstractFacade {
    private void sendCollectionNotifications(final Collection collection, final String event) {
       Set<String> userIds = resourceAdapter.getCollectionReaders(getOrganization(), getProject(), collection);
       sendNotificationsBatch(userIds.stream()
-                                    .map(userId -> createEvent(new ObjectWithParent(createCollectionForUser(collection, userId), getOrganization().getId(), getProject().getId()), event, userId))
+                                    .map(userId -> createEvent(new ObjectWithParent(getAppId(), createCollectionForUser(collection, userId), getOrganization().getId(), getProject().getId()), event, userId))
                                     .collect(Collectors.toList()));
    }
 
@@ -585,7 +590,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateServiceLimits(@Observes final UpdateServiceLimits updateServiceLimits) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(updateServiceLimits.getServiceLimits(), updateServiceLimits.getOrganization().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), updateServiceLimits.getServiceLimits(), updateServiceLimits.getOrganization().getId());
             Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(updateServiceLimits.getOrganization(), RoleType.Manage);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
@@ -597,7 +602,7 @@ public class PusherFacade extends AbstractFacade {
    public void createOrUpdatePayment(@Observes final CreateOrUpdatePayment createOrUpdatePayment) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
             Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(createOrUpdatePayment.getOrganization(), RoleType.Manage);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
@@ -609,7 +614,7 @@ public class PusherFacade extends AbstractFacade {
    public void updateDefaultViewConfig(@Observes final UpdateDefaultViewConfig updateDefaultViewConfig) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(updateDefaultViewConfig.getConfig(), getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), updateDefaultViewConfig.getConfig(), getOrganization().getId(), getProject().getId());
             Set<String> userIds = Collections.singleton(getCurrentUserId());
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
@@ -623,10 +628,10 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             DashboardData dashboardData = updateDashboardData.getData();
-            ObjectWithParent object = new ObjectWithParent(dashboardData, getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), dashboardData, getOrganization().getId(), getProject().getId());
 
             DashboardData backupData = new DashboardData(dashboardData.getType(), dashboardData.getTypeId());
-            ObjectWithParent backupObject = new ObjectWithParent(backupData, getOrganization().getId(), getProject().getId());
+            ObjectWithParent backupObject = new ObjectWithParent(getAppId(), backupData, getOrganization().getId(), getProject().getId());
 
             Event event = pusherAdapter.createEventForObjectWithParent(object, backupObject, UPDATE_EVENT_SUFFIX, getCurrentUserId());
             sendNotificationsBatch(Collections.singletonList(event));
@@ -639,7 +644,7 @@ public class PusherFacade extends AbstractFacade {
    public void createOrUpdateSequence(@Observes final CreateOrUpdateSequence createOrUpdateSequence) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(createOrUpdateSequence.getSequence(), getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), createOrUpdateSequence.getSequence(), getOrganization().getId(), getProject().getId());
             Set<String> userIds = permissionAdapter.getProjectUsersByRole(getOrganization(), getProject(), RoleType.TechConfig);
 
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
@@ -655,7 +660,7 @@ public class PusherFacade extends AbstractFacade {
             Sequence sequence = removeSequence.getSequence();
             Set<String> userIds = permissionAdapter.getProjectUsersByRole(getOrganization(), getProject(), RoleType.TechConfig);
 
-            ResourceId message = new ResourceId(sequence.getId());
+            ResourceId message = new ResourceId(getAppId(), sequence.getId());
 
             sendNotificationsByUsers(message, userIds, REMOVE_EVENT_SUFFIX);
          } catch (Exception e) {
@@ -680,7 +685,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             UserNotification notification = removeUserNotification.getUserNotification();
-            Event event = createEventForRemove(notification.getClass().getSimpleName(), new ResourceId(notification.getId()), notification.getUserId());
+            Event event = createEventForRemove(notification.getClass().getSimpleName(), new ResourceId(getAppId(), notification.getId()), notification.getUserId());
             sendNotificationsBatch(Collections.singletonList(event));
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
@@ -699,7 +704,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private void createFavoriteItemNotification(final FavoriteItem favoriteItem, final String suffix) {
-      ResourceId resourceId = new ResourceId(favoriteItem.getItemId(), getOrganization().getId(), getProject().getId());
+      ResourceId resourceId = new ResourceId(getAppId(), favoriteItem.getItemId(), getOrganization().getId(), getProject().getId());
       String resource = favoriteItem.getResourceType().toString();
       String favoriteItemPrefix = "Favorite" + resource.substring(0, 1).toUpperCase() + resource.substring(1);
       Event event = new Event(eventChannel(favoriteItem.getUserId()), favoriteItemPrefix + suffix, resourceId);
@@ -734,7 +739,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Organization organization = organizationDao.getOrganizationById(createOrUpdateUser.getOrganizationId());
-            ObjectWithParent object = new ObjectWithParent(cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), cleanUserFromUserEvent(createOrUpdateUser), organization.getId());
             Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -757,8 +762,8 @@ public class PusherFacade extends AbstractFacade {
          try {
             Organization organization = organizationDao.getOrganizationById(selectionListEvent.getOrganizationId());
             Project project = projectDao.getProjectById(selectionListEvent.getSelectionList().getProjectId());
-            ObjectWithParent object = new ObjectWithParent(selectionListEvent.getSelectionList(), organization.getId(), project.getId());
-            ResourceId backup = new ResourceId(selectionListEvent.getSelectionList().getId(), organization.getId(), project.getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), selectionListEvent.getSelectionList(), organization.getId(), project.getId());
+            ResourceId backup = new ResourceId(getAppId(), selectionListEvent.getSelectionList().getId(), organization.getId(), project.getId());
             Set<String> users = resourceAdapter.getProjectReaders(organization, project);
             List<Event> events = users.stream().map(userId -> pusherAdapter.createEventForObjectWithParent(object, backup, suffix, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -773,7 +778,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Organization organization = organizationDao.getOrganizationById(selectionListEvent.getOrganizationId());
             Project project = projectDao.getProjectById(selectionListEvent.getSelectionList().getProjectId());
-            ResourceId resourceId = new ResourceId(selectionListEvent.getSelectionList().getId(), organization.getId());
+            ResourceId resourceId = new ResourceId(getAppId(), selectionListEvent.getSelectionList().getId(), organization.getId());
             Set<String> users = resourceAdapter.getProjectReaders(organization, project);
             List<Event> events = users.stream().map(userId -> createEventForRemove(selectionListEvent.getSelectionList().getClass().getSimpleName(), resourceId, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -788,7 +793,7 @@ public class PusherFacade extends AbstractFacade {
          try {
             Organization organization = organizationDao.getOrganizationById(reloadSelectionLists.getOrganizationId());
             Project project = projectDao.getProjectById(reloadSelectionLists.getProjectId());
-            ObjectWithParent object = new ObjectWithParent(organization.getId(), organization.getId(), project.getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), organization.getId(), organization.getId(), project.getId());
             Set<String> users = resourceAdapter.getProjectReaders(organization, project);
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), SelectionList.class.getSimpleName() + RELOAD_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -802,7 +807,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Organization organization = organizationDao.getOrganizationById(createOrUpdateGroup.getOrganizationId());
-            ObjectWithParent object = new ObjectWithParent(createOrUpdateGroup.getGroup(), organization.getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), createOrUpdateGroup.getGroup(), organization.getId());
             Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForObjectWithParent(object, UPDATE_EVENT_SUFFIX, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
@@ -815,7 +820,7 @@ public class PusherFacade extends AbstractFacade {
    public void reloadGroups(@Observes final ReloadGroups reloadGroups) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(reloadGroups.getOrganizationId(), reloadGroups.getOrganizationId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), reloadGroups.getOrganizationId(), reloadGroups.getOrganizationId());
             Organization organization = organizationDao.getOrganizationById(reloadGroups.getOrganizationId());
             Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), Group.class.getSimpleName() + RELOAD_EVENT_SUFFIX, object)).collect(Collectors.toList());
@@ -843,7 +848,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Set<String> users = resourceAdapter.getProjectReaders(getOrganization(), getProject());
-            ObjectWithParent object = new ObjectWithParent(createDocumentsAndLinks, getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), createDocumentsAndLinks, getOrganization().getId(), getProject().getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "DocumentsAndLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
@@ -856,7 +861,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Set<String> users = resourceAdapter.getProjectReaders(getOrganization(), getProject());
-            ObjectWithParent object = new ObjectWithParent(setDocumentLinks, getOrganization().getId(), getProject().getId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), setDocumentLinks, getOrganization().getId(), getProject().getId());
             List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), "SetDocumentLinks" + CREATE_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
@@ -875,7 +880,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Organization organization = organizationDao.getOrganizationById(removeUser.getOrganizationId());
-            ResourceId resourceId = new ResourceId(removeUser.getUser().getId(), organization.getId());
+            ResourceId resourceId = new ResourceId(getAppId(), removeUser.getUser().getId(), organization.getId());
             String className = removeUser.getUser().getClass().getSimpleName();
             Set<String> users = resourceAdapter.getOrganizationReaders(organization);
             List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
@@ -890,7 +895,7 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             Organization organization = organizationDao.getOrganizationById(removeGroup.getOrganizationId());
-            ResourceId resourceId = new ResourceId(removeGroup.getGroup().getId(), organization.getId());
+            ResourceId resourceId = new ResourceId(getAppId(), removeGroup.getGroup().getId(), organization.getId());
             String className = removeGroup.getGroup().getClass().getSimpleName();
             Set<String> users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.UserConfig);
             List<Event> events = users.stream().map(userId -> createEventForRemove(className, resourceId, userId)).collect(Collectors.toList());
@@ -917,25 +922,38 @@ public class PusherFacade extends AbstractFacade {
       return pusherClient != null;
    }
 
-   public static final class ResourceId {
+   public static class EventData {
+      private final String appId;
+
+      public EventData(final String appId) {
+         this.appId = appId;
+      }
+
+      public String getAppId() {
+         return appId;
+      }
+   }
+
+   public static final class ResourceId extends EventData {
       private final String id;
       private final String organizationId;
       private final String projectId;
       private final String extraId; // used to carry collectionId or linkTypeId
 
-      public ResourceId(final String id) {
-         this(id, null, null);
+      public ResourceId(final AppId appId, final String id) {
+         this(appId, id, null, null);
       }
 
-      public ResourceId(final String id, final String organizationId) {
-         this(id, organizationId, null);
+      public ResourceId(final AppId appId, final String id, final String organizationId) {
+         this(appId, id, organizationId, null);
       }
 
-      public ResourceId(final String id, final String organizationId, final String projectId) {
-         this(id, organizationId, projectId, null);
+      public ResourceId(final AppId appId, final String id, final String organizationId, final String projectId) {
+         this(appId, id, organizationId, projectId, null);
       }
 
-      public ResourceId(final String id, final String organizationId, final String projectId, final String extraId) {
+      public ResourceId(final AppId appId, final String id, final String organizationId, final String projectId, final String extraId) {
+         super(appId.getValue());
          this.id = id;
          this.organizationId = organizationId;
          this.projectId = projectId;
@@ -959,17 +977,18 @@ public class PusherFacade extends AbstractFacade {
       }
    }
 
-   public static final class ObjectWithParent {
+   public static final class ObjectWithParent extends EventData {
       private final Object object;
       private final String organizationId;
       private final String projectId;
       private String correlationId;
 
-      public ObjectWithParent(final Object object, final String organizationId) {
-         this(object, organizationId, null);
+      public ObjectWithParent(final AppId appId, final Object object, final String organizationId) {
+         this(appId, object, organizationId, null);
       }
 
-      public ObjectWithParent(final Object object, final String organizationId, final String projectId) {
+      public ObjectWithParent(final AppId appId, final Object object, final String organizationId, final String projectId) {
+         super(appId.getValue());
          this.object = object;
          this.organizationId = organizationId;
          this.projectId = projectId;
