@@ -88,6 +88,7 @@ public abstract class IntegrationTestBase {
                        .addAsResource("numbro.min.js")
                        .addAsResource("numbro-languages.min.js")
                        .addAsResource("lumeer-data-filters.min.js")
+                       .addAsResource("test.json")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
