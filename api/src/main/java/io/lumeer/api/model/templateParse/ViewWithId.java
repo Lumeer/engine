@@ -19,6 +19,7 @@
 package io.lumeer.api.model.templateParse;
 
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.View;
 
@@ -43,7 +44,7 @@ public class ViewWithId extends View {
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(QUERY) final Query query,
          @JsonProperty(ADDITIONAL_QUERIES) final List<Query> additionalQueries,
-         @JsonProperty(PERSPECTIVE) final String perspective,
+         @JsonProperty(PERSPECTIVE) final Perspective perspective,
          @JsonProperty(CONFIG) final Object config,
          @JsonProperty(SETTINGS) final Object settings,
          @JsonProperty(AUTHOR_ID) final String authorId,

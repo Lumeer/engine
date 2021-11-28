@@ -48,7 +48,7 @@ public class View extends Resource implements Updatable<View> {
 
    private Query query;
    private List<Query> additionalQueries;
-   private String perspective;
+   private Perspective perspective;
    private Object config;
    private Object settings;
    private String authorId;
@@ -74,7 +74,7 @@ public class View extends Resource implements Updatable<View> {
          @JsonProperty(PERMISSIONS) final Permissions permissions,
          @JsonProperty(QUERY) final Query query,
          @JsonProperty(ADDITIONAL_QUERIES) final List<Query> additionalQueries,
-         @JsonProperty(PERSPECTIVE) final String perspective,
+         @JsonProperty(PERSPECTIVE) final Perspective perspective,
          @JsonProperty(CONFIG) final Object config,
          @JsonProperty(SETTINGS) final Object settings,
          @JsonProperty(AUTHOR_ID) final String authorId,
@@ -134,11 +134,18 @@ public class View extends Resource implements Updatable<View> {
    @JsonIgnore
    public Set<String> getAllLinkTypeIds() {
       Set<String> linkTypeIds = new HashSet<>(getQuery() != null ? getQuery().getLinkTypeIds() : Collections.emptyList());
+      linkTypeIds.addAll(getAdditionalLinkTypeIds());
+      return linkTypeIds;
+   }
+
+   @JsonIgnore
+   public Set<String> getAdditionalLinkTypeIds() {
+      Set<String> linkTypeIds = new HashSet<>();
       getAdditionalQueries().forEach(query -> linkTypeIds.addAll(query.getLinkTypeIds()));
       return linkTypeIds;
    }
 
-   public String getPerspective() {
+   public Perspective getPerspective() {
       return perspective;
    }
 
@@ -154,7 +161,7 @@ public class View extends Resource implements Updatable<View> {
       this.query = query;
    }
 
-   public void setPerspective(final String perspective) {
+   public void setPerspective(final Perspective perspective) {
       this.perspective = perspective;
    }
 

@@ -268,7 +268,7 @@ public class UserNotificationFacade extends AbstractFacade {
       if (originalResource == null || currentResource == null) {
          return;
       }
-      
+
       final RolesDifference resourceReadersDifference = permissionsChecker.getPermissionAdapter().getResourceReadersDifference(getOrganization(), getProject(), originalResource, currentResource);
       final Set<String> removedUsers = new HashSet<>(resourceReadersDifference.getRemovedUsers());
       removedUsers.remove(getCurrentUserId());
@@ -391,7 +391,7 @@ public class UserNotificationFacade extends AbstractFacade {
                            UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_NAME, updated.getName(),
                            UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_COLOR, updated.getColor(),
                            UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_ICON, updated.getIcon(),
-                           UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) updated).getPerspective()
+                           UserNotification.DATA + "." + UserNotification.ViewShared.VIEW_PERSPECTIVE, ((View) updated).getPerspective().getValue()
                      )
                );
                break;

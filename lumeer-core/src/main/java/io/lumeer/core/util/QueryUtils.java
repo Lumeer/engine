@@ -22,7 +22,15 @@ public class QueryUtils {
 
    public static Set<String> getViewCollectionIds(View view, java.util.Collection<LinkType> linkTypes) {
       Set<String> collectionIds = getQueryCollectionIds(view.getQuery(), linkTypes);
+      collectionIds.addAll(getViewAdditionalCollectionIds(view, linkTypes));
+      return collectionIds;
+   }
+
+   public static Set<String> getViewAdditionalCollectionIds(View view, java.util.Collection<LinkType> linkTypes) {
+      Set<String> collectionIds = new HashSet<>();
       view.getAdditionalQueries().forEach(query -> collectionIds.addAll(getQueryCollectionIds(query, linkTypes)));
+      Set<String> queryCollectionIds = getQueryCollectionIds(view.getQuery(), linkTypes);
+      collectionIds.removeAll(queryCollectionIds);
       return collectionIds;
    }
 
