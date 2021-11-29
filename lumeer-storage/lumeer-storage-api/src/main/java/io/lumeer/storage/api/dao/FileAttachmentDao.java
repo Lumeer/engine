@@ -28,11 +28,15 @@ public interface FileAttachmentDao {
 
    FileAttachment createFileAttachment(FileAttachment fileAttachment);
 
+   List<FileAttachment> createFileAttachments(List<FileAttachment> fileAttachments);
+
    FileAttachment updateFileAttachment(FileAttachment fileAttachment);
 
    FileAttachment findFileAttachment(String fileAttachmentId);
 
    FileAttachment findFileAttachment(FileAttachment fileAttachment);
+
+   List<FileAttachment> findFileAttachments(java.util.Collection<String> fileAttachmentId);
 
    List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, FileAttachment.AttachmentType type);
 
@@ -41,6 +45,8 @@ public interface FileAttachmentDao {
    List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId, FileAttachment.AttachmentType type);
 
    boolean removeFileAttachment(String fileAttachmentId);
+
+   boolean removeFileAttachments(java.util.Collection<String> fileAttachmentIds);
 
    boolean removeFileAttachment(FileAttachment fileAttachment);
 

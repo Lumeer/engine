@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.Role;
@@ -56,7 +57,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    private static final String COLOR = "#000000";
    private static final String ICON = "fa-eye";
    private static final Query QUERY = new Query();
-   private static final String PERSPECTIVE = "postit";
+   private static final Perspective PERSPECTIVE = Perspective.Kanban;
    private static final Object CONFIG = "configuration object";
 
    private static final Permissions PERMISSIONS = new Permissions();

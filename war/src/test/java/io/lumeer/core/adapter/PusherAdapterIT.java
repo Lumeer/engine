@@ -20,6 +20,7 @@ package io.lumeer.core.adapter;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.lumeer.api.model.AppId;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.LinkPermissionsType;
@@ -135,7 +136,7 @@ public class PusherAdapterIT extends IntegrationTestBase {
 
       FacadeAdapter facadeAdapter = new FacadeAdapter(permissionsChecker.getPermissionAdapter());
       ResourceAdapter resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
-      pusherAdapter = new PusherAdapter(facadeAdapter, resourceAdapter, permissionsChecker.getPermissionAdapter(), viewDao, linkTypeDao, collectionDao);
+      pusherAdapter = new PusherAdapter(new AppId(""), facadeAdapter, resourceAdapter, permissionsChecker.getPermissionAdapter(), viewDao, linkTypeDao, collectionDao);
 
       permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
@@ -281,7 +282,7 @@ public class PusherAdapterIT extends IntegrationTestBase {
    }
 
    private View createView(String name, Query query, Set<Role> userRoles, Set<Role> groupRoles) {
-      View view = new View(name, name, "", "", "", 0L, new Permissions(), query, null, null, null, user.getId(), null);
+      View view = new View(name, name, "", "", "", 0L, new Permissions(), query, Collections.emptyList(), null, null, null, user.getId(), null);
       Permission userPermission = Permission.buildWithRoles(user.getId(), userRoles);
       view.getPermissions().updateUserPermissions(userPermission);
 

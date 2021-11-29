@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.AppId;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Group;
@@ -113,7 +114,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
-      pusherAdapter = new PusherAdapter(new FacadeAdapter(permissionAdapter),  resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
+      pusherAdapter = new PusherAdapter(getAppId(), new FacadeAdapter(permissionAdapter),  resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
 
       return this;
    }
@@ -231,7 +232,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
       final Collection mappedCollection = collectionAdapter.mapCollectionComputedProperties(collection.copy(), userId, projectId);
 
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedCollection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), mappedCollection, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Collection.class.getSimpleName() + suffix, message, getResourceId(mappedCollection, null), null);
    }
@@ -241,7 +242,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
       final View mappedView = viewAdapter.mapViewData(getDaoContextSnapshot().getOrganization(), getDaoContextSnapshot().getProject(), view.copy(), userId, projectId);
 
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedView, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), mappedView, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, View.class.getSimpleName() + suffix, message, getResourceId(mappedView, null), null);
    }
@@ -255,7 +256,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
          return createEventForRemove(Document.class.getSimpleName(), getResourceId(mappedDocument, mappedDocument.getCollectionId()), userId);
       }
 
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(mappedDocument, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), mappedDocument, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Document.class.getSimpleName() + suffix, message, getResourceId(mappedDocument, mappedDocument.getCollectionId()), null);
    }
@@ -267,7 +268,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    private Event createEventForLinkType(final LinkType linkType, final String userId, final String suffix) {
       linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
 
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), linkType, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkType.class.getSimpleName() + suffix, message, getResourceId(linkType, null), null);
    }
@@ -278,48 +279,48 @@ public abstract class AbstractContextualTask implements ContextualTask {
       if (PusherFacade.REMOVE_EVENT_SUFFIX.equals(suffix)) {
          return createEventForRemove(LinkInstance.class.getSimpleName(), getResourceId(linkInstance, linkInstance.getLinkTypeId()), userId);
       } else {
-         final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+         final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), linkInstance, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
          injectCorrelationId(message);
          return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, LinkInstance.class.getSimpleName() + suffix, message, getResourceId(linkInstance, linkInstance.getLinkTypeId()), null);
       }
    }
 
    private Event createEventForSequence(final Sequence sequence, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(sequence, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), sequence, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, Sequence.class.getSimpleName() + PusherFacade.UPDATE_EVENT_SUFFIX, message, getResourceId(sequence, null), null);
    }
 
    private Event createEventForUserMessage(final UserMessageRequest userMessageRequest, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(userMessageRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), userMessageRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new BackupDataEvent(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, UserMessageRequest.class.getSimpleName() + PusherFacade.CREATE_EVENT_SUFFIX, message, getResourceId(), null);
    }
 
    private Event createEventForPrintRequest(final GenericPrintRequest printRequest, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(printRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), printRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, printRequest.getClass().getSimpleName(), message, null);
    }
 
    private Event createEventForNavigationRequest(final NavigationRequest navigationRequest, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(navigationRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), navigationRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, NavigationRequest.class.getSimpleName(), message, null);
    }
 
    private Event createEventForSendEmailRequest(final SendEmailRequest sendEmailRequest, final String userId) {
-      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(sendEmailRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
+      final PusherFacade.ObjectWithParent message = new PusherFacade.ObjectWithParent(getAppId(), sendEmailRequest, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId());
       injectCorrelationId(message);
       return new Event(PusherFacade.PRIVATE_CHANNEL_PREFIX + userId, SendEmailRequest.class.getSimpleName(), message, null);
    }
 
    private PusherFacade.ResourceId getResourceId(final WithId idObject, final String extraId) {
-      return new PusherFacade.ResourceId(idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
+      return new PusherFacade.ResourceId(getAppId(), idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
    }
 
    private PusherFacade.ResourceId getResourceId() {
-      return new PusherFacade.ResourceId(null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
+      return new PusherFacade.ResourceId(getAppId(), null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
    }
 
    private Event createEventForRemove(final String className, final PusherFacade.ResourceId object, final String userId) {
@@ -589,7 +590,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
 
    private void injectCorrelationId(final PusherFacade.ObjectWithParent obj) {
       if (requestDataKeeper != null) {
-         obj.setCorrelationId(StringUtils.isNotBlank(getSecondaryCorrelationId()) ? getSecondaryCorrelationId() : getCorrelationId());
+         obj.setCorrelationId(getCorrelationId());
       }
    }
 
@@ -638,8 +639,8 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    @Override
-   public String getSecondaryCorrelationId() {
-      return requestDataKeeper.getSecondaryCorrelationId();
+   public AppId getAppId() {
+      return requestDataKeeper.getAppId();
    }
 
    public int getRecursionDepth() {

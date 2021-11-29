@@ -26,6 +26,7 @@ import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
@@ -70,7 +71,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    private static final String ICON = "fa-eye";
    private static final String COLOR = "#00ff00";
    private Query query = new Query();
-   private static final String PERSPECTIVE = "postit";
+   private static final Perspective PERSPECTIVE = Perspective.Kanban;
    private static final Object CONFIG = "configuration object";
 
    private Permission userPermission;
@@ -167,7 +168,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
    }
 
    private View prepareView(String code) {
-      return new View(code, NAME, ICON, COLOR, null, null, null, query, PERSPECTIVE, CONFIG, null, this.user.getId(), Collections.emptyList());
+      return new View(code, NAME, ICON, COLOR, null, null, null, query, Collections.emptyList(), PERSPECTIVE, CONFIG, null, this.user.getId(), Collections.emptyList());
    }
 
    private View createView(String code) {

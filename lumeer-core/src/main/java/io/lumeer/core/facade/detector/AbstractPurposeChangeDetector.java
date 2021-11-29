@@ -312,7 +312,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
             timeZonedWhen = roundTime(timeZonedWhen, NotificationFrequency.Immediately);  // in the future, this can be removed and checked in DelayedActionProcessor
             final String resourcePath = getResourcePath(documentEvent);
-            final String correlationId = StringUtils.isNotBlank(requestDataKeeper.getSecondaryCorrelationId()) ? requestDataKeeper.getSecondaryCorrelationId() : requestDataKeeper.getCorrelationId();
+            final String correlationId = requestDataKeeper.getAppId() != null ? requestDataKeeper.getAppId().getValue() : requestDataKeeper.getCorrelationId();
             final DataDocument data = getData(documentEvent, collection, assignee, assignees);
 
             for (NotificationChannel channel : NotificationChannel.values()) {

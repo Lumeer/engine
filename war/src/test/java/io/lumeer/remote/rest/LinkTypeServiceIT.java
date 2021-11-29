@@ -26,6 +26,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
@@ -152,7 +153,7 @@ public class LinkTypeServiceIT extends ServiceIntegrationTestBase {
       QueryStem stem = new QueryStem(null, collectionIdNoPerm, Collections.singletonList(linkTypeIdFromView), Collections.emptySet(), Collections.emptyList(), Collections.emptyList());
       Query query = new Query(stem);
 
-      View view = new View("code", "name", "", "", "", null, userPermissions, query, "perspective", "", null, createdUser.getId(), Collections.emptyList());
+      View view = new View("code", "name", "", "", "", null, userPermissions, query, Collections.emptyList(), Perspective.Kanban, "", null, createdUser.getId(), Collections.emptyList());
       viewDao.createView(view);
 
       linkTypesUrl = projectPath(storedOrganization, storedProject) + "link-types";

@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.task;
 
+import io.lumeer.api.model.AppId;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -42,7 +43,7 @@ public interface ContextualTask extends Task {
    ConstraintManager getConstraintManager();
    String getCurrentLocale();
    String getCorrelationId();
-   String getSecondaryCorrelationId();
+   AppId getAppId();
    PurposeChangeProcessor getPurposeChangeProcessor();
    String getTimeZone();
 

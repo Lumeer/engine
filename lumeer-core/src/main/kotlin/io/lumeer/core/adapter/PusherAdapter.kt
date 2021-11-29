@@ -31,6 +31,7 @@ import org.marvec.pusher.data.BackupDataEvent
 import org.marvec.pusher.data.Event
 
 class PusherAdapter(
+      private val appId: AppId,
       private val facadeAdapter: FacadeAdapter,
       private val resourceAdapter: ResourceAdapter,
       private val permissionAdapter: PermissionAdapter,
@@ -44,7 +45,7 @@ class PusherAdapter(
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
       val removedReadersNotifications = rolesDifference.removedUsers
-            .map { userId -> createEventForRemove(originalLinkType.javaClass.simpleName, ResourceId(originalLinkType.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
+            .map { userId -> createEventForRemove(originalLinkType.javaClass.simpleName, ResourceId(appId, originalLinkType.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
             .toMutableList()
 
       if (changedUsers.isEmpty()) {
@@ -69,7 +70,7 @@ class PusherAdapter(
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
       val removedReadersNotifications = rolesDifference.removedUsers
-            .map { userId -> createEventForRemove(originalCollection.javaClass.simpleName, ResourceId(originalCollection.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
+            .map { userId -> createEventForRemove(originalCollection.javaClass.simpleName, ResourceId(appId, originalCollection.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
             .toMutableList()
 
       if (changedUsers.isEmpty()) {
@@ -98,7 +99,7 @@ class PusherAdapter(
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
       val removedReadersNotifications = rolesDifference.removedUsers
-            .map { userId -> createEventForRemove(originalView.javaClass.simpleName, ResourceId(originalView.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
+            .map { userId -> createEventForRemove(originalView.javaClass.simpleName, ResourceId(appId, originalView.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
             .toMutableList()
 
       if (changedUsers.isEmpty()) {
@@ -128,7 +129,7 @@ class PusherAdapter(
       val gainedCollections = collectionsAfter.toMutableSet().minus(collectionsBefore)
 
       lostCollections.forEach {
-         notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(it.id, organization.id.orEmpty(), project?.id.orEmpty()), userId))
+         notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(appId, it.id, organization.id.orEmpty(), project?.id.orEmpty()), userId))
       }
       gainedCollections.forEach {
          notifications.add(createEventForWorkspaceObject(organization, project, filterUserRoles(organization, project, userId, it), it.id, PusherFacade.UPDATE_EVENT_SUFFIX, userId))
@@ -147,7 +148,7 @@ class PusherAdapter(
       val gainedLinkTypes = linkTypesAfter.toMutableSet().minus(linkTypesBefore)
 
       lostLinkTypes.forEach {
-         notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(it.id, organization.id.orEmpty(), project?.id.orEmpty()), userId))
+         notifications.add(createEventForRemove(it.javaClass.simpleName, ResourceId(appId, it.id, organization.id.orEmpty(), project?.id.orEmpty()), userId))
       }
       gainedLinkTypes.forEach {
          notifications.add(createEventForWorkspaceObject(organization, project, filterUserRoles(organization, project, userId, it), it.id, PusherFacade.UPDATE_EVENT_SUFFIX, userId))
@@ -186,12 +187,12 @@ class PusherAdapter(
       val organizationId = organization?.id.orEmpty()
       val projectId = project?.id.orEmpty()
       if (PusherFacade.REMOVE_EVENT_SUFFIX == event) {
-         return createEventForRemove(any.javaClass.simpleName, ResourceId(id, organizationId, projectId), userId)
+         return createEventForRemove(any.javaClass.simpleName, ResourceId(appId, id, organizationId, projectId), userId)
       }
       val normalMessage = if (any is LinkType) {
-         ObjectWithParent(filterUserRoles(organization, project, userId, any), organizationId, projectId)
+         ObjectWithParent(appId, filterUserRoles(organization, project, userId, any), organizationId, projectId)
       } else {
-         ObjectWithParent(any, organizationId, projectId)
+         ObjectWithParent(appId, any, organizationId, projectId)
       }
       val extraId = when (any) {
          is Document -> {
@@ -205,7 +206,7 @@ class PusherAdapter(
          }
          else -> null
       }
-      val alternateMessage = ResourceId(id, organizationId, projectId, extraId)
+      val alternateMessage = ResourceId(appId, id, organizationId, projectId, extraId)
       return createEventForObjectWithParent(normalMessage, alternateMessage, event, userId)
    }
 
@@ -233,7 +234,7 @@ class PusherAdapter(
          return createEventForRemove(resource.javaClass.simpleName, getResourceId(organization, project, resource), userId)
       }
       val filteredResource = filterUserRoles(organization, project, userId, resource)
-      val newObjectWithParent = ObjectWithParent(filteredResource, objectWithParent.organizationId, objectWithParent.projectId)
+      val newObjectWithParent = ObjectWithParent(appId, filteredResource, objectWithParent.organizationId, objectWithParent.projectId)
       newObjectWithParent.correlationId = objectWithParent.correlationId
       return createEventForObjectWithParent(newObjectWithParent, getResourceId(organization, project, resource), event, userId)
    }
@@ -248,11 +249,11 @@ class PusherAdapter(
 
    private fun getResourceId(organization: Organization?, project: Project?, resource: Resource): ResourceId {
       if (resource is Organization) {
-         return ResourceId(resource.getId(), null, null)
+         return ResourceId(appId, resource.getId(), null, null)
       } else if (resource is Project) {
-         return ResourceId(resource.getId(), organization?.id.orEmpty(), null)
+         return ResourceId(appId, resource.getId(), organization?.id.orEmpty(), null)
       }
-      return ResourceId(resource.id, organization?.id.orEmpty(), project?.id.orEmpty())
+      return ResourceId(appId, resource.id, organization?.id.orEmpty(), project?.id.orEmpty())
    }
 
    private fun <T : Resource> filterUserRoles(organization: Organization?, project: Project?, userId: String, resource: T): T {

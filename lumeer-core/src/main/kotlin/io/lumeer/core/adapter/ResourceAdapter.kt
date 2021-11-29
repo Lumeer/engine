@@ -55,7 +55,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
 
    fun getAllLinkTypes(organization: Organization, project: Project?, linkTypes: List<LinkType>, views: List<View>, collections: List<Collection>, userId: String): List<LinkType> {
       val viewsByUser = filterViewsByUser(organization, project, views, userId)
-      val linkTypeIdsInViews = viewsByUser.flatMap { it.query?.linkTypeIds.orEmpty() }
+      val linkTypeIdsInViews = viewsByUser.flatMap { it.allLinkTypeIds }
       return linkTypes.filter { linkTypeIdsInViews.contains(it.id) || permissionAdapter.hasRoleInLinkType(organization, project, it, collections, RoleType.Read, userId) }
    }
 
@@ -63,7 +63,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
       val viewsByUser = filterViewsByUser(organization, project, views, userId)
       val collectionIdsInViews = QueryUtils.getViewsCollectionIds(viewsByUser, linkTypes)
 
-      // when user can read link type by custom permission, than we have to send him both collections
+      // when user can read link type by custom permission, then we have to send him both collections
       val linkTypesByCustomRead = filterLinkTypesByCustomPermission(organization, project, linkTypes, userId)
       val collectionIdsInLinkTypes = linkTypesByCustomRead.flatMap { it.collectionIds.orEmpty() }
 
@@ -125,14 +125,14 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    }
 
    private fun getViewCollections(view: View): List<Collection> {
-      val linkTypeIds = view.query?.linkTypeIds.orEmpty()
+      val linkTypeIds = view.allLinkTypeIds
       val linkTypes = if (linkTypeIds.isEmpty()) listOf() else linkTypeDao.getLinkTypesByIds(linkTypeIds)
-      val collectionIds = QueryUtils.getQueryCollectionIds(view.query, linkTypes)
+      val collectionIds = QueryUtils.getViewCollectionIds(view, linkTypes)
       return collectionDao.getCollectionsByIds(collectionIds)
    }
 
    private fun getViewLinkTypes(view: View): List<LinkType> {
-      val linkTypeIds = view.query?.linkTypeIds.orEmpty()
+      val linkTypeIds = view.allLinkTypeIds
       return if (linkTypeIds.isEmpty()) listOf() else linkTypeDao.getLinkTypesByIds(linkTypeIds)
    }
 
@@ -146,7 +146,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
 
    fun getCollectionTransitiveReaders(organization: Organization, project: Project, collectionId: String): Set<String> {
       val linkTypes = linkTypeDao.allLinkTypes
-      val views = viewDao.allViews.filter { QueryUtils.getQueryCollectionIds(it.query, linkTypes).contains(collectionId) }
+      val views = viewDao.allViews.filter { QueryUtils.getViewCollectionIds(it, linkTypes).contains(collectionId) }
       val linkTypesByCustomPermissions = linkTypes.filter { it.permissionsType == LinkPermissionsType.Custom && it.collectionIds.orEmpty().contains(collectionId) }
 
       val viewsReaders = views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()
@@ -156,7 +156,7 @@ class ResourceAdapter(private val permissionAdapter: PermissionAdapter,
    }
 
    fun getLinkTypeTransitiveReaders(organization: Organization, project: Project, linkTypeId: String): Set<String> {
-      val views = viewDao.allViews.filter { it.query?.linkTypeIds.orEmpty().contains(linkTypeId) }
+      val views = viewDao.allViews.filter { it.allLinkTypeIds.contains(linkTypeId) }
 
       return views.flatMap { permissionAdapter.getResourceUsersByRole(organization, project, it, RoleType.Read) }.toSet()
    }

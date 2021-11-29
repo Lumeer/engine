@@ -19,6 +19,7 @@
 
 package io.lumeer.core.auth;
 
+import io.lumeer.api.model.AppId;
 import io.lumeer.api.model.Language;
 
 import javax.enterprise.context.RequestScoped;
@@ -28,7 +29,7 @@ public class RequestDataKeeper {
 
    private String correlationId;
 
-   private String secondaryCorrelationId;
+   private AppId appId;
 
    private String userLocale = "en";
 
@@ -38,8 +39,8 @@ public class RequestDataKeeper {
       return correlationId;
    }
 
-   public String getSecondaryCorrelationId() {
-      return secondaryCorrelationId;
+   public AppId getAppId() {
+      return appId;
    }
 
    public void setCorrelationId(final String correlationId) {
@@ -48,9 +49,9 @@ public class RequestDataKeeper {
       }
    }
 
-   public void setSecondaryCorrelationId(final String secondaryCorrelationId) {
-      if (this.secondaryCorrelationId == null) {
-         this.secondaryCorrelationId = secondaryCorrelationId;
+   public void setAppId(final String appId) {
+      if (this.appId == null) {
+         this.appId = new AppId(appId);
       }
    }
 
@@ -81,14 +82,14 @@ public class RequestDataKeeper {
       this.correlationId = original.getCorrelationId();
       this.userLocale = original.getUserLocale();
       this.timezone = original.getTimezone();
-      this.secondaryCorrelationId = original.getSecondaryCorrelationId();
+      this.appId = original.getAppId();
    }
 
    @Override
    public String toString() {
       return "RequestDataKeeper{" +
             "correlationId='" + correlationId + '\'' +
-            ", secondaryCorrelationId='" + secondaryCorrelationId + '\'' +
+            ", appId='" + appId + '\'' +
             ", userLocale='" + userLocale + '\'' +
             ", timezone='" + timezone + '\'' +
             '}';

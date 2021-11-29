@@ -19,6 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
@@ -36,12 +37,17 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
 
    public static final String QUERY = "query";
+   public static final String ADDITIONAL_QUERIES = "additionalQueries";
    public static final String PERSPECTIVE = "perspective";
    public static final String CONFIG = "config";
    public static final String SETTINGS = "settings";
@@ -59,14 +65,21 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
       SimpleResource resource = decodeResource(bson, ResourceType.VIEW);
 
       Query query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
-      String perspective = bson.getString(PERSPECTIVE);
+      Perspective perspective = decodePerspective(bson);
       Object config = bson.get(CONFIG);
       Object settings = bson.get(SETTINGS);
       String authorId = bson.getString(AUTHOR_ID);
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       List<String> folders = bson.getList(FOLDERS, String.class);
+      List<Query> additionalQueries = Collections.emptyList();
+      List queriesList = bson.get(ADDITIONAL_QUERIES, List.class);
+      if (queriesList != null) {
+         additionalQueries = new ArrayList<Document>(queriesList).stream()
+                                                                 .map(QueryCodec::convertFromDocument)
+                                                                 .collect(Collectors.toList());
+      }
 
-      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), query, perspective, config, settings, authorId, folders);
+      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), query, additionalQueries, perspective, config, settings, authorId, folders);
       view.setId(resource.getId());
       view.setVersion(resource.getVersion());
 
@@ -77,11 +90,20 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
       return view;
    }
 
+   private Perspective decodePerspective(Document bson) {
+      String perspective = bson.getString(PERSPECTIVE);
+      if ("postit".equals(perspective)) {
+         return Perspective.Kanban;
+      }
+      return Objects.requireNonNullElse(Perspective.fromString(perspective), Perspective.Search);
+   }
+
    @Override
    public void encode(final BsonWriter writer, final View value, final EncoderContext encoderContext) {
       Document bson = encodeResource(value)
             .append(QUERY, value.getQuery())
-            .append(PERSPECTIVE, value.getPerspective())
+            .append(ADDITIONAL_QUERIES, value.getAdditionalQueries())
+            .append(PERSPECTIVE, value.getPerspective() != null ? value.getPerspective().getValue() : null)
             .append(CONFIG, value.getConfig())
             .append(SETTINGS, value.getSettings())
             .append(AUTHOR_ID, value.getAuthorId())
