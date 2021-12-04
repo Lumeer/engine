@@ -30,6 +30,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.RolesDifference;
 import io.lumeer.api.model.SelectionList;
@@ -46,6 +47,7 @@ import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.adapter.PusherAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
+import io.lumeer.core.adapter.ResourceVariableAdapter;
 import io.lumeer.core.adapter.ViewAdapter;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -64,6 +66,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.CreateOrUpdateUserNotification;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.CreateResourceComment;
+import io.lumeer.engine.api.event.CreateResourceVariable;
 import io.lumeer.engine.api.event.CreateSelectionList;
 import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
@@ -78,10 +81,12 @@ import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.RemoveResourceComment;
+import io.lumeer.engine.api.event.RemoveResourceVariable;
 import io.lumeer.engine.api.event.RemoveSelectionList;
 import io.lumeer.engine.api.event.RemoveSequence;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.RemoveUserNotification;
+import io.lumeer.engine.api.event.ResourceVariableEvent;
 import io.lumeer.engine.api.event.SelectionListEvent;
 import io.lumeer.engine.api.event.SetDocumentLinks;
 import io.lumeer.engine.api.event.TemplateCreated;
@@ -94,6 +99,7 @@ import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.engine.api.event.UpdateLinkType;
 import io.lumeer.engine.api.event.UpdateResource;
 import io.lumeer.engine.api.event.UpdateResourceComment;
+import io.lumeer.engine.api.event.UpdateResourceVariable;
 import io.lumeer.engine.api.event.UpdateSelectionList;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.storage.api.dao.CollectionDao;
@@ -188,6 +194,7 @@ public class PusherFacade extends AbstractFacade {
    private PusherAdapter pusherAdapter;
    private LinkInstanceAdapter linkInstanceAdapter;
    private PermissionAdapter permissionAdapter;
+   private ResourceVariableAdapter resourceVariableAdapter;
 
    @PostConstruct
    public void init() {
@@ -198,6 +205,7 @@ public class PusherFacade extends AbstractFacade {
       resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
       linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
       viewAdapter = new ViewAdapter(resourceAdapter, favoriteItemDao);
+      resourceVariableAdapter = new ResourceVariableAdapter();
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
@@ -781,6 +789,65 @@ public class PusherFacade extends AbstractFacade {
             ResourceId resourceId = new ResourceId(getAppId(), selectionListEvent.getSelectionList().getId(), organization.getId());
             Set<String> users = resourceAdapter.getProjectReaders(organization, project);
             List<Event> events = users.stream().map(userId -> createEventForRemove(selectionListEvent.getSelectionList().getClass().getSimpleName(), resourceId, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void createResourceVariableNotification(@Observes final CreateResourceVariable createResourceVariable) {
+      createOrUpdateResourceVariableNotification(createResourceVariable, CREATE_EVENT_SUFFIX);
+   }
+
+   public void updateResourceVariableNotification(@Observes final UpdateResourceVariable updateResourceVariable) {
+      createOrUpdateResourceVariableNotification(updateResourceVariable, UPDATE_EVENT_SUFFIX);
+   }
+
+   public void createOrUpdateResourceVariableNotification(final ResourceVariableEvent resourceVariableEvent, final String suffix) {
+      if (isEnabled()) {
+         try {
+            ResourceVariable resourceVariable = resourceVariableAdapter.mapVariable(resourceVariableEvent.getVariable());
+            Organization organization = organizationDao.getOrganizationById(resourceVariable.getOrganizationId());
+            Set<String> users;
+            ObjectWithParent object;
+            ResourceId backup;
+            if (resourceVariable.getResourceType() == ResourceType.ORGANIZATION) {
+               object = new ObjectWithParent(getAppId(), resourceVariable, organization.getId());
+               backup = new ResourceId(getAppId(), resourceVariable.getId(), organization.getId());
+               users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.TechConfig);
+            } else {
+               Project project = projectDao.getProjectById(resourceVariable.getProjectId());
+               object = new ObjectWithParent(getAppId(), resourceVariable, organization.getId(), project.getId());
+               backup = new ResourceId(getAppId(), resourceVariable.getId(), organization.getId(), project.getId());
+               users = permissionAdapter.getProjectUsersByRole(organization, project, RoleType.TechConfig);
+            }
+
+            List<Event> events = users.stream().map(userId -> pusherAdapter.createEventForObjectWithParent(object, backup, suffix, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void removeResourceVariableNotification(@Observes final RemoveResourceVariable removeResourceVariable) {
+      if (isEnabled()) {
+         try {
+            ResourceVariable resourceVariable = resourceVariableAdapter.mapVariable(removeResourceVariable.getVariable());
+            Organization organization = organizationDao.getOrganizationById(resourceVariable.getOrganizationId());
+            ResourceId resourceId;
+            Set<String> users;
+            if (resourceVariable.getResourceType() == ResourceType.ORGANIZATION) {
+               resourceId = new ResourceId(getAppId(), resourceVariable.getId(), organization.getId());
+               users = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.TechConfig);
+            } else {
+               Project project = projectDao.getProjectById(resourceVariable.getProjectId());
+               resourceId = new ResourceId(getAppId(), resourceVariable.getId(), organization.getId(), project.getId());
+               users = permissionAdapter.getProjectUsersByRole(organization, project, RoleType.TechConfig);
+            }
+
+            List<Event> events = users.stream().map(userId -> createEventForRemove(resourceVariable.getClass().getSimpleName(), resourceId, userId)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);

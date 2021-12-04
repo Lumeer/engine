@@ -22,6 +22,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.core.adapter.ResourceVariableAdapter;
 import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -29,6 +30,7 @@ import io.lumeer.storage.api.dao.ResourceVariableDao;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
@@ -43,6 +45,13 @@ public class ResourceVariableFacade extends AbstractFacade {
 
    @Inject
    private ProjectDao projectDao;
+
+   private ResourceVariableAdapter adapter;
+
+   @PostConstruct
+   public void init() {
+      adapter = new ResourceVariableAdapter();
+   }
 
    public ResourceVariable create(ResourceVariable variable) {
       checkPermissions(variable);
@@ -85,10 +94,7 @@ public class ResourceVariableFacade extends AbstractFacade {
    }
 
    private ResourceVariable mapVariable(ResourceVariable variable) {
-      if (variable.getSecure()) {
-         variable.setValue(null);
-      }
-      return variable;
+      return adapter.mapVariable(variable);
    }
 
    private void checkPermissions(final ResourceVariable variable) {
