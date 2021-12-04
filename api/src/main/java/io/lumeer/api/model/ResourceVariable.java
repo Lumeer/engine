@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceVariable implements WithId, HealthChecking {
@@ -134,6 +136,39 @@ public class ResourceVariable implements WithId, HealthChecking {
          return value != null ? value.toString() : null;
       }
       return null;
+   }
+
+   @Override
+   public boolean equals(final Object o) {
+      if (this == o) {
+         return true;
+      }
+      if (!(o instanceof ResourceVariable)) {
+         return false;
+      }
+      final ResourceVariable variable = (ResourceVariable) o;
+      return Objects.equals(id, variable.id) && Objects.equals(resourceId, variable.resourceId) && resourceType == variable.resourceType && Objects.equals(key, variable.key) && Objects.equals(value, variable.value) && type == variable.type && Objects.equals(secure, variable.secure) && Objects.equals(organizationId, variable.organizationId)
+            && Objects.equals(projectId, variable.projectId);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(id, resourceId, resourceType, key, value, type, secure, organizationId, projectId);
+   }
+
+   @Override
+   public String toString() {
+      return "ResourceVariable{" +
+            "id='" + id + '\'' +
+            ", resourceId='" + resourceId + '\'' +
+            ", resourceType=" + resourceType +
+            ", key='" + key + '\'' +
+            ", value=" + value +
+            ", type=" + type +
+            ", secure=" + secure +
+            ", organizationId='" + organizationId + '\'' +
+            ", projectId='" + projectId + '\'' +
+            '}';
    }
 
    @Override

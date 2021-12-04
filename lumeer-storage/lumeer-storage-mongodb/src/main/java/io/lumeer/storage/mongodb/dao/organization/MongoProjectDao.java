@@ -191,7 +191,7 @@ public class MongoProjectDao extends MongoOrganizationScopedDao implements Proje
    }
 
    String databaseCollectionName() {
-      if (!getOrganization().isPresent()) {
+      if (getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
       return databaseCollectionName(getOrganization().get());

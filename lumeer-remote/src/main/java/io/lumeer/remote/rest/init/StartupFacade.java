@@ -78,6 +78,7 @@ public class StartupFacade implements Serializable {
       long tm = System.currentTimeMillis();
 
       organizationDao.getAllOrganizations().forEach(organization -> {
+         resourceVariableDao.setOrganization(organization);
          resourceVariableDao.ensureIndexes(organization);
       });
 

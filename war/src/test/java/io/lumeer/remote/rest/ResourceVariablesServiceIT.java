@@ -32,15 +32,12 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.facade.OrganizationFacade;
-import io.lumeer.core.facade.ResourceVariableFacade;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 
-import org.assertj.core.api.SoftAssertions;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,10 +63,7 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
    private String variablesUrl;
 
    @Inject
-   private ResourceVariableFacade resourceVariableFacade;
-
-   @Inject
-   private OrganizationFacade organizationFacade;
+   private OrganizationDao organizationDao;
 
    @Inject
    private ResourceVariableDao resourceVariableDao;
@@ -92,11 +86,13 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
       organization.setCode("ORGANIZATION");
       organization.setPermissions(new Permissions());
       organization.getPermissions().updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read))));
-      Organization storedOrganization = organizationFacade.createOrganization(organization);
+      Organization storedOrganization = organizationDao.createOrganization(organization);
       organizationId = storedOrganization.getId();
 
       projectDao.setOrganization(storedOrganization);
       resourceVariableDao.setOrganization(storedOrganization);
+      resourceVariableDao.ensureIndexes(storedOrganization);
+
       Project project = new Project();
       project.setCode("PROJECT");
       project.setPermissions(new Permissions());
@@ -148,7 +144,8 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
    public void testGetVariable() {
       final ResourceVariable variable = createVariable("key", "value", false);
 
-      Response response = client.target(variablesUrl).path(variable.getId())
+      Response response = client.target(variablesUrl)
+                                .path(variable.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -162,7 +159,8 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
    public void testGetSecureVariable() {
       final ResourceVariable variable = createVariable("key", "value", true);
 
-      Response response = client.target(variablesUrl).path(variable.getId())
+      Response response = client.target(variablesUrl)
+                                .path(variable.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
       assertThat(response).isNotNull();
@@ -181,7 +179,7 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
       createVariable("k5", "dasdsadsa", true);
 
       Response response = client.target(variablesUrl)
-                                .path("/projects")
+                                .path("projects")
                                 .path(projectId)
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
@@ -210,7 +208,6 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(variable);
 
       Response response = client.target(variablesUrl)
-                                .path("/")
                                 .path(variable.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
@@ -230,7 +227,6 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
       Entity entity = Entity.json(variable);
 
       Response response = client.target(variablesUrl)
-                                .path("/")
                                 .path(variable.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPut(entity).invoke();
@@ -257,17 +253,18 @@ public class ResourceVariablesServiceIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   public void testDeleteOrganization() {
+   public void testDeleteVariable() {
       final ResourceVariable variable = createVariable("key", "value", false);
 
-      Response response = client.target(variablesUrl).path(variable.getId())
+      Response response = client.target(variablesUrl)
+                                .path(variable.getId())
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildDelete().invoke();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
       assertThat(response.getLinks()).extracting(Link::getUri).containsOnly(UriBuilder.fromUri(variablesUrl).build());
 
-      assertThatThrownBy(() -> resourceVariableFacade.getVariable(variable.getId()))
+      assertThatThrownBy(() -> resourceVariableDao.getVariable(variable.getId()))
             .isInstanceOf(StorageException.class);
    }
 

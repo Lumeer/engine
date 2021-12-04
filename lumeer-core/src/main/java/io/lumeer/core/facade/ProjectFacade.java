@@ -55,6 +55,7 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -136,6 +137,9 @@ public class ProjectFacade extends AbstractFacade {
    private SelectionListDao selectionListDao;
 
    @Inject
+   private ResourceVariableDao resourceVariableDao;
+
+   @Inject
    private RequestDataKeeper requestDataKeeper;
 
    void init(DaoContextSnapshot daoContextSnapshot) {
@@ -153,6 +157,7 @@ public class ProjectFacade extends AbstractFacade {
       this.sequenceDao = daoContextSnapshot.getSequenceDao();
       this.resourceCommentDao = daoContextSnapshot.getResourceCommentDao();
       this.selectionListDao = daoContextSnapshot.getSelectionListDao();
+      this.resourceVariableDao = daoContextSnapshot.getResourceVariableDao();
    }
 
    public Project createProject(Project project) {
