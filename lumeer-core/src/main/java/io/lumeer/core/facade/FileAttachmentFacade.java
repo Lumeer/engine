@@ -23,11 +23,11 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.core.adapter.FileAttachmentAdapter;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.LinkInstanceUtils;
-import io.lumeer.core.util.s3.PresignUrlRequest;
-import io.lumeer.core.util.s3.S3Utils;
+import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -38,52 +38,22 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.exception.StorageException;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.AwsCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
-import software.amazon.awssdk.http.SdkHttpMethod;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
-import software.amazon.awssdk.services.s3.model.Delete;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
-import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
-
 @RequestScoped
 public class FileAttachmentFacade extends AbstractFacade {
 
-   public static final int PRESIGN_TIMEOUT = 60;
-   private String S3_KEY;
-   private String S3_SECRET;
-   private String S3_BUCKET;
-   private String S3_REGION;
-   private String S3_ENDPOINT;
-
-   private Region region;
-   private AwsCredentials awsCredentials;
-   private StaticCredentialsProvider staticCredentialsProvider;
-   private S3Client s3 = null;
+   private LumeerS3Client lumeerS3Client = null;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -109,29 +79,12 @@ public class FileAttachmentFacade extends AbstractFacade {
    @Inject
    private LinkDataDao linkDataDao;
 
+   private FileAttachmentAdapter adapter;
+
    @PostConstruct
    public void init() {
-      S3_KEY = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_KEY)).orElse("");
-      S3_SECRET = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_SECRET)).orElse("");
-      S3_BUCKET = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_BUCKET)).orElse("");
-      S3_REGION = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_REGION)).orElse("");
-      S3_ENDPOINT = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.S3_ENDPOINT)).orElse("");
-
-      if (StringUtils.isNotEmpty(S3_KEY)) {
-         region = Region.of(S3_REGION);
-         awsCredentials = AwsBasicCredentials.create(S3_KEY, S3_SECRET);
-         staticCredentialsProvider = StaticCredentialsProvider.create(awsCredentials);
-         try {
-            s3 = S3Client
-                    .builder()
-                    .region(region)
-                    .endpointOverride(new URI("https://" + S3_REGION + "." + S3_ENDPOINT))
-                    .credentialsProvider(staticCredentialsProvider)
-                    .build();
-         } catch (URISyntaxException e) {
-            throw new IllegalStateException("Unable to initialize S3 client. Wrong endpoint. Unable to work with file attachments.");
-         }
-      }
+      lumeerS3Client = new LumeerS3Client(configurationProducer);
+      adapter = new FileAttachmentAdapter(lumeerS3Client, fileAttachmentDao, configurationProducer.getEnvironment().name());
    }
 
    public List<FileAttachment> createFileAttachments(final List<FileAttachment> fileAttachments) {
@@ -177,6 +130,16 @@ public class FileAttachmentFacade extends AbstractFacade {
       fileAttachment.setCreationDate(ZonedDateTime.now());
    }
 
+   public FileAttachment createFileAttachment(final FileAttachment fileAttachment, final byte[] data) {
+      if (fileAttachment.getAttachmentType().equals(FileAttachment.AttachmentType.DOCUMENT)) {
+         checkCanEditDocument(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
+      } else {
+         checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
+      }
+
+      return adapter.createFileAttachment(fileAttachment, data);
+   }
+
    public FileAttachment getFileAttachment(final String fileAttachmentId, final boolean write) {
       final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
 
@@ -198,13 +161,13 @@ public class FileAttachmentFacade extends AbstractFacade {
          checkCanReadLinkInstance(collectionId, documentId);
       }
 
-      return fileAttachmentDao.findAllFileAttachments(
-            getOrganization(),
-            getProject(),
-              collectionId, documentId, attributeId, type)
-              .stream()
-              .map(fa -> presignFileAttachment(fa, false))
-              .collect(Collectors.toList());
+      return adapter.getAllFileAttachments(
+                                    getOrganization(),
+                                    getProject(),
+                                    collectionId, documentId, attributeId, type)
+                              .stream()
+                              .map(fa -> presignFileAttachment(fa, false))
+                              .collect(Collectors.toList());
    }
 
    protected void duplicateFileAttachments(final String collectionId, final Map<String, String> sourceTargetIdMap, final FileAttachment.AttachmentType type) {
@@ -233,12 +196,12 @@ public class FileAttachmentFacade extends AbstractFacade {
       }
 
       return fileAttachmentDao.findAllFileAttachments(
-            getOrganization(),
-            getProject(),
-              collectionId, documentId, type)
-              .stream()
-              .map(fa -> presignFileAttachment(fa, false))
-              .collect(Collectors.toList());
+                                    getOrganization(),
+                                    getProject(),
+                                    collectionId, documentId, type)
+                              .stream()
+                              .map(fa -> presignFileAttachment(fa, false))
+                              .collect(Collectors.toList());
    }
 
    public List<FileAttachment> getAllFileAttachments(final String resourceId, final FileAttachment.AttachmentType type) {
@@ -301,9 +264,9 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       checkFileAttachmentsCanEdit(fileAttachments);
 
-      if (s3 != null) {
+      if (lumeerS3Client.isInitialized()) {
          fileAttachments.forEach(fileAttachment -> {
-            s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
+            lumeerS3Client.deleteObject(adapter.getFileAttachmentKey(fileAttachment));
          });
       }
 
@@ -327,59 +290,28 @@ public class FileAttachmentFacade extends AbstractFacade {
          checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       }
 
-      if (s3 != null) {
-         s3.deleteObject(DeleteObjectRequest.builder().bucket(S3_BUCKET).key(getFileAttachmentKey(fileAttachment)).build());
+      if (lumeerS3Client.isInitialized()) {
+         lumeerS3Client.deleteObject(adapter.getFileAttachmentKey(fileAttachment));
       }
 
       fileAttachmentDao.removeFileAttachment(fileAttachment);
    }
 
    private FileAttachment presignFileAttachment(final FileAttachment fileAttachment, final boolean write) {
-      if (s3 == null) {
+      if (!lumeerS3Client.isInitialized()) {
          return fileAttachment;
       }
 
-      final String key = getFileAttachmentKey(fileAttachment);
-      final URI uri = S3Utils.presign(PresignUrlRequest.builder()
-              .region(region)
-              .bucket(S3_BUCKET)
-              .key(key)
-              .httpMethod(write ? SdkHttpMethod.PUT : SdkHttpMethod.GET)
-              .signatureDuration(Duration.of(PRESIGN_TIMEOUT, ChronoUnit.SECONDS))
-              .credentialsProvider(staticCredentialsProvider)
-              .endpoint(S3_ENDPOINT)
-              .build());
+      final String key = adapter.getFileAttachmentKey(fileAttachment);
+      final URI uri = lumeerS3Client.presign(key, write);
 
       fileAttachment.setPresignedUrl(uri.toString());
 
       return fileAttachment;
    }
 
-   private String getFileAttachmentLocation(final String organizationId, final String projectId, final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
-      final StringBuilder sb = new StringBuilder(configurationProducer.getEnvironment().name() + "/" + organizationId + "/" + projectId + "/" + type.name());
-
-      if (collectionId != null) {
-         sb.append("/").append(collectionId);
-
-         if (attributeId != null) {
-            sb.append("/").append(attributeId);
-
-            if (documentId != null) {
-               sb.append("/").append(documentId);
-            }
-         }
-      }
-
-      return sb.toString();
-   }
-
-   private String getFileAttachmentKey(final FileAttachment fileAttachment) {
-      return getFileAttachmentLocation(fileAttachment.getOrganizationId(), fileAttachment.getProjectId(), fileAttachment.getCollectionId(), fileAttachment.getDocumentId(), fileAttachment.getAttributeId(), fileAttachment.getAttachmentType()) + "/"
-            + fileAttachment.getId();
-   }
-
    /**
-    * Lists the file attachments really present in S3 bucket.
+    * Lists the file attachments really present in the S3 bucket.
     *
     * @param collectionId ID of a collection.
     * @param documentId   ID of a document.
@@ -388,7 +320,7 @@ public class FileAttachmentFacade extends AbstractFacade {
     * @return Files present in S3 bucket for the specified collection, document and its attribute.
     */
    public List<FileAttachment> listFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
-      if (s3 == null) {
+      if (!lumeerS3Client.isInitialized()) {
          return Collections.emptyList();
       }
 
@@ -400,24 +332,18 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       final String organizationId = getOrganization().getId();
       final String projectId = getProject().getId();
-      final ListObjectsV2Response response = s3.listObjectsV2(
-              ListObjectsV2Request
-                      .builder()
-                      .encodingType("UTF-8")
-                      .bucket(S3_BUCKET)
-                      .prefix(
-                              getFileAttachmentLocation(
-                                      organizationId,
-                                      projectId,
-                                      collectionId,
-                                      documentId,
-                                      attributeId,
-                                      type)
-                      ).build());
 
-      return response.contents().stream().map(s3Object -> {
-         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3Object.key(), s3Object.key(), type);
-         fileAttachment.setSize(s3Object.size());
+      return lumeerS3Client.listObjects(
+            adapter.getFileAttachmentLocation(
+                  organizationId,
+                  projectId,
+                  collectionId,
+                  documentId,
+                  attributeId,
+                  type)
+      ).stream().map(s3ObjectItem -> {
+         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3ObjectItem.getKey(), s3ObjectItem.getKey(), type);
+         fileAttachment.setSize(s3ObjectItem.getSize());
 
          return fileAttachment;
       }).collect(Collectors.toList());
@@ -434,18 +360,9 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private void copyFileAttachmentData(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
-      if (s3 == null) {
-         return;
+      if (lumeerS3Client.isInitialized()) {
+         lumeerS3Client.copyObject(adapter.getFileAttachmentKey(sourceFileAttachment), adapter.getFileAttachmentKey(targetFileAttachment));
       }
-
-      s3.copyObject(
-            CopyObjectRequest
-                  .builder()
-                  .copySource(S3_BUCKET + "/" + getFileAttachmentKey(sourceFileAttachment))
-                  .destinationBucket(S3_BUCKET)
-                  .destinationKey(getFileAttachmentKey(targetFileAttachment))
-                  .build()
-      );
    }
 
    void removeAllFileAttachments(final String collectionId, final FileAttachment.AttachmentType type) {
@@ -473,29 +390,22 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private void removeFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
-      if (s3 == null) {
-         return;
+      if (lumeerS3Client.isInitialized()) {
+         final String organizationId = getOrganization().getId();
+         final String projectId = getProject().getId();
+
+         lumeerS3Client.deleteObjects(
+               lumeerS3Client.listObjects(
+                     adapter.getFileAttachmentLocation(
+                           organizationId,
+                           projectId,
+                           collectionId,
+                           documentId,
+                           attributeId,
+                           type)
+               )
+         );
       }
-
-      final String organizationId = getOrganization().getId();
-      final String projectId = getProject().getId();
-      final ListObjectsV2Response response = s3.listObjectsV2(
-              ListObjectsV2Request
-                      .builder()
-                      .encodingType("UTF-8")
-                      .bucket(S3_BUCKET)
-                      .prefix(
-                              getFileAttachmentLocation(
-                                      organizationId,
-                                      projectId,
-                                      collectionId,
-                                      documentId,
-                                      attributeId,
-                                      type)
-                      ).build());
-
-      final Delete delete = Delete.builder().objects(response.contents().stream().map(s3Object -> ObjectIdentifier.builder().key(s3Object.key()).build()).collect(Collectors.toList())).build();
-      s3.deleteObjects(DeleteObjectsRequest.builder().bucket(S3_BUCKET).delete(delete).build());
    }
 
    private void checkCanEditDocument(final String collectionId, final String documentId) {

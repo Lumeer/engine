@@ -33,6 +33,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.FacadeAdapter;
+import io.lumeer.core.adapter.FileAttachmentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
@@ -53,6 +54,7 @@ import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
+import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
@@ -81,6 +83,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected User initiator;
    protected DaoContextSnapshot daoContextSnapshot;
    protected PusherClient pusherClient;
+   protected LumeerS3Client lumeerS3Client;
    protected Task parent;
    protected RequestDataKeeper requestDataKeeper;
    protected ConstraintManager constraintManager;
@@ -95,12 +98,14 @@ public abstract class AbstractContextualTask implements ContextualTask {
    protected LinkInstanceAdapter linkInstanceAdapter;
    protected PermissionAdapter permissionAdapter;
    protected PusherAdapter pusherAdapter;
+   protected FileAttachmentAdapter fileAttachmentAdapter;
 
    @Override
-   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment, final int recursionDepth) {
+   public ContextualTask initialize(final User initiator, final DaoContextSnapshot daoContextSnapshot, final PusherClient pusherClient, final LumeerS3Client lumeerS3Client, final RequestDataKeeper requestDataKeeper, final ConstraintManager constraintManager, DefaultConfigurationProducer.DeployEnvironment environment, final int recursionDepth) {
       this.initiator = initiator;
       this.daoContextSnapshot = daoContextSnapshot;
       this.pusherClient = pusherClient;
+      this.lumeerS3Client = lumeerS3Client;
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
       this.environment = environment;
@@ -115,6 +120,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
       pusherAdapter = new PusherAdapter(getAppId(), new FacadeAdapter(permissionAdapter),  resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
+      fileAttachmentAdapter = new FileAttachmentAdapter(getLumeerS3Client(), daoContextSnapshot.getFileAttachmentDao(), environment.name());
 
       return this;
    }
@@ -127,6 +133,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public PusherClient getPusherClient() {
       return pusherClient;
+   }
+
+   @Override
+   public LumeerS3Client getLumeerS3Client() {
+      return lumeerS3Client;
    }
 
    @Override
@@ -157,6 +168,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    @Override
    public String getTimeZone() {
       return timeZone;
+   }
+
+   @Override
+   public FileAttachmentAdapter getFileAttachmentAdapter() {
+      return fileAttachmentAdapter;
    }
 
    private Set<String> getLinkTypeReaders(final LinkType linkType) {
@@ -652,7 +668,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), new RequestDataKeeper(requestDataKeeper), constraintManager, environment, recursionDepth + 1);
+            t.initialize(getInitiator(), getDaoContextSnapshot(), getPusherClient(), getLumeerS3Client(), new RequestDataKeeper(requestDataKeeper), constraintManager, environment, recursionDepth + 1);
 
             return t;
          } catch (Exception e) {
@@ -668,12 +684,14 @@ public abstract class AbstractContextualTask implements ContextualTask {
       private final User initiator;
       private final DaoContextSnapshot contextSnapshot;
       private final PusherClient pusherClient;
+      private final LumeerS3Client lumeerS3Client;
       private final DefaultConfigurationProducer.DeployEnvironment environment;
 
       public SyntheticContextualTaskFactory(final DefaultConfigurationProducer configurationProducer, final DaoContextSnapshot daoContextSnapshot) {
          this.contextSnapshot = daoContextSnapshot;
          constraintManager = ConstraintManager.getInstance(configurationProducer);
          pusherClient = PusherClient.getInstance(configurationProducer);
+         lumeerS3Client = new LumeerS3Client(configurationProducer);
          initiator = AuthenticatedUser.getMachineUser();
          environment = configurationProducer.getEnvironment();
       }
@@ -681,7 +699,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(initiator, contextSnapshot, pusherClient, new RequestDataKeeper(), constraintManager, environment, 0);
+            t.initialize(initiator, contextSnapshot, pusherClient, lumeerS3Client, new RequestDataKeeper(), constraintManager, environment, 0);
 
             return t;
          } catch (Exception e) {
