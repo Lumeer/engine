@@ -29,6 +29,7 @@ import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
@@ -107,6 +108,8 @@ public interface DaoContextSnapshot {
    DelayedActionDao getDelayedActionDao();
 
    AuditDao getAuditDao();
+
+   FileAttachmentDao getFileAttachmentDao();
 
    SelectionListDao getSelectionListDao();
 

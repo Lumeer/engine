@@ -20,81 +20,27 @@ package io.lumeer.core.adapter
 
 import io.lumeer.api.model.FileAttachment
 import io.lumeer.api.model.FileAttachment.AttachmentType
-import io.lumeer.core.facade.FileAttachmentFacade
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer
-import io.lumeer.core.util.s3.PresignUrlRequest
-import io.lumeer.core.util.s3.S3Utils
-import org.apache.commons.lang3.StringUtils
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
-import software.amazon.awssdk.auth.credentials.AwsCredentials
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider
-import software.amazon.awssdk.http.SdkHttpMethod
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3Client
-import java.net.URI
-import java.net.URISyntaxException
-import java.time.Duration
-import java.time.temporal.ChronoUnit
-import java.util.*
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Project
+import io.lumeer.core.util.LumeerS3Client
+import io.lumeer.storage.api.dao.FileAttachmentDao
 
-class FileAttachmentAdapter(val configurationProducer: DefaultConfigurationProducer) {
+class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachmentDao: FileAttachmentDao, val environment: String) {
 
-   val PRESIGN_TIMEOUT = 60
-   private val S3_KEY: String
-   private val S3_SECRET: String
-   private val S3_BUCKET: String
-   private val S3_REGION: String
-   private val S3_ENDPOINT: String
-
-   private var region: Region? = null
-   private var awsCredentials: AwsCredentials? = null
-   private var staticCredentialsProvider: StaticCredentialsProvider? = null
-   private var s3: S3Client? = null
-
-   init {
-      S3_KEY = Optional.ofNullable(configurationProducer[DefaultConfigurationProducer.S3_KEY]).orElse("")
-      S3_SECRET = Optional.ofNullable(configurationProducer[DefaultConfigurationProducer.S3_SECRET]).orElse("")
-      S3_BUCKET = Optional.ofNullable(configurationProducer[DefaultConfigurationProducer.S3_BUCKET]).orElse("")
-      S3_REGION = Optional.ofNullable(configurationProducer[DefaultConfigurationProducer.S3_REGION]).orElse("")
-      S3_ENDPOINT = Optional.ofNullable(configurationProducer[DefaultConfigurationProducer.S3_ENDPOINT]).orElse("")
-
-      if (StringUtils.isNotEmpty(S3_KEY)) {
-         region = Region.of(S3_REGION)
-         awsCredentials = AwsBasicCredentials.create(S3_KEY, S3_SECRET)
-         staticCredentialsProvider = StaticCredentialsProvider.create(awsCredentials)
-         s3 = try {
-            S3Client
-                  .builder()
-                  .region(region)
-                  .endpointOverride(URI("https://$S3_REGION.$S3_ENDPOINT"))
-                  .credentialsProvider(staticCredentialsProvider)
-                  .build()
-         } catch (e: URISyntaxException) {
-            throw IllegalStateException("Unable to initialize S3 client. Wrong endpoint. Unable to work with file attachments.")
-         }
-      }
+   fun createFileAttachment(fileAttachment: FileAttachment, data: ByteArray): FileAttachment {
+      val storedAttachment = fileAttachmentDao.createFileAttachment(fileAttachment)
+      lumeerS3Client.putObject(getFileAttachmentKey(fileAttachment), data)
+      return storedAttachment
    }
 
-   private fun presignFileAttachment(fileAttachment: FileAttachment, write: Boolean): FileAttachment? {
-      if (s3 == null) {
-         return fileAttachment
-      }
-      val key = getFileAttachmentKey(fileAttachment)
-      val uri = S3Utils.presign(PresignUrlRequest.builder()
-            .region(region)
-            .bucket(S3_BUCKET)
-            .key(key)
-            .httpMethod(if (write) SdkHttpMethod.PUT else SdkHttpMethod.GET)
-            .signatureDuration(Duration.of(FileAttachmentFacade.PRESIGN_TIMEOUT.toLong(), ChronoUnit.SECONDS))
-            .credentialsProvider(staticCredentialsProvider)
-            .endpoint(S3_ENDPOINT)
-            .build())
-      fileAttachment.presignedUrl = uri.toString()
-      return fileAttachment
-   }
+   fun getAllFileAttachments(organization: Organization, project: Project, collectionId: String, documentId: String, attributeId: String, type: AttachmentType): List<FileAttachment> =
+      fileAttachmentDao.findAllFileAttachments(
+            organization,
+            project,
+            collectionId, documentId, attributeId, type)
 
-   private fun getFileAttachmentLocation(organizationId: String, projectId: String, collectionId: String?, documentId: String?, attributeId: String?, type: AttachmentType): String {
-      val sb = StringBuilder(configurationProducer.environment.name + "/" + organizationId + "/" + projectId + "/" + type.name)
+   fun getFileAttachmentLocation(organizationId: String, projectId: String, collectionId: String?, documentId: String?, attributeId: String?, type: AttachmentType): String {
+      val sb = StringBuilder(environment + "/" + organizationId + "/" + projectId + "/" + type.name)
       if (collectionId != null) {
          sb.append("/").append(collectionId)
          if (attributeId != null) {
@@ -107,7 +53,7 @@ class FileAttachmentAdapter(val configurationProducer: DefaultConfigurationProdu
       return sb.toString()
    }
 
-   private fun getFileAttachmentKey(fileAttachment: FileAttachment): String {
+   fun getFileAttachmentKey(fileAttachment: FileAttachment): String {
       return (getFileAttachmentLocation(fileAttachment.organizationId, fileAttachment.projectId, fileAttachment.collectionId, fileAttachment.documentId, fileAttachment.attributeId, fileAttachment.attachmentType) + "/"
             + fileAttachment.id)
    }

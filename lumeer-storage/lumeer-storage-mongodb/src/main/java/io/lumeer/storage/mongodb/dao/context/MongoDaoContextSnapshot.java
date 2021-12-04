@@ -30,6 +30,7 @@ import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.FunctionDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
@@ -67,6 +68,7 @@ import io.lumeer.storage.mongodb.dao.project.MongoSequenceDao;
 import io.lumeer.storage.mongodb.dao.project.MongoViewDao;
 import io.lumeer.storage.mongodb.dao.system.MongoDelayedActionDao;
 import io.lumeer.storage.mongodb.dao.system.MongoFeedbackDao;
+import io.lumeer.storage.mongodb.dao.system.MongoFileAttachmentDao;
 import io.lumeer.storage.mongodb.dao.system.MongoGroupDao;
 import io.lumeer.storage.mongodb.dao.system.MongoOrganizationDao;
 import io.lumeer.storage.mongodb.dao.system.MongoSystemScopedDao;
@@ -111,6 +113,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    private final ResourceCommentDao resourceCommentDao;
    private final DelayedActionDao delayedActionDao;
    private final AuditDao auditDao;
+   private final FileAttachmentDao fileAttachmentDao;
    private final SelectionListDao selectionListDao;
 
 
@@ -154,6 +157,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       this.resourceCommentDao = initProjectScopedDao(new MongoResourceCommentDao());
       this.delayedActionDao = initSystemScopedDao(new MongoDelayedActionDao());
       this.auditDao = initProjectScopedDao(new MongoAuditRecordDao());
+      this.fileAttachmentDao = initSystemScopedDao(new MongoFileAttachmentDao());
       this.selectionListDao = initOrganizationScopedDao(new MongoSelectionListDao());
    }
 
@@ -306,6 +310,11 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    @Override
    public SelectionListDao getSelectionListDao() {
       return selectionListDao;
+   }
+
+   @Override
+   public FileAttachmentDao getFileAttachmentDao() {
+      return fileAttachmentDao;
    }
 
    @Override
