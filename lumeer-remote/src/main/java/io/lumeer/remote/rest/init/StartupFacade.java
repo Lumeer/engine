@@ -32,6 +32,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -68,10 +69,17 @@ public class StartupFacade implements Serializable {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
+   @Inject
+   private ResourceVariableDao resourceVariableDao;
+
    @PostConstruct
    public void afterDeployment() {
       log.info("Checking database for updates...");
       long tm = System.currentTimeMillis();
+
+      organizationDao.getAllOrganizations().forEach(organization -> {
+         resourceVariableDao.ensureIndexes(organization);
+      });
 
       /*final LongAdder orgs = new LongAdder(), projs = new LongAdder(), comments = new LongAdder();
 

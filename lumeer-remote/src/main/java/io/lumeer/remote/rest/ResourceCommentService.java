@@ -65,7 +65,7 @@ public class ResourceCommentService extends AbstractService {
    public void init() {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
       if (resourceType != null) {
-         type = ResourceType.valueOf(resourceType.toUpperCase());
+         type = ResourceType.fromString(resourceType);
       }
    }
 

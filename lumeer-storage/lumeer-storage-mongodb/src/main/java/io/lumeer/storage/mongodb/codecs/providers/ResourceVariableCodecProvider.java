@@ -16,34 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.storage.mongodb.codecs.providers;
 
-import java.util.Arrays;
+import io.lumeer.api.model.ResourceVariable;
+import io.lumeer.storage.mongodb.codecs.ResourceVariableCodec;
 
-public enum ResourceType {
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
 
-   ORGANIZATION,
-   PROJECT,
-   COLLECTION,
-   VIEW,
-   LINK_TYPE,
-   DOCUMENT,
-   LINK;
-
-   public static ResourceType fromString(String type) {
-      if (type == null) {
-         return null;
-      }
-      try {
-         return Arrays.stream(values()).filter(role -> role.toString().equalsIgnoreCase(type)).findFirst().orElse(null);
-      } catch (IllegalArgumentException exception) {
-         return null;
-      }
-   }
-
+public class ResourceVariableCodecProvider implements CodecProvider {
 
    @Override
-   public String toString() {
-      return name().toLowerCase();
+   public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+      if (clazz == ResourceVariable.class) {
+         return (Codec<T>) new ResourceVariableCodec(registry);
+      }
+
+      return null;
    }
+
 }

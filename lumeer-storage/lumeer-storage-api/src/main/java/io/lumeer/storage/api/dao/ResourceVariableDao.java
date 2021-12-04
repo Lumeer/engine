@@ -16,34 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.storage.api.dao;
 
-import java.util.Arrays;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.ResourceVariable;
 
-public enum ResourceType {
+import java.util.List;
 
-   ORGANIZATION,
-   PROJECT,
-   COLLECTION,
-   VIEW,
-   LINK_TYPE,
-   DOCUMENT,
-   LINK;
+public interface ResourceVariableDao extends OrganizationScopedDao {
 
-   public static ResourceType fromString(String type) {
-      if (type == null) {
-         return null;
-      }
-      try {
-         return Arrays.stream(values()).filter(role -> role.toString().equalsIgnoreCase(type)).findFirst().orElse(null);
-      } catch (IllegalArgumentException exception) {
-         return null;
-      }
-   }
+   void ensureIndexes(Organization organization);
 
+   ResourceVariable create(ResourceVariable variable);
 
-   @Override
-   public String toString() {
-      return name().toLowerCase();
-   }
+   ResourceVariable update(String id, ResourceVariable variable);
+
+   void delete(ResourceVariable variable);
+
+   List<ResourceVariable> getByProject(String organizationId, String projectId);
+
+   ResourceVariable getVariable(String id);
 }

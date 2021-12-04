@@ -84,7 +84,7 @@ public class MongoSelectionListDao extends MongoOrganizationScopedDao implements
    @Override
    public void ensureIndexes(final Organization organization) {
       MongoCollection<Document> collection = database.getCollection(databaseCollectionName(organization));
-      collection.createIndex(Indexes.ascending(SelectionList.PROJECT_ID, SelectionList.NAME), new IndexOptions().unique(true));
+      collection.createIndex(Indexes.ascending(SelectionListCodec.PROJECT_ID, SelectionListCodec.NAME), new IndexOptions().unique(true));
    }
 
    @Override

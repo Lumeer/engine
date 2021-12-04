@@ -39,6 +39,7 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -54,6 +55,7 @@ import io.lumeer.storage.mongodb.dao.organization.MongoFavoriteItemDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoPaymentDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoProjectDao;
+import io.lumeer.storage.mongodb.dao.organization.MongoResourceVariableDao;
 import io.lumeer.storage.mongodb.dao.organization.MongoSelectionListDao;
 import io.lumeer.storage.mongodb.dao.project.MongoAuditRecordDao;
 import io.lumeer.storage.mongodb.dao.project.MongoCollectionDao;
@@ -112,7 +114,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    private final DelayedActionDao delayedActionDao;
    private final AuditDao auditDao;
    private final SelectionListDao selectionListDao;
-
+   private final ResourceVariableDao resourceVariableDao;
 
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
       this.systemDatabase = (MongoDatabase) systemDataStorage.getDatabase();
@@ -155,6 +157,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       this.delayedActionDao = initSystemScopedDao(new MongoDelayedActionDao());
       this.auditDao = initProjectScopedDao(new MongoAuditRecordDao());
       this.selectionListDao = initOrganizationScopedDao(new MongoSelectionListDao());
+      this.resourceVariableDao = initOrganizationScopedDao(new MongoResourceVariableDao());
    }
 
    private <T extends MongoSystemScopedDao> T initSystemScopedDao(T dao) {
@@ -311,6 +314,10 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    @Override
    public SelectedWorkspace getSelectedWorkspace() {
       return workspaceSnapshot;
+   }
+
+   public ResourceVariableDao getResourceVariableDao() {
+      return resourceVariableDao;
    }
 
    @Override
