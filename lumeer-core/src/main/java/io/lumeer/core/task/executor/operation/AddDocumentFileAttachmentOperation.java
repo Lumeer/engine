@@ -21,9 +21,9 @@ package io.lumeer.core.task.executor.operation;
 import io.lumeer.api.model.Document;
 import io.lumeer.core.task.executor.operation.data.FileAttachmentData;
 
-public class AddFileAttachmentOperation extends ResourceOperation<Document> {
+public class AddDocumentFileAttachmentOperation extends ResourceOperation<Document> {
 
-   public AddFileAttachmentOperation(final Document entity, final String attrId, final FileAttachmentData value) {
+   public AddDocumentFileAttachmentOperation(final Document entity, final String attrId, final FileAttachmentData value) {
       super(entity, attrId, value);
    }
 
