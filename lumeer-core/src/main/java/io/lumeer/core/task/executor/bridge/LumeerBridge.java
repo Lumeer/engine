@@ -44,7 +44,8 @@ import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
-import io.lumeer.core.task.executor.operation.AddFileAttachmentOperation;
+import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation;
+import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
 import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
@@ -300,13 +301,28 @@ public class LumeerBridge {
          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
          PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
 
-         operations.add(new AddFileAttachmentOperation(d.getDocument(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
+         operations.add(new AddDocumentFileAttachmentOperation(d.getDocument(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
       } catch (Exception e) {
          cause = e;
          throw e;
       }
    }
 
+   @SuppressWarnings("unused")
+   public void writePdf(final LinkBridge l, final String attrId, final String fileName, final boolean overwrite, final String html) throws IOException {
+      try {
+         if (html.length() > 5L*1024*1024) {
+            throw new IllegalArgumentException("Input HTML too large.");
+         }
+         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+         PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
+
+         operations.add(new AddLinkFileAttachmentOperation(l.getLink(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
 
    public void setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
       try {
