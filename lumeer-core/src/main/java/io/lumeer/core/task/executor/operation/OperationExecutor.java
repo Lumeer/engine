@@ -58,10 +58,12 @@ public class OperationExecutor implements Callable<ChangesTracker> {
       final Stage fileAttachmentsStage = new FileAttachmentsStage(this);
       final Stage singleStage = new SingleStage(this);
       final Stage viewsStage = new ViewsUpdatingStage(this);
+      final Stage fileAttachmentsStage = new FileAttachmentsStage(this);
 
       final ChangesTracker changes = fileAttachmentsStage.call();
       changes.merge(singleStage.call());
       changes.merge(viewsStage.call());
+      changes.merge(fileAttachmentsStage.call());
 
       return changes;
    }
