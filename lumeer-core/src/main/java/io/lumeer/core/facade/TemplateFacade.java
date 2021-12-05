@@ -30,6 +30,7 @@ import io.lumeer.core.template.FunctionAndRuleCreator;
 import io.lumeer.core.template.LinkInstanceCreator;
 import io.lumeer.core.template.LinkTypeCreator;
 import io.lumeer.core.template.ResourceCommentCreator;
+import io.lumeer.core.template.ResourceVariableCreator;
 import io.lumeer.core.template.SelectionListCreator;
 import io.lumeer.core.template.SequenceCreator;
 import io.lumeer.core.template.TemplateMetadata;
@@ -71,6 +72,9 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private ResourceCommentFacade resourceCommentFacade;
+
+   @Inject
+   private ResourceVariableFacade resourceVariableFacade;
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -116,17 +120,17 @@ public class TemplateFacade extends AbstractFacade {
       return result;
    }
 
-   public void installTemplate(final Project project, final String templateType, final Language language) {
+   public void installTemplate(final Project project, final String organizationId, final String templateType, final Language language) {
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
-      installTemplate(project, templateParser, createTemplateMetadata(new Date()), true);
+      installTemplate(organizationId, project, templateParser, createTemplateMetadata(new Date()), true);
    }
 
    public void installTemplate(final Project project, final String organizationId, final ProjectContent projectContent, final Date relativeDate) {
       final TemplateParser templateParser = new TemplateParser(projectContent);
       final boolean originalLumeerTemplate = getAllTemplateOrganizationIds().contains(organizationId);
 
-      installTemplate(project, templateParser, createTemplateMetadata(relativeDate), originalLumeerTemplate);
+      installTemplate(organizationId, project, templateParser, createTemplateMetadata(relativeDate), originalLumeerTemplate);
    }
 
    private TemplateMetadata createTemplateMetadata(final Date relativeDate) {
@@ -138,7 +142,7 @@ public class TemplateFacade extends AbstractFacade {
       return new TemplateMetadata(dateAddition);
    }
 
-   private void installTemplate(final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata, final boolean originalLumeerTemplate) {
+   private void installTemplate(final String organizationId, final Project project, final TemplateParser templateParser, final TemplateMetadata templateMetadata, final boolean originalLumeerTemplate) {
       SelectionListCreator.createLists(templateParser, project, selectionListFacade);
       CollectionCreator.createCollections(templateParser, collectionFacade, defaultConfigurationProducer);
       LinkTypeCreator.createLinkTypes(templateParser, linkTypeFacade);
@@ -149,6 +153,7 @@ public class TemplateFacade extends AbstractFacade {
       FavoriteItemsCreator.createFavoriteItems(templateParser, collectionFacade, viewFacade);
       SequenceCreator.createSequences(templateParser, sequenceFacade);
       ResourceCommentCreator.createComments(templateParser, resourceCommentFacade, defaultConfigurationProducer);
+      ResourceVariableCreator.createVariables(templateParser, resourceVariableFacade, defaultConfigurationProducer, organizationId, project.getId());
 
       if (templateCreatedEvent != null) {
          templateCreatedEvent.fire(templateParser.getReport(project));

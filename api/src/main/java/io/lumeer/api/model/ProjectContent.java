@@ -70,6 +70,9 @@ public class ProjectContent {
    @JsonProperty("selectionLists")
    private List<SelectionList> selectionLists;
 
+   @JsonProperty("variables")
+   private List<ResourceVariable> variables;
+
    @JsonProperty("comments")
    private List<ResourceCommentWrapper> comments;
 
@@ -175,5 +178,13 @@ public class ProjectContent {
 
    public void setSelectionLists(final List<SelectionList> selectionLists) {
       this.selectionLists = selectionLists;
+   }
+
+   public List<ResourceVariable> getVariables() {
+      return variables;
+   }
+
+   public void setVariables(final List<ResourceVariable> variables) {
+      this.variables = variables;
    }
 }

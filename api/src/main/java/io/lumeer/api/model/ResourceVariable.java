@@ -80,6 +80,10 @@ public class ResourceVariable implements WithId, HealthChecking {
       return resourceId;
    }
 
+   public void setResourceId(final String resourceId) {
+      this.resourceId = resourceId;
+   }
+
    public ResourceType getResourceType() {
       return resourceType;
    }
@@ -128,6 +132,10 @@ public class ResourceVariable implements WithId, HealthChecking {
          return resourceId;
       }
       return projectId;
+   }
+
+   public void setProjectId(final String projectId) {
+      this.projectId = projectId;
    }
 
    @JsonIgnore

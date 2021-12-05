@@ -16,28 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.ResourceVariable;
+package io.lumeer.engine.api.event;
 
-import java.util.List;
+public class ReloadResourceVariables {
 
-public interface ResourceVariableDao extends OrganizationScopedDao {
+   private final String organizationId;
+   private final String projectId;
 
-   void ensureIndexes(Organization organization);
+   public ReloadResourceVariables(String organizationId, String projectId) {
+      this.organizationId = organizationId;
+      this.projectId = projectId;
+   }
 
-   ResourceVariable create(ResourceVariable variable);
+   public String getOrganizationId() {
+      return organizationId;
+   }
 
-   void create(List<ResourceVariable> variables, String organizationId, String projectId);
-
-   ResourceVariable update(String id, ResourceVariable variable);
-
-   void delete(ResourceVariable variable);
-
-   void deleteInProject(String organizationId, String projectId);
-
-   List<ResourceVariable> getInProject(String organizationId, String projectId);
-
-   ResourceVariable getVariable(String id);
+   public String getProjectId() {
+      return projectId;
+   }
 }

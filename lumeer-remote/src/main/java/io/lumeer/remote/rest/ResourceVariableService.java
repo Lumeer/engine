@@ -93,7 +93,7 @@ public class ResourceVariableService extends AbstractService {
    @GET
    @Path("projects/{projectId:[0-9a-fA-F]{24}}")
    public List<ResourceVariable> getVariables(@PathParam("projectId") String projectId) {
-      return resourceVariableFacade.getByProject(projectId);
+      return resourceVariableFacade.getInProject(projectId);
    }
 
 }

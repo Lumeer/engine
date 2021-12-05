@@ -73,6 +73,7 @@ import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.OrganizationUserEvent;
 import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.ReloadResourceContent;
+import io.lumeer.engine.api.event.ReloadResourceVariables;
 import io.lumeer.engine.api.event.ReloadSelectionLists;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveFavoriteItem;
@@ -848,6 +849,21 @@ public class PusherFacade extends AbstractFacade {
             }
 
             List<Event> events = users.stream().map(userId -> createEventForRemove(resourceVariable.getClass().getSimpleName(), resourceId, userId)).collect(Collectors.toList());
+            sendNotificationsBatch(events);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void reloadResourceVariablesNotification(@Observes final ReloadResourceVariables reloadResourceVariables) {
+      if (isEnabled()) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(reloadResourceVariables.getOrganizationId());
+            Project project = projectDao.getProjectById(reloadResourceVariables.getProjectId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), organization.getId(), organization.getId(), project.getId());
+            Set<String> users = permissionAdapter.getProjectUsersByRole(organization, project, RoleType.TechConfig);
+            List<Event> events = users.stream().map(userId -> new Event(eventChannel(userId), ResourceVariable.class.getSimpleName() + RELOAD_EVENT_SUFFIX, object)).collect(Collectors.toList());
             sendNotificationsBatch(events);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);

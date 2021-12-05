@@ -24,6 +24,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.engine.api.event.CreateResourceVariable;
+import io.lumeer.engine.api.event.ReloadResourceVariables;
 import io.lumeer.engine.api.event.RemoveResourceVariable;
 import io.lumeer.engine.api.event.UpdateResourceVariable;
 import io.lumeer.storage.api.dao.ResourceVariableDao;
@@ -64,6 +65,9 @@ public class MongoResourceVariableDao extends MongoOrganizationScopedDao impleme
    @Inject
    private Event<RemoveResourceVariable> removeEvent;
 
+   @Inject
+   private Event<ReloadResourceVariables> reloadEvent;
+
    @Override
    public void createRepository(Organization organization) {
       database.createCollection(databaseCollectionName(organization));
@@ -97,6 +101,17 @@ public class MongoResourceVariableDao extends MongoOrganizationScopedDao impleme
    }
 
    @Override
+   public void create(final List<ResourceVariable> variables, final String organizationId, final String projectId) {
+      if (variables != null && variables.size() > 0) {
+         databaseCollection().insertMany(variables);
+
+         if (reloadEvent != null) {
+            reloadEvent.fire(new ReloadResourceVariables(organizationId, projectId));
+         }
+      }
+   }
+
+   @Override
    public ResourceVariable update(final String id, final ResourceVariable variable) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
@@ -125,9 +140,21 @@ public class MongoResourceVariableDao extends MongoOrganizationScopedDao impleme
    }
 
    @Override
-   public List<ResourceVariable> getByProject(final String organizationId, final String projectId) {
-      Bson filter = Filters.and(Filters.eq(ResourceVariableCodec.ORGANIZATION_ID, organizationId), Filters.eq(ResourceVariableCodec.PROJECT_ID, projectId));
+   public void deleteInProject(final String organizationId, final String projectId) {
+      Bson filter = inProjectFilter(organizationId, projectId);
+      databaseCollection().deleteMany(filter);
+   }
+
+   @Override
+   public List<ResourceVariable> getInProject(final String organizationId, final String projectId) {
+      Bson filter = inProjectFilter(organizationId, projectId);
       return databaseCollection().find(filter).into(new ArrayList<>());
+   }
+
+   private Bson inProjectFilter(final String organizationId, final String projectId) {
+      Bson inProjectBson = Filters.and(Filters.eq(ResourceVariableCodec.ORGANIZATION_ID, organizationId), Filters.eq(ResourceVariableCodec.PROJECT_ID, projectId), Filters.in(ResourceVariableCodec.RESOURCE_TYPE, List.of(ResourceType.LINK_TYPE.toString(), ResourceType.COLLECTION.toString(), ResourceType.VIEW.toString())));
+      Bson projectBson = Filters.and(Filters.eq(ResourceVariableCodec.ORGANIZATION_ID, organizationId), Filters.eq(ResourceVariableCodec.RESOURCE_TYPE, ResourceType.PROJECT.toString()), Filters.eq(ResourceVariableCodec.RESOURCE_ID, projectId));
+      return Filters.or(inProjectBson, projectBson);
    }
 
    @Override

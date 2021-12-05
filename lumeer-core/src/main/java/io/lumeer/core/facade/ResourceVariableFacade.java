@@ -60,6 +60,12 @@ public class ResourceVariableFacade extends AbstractFacade {
       return mapVariable(resourceVariableDao.create(variable));
    }
 
+   public void storeResourceVariables(List<ResourceVariable> variables, String organizationId, String projectId) {
+      List<ResourceVariable> allowedVariables = variables.stream().filter(this::hasPermissions).collect(Collectors.toList());
+
+      resourceVariableDao.create(allowedVariables, organizationId, projectId);
+   }
+
    public ResourceVariable update(final String id, ResourceVariable variable) {
       ResourceVariable currentVariable = resourceVariableDao.getVariable(id);
       currentVariable.patch(variable);
@@ -77,10 +83,10 @@ public class ResourceVariableFacade extends AbstractFacade {
       resourceVariableDao.delete(currentVariable);
    }
 
-   public List<ResourceVariable> getByProject(String projectId) {
+   public List<ResourceVariable> getInProject(String projectId) {
       checkProjectPermissions(projectId);
 
-      return resourceVariableDao.getByProject(getOrganization().getId(), projectId)
+      return resourceVariableDao.getInProject(getOrganization().getId(), projectId)
                                 .stream().map(this::mapVariable)
                                 .collect(Collectors.toList());
    }
@@ -108,6 +114,19 @@ public class ResourceVariableFacade extends AbstractFacade {
             break;
          default:
             throw new UnsupportedOperationException("Resource type '" + variable.getResourceType() + "' is not supported now");
+      }
+   }
+
+   private boolean hasPermissions(final ResourceVariable variable) {
+      switch (variable.getResourceType()) {
+         case ORGANIZATION:
+            Organization organization = organizationDao.getOrganizationById(variable.getOrganizationId());
+            return permissionsChecker.hasRole(organization, RoleType.TechConfig);
+         case PROJECT:
+            Project project = projectDao.getProjectById(variable.getProjectId());
+            return permissionsChecker.hasRole(project, RoleType.TechConfig);
+         default:
+            return false;
       }
    }
 

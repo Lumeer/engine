@@ -356,7 +356,9 @@ public class ProjectFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
 
       if (workspaceKeeper.getOrganization().isPresent()) {
-         delayedActionDao.deleteAllScheduledActions(workspaceKeeper.getOrganization().get().getId() + "/" + project.getId());
+         String organizationId = workspaceKeeper.getOrganization().get().getId();
+         resourceVariableDao.deleteInProject(organizationId, project.getId());
+         delayedActionDao.deleteAllScheduledActions(organizationId + "/" + project.getId());
       }
    }
 
@@ -419,6 +421,10 @@ public class ProjectFacade extends AbstractFacade {
       content.setData(documentsData);
 
       content.setComments(resourceCommentDao.getAllComments().stream().map(ResourceCommentWrapper::new).collect(Collectors.toList()));
+
+      content.setVariables(resourceVariableDao.getInProject(getOrganization().getId(), projectId).stream()
+                                              .filter(variable -> !variable.getSecure())
+                                              .collect(Collectors.toList()));
 
       content.setTemplateMeta(
             new ProjectMeta(
