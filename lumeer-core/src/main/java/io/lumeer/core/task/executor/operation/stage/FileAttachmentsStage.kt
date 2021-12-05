@@ -3,9 +3,9 @@ package io.lumeer.core.task.executor.operation.stage
 import io.lumeer.api.model.FileAttachment
 import io.lumeer.core.adapter.FileAttachmentAdapter
 import io.lumeer.core.task.executor.ChangesTracker
-import io.lumeer.core.task.executor.operation.AddFileAttachmentOperation
+import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation
+import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation
 import io.lumeer.core.task.executor.operation.OperationExecutor
-import io.lumeer.core.task.executor.operation.ViewPermissionsOperation
 
 /*
  * Lumeer: Modern Data Definition and Processing Platform
@@ -34,11 +34,11 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
          return ChangesTracker()
       }
 
-      val attachmentUpdates = operations.orEmpty().filter { operation -> operation is AddFileAttachmentOperation && operation.isComplete }
-            .map { operation -> (operation as AddFileAttachmentOperation) }
+      val documentAttachmentUpdates = operations.orEmpty().filter { operation -> operation is AddDocumentFileAttachmentOperation && operation.isComplete }
+            .map { operation -> (operation as AddDocumentFileAttachmentOperation) }
 
 
-      attachmentUpdates.forEach { operation ->
+      documentAttachmentUpdates.forEach { operation ->
          val fileAttachment = FileAttachment(
                task.daoContextSnapshot.organizationId,
                task.daoContextSnapshot.projectId,
@@ -51,6 +51,25 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
          changesTracker.addUpdatedDocuments(mutableListOf(operation.entity))
+      }
+
+      val linkAttachmentUpdates = operations.orEmpty().filter { operation -> operation is AddLinkFileAttachmentOperation && operation.isComplete }
+            .map { operation -> (operation as AddLinkFileAttachmentOperation) }
+
+
+      linkAttachmentUpdates.forEach { operation ->
+         val fileAttachment = FileAttachment(
+               task.daoContextSnapshot.organizationId,
+               task.daoContextSnapshot.projectId,
+               operation.entity.linkTypeId,
+               operation.entity.id,
+               operation.attrId,
+               operation.fileAttachmentData.fileName,
+               FileAttachment.AttachmentType.DOCUMENT
+         )
+         fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
+
+         changesTracker.addUpdatedLinkInstances(mutableListOf(operation.entity))
       }
 
       return changesTracker

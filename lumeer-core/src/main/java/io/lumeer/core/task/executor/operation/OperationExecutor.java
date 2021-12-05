@@ -21,6 +21,7 @@ package io.lumeer.core.task.executor.operation;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.operation.stage.FileAttachmentsStage;
 import io.lumeer.core.task.executor.operation.stage.SingleStage;
 import io.lumeer.core.task.executor.operation.stage.Stage;
 import io.lumeer.core.task.executor.operation.stage.ViewsUpdatingStage;
@@ -56,9 +57,11 @@ public class OperationExecutor implements Callable<ChangesTracker> {
    public ChangesTracker call() {
       final Stage singleStage = new SingleStage(this);
       final Stage viewsStage = new ViewsUpdatingStage(this);
+      final Stage fileAttachmentsStage = new FileAttachmentsStage(this);
 
       final ChangesTracker changes = singleStage.call();
       changes.merge(viewsStage.call());
+      changes.merge(fileAttachmentsStage.call());
 
       return changes;
    }
