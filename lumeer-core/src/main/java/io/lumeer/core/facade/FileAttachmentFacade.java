@@ -153,12 +153,12 @@ public class FileAttachmentFacade extends AbstractFacade {
       }
 
       return adapter.getAllFileAttachments(
-                                    getOrganization(),
-                                    getProject(),
-                                    collectionId, documentId, attributeId, type)
-                              .stream()
-                              .map(fa -> presignFileAttachment(fa, false))
-                              .collect(Collectors.toList());
+                          getOrganization(),
+                          getProject(),
+                          collectionId, documentId, attributeId, type)
+                    .stream()
+                    .map(fa -> presignFileAttachment(fa, false))
+                    .collect(Collectors.toList());
    }
 
    protected void duplicateFileAttachments(final String collectionId, final Map<String, String> sourceTargetIdMap, final FileAttachment.AttachmentType type) {
@@ -255,13 +255,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
       checkFileAttachmentsCanEdit(fileAttachments);
 
-      if (lumeerS3Client.isInitialized()) {
-         fileAttachments.forEach(fileAttachment -> {
-            lumeerS3Client.deleteObject(adapter.getFileAttachmentKey(fileAttachment));
-         });
-      }
-
-      fileAttachmentDao.removeFileAttachments(fileAttachmentIds);
+      adapter.removeFileAttachments(fileAttachments);
    }
 
    public void removeFileAttachment(final String fileAttachmentId) {
@@ -281,11 +275,7 @@ public class FileAttachmentFacade extends AbstractFacade {
          checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       }
 
-      if (lumeerS3Client.isInitialized()) {
-         lumeerS3Client.deleteObject(adapter.getFileAttachmentKey(fileAttachment));
-      }
-
-      fileAttachmentDao.removeFileAttachment(fileAttachment);
+      adapter.removeFileAttachment(fileAttachment);
    }
 
    private FileAttachment presignFileAttachment(final FileAttachment fileAttachment, final boolean write) {
@@ -384,15 +374,13 @@ public class FileAttachmentFacade extends AbstractFacade {
          final String organizationId = getOrganization().getId();
          final String projectId = getProject().getId();
 
-         lumeerS3Client.deleteObjects(
-               lumeerS3Client.listObjects(
-                     adapter.getFileAttachmentLocation(
-                           organizationId,
-                           projectId,
-                           collectionId,
-                           documentId,
-                           attributeId,
-                           type)
+         adapter.removeFileAttachments(adapter.getFileAttachmentLocation(
+                     organizationId,
+                     projectId,
+                     collectionId,
+                     documentId,
+                     attributeId,
+                     type
                )
          );
       }

@@ -26,6 +26,7 @@ import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
@@ -301,6 +302,8 @@ public class LumeerBridge {
          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
          PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
 
+         setDocumentAttribute(d, attrId, Value.asValue(getUpdateFileAttachmentsList(d, attrId, fileName, overwrite)));
+
          operations.add(new AddDocumentFileAttachmentOperation(d.getDocument(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
       } catch (Exception e) {
          cause = e;
@@ -317,11 +320,43 @@ public class LumeerBridge {
          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
          PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
 
+         setLinkAttribute(l, attrId, Value.asValue(getUpdateFileAttachmentsList(l, attrId, fileName, overwrite)));
+
          operations.add(new AddLinkFileAttachmentOperation(l.getLink(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
       } catch (Exception e) {
          cause = e;
          throw e;
       }
+   }
+
+   private String getUpdateFileAttachmentsList(final DocumentBridge d, final String attrId, final String fileName, final boolean overwrite) {
+      var fileNames = task.getDaoContextSnapshot().getFileAttachmentDao().findAllFileAttachments(
+            task.getDaoContextSnapshot().getOrganization(),
+            task.getDaoContextSnapshot().getProject(),
+            d.getDocument().getCollectionId(),
+            d.getDocument().getId(),
+            attrId,
+            FileAttachment.AttachmentType.DOCUMENT
+      ).stream().map(FileAttachment::getFileName).filter(fn -> !fn.equals(fileName)).collect(toList());
+
+      fileNames.add(fileName);
+
+      return String.join(",", fileNames);
+   }
+
+   private String getUpdateFileAttachmentsList(final LinkBridge l, final String attrId, final String fileName, final boolean overwrite) {
+      var fileNames = task.getDaoContextSnapshot().getFileAttachmentDao().findAllFileAttachments(
+            task.getDaoContextSnapshot().getOrganization(),
+            task.getDaoContextSnapshot().getProject(),
+            l.getLink().getLinkTypeId(),
+            l.getLink().getId(),
+            attrId,
+            FileAttachment.AttachmentType.LINK
+      ).stream().map(FileAttachment::getFileName).filter(fn -> !fn.equals(fileName)).collect(toList());
+
+      fileNames.add(fileName);
+
+      return String.join(",", fileNames);
    }
 
    public void setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
