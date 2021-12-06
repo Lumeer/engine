@@ -162,7 +162,7 @@ public class CopyFacadeIT extends IntegrationTestBase {
       assertThatThrownBy(() -> templateFacade.installTemplate(project, organization.getId(), TEMPLATE, Language.EN))
             .isInstanceOf(NoResourcePermissionException.class);
 
-      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.ViewContribute), new Role(RoleType.LinkContribute)));
+      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.ViewContribute), new Role(RoleType.LinkContribute), new Role(RoleType.TechConfig)));
 
       templateFacade.installTemplate(project, organization.getId(), TEMPLATE, Language.EN);
 

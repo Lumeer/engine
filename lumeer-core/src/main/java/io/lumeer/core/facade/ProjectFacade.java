@@ -422,9 +422,11 @@ public class ProjectFacade extends AbstractFacade {
 
       content.setComments(resourceCommentDao.getAllComments().stream().map(ResourceCommentWrapper::new).collect(Collectors.toList()));
 
-      content.setVariables(resourceVariableDao.getInProject(getOrganization().getId(), projectId).stream()
-                                              .filter(variable -> !variable.getSecure())
-                                              .collect(Collectors.toList()));
+      if (permissionsChecker.hasRole(storedProject, RoleType.TechConfig)) {
+         content.setVariables(resourceVariableDao.getInProject(getOrganization().getId(), projectId).stream()
+                                                 .filter(variable -> !variable.getSecure())
+                                                 .collect(Collectors.toList()));
+      }
 
       content.setTemplateMeta(
             new ProjectMeta(
