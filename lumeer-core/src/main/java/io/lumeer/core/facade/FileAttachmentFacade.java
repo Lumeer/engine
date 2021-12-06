@@ -43,6 +43,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
@@ -139,6 +140,8 @@ public class FileAttachmentFacade extends AbstractFacade {
    public List<FileAttachment> createFileAttachments(final List<FileAttachment> fileAttachments) {
       checkFileAttachmentsCanEdit(fileAttachments);
 
+      fileAttachments.forEach(this::setAttachmentMetadataOnCreation);
+
       return fileAttachmentDao.createFileAttachments(fileAttachments).stream()
                               .map(fileAttachment -> presignFileAttachment(fileAttachment, true))
                               .collect(Collectors.toList());
@@ -168,7 +171,13 @@ public class FileAttachmentFacade extends AbstractFacade {
          checkCanEditLinkInstance(fileAttachment.getCollectionId(), fileAttachment.getDocumentId());
       }
 
+      setAttachmentMetadataOnCreation(fileAttachment);
       return presignFileAttachment(fileAttachmentDao.createFileAttachment(fileAttachment), true);
+   }
+
+   private void setAttachmentMetadataOnCreation(final FileAttachment fileAttachment) {
+      fileAttachment.setCreatedBy(getCurrentUserId());
+      fileAttachment.setCreationDate(ZonedDateTime.now());
    }
 
    public FileAttachment getFileAttachment(final String fileAttachmentId, final boolean write) {
@@ -410,7 +419,7 @@ public class FileAttachmentFacade extends AbstractFacade {
                       ).build());
 
       return response.contents().stream().map(s3Object -> {
-         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3Object.key(), type);
+         final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, s3Object.key(), s3Object.key(), type);
          fileAttachment.setSize(s3Object.size());
 
          return fileAttachment;
@@ -419,6 +428,7 @@ public class FileAttachmentFacade extends AbstractFacade {
 
    private FileAttachment copyFileAttachment(final FileAttachment sourceFileAttachment, final FileAttachment targetFileAttachment) {
       targetFileAttachment.setFileName(sourceFileAttachment.getFileName());
+      setAttachmentMetadataOnCreation(targetFileAttachment);
 
       final FileAttachment result = fileAttachmentDao.createFileAttachment(targetFileAttachment);
       copyFileAttachmentData(sourceFileAttachment, result);

@@ -32,6 +32,10 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
+
 public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
 
    public static final String ID = "_id";
@@ -41,6 +45,9 @@ public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
    public static final String DOCUMENT_ID = "documentId";
    public static final String ATTRIBUTE_ID = "attributeId";
    public static final String FILE_NAME = "fileName";
+   public static final String CREATED_BY = "createdBy";
+   public static final String CREATION_DATE = "creationDate";
+   public static final String UNIQUE_NAME = "uniqueName";
    public static final String ATTACHMENT_TYPE = "attachmentType";
 
    private final Codec<Document> documentCodec;
@@ -59,11 +66,18 @@ public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
       final String documentId = bson.getString(DOCUMENT_ID);
       final String attributeId = bson.getString(ATTRIBUTE_ID);
       final String fileName = bson.getString(FILE_NAME);
+      final String uniqueNameString = bson.getString(UNIQUE_NAME);
+      final String uniqueName = uniqueNameString != null ? uniqueNameString : fileName;
       final Integer typeInt = bson.getInteger(ATTACHMENT_TYPE);
       final FileAttachment.AttachmentType type = FileAttachment.AttachmentType.values()[typeInt != null ? typeInt : 0];
+      Date creationDate = bson.getDate(CREATION_DATE);
+      ZonedDateTime creationZonedDate = creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null;
+      String createdBy = bson.getString(CREATED_BY);
 
-      final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, fileName, type);
+      final FileAttachment fileAttachment = new FileAttachment(organizationId, projectId, collectionId, documentId, attributeId, fileName, uniqueName, type);
       fileAttachment.setId(id);
+      fileAttachment.setCreatedBy(createdBy);
+      fileAttachment.setCreationDate(creationZonedDate);
 
       return fileAttachment;
    }
@@ -77,7 +91,13 @@ public class FileAttachmentCodec implements CollectibleCodec<FileAttachment> {
           .append(DOCUMENT_ID, fileAttachment.getDocumentId())
           .append(ATTRIBUTE_ID, fileAttachment.getAttributeId())
           .append(FILE_NAME, fileAttachment.getFileName())
+          .append(UNIQUE_NAME, fileAttachment.getUniqueName())
+          .append(CREATED_BY, fileAttachment.getCreatedBy())
           .append(ATTACHMENT_TYPE, fileAttachment.getAttachmentType().ordinal());
+
+      if (fileAttachment.getCreationDate() != null) {
+         bson.append(CREATION_DATE, Date.from(fileAttachment.getCreationDate().toInstant()));
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }
