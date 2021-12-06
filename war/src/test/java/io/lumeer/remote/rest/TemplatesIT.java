@@ -175,8 +175,6 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       var exportedTemplate = response.readEntity(String.class);
 
-      System.out.println(exportedTemplate);
-
       entity = Entity.json(exportedTemplate);
       response = client.target(projectUrl + p2.getId() + "/raw")
                                 .request(MediaType.APPLICATION_JSON)

@@ -67,14 +67,15 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
          // update the document data
-         operation.entity.data.put(operation.attrId, fileAttachmentAdapter.getFileAttachmentNames(
+         val attachmentNames = fileAttachmentAdapter.getFileAttachmentNames(
                task.daoContextSnapshot.organization,
                task.daoContextSnapshot.project,
                operation.entity.collectionId,
                operation.entity.id,
                operation.attrId,
                FileAttachment.AttachmentType.DOCUMENT
-         ))
+         )
+         operation.updateRelatedValue(attachmentNames)
 
          changesTracker.addUpdatedDocuments(mutableListOf(operation.entity))
       }
@@ -109,14 +110,15 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
          // update the document data
-         operation.entity.data.put(operation.attrId, fileAttachmentAdapter.getFileAttachmentNames(
+         val attachmentNames = fileAttachmentAdapter.getFileAttachmentNames(
                task.daoContextSnapshot.organization,
                task.daoContextSnapshot.project,
                operation.entity.linkTypeId,
                operation.entity.id,
                operation.attrId,
                FileAttachment.AttachmentType.LINK
-         ))
+         )
+         operation.updateRelatedValue(attachmentNames)
 
          changesTracker.addUpdatedLinkInstances(mutableListOf(operation.entity))
       }
