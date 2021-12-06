@@ -1,6 +1,8 @@
 package io.lumeer.core.task.executor.operation.stage
 
 import io.lumeer.api.model.FileAttachment
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Project
 import io.lumeer.core.adapter.FileAttachmentAdapter
 import io.lumeer.core.task.executor.ChangesTracker
 import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation
@@ -39,6 +41,20 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
 
 
       documentAttachmentUpdates.forEach { operation ->
+         // remove existing attachments when overwrite is on
+         if (operation.fileAttachmentData.isOverwriteExisting) {
+            deleteExistingAttachment(
+                  task.daoContextSnapshot.organization,
+                  task.daoContextSnapshot.project,
+                  operation.entity.collectionId,
+                  operation.entity.id,
+                  operation.attrId,
+                  FileAttachment.AttachmentType.DOCUMENT,
+                  operation.fileAttachmentData.fileName
+            )
+         }
+
+         // create the file attachment
          val fileAttachment = FileAttachment(
                task.daoContextSnapshot.organizationId,
                task.daoContextSnapshot.projectId,
@@ -50,14 +66,37 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
          )
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
+         // update the document data
+         operation.entity.data.put(operation.attrId, fileAttachmentAdapter.getFileAttachmentNames(
+               task.daoContextSnapshot.organization,
+               task.daoContextSnapshot.project,
+               operation.entity.collectionId,
+               operation.entity.id,
+               operation.attrId,
+               FileAttachment.AttachmentType.DOCUMENT
+         ))
+
          changesTracker.addUpdatedDocuments(mutableListOf(operation.entity))
       }
 
       val linkAttachmentUpdates = operations.orEmpty().filter { operation -> operation is AddLinkFileAttachmentOperation && operation.isComplete }
             .map { operation -> (operation as AddLinkFileAttachmentOperation) }
 
-
       linkAttachmentUpdates.forEach { operation ->
+         // remove existing attachments when overwrite is on
+         if (operation.fileAttachmentData.isOverwriteExisting) {
+            deleteExistingAttachment(
+                  task.daoContextSnapshot.organization,
+                  task.daoContextSnapshot.project,
+                  operation.entity.linkTypeId,
+                  operation.entity.id,
+                  operation.attrId,
+                  FileAttachment.AttachmentType.LINK,
+                  operation.fileAttachmentData.fileName
+            )
+         }
+
+         // create the file attachment
          val fileAttachment = FileAttachment(
                task.daoContextSnapshot.organizationId,
                task.daoContextSnapshot.projectId,
@@ -69,10 +108,28 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
          )
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
+         // update the document data
+         operation.entity.data.put(operation.attrId, fileAttachmentAdapter.getFileAttachmentNames(
+               task.daoContextSnapshot.organization,
+               task.daoContextSnapshot.project,
+               operation.entity.linkTypeId,
+               operation.entity.id,
+               operation.attrId,
+               FileAttachment.AttachmentType.LINK
+         ))
+
          changesTracker.addUpdatedLinkInstances(mutableListOf(operation.entity))
       }
 
       return changesTracker
+   }
+
+   private fun deleteExistingAttachment(organization: Organization, project: Project, resourceId: String, documentId: String, attributeId: String, type: FileAttachment.AttachmentType, fileName: String) {
+      val attachments = fileAttachmentAdapter.getAllFileAttachments(organization, project, resourceId, documentId, attributeId, type)
+
+      attachments.filter { it.fileName == fileName } .forEach {
+         fileAttachmentAdapter.removeFileAttachment(it)
+      }
    }
 
 }

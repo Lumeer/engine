@@ -24,6 +24,7 @@ import io.lumeer.api.model.Organization
 import io.lumeer.api.model.Project
 import io.lumeer.core.util.LumeerS3Client
 import io.lumeer.storage.api.dao.FileAttachmentDao
+import java.util.function.Consumer
 
 class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachmentDao: FileAttachmentDao, val environment: String) {
 
@@ -38,6 +39,34 @@ class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachme
             organization,
             project,
             collectionId, documentId, attributeId, type)
+
+   fun getFileAttachmentNames(organization: Organization, project: Project, collectionId: String, documentId: String, attributeId: String, type: AttachmentType): String =
+         fileAttachmentDao.findAllFileAttachments(
+               organization,
+               project,
+               collectionId, documentId, attributeId, type
+         ).map { it.fileName } .joinToString(",")
+
+   fun removeFileAttachments(attachmentLocation: String) {
+      if (lumeerS3Client.isInitialized) {
+         lumeerS3Client.deleteObjects(lumeerS3Client.listObjects(attachmentLocation))
+      }
+   }
+
+   fun removeFileAttachment(fileAttachment: FileAttachment) {
+      if (lumeerS3Client.isInitialized) {
+         lumeerS3Client.deleteObject(getFileAttachmentKey(fileAttachment))
+      }
+
+      fileAttachmentDao.removeFileAttachment(fileAttachment)
+   }
+
+   fun removeFileAttachments(fileAttachments: Collection<FileAttachment>) {
+      if (lumeerS3Client.isInitialized) {
+         fileAttachments.forEach(Consumer { fileAttachment -> lumeerS3Client.deleteObject(getFileAttachmentKey(fileAttachment)) })
+      }
+      fileAttachmentDao.removeFileAttachments(fileAttachments.map { it.id })
+   }
 
    fun getFileAttachmentLocation(organizationId: String, projectId: String, collectionId: String?, documentId: String?, attributeId: String?, type: AttachmentType): String {
       val sb = StringBuilder(environment + "/" + organizationId + "/" + projectId + "/" + type.name)
