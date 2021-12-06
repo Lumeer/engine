@@ -284,9 +284,12 @@ public class LumeerBridge {
    }
 
    @SuppressWarnings("unused")
-   public void setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
+   public LinkOperation setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
       try {
-         operations.add(new LinkOperation(l.getLink(), attrId, convertValue(value)));
+         final LinkOperation operation = new LinkOperation(l.getLink(), attrId, convertValue(value));
+         operations.add(operation);
+
+         return operation;
       } catch (Exception e) {
          cause = e;
          throw e;
@@ -302,9 +305,9 @@ public class LumeerBridge {
          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
          PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
 
-         setDocumentAttribute(d, attrId, Value.asValue(getUpdateFileAttachmentsList(d, attrId, fileName, overwrite)));
+         var relatedOperation = setDocumentAttribute(d, attrId, Value.asValue(getUpdateFileAttachmentsList(d, attrId, fileName, overwrite)));
 
-         operations.add(new AddDocumentFileAttachmentOperation(d.getDocument(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
+         operations.add(new AddDocumentFileAttachmentOperation(d.getDocument(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite), relatedOperation));
       } catch (Exception e) {
          cause = e;
          throw e;
@@ -320,9 +323,9 @@ public class LumeerBridge {
          final ByteArrayOutputStream baos = new ByteArrayOutputStream();
          PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
 
-         setLinkAttribute(l, attrId, Value.asValue(getUpdateFileAttachmentsList(l, attrId, fileName, overwrite)));
+         var relatedOperation = setLinkAttribute(l, attrId, Value.asValue(getUpdateFileAttachmentsList(l, attrId, fileName, overwrite)));
 
-         operations.add(new AddLinkFileAttachmentOperation(l.getLink(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite)));
+         operations.add(new AddLinkFileAttachmentOperation(l.getLink(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite), relatedOperation));
       } catch (Exception e) {
          cause = e;
          throw e;
@@ -337,11 +340,11 @@ public class LumeerBridge {
             d.getDocument().getId(),
             attrId,
             FileAttachment.AttachmentType.DOCUMENT
-      ).stream().map(FileAttachment::getFileName).filter(fn -> !fn.equals(fileName)).collect(toList());
+      ).stream().filter(fa -> !fa.getFileName().equals(fileName)).map(fa -> "'" + (fa.getId() + ":" + fa.getFileName()).replaceAll("([\\'\\\\])", "\\\\$1") + "'").collect(toList());
 
-      fileNames.add(fileName);
+      fileNames.add("'TEMP_" + UUID.randomUUID() + ":" + fileName + "'");
 
-      return String.join(",", fileNames);
+      return "[" + String.join(",", fileNames) + "]";
    }
 
    private String getUpdateFileAttachmentsList(final LinkBridge l, final String attrId, final String fileName, final boolean overwrite) {
@@ -352,16 +355,18 @@ public class LumeerBridge {
             l.getLink().getId(),
             attrId,
             FileAttachment.AttachmentType.LINK
-      ).stream().map(FileAttachment::getFileName).filter(fn -> !fn.equals(fileName)).collect(toList());
+      ).stream().filter(fa -> !fa.getFileName().equals(fileName)).map(fa -> "'" + (fa.getId() + ":" + fa.getFileName()).replaceAll("([\\'\\\\])", "\\\\$1") + "'").collect(toList());
 
       fileNames.add(fileName);
 
-      return String.join(",", fileNames);
+      return "[" + String.join(",", fileNames) + "]";
    }
 
-   public void setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
+   public DocumentOperation setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
       try {
-         operations.add(new DocumentOperation(d.getDocument(), attrId, convertValue(value)));
+         final DocumentOperation operation = new DocumentOperation(d.getDocument(), attrId, convertValue(value));
+         operations.add(operation);
+
          if (d.getDocument() != null) {
             if (d.getDocument().getData() != null) {
                d.getDocument().getData().append(attrId, convertValue(value));
@@ -369,6 +374,8 @@ public class LumeerBridge {
                d.getDocument().setData(new DataDocument().append(attrId, convertValue(value)));
             }
          }
+
+         return operation;
       } catch (Exception e) {
          cause = e;
          throw e;

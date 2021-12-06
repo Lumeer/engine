@@ -20,14 +20,30 @@ package io.lumeer.core.task.executor.operation;
 
 import io.lumeer.api.model.Document;
 import io.lumeer.core.task.executor.operation.data.FileAttachmentData;
+import io.lumeer.engine.api.data.DataDocument;
 
 public class AddDocumentFileAttachmentOperation extends ResourceOperation<Document> {
 
-   public AddDocumentFileAttachmentOperation(final Document entity, final String attrId, final FileAttachmentData value) {
+   private final DocumentOperation relatedUpdate;
+
+   public AddDocumentFileAttachmentOperation(final Document entity, final String attrId, final FileAttachmentData value, final DocumentOperation relatedUpdate) {
       super(entity, attrId, value);
+      this.relatedUpdate = relatedUpdate;
    }
 
    public FileAttachmentData getFileAttachmentData() {
       return (FileAttachmentData) getValue();
+   }
+
+   public void updateRelatedValue(final Object value) {
+      relatedUpdate.updateValue(value);
+
+      if (relatedUpdate.entity != null) {
+         if (relatedUpdate.entity.getData() != null) {
+            relatedUpdate.entity.getData().append(getAttrId(), value);
+         } else {
+            relatedUpdate.entity.setData(new DataDocument().append(getAttrId(), value));
+         }
+      }
    }
 }

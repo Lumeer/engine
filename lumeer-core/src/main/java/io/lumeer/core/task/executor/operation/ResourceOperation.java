@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 public abstract class ResourceOperation<T extends WithId> extends Operation<T> {
 
    private final String attrId;
-   private final Object value;
+   private Object value;
 
    public <R> ResourceOperation(final T entity, final String attrId, final R value) {
       super(entity);
@@ -44,6 +44,10 @@ public abstract class ResourceOperation<T extends WithId> extends Operation<T> {
 
    public Object getValue() {
       return value;
+   }
+
+   void updateValue(final Object value) {
+      this.value = value;
    }
 
    @Override
