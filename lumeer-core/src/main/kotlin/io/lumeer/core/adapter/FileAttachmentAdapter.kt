@@ -45,7 +45,7 @@ class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachme
                organization,
                project,
                collectionId, documentId, attributeId, type
-         ).map { it.fileName } .joinToString(",")
+         ).joinToString(",", "[", "]") { "'" + "${it.id}:${it.fileName}".replace("([\\'\\\\])".toRegex(), "\\\\$1") + "'" }
 
    fun removeFileAttachments(attachmentLocation: String) {
       if (lumeerS3Client.isInitialized) {
