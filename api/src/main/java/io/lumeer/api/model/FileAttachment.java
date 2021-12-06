@@ -18,13 +18,16 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class FileAttachment implements WithId, HealthChecking {
 
@@ -39,6 +42,7 @@ public class FileAttachment implements WithId, HealthChecking {
    public static final String DOCUMENT_ID = "documentId";
    public static final String ATTRIBUTE_ID = "attributeId";
    public static final String FILE_NAME = "fileName";
+   public static final String UNIQUE_NAME = "uniqueName";
    public static final String ATTACHMENT_TYPE = "attachmentType";
    public static final String PRESIGNED_URL = "presignedUrl";
    public static final String SIZE = "size";
@@ -53,8 +57,13 @@ public class FileAttachment implements WithId, HealthChecking {
    private final String attributeId;
    private final AttachmentType attachmentType;
    private String fileName;
+   private String uniqueName;
    @JsonProperty(PRESIGNED_URL)
    private String presignedUrl;
+
+   private String createdBy;
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime creationDate;
 
    @JsonProperty(SIZE)
    private long size;
@@ -63,18 +72,21 @@ public class FileAttachment implements WithId, HealthChecking {
    public FileAttachment(@JsonProperty(ORGANIZATION_ID) final String organizationId,
          @JsonProperty(PROJECT_ID) final String projectId, @JsonProperty(COLLECTION_ID) final String collectionId,
          @JsonProperty(DOCUMENT_ID) final String documentId, @JsonProperty(ATTRIBUTE_ID) final String attributeId,
-         @JsonProperty(FILE_NAME) final String fileName, @JsonProperty(ATTACHMENT_TYPE) final AttachmentType attachmentType) {
+         @JsonProperty(FILE_NAME) final String fileName, @JsonProperty(UNIQUE_NAME) final String uniqueName, @JsonProperty(ATTACHMENT_TYPE) final AttachmentType attachmentType) {
       this.organizationId = organizationId;
       this.projectId = projectId;
       this.collectionId = collectionId;
       this.documentId = documentId;
       this.attributeId = attributeId;
       this.fileName = fileName;
+      this.uniqueName = uniqueName;
       this.attachmentType = attachmentType;
    }
 
    public FileAttachment(final FileAttachment source) {
-      this(source.organizationId, source.projectId, source.collectionId, source.documentId, source.attributeId, source.fileName, source.attachmentType);
+      this(source.organizationId, source.projectId, source.collectionId, source.documentId, source.attributeId, source.fileName, source.uniqueName, source.attachmentType);
+      this.createdBy = source.createdBy;
+      this.creationDate = source.creationDate;
    }
 
    @Override
@@ -138,6 +150,26 @@ public class FileAttachment implements WithId, HealthChecking {
       this.size = size;
    }
 
+   public String getUniqueName() {
+      return uniqueName;
+   }
+
+   public String getCreatedBy() {
+      return createdBy;
+   }
+
+   public void setCreatedBy(final String createdBy) {
+      this.createdBy = createdBy;
+   }
+
+   public ZonedDateTime getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(final ZonedDateTime creationDate) {
+      this.creationDate = creationDate;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -165,9 +197,12 @@ public class FileAttachment implements WithId, HealthChecking {
             ", documentId='" + documentId + '\'' +
             ", attributeId='" + attributeId + '\'' +
             ", fileName='" + fileName + '\'' +
+            ", uniqueName='" + uniqueName + '\'' +
             ", attachmentType='" + attachmentType.toString() + '\'' +
             ", presignedUrl='" + presignedUrl + '\'' +
             ", size='" + size + '\'' +
+            ", createdBy='" + createdBy + '\'' +
+            ", creationDate=" + creationDate +
             '}';
    }
 

@@ -134,8 +134,8 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
       collection.getPermissions().updateGroupPermissions(groupPermission);
       collection = collectionDao.createCollection(collection);
 
-      fileAttachment1 = new FileAttachment(organization.getId(), project.getId(), collection.getId(), "5cf6f208857aba009210af9b", "a3", "můk super/$~@#ę€%=název.pdf", FileAttachment.AttachmentType.DOCUMENT);
-      fileAttachment2 = new FileAttachment(organization.getId(), "5cf6f208857aba009210af9c", collection.getId(), "5cf6f208857aba009210af9b", "a3", "normal file name .doc", FileAttachment.AttachmentType.DOCUMENT);
+      fileAttachment1 = new FileAttachment(organization.getId(), project.getId(), collection.getId(), "5cf6f208857aba009210af9b", "a3", "můk super/$~@#ę€%=název.pdf", "", FileAttachment.AttachmentType.DOCUMENT);
+      fileAttachment2 = new FileAttachment(organization.getId(), "5cf6f208857aba009210af9c", collection.getId(), "5cf6f208857aba009210af9b", "a3", "normal file name .doc", "", FileAttachment.AttachmentType.DOCUMENT);
    }
 
    @Test
@@ -153,7 +153,7 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
       assertThat(result).containsExactly(createdFileAttachment);
 
       var listing = fileAttachmentFacade.listFileAttachments(createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), FileAttachment.AttachmentType.DOCUMENT);
-      var tempFileAttachment = new FileAttachment(createdFileAttachment.getOrganizationId(), createdFileAttachment.getProjectId(), createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), createdFileAttachment.getFileName(), FileAttachment.AttachmentType.DOCUMENT);
+      var tempFileAttachment = new FileAttachment(createdFileAttachment.getOrganizationId(), createdFileAttachment.getProjectId(), createdFileAttachment.getCollectionId(), createdFileAttachment.getDocumentId(), createdFileAttachment.getAttributeId(), createdFileAttachment.getFileName(), createdFileAttachment.getUniqueName(), FileAttachment.AttachmentType.DOCUMENT);
       tempFileAttachment.setSize(content.length());
       assertThat(listing).containsExactly(tempFileAttachment);
       assertThat(listing.get(0).getSize()).isGreaterThan(0L);
