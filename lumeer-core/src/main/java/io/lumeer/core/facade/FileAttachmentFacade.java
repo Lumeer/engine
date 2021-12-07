@@ -363,7 +363,7 @@ public class FileAttachmentFacade extends AbstractFacade {
       fileAttachmentDao.removeAllFileAttachments(getOrganization(), getProject(), collectionId, type);
    }
 
-   void removeAllFileAttachments(final String collectionId, final String attributeId, final FileAttachment.AttachmentType type) {
+   public void removeAllFileAttachments(final String collectionId, final String attributeId, final FileAttachment.AttachmentType type) {
       // not checking access right - only have package access
 
       removeFileAttachments(collectionId, null, attributeId, type);
@@ -372,7 +372,7 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    void removeAllFileAttachments(final String collectionId, final String documentId, final String attributeId, final FileAttachment.AttachmentType type) {
-      // not checking access right - only have package access
+      // not checking access right - used only internally
 
       removeFileAttachments(collectionId, documentId, attributeId, type);
 

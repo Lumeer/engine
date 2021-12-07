@@ -45,6 +45,7 @@ public class ConstraintConverterFactory {
       registerConverter(new NoneToPercentageConverter());
       registerConverter(new NoneToBooleanConverter());
       registerConverter(new AnyToFilesConverter());
+      registerConverter(new FilesToAnyConverter());
       registerConverter(new UserToNoneConverter());
       registerConverter(new NoneToUserConverter());
    }
