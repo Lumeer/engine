@@ -41,18 +41,16 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
 
 
       documentAttachmentUpdates.forEach { operation ->
-         // remove existing attachments when overwrite is on
-         if (operation.fileAttachmentData.isOverwriteExisting) {
-            deleteExistingAttachment(
-                  task.daoContextSnapshot.organization,
-                  task.daoContextSnapshot.project,
-                  operation.entity.collectionId,
-                  operation.entity.id,
-                  operation.attrId,
-                  FileAttachment.AttachmentType.DOCUMENT,
-                  operation.fileAttachmentData.fileName
-            )
-         }
+         // get existing attachments when overwrite is on
+         val attachments = getExistingAttachments(
+            task.daoContextSnapshot.organization,
+            task.daoContextSnapshot.project,
+            operation.entity.collectionId,
+            operation.entity.id,
+            operation.attrId,
+            FileAttachment.AttachmentType.DOCUMENT,
+            operation.fileAttachmentData.fileName
+         )
 
          // create the file attachment
          val fileAttachment = FileAttachment(
@@ -66,6 +64,11 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                FileAttachment.AttachmentType.DOCUMENT
          )
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
+
+         // delete the attachments being overwritten
+         if (operation.fileAttachmentData.isOverwriteExisting) {
+            deleteExistingAttachment(attachments)
+         }
 
          // update the document data
          val attachmentNames = fileAttachmentAdapter.getFileAttachmentNames(
@@ -85,18 +88,16 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
             .map { operation -> (operation as AddLinkFileAttachmentOperation) }
 
       linkAttachmentUpdates.forEach { operation ->
-         // remove existing attachments when overwrite is on
-         if (operation.fileAttachmentData.isOverwriteExisting) {
-            deleteExistingAttachment(
-                  task.daoContextSnapshot.organization,
-                  task.daoContextSnapshot.project,
-                  operation.entity.linkTypeId,
-                  operation.entity.id,
-                  operation.attrId,
-                  FileAttachment.AttachmentType.LINK,
-                  operation.fileAttachmentData.fileName
-            )
-         }
+         // get existing attachments when overwrite is on
+         val attachments = getExistingAttachments(
+               task.daoContextSnapshot.organization,
+               task.daoContextSnapshot.project,
+               operation.entity.linkTypeId,
+               operation.entity.id,
+               operation.attrId,
+               FileAttachment.AttachmentType.LINK,
+               operation.fileAttachmentData.fileName
+         )
 
          // create the file attachment
          val fileAttachment = FileAttachment(
@@ -110,6 +111,11 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                FileAttachment.AttachmentType.DOCUMENT
          )
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
+
+         // delete the attachments being overwritten
+         if (operation.fileAttachmentData.isOverwriteExisting) {
+            deleteExistingAttachment(attachments)
+         }
 
          // update the document data
          val attachmentNames = fileAttachmentAdapter.getFileAttachmentNames(
@@ -128,12 +134,13 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
       return changesTracker
    }
 
-   private fun deleteExistingAttachment(organization: Organization, project: Project, resourceId: String, documentId: String, attributeId: String, type: FileAttachment.AttachmentType, fileName: String) {
-      val attachments = fileAttachmentAdapter.getAllFileAttachments(organization, project, resourceId, documentId, attributeId, type)
-
-      attachments.filter { it.fileName == fileName } .forEach {
+   private fun deleteExistingAttachment(attachments: List<FileAttachment>) {
+      attachments.forEach {
          fileAttachmentAdapter.removeFileAttachment(it)
       }
    }
+
+   private fun getExistingAttachments(organization: Organization, project: Project, resourceId: String, documentId: String, attributeId: String, type: FileAttachment.AttachmentType, fileName: String): List<FileAttachment> =
+      fileAttachmentAdapter.getAllFileAttachments(organization, project, resourceId, documentId, attributeId, type).filter { it.fileName == fileName }
 
 }
