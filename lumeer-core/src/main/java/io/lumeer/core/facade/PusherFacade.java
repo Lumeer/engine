@@ -69,6 +69,7 @@ import io.lumeer.engine.api.event.FavoriteItem;
 import io.lumeer.engine.api.event.ImportResource;
 import io.lumeer.engine.api.event.OrganizationUserEvent;
 import io.lumeer.engine.api.event.ReloadGroups;
+import io.lumeer.engine.api.event.ReloadLinkTypeContent;
 import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.ReloadSelectionLists;
 import io.lumeer.engine.api.event.RemoveDocument;
@@ -266,6 +267,16 @@ public class PusherFacade extends AbstractFacade {
       if (isEnabled()) {
          try {
             processWithId(reloadResourceContent.getResource(), RELOAD_EVENT_SUFFIX);
+         } catch (Exception e) {
+            log.log(Level.WARNING, "Unable to send push notification: ", e);
+         }
+      }
+   }
+
+   public void reloadLinkType(@Observes final ReloadLinkTypeContent reloadLinkTypeContent) {
+      if (isEnabled()) {
+         try {
+            processWithId(reloadLinkTypeContent.getLinkType(), RELOAD_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }

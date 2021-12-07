@@ -62,6 +62,7 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                operation.entity.id,
                operation.attrId,
                operation.fileAttachmentData.fileName,
+               System.currentTimeMillis().toString() + "_" + operation.fileAttachmentData.fileName,
                FileAttachment.AttachmentType.DOCUMENT
          )
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
@@ -105,6 +106,7 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                operation.entity.id,
                operation.attrId,
                operation.fileAttachmentData.fileName,
+               System.currentTimeMillis().toString() + "_" + operation.fileAttachmentData.fileName,
                FileAttachment.AttachmentType.DOCUMENT
          )
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
