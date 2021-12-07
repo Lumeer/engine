@@ -8,6 +8,7 @@ import io.lumeer.core.task.executor.ChangesTracker
 import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation
 import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation
 import io.lumeer.core.task.executor.operation.OperationExecutor
+import java.time.ZonedDateTime
 
 /*
  * Lumeer: Modern Data Definition and Processing Platform
@@ -63,6 +64,11 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                System.currentTimeMillis().toString() + "_" + operation.fileAttachmentData.fileName,
                FileAttachment.AttachmentType.DOCUMENT
          )
+         println(task.initiator)
+         if (task.initiator != null) {
+            fileAttachment.createdBy = task.initiator.id
+         }
+         fileAttachment.creationDate = ZonedDateTime.now()
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
          // delete the attachments being overwritten
@@ -110,6 +116,10 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                System.currentTimeMillis().toString() + "_" + operation.fileAttachmentData.fileName,
                FileAttachment.AttachmentType.DOCUMENT
          )
+         if (task.initiator != null) {
+            fileAttachment.createdBy = task.initiator.id
+         }
+         fileAttachment.creationDate = ZonedDateTime.now()
          fileAttachmentAdapter.createFileAttachment(fileAttachment, operation.fileAttachmentData.data)
 
          // delete the attachments being overwritten
