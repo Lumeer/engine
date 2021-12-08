@@ -177,9 +177,7 @@ public class MongoFileAttachmentDao extends MongoSystemScopedDao implements File
 
    @Override
    public boolean removeFileAttachment(final FileAttachment fileAttachment) {
-      DeleteResult result = databaseCollection().deleteOne(idFilter(fileAttachment.getId()));
-
-      return result.getDeletedCount() == 1;
+      return removeFileAttachment(fileAttachment.getId());
    }
 
    @Override

@@ -26,6 +26,7 @@ import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.Group;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
@@ -39,10 +40,13 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.PermissionUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.pdf.PdfCreator;
 import io.lumeer.core.task.ContextualTask;
 import io.lumeer.core.task.Task;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
+import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation;
+import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
 import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
@@ -56,6 +60,7 @@ import io.lumeer.core.task.executor.operation.ResourceOperation;
 import io.lumeer.core.task.executor.operation.SendEmailOperation;
 import io.lumeer.core.task.executor.operation.UserMessageOperation;
 import io.lumeer.core.task.executor.operation.ViewPermissionsOperation;
+import io.lumeer.core.task.executor.operation.data.FileAttachmentData;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
@@ -69,7 +74,11 @@ import io.lumeer.storage.api.query.SearchQueryStem;
 import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.Value;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -275,18 +284,89 @@ public class LumeerBridge {
    }
 
    @SuppressWarnings("unused")
-   public void setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
+   public LinkOperation setLinkAttribute(final LinkBridge l, final String attrId, final Value value) {
       try {
-         operations.add(new LinkOperation(l.getLink(), attrId, convertValue(value)));
+         final LinkOperation operation = new LinkOperation(l.getLink(), attrId, convertValue(value));
+         operations.add(operation);
+
+         return operation;
       } catch (Exception e) {
          cause = e;
          throw e;
       }
    }
 
-   public void setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
+   @SuppressWarnings("unused")
+   public void writePdf(final DocumentBridge d, final String attrId, final String fileName, final boolean overwrite, final String html) throws IOException {
       try {
-         operations.add(new DocumentOperation(d.getDocument(), attrId, convertValue(value)));
+         if (html.length() > 5L*1024*1024) {
+            throw new IllegalArgumentException("Input HTML too large.");
+         }
+         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+         PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
+
+         var relatedOperation = setDocumentAttribute(d, attrId, Value.asValue(getUpdateFileAttachmentsList(d, attrId, fileName, overwrite)));
+
+         operations.add(new AddDocumentFileAttachmentOperation(d.getDocument(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite), relatedOperation));
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void writePdf(final LinkBridge l, final String attrId, final String fileName, final boolean overwrite, final String html) throws IOException {
+      try {
+         if (html.length() > 5L*1024*1024) {
+            throw new IllegalArgumentException("Input HTML too large.");
+         }
+         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+         PdfCreator.createPdf(new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8)), baos);
+
+         var relatedOperation = setLinkAttribute(l, attrId, Value.asValue(getUpdateFileAttachmentsList(l, attrId, fileName, overwrite)));
+
+         operations.add(new AddLinkFileAttachmentOperation(l.getLink(), attrId, new FileAttachmentData(baos.toByteArray(), fileName, overwrite), relatedOperation));
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   private String getUpdateFileAttachmentsList(final DocumentBridge d, final String attrId, final String fileName, final boolean overwrite) {
+      var fileNames = task.getDaoContextSnapshot().getFileAttachmentDao().findAllFileAttachments(
+            task.getDaoContextSnapshot().getOrganization(),
+            task.getDaoContextSnapshot().getProject(),
+            d.getDocument().getCollectionId(),
+            d.getDocument().getId(),
+            attrId,
+            FileAttachment.AttachmentType.DOCUMENT
+      ).stream().filter(fa -> !fa.getFileName().equals(fileName)).map(fa -> "'" + (fa.getId() + ":" + fa.getFileName()).replaceAll("([\\'\\\\])", "\\\\$1") + "'").collect(toList());
+
+      fileNames.add("'TEMP_" + UUID.randomUUID() + ":" + fileName + "'");
+
+      return "[" + String.join(",", fileNames) + "]";
+   }
+
+   private String getUpdateFileAttachmentsList(final LinkBridge l, final String attrId, final String fileName, final boolean overwrite) {
+      var fileNames = task.getDaoContextSnapshot().getFileAttachmentDao().findAllFileAttachments(
+            task.getDaoContextSnapshot().getOrganization(),
+            task.getDaoContextSnapshot().getProject(),
+            l.getLink().getLinkTypeId(),
+            l.getLink().getId(),
+            attrId,
+            FileAttachment.AttachmentType.LINK
+      ).stream().filter(fa -> !fa.getFileName().equals(fileName)).map(fa -> "'" + (fa.getId() + ":" + fa.getFileName()).replaceAll("([\\'\\\\])", "\\\\$1") + "'").collect(toList());
+
+      fileNames.add(fileName);
+
+      return "[" + String.join(",", fileNames) + "]";
+   }
+
+   public DocumentOperation setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
+      try {
+         final DocumentOperation operation = new DocumentOperation(d.getDocument(), attrId, convertValue(value));
+         operations.add(operation);
+
          if (d.getDocument() != null) {
             if (d.getDocument().getData() != null) {
                d.getDocument().getData().append(attrId, convertValue(value));
@@ -294,6 +374,28 @@ public class LumeerBridge {
                d.getDocument().setData(new DataDocument().append(attrId, convertValue(value)));
             }
          }
+
+         return operation;
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   public void copyDocumentAttributes(final DocumentBridge source, final DocumentBridge target) {
+      try {
+         source.getDocument().getData().forEach((key, val) -> {
+            if (StringUtils.isNotEmpty(key) && !"_id".equals(key))
+            operations.add(new DocumentOperation(target.getDocument(), key, val));
+
+            if (target.getDocument() != null) {
+               if (target.getDocument().getData() != null) {
+                  target.getDocument().getData().append(key, val);
+               } else {
+                  target.getDocument().setData(new DataDocument().append(key, val));
+               }
+            }
+         });
       } catch (Exception e) {
          cause = e;
          throw e;

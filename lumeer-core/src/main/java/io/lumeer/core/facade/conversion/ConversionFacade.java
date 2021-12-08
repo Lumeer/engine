@@ -22,16 +22,23 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintConverter;
 import io.lumeer.core.constraint.ConstraintConverterFactory;
 import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.FileAttachmentFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.ReloadLinkTypeContent;
 import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -54,13 +61,25 @@ public class ConversionFacade {
    private Event<ReloadResourceContent> reloadResourceContentEvent;
 
    @Inject
+   private Event<ReloadLinkTypeContent> reloadLinkTypeContentEvent;
+
+   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    @Inject
    private DocumentDao documentDao;
 
    @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
    private DataDao dataDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
+
+   @Inject
+   private FileAttachmentFacade fileAttachmentFacade;
 
    private ConstraintManager constraintManager;
 
@@ -74,6 +93,9 @@ public class ConversionFacade {
 
    public void convertStoredDocuments(final Collection collection, final Attribute originalAttribute, final Attribute newAttribute) {
       if (areConstraintsDifferent(originalAttribute, newAttribute)) {
+
+         removeFileAttachments(collection, originalAttribute, newAttribute);
+
          final ConstraintConverter converter = constraintConverterFactory.getConstraintConverter(originalAttribute, newAttribute);
 
          if (converter != null) {
@@ -100,11 +122,61 @@ public class ConversionFacade {
       }
    }
 
-   private void updateDocument(Document document) {
+   public void convertStoredDocuments(final LinkType linkType, final Attribute originalAttribute, final Attribute newAttribute) {
+      if (areConstraintsDifferent(originalAttribute, newAttribute)) {
+
+         removeFileAttachments(linkType, originalAttribute, newAttribute);
+
+         final ConstraintConverter converter = constraintConverterFactory.getConstraintConverter(originalAttribute, newAttribute);
+
+         if (converter != null) {
+            final List<LinkInstance> links = linkInstanceDao.getLinkInstancesByLinkType(linkType.getId());
+
+            if (links.size() < 1_000_000) { // only if the number of links is manageable
+
+               links.forEach(l -> {
+                  final DataDocument update = getConversionUpdate(converter, linkDataDao.getData(linkType.getId(), l.getId()));
+
+                  if (update != null && update.size() > 0) {
+                     linkDataDao.patchData(linkType.getId(), l.getId(), update);
+                     updateLink(l);
+                  }
+               });
+
+               if (reloadResourceContentEvent != null) {
+                  reloadLinkTypeContentEvent.fire(new ReloadLinkTypeContent(linkType));
+               }
+            }
+
+            converter.close();
+         }
+      }
+   }
+
+   private void removeFileAttachments(final Collection collection, final Attribute originalAttribute, final Attribute newAttribute) {
+      if (originalAttribute.getConstraint() != null && originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && (newAttribute.getConstraint() == null || newAttribute.getConstraint().getType() != ConstraintType.FileAttachment)) {
+         fileAttachmentFacade.removeAllFileAttachments(collection.getId(), originalAttribute.getId(), FileAttachment.AttachmentType.DOCUMENT);
+      }
+   }
+
+   private void removeFileAttachments(final LinkType linkType, final Attribute originalAttribute, final Attribute newAttribute) {
+      if (originalAttribute.getConstraint() != null && originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && (newAttribute.getConstraint() == null || newAttribute.getConstraint().getType() != ConstraintType.FileAttachment)) {
+         fileAttachmentFacade.removeAllFileAttachments(linkType.getId(), originalAttribute.getId(), FileAttachment.AttachmentType.LINK);
+      }
+   }
+
+   private void updateDocument(final Document document) {
       document.setUpdatedBy(authenticatedUser.getCurrentUserId());
       document.setUpdateDate(ZonedDateTime.now());
 
       documentDao.updateDocument(document.getId(), document);
+   }
+
+   private void updateLink(final LinkInstance link) {
+      link.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      link.setUpdateDate(ZonedDateTime.now());
+
+      linkInstanceDao.updateLinkInstance(link.getId(), link);
    }
 
    private boolean areConstraintsDifferent(final Attribute originalAttribute, final Attribute newAttribute) {

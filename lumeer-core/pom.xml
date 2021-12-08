@@ -200,6 +200,15 @@
          <artifactId>jmte</artifactId>
       </dependency>
 
+      <dependency>
+         <groupId>com.itextpdf</groupId>
+         <artifactId>kernel</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.itextpdf</groupId>
+         <artifactId>html2pdf</artifactId>
+      </dependency>
+
    </dependencies>
 
    <build>

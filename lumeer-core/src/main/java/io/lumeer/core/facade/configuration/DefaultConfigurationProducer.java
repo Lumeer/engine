@@ -18,8 +18,6 @@
  */
 package io.lumeer.core.facade.configuration;
 
-import io.lumeer.core.facade.ConfigurationFacade;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

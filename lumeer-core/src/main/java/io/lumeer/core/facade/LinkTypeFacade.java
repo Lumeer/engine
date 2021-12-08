@@ -34,6 +34,7 @@ import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoPermissionException;
+import io.lumeer.core.facade.conversion.ConversionFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -82,6 +83,9 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @Inject
    private UserDao userDao;
+
+   @Inject
+   private ConversionFacade conversionFacade;
 
    private LinkTypeAdapter adapter;
    private ResourceAdapter resourceAdapter;
@@ -372,6 +376,8 @@ public class LinkTypeFacade extends AbstractFacade {
       linkType.updateAttribute(attributeId, attribute);
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
+
+      originalAttribute.ifPresent(value -> conversionFacade.convertStoredDocuments(linkType, value, attribute));
 
       return attribute;
    }
