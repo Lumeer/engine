@@ -159,12 +159,12 @@ public class CopyFacadeIT extends IntegrationTestBase {
    @Test
    @SuppressWarnings("unchecked")
    public void testTemplateImportLocal() {
-      assertThatThrownBy(() -> templateFacade.installTemplate(project, TEMPLATE, Language.EN))
+      assertThatThrownBy(() -> templateFacade.installTemplate(project, organization.getId(), TEMPLATE, Language.EN))
             .isInstanceOf(NoResourcePermissionException.class);
 
-      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.ViewContribute), new Role(RoleType.LinkContribute)));
+      setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.ViewContribute), new Role(RoleType.LinkContribute), new Role(RoleType.TechConfig)));
 
-      templateFacade.installTemplate(project, TEMPLATE, Language.EN);
+      templateFacade.installTemplate(project, organization.getId(), TEMPLATE, Language.EN);
 
       var collections = collectionFacade.getCollections();
       assertThat(collections).hasSize(4);

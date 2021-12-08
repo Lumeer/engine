@@ -16,21 +16,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package io.lumeer.api.model;
+
+import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
 
-public enum ResourceType {
+public enum ResourceVariableType {
+   String("string");
 
-   ORGANIZATION,
-   PROJECT,
-   COLLECTION,
-   VIEW,
-   LINK_TYPE,
-   DOCUMENT,
-   LINK;
+   private final String value;
 
-   public static ResourceType fromString(String type) {
+   ResourceVariableType(String value) {
+      this.value = value;
+   }
+
+   @JsonValue
+   public String getValue() {
+      return value;
+   }
+
+   public static ResourceVariableType fromString(String type) {
       if (type == null) {
          return null;
       }
@@ -41,9 +48,8 @@ public enum ResourceType {
       }
    }
 
-
    @Override
    public String toString() {
-      return name().toLowerCase();
+      return value;
    }
 }

@@ -16,34 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-import java.util.Arrays;
+package io.lumeer.core.adapter
 
-public enum ResourceType {
+import io.lumeer.api.model.ResourceVariable
 
-   ORGANIZATION,
-   PROJECT,
-   COLLECTION,
-   VIEW,
-   LINK_TYPE,
-   DOCUMENT,
-   LINK;
+class ResourceVariableAdapter {
 
-   public static ResourceType fromString(String type) {
-      if (type == null) {
-         return null;
+   fun mapVariable(variable: ResourceVariable): ResourceVariable = variable.apply {
+      if (secure) {
+         value = null
       }
-      try {
-         return Arrays.stream(values()).filter(role -> role.toString().equalsIgnoreCase(type)).findFirst().orElse(null);
-      } catch (IllegalArgumentException exception) {
-         return null;
-      }
-   }
-
-
-   @Override
-   public String toString() {
-      return name().toLowerCase();
    }
 }

@@ -64,7 +64,7 @@ public class ResourceCommentCodec implements CollectibleCodec<ResourceComment> {
 
       final ResourceComment comment = new ResourceComment(bson.getString(COMMENT), null);
       comment.setId(bson.getObjectId(ID).toHexString());
-      comment.setResourceType(ResourceType.valueOf(bson.getString(RESOURCE_TYPE).toUpperCase()));
+      comment.setResourceType(ResourceType.fromString(bson.getString(RESOURCE_TYPE)));
       comment.setResourceId(bson.getString(RESOURCE_ID));
       comment.setParentId(bson.getString(PARENT_ID));
 

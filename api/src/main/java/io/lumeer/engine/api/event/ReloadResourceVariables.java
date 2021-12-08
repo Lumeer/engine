@@ -16,34 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
 
-import java.util.Arrays;
+package io.lumeer.engine.api.event;
 
-public enum ResourceType {
+public class ReloadResourceVariables {
 
-   ORGANIZATION,
-   PROJECT,
-   COLLECTION,
-   VIEW,
-   LINK_TYPE,
-   DOCUMENT,
-   LINK;
+   private final String organizationId;
+   private final String projectId;
 
-   public static ResourceType fromString(String type) {
-      if (type == null) {
-         return null;
-      }
-      try {
-         return Arrays.stream(values()).filter(role -> role.toString().equalsIgnoreCase(type)).findFirst().orElse(null);
-      } catch (IllegalArgumentException exception) {
-         return null;
-      }
+   public ReloadResourceVariables(String organizationId, String projectId) {
+      this.organizationId = organizationId;
+      this.projectId = projectId;
    }
 
+   public String getOrganizationId() {
+      return organizationId;
+   }
 
-   @Override
-   public String toString() {
-      return name().toLowerCase();
+   public String getProjectId() {
+      return projectId;
    }
 }

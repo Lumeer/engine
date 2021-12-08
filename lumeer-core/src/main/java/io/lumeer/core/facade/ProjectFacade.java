@@ -55,6 +55,7 @@ import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.ViewDao;
@@ -136,6 +137,9 @@ public class ProjectFacade extends AbstractFacade {
    private SelectionListDao selectionListDao;
 
    @Inject
+   private ResourceVariableDao resourceVariableDao;
+
+   @Inject
    private RequestDataKeeper requestDataKeeper;
 
    void init(DaoContextSnapshot daoContextSnapshot) {
@@ -153,6 +157,7 @@ public class ProjectFacade extends AbstractFacade {
       this.sequenceDao = daoContextSnapshot.getSequenceDao();
       this.resourceCommentDao = daoContextSnapshot.getResourceCommentDao();
       this.selectionListDao = daoContextSnapshot.getSelectionListDao();
+      this.resourceVariableDao = daoContextSnapshot.getResourceVariableDao();
    }
 
    public Project createProject(Project project) {
@@ -351,7 +356,9 @@ public class ProjectFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
 
       if (workspaceKeeper.getOrganization().isPresent()) {
-         delayedActionDao.deleteAllScheduledActions(workspaceKeeper.getOrganization().get().getId() + "/" + project.getId());
+         String organizationId = workspaceKeeper.getOrganization().get().getId();
+         resourceVariableDao.deleteInProject(organizationId, project.getId());
+         delayedActionDao.deleteAllScheduledActions(organizationId + "/" + project.getId());
       }
    }
 
@@ -414,6 +421,12 @@ public class ProjectFacade extends AbstractFacade {
       content.setData(documentsData);
 
       content.setComments(resourceCommentDao.getAllComments().stream().map(ResourceCommentWrapper::new).collect(Collectors.toList()));
+
+      if (permissionsChecker.hasRole(storedProject, RoleType.TechConfig)) {
+         content.setVariables(resourceVariableDao.getInProject(getOrganization().getId(), projectId).stream()
+                                                 .filter(variable -> !variable.getSecure())
+                                                 .collect(Collectors.toList()));
+      }
 
       content.setTemplateMeta(
             new ProjectMeta(
