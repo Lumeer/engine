@@ -152,5 +152,4 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
 
    private fun getExistingAttachments(organization: Organization, project: Project, resourceId: String, documentId: String, attributeId: String, type: FileAttachment.AttachmentType, fileName: String): List<FileAttachment> =
       fileAttachmentAdapter.getAllFileAttachments(organization, project, resourceId, documentId, attributeId, type).filter { it.fileName == fileName }
-
 }
