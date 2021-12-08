@@ -154,13 +154,13 @@ public class ConversionFacade {
    }
 
    private void removeFileAttachments(final Collection collection, final Attribute originalAttribute, final Attribute newAttribute) {
-      if (originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && newAttribute.getConstraint().getType() != ConstraintType.FileAttachment) {
+      if (originalAttribute.getConstraint() != null && originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && (newAttribute.getConstraint() == null || newAttribute.getConstraint().getType() != ConstraintType.FileAttachment)) {
          fileAttachmentFacade.removeAllFileAttachments(collection.getId(), originalAttribute.getId(), FileAttachment.AttachmentType.DOCUMENT);
       }
    }
 
    private void removeFileAttachments(final LinkType linkType, final Attribute originalAttribute, final Attribute newAttribute) {
-      if (originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && newAttribute.getConstraint().getType() != ConstraintType.FileAttachment) {
+      if (originalAttribute.getConstraint() != null && originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && (newAttribute.getConstraint() == null || newAttribute.getConstraint().getType() != ConstraintType.FileAttachment)) {
          fileAttachmentFacade.removeAllFileAttachments(linkType.getId(), originalAttribute.getId(), FileAttachment.AttachmentType.LINK);
       }
    }
