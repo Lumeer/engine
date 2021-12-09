@@ -54,7 +54,7 @@ public class ResourceVariableFacade extends AbstractFacade {
    }
 
    public ResourceVariable create(ResourceVariable variable) {
-      checkPermissions(variable);
+      checkPermissions(variable, RoleType.TechConfig);
       variable.setId(null);
 
       return mapVariable(resourceVariableDao.create(variable));
@@ -70,7 +70,7 @@ public class ResourceVariableFacade extends AbstractFacade {
       ResourceVariable currentVariable = resourceVariableDao.getVariable(id);
       currentVariable.patch(variable);
 
-      checkPermissions(currentVariable);
+      checkPermissions(currentVariable, RoleType.TechConfig);
 
       return mapVariable(resourceVariableDao.update(id, variable));
    }
@@ -78,13 +78,13 @@ public class ResourceVariableFacade extends AbstractFacade {
    public void delete(String id) {
       ResourceVariable currentVariable = resourceVariableDao.getVariable(id);
 
-      checkPermissions(currentVariable);
+      checkPermissions(currentVariable, RoleType.TechConfig);
 
       resourceVariableDao.delete(currentVariable);
    }
 
    public List<ResourceVariable> getInProject(String projectId) {
-      checkProjectPermissions(projectId);
+      checkProjectPermissions(projectId, RoleType.Read);
 
       return resourceVariableDao.getInProject(getOrganization().getId(), projectId)
                                 .stream().map(this::mapVariable)
@@ -94,7 +94,7 @@ public class ResourceVariableFacade extends AbstractFacade {
    public ResourceVariable getVariable(String id) {
       ResourceVariable currentVariable = resourceVariableDao.getVariable(id);
 
-      checkPermissions(currentVariable);
+      checkPermissions(currentVariable, RoleType.TechConfig);
 
       return mapVariable(currentVariable);
    }
@@ -103,14 +103,14 @@ public class ResourceVariableFacade extends AbstractFacade {
       return adapter.mapVariable(variable);
    }
 
-   private void checkPermissions(final ResourceVariable variable) {
+   private void checkPermissions(final ResourceVariable variable, final RoleType roleType) {
       switch (variable.getResourceType()) {
          case ORGANIZATION:
             Organization organization = organizationDao.getOrganizationById(variable.getOrganizationId());
-            permissionsChecker.checkRole(organization, RoleType.TechConfig);
+            permissionsChecker.checkRole(organization, roleType);
             break;
          case PROJECT:
-            checkProjectPermissions(variable.getProjectId());
+            checkProjectPermissions(variable.getProjectId(), roleType);
             break;
          default:
             throw new UnsupportedOperationException("Resource type '" + variable.getResourceType() + "' is not supported now");
@@ -130,9 +130,9 @@ public class ResourceVariableFacade extends AbstractFacade {
       }
    }
 
-   private void checkProjectPermissions(final String projectId) {
+   private void checkProjectPermissions(final String projectId, final RoleType roleType) {
       Project project = projectDao.getProjectById(projectId);
-      permissionsChecker.checkRole(project, RoleType.TechConfig);
+      permissionsChecker.checkRole(project, roleType);
    }
 
 }
