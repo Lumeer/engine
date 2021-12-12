@@ -78,7 +78,7 @@ public class UserNotificationFacade extends AbstractFacade {
    private WorkspaceKeeper workspaceKeeper;
 
    @Inject
-   private EmailService emailService;
+   private EmailSenderFacade emailSenderFacade;
 
    @Inject
    private UserDao userDao;
@@ -165,21 +165,21 @@ public class UserNotificationFacade extends AbstractFacade {
       }
    }
 
-   private EmailService.EmailTemplate getEmailTemplate(final Resource resource) {
+   private EmailSenderFacade.EmailTemplate getEmailTemplate(final Resource resource) {
       if (resource.getType() == ResourceType.ORGANIZATION) {
-         return EmailService.EmailTemplate.ORGANIZATION_SHARED;
+         return EmailSenderFacade.EmailTemplate.ORGANIZATION_SHARED;
       }
 
       if (resource.getType() == ResourceType.PROJECT) {
-         return EmailService.EmailTemplate.PROJECT_SHARED;
+         return EmailSenderFacade.EmailTemplate.PROJECT_SHARED;
       }
 
       if (resource.getType() == ResourceType.COLLECTION) {
-         return EmailService.EmailTemplate.COLLECTION_SHARED;
+         return EmailSenderFacade.EmailTemplate.COLLECTION_SHARED;
       }
 
       if (resource.getType() == ResourceType.VIEW) {
-         return EmailService.EmailTemplate.VIEW_SHARED;
+         return EmailSenderFacade.EmailTemplate.VIEW_SHARED;
       }
 
       return null;
@@ -310,11 +310,11 @@ public class UserNotificationFacade extends AbstractFacade {
          newUsers.stream()
                  .filter(user -> hasUserEnabledNotifications(resource, users.get(user), NotificationChannel.Email))
                  .forEach(user ->
-                       emailService.sendEmailFromTemplate(
+                       emailSenderFacade.sendEmailFromTemplate(
                              getEmailTemplate(resource),
                              languages.getOrDefault(user, Language.EN),
-                             emailService.formatUserReference(authenticatedUser.getCurrentUser()),
-                             emailService.formatFrom(authenticatedUser.getCurrentUser()),
+                             emailSenderFacade.formatUserReference(authenticatedUser.getCurrentUser()),
+                             emailSenderFacade.formatFrom(authenticatedUser.getCurrentUser()),
                              users.get(user).getEmail(),
                              StringUtils.isNotEmpty(resource.getName()) ? resource.getName() : resource.getCode(),
                              getResourceDescription(resource))

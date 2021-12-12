@@ -16,19 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
+package io.lumeer.api.util;
 
-import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.LinkType;
 
-public class SendEmailOperation extends Operation<SendEmailRequest> {
-   public SendEmailOperation(final SendEmailRequest entity) {
-      super(entity);
+public class LinkTypeUtil {
+
+   public static Attribute getAttribute(final LinkType linkType, final String attributeId) {
+      return ResourceUtils.findAttribute(linkType.getAttributes(), attributeId);
    }
 
-   @Override
-   public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "entity=" + entity +
-            '}';
-   }
 }

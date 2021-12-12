@@ -33,10 +33,13 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.api.util.CollectionUtil;
+import io.lumeer.api.util.LinkTypeUtil;
 import io.lumeer.api.util.PermissionUtils;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -58,15 +61,20 @@ import io.lumeer.core.task.executor.operation.PrintAttributeOperation;
 import io.lumeer.core.task.executor.operation.PrintTextOperation;
 import io.lumeer.core.task.executor.operation.ResourceOperation;
 import io.lumeer.core.task.executor.operation.SendEmailOperation;
+import io.lumeer.core.task.executor.operation.SendSmtpEmailOperation;
 import io.lumeer.core.task.executor.operation.UserMessageOperation;
 import io.lumeer.core.task.executor.operation.ViewPermissionsOperation;
 import io.lumeer.core.task.executor.operation.data.FileAttachmentData;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.SendSmtpEmailRequest;
+import io.lumeer.core.task.executor.request.SmtpConfiguration;
+import io.lumeer.core.task.executor.request.SmtpConfigurationBuilder;
 import io.lumeer.core.task.executor.request.TextPrintRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
 import io.lumeer.core.util.DocumentUtils;
+import io.lumeer.core.util.EmailSecurityType;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -360,6 +368,124 @@ public class LumeerBridge {
       fileNames.add(fileName);
 
       return "[" + String.join(",", fileNames) + "]";
+   }
+
+   @SuppressWarnings("unused")
+   public String getVariable(final String variableName) {
+      try {
+         final List<ResourceVariable> vars = task.getDaoContextSnapshot().getResourceVariableDao().getInProject(task.getDaoContextSnapshot().getOrganizationId(), task.getDaoContextSnapshot().getProjectId());
+
+         if (vars != null) {
+            return vars.stream().filter(v -> v.getKey().equals(variableName)).map(ResourceVariable::getValue).map(String::valueOf).findFirst().orElse("");
+         }
+
+         return "";
+      }  catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void sendEmail(final String to, final String fromName, final String subject, final String body, final Value smtpConfig) {
+      if (task.getDaoContextSnapshot().increaseEmailCounter() <= Task.MAX_EMAILS) {
+         final SmtpConfiguration smtpConfiguration = getSmtpConfiguration(smtpConfig);
+
+         if (smtpConfiguration != null) {
+            final SendSmtpEmailRequest sendSmtpEmailRequest = new SendSmtpEmailRequest(subject, to, body, fromName, smtpConfiguration);
+
+            operations.add(new SendSmtpEmailOperation(sendSmtpEmailRequest));
+         }
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void sendEmail(final String to, final String fromName, final String subject, final String body, final DocumentBridge d, final String attrId, final Value smtpConfig) throws Exception {
+      if (task.getDaoContextSnapshot().increaseEmailCounter() <= Task.MAX_EMAILS) {
+         if (StringUtils.isNotEmpty(to)) {
+            if (to.split(",").length > Task.MAX_EMAIL_RECIPIENTS) {
+               cause = new IllegalStateException("Too many email recipients (more than 100).");
+               throw cause;
+            }
+
+            final SmtpConfiguration smtpConfiguration = getSmtpConfiguration(smtpConfig);
+
+            if (smtpConfiguration != null) {
+               if (getAttachmentsSize(d.getDocument(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
+                  cause = new IllegalStateException("Attachments size is larger than 5MB.");
+                  throw cause;
+               }
+
+               final SendSmtpEmailRequest sendSmtpEmailRequest = new SendSmtpEmailRequest(subject, to, body, fromName, smtpConfiguration);
+               sendSmtpEmailRequest.setAttachment(d.getDocument(), attrId);
+
+               operations.add(new SendSmtpEmailOperation(sendSmtpEmailRequest));
+            }
+         } else {
+            cause = new IllegalStateException("Recipients list is empty.");
+            throw cause;
+         }
+      } else {
+         cause = new IllegalStateException("Too many requests to send email in a single rule (more than 3).");
+         throw cause;
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void sendEmail(final String to, final String fromName, final String subject, final String body, final LinkBridge l, final String attrId, final Value smtpConfig) throws Exception {
+      if (task.getDaoContextSnapshot().increaseEmailCounter() <= Task.MAX_EMAILS) {
+         if (StringUtils.isNotEmpty(to) && to.split(",").length > Task.MAX_EMAIL_RECIPIENTS) {
+            cause = new IllegalStateException("Too many email recipients (more than 100).");
+            throw cause;
+         }
+
+         final SmtpConfiguration smtpConfiguration = getSmtpConfiguration(smtpConfig);
+
+         if (smtpConfiguration != null) {
+            if (getAttachmentsSize(l.getLink(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
+               cause = new IllegalStateException("Attachments size is larger than 5MB.");
+               throw cause;
+            }
+
+            final SendSmtpEmailRequest sendSmtpEmailRequest = new SendSmtpEmailRequest(subject, to, body, fromName, smtpConfiguration);
+            sendSmtpEmailRequest.setAttachment(l.getLink(), attrId);
+
+            operations.add(new SendSmtpEmailOperation(sendSmtpEmailRequest));
+         }
+      } else {
+         cause = new IllegalStateException("Too many requests to send email in a single rule (more than 3).");
+         throw cause;
+      }
+   }
+
+   private SmtpConfiguration getSmtpConfiguration(final Value smtpConfig) {
+      if (smtpConfig != null && smtpConfig.hasMembers()) {
+         final SmtpConfigurationBuilder smtpConfigurationBuilder = new SmtpConfigurationBuilder();
+         smtpConfigurationBuilder.setHost(smtpConfig.hasMember("host") ? smtpConfig.getMember("host").asString() : "");
+         smtpConfigurationBuilder.setPort(smtpConfig.hasMember("port") ? smtpConfig.getMember("port").asInt() : 0);
+         smtpConfigurationBuilder.setUser(smtpConfig.hasMember("user") ? smtpConfig.getMember("user").asString() : "");
+         smtpConfigurationBuilder.setPassword(smtpConfig.hasMember("password") ? smtpConfig.getMember("password").asString() : "");
+         smtpConfigurationBuilder.setFrom(smtpConfig.hasMember("from") ? smtpConfig.getMember("from").asString() : "");
+         smtpConfigurationBuilder.setEmailSecurityType(smtpConfig.hasMember("security") ? EmailSecurityType.valueOf(smtpConfig.getMember("security").asString()) : EmailSecurityType.NONE);
+
+         return smtpConfigurationBuilder.build();
+      }
+
+      return null;
+   }
+
+   private long getAttachmentsSize(final Document d, final String attrId) {
+      return task.getDaoContextSnapshot().getFileAttachmentDao().findAllFileAttachments(
+            task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(),
+            d.getCollectionId(), d.getId(), attrId, FileAttachment.AttachmentType.DOCUMENT
+      ).stream().mapToLong(FileAttachment::getSize).sum();
+   }
+
+   private long getAttachmentsSize(final LinkInstance l, final String attrId) {
+      return task.getDaoContextSnapshot().getFileAttachmentDao().findAllFileAttachments(
+            task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(),
+            l.getLinkTypeId(), l.getId(), attrId, FileAttachment.AttachmentType.LINK
+      ).stream().mapToLong(FileAttachment::getSize).sum();
    }
 
    public DocumentOperation setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
@@ -837,6 +963,33 @@ public class LumeerBridge {
             final LinkCreationOperation linkCreationOperation = (LinkCreationOperation) operation;
             final LinkType linkType = linkTypes.computeIfAbsent(linkCreationOperation.getEntity().getLinkTypeId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
             sb.append("new Link(").append(linkType.getName()).append(")\n");
+         } else if (operation instanceof AddDocumentFileAttachmentOperation) {
+            final AddDocumentFileAttachmentOperation addDocumentFileAttachmentOperation = (AddDocumentFileAttachmentOperation) operation;
+            final Collection collection = collections.computeIfAbsent(addDocumentFileAttachmentOperation.getEntity().getCollectionId(), id -> task.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
+            sb.append("new record file attachment (")
+                  .append(collection.getName())
+                  .append(".")
+                  .append(CollectionUtil.getAttribute(collection, addDocumentFileAttachmentOperation.getAttrId()))
+                  .append(": ")
+                  .append(addDocumentFileAttachmentOperation.getFileAttachmentData().getFileName())
+                  .append(")\n");
+         } else if (operation instanceof AddLinkFileAttachmentOperation) {
+            final AddLinkFileAttachmentOperation addLinkFileAttachmentOperation = (AddLinkFileAttachmentOperation) operation;
+            final LinkType linkType = linkTypes.computeIfAbsent(addLinkFileAttachmentOperation.getEntity().getLinkTypeId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
+            sb.append("new link file attachment (")
+              .append(linkType.getName())
+              .append(".")
+              .append(LinkTypeUtil.getAttribute(linkType, addLinkFileAttachmentOperation.getAttrId()))
+              .append(": ")
+              .append(addLinkFileAttachmentOperation.getFileAttachmentData().getFileName())
+              .append(")\n");
+         } else if (operation instanceof SendSmtpEmailOperation) {
+            final SendSmtpEmailOperation sendSmtpEmailOperation = (SendSmtpEmailOperation) operation;
+            sb.append("send email (to: ")
+                  .append(sendSmtpEmailOperation.getEntity().getEmail())
+                  .append(", subject: ")
+                  .append(sendSmtpEmailOperation.getEntity().getSubject())
+                  .append(")\n");
          }
       });
 

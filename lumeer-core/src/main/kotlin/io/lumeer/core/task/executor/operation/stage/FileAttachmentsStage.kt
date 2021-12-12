@@ -40,7 +40,6 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
       val documentAttachmentUpdates = operations.orEmpty().filter { operation -> operation is AddDocumentFileAttachmentOperation && operation.isComplete }
             .map { operation -> (operation as AddDocumentFileAttachmentOperation) }
 
-
       documentAttachmentUpdates.forEach { operation ->
          // get existing attachments when overwrite is on
          val attachments = getExistingAttachments(
@@ -64,7 +63,6 @@ class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
                System.currentTimeMillis().toString() + "_" + operation.fileAttachmentData.fileName,
                FileAttachment.AttachmentType.DOCUMENT
          )
-         println(task.initiator)
          if (task.initiator != null) {
             fileAttachment.createdBy = task.initiator.id
          }

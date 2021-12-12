@@ -24,6 +24,7 @@ import io.lumeer.api.model.Organization
 import io.lumeer.api.model.Project
 import io.lumeer.core.util.LumeerS3Client
 import io.lumeer.storage.api.dao.FileAttachmentDao
+import java.nio.ByteBuffer
 import java.util.function.Consumer
 
 class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachmentDao: FileAttachmentDao, val environment: String) {
@@ -66,6 +67,14 @@ class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachme
          fileAttachments.forEach(Consumer { fileAttachment -> lumeerS3Client.deleteObject(getFileAttachmentKey(fileAttachment)) })
       }
       fileAttachmentDao.removeFileAttachments(fileAttachments.map { it.id })
+   }
+
+   fun readFileAttachment(fileAttachment: FileAttachment): ByteArray {
+      if (lumeerS3Client.isInitialized) {
+         return lumeerS3Client.readObject(getFileAttachmentKey(fileAttachment))
+      }
+
+      return ByteArray(0)
    }
 
    fun getFileAttachmentLocation(organizationId: String, projectId: String, collectionId: String?, documentId: String?, attributeId: String?, type: AttachmentType): String {

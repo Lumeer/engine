@@ -21,6 +21,8 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.EmailSecurityType;
+import io.lumeer.core.util.EmailService;
 
 import com.floreysoft.jmte.Engine;
 import org.apache.commons.io.IOUtils;
@@ -48,7 +50,7 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 @ApplicationScoped
-public class EmailService {
+public class EmailSenderFacade {
 
    @Inject
    private DefaultConfigurationProducer defaultConfigurationProducer;
@@ -62,17 +64,15 @@ public class EmailService {
    private static Integer SMTP_PORT;
    private static String SMTP_FROM;
 
-   private Session session;
-
    private Map<String, String> subjectLines = new HashMap<>();
    private Map<String, String> templates = new HashMap<>();
    private Engine templateEngine = Engine.createEngine();
-
-
+   private EmailService emailService = null;
 
    public enum EmailTemplate {
       INVITATION, TASK_ASSIGNED, DUE_DATE_SOON, PAST_DUE_DATE, STATE_UPDATE, TASK_UPDATED, TASK_REMOVED, TASK_UNASSIGNED, ORGANIZATION_SHARED, PROJECT_SHARED, COLLECTION_SHARED, VIEW_SHARED, DUE_DATE_CHANGED, TASK_COMMENTED, TASK_MENTIONED, TASK_REOPENED;
    }
+
    @PostConstruct
    public void init() {
       SMTP_USER = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.SMTP_USER)).orElse("");
@@ -86,22 +86,7 @@ public class EmailService {
       }
 
       if (isActive()) {
-         final Properties props = new Properties();
-         props.setProperty("mail.smtp.host", SMTP_SERVER);
-         props.setProperty("mail.smtp.port", SMTP_PORT.toString());
-         props.setProperty("mail.smtp.from", SMTP_FROM);
-         props.setProperty("mail.smtp.auth", "true");
-         //props.setProperty("mail.smtp.ssl.enable", "true");
-         props.setProperty("mail.smtp.starttls.enable", "true");
-         props.setProperty("mail.smtp.starttls.required", "true");
-
-         this.session = Session.getInstance(props, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-               return new PasswordAuthentication(SMTP_USER, SMTP_PASSWORD);
-            }
-         });
-
+         emailService = new EmailService(SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM, EmailSecurityType.TLS);
          readSubjectLines();
       }
    }
@@ -114,30 +99,12 @@ public class EmailService {
                   StringUtils.isNotEmpty(SMTP_FROM);
    }
 
-   private void sendEmail(final String subject, final String to, final String body, final String from) {
-      try {
-         final MimeMessage message = new MimeMessage(session);
-         message.setFrom(new InternetAddress(SMTP_FROM, StringUtils.isNotEmpty(from) ? from + " (Lumeer)" : "Lumeer"));
-         message.addRecipient(Message.RecipientType.TO,  new InternetAddress(to));
-         message.setSubject(subject, StandardCharsets.UTF_8.name());
-         message.setContent(body, "text/html; charset=utf-8");
-         message.saveChanges();
-
-         final Transport transport = session.getTransport("smtp");
-         transport.connect();
-         transport.sendMessage(message, message.getAllRecipients());
-         transport.close();
-      } catch (Exception e) {
-         log.log(Level.SEVERE, String.format("Unable to send email '%s'.", subject), e);
-      }
-   }
-
    public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String from, final String recipient, final String subjectPart) {
       sendEmailFromTemplate(emailTemplate, language, sender, from, recipient, subjectPart, null);
    }
 
    public void sendEmailFromTemplate(final EmailTemplate emailTemplate, final Language language, final String sender, final String from, final String recipient, final String subjectPart, final Map<String, Object> additionalData) {
-      if (session != null) {
+      if (emailService != null) {
          final String subject = String.format(subjectLines.getOrDefault(emailTemplate.toString().toLowerCase() + "_" + language.toString().toLowerCase(), language == Language.EN ? "Hi" : "Dobrý den"), subjectPart);
          final String template = loadTemplate(emailTemplate, language);
 
@@ -153,7 +120,7 @@ public class EmailService {
 
             final String body = templateEngine.transform(template, values);
 
-            sendEmail(subject, recipient, body, from);
+            emailService.sendEmail(subject, recipient, body, from);
          }
       }
    }
@@ -191,7 +158,7 @@ public class EmailService {
    private void readSubjectLines() {
       final Properties properties = new Properties();
       try {
-         final InputStream input = EmailService.class.getResourceAsStream("/email-templates/subject.properties");
+         final InputStream input = EmailSenderFacade.class.getResourceAsStream("/email-templates/subject.properties");
          if (input != null) {
             properties.load(new InputStreamReader(input));
             properties.forEach((key, value) -> {
