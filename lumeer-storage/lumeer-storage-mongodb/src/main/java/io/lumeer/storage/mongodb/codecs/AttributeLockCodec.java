@@ -30,6 +30,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,14 +55,14 @@ public class AttributeLockCodec implements Codec<AttributeLock> {
 
    public static AttributeLock convertFromDocument(final Document document) {
       if (document == null) {
-         return null;
+         return new AttributeLock(Collections.emptyList(), false);
       }
-      Boolean locked = document.getBoolean(LOCKED, false);
+      boolean locked = document.getBoolean(LOCKED, false);
 
       List<AttributeLockExceptionGroup> exceptionGroups;
       List groupsList = document.get(EXCEPTION_GROUPS, List.class);
       if (groupsList != null) {
-         exceptionGroups = document.getList(groupsList, Document.class)
+         exceptionGroups = new ArrayList<Document>(groupsList)
                                    .stream()
                                    .map(AttributeLockExceptionGroupCodec::convertFromDocument)
                                    .collect(Collectors.toList());

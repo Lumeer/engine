@@ -28,11 +28,11 @@ import java.util.Objects;
 public class AttributeLock {
 
    private final List<AttributeLockExceptionGroup> exceptionGroups;
-   private final Boolean locked;
+   private final boolean locked;
 
    @JsonCreator
    public AttributeLock(@JsonProperty("exceptionGroups") final List<AttributeLockExceptionGroup> exceptionGroups,
-         @JsonProperty("locked") final Boolean locked) {
+         @JsonProperty("locked") final boolean locked) {
       this.exceptionGroups = exceptionGroups;
       this.locked = locked;
    }
@@ -41,7 +41,7 @@ public class AttributeLock {
       return exceptionGroups;
    }
 
-   public Boolean getLocked() {
+   public boolean getLocked() {
       return locked;
    }
 

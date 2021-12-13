@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeLock;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
@@ -54,6 +55,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -97,6 +99,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
    private static final Constraint ATTRIBUTE_CONSTRAINT = new Constraint(ConstraintType.Boolean, null);
    private static final Function ATTRIBUTE_FUNCTION = new Function("js", "xml", "error", 123456L, false);
    private static final Integer ATTRIBUTE_COUNT = 0;
+   private static final AttributeLock ATTRIBUTE_LOCK = new AttributeLock(new ArrayList<>(), false);
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
 
@@ -354,7 +357,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_LOCK, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
       Entity entity = Entity.json(updatedAttribute);
 
       Response response = client.target(collectionsUrl).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)
@@ -371,6 +374,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(attribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
       assertions.assertThat(attribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(attribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertThat(attribute.getLock()).isEqualTo(ATTRIBUTE_LOCK);
       assertions.assertAll();
 
       Collection storedCollection = collectionDao.getCollectionByCode(CODE);
@@ -383,6 +387,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       assertions.assertThat(storedAttribute.getName()).isEqualTo(ATTRIBUTE_NAME2);
       assertions.assertThat(storedAttribute.getConstraint()).isEqualTo(ATTRIBUTE_CONSTRAINT);
       assertions.assertThat(storedAttribute.getUsageCount()).isEqualTo(ATTRIBUTE_COUNT);
+      assertions.assertThat(storedAttribute.getLock()).isEqualTo(ATTRIBUTE_LOCK);
       assertions.assertAll();
    }
 

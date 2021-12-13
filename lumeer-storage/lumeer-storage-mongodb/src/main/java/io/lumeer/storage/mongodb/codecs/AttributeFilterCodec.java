@@ -55,6 +55,9 @@ public class AttributeFilterCodec implements Codec<AttributeFilter> {
    }
 
    public static AttributeFilter convertFromDocument(final Document document) {
+      if (document == null) {
+         return null;
+      }
       String attributeId = document.getString(ATTRIBUTE_ID);
       String conditionString = document.getString(CONDITION);
       ConditionType operator = ConditionType.fromString(conditionString);
@@ -70,7 +73,7 @@ public class AttributeFilterCodec implements Codec<AttributeFilter> {
          values = Collections.singletonList(new ConditionValue(value));
       }
 
-      return new AttributeFilter( attributeId, operator, values);
+      return new AttributeFilter(attributeId, operator, values);
    }
 
    @Override
@@ -80,7 +83,7 @@ public class AttributeFilterCodec implements Codec<AttributeFilter> {
       documentCodec.encode(writer, bson, encoderContext);
    }
 
-   public static Document convertToDocument( final AttributeFilter value) {
+   public static Document convertToDocument(final AttributeFilter value) {
       return new Document()
             .append(CONDITION, value.getCondition() != null ? value.getCondition().getValue() : null)
             .append(VALUE, value.getConditionValues())

@@ -133,6 +133,7 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
       this.lock = lock;
    }
 
+   @JsonIgnore
    public Attribute copy() {
       return new Attribute(getId(), getName(), getDescription(), getConstraint(), getLock(), getFunction(), getUsageCount());
    }
@@ -162,6 +163,7 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", constraint=" + constraint +
+            ", lock=" + lock +
             ", function=" + function +
             ", usageCount=" + usageCount +
             '}';
