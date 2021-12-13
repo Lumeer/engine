@@ -30,6 +30,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.util.CollectionUtil;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.exception.BadFormatException;
@@ -49,7 +50,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -330,14 +330,8 @@ public class LinkTypeFacade extends AbstractFacade {
          rule.setCreatedAt(ZonedDateTime.now());
       }
 
-      rule.parseConfiguration();
-
       Rule originalRule = rules.get(ruleId);
-      rule.keepInternalConfiguration(originalRule);
-
-      if (rule.shouldResetCreatedAt(originalRule)) {
-         rule.setCreatedAt(ZonedDateTime.now());
-      }
+      rule.checkConfiguration(originalRule);
 
       rules.put(ruleId, rule);
       storedLinkType.setRules(rules);
@@ -351,33 +345,32 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
-      LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
-      final Optional<Attribute> originalAttribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
-      if (originalAttribute.isEmpty()) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      final Attribute originalAttribute = ResourceUtils.findAttribute(linkType.getAttributes(), attributeId);
+      if (originalAttribute == null) {
          return attribute;
       }
 
       LinkType originalLinkType = new LinkType(linkType);
+      permissionsChecker.checkAnyRoleInLinkType(linkType, Set.of(RoleType.AttributeEdit, RoleType.TechConfig));
 
-      if (!permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig)) {
-         attribute.setFunction(originalAttribute.get().getFunction());
-      }
+      Attribute updatingAttribute = originalAttribute.copy();
+      updatingAttribute.patch(attribute, permissionsChecker.getActualRoles(linkType));
 
-      if (attribute.isFunctionDefined()) {
-         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
+      if (updatingAttribute.isFunctionDefined()) {
+         permissionsChecker.checkFunctionRuleAccess(updatingAttribute.getFunction().getJs(), RoleType.Read);
       } else {
-         attribute.setFunction(null);
+         updatingAttribute.setFunction(null);
       }
 
       if (!skipFceLimits) {
          permissionsChecker.checkFunctionsLimit(linkType);
       }
 
-      linkType.updateAttribute(attributeId, attribute);
+      linkType.updateAttribute(attributeId, updatingAttribute);
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
-
-      originalAttribute.ifPresent(value -> conversionFacade.convertStoredDocuments(linkType, value, attribute));
+      conversionFacade.convertStoredDocuments(linkType, originalAttribute, updatingAttribute);
 
       return attribute;
    }

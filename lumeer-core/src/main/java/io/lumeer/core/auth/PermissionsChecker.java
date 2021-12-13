@@ -252,6 +252,10 @@ public class PermissionsChecker {
       return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
    }
 
+   public void checkAnyRoleInLinkType(LinkType linkType, Set<RoleType> roles) {
+      permissionAdapter.checkAnyRoleInLinkType(getOrganization(), getProject(), linkType, roles, authenticatedUser.getCurrentUserId());
+   }
+
    public void checkRoleInLinkType(LinkType linkType, RoleType role) {
       checkRoleInLinkType(linkType, role, authenticatedUser.getCurrentUserId());
    }
@@ -399,9 +403,13 @@ public class PermissionsChecker {
 
    public void checkRulesPermissions(Map<String, Rule> ruleMap) {
       if (ruleMap != null) {
-         ruleMap.values().stream().filter(r -> r.getType() == Rule.RuleType.BLOCKLY).forEach(rule ->
-               checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.DataWrite)
-         );
+         ruleMap.values().forEach(this::checkRulePermissions);
+      }
+   }
+
+   public void checkRulePermissions(Rule rule) {
+      if (rule.getType() != Rule.RuleType.BLOCKLY) {
+         checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.DataWrite);
       }
    }
 

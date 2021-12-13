@@ -20,8 +20,8 @@ package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
+import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.RoleUtils;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -36,12 +36,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Collection extends Resource implements HealthChecking, Updatable<Collection> {
+public class Collection extends Resource implements AttributesResource, HealthChecking, Updatable<Collection> {
 
    public static Set<Role> ROLES = RoleUtils.collectionResourceRoles();
 
@@ -127,25 +126,9 @@ public class Collection extends Resource implements HealthChecking, Updatable<Co
       this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
    }
 
-   public void createAttribute(final Attribute attribute) {
-      attributes.add(attribute);
-   }
-
-   public void updateAttribute(final String attributeId, final Attribute attribute) {
-      Optional<Attribute> oldAttribute = attributes.stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
-      attributes.removeIf(a -> a.getId().equals(attributeId));
-
-      oldAttribute.ifPresent((a) -> attribute.setUsageCount(a.getUsageCount()));
-      attributes.add(attribute);
-
-      if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {
-         AttributeUtil.renameChildAttributes(attributes, oldAttribute.get().getName(), attribute.getName());
-      }
-   }
-
-   public void deleteAttribute(final String attributeId) {
-      Optional<Attribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
-      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
+   @Override
+   public java.util.Collection<Attribute> getMutableAttributes() {
+      return attributes;
    }
 
    public Long getDocumentsCount() {
@@ -268,18 +251,13 @@ public class Collection extends Resource implements HealthChecking, Updatable<Co
          setDataDescription(resource.getDataDescription());
       }
       if (roles.contains(RoleType.AttributeEdit)) {
-         setAttributes(resource.getAttributes());
          setDefaultAttributeId(resource.getDefaultAttributeId());
       }
       if (roles.contains(RoleType.TechConfig)) {
          setPurpose(resource.getPurpose());
-
-         // remove deleted rules, for inserting rules, upsert is used
-         if (resource.getRules() != null && getRules() != null) {
-            var ruleKeys = new HashSet<>(getRules().keySet());
-            ruleKeys.removeAll(resource.getRules().keySet());
-            ruleKeys.forEach(getRules()::remove);
-         }
+         patchRules(resource.getRules());
       }
+
+      patchAttributes(resource.getAttributes(), roles);
    }
 }

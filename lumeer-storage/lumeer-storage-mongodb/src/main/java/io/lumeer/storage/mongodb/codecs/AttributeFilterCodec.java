@@ -19,7 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.ConditionValue;
 
@@ -35,9 +35,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
+public class AttributeFilterCodec implements Codec<AttributeFilter> {
 
-   public static final String COLLECTION_ID = "collectionId";
    public static final String CONDITION = "condition";
    public static final String VALUE = "value";
    public static final String ATTRIBUTE_ID = "attributeId";
@@ -49,14 +48,13 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
    }
 
    @Override
-   public CollectionAttributeFilter decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public AttributeFilter decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
       return AttributeFilterCodec.convertFromDocument(bson);
    }
 
-   public static CollectionAttributeFilter convertFromDocument(final Document document) {
-      String collectionId = document.getString(COLLECTION_ID);
+   public static AttributeFilter convertFromDocument(final Document document) {
       String attributeId = document.getString(ATTRIBUTE_ID);
       String conditionString = document.getString(CONDITION);
       ConditionType operator = ConditionType.fromString(conditionString);
@@ -72,23 +70,26 @@ public class AttributeFilterCodec implements Codec<CollectionAttributeFilter> {
          values = Collections.singletonList(new ConditionValue(value));
       }
 
-      return new CollectionAttributeFilter(collectionId, attributeId, operator, values);
+      return new AttributeFilter( attributeId, operator, values);
    }
 
    @Override
-   public void encode(final BsonWriter writer, final CollectionAttributeFilter value, final EncoderContext encoderContext) {
-      Document bson = new Document()
-            .append(COLLECTION_ID, value.getCollectionId())
-            .append(CONDITION, value.getCondition() != null ? value.getCondition().getValue() : null)
-            .append(VALUE, value.getConditionValues())
-            .append(ATTRIBUTE_ID, value.getAttributeId());
+   public void encode(final BsonWriter writer, final AttributeFilter value, final EncoderContext encoderContext) {
+      Document bson = convertToDocument(value);
 
       documentCodec.encode(writer, bson, encoderContext);
    }
 
+   public static Document convertToDocument( final AttributeFilter value) {
+      return new Document()
+            .append(CONDITION, value.getCondition() != null ? value.getCondition().getValue() : null)
+            .append(VALUE, value.getConditionValues())
+            .append(ATTRIBUTE_ID, value.getAttributeId());
+   }
+
    @Override
-   public Class<CollectionAttributeFilter> getEncoderClass() {
-      return CollectionAttributeFilter.class;
+   public Class<AttributeFilter> getEncoderClass() {
+      return AttributeFilter.class;
    }
 }
 

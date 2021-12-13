@@ -36,6 +36,7 @@ import io.lumeer.storage.mongodb.codecs.BigDecimalCodec;
 import io.lumeer.storage.mongodb.codecs.RoleTypeCodec;
 import io.lumeer.storage.mongodb.codecs.providers.AttributeCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.AttributeFilterCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.AttributeLockCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.AuditRecordCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.CollectionCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.CollectionPurposeCodecProvider;
@@ -51,7 +52,6 @@ import io.lumeer.storage.mongodb.codecs.providers.FileAttachmentCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.FunctionCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.FunctionRowCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.GroupCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.LinkAttributeFilterCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkInstanceCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.LinkTypeCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.NotificationSettingCodecProvider;
@@ -159,7 +159,7 @@ public class MongoDbStorage implements DataStorage {
                new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),
                new DocumentCodecProvider(), new QueryStemCodecProvider(), new AttributeFilterCodecProvider(), new UserNotificationCodecProvider(),
                new ConstraintCodecProvider(), new RuleCodecProvider(), new FunctionCodecProvider(), new FunctionRowCodecProvider(),
-               new LinkAttributeFilterCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(),
+               new AttributeLockCodecProvider(), new FileAttachmentCodecProvider(), new SequenceCodecProvider(), new ConditionValueCodecProvider(),
                new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider(),
                new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider(), new AuditRecordCodecProvider(),
                new RoleCodecProvider(), new SelectionCodecProvider(), new DashboardDataCodecProvider(), new ResourceVariableCodecProvider()

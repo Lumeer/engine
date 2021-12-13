@@ -36,6 +36,7 @@ import io.lumeer.api.model.View;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.api.util.CollectionUtil;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -68,9 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -221,18 +220,11 @@ public class CollectionFacade extends AbstractFacade {
       final Collection originalCollection = storedCollection.copy();
 
       Map<String, Rule> rules = Objects.requireNonNullElse(storedCollection.getRules(), new HashMap<>());
-      if (!rules.containsKey(ruleId)) {
-         rule.setCreatedAt(ZonedDateTime.now());
-      }
-
-      rule.parseConfiguration();
-
+  
       Rule originalRule = rules.get(ruleId);
-      rule.keepInternalConfiguration(originalRule);
+      rule.checkConfiguration(originalRule);
 
-      if (rule.shouldResetCreatedAt(originalRule)) {
-         rule.setCreatedAt(ZonedDateTime.now());
-      }
+      permissionsChecker.checkRulePermissions(rule);
 
       rules.put(ruleId, rule);
       storedCollection.setRules(rules);
@@ -373,14 +365,11 @@ public class CollectionFacade extends AbstractFacade {
       final Collection bookedAttributesCollection = collectionDao.bookAttributesNum(collection.getId(), collection, attributes.size());
 
       int lastAttributeNum = bookedAttributesCollection.getLastAttributeNum() - attributes.size() + 1;
-      var canEditFunction = permissionsChecker.hasRole(collection, RoleType.TechConfig);
+      final Set<RoleType> actualRoles = permissionsChecker.getActualRoles(collection);
 
       for (Attribute attribute : attributes) {
          attribute.setId(Collection.ATTRIBUTE_PREFIX + lastAttributeNum++);
-         attribute.setUsageCount(0);
-         if (!canEditFunction) {
-            attribute.setFunction(null);
-         }
+         attribute.patchCreation(actualRoles);
          bookedAttributesCollection.createAttribute(attribute);
       }
 
@@ -397,20 +386,12 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
       permissionsChecker.checkAttributesFunctionAccess(attributes);
 
-      var canEditFunction = permissionsChecker.hasRole(collection, RoleType.TechConfig);
+      final Set<RoleType> actualRoles = permissionsChecker.getActualRoles(collection);
 
       var sortedAttributes = attributes.stream().sorted((a, b) -> a.getId().compareToIgnoreCase(b.getId())).collect(Collectors.toList());
       for (Attribute attribute : sortedAttributes) {
-         final Integer freeNum = getFreeAttributeNum(collection);
-         if (attribute.getId() == null) {
-            attribute.setId(Collection.ATTRIBUTE_PREFIX + freeNum);
-         }
-         attribute.setUsageCount(0);
-         if (!canEditFunction) {
-            attribute.setFunction(null);
-         }
+         attribute.patchCreation(actualRoles);
          collection.createAttribute(attribute);
-         collection.setLastAttributeNum(freeNum);
       }
 
       permissionsChecker.checkFunctionsLimit(collection);
@@ -420,57 +401,40 @@ public class CollectionFacade extends AbstractFacade {
       return attributes;
    }
 
-   private Integer getFreeAttributeNum(final Collection collection) {
-      final AtomicInteger last = new AtomicInteger(Math.max(1, collection.getLastAttributeNum() + 1));
-      while (collection.getAttributes().stream().anyMatch(attribute -> attribute.getId().equals(Collection.ATTRIBUTE_PREFIX + last.get()))) {
-         last.incrementAndGet();
-      }
-
-      return last.get();
-   }
-
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute) {
       return updateCollectionAttribute(collectionId, attributeId, attribute, false);
    }
 
    public Attribute updateCollectionAttribute(final String collectionId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      final Optional<Attribute> originalAttribute = collection.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
-      if (originalAttribute.isEmpty()) {
+      final Attribute originalAttribute = ResourceUtils.findAttribute(collection.getAttributes(), attributeId);
+      if (originalAttribute == null) {
          return attribute;
       }
 
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkAnyRole(collection, Set.of(RoleType.AttributeEdit, RoleType.TechConfig));
 
-      if (!permissionsChecker.hasRole(collection, RoleType.TechConfig)) {
-         attribute.setFunction(originalAttribute.get().getFunction());
-      }
+      Attribute updatingAttribute = originalAttribute.copy();
+      updatingAttribute.patch(attribute, permissionsChecker.getActualRoles(collection));
 
-      if (!permissionsChecker.hasRole(collection, RoleType.AttributeEdit)) {
-         attribute.setName(originalAttribute.get().getName());
-         attribute.setDescription(originalAttribute.get().getDescription());
-         attribute.setConstraint(originalAttribute.get().getConstraint());
-      }
-
-      if (attribute.isFunctionDefined()) {
-         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
+      if (updatingAttribute.isFunctionDefined()) {
+         permissionsChecker.checkFunctionRuleAccess(updatingAttribute.getFunction().getJs(), RoleType.Read);
       } else {
-         attribute.setFunction(null);
+         updatingAttribute.setFunction(null);
       }
 
       if (!skipFceLimits) {
          permissionsChecker.checkFunctionsLimit(collection);
       }
 
-      collection.updateAttribute(attributeId, attribute);
+      collection.updateAttribute(attributeId, updatingAttribute);
       collection.setLastTimeUsed(ZonedDateTime.now());
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
+      conversionFacade.convertStoredDocuments(collection, originalAttribute, updatingAttribute);
 
-      originalAttribute.ifPresent(value -> conversionFacade.convertStoredDocuments(collection, value, attribute));
-
-      return attribute;
+      return updatingAttribute;
    }
 
    public void deleteCollectionAttribute(final String collectionId, final String attributeId) {
@@ -659,7 +623,7 @@ public class CollectionFacade extends AbstractFacade {
                final User user = AuthenticatedUser.getMachineUser();
                final AllowedPermissions allowedPermissions = AllowedPermissions.allAllowed();
 
-               documents = DocumentUtils.getDocuments(collectionDao, documentDao, dataDao, userDao, groupDao,  selectionListDao, getOrganization(), getProject(), view.getQuery(), user, cronRule.getLanguage(), allowedPermissions, null);
+               documents = DocumentUtils.getDocuments(collectionDao, documentDao, dataDao, userDao, groupDao, selectionListDao, getOrganization(), getProject(), view.getQuery(), user, cronRule.getLanguage(), allowedPermissions, null);
                documents = documents.stream().filter(document -> document.getCollectionId().equals(collection.getId())).collect(Collectors.toList());
             } catch (ResourceNotFoundException ignore) {
 

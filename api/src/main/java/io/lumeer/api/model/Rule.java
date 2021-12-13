@@ -157,7 +157,16 @@ public class Rule implements HealthChecking {
       this.configuration = configuration;
    }
 
-   public void parseConfiguration() {
+   public void checkConfiguration(final Rule originalRule) {
+      parseConfiguration();
+      keepInternalConfiguration(originalRule);
+
+      if (shouldResetCreatedAt(originalRule)) {
+         setCreatedAt(ZonedDateTime.now());
+      }
+   }
+
+   private void parseConfiguration() {
       switch (getType()) {
          case CRON:
             setConfiguration(CronRule.parseConfiguration(getConfiguration()));
@@ -165,7 +174,7 @@ public class Rule implements HealthChecking {
       }
    }
 
-   public boolean shouldResetCreatedAt(Rule originalRule) {
+   private boolean shouldResetCreatedAt(Rule originalRule) {
       if (originalRule == null) {
          return true;
       }
@@ -178,7 +187,7 @@ public class Rule implements HealthChecking {
       }
    }
 
-   public void keepInternalConfiguration(Rule originalRule) {
+   private void keepInternalConfiguration(Rule originalRule) {
       if (originalRule == null) {
          return;
       }

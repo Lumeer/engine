@@ -19,8 +19,12 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
+import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.CollectionAttributeFilter;
+import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.storage.mongodb.codecs.AttributeFilterCodec;
+import io.lumeer.storage.mongodb.codecs.CollectionAttributeFilterCodec;
+import io.lumeer.storage.mongodb.codecs.LinkAttributeFilterCodec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -31,6 +35,10 @@ public class AttributeFilterCodecProvider implements CodecProvider {
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
       if (clazz == CollectionAttributeFilter.class) {
+         return (Codec<T>) new CollectionAttributeFilterCodec(registry);
+      } else if (clazz == LinkAttributeFilter.class) {
+         return (Codec<T>) new LinkAttributeFilterCodec(registry);
+      } else if (clazz == AttributeFilter.class) {
          return (Codec<T>) new AttributeFilterCodec(registry);
       }
 
