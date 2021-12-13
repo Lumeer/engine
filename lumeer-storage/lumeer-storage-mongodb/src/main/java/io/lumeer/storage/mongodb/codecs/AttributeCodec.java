@@ -20,9 +20,9 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeLock;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.function.Function;
-import io.lumeer.engine.api.exception.DbException;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -37,6 +37,7 @@ public class AttributeCodec implements Codec<Attribute> {
    public static final String ID = "id";
    public static final String NAME = "name";
    public static final String DESCRIPTION = "description";
+   public static final String LOCK = "lock";
    public static final String CONSTRAINT = "constraint";
    public static final String FUNCTION = "function";
    public static final String USAGE_COUNT = "usageCount";
@@ -59,10 +60,11 @@ public class AttributeCodec implements Codec<Attribute> {
       String name = document.getString(NAME);
       String description = document.getString(DESCRIPTION);
       Constraint constraint = ConstraintCodec.convertFromDocument(document.get(CONSTRAINT, Document.class));
+      AttributeLock lock = AttributeLockCodec.convertFromDocument(document.get(LOCK, Document.class));
       Function function = FunctionCodec.convertFromDocument(document.get(FUNCTION, Document.class));
       Integer usageCount = document.getInteger(USAGE_COUNT);
 
-      return new Attribute(id, name, description, constraint, function, usageCount);
+      return new Attribute(id, name, description, constraint, lock, function, usageCount);
    }
 
    @Override
@@ -71,6 +73,7 @@ public class AttributeCodec implements Codec<Attribute> {
             .append(ID, value.getId())
             .append(NAME, value.getName())
             .append(DESCRIPTION, value.getDescription())
+            .append(LOCK, value.getLock())
             .append(CONSTRAINT, value.getConstraint())
             .append(FUNCTION, value.getFunction())
             .append(USAGE_COUNT, value.getUsageCount());

@@ -310,7 +310,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testSearchDocumentsByNumberConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument());
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("numberCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, "20.3").getId();
@@ -348,7 +348,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testSearchFulltextDocumentsByNumberConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument("currency", "sk-SK"));
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("numberCollection2", attribute).getId();
 
       String id1 = createDocument(collectionId, "20.3").getId();
@@ -417,24 +417,24 @@ public class SearchFacadeIT extends IntegrationTestBase {
    private Collection createTaskCollectionWithAttributes(String name) {
       var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
       Constraint stateConstraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
-      Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, 1);
+      Attribute stateAttribute = new Attribute("a1", "a1", null, stateConstraint, null, null, 1);
       var stateAttributeId = stateAttribute.getId();
       Constraint assigneeConstraint = new Constraint(ConstraintType.User, new DataDocument());
-      Attribute assigneeAttribute = new Attribute("a2", "a2", null, assigneeConstraint, null, 1);
+      Attribute assigneeAttribute = new Attribute("a2", "a2", null, assigneeConstraint, null, null, 1);
       var assigneeAttributeId = assigneeAttribute.getId();
       var purposeMetadata = new DataDocument(CollectionPurpose.META_STATE_ATTRIBUTE_ID, stateAttributeId)
             .append(CollectionPurpose.META_ASSIGNEE_ATTRIBUTE_ID, assigneeAttributeId)
             .append(CollectionPurpose.META_FINAL_STATES_LIST, Arrays.asList("c", "d"));
       CollectionPurpose purpose = new CollectionPurpose(CollectionPurposeType.Tasks, purposeMetadata);
       Constraint numberConstraint = new Constraint(ConstraintType.Number, new DataDocument());
-      Attribute otherAttribute = new Attribute("a3", "a3", null, numberConstraint, null, 3);
+      Attribute otherAttribute = new Attribute("a3", "a3", null, numberConstraint, null, null, 3);
       return createTaskCollection(name, purpose, stateAttribute, assigneeAttribute, otherAttribute);
    }
 
    @Test
    public void testSearchContributors() {
       Constraint constraint = new Constraint(ConstraintType.Number, new DataDocument());
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       Collection collection = createCollection("numberCollection", attribute);
       setCollectionUserRoles(collection, Set.of(new Role(RoleType.Read)));
 
@@ -493,7 +493,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       String id2 = createDocumentWithOtherUser(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "b")).getId();
       String id3 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "c")).getId();
       String id4 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), "d")).getId();
-      String id5 = createDocumentWithOtherUser(taskCollection.getId(), Map.of(stateAttribute.getId(), Arrays.asList("a", "b"),  assigneeAttribute.getId(), USER)).getId();
+      String id5 = createDocumentWithOtherUser(taskCollection.getId(), Map.of(stateAttribute.getId(), Arrays.asList("a", "b"), assigneeAttribute.getId(), USER)).getId();
       String id6 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("b", "c"))).getId();
       String id7 = createDocumentWithOtherUser(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("c", "d"))).getId();
       String id8 = createDocument(taskCollection.getId(), Collections.singletonMap(stateAttribute.getId(), Arrays.asList("d", "a"))).getId();
@@ -520,7 +520,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testSearchDocumentsDateConstraint() {
       Constraint constraint = new Constraint(ConstraintType.DateTime, new DataDocument());
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("dateCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, "2019-04-01T00:00:00.000Z").getId();
@@ -566,7 +566,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testSearchDocumentsCoordinatesConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Coordinates, new DataDocument());
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("coordinatesCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, "40.123°N 74.123°W").getId();
@@ -582,7 +582,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    public void testSearchMultiSelectConstraint() {
       var options = Arrays.asList(new DataDocument("option", "a"), new DataDocument("option", "b"), new DataDocument("option", "c"), new DataDocument("option", "d"));
       Constraint constraint = new Constraint(ConstraintType.Select, new DataDocument("multi", true).append("options", options));
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("selectCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, Arrays.asList("a", "b", "c")).getId();
@@ -615,7 +615,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testDurationConstraint() {
       Constraint constraint = new Constraint(ConstraintType.Duration, new DataDocument("type", "Work"));
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("durationCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, "5w3d").getId();
@@ -641,7 +641,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
    @Test
    public void testUserConstraint() {
       Constraint constraint = new Constraint(ConstraintType.User, new DataDocument("multi", true));
-      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, 3);
+      Attribute attribute = new Attribute(DOCUMENT_KEY, DOCUMENT_KEY, null, constraint, null, null, 3);
       String collectionId = createCollection("userCollection", attribute).getId();
 
       String id1 = createDocument(collectionId, Collections.singletonList(USER)).getId();
@@ -726,7 +726,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
       SoftAssertions assertions = new SoftAssertions();
       assertions.assertThat(
-            documents.stream().filter(d -> d.getMetaData() == null || d.getMetaData().get(Document.META_PARENT_ID) == null).count())
+                      documents.stream().filter(d -> d.getMetaData() == null || d.getMetaData().get(Document.META_PARENT_ID) == null).count())
                 .isEqualTo(1);
       assertions.assertThat(documents).hasSize(11);
       assertions.assertThat(documents.stream().map(d -> d.getData().getString(DOCUMENT_KEY)).collect(Collectors.toSet()))
@@ -793,7 +793,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
       Collection collection = collectionDao.getCollectionById(collectionId);
       values.forEach((attributeId, value) -> {
          if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(attributeId))) {
-            collection.createAttribute(new Attribute(attributeId, attributeId, null, null, null, 1));
+            collection.createAttribute(new Attribute(attributeId, attributeId, null, null, null, null, 1));
             collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
          } else {
             Attribute attr = collection.getAttributes().stream().filter(a -> a.getName().equals(attributeId)).findFirst().get();

@@ -326,12 +326,11 @@ public class LinkTypeFacade extends AbstractFacade {
       LinkType originalLinkType = new LinkType(storedLinkType);
 
       Map<String, Rule> rules = Objects.requireNonNullElse(storedLinkType.getRules(), new HashMap<>());
-      if (!rules.containsKey(ruleId)) {
-         rule.setCreatedAt(ZonedDateTime.now());
-      }
 
       Rule originalRule = rules.get(ruleId);
       rule.checkConfiguration(originalRule);
+
+      permissionsChecker.checkRulePermissions(rule);
 
       rules.put(ruleId, rule);
       storedLinkType.setRules(rules);

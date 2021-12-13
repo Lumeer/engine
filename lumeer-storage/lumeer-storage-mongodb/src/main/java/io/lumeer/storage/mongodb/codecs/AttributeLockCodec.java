@@ -53,15 +53,18 @@ public class AttributeLockCodec implements Codec<AttributeLock> {
    }
 
    public static AttributeLock convertFromDocument(final Document document) {
+      if (document == null) {
+         return null;
+      }
       Boolean locked = document.getBoolean(LOCKED, false);
 
       List<AttributeLockExceptionGroup> exceptionGroups;
       List groupsList = document.get(EXCEPTION_GROUPS, List.class);
       if (groupsList != null) {
          exceptionGroups = document.getList(groupsList, Document.class)
-                          .stream()
-                          .map(AttributeLockExceptionGroupCodec::convertFromDocument)
-                          .collect(Collectors.toList());
+                                   .stream()
+                                   .map(AttributeLockExceptionGroupCodec::convertFromDocument)
+                                   .collect(Collectors.toList());
       } else {
          exceptionGroups = Collections.emptyList();
       }
