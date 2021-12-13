@@ -33,6 +33,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.api.util.CollectionUtil;
@@ -220,7 +221,7 @@ public class CollectionFacade extends AbstractFacade {
       final Collection originalCollection = storedCollection.copy();
 
       Map<String, Rule> rules = Objects.requireNonNullElse(storedCollection.getRules(), new HashMap<>());
-  
+
       Rule originalRule = rules.get(ruleId);
       rule.checkConfiguration(originalRule);
 
@@ -368,7 +369,7 @@ public class CollectionFacade extends AbstractFacade {
       final Set<RoleType> actualRoles = permissionsChecker.getActualRoles(collection);
 
       for (Attribute attribute : attributes) {
-         attribute.setId(Collection.ATTRIBUTE_PREFIX + lastAttributeNum++);
+         attribute.setId(AttributesResource.ATTRIBUTE_PREFIX + lastAttributeNum++);
          attribute.patchCreation(actualRoles);
          bookedAttributesCollection.createAttribute(attribute);
       }

@@ -44,8 +44,6 @@ public class Collection extends Resource implements AttributesResource, HealthCh
 
    public static Set<Role> ROLES = RoleUtils.collectionResourceRoles();
 
-   public static String ATTRIBUTE_PREFIX = "a";
-
    public static final String ATTRIBUTES = "attributes";
    public static final String DATA_DESCRIPTION = "dataDescription";
    public static final String PURPOSE = "purpose";

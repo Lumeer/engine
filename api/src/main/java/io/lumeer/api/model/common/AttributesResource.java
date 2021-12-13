@@ -26,6 +26,7 @@ import io.lumeer.api.util.ResourceUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,24 +39,25 @@ public interface AttributesResource {
 
    public static final String ATTRIBUTE_PREFIX = "a";
 
-   public Map<String, Rule> getRules();
+   Map<String, Rule> getRules();
 
-   public void setRules(final Map<String, Rule> rules);
+   void setRules(final Map<String, Rule> rules);
 
-   public Collection<Attribute> getAttributes();
+   Collection<Attribute> getAttributes();
 
-   public Collection<Attribute> getMutableAttributes();
+   @JsonIgnore
+   Collection<Attribute> getMutableAttributes();
 
-   public void setAttributes(final Collection<Attribute> attributes);
+   void setAttributes(final Collection<Attribute> attributes);
 
-   public Integer getLastAttributeNum();
+   Integer getLastAttributeNum();
 
-   public void setLastAttributeNum(final Integer lastAttributeNum);
+   void setLastAttributeNum(final Integer lastAttributeNum);
 
    default void createAttribute(final Attribute attribute) {
       if (attribute.getId() == null) {
          final Integer freeNum = getFreeAttributeNum();
-         attribute.setId(io.lumeer.api.model.Collection.ATTRIBUTE_PREFIX + freeNum);
+         attribute.setId(ATTRIBUTE_PREFIX + freeNum);
          setLastAttributeNum(freeNum);
       }
       getMutableAttributes().add(attribute);
@@ -105,7 +107,7 @@ public interface AttributesResource {
 
    default void patchAttributes(final java.util.Collection<Attribute> attributes, final Set<RoleType> roles) {
       // update and delete attributes
-      getAttributes().forEach(oldAttribute -> {
+      new ArrayList<>(getAttributes()).forEach(oldAttribute -> {
          var newAttribute = ResourceUtils.findAttribute(attributes, oldAttribute.getId());
          if (newAttribute != null) { // update
             var updatingAttribute = oldAttribute.copy();

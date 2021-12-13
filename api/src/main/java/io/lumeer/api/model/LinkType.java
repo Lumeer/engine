@@ -53,8 +53,6 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, At
    public static final String PERMISSIONS_TYPE = "permissionsType";
    public static final String PERMISSIONS = "permissions";
 
-   public static final String ATTRIBUTE_PREFIX = "a";
-
    private String id;
    private String name;
    private long version;

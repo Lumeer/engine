@@ -408,7 +408,7 @@ public class PermissionsChecker {
    }
 
    public void checkRulePermissions(Rule rule) {
-      if (rule.getType() != Rule.RuleType.BLOCKLY) {
+      if (rule.getType() == Rule.RuleType.BLOCKLY) {
          checkFunctionRuleAccess(new BlocklyRule(rule).getJs(), RoleType.DataWrite);
       }
    }

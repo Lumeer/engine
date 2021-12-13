@@ -33,6 +33,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionCheckerUtil;
@@ -283,7 +284,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       linkTypeFacade.createLinkTypeAttributes(id, Collections.singletonList(new Attribute("LMR")));
       linkType = linkTypeFacade.getLinkType(id);
       assertThat(linkType.getAttributes()).hasSize(1);
-      assertThat(linkType.getAttributes().get(0).getId()).isEqualTo(LinkType.ATTRIBUTE_PREFIX + "1");
+      assertThat(linkType.getAttributes().get(0).getId()).isEqualTo(AttributesResource.ATTRIBUTE_PREFIX + "1");
    }
 
    @Test
@@ -299,7 +300,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       assertThat(linkType.getAttributes()).hasSize(1);
       assertThat(linkType.getAttributes().get(0).getName()).isEqualTo("LMR");
 
-      linkTypeFacade.updateLinkTypeAttribute(id, LinkType.ATTRIBUTE_PREFIX + "1", new Attribute("LMR UPDATED"));
+      linkTypeFacade.updateLinkTypeAttribute(id, AttributesResource.ATTRIBUTE_PREFIX + "1", new Attribute("LMR UPDATED"));
       linkType = linkTypeFacade.getLinkType(id);
       assertThat(linkType.getAttributes()).hasSize(1);
       assertThat(linkType.getAttributes().get(0).getName()).isEqualTo("LMR UPDATED");
@@ -318,7 +319,7 @@ public class LinkTypeFacadeIT extends IntegrationTestBase {
       assertThat(linkType.getAttributes()).hasSize(1);
       assertThat(linkType.getAttributes().get(0).getName()).isEqualTo("LMR");
 
-      linkTypeFacade.deleteLinkTypeAttribute(id, LinkType.ATTRIBUTE_PREFIX + "1");
+      linkTypeFacade.deleteLinkTypeAttribute(id, AttributesResource.ATTRIBUTE_PREFIX + "1");
       linkType = linkTypeFacade.getLinkType(id);
       assertThat(linkType.getAttributes()).isEmpty();
    }
