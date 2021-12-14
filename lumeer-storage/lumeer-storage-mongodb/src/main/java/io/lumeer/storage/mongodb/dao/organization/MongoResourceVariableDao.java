@@ -83,7 +83,12 @@ public class MongoResourceVariableDao extends MongoOrganizationScopedDao impleme
    @Override
    public void ensureIndexes(final Organization organization) {
       MongoCollection<Document> collection = database.getCollection(databaseCollectionName(organization));
-      collection.createIndex(Indexes.ascending(ResourceVariableCodec.ORGANIZATION_ID, ResourceVariableCodec.PROJECT_ID, ResourceVariableCodec.RESOURCE_TYPE, ResourceVariableCodec.RESOURCE_ID, ResourceVariableCodec.KEY), new IndexOptions().unique(true));
+
+      final List<Document> indexes = collection.listIndexes().into(new ArrayList<>());
+
+      if (indexes.isEmpty()) {
+         collection.createIndex(Indexes.ascending(ResourceVariableCodec.ORGANIZATION_ID, ResourceVariableCodec.PROJECT_ID, ResourceVariableCodec.RESOURCE_TYPE, ResourceVariableCodec.RESOURCE_ID, ResourceVariableCodec.KEY), new IndexOptions().unique(true));
+      }
    }
 
    @Override
