@@ -55,7 +55,7 @@ public class AttributeLockCodec implements Codec<AttributeLock> {
 
    public static AttributeLock convertFromDocument(final Document document) {
       if (document == null) {
-         return new AttributeLock(Collections.emptyList(), false);
+         return null;
       }
       boolean locked = document.getBoolean(LOCKED, false);
 

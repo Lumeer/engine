@@ -18,26 +18,28 @@
  */
 package io.lumeer.remote.rest.init;
 
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Language;
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.ResourceComment;
-import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeFilterEquation;
+import io.lumeer.api.model.AttributeLock;
+import io.lumeer.api.model.AttributeLockExceptionGroup;
+import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.core.WorkspaceKeeper;
-import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.dao.DocumentDao;
-import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
-import io.lumeer.storage.api.dao.ResourceCommentDao;
-import io.lumeer.storage.api.dao.ResourceVariableDao;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -58,31 +60,20 @@ public class StartupFacade implements Serializable {
    private ProjectDao projectDao;
 
    @Inject
-   private DocumentDao documentDao;
+   private CollectionDao collectionDao;
 
    @Inject
-   private LinkInstanceDao linkInstanceDao;
-
-   @Inject
-   private ResourceCommentDao resourceCommentDao;
+   private LinkTypeDao linkTypeDao;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
-
-   @Inject
-   private ResourceVariableDao resourceVariableDao;
 
    @PostConstruct
    public void afterDeployment() {
       log.info("Checking database for updates...");
       long tm = System.currentTimeMillis();
 
-      organizationDao.getAllOrganizations().forEach(organization -> {
-         resourceVariableDao.setOrganization(organization);
-         resourceVariableDao.ensureIndexes(organization);
-      });
-
-      /*final LongAdder orgs = new LongAdder(), projs = new LongAdder(), comments = new LongAdder();
+      final LongAdder orgs = new LongAdder(), projs = new LongAdder(), attributes = new LongAdder();
 
       workspaceKeeper.push();
 
@@ -98,30 +89,29 @@ public class StartupFacade implements Serializable {
                log.info("Processing project " + project.getCode());
 
                workspaceKeeper.setProject(project);
-               resourceCommentDao.setProject(project);
-               documentDao.setProject(project);
-               linkInstanceDao.setProject(project);
+               linkTypeDao.setProject(project);
+               collectionDao.setProject(project);
 
-               resourceCommentDao.ensureIndexes(project);
+               collectionDao.getAllCollections().forEach(collection -> {
+                  log.info("Read " + collection.getAttributes().size() + " collection attributes.");
 
-               var allComments = resourceCommentDao.getResourceComments(ResourceType.DOCUMENT);
-               var documents = documentDao.getDocumentsByIds(allComments.stream().map(ResourceComment::getResourceId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(Document::getId, Function.identity()));
+                  var originalCollection = collection.copy();
 
-               log.info("Read " + allComments.size() + " document comments.");
+                  var migratedAttributes = collection.getAttributes().stream().map(this::migrateAttribute).collect(Collectors.toSet());
+                  collection.setAttributes(migratedAttributes);
 
-               allComments.forEach(comment -> {
-                  comments.increment();
-                  comment.setParentId(documents.get(comment.getResourceId()).getCollectionId());
-                  resourceCommentDao.pureUpdateComment(comment);
+                  collectionDao.updateCollection(collection.getId(), collection, originalCollection, false);
                });
 
-               allComments = resourceCommentDao.getResourceComments(ResourceType.LINK);
-               log.info("Read " + allComments.size() + " link comments.");
-               var links = linkInstanceDao.getLinkInstances(allComments.stream().map(ResourceComment::getResourceId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(LinkInstance::getId, Function.identity()));
-               allComments.forEach(comment -> {
-                  comments.increment();
-                  comment.setParentId(links.get(comment.getResourceId()).getLinkTypeId());
-                  resourceCommentDao.pureUpdateComment(comment);
+               linkTypeDao.getAllLinkTypes().forEach(linkType -> {
+                  log.info("Read " + linkType.getAttributes().size() + " collection attributes.");
+
+                  var originalLinkType = new LinkType(linkType);
+
+                  var migratedAttributes = linkType.getAttributes().stream().map(this::migrateAttribute).collect(Collectors.toSet());
+                  linkType.setAttributes(migratedAttributes);
+
+                  linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, false);
                });
 
             });
@@ -133,10 +123,35 @@ public class StartupFacade implements Serializable {
 
       workspaceKeeper.pop();
 
-      log.info(String.format("Updated %d organizations, %d project, %d comments.",
-            orgs.longValue(), projs.longValue(), comments.longValue()));
-      */
+      log.info(String.format("Updated %d organizations, %d project, %d attributes.",
+            orgs.longValue(), projs.longValue(), attributes.longValue()));
 
       log.info("Updates completed in " + (System.currentTimeMillis() - tm) + "ms.");
+   }
+
+   private Attribute migrateAttribute(Attribute attribute) {
+      Constraint constraint = attribute.getConstraint();
+      AttributeLock attributeLock = null;
+      if (constraint != null && constraint.getType() == ConstraintType.Action && AttributeUtil.isConstraintWithConfig(attribute)) {
+         @SuppressWarnings("unchecked") final Map<String, Object> config = (Map<String, Object>) constraint.getConfig();
+         config.remove("role");
+         Object equationObject = config.remove("equation");
+         if (equationObject != null) {
+            ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+            try {
+               String json = ow.writeValueAsString(equationObject);
+               ObjectMapper objectMapper = new ObjectMapper();
+               AttributeFilterEquation equation = objectMapper.readValue(json, AttributeFilterEquation.class);
+               AttributeLockExceptionGroup group = new AttributeLockExceptionGroup(equation, Collections.emptyList(), "everyone");
+               attributeLock = new AttributeLock(Collections.singletonList(group), true);
+            } catch (IOException ignored) {
+
+            }
+         }
+      } else if (AttributeUtil.functionIsDefined(attribute)) {
+         attributeLock = new AttributeLock(Collections.emptyList(), !attribute.getFunction().isEditable());
+      }
+
+      return new Attribute(attribute.getId(), attribute.getName(), attribute.getDescription(), constraint, attributeLock, attribute.getFunction(), attribute.getUsageCount());
    }
 }
