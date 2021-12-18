@@ -2,12 +2,11 @@ package io.lumeer.core.task.executor.operation.stage
 
 import io.lumeer.api.model.FileAttachment
 import io.lumeer.core.task.executor.ChangesTracker
-import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation
 import io.lumeer.core.task.executor.operation.OperationExecutor
 import io.lumeer.core.task.executor.operation.SendSmtpEmailOperation
-import io.lumeer.core.task.executor.request.SendSmtpEmailRequest
 import io.lumeer.core.util.EmailPart
 import io.lumeer.core.util.EmailService
+import java.net.URLConnection
 
 /*
  * Lumeer: Modern Data Definition and Processing Platform
@@ -51,8 +50,8 @@ class SendSmtpEmailsStage(executor: OperationExecutor) : Stage(executor) {
                      FileAttachment.AttachmentType.DOCUMENT
                ).map { attachment ->
                   val bytes = task.fileAttachmentAdapter.readFileAttachment(attachment)
-                  // TODO determine mimeType
-                  EmailPart(attachment.fileName, "", bytes)
+                  URLConnection.getFileNameMap()
+                  EmailPart(attachment.fileName, getMimeType(attachment.fileName), bytes)
                }
             )
          }
@@ -68,8 +67,7 @@ class SendSmtpEmailsStage(executor: OperationExecutor) : Stage(executor) {
                         FileAttachment.AttachmentType.LINK
                   ).map { attachment ->
                      val bytes = task.fileAttachmentAdapter.readFileAttachment(attachment)
-                     // TODO determine mimeType
-                     EmailPart(attachment.fileName, "", bytes)
+                     EmailPart(attachment.fileName, getMimeType(attachment.fileName), bytes)
                   }
             )
          }
@@ -79,4 +77,7 @@ class SendSmtpEmailsStage(executor: OperationExecutor) : Stage(executor) {
 
       return changesTracker
    }
+
+   private fun getMimeType(fileName: String): String =
+         URLConnection.guessContentTypeFromName(fileName) ?: "application/octet-stream"
 }

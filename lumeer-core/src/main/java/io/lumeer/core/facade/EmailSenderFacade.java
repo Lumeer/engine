@@ -120,7 +120,11 @@ public class EmailSenderFacade {
 
             final String body = templateEngine.transform(template, values);
 
-            emailService.sendEmail(subject, recipient, body, from);
+            try {
+               emailService.sendEmail(subject, recipient, body, from);
+            } catch (Exception e) {
+               log.log(Level.SEVERE, String.format("Unable to send email '%s'.", subject), e);
+            }
          }
       }
    }

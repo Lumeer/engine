@@ -61,45 +61,37 @@ class EmailService(val server: String, val port: Int, val user: String, val pass
    }
 
    fun sendEmail(subject: String, to: String, body: String, fromName: String) {
-      try {
-         val message = getMimeMessage(subject, to, body, fromName)
-         message.setContent(body, "text/html; charset=utf-8")
-         message.saveChanges()
+      val message = getMimeMessage(subject, to, body, fromName)
+      message.setContent(body, "text/html; charset=utf-8")
+      message.saveChanges()
 
-         sendMimeMessage(message)
-      } catch (e: Exception) {
-         log.log(Level.SEVERE, String.format("Unable to send email '%s'.", subject), e)
-      }
+      sendMimeMessage(message)
    }
 
    fun sendEmail(subject: String, to: String, body: String, fromName: String, attachments: List<EmailPart>) {
       if (attachments.size <= 0) {
          sendEmail(subject, to, body, fromName)
       } else {
-         try {
-            val message = getMimeMessage(subject, to, body, fromName)
+         val message = getMimeMessage(subject, to, body, fromName)
 
-            val multipart = MimeMultipart()
+         val multipart = MimeMultipart()
 
-            val bodyPart = MimeBodyPart()
-            bodyPart.setContent(body, "text/html; charset=utf-8")
-            multipart.addBodyPart(bodyPart)
+         val bodyPart = MimeBodyPart()
+         bodyPart.setContent(body, "text/html; charset=utf-8")
+         multipart.addBodyPart(bodyPart)
 
-            attachments.forEach { attachment ->
-               val part = MimeBodyPart()
-               part.setContent(attachment.data, attachment.mimeType)
-               part.fileName = attachment.name
+         attachments.forEach { attachment ->
+            val part = MimeBodyPart()
+            part.setContent(attachment.data, attachment.mimeType)
+            part.fileName = attachment.name
 
-               multipart.addBodyPart(part)
-            }
-
-            message.setContent(multipart)
-            message.saveChanges()
-
-            sendMimeMessage(message)
-         } catch (e: Exception) {
-            log.log(Level.SEVERE, String.format("Unable to send email '%s'.", subject), e)
+            multipart.addBodyPart(part)
          }
+
+         message.setContent(multipart)
+         message.saveChanges()
+
+         sendMimeMessage(message)
       }
    }
 
