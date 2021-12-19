@@ -34,7 +34,7 @@ import io.lumeer.api.model.ViewCursor;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.adapter.PermissionAdapter;
-import io.lumeer.core.facade.EmailService;
+import io.lumeer.core.facade.EmailSenderFacade;
 import io.lumeer.core.facade.PusherFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.facade.translate.TranslationManager;
@@ -92,7 +92,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
    private UserNotificationDao userNotificationDao;
 
    @Inject
-   private EmailService emailService;
+   private EmailSenderFacade emailSenderFacade;
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -215,12 +215,12 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
                if (action.getNotificationChannel() == NotificationChannel.Email) {
                   final User user = userIds.containsKey(action.getInitiator()) ? users.get(userIds.get(action.getInitiator())) : null;
-                  final String sender = user != null ? emailService.formatUserReference(user) : "";
-                  final String from = user != null ? emailService.formatFrom(user) : "";
+                  final String sender = user != null ? emailSenderFacade.formatUserReference(user) : "";
+                  final String from = user != null ? emailSenderFacade.formatFrom(user) : "";
                   final String recipient = action.getReceiver();
                   final Map<String, Object> additionalData = processData(action.getData(), lang, receiverUser);
 
-                  emailService.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, from, recipient, getEmailSubjectPart(action, additionalData, lang), additionalData);
+                  emailSenderFacade.sendEmailFromTemplate(getEmailTemplate(action), lang, sender, from, recipient, getEmailSubjectPart(action, additionalData, lang), additionalData);
                } else if (action.getNotificationChannel() == NotificationChannel.Internal && userIds.containsKey(action.getReceiver())) {
                   UserNotification notification = createUserNotification(users.get(userIds.get(action.getReceiver())), action, lang);
                   notification = userNotificationDao.createNotification(notification);
@@ -459,36 +459,36 @@ public class DelayedActionProcessor extends WorkspaceContext {
       return subject.toString();
    }
 
-   private EmailService.EmailTemplate getEmailTemplate(final DelayedAction action) {
+   private EmailSenderFacade.EmailTemplate getEmailTemplate(final DelayedAction action) {
       switch (action.getNotificationType()) {
          case TASK_ASSIGNED:
-            return EmailService.EmailTemplate.TASK_ASSIGNED;
+            return EmailSenderFacade.EmailTemplate.TASK_ASSIGNED;
          case DUE_DATE_SOON:
-            return EmailService.EmailTemplate.DUE_DATE_SOON;
+            return EmailSenderFacade.EmailTemplate.DUE_DATE_SOON;
          case PAST_DUE_DATE:
-            return EmailService.EmailTemplate.PAST_DUE_DATE;
+            return EmailSenderFacade.EmailTemplate.PAST_DUE_DATE;
          case STATE_UPDATE:
-            return EmailService.EmailTemplate.STATE_UPDATE;
+            return EmailSenderFacade.EmailTemplate.STATE_UPDATE;
          case TASK_UPDATED:
-            return EmailService.EmailTemplate.TASK_UPDATED;
+            return EmailSenderFacade.EmailTemplate.TASK_UPDATED;
          case TASK_REMOVED:
-            return EmailService.EmailTemplate.TASK_REMOVED;
+            return EmailSenderFacade.EmailTemplate.TASK_REMOVED;
          case TASK_UNASSIGNED:
-            return EmailService.EmailTemplate.TASK_UNASSIGNED;
+            return EmailSenderFacade.EmailTemplate.TASK_UNASSIGNED;
          case DUE_DATE_CHANGED:
-            return EmailService.EmailTemplate.DUE_DATE_CHANGED;
+            return EmailSenderFacade.EmailTemplate.DUE_DATE_CHANGED;
          case TASK_COMMENTED:
-            return EmailService.EmailTemplate.TASK_COMMENTED;
+            return EmailSenderFacade.EmailTemplate.TASK_COMMENTED;
          case TASK_MENTIONED:
-            return EmailService.EmailTemplate.TASK_MENTIONED;
+            return EmailSenderFacade.EmailTemplate.TASK_MENTIONED;
          case TASK_REOPENED:
-            return EmailService.EmailTemplate.TASK_REOPENED;
+            return EmailSenderFacade.EmailTemplate.TASK_REOPENED;
          case TASK_CHANGED:
             return action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_TYPES, NotificationType.class).contains(NotificationType.TASK_ASSIGNED) ?
-                  EmailService.EmailTemplate.TASK_ASSIGNED :
+                  EmailSenderFacade.EmailTemplate.TASK_ASSIGNED :
                   (action.getData().getArrayList(DelayedAction.DATA_ORIGINAL_ACTION_TYPES, NotificationType.class).contains(NotificationType.TASK_REOPENED) ?
-                        EmailService.EmailTemplate.TASK_REOPENED :
-                        EmailService.EmailTemplate.TASK_UPDATED);
+                        EmailSenderFacade.EmailTemplate.TASK_REOPENED :
+                        EmailSenderFacade.EmailTemplate.TASK_UPDATED);
          default:
             return null;
       }

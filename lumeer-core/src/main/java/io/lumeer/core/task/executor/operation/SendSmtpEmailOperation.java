@@ -18,10 +18,11 @@
  */
 package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.core.task.executor.request.SendEmailRequest;
+import io.lumeer.core.task.executor.request.SendSmtpEmailRequest;
 
-public class SendEmailOperation extends Operation<SendEmailRequest> {
-   public SendEmailOperation(final SendEmailRequest entity) {
+public class SendSmtpEmailOperation extends Operation<SendSmtpEmailRequest> {
+
+   public SendSmtpEmailOperation(final SendSmtpEmailRequest entity) {
       super(entity);
    }
 
@@ -31,4 +32,5 @@ public class SendEmailOperation extends Operation<SendEmailRequest> {
             "entity=" + entity +
             '}';
    }
+
 }

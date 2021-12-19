@@ -96,7 +96,7 @@ public class BlocklyRuleTaskExecutor {
          }
 
          checkErrorErasure();
-      } catch (Exception e) {
+      } catch (Throwable e) {
          log.log(Level.WARNING, "Unable to execute Blockly Rule on document change: ", e);
          writeTaskError(e);
       }
@@ -111,7 +111,7 @@ public class BlocklyRuleTaskExecutor {
       }
    }
 
-   private void writeTaskError(final Exception e) {
+   private void writeTaskError(final Throwable e) {
       try (StringWriter sw = new StringWriter(); PrintWriter pw = new PrintWriter(sw)) {
          e.printStackTrace(pw);
 

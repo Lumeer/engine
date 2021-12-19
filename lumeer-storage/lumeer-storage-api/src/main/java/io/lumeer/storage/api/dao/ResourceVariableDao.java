@@ -39,5 +39,7 @@ public interface ResourceVariableDao extends OrganizationScopedDao {
 
    List<ResourceVariable> getInProject(String organizationId, String projectId);
 
+   ResourceVariable getVariableByName(String organizationId, String projectId, String name);
+
    ResourceVariable getVariable(String id);
 }

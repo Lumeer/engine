@@ -30,6 +30,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -51,6 +52,7 @@ import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
@@ -133,6 +135,16 @@ public class LumeerS3Client {
                   .build());
 
       return response.contents().stream().map(s3Object -> new S3ObjectItem(s3Object.key(), s3Object.size())).collect(Collectors.toList());
+   }
+
+   public byte[] readObject(final String key) {
+      return s3.getObjectAsBytes(
+            GetObjectRequest
+                  .builder()
+                  .bucket(S3_BUCKET)
+                  .key(key)
+                  .build()
+      ).asByteArray();
    }
 
    public void copyObject(final String sourceKey, final String targetKey) {

@@ -16,19 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.core.task.executor.operation;
+package io.lumeer.core.util
 
-import io.lumeer.core.task.executor.request.SendEmailRequest;
-
-public class SendEmailOperation extends Operation<SendEmailRequest> {
-   public SendEmailOperation(final SendEmailRequest entity) {
-      super(entity);
-   }
-
-   @Override
-   public String toString() {
-      return getClass().getSimpleName() + "{" +
-            "entity=" + entity +
-            '}';
-   }
+enum class EmailSecurityType {
+   NONE, SSL, TLS
 }

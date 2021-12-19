@@ -121,4 +121,5 @@ public interface DaoContextSnapshot {
    long increaseCreationCounter();
    long increaseDeletionCounter();
    long increaseMessageCounter();
+   long increaseEmailCounter();
 }

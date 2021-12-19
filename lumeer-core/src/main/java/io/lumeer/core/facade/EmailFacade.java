@@ -34,9 +34,9 @@ public class EmailFacade {
    private AuthenticatedUser user;
 
    @Inject
-   private EmailService emailService;
+   private EmailSenderFacade emailSenderFacade;
 
    public void sendInvitation(final String invitedEmail) {
-      emailService.sendEmailFromTemplate(EmailService.EmailTemplate.INVITATION, requestDataKeeper.getUserLanguage(), emailService.formatUserReference(user.getCurrentUser()), emailService.formatFrom(user.getCurrentUser()), invitedEmail, "");
+      emailSenderFacade.sendEmailFromTemplate(EmailSenderFacade.EmailTemplate.INVITATION, requestDataKeeper.getUserLanguage(), emailSenderFacade.formatUserReference(user.getCurrentUser()), emailSenderFacade.formatFrom(user.getCurrentUser()), invitedEmail, "");
    }
 }
