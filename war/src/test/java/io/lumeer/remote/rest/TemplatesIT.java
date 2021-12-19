@@ -38,6 +38,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -109,6 +110,9 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
    @Inject
    private SelectionListDao selectionListDao;
+
+   @Inject
+   private ResourceVariableDao resourceVariableDao;
 
    @Before
    public void configureProject() {
@@ -195,15 +199,15 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       var tasksCollection = collectionsList.get(0).getName().equals("Tasks") ? collectionsList.get(0) : collectionsList.get(1);
 
-      assertThat(tasksCollection.getRules().size()).isEqualTo(1);
+      assertThat(tasksCollection.getRules().size()).isEqualTo(2);
       tasksCollection.getRules().forEach((ruleId, rule) -> {
          assertThat(rule.getType()).isEqualTo(Rule.RuleType.BLOCKLY);
          assertThat(rule.getConfiguration()).containsKeys(BlocklyRule.BLOCKLY_XML, BlocklyRule.BLOCKLY_JS);
-         assertThat(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML).length()).isGreaterThan(100);
-         assertThat(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS).length()).isGreaterThan(100);
+         assertThat(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_XML).length()).isGreaterThan(80);
+         assertThat(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS).length()).isGreaterThan(80);
       });
 
-      assertThat(tasksCollection.getAttributes().size()).isEqualTo(5);
+      assertThat(tasksCollection.getAttributes().size()).isEqualTo(6);
 
       var dataCollection = collectionsList.get(0).getName().equals("Data") ? collectionsList.get(0) : collectionsList.get(1);
 
@@ -223,11 +227,17 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       assertThat(sequences.size()).isEqualTo(1);
       assertThat(sequences.get(0).getSeq()).isEqualTo(1);
 
-      var selectionLists = selectionListDao.getAllLists(List.of(p1.getId()));
+      var selectionLists = selectionListDao.getAllLists(List.of(p2.getId()));
 
       assertThat(selectionLists).extracting(SelectionList::getName).contains("3 states");
 
       assertThat(selectionLists.size()).isEqualTo(6);
+
+      var variables = resourceVariableDao.getInProject(organization.getId(), p2.getId());
+
+      assertThat(variables.size()).isEqualTo(1);
+      assertThat(variables.get(0).getKey()).isEqualTo("public_var");
+      assertThat(variables.get(0).getValue()).isEqualTo("normal");
    }
 
 }
