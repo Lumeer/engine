@@ -79,6 +79,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
+import com.floreysoft.jmte.Engine;
 import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.Value;
 
@@ -113,6 +114,8 @@ public class LumeerBridge {
    private Exception cause = null;
    private boolean dryRun = false;
    private boolean printed = false;
+
+   private Engine templateEngine = null;
 
    public LumeerBridge(final ContextualTask task) {
       this.task = task;
@@ -486,6 +489,45 @@ public class LumeerBridge {
             task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(),
             l.getLinkTypeId(), l.getId(), attrId, FileAttachment.AttachmentType.LINK
       ).stream().mapToLong(FileAttachment::getSize).sum();
+   }
+
+   @SuppressWarnings("unused")
+   public synchronized String formatTemplate(final String template, final Value replacements, final String splitter) {
+      if (replacements == null) {
+         return "";
+      }
+
+      if (templateEngine == null) {
+         templateEngine = Engine.createEngine();
+      }
+
+      final Map<String, Object> patterns = new HashMap<>();
+
+      if (replacements.hasArrayElements()) {
+         for (int i = 0; i < replacements.getArraySize(); i++) {
+            addTemplatePart(patterns, splitter, replacements.getArrayElement(i).toString());
+         }
+      } else if (replacements.hasMembers()) {
+         replacements.getMemberKeys().stream().filter(key -> replacements.getMember(key) != null).forEach(key -> addTemplatePart(patterns, splitter, replacements.getMember(key).asString()));
+      } else {
+         addTemplatePart(patterns, splitter, replacements.toString());
+      }
+
+      try {
+         return templateEngine.transform(template, patterns);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   private void addTemplatePart(final Map<String, Object> patterns, final String splitter, final String item) {
+      var parts = item.split(splitter);
+      if (parts.length == 2) {
+         patterns.put(parts[0], parts[1]);
+      } else {
+         throw new IllegalStateException(String.format("Illegal number of parts in a replacement pattern. Splitting with %s and found %d parts.", splitter, parts.length));
+      }
    }
 
    public DocumentOperation setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
