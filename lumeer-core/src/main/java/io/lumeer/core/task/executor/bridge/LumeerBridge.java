@@ -376,10 +376,10 @@ public class LumeerBridge {
    @SuppressWarnings("unused")
    public String getVariable(final String variableName) {
       try {
-         final List<ResourceVariable> vars = task.getDaoContextSnapshot().getResourceVariableDao().getInProject(task.getDaoContextSnapshot().getOrganizationId(), task.getDaoContextSnapshot().getProjectId());
+         final ResourceVariable variable = task.getDaoContextSnapshot().getResourceVariableDao().getVariableByName(task.getDaoContextSnapshot().getOrganizationId(), task.getDaoContextSnapshot().getProjectId(), variableName);
 
-         if (vars != null) {
-            return vars.stream().filter(v -> v.getKey().equals(variableName)).map(ResourceVariable::getValue).map(String::valueOf).findFirst().orElse("");
+         if (variable != null && variable.getValue() != null) {
+            return variable.getValue().toString();
          }
 
          return "";

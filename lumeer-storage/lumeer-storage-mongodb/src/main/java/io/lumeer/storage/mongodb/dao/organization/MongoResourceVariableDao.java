@@ -166,6 +166,14 @@ public class MongoResourceVariableDao extends MongoOrganizationScopedDao impleme
       return mongoCursor.next();
    }
 
+   @Override
+   public ResourceVariable getVariableByName(final String organizationId, final String projectId, final String varName) {
+      final Bson filter = inProjectFilter(organizationId, projectId);
+      final Bson nameFilter = Filters.eq(ResourceVariableCodec.KEY, varName);
+
+      return databaseCollection().find(Filters.and(filter, nameFilter)).first();
+   }
+
    MongoCollection<ResourceVariable> databaseCollection() {
       return database.getCollection(databaseCollectionName(), ResourceVariable.class);
    }
