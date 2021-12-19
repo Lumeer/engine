@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.util;
 
-import io.lumeer.api.model.FileAttachment;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.s3.PresignUrlRequest;
 import io.lumeer.core.util.s3.S3ObjectItem;
@@ -30,7 +29,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;

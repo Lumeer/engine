@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+import com.oracle.truffle.regex.util.LRUCache;
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.lang3.StringUtils;
 import org.marvec.pusher.Pusher;
 import org.marvec.pusher.data.BackupDataEvent;
@@ -35,9 +37,13 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PusherClient {
+
+   private static final Map<Integer, PusherClient> cache = new LRUMap<>(10);
 
    private Pusher pusher;
    private ObjectMapper mapper;
@@ -52,7 +58,9 @@ public class PusherClient {
       String pusherCluster = Optional.ofNullable(configurationProducer.get(DefaultConfigurationProducer.PUSHER_CLUSTER)).orElse("");
 
       if (StringUtils.isNotEmpty(pusherSecret)) {
-         return new PusherClient(pusherAppId, pusheyKey, pusherSecret, pusherCluster);
+         int hash = (pusherAppId + pusheyKey + pusherSecret + pusheyKey).hashCode();
+
+         return cache.computeIfAbsent(hash, k -> new PusherClient(pusherAppId, pusheyKey, pusherSecret, pusherCluster));
       }
 
       return null;
