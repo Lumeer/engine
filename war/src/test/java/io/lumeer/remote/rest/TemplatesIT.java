@@ -199,7 +199,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       var tasksCollection = collectionsList.get(0).getName().equals("Tasks") ? collectionsList.get(0) : collectionsList.get(1);
 
-      assertThat(tasksCollection.getRules().size()).isEqualTo(2);
+      assertThat(tasksCollection.getRules().size()).isEqualTo(1);
       tasksCollection.getRules().forEach((ruleId, rule) -> {
          assertThat(rule.getType()).isEqualTo(Rule.RuleType.BLOCKLY);
          assertThat(rule.getConfiguration()).containsKeys(BlocklyRule.BLOCKLY_XML, BlocklyRule.BLOCKLY_JS);
@@ -207,7 +207,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
          assertThat(rule.getConfiguration().getString(BlocklyRule.BLOCKLY_JS).length()).isGreaterThan(80);
       });
 
-      assertThat(tasksCollection.getAttributes().size()).isEqualTo(6);
+      assertThat(tasksCollection.getAttributes().size()).isEqualTo(5);
 
       var dataCollection = collectionsList.get(0).getName().equals("Data") ? collectionsList.get(0) : collectionsList.get(1);
 
