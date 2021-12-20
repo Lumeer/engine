@@ -72,7 +72,8 @@ public class ResourceVariableCreator extends WithIdCreator {
       final JSONArray variables = (JSONArray) templateParser.template.get("variables");
 
       List<ResourceVariable> currentVariables = resourceVariableFacade.getInProject(projectId);
-      Set<String> currentKeys = currentVariables.stream().map(ResourceVariable::getKey).collect(Collectors.toSet());;
+      Set<String> currentKeys = currentVariables.stream().map(ResourceVariable::getKey).collect(Collectors.toSet());
+      ;
 
       if (variables != null) {
          final List<ResourceVariable> result = new ArrayList<>();
@@ -83,7 +84,7 @@ public class ResourceVariableCreator extends WithIdCreator {
                var resourceVariable = mapper.readValue(variableJson.toJSONString(), ResourceVariable.class);
                resourceVariable.setId(null);
 
-               if(currentKeys.contains(resourceVariable.getKey()) || resourceVariable.getResourceType() == ResourceType.ORGANIZATION) {
+               if (currentKeys.contains(resourceVariable.getKey()) || resourceVariable.getResourceType() == ResourceType.ORGANIZATION) {
                   return;
                }
 

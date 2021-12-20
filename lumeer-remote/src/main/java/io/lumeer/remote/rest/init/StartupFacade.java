@@ -97,7 +97,7 @@ public class StartupFacade implements Serializable {
 
                   var originalCollection = collection.copy();
 
-                  var migratedAttributes = collection.getAttributes().stream().map(this::migrateAttribute).collect(Collectors.toSet());
+                  var migratedAttributes = collection.getAttributes().stream().map(attribute -> this.migrateAttribute(attribute, attributes)).collect(Collectors.toSet());
                   collection.setAttributes(migratedAttributes);
 
                   collectionDao.updateCollection(collection.getId(), collection, originalCollection, false);
@@ -108,7 +108,7 @@ public class StartupFacade implements Serializable {
 
                   var originalLinkType = new LinkType(linkType);
 
-                  var migratedAttributes = linkType.getAttributes().stream().map(this::migrateAttribute).collect(Collectors.toSet());
+                  var migratedAttributes = linkType.getAttributes().stream().map(attribute -> this.migrateAttribute(attribute, attributes)).collect(Collectors.toSet());
                   linkType.setAttributes(migratedAttributes);
 
                   linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, false);
@@ -129,7 +129,7 @@ public class StartupFacade implements Serializable {
       log.info("Updates completed in " + (System.currentTimeMillis() - tm) + "ms.");
    }
 
-   private Attribute migrateAttribute(Attribute attribute) {
+   private Attribute migrateAttribute(Attribute attribute, LongAdder adder) {
       Constraint constraint = attribute.getConstraint();
       AttributeLock attributeLock = null;
       if (constraint != null && constraint.getType() == ConstraintType.Action && AttributeUtil.isConstraintWithConfig(attribute)) {
@@ -144,12 +144,14 @@ public class StartupFacade implements Serializable {
                AttributeFilterEquation equation = objectMapper.readValue(json, AttributeFilterEquation.class);
                AttributeLockExceptionGroup group = new AttributeLockExceptionGroup(equation, Collections.emptyList(), "everyone");
                attributeLock = new AttributeLock(Collections.singletonList(group), true);
+               adder.increment();
             } catch (IOException ignored) {
 
             }
          }
       } else if (AttributeUtil.functionIsDefined(attribute)) {
          attributeLock = new AttributeLock(Collections.emptyList(), !attribute.getFunction().isEditable());
+         adder.increment();
       }
 
       return new Attribute(attribute.getId(), attribute.getName(), attribute.getDescription(), constraint, attributeLock, attribute.getFunction(), attribute.getUsageCount());
