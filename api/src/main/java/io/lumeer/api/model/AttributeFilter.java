@@ -19,7 +19,9 @@
 
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,10 +33,13 @@ public class AttributeFilter {
    private final ConditionType condition;
    private List<ConditionValue> conditionValues;
 
-   public AttributeFilter(final String attributeId, final ConditionType condition, final List<ConditionValue> value) {
+   @JsonCreator
+   public AttributeFilter(@JsonProperty("attributeId") final String attributeId,
+         @JsonProperty("condition") final ConditionType condition,
+         @JsonProperty("conditionValues") final List<ConditionValue> conditionValues) {
       this.attributeId = attributeId;
       this.condition = condition;
-      this.conditionValues = value;
+      this.conditionValues = conditionValues;
    }
 
    public String getAttributeId() {

@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.ActionRoleType;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
@@ -603,16 +602,9 @@ public class DocumentFacade extends AbstractFacade {
          if (!collection.getRules().containsKey(rule)) {
             throw new IllegalStateException("Rule not found");
          }
-         var roleString = config.get("role").toString();
-         var role = ActionRoleType.fromString(roleString);
 
-         if (role == ActionRoleType.Read) {
-            var document = checkReadDocument(collection, documentId);
-            taskProcessingFacade.runRule(collection, rule, document, actionName);
-         } else if (role == ActionRoleType.Write) {
-            var document = checkEditDocument(collection, documentId);
-            taskProcessingFacade.runRule(collection, rule, document, actionName);
-         }
+         var document = checkReadDocument(collection, documentId);
+         taskProcessingFacade.runRule(collection, rule, document, actionName);
       }
    }
 

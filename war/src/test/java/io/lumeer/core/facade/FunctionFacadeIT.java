@@ -353,7 +353,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private LinkType getLinkType(Collection coll1, Collection coll2) {
       return linkTypeDao.getLinkTypesByCollectionId(coll1.getId()).
-            stream().filter(lt -> lt.getCollectionIds().containsAll(Arrays.asList(coll1.getId(), coll2.getId())))
+                        stream().filter(lt -> lt.getCollectionIds().containsAll(Arrays.asList(coll1.getId(), coll2.getId())))
                         .findFirst().get();
    }
 
@@ -404,7 +404,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private Collection createCollectionWithAttributes(String code, String... attributeIds) {
       Set<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
-            new Attribute(attributeId, attributeId, null, null, new Function("const lumeerko", "", "", 0, false), 1))
+                                              new Attribute(attributeId, attributeId, null, null, null, new Function("const lumeerko", "", "", 0, false), 1))
                                         .collect(Collectors.toSet());
       return createCollection(code, attributes);
    }
@@ -419,7 +419,7 @@ public class FunctionFacadeIT extends IntegrationTestBase {
 
    private LinkType createLinkWithAttribute(String name, List<String> collectionIds, String... attributeIds) {
       List<Attribute> attributes = Arrays.stream(attributeIds).map(attributeId ->
-            new Attribute(attributeId, attributeId, null, null, new Function("const lumeerko", "", "", 0, false), 1))
+                                               new Attribute(attributeId, attributeId, null, null, null, new Function("const lumeerko", "", "", 0, false), 1))
                                          .collect(Collectors.toList());
       LinkType linkType = new LinkType(name, collectionIds, attributes, null, null, null);
       return linkTypeDao.createLinkType(linkType);

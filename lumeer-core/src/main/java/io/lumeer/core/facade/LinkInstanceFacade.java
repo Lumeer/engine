@@ -19,7 +19,6 @@
 
 package io.lumeer.core.facade;
 
-import io.lumeer.api.model.ActionRoleType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
@@ -380,16 +379,9 @@ public class LinkInstanceFacade extends AbstractFacade {
          if (!linkType.getRules().containsKey(rule)) {
             throw new IllegalStateException("Rule not found");
          }
-         var roleString = config.get("role").toString();
-         var role = ActionRoleType.fromString(roleString);
 
-         if (role == ActionRoleType.Read) {
-            var linkInstance = checkReadLink(linkType, linkInstanceId);
-            taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
-         } else if (role == ActionRoleType.Write) {
-            var linkInstance = checkEditLink(linkType, linkInstanceId);
-            taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
-         }
+         var linkInstance = checkReadLink(linkType, linkInstanceId);
+         taskProcessingFacade.runRule(linkType, rule, linkInstance, actionName);
       }
    }
 

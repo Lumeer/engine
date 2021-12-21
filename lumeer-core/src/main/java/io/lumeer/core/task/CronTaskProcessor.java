@@ -39,6 +39,8 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
@@ -55,6 +57,8 @@ public class CronTaskProcessor extends WorkspaceContext {
    @Inject
    private TaskExecutor taskExecutor;
 
+   private static final Logger log = Logger.getLogger(CronTaskProcessor.class.getName());
+
    private final CronTaskChecker checker = new CronTaskChecker();
 
    @Schedule(hour = "*", minute = "*/2") // every single hour
@@ -69,45 +73,61 @@ public class CronTaskProcessor extends WorkspaceContext {
 
          projects.forEach(project -> {
             final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
-            final ContextualTaskFactory taskFactory = getTaskFactory(projDao);
-
             final List<Collection> collections = projDao.getCollectionDao().getAllCollections();
-            collections.forEach(collection -> processRules(projDao, collection, taskFactory));
+            collections.forEach(collection -> processRules(projDao, collection));
          });
       });
    }
 
-   private void processRules(final DaoContextSnapshot dao, final Collection collection, final ContextualTaskFactory taskFactory) {
-      collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).forEach(entry -> {
-         final CronRule rule = new CronRule(entry.getValue());
-         if (checker.shouldExecute(rule, ZonedDateTime.now())) {
-            final String signature = UUID.randomUUID().toString();
-            rule.setLastRun(ZonedDateTime.now());
-            rule.setExecuting(signature);
+   private void processRules(final DaoContextSnapshot dao, final Collection collection) {
+      var rules = collection.getRules().entrySet().stream().filter(e -> e.getValue().getType() == Rule.RuleType.CRON).collect(Collectors.toList());
 
-            final Collection bookedCollection = dao.getCollectionDao().updateCollectionRules(collection);
+      if (rules.size() > 0) {
+         final ContextualTaskFactory taskFactory = getTaskFactory(dao);
 
-            // is it us who tried last?
-            final String executing = new CronRule(bookedCollection.getRules().get(entry.getKey())).getExecuting();
-            if (executing == null || "".equals(executing)) {
+         rules.forEach(entry -> {
+            final CronRule rule = new CronRule(entry.getValue());
+            if (checker.shouldExecute(rule, ZonedDateTime.now())) {
 
-               final List<Document> documents = getDocuments(rule, collection, dao);
-
-               taskExecutor.submitTask(
-                     getTask(
-                           taskFactory,
-                           entry.getValue().getName() != null ? entry.getValue().getName() : entry.getKey(),
-                           entry.getValue(),
-                           collection,
-                           documents
-                     )
+               log.log(
+                     Level.INFO,
+                     "Running cron rule on %s/%s, %s, '%s'.",
+                     new String[] {
+                           dao.getOrganization().getCode(),
+                           dao.getProject().getCode(),
+                           collection.getName(),
+                           rule.getRule().getName()
+                     }
                );
 
-               rule.setExecuting(null);
-               dao.getCollectionDao().updateCollectionRules(collection);
+               final String signature = UUID.randomUUID().toString();
+               rule.setLastRun(ZonedDateTime.now());
+               rule.setExecuting(signature);
+
+               final Collection bookedCollection = dao.getCollectionDao().updateCollectionRules(collection);
+
+               // is it us who tried last?
+               final String executing = new CronRule(bookedCollection.getRules().get(entry.getKey())).getExecuting();
+               if (executing == null || "".equals(executing)) {
+
+                  final List<Document> documents = getDocuments(rule, collection, dao);
+
+                  taskExecutor.submitTask(
+                        getTask(
+                              taskFactory,
+                              entry.getValue().getName() != null ? entry.getValue().getName() : entry.getKey(),
+                              entry.getValue(),
+                              collection,
+                              documents
+                        )
+                  );
+
+                  rule.setExecuting(null);
+                  dao.getCollectionDao().updateCollectionRules(collection);
+               }
             }
-         }
-      });
+         });
+      }
    }
 
    private List<Document> getDocuments(final CronRule rule, final Collection collection, final DaoContextSnapshot dao) {

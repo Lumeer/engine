@@ -72,7 +72,7 @@ public class QueryStemCodec implements Codec<QueryStem> {
       Set<String> documentIds = convertToSet(bson.get(DOCUMENT_IDS, List.class));
 
       List<CollectionAttributeFilter> attributes = new ArrayList<Document>(bson.get(FILTERS, List.class)).stream()
-                                                                                                         .map(AttributeFilterCodec::convertFromDocument)
+                                                                                                         .map(CollectionAttributeFilterCodec::convertFromDocument)
                                                                                                          .collect(Collectors.toList());
 
       List<LinkAttributeFilter> linkAttributes;

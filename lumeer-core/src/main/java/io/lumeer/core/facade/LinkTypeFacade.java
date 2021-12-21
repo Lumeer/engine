@@ -29,7 +29,9 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.util.CollectionUtil;
+import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.exception.BadFormatException;
@@ -43,15 +45,12 @@ import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -266,14 +265,11 @@ public class LinkTypeFacade extends AbstractFacade {
       final LinkType bookedAttributesLinkType = linkTypeDao.bookAttributesNum(linkType.getId(), linkType, attributes.size());
 
       int lastAttributeNum = bookedAttributesLinkType.getLastAttributeNum() - attributes.size() + 1;
-      var canEditFunction = permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig);
+      var actualRoles = permissionsChecker.getActualRoles(linkType);
 
       for (Attribute attribute : attributes) {
-         attribute.setId(LinkType.ATTRIBUTE_PREFIX + lastAttributeNum++);
-         attribute.setUsageCount(0);
-         if (!canEditFunction) {
-            attribute.setFunction(null);
-         }
+         attribute.setId(AttributesResource.ATTRIBUTE_PREFIX + lastAttributeNum++);
+         attribute.patchCreation(actualRoles);
          bookedAttributesLinkType.createAttribute(attribute);
       }
 
@@ -288,20 +284,12 @@ public class LinkTypeFacade extends AbstractFacade {
       permissionsChecker.checkAttributesFunctionAccess(attributes);
       LinkType originalLinkType = new LinkType(linkType);
 
-      var canEditFunction = permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig);
+      var actualRoles = permissionsChecker.getActualRoles(linkType);
 
       var sortedAttributes = attributes.stream().sorted((a, b) -> a.getId().compareToIgnoreCase(b.getId())).collect(Collectors.toList());
       for (Attribute attribute : sortedAttributes) {
-         final Integer freeNum = getFreeAttributeNum(linkType);
-         if (attribute.getId() == null) {
-            attribute.setId(LinkType.ATTRIBUTE_PREFIX + freeNum);
-         }
-         attribute.setUsageCount(0);
-         if (!canEditFunction) {
-            attribute.setFunction(null);
-         }
+         attribute.patchCreation(actualRoles);
          linkType.createAttribute(attribute);
-         linkType.setLastAttributeNum(freeNum);
       }
 
       permissionsChecker.checkFunctionsLimit(linkType);
@@ -310,34 +298,17 @@ public class LinkTypeFacade extends AbstractFacade {
       return attributes;
    }
 
-   private Integer getFreeAttributeNum(final LinkType linkType) {
-      int lastAttributeNum = Objects.requireNonNullElse(linkType.getLastAttributeNum(), 0);
-      final AtomicInteger last = new AtomicInteger(Math.max(1, lastAttributeNum + 1));
-      while (linkType.getAttributes().stream().anyMatch(attribute -> attribute.getId().equals(LinkType.ATTRIBUTE_PREFIX + last.get()))) {
-         last.incrementAndGet();
-      }
-
-      return last.get();
-   }
-
    public LinkType upsertRule(final String linkTypeId, final String ruleId, final Rule rule) {
       final LinkType storedLinkType = checkLinkTypePermission(linkTypeId, RoleType.TechConfig);
 
       LinkType originalLinkType = new LinkType(storedLinkType);
 
       Map<String, Rule> rules = Objects.requireNonNullElse(storedLinkType.getRules(), new HashMap<>());
-      if (!rules.containsKey(ruleId)) {
-         rule.setCreatedAt(ZonedDateTime.now());
-      }
-
-      rule.parseConfiguration();
 
       Rule originalRule = rules.get(ruleId);
-      rule.keepInternalConfiguration(originalRule);
+      rule.checkConfiguration(originalRule);
 
-      if (rule.shouldResetCreatedAt(originalRule)) {
-         rule.setCreatedAt(ZonedDateTime.now());
-      }
+      permissionsChecker.checkRulePermissions(rule);
 
       rules.put(ruleId, rule);
       storedLinkType.setRules(rules);
@@ -351,33 +322,32 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public Attribute updateLinkTypeAttribute(final String linkTypeId, final String attributeId, final Attribute attribute, final boolean skipFceLimits) {
-      LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
-      final Optional<Attribute> originalAttribute = linkType.getAttributes().stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
-      if (originalAttribute.isEmpty()) {
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      final Attribute originalAttribute = ResourceUtils.findAttribute(linkType.getAttributes(), attributeId);
+      if (originalAttribute == null) {
          return attribute;
       }
 
       LinkType originalLinkType = new LinkType(linkType);
+      permissionsChecker.checkAnyRoleInLinkType(linkType, Set.of(RoleType.AttributeEdit, RoleType.TechConfig));
 
-      if (!permissionsChecker.hasRoleInLinkType(linkType, RoleType.TechConfig)) {
-         attribute.setFunction(originalAttribute.get().getFunction());
-      }
+      Attribute updatingAttribute = originalAttribute.copy();
+      updatingAttribute.patch(attribute, permissionsChecker.getActualRoles(linkType));
 
-      if (attribute.isFunctionDefined()) {
-         permissionsChecker.checkFunctionRuleAccess(attribute.getFunction().getJs(), RoleType.Read);
+      if (updatingAttribute.isFunctionDefined()) {
+         permissionsChecker.checkFunctionRuleAccess(updatingAttribute.getFunction().getJs(), RoleType.Read);
       } else {
-         attribute.setFunction(null);
+         updatingAttribute.setFunction(null);
       }
 
       if (!skipFceLimits) {
          permissionsChecker.checkFunctionsLimit(linkType);
       }
 
-      linkType.updateAttribute(attributeId, attribute);
+      linkType.updateAttribute(attributeId, updatingAttribute);
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
-
-      originalAttribute.ifPresent(value -> conversionFacade.convertStoredDocuments(linkType, value, attribute));
+      conversionFacade.convertStoredDocuments(linkType, originalAttribute, updatingAttribute);
 
       return attribute;
    }

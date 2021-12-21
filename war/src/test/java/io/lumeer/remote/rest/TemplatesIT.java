@@ -34,6 +34,7 @@ import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -107,6 +108,9 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
    @Inject
    private SequenceDao sequenceDao;
+
+   @Inject
+   private CopyFacade copyFacade;
 
    @Inject
    private SelectionListDao selectionListDao;

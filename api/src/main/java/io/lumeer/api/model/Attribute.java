@@ -26,14 +26,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Set;
 
-public class Attribute implements HealthChecking {
+public class Attribute implements HealthChecking, Updatable<Attribute> {
 
    public static final List<Character> ILLEGAL_CHARS = List.of('.');
 
    public static final String ID = "id";
    public static final String NAME = "name";
    public static final String CONSTRAINT = "constraint";
+   public static final String LOCK = "lock";
    public static final String FUNCTION = "function";
    public static final String DESCRIPTION = "description";
    public static final String USAGE_COUNT = "usageCount";
@@ -42,6 +44,7 @@ public class Attribute implements HealthChecking {
    private String name;
    private String description;
    private Constraint constraint;
+   private AttributeLock lock;
    private Function function;
    private Integer usageCount;
 
@@ -57,12 +60,14 @@ public class Attribute implements HealthChecking {
          @JsonProperty(NAME) final String name,
          @JsonProperty(DESCRIPTION) final String description,
          @JsonProperty(CONSTRAINT) final Constraint constraint,
+         @JsonProperty(LOCK) final AttributeLock lock,
          @JsonProperty(FUNCTION) final Function function,
          @JsonProperty(USAGE_COUNT) final Integer usageCount) {
       this.name = name;
       this.id = id;
       this.description = description;
       this.constraint = constraint;
+      this.lock = lock;
       this.function = function;
       this.usageCount = usageCount;
    }
@@ -120,6 +125,19 @@ public class Attribute implements HealthChecking {
       this.description = description;
    }
 
+   public AttributeLock getLock() {
+      return lock;
+   }
+
+   public void setLock(final AttributeLock lock) {
+      this.lock = lock;
+   }
+
+   @JsonIgnore
+   public Attribute copy() {
+      return new Attribute(getId(), getName(), getDescription(), getConstraint(), getLock(), getFunction(), getUsageCount());
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -145,6 +163,7 @@ public class Attribute implements HealthChecking {
             "id='" + id + '\'' +
             ", name='" + name + '\'' +
             ", constraint=" + constraint +
+            ", lock=" + lock +
             ", function=" + function +
             ", usageCount=" + usageCount +
             '}';
@@ -155,5 +174,25 @@ public class Attribute implements HealthChecking {
       checkStringLength("name", name, MAX_STRING_LENGTH);
       checkStringLength("description", description, MAX_LONG_STRING_LENGTH);
       checkIllegalCharacters("name", name, ILLEGAL_CHARS);
+   }
+
+   @Override
+   public void patch(final Attribute resource, final Set<RoleType> roles) {
+      if (roles.contains(RoleType.AttributeEdit)) {
+         setName(resource.getName());
+         setDescription(resource.getDescription());
+         setConstraint(resource.getConstraint());
+         setLock(resource.getLock());
+      }
+      if (roles.contains(RoleType.TechConfig)) {
+         setFunction(resource.getFunction());
+      }
+   }
+
+   public void patchCreation(final Set<RoleType> roles) {
+      if (!roles.contains(RoleType.TechConfig)) {
+         setFunction(null);
+      }
+      setUsageCount(0);
    }
 }

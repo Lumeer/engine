@@ -154,9 +154,9 @@ public class DelayedActionIT extends IntegrationTestBase {
       Collection jsonCollection = new Collection(null, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
       jsonCollection.setLastAttributeNum(0);
       jsonCollection.setAttributes(List.of(
-            new Attribute("a0", "Summary", null, new Constraint(ConstraintType.Text, null), null, 0),
-            new Attribute("a1", "Assignee", null, new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
-            new Attribute("a2", "Due date", null, new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")), null, 0),
+            new Attribute("a0", "Summary", null, new Constraint(ConstraintType.Text, null), null, null, 0),
+            new Attribute("a1", "Assignee", null, new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, null, 0),
+            new Attribute("a2", "Due date", null, new Constraint(ConstraintType.DateTime, new org.bson.Document("format", "DD/MM/YYYY H:mm:ss")), null, null, 0),
             new Attribute("a3", "State", null, new Constraint(ConstraintType.Select, new org.bson.Document("options",
                   List.of(
                         new org.bson.Document("value", "New").append("displayValue", ""),
@@ -165,9 +165,9 @@ public class DelayedActionIT extends IntegrationTestBase {
                         new org.bson.Document("value", "Done").append("displayValue", ""),
                         new org.bson.Document("value", "Won't fix").append("displayValue", "")
                   )
-            )), null, 0),
-            new Attribute("a4", "Observers", null, new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, 0),
-            new Attribute("a5", "Something", null, null, null, 0)
+            )), null, null, 0),
+            new Attribute("a4", "Observers", null, new Constraint(ConstraintType.User, new org.bson.Document("multi", true).append("externalUsers", true)), null, null, 0),
+            new Attribute("a5", "Something", null, null, null, null, 0)
       ));
       jsonCollection.setDefaultAttributeId("a0");
       jsonCollection.setPurpose(new CollectionPurpose(CollectionPurposeType.Tasks,

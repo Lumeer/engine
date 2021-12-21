@@ -86,7 +86,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    private String createDocument(String key, Object value) {
       Collection collection = collectionDao.getCollectionById(COLLECTION_ID);
       if (collection.getAttributes().stream().noneMatch(attr -> attr.getName().equals(key))) {
-         collection.createAttribute(new Attribute(key, key, null, null, null, 1));
+         collection.createAttribute(new Attribute(key, key, null, null, null, null, 1));
          collection.setLastAttributeNum(collection.getLastAttributeNum() + 1);
          collectionDao.updateCollection(COLLECTION_ID, collection, null);
       } else {

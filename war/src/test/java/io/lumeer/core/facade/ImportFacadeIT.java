@@ -30,6 +30,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.engine.IntegrationTestBase;
@@ -81,7 +82,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
    private static final String COLLECTION_ICON = "fa-user";
    private static final String COLLECTION_COLOR = "#ababab";
 
-   private static final String PREFIX = Collection.ATTRIBUTE_PREFIX;
+   private static final String PREFIX = AttributesResource.ATTRIBUTE_PREFIX;
 
    private User user;
 

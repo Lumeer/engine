@@ -19,19 +19,27 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.LinkAttributeFilter;
-import io.lumeer.storage.mongodb.codecs.LinkAttributeFilterCodec;
+import io.lumeer.api.model.AttributeFilterEquation;
+import io.lumeer.api.model.AttributeLock;
+import io.lumeer.api.model.AttributeLockExceptionGroup;
+import io.lumeer.storage.mongodb.codecs.AttributeFilterEquationCodec;
+import io.lumeer.storage.mongodb.codecs.AttributeLockCodec;
+import io.lumeer.storage.mongodb.codecs.AttributeLockExceptionGroupCodec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class LinkAttributeFilterCodecProvider implements CodecProvider {
+public class AttributeLockCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == LinkAttributeFilter.class) {
-         return (Codec<T>) new LinkAttributeFilterCodec(registry);
+      if (clazz == AttributeLock.class) {
+         return (Codec<T>) new AttributeLockCodec(registry);
+      } else if (clazz == AttributeLockExceptionGroup.class) {
+         return (Codec<T>) new AttributeLockExceptionGroupCodec(registry);
+      } else if (clazz == AttributeFilterEquation.class) {
+         return (Codec<T>) new AttributeFilterEquationCodec(registry);
       }
 
       return null;

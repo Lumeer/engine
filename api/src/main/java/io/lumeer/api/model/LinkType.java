@@ -20,8 +20,8 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.exception.InsaneObjectException;
+import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,19 +30,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
+public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, AttributesResource {
 
    public static Set<Role> ROLES = RoleUtils.linkTypeResourceRoles();
 
@@ -53,8 +52,6 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
    public static final String RULES = "rules";
    public static final String PERMISSIONS_TYPE = "permissionsType";
    public static final String PERMISSIONS = "permissions";
-
-   public static final String ATTRIBUTE_PREFIX = "a";
 
    private String id;
    private String name;
@@ -145,29 +142,12 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
       this.attributes = attributes != null ? new LinkedList<>(attributes) : new LinkedList<>();
    }
 
-   public void createAttribute(final Attribute attribute) {
-      if (attributes != null) {
-         attributes.add(attribute);
-      } else {
-         attributes = new ArrayList<>(Collections.singletonList(attribute));
+   @Override
+   public Collection<Attribute> getMutableAttributes() {
+      if (attributes == null) {
+         attributes = new ArrayList<>();
       }
-   }
-
-   public void updateAttribute(final String attributeId, final Attribute attribute) {
-      Optional<Attribute> oldAttribute = attributes.stream().filter(attr -> attr.getId().equals(attributeId)).findFirst();
-      attributes.removeIf(a -> a.getId().equals(attributeId));
-
-      oldAttribute.ifPresent((a) -> attribute.setUsageCount(a.getUsageCount()));
-      attributes.add(attribute);
-
-      if (oldAttribute.isPresent() && !oldAttribute.get().getName().equals(attribute.getName())) {
-         AttributeUtil.renameChildAttributes(attributes, oldAttribute.get().getName(), attribute.getName());
-      }
-   }
-
-   public void deleteAttribute(final String attributeId) {
-      Optional<Attribute> toDelete = attributes.stream().filter(attribute -> attribute.getId().equals(attributeId)).findFirst();
-      toDelete.ifPresent(jsonAttribute -> attributes.removeIf(attribute -> AttributeUtil.isEqualOrChild(attribute, jsonAttribute.getName())));
+      return attributes;
    }
 
    public long getVersion() {
@@ -262,16 +242,9 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType> {
       }
       if (roles.contains(RoleType.TechConfig)) {
          setRules(resource.getRules());
+         patchRules(resource.getRules());
+      }
 
-         // remove deleted rules, for inserting rules, upsert is used
-         if (resource.getRules() != null && getRules() != null) {
-            var ruleKeys = new HashSet<>(getRules().keySet());
-            ruleKeys.removeAll(resource.getRules().keySet());
-            ruleKeys.forEach(getRules()::remove);
-         }
-      }
-      if (roles.contains(RoleType.AttributeEdit)) {
-         setAttributes(resource.getAttributes());
-      }
+      patchAttributes(resource.getAttributes(), roles);
    }
 }

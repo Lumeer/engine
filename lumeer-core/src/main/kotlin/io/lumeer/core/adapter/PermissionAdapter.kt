@@ -410,6 +410,17 @@ class PermissionAdapter(private val userDao: UserDao,
       }
    }
 
+   fun checkAnyRoleInLinkType(organization: Organization, project: Project?, linkType: LinkType, roles: Set<RoleType>, userId: String) {
+      if (!hasAnyRoleInLinkType(organization, project, linkType, roles, userId)) {
+         throw NoPermissionException(ResourceType.LINK_TYPE.toString())
+      }
+   }
+
+   fun hasAnyRoleInLinkType(organization: Organization, project: Project?, linkType: LinkType, roles: Set<RoleType>, userId: String): Boolean {
+      val linkTypeCollections =  getLinkTypeCollections(linkType);
+      return roles.any { hasRoleInLinkType(organization, project, linkType, linkTypeCollections, it, userId) }
+   }
+
    fun hasRoleInLinkType(organization: Organization, project: Project?, linkType: LinkType, role: RoleType, userId: String): Boolean {
       return hasRoleInLinkType(organization, project, linkType, getLinkTypeCollections(linkType), role, userId)
    }

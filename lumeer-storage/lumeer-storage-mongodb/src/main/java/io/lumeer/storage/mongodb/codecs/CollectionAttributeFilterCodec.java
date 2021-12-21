@@ -20,7 +20,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.AttributeFilter;
-import io.lumeer.api.model.LinkAttributeFilter;
+import io.lumeer.api.model.CollectionAttributeFilter;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -30,41 +30,41 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
-public class LinkAttributeFilterCodec implements Codec<LinkAttributeFilter> {
+public class CollectionAttributeFilterCodec implements Codec<CollectionAttributeFilter> {
 
-   public static final String LINK_TYPE_ID = "linkTypeId";
+   public static final String COLLECTION_ID = "collectionId";
 
    private final Codec<Document> documentCodec;
 
-   public LinkAttributeFilterCodec(final CodecRegistry registry) {
+   public CollectionAttributeFilterCodec(final CodecRegistry registry) {
       this.documentCodec = registry.get(Document.class);
    }
 
    @Override
-   public LinkAttributeFilter decode(final BsonReader reader, final DecoderContext decoderContext) {
+   public CollectionAttributeFilter decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
-      return LinkAttributeFilterCodec.convertFromDocument(bson);
+      return CollectionAttributeFilterCodec.convertFromDocument(bson);
    }
 
-   public static LinkAttributeFilter convertFromDocument(final Document document) {
-      String linkTypeId = document.getString(LINK_TYPE_ID);
+   public static CollectionAttributeFilter convertFromDocument(final Document document) {
+      String collectionId = document.getString(COLLECTION_ID);
       AttributeFilter filter = AttributeFilterCodec.convertFromDocument(document);
 
-      return new LinkAttributeFilter(linkTypeId, filter.getAttributeId(), filter.getCondition(), filter.getConditionValues());
+      return new CollectionAttributeFilter(collectionId, filter.getAttributeId(), filter.getCondition(), filter.getConditionValues());
    }
 
    @Override
-   public void encode(final BsonWriter writer, final LinkAttributeFilter value, final EncoderContext encoderContext) {
+   public void encode(final BsonWriter writer, final CollectionAttributeFilter value, final EncoderContext encoderContext) {
       Document bson = AttributeFilterCodec.convertToDocument(value)
-            .append(LINK_TYPE_ID, value.getLinkTypeId());
+            .append(COLLECTION_ID, value.getCollectionId());
 
       documentCodec.encode(writer, bson, encoderContext);
    }
 
    @Override
-   public Class<LinkAttributeFilter> getEncoderClass() {
-      return LinkAttributeFilter.class;
+   public Class<CollectionAttributeFilter> getEncoderClass() {
+      return CollectionAttributeFilter.class;
    }
 }
 
