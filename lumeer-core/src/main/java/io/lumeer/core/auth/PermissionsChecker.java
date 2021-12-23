@@ -140,7 +140,10 @@ public class PermissionsChecker {
    }
 
    public static PermissionsChecker getPermissionsChecker(final AuthenticatedUser authenticatedUser, final DaoContextSnapshot daoContextSnapshot) {
-      return new PermissionsChecker(authenticatedUser, daoContextSnapshot.getSelectedWorkspace(), daoContextSnapshot.getUserDao(), daoContextSnapshot.getGroupDao(), daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
+      var pc = new PermissionsChecker(authenticatedUser, daoContextSnapshot.getSelectedWorkspace(), daoContextSnapshot.getUserDao(), daoContextSnapshot.getGroupDao(), daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
+      pc.init();
+
+      return pc;
    }
 
    public PermissionAdapter getPermissionAdapter() {
