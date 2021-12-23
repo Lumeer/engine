@@ -37,6 +37,7 @@ import io.lumeer.api.model.templateParse.LinkInstanceWithId;
 import io.lumeer.api.model.templateParse.LinkTypeWithId;
 import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.api.model.templateParse.ViewWithId;
+import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -143,7 +144,7 @@ public class ProjectFacade extends AbstractFacade {
    @Inject
    private RequestDataKeeper requestDataKeeper;
 
-   void init(final AuthenticatedUser authenticatedUser, final DaoContextSnapshot daoContextSnapshot) {
+   void init(final AuthenticatedUser authenticatedUser, final DaoContextSnapshot daoContextSnapshot, final WorkspaceKeeper workspaceKeeper) {
       // IMPORTANT!!!!!!!
       // When injecting a new DAO, please make sure it is also initialized here
       this.collectionDao = daoContextSnapshot.getCollectionDao();
@@ -161,7 +162,7 @@ public class ProjectFacade extends AbstractFacade {
       this.resourceVariableDao = daoContextSnapshot.getResourceVariableDao();
       this.permissionsChecker = PermissionsChecker.getPermissionsChecker(authenticatedUser, daoContextSnapshot);
       this.authenticatedUser = authenticatedUser;
-      this.selectedWorkspace = daoContextSnapshot.getSelectedWorkspace();
+      this.workspaceKeeper = workspaceKeeper;
    }
 
    public Project createProject(Project project) {
@@ -359,19 +360,19 @@ public class ProjectFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
 
-      if (selectedWorkspace.getOrganization().isPresent()) {
-         String organizationId = selectedWorkspace.getOrganization().get().getId();
+      if (workspaceKeeper.getOrganization().isPresent()) {
+         String organizationId = workspaceKeeper.getOrganization().get().getId();
          resourceVariableDao.deleteInProject(organizationId, project.getId());
          delayedActionDao.deleteAllScheduledActions(organizationId + "/" + project.getId());
       }
    }
 
    private void checkOrganizationRole(RoleType role) {
-      if (selectedWorkspace.getOrganization().isEmpty()) {
+      if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      Organization organization = selectedWorkspace.getOrganization().get();
+      Organization organization = workspaceKeeper.getOrganization().get();
       permissionsChecker.checkRole(organization, role);
    }
 
@@ -458,7 +459,7 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public void switchOrganization() {
-      selectedWorkspace.getOrganization().ifPresent(o -> {
+      workspaceKeeper.getOrganization().ifPresent(o -> {
          permissionsChecker.checkRole(o, RoleType.Read);
          projectDao.switchOrganization();
       });

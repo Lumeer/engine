@@ -63,11 +63,11 @@ public class DashboardDataFacade extends AbstractFacade {
    }
 
    private Project checkPermissions() {
-      if (selectedWorkspace.getProject().isEmpty()) {
+      if (workspaceKeeper.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
 
-      Project project = selectedWorkspace.getProject().get();
+      Project project = workspaceKeeper.getProject().get();
       permissionsChecker.checkRole(project, RoleType.Read);
       return project;
    }

@@ -26,6 +26,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -60,6 +61,9 @@ public class CopyFacade extends AbstractFacade {
 
    @Inject
    private EventLogFacade eventLogFacade;
+
+   @Inject
+   private WorkspaceCache workspaceCache;
 
    private Language language;
 
@@ -108,22 +112,22 @@ public class CopyFacade extends AbstractFacade {
       final StringBuilder sb = new StringBuilder();
 
       var fromOrganization = organizationDao.getOrganizationById(organizationId);
-      selectedWorkspace.push();
-      selectedWorkspace.setOrganization(fromOrganization);
+      workspaceKeeper.push();
+      workspaceKeeper.setOrganization(fromOrganization);
 
       var storage = dataStorageProvider.getUserStorage();
-      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, selectedWorkspace);
+      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
-      selectedWorkspace.setWorkspace(fromOrganization, fromProject);
+      workspaceKeeper.setWorkspace(fromOrganization, fromProject);
       sb.append("Copied project from ").append(fromOrganization.getCode()).append("/").append(fromProject.getCode());
 
       storage = dataStorageProvider.getUserStorage();
-      contextSnapshot = daoContextSnapshotFactory.getInstance(storage, selectedWorkspace);
+      contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var facade = new ProjectFacade();
-      facade.init(authenticatedUser, contextSnapshot);
+      facade.init(authenticatedUser, contextSnapshot, workspaceKeeper);
       var content = facade.getRawProjectContent(fromProject.getId());
 
-      selectedWorkspace.pop();
+      workspaceKeeper.pop();
 
       var relativeDateMillis = fromProject.getTemplateMetadata() != null ? fromProject.getTemplateMetadata().getRelativeDate() : null;
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;

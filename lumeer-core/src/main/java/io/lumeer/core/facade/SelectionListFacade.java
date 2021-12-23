@@ -87,7 +87,7 @@ public class SelectionListFacade extends AbstractFacade {
          return;
       }
 
-      selectedWorkspace.setProjectId(projectId);
+      workspaceKeeper.setProjectId(projectId);
       List<Collection> collections = collectionDao.getAllCollections();
       collections.forEach(collection -> {
          var shouldUpdate = false;

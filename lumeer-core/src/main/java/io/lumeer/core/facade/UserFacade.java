@@ -235,7 +235,7 @@ public class UserFacade extends AbstractFacade {
 
    private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final InvitationType invitationType) {
       if (!users.isEmpty()) {
-         selectedWorkspace.setOrganizationId(organization.getId());
+         workspaceKeeper.setOrganizationId(organization.getId());
          var project = projectDao.getProjectById(projectId);
          var newPermissions = buildUserPermission(project, users, invitationType);
          projectFacade.updateUserPermissions(projectId, newPermissions);
@@ -483,7 +483,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private Project checkProjectPermissions(final String organizationId, final String projectId, final RoleType role) {
-      selectedWorkspace.setOrganizationId(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, role);
 
@@ -491,7 +491,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private Project checkProjectPermissionsByCode(final String organizationId, final String projectCode, final RoleType role) {
-      selectedWorkspace.setOrganizationId(organizationId);
+      workspaceKeeper.setOrganizationId(organizationId);
       Project project = projectDao.getProjectByCode(projectCode);
       permissionsChecker.checkRole(project, role);
 

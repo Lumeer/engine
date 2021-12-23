@@ -268,7 +268,7 @@ public class SearchFacade extends AbstractFacade {
          allLinkInstances.addAll(result.getSecond());
       }
 
-      var mappedDocuments = documentAdapter.mapDocumentsData(new ArrayList<>(allDocuments), getCurrentUserId(), selectedWorkspace.getProjectId());
+      var mappedDocuments = documentAdapter.mapDocumentsData(new ArrayList<>(allDocuments), getCurrentUserId(), workspaceKeeper.getProjectId());
       var mappedLinkInstances = linkInstanceAdapter.mapLinkInstancesData(new ArrayList<>(allLinkInstances));
 
       return new Tuple<>(mappedDocuments, mappedLinkInstances);
@@ -276,12 +276,12 @@ public class SearchFacade extends AbstractFacade {
 
    private ConstraintData createConstraintData() {
       return new ConstraintData(
-            userDao.getAllUsers(selectedWorkspace.getOrganizationId()),
+            userDao.getAllUsers(workspaceKeeper.getOrganizationId()),
             authenticatedUser.getCurrentUser(),
             translationManager.translateDurationUnitsMap(language),
             new CurrencyData(translationManager.translateAbbreviations(language), translationManager.translateOrdinals(language)),
             timezone,
-            groupDao.getAllGroups(selectedWorkspace.getOrganizationId()),
+            groupDao.getAllGroups(workspaceKeeper.getOrganizationId()),
             selectionListDao.getAllLists(Collections.singletonList(getProject().getId()))
       );
    }
