@@ -108,22 +108,22 @@ public class CopyFacade extends AbstractFacade {
       final StringBuilder sb = new StringBuilder();
 
       var fromOrganization = organizationDao.getOrganizationById(organizationId);
-      workspaceKeeper.push();
-      workspaceKeeper.setOrganization(fromOrganization);
+      selectedWorkspace.push();
+      selectedWorkspace.setOrganization(fromOrganization);
 
       var storage = dataStorageProvider.getUserStorage();
-      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, selectedWorkspace);
       var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
-      workspaceKeeper.setWorkspace(fromOrganization, fromProject);
+      selectedWorkspace.setWorkspace(fromOrganization, fromProject);
       sb.append("Copied project from ").append(fromOrganization.getCode()).append("/").append(fromProject.getCode());
 
       storage = dataStorageProvider.getUserStorage();
-      contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+      contextSnapshot = daoContextSnapshotFactory.getInstance(storage, selectedWorkspace);
       var facade = new ProjectFacade();
       facade.init(authenticatedUser, contextSnapshot);
       var content = facade.getRawProjectContent(fromProject.getId());
 
-      workspaceKeeper.pop();
+      selectedWorkspace.pop();
 
       var relativeDateMillis = fromProject.getTemplateMetadata() != null ? fromProject.getTemplateMetadata().getRelativeDate() : null;
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;

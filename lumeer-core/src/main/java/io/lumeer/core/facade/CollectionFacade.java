@@ -206,7 +206,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Collection mapCollection(Collection collection) {
-      return mapResource(adapter.mapCollectionComputedProperties(mapResource(collection), getCurrentUserId(), workspaceKeeper.getProjectId()));
+      return mapResource(adapter.mapCollectionComputedProperties(mapResource(collection), getCurrentUserId(), selectedWorkspace.getProjectId()));
    }
 
    private void keepUnmodifiableFields(Collection collection, Collection storedCollection) {
@@ -312,7 +312,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private List<Collection> mapCollectionsData(List<Collection> collections) {
-      return adapter.mapCollectionsComputedProperties(collections, getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapCollectionsComputedProperties(collections, getCurrentUserId(), selectedWorkspace.getProjectId());
    }
 
    public void addFavoriteCollection(String collectionId) {
@@ -559,10 +559,10 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private Project getCurrentProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
+      if (selectedWorkspace.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
-      return workspaceKeeper.getProject().get();
+      return selectedWorkspace.getProject().get();
    }
 
    private User getCurrentUser() {

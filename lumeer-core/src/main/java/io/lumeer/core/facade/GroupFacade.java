@@ -111,7 +111,7 @@ public class GroupFacade extends AbstractFacade {
    }
 
    private void addGroupsToProject(Organization organization, final Project project, final List<Group> groups, final InvitationType invitationType) {
-      workspaceKeeper.setOrganizationId(organization.getId());
+      selectedWorkspace.setOrganizationId(organization.getId());
       var newPermissions = buildGroupPermission(project, groups, invitationType);
       projectFacade.updateGroupPermissions(project.getId(), newPermissions);
    }
@@ -147,22 +147,22 @@ public class GroupFacade extends AbstractFacade {
    }
 
    private Group mapGroupData(Group group) {
-      group.setOrganizationId(workspaceKeeper.getOrganizationId());
+      group.setOrganizationId(selectedWorkspace.getOrganizationId());
       return group;
    }
 
    private Organization checkPermissions(RoleType roleType) {
-      if (workspaceKeeper.getOrganization().isEmpty()) {
+      if (selectedWorkspace.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      Organization organization = workspaceKeeper.getOrganization().get();
+      Organization organization = selectedWorkspace.getOrganization().get();
       permissionsChecker.checkRole(organization, roleType);
       return organization;
    }
 
    private Project checkProjectPermissions(final String organizationId, final String projectId) {
-      workspaceKeeper.setOrganizationId(organizationId);
+      selectedWorkspace.setOrganizationId(organizationId);
       Project project = projectDao.getProjectById(projectId);
       permissionsChecker.checkRole(project, RoleType.UserConfig);
 

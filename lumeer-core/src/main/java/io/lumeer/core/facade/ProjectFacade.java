@@ -160,6 +160,8 @@ public class ProjectFacade extends AbstractFacade {
       this.selectionListDao = daoContextSnapshot.getSelectionListDao();
       this.resourceVariableDao = daoContextSnapshot.getResourceVariableDao();
       this.permissionsChecker = PermissionsChecker.getPermissionsChecker(authenticatedUser, daoContextSnapshot);
+      this.authenticatedUser = authenticatedUser;
+      this.selectedWorkspace = daoContextSnapshot.getSelectedWorkspace();
    }
 
    public Project createProject(Project project) {
@@ -357,19 +359,19 @@ public class ProjectFacade extends AbstractFacade {
       favoriteItemDao.removeFavoriteCollectionsByProjectFromUsers(project.getId());
       favoriteItemDao.removeFavoriteDocumentsByProjectFromUsers(project.getId());
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         String organizationId = workspaceKeeper.getOrganization().get().getId();
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         String organizationId = selectedWorkspace.getOrganization().get().getId();
          resourceVariableDao.deleteInProject(organizationId, project.getId());
          delayedActionDao.deleteAllScheduledActions(organizationId + "/" + project.getId());
       }
    }
 
    private void checkOrganizationRole(RoleType role) {
-      if (workspaceKeeper.getOrganization().isEmpty()) {
+      if (selectedWorkspace.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
       }
 
-      Organization organization = workspaceKeeper.getOrganization().get();
+      Organization organization = selectedWorkspace.getOrganization().get();
       permissionsChecker.checkRole(organization, role);
    }
 
@@ -456,7 +458,7 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public void switchOrganization() {
-      workspaceKeeper.getOrganization().ifPresent(o -> {
+      selectedWorkspace.getOrganization().ifPresent(o -> {
          permissionsChecker.checkRole(o, RoleType.Read);
          projectDao.switchOrganization();
       });

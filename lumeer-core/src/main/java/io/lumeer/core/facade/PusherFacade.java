@@ -438,7 +438,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private View createViewForUser(final View view, final String userId) {
-      return viewAdapter.mapViewData(getOrganization(), getProject(), view.copy(), userId, workspaceKeeper.getProjectId());
+      return viewAdapter.mapViewData(getOrganization(), getProject(), view.copy(), userId, selectedWorkspace.getProjectId());
    }
 
    private void sendCollectionNotifications(final Collection collection, final String event) {
@@ -449,7 +449,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Collection createCollectionForUser(final Collection collection, final String userId) {
-      return collectionAdapter.mapCollectionComputedProperties(collection.copy(), userId, workspaceKeeper.getProjectId());
+      return collectionAdapter.mapCollectionComputedProperties(collection.copy(), userId, selectedWorkspace.getProjectId());
    }
 
    public void createResourceComment(@Observes final CreateResourceComment commentEvent) {
@@ -527,7 +527,7 @@ public class PusherFacade extends AbstractFacade {
    }
 
    private Document createDocumentForUser(final Document document, final String userId) {
-      return documentAdapter.mapDocumentData(document, userId, workspaceKeeper.getProjectId());
+      return documentAdapter.mapDocumentData(document, userId, selectedWorkspace.getProjectId());
    }
 
    public void createLinkInstance(@Observes final CreateLinkInstance createLinkInstance) {

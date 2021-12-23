@@ -128,8 +128,8 @@ public class AuditFacade extends AbstractFacade {
       final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
       permissionsChecker.checkEditDocument(collection, document);
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(selectedWorkspace.getOrganization().get());
 
          return decode(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, limits.getServiceLevel()));
       }
@@ -142,8 +142,8 @@ public class AuditFacade extends AbstractFacade {
       final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(selectedWorkspace.getOrganization().get());
 
          return decode(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, limits.getServiceLevel()));
       }
@@ -156,8 +156,8 @@ public class AuditFacade extends AbstractFacade {
       final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
       permissionsChecker.checkEditDocument(collection, document);
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(selectedWorkspace.getOrganization().get());
 
          if (limits.getServiceLevel().equals(Payment.ServiceLevel.FREE)) {
             throw new UnsupportedOperationException("Reverting audit log entries is not available on the free plan.");
@@ -178,7 +178,7 @@ public class AuditFacade extends AbstractFacade {
 
          document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
 
-         return documentAdapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
+         return documentAdapter.mapDocumentData(document, getCurrentUserId(), selectedWorkspace.getProjectId());
       }
 
       throw new UnsupportedOperationException("No organization specified.");
@@ -189,8 +189,8 @@ public class AuditFacade extends AbstractFacade {
       final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
+      if (selectedWorkspace.getOrganization().isPresent()) {
+         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(selectedWorkspace.getOrganization().get());
 
          if (limits.getServiceLevel().equals(Payment.ServiceLevel.FREE)) {
             throw new UnsupportedOperationException("Reverting audit log entries is not available on the free plan.");

@@ -18,11 +18,11 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.FacadeAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
@@ -42,7 +42,7 @@ abstract class AbstractFacade {
    protected UserCache userCache;
 
    @Inject
-   protected WorkspaceKeeper workspaceKeeper;
+   protected SelectedWorkspace selectedWorkspace;
 
    protected FacadeAdapter facadeAdapter;
 
@@ -74,11 +74,11 @@ abstract class AbstractFacade {
    }
 
    protected Organization getOrganization() {
-      return workspaceKeeper.getOrganization().orElse(null);
+      return selectedWorkspace.getOrganization().orElse(null);
    }
 
    protected Project getProject() {
-      return workspaceKeeper.getProject().orElse(null);
+      return selectedWorkspace.getProject().orElse(null);
    }
 
    protected <T extends Resource> T setupPublicPermissions(final T resource) {

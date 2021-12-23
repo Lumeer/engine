@@ -129,7 +129,7 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private View mapView(View view) {
-      return adapter.mapViewData(getOrganization(), getProject(), mapResource(view), getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapViewData(getOrganization(), getProject(), mapResource(view), getCurrentUserId(), selectedWorkspace.getProjectId());
    }
 
    public void deleteView(final String id) {
@@ -157,7 +157,7 @@ public class ViewFacade extends AbstractFacade {
    }
 
    private List<View> mapViews(List<View> views) {
-      return adapter.mapViewsData(getOrganization(), getProject(), views, getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapViewsData(getOrganization(), getProject(), views, getCurrentUserId(), selectedWorkspace.getProjectId());
    }
 
    public List<View> getViews() {

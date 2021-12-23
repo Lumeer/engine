@@ -609,7 +609,7 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private Document mapDocumentData(final Document document) {
-      return adapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
+      return adapter.mapDocumentData(document, getCurrentUserId(), selectedWorkspace.getProjectId());
    }
 
    public List<Document> getRecentDocuments(final String collectionId, final boolean byUpdate) {
@@ -631,10 +631,10 @@ public class DocumentFacade extends AbstractFacade {
    }
 
    private Project getCurrentProject() {
-      if (workspaceKeeper.getProject().isEmpty()) {
+      if (selectedWorkspace.getProject().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.PROJECT);
       }
-      return workspaceKeeper.getProject().get();
+      return selectedWorkspace.getProject().get();
    }
 
    private Collection checkCreateDocuments(String collectionId) {

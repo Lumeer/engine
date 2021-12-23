@@ -164,7 +164,7 @@ public class PaymentFacade extends AbstractFacade {
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
       checkReadPermissions(organization);
-      ServiceLimits serviceLimits = workspaceKeeper.getServiceLimits(organization);
+      ServiceLimits serviceLimits = selectedWorkspace.getServiceLimits(organization);
 
       if (serviceLimits != null) {
          return serviceLimits;
@@ -179,7 +179,7 @@ public class PaymentFacade extends AbstractFacade {
                   ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
                   ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
                   ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
-            workspaceKeeper.setServiceLimits(organization, serviceLimits);
+            selectedWorkspace.setServiceLimits(organization, serviceLimits);
             return serviceLimits;
          }
       }
@@ -188,7 +188,7 @@ public class PaymentFacade extends AbstractFacade {
          return ServiceLimits.BASIC_LIMITS;
       }
 
-      workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
+      selectedWorkspace.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
 
       return ServiceLimits.FREE_LIMITS;
    }
@@ -233,7 +233,7 @@ public class PaymentFacade extends AbstractFacade {
       final Organization organization = getOrganizationUnsafe(organizationId);
 
       currentPayment = null;
-      workspaceKeeper.clearServiceLimits(organization);
+      selectedWorkspace.clearServiceLimits(organization);
 
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
       final Payment.PaymentState newState = paymentGateway.getPaymentStatus(payment.getPaymentId());
