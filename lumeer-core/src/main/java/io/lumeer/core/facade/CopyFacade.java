@@ -24,6 +24,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SampleDataType;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -38,6 +39,9 @@ import javax.inject.Inject;
 
 @RequestScoped
 public class CopyFacade extends AbstractFacade {
+
+   @Inject
+   private AuthenticatedUser authenticatedUser;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -68,20 +72,20 @@ public class CopyFacade extends AbstractFacade {
       checkProjectContribute(project);
 
       var organizationId = templateFacade.getSampleDataOrganizationId(language);
-      this.copyProjectByCode(project, organizationId, sampleType.toString());
+      copyProjectByCode(project, organizationId, sampleType.toString());
    }
 
    public void deepCopyTemplate(Project project, String templateId) {
       checkProjectContribute(project);
 
       var organizationId = templateFacade.getTemplateOrganizationId(language);
-      this.copyProjectById(project, organizationId, templateId);
+      copyProjectById(project, organizationId, templateId);
    }
 
    public void deepCopyProject(Project project, String organizationId, String projectId) {
       checkProjectContribute(project);
 
-      this.copyProjectById(project, organizationId, projectId);
+      copyProjectById(project, organizationId, projectId);
    }
 
    private void copyProjectById(Project project, String organizationId, String projectId) {
@@ -116,7 +120,7 @@ public class CopyFacade extends AbstractFacade {
       storage = dataStorageProvider.getUserStorage();
       contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var facade = new ProjectFacade();
-      facade.init(contextSnapshot);
+      facade.init(authenticatedUser, contextSnapshot);
       var content = facade.getRawProjectContent(fromProject.getId());
 
       workspaceKeeper.pop();
