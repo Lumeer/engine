@@ -38,6 +38,7 @@ import io.lumeer.api.model.templateParse.LinkTypeWithId;
 import io.lumeer.api.model.templateParse.ResourceCommentWrapper;
 import io.lumeer.api.model.templateParse.ViewWithId;
 import io.lumeer.core.auth.AuthenticatedUser;
+import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoResourcePermissionException;
@@ -142,7 +143,7 @@ public class ProjectFacade extends AbstractFacade {
    @Inject
    private RequestDataKeeper requestDataKeeper;
 
-   void init(DaoContextSnapshot daoContextSnapshot) {
+   void init(final AuthenticatedUser authenticatedUser, final DaoContextSnapshot daoContextSnapshot) {
       // IMPORTANT!!!!!!!
       // When injecting a new DAO, please make sure it is also initialized here
       this.collectionDao = daoContextSnapshot.getCollectionDao();
@@ -158,6 +159,7 @@ public class ProjectFacade extends AbstractFacade {
       this.resourceCommentDao = daoContextSnapshot.getResourceCommentDao();
       this.selectionListDao = daoContextSnapshot.getSelectionListDao();
       this.resourceVariableDao = daoContextSnapshot.getResourceVariableDao();
+      this.permissionsChecker = PermissionsChecker.getPermissionsChecker(authenticatedUser, daoContextSnapshot);
    }
 
    public Project createProject(Project project) {

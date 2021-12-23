@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.auth;
 
+import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.AllowedPermissions;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
@@ -55,6 +56,7 @@ import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -78,7 +80,7 @@ public class PermissionsChecker {
    private PaymentFacade paymentFacade;
 
    @Inject
-   private WorkspaceKeeper workspaceKeeper;
+   private SelectedWorkspace selectedWorkspace;
 
    @Inject
    private OrganizationFacade organizationFacade;
@@ -125,9 +127,9 @@ public class PermissionsChecker {
    public PermissionsChecker() {
    }
 
-   PermissionsChecker(AuthenticatedUser authenticatedUser, WorkspaceKeeper workspaceKeeper, UserDao userDao, GroupDao groupDao, CollectionDao collectionDao, ViewDao viewDao, LinkTypeDao linkTypeDao, FavoriteItemDao favoriteItemDao, DocumentDao documentDao) {
+   PermissionsChecker(AuthenticatedUser authenticatedUser, SelectedWorkspace selectedWorkspace, UserDao userDao, GroupDao groupDao, CollectionDao collectionDao, ViewDao viewDao, LinkTypeDao linkTypeDao, FavoriteItemDao favoriteItemDao, DocumentDao documentDao) {
       this.authenticatedUser = authenticatedUser;
-      this.workspaceKeeper = workspaceKeeper;
+      this.selectedWorkspace = selectedWorkspace;
       this.userDao = userDao;
       this.groupDao = groupDao;
       this.collectionDao = collectionDao;
@@ -135,6 +137,10 @@ public class PermissionsChecker {
       this.linkTypeDao = linkTypeDao;
       this.favoriteItemDao = favoriteItemDao;
       this.documentDao = documentDao;
+   }
+
+   public static PermissionsChecker getPermissionsChecker(final AuthenticatedUser authenticatedUser, final DaoContextSnapshot daoContextSnapshot) {
+      return new PermissionsChecker(authenticatedUser, daoContextSnapshot.getSelectedWorkspace(), daoContextSnapshot.getUserDao(), daoContextSnapshot.getGroupDao(), daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
    }
 
    public PermissionAdapter getPermissionAdapter() {
@@ -454,7 +460,7 @@ public class PermissionsChecker {
 
       if (resource.getType().equals(ResourceType.PROJECT)) {
          if (limits.getProjects() > 0 && limits.getProjects() <= currentCount) {
-            final Optional<Organization> organization = workspaceKeeper.getOrganization();
+            final Optional<Organization> organization = selectedWorkspace.getOrganization();
             freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "PROJECT", organization.isPresent() ? organization.get().getId() : "<empty>");
             throw new ServiceLimitsExceededException(limits.getProjects(), resource);
          }
@@ -462,7 +468,7 @@ public class PermissionsChecker {
 
       if (resource.getType().equals(ResourceType.COLLECTION)) {
          if (limits.getFiles() > 0 && limits.getFiles() <= currentCount) {
-            final Optional<Organization> organization = workspaceKeeper.getOrganization();
+            final Optional<Organization> organization = selectedWorkspace.getOrganization();
             freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "COLLECTION", organization.isPresent() ? organization.get().getId() : "<empty>");
             throw new ServiceLimitsExceededException(limits.getFiles(), resource);
          }
@@ -483,7 +489,7 @@ public class PermissionsChecker {
       final long documentsCount = countDocuments();
 
       if (limits.getDocuments() > 0 && documentsCount >= limits.getDocuments()) {
-         final Optional<Organization> organization = workspaceKeeper.getOrganization();
+         final Optional<Organization> organization = selectedWorkspace.getOrganization();
          freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, document);
       }
@@ -507,7 +513,7 @@ public class PermissionsChecker {
       final long documentsCount = countDocuments();
 
       if (limits.getDocuments() > 0 && documentsCount + number > limits.getDocuments()) {
-         final Optional<Organization> organization = workspaceKeeper.getOrganization();
+         final Optional<Organization> organization = selectedWorkspace.getOrganization();
          freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
          throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
       }
@@ -639,10 +645,10 @@ public class PermissionsChecker {
    }
 
    private Organization getOrganization() {
-      return workspaceKeeper.getOrganization().orElse(null);
+      return selectedWorkspace.getOrganization().orElse(null);
    }
 
    private Project getProject() {
-      return workspaceKeeper.getProject().orElse(null);
+      return selectedWorkspace.getProject().orElse(null);
    }
 }
