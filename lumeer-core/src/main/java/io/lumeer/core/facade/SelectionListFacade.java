@@ -21,7 +21,6 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SelectOption;
 import io.lumeer.api.model.SelectionList;

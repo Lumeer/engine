@@ -26,6 +26,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -60,6 +61,9 @@ public class CopyFacade extends AbstractFacade {
 
    @Inject
    private EventLogFacade eventLogFacade;
+
+   @Inject
+   private WorkspaceCache workspaceCache;
 
    private Language language;
 
@@ -120,7 +124,7 @@ public class CopyFacade extends AbstractFacade {
       storage = dataStorageProvider.getUserStorage();
       contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
       var facade = new ProjectFacade();
-      facade.init(authenticatedUser, contextSnapshot);
+      facade.init(authenticatedUser, contextSnapshot, workspaceKeeper);
       var content = facade.getRawProjectContent(fromProject.getId());
 
       workspaceKeeper.pop();

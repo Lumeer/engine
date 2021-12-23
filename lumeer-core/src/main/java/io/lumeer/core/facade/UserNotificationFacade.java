@@ -75,9 +75,6 @@ public class UserNotificationFacade extends AbstractFacade {
    private UserNotificationDao dao;
 
    @Inject
-   private WorkspaceKeeper workspaceKeeper;
-
-   @Inject
    private EmailSenderFacade emailSenderFacade;
 
    @Inject
