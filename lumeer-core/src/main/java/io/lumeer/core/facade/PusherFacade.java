@@ -1047,7 +1047,7 @@ public class PusherFacade extends AbstractFacade {
       }
 
       public ResourceId(final AppId appId, final String id, final String organizationId, final String projectId, final String extraId) {
-         super(appId.getValue());
+         super(appId != null ? appId.getValue() : null);
          this.id = id;
          this.organizationId = organizationId;
          this.projectId = projectId;

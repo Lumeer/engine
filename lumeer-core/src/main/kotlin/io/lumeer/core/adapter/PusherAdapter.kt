@@ -31,7 +31,7 @@ import org.marvec.pusher.data.BackupDataEvent
 import org.marvec.pusher.data.Event
 
 class PusherAdapter(
-      private val appId: AppId,
+      private val appId: AppId?,
       private val facadeAdapter: FacadeAdapter,
       private val resourceAdapter: ResourceAdapter,
       private val permissionAdapter: PermissionAdapter,
