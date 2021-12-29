@@ -118,8 +118,12 @@ class CronTaskChecker {
       return (runOn.isBefore(date) || runOn.isEqual(date)) && rule.hour <= date.hour
    }
 
-   private fun areSameWeeks(d1: ZonedDateTime, d2: ZonedDateTime): Boolean = d1.year == d2.year &&
-         d1.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong()).get(ChronoField.ALIGNED_WEEK_OF_YEAR) == d2.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong()).get(ChronoField.ALIGNED_WEEK_OF_YEAR)
+   private fun areSameWeeks(d1: ZonedDateTime, d2: ZonedDateTime): Boolean {
+      val d1Monday = d1.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong())
+      val d2Monday = d2.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong())
+      return d1Monday.year == d2Monday.year &&
+         d1Monday.get(ChronoField.ALIGNED_WEEK_OF_YEAR) == d2Monday.get(ChronoField.ALIGNED_WEEK_OF_YEAR)
+   }
 
    private fun shouldRunOnDay(rule: CronRule, date: ZonedDateTime): Boolean {
       val createdAt = rule.rule.createdAt ?: date
