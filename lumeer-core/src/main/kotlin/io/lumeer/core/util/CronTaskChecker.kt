@@ -118,7 +118,7 @@ class CronTaskChecker {
       return (runOn.isBefore(date) || runOn.isEqual(date)) && rule.hour <= date.hour
    }
 
-   private fun areSameWeeks(d1: ZonedDateTime, d2: ZonedDateTime): Boolean = d1.year == d2.year &&
+   private fun areSameWeeks(d1: ZonedDateTime, d2: ZonedDateTime): Boolean =
          d1.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong()).get(ChronoField.ALIGNED_WEEK_OF_YEAR) == d2.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong()).get(ChronoField.ALIGNED_WEEK_OF_YEAR)
 
    private fun shouldRunOnDay(rule: CronRule, date: ZonedDateTime): Boolean {
