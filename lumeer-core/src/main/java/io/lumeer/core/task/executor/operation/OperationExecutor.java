@@ -23,6 +23,7 @@ import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.operation.stage.FileAttachmentsStage;
 import io.lumeer.core.task.executor.operation.stage.SendSmtpEmailsStage;
+import io.lumeer.core.task.executor.operation.stage.SequencesStage;
 import io.lumeer.core.task.executor.operation.stage.SingleStage;
 import io.lumeer.core.task.executor.operation.stage.Stage;
 import io.lumeer.core.task.executor.operation.stage.ViewsUpdatingStage;
@@ -60,11 +61,13 @@ public class OperationExecutor implements Callable<ChangesTracker> {
       final Stage singleStage = new SingleStage(this);
       final Stage viewsStage = new ViewsUpdatingStage(this);
       final Stage smtpEmailsStage = new SendSmtpEmailsStage(this);
+      final Stage sequencesStage = new SequencesStage(this);
 
       final ChangesTracker changes = fileAttachmentsStage.call();
       changes.merge(singleStage.call());
       changes.merge(viewsStage.call());
       changes.merge(smtpEmailsStage.call());
+      changes.merge(sequencesStage.call());
 
       return changes;
    }

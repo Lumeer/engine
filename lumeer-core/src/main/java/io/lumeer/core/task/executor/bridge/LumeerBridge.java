@@ -53,6 +53,7 @@ import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation;
 import io.lumeer.core.task.executor.operation.DocumentCreationOperation;
 import io.lumeer.core.task.executor.operation.DocumentOperation;
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
+import io.lumeer.core.task.executor.operation.DummySequenceOperation;
 import io.lumeer.core.task.executor.operation.LinkCreationOperation;
 import io.lumeer.core.task.executor.operation.LinkOperation;
 import io.lumeer.core.task.executor.operation.NavigationOperation;
@@ -129,6 +130,7 @@ public class LumeerBridge {
          return String.format(format, 1);
       } else {
          final int sequenceValue = task.getDaoContextSnapshot().getSequenceDao().getNextSequenceNo(sequenceName);
+         operations.add(new DummySequenceOperation(sequenceName));
          changesTracker.addSequence(sequenceName);
 
          return String.format(format, sequenceValue);
