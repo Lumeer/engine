@@ -11,10 +11,7 @@ import javax.mail.Authenticator
 import javax.mail.Message
 import javax.mail.PasswordAuthentication
 import javax.mail.Session
-import javax.mail.internet.InternetAddress
-import javax.mail.internet.MimeBodyPart
-import javax.mail.internet.MimeMessage
-import javax.mail.internet.MimeMultipart
+import javax.mail.internet.*
 
 /*
  * Lumeer: Modern Data Definition and Processing Platform
@@ -98,7 +95,7 @@ class EmailService(val server: String, val port: Int, val user: String, val pass
    private fun getMimeMessage(subject: String, to: String, body: String, fromName: String): MimeMessage {
       val message = MimeMessage(session)
       message.setFrom(InternetAddress(from, if (StringUtils.isNotEmpty(fromName)) "$fromName (Lumeer)" else "Lumeer"))
-      message.setSubject(subject, StandardCharsets.UTF_8.name())
+      message.setSubject(MimeUtility.encodeText(subject, StandardCharsets.UTF_8.name(), "B"))
 
       val recipients = to.split(",").map { it.trim() }.map { InternetAddress(it) }.toTypedArray()
       message.addRecipients(Message.RecipientType.TO, recipients)
