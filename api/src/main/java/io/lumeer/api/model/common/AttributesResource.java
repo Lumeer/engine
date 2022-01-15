@@ -55,12 +55,19 @@ public interface AttributesResource {
    void setLastAttributeNum(final Integer lastAttributeNum);
 
    default void createAttribute(final Attribute attribute) {
+      var hasCustomId = attribute.getId() != null;
       if (attribute.getId() == null) {
          final Integer freeNum = getFreeAttributeNum();
          attribute.setId(ATTRIBUTE_PREFIX + freeNum);
          setLastAttributeNum(freeNum);
       }
       getMutableAttributes().add(attribute);
+
+      // we should check this after attribute was added because custom id can be any number (i.e. we have a1, a2, a3 and next we try to add a200)
+      if (hasCustomId) {
+         final Integer freeNum = getFreeAttributeNum();
+         setLastAttributeNum(freeNum - 1);
+      }
    }
 
    default void updateAttribute(final String attributeId, final Attribute attribute) {
