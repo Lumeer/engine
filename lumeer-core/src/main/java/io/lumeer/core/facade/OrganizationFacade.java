@@ -57,6 +57,9 @@ public class OrganizationFacade extends AbstractFacade {
    private ProjectDao projectDao;
 
    @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private GroupDao groupDao;
 
    @Inject
@@ -124,7 +127,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    public void deleteOrganization(final String organizationId) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
-      permissionsChecker.checkCanDelete(organization);
+      if (!hasSystemPermission()) {
+         permissionsChecker.checkCanDelete(organization);
+      }
 
       deleteOrganizationScopedRepositories(organization);
 
@@ -275,6 +280,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    private void deleteOrganizationScopedRepositories(Organization organization) {
       projectDao.setOrganization(organization);
+
+      projectDao.getAllProjects().forEach(project -> projectFacade.deleteProjectScopedRepositories(project));
+
       projectDao.deleteRepository(organization);
       groupDao.deleteRepository(organization);
       paymentDao.deleteRepository(organization);
@@ -288,10 +296,13 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    private void checkSystemPermission() {
-      String currentUserEmail = authenticatedUser.getUserEmail();
-      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "mvecera@lumeer.io", "kubedo8@gmail.com", "aturing@lumeer.io");
-      if (!allowedEmails.contains(currentUserEmail)) {
+      if (!hasSystemPermission()) {
          throw new NoSystemPermissionException();
       }
+   }
+
+   private boolean hasSystemPermission() {
+      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "mvecera@lumeer.io", "kubedo8@gmail.com", "aturing@lumeer.io");
+      return allowedEmails.contains(authenticatedUser.getUserEmail());
    }
 }
