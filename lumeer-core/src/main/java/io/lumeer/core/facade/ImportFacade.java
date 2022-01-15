@@ -119,6 +119,7 @@ public class ImportFacade extends AbstractFacade {
       String[] headerIds = createdAttributes.stream().map(Attribute::getId).toArray(String[]::new);
 
       int[] counts = new int[headers.length];
+      long documentsCount = 0;
 
       List<Document> documents = new ArrayList<>();
       String[] row;
@@ -129,27 +130,28 @@ public class ImportFacade extends AbstractFacade {
          documents.add(d);
 
          if (documents.size() >= MAX_PARSED_DOCUMENTS) {
-            addDocumentsToDb(collection.getId(), documents);
+            documentsCount+= addDocumentsToDb(collection.getId(), documents);
             documents.clear();
          }
 
       }
 
       if (!documents.isEmpty()) {
-         addDocumentsToDb(collection.getId(), documents);
+         documentsCount+= addDocumentsToDb(collection.getId(), documents);
       }
 
       parser.stopParsing();
 
-      addCollectionMetadata(collection, headerIds, counts);
+      addCollectionMetadata(collection, headerIds, counts, documentsCount);
    }
 
-   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts) {
+   private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, long documentsCount) {
       final Collection originalCollection = collection.copy();
       collection.getAttributes().forEach(attr -> {
          int index = Arrays.asList(headersIds).indexOf(attr.getId());
          attr.setUsageCount(counts[index]);
       });
+      collection.setDocumentsCount(documentsCount);
 
       collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
@@ -162,8 +164,8 @@ public class ImportFacade extends AbstractFacade {
       return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
-   private void addDocumentsToDb(String collectionId, List<Document> documents) {
-      documentFacade.createDocuments(collectionId, documents, true);
+   private long addDocumentsToDb(String collectionId, List<Document> documents) {
+      return documentFacade.createDocuments(collectionId, documents, true).size();
    }
 
    private void addDocumentMetadata(String collectionId, Document document) {
