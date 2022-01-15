@@ -37,6 +37,7 @@ import java.io.StringReader;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -65,13 +66,15 @@ public class ImportFacade extends AbstractFacade {
    public Collection importDocuments(String format, ImportedCollection importedCollection) {
       Collection collectionToCreate = importedCollection.getCollection();
       collectionToCreate.setName(generateCollectionName(collectionToCreate.getName()));
+      Collection collection = collectionFacade.createCollection(collectionToCreate);
 
       switch (format.toLowerCase()) {
          case FORMAT_CSV:
-            return parseCSVFile(collectionToCreate, importedCollection.getData());
-         default:
-            throw new IllegalArgumentException("Cannot import Collection with format: " + format);
+            parseCSVFile(collection, importedCollection.getData());
+            break;
       }
+
+      return collection;
    }
 
    private String generateCollectionName(String collectionName) {
@@ -90,9 +93,9 @@ public class ImportFacade extends AbstractFacade {
       return nameWithSuffix;
    }
 
-   private Collection parseCSVFile(Collection collectionToCreate, String data) {
+   private void parseCSVFile(Collection collection, String data) {
       if (data == null || data.trim().isEmpty()) {
-         return collectionDao.createCollection(collectionToCreate);
+         return;
       }
       CsvParserSettings settings = new CsvParserSettings();
       settings.setMaxCharsPerColumn(16 * 1024);
@@ -107,11 +110,11 @@ public class ImportFacade extends AbstractFacade {
                                .toArray(String[]::new);
 
       if (headers.length == 0) {
-         return collectionDao.createCollection(collectionToCreate);
+         return;
       }
 
-      Collection collection = createAttributes(collectionToCreate, headers);
-      Set<Attribute> createdAttributes = collection.getAttributes();
+      List<Attribute> createdAttributes = createAttributes(collection.getId(), headers);
+      collection.setAttributes(new HashSet<>(createdAttributes));
       collection.setLastAttributeNum(collection.getLastAttributeNum() + createdAttributes.size());
       String[] headerIds = createdAttributes.stream().map(Attribute::getId).toArray(String[]::new);
 
@@ -140,7 +143,6 @@ public class ImportFacade extends AbstractFacade {
       parser.stopParsing();
 
       addCollectionMetadata(collection, headerIds, counts, documentsCount);
-      return collection;
    }
 
    private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, long documentsCount) {
@@ -155,12 +157,11 @@ public class ImportFacade extends AbstractFacade {
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
-   private Collection createAttributes(Collection collection, String[] headers) {
+   private List<Attribute> createAttributes(String collectionId, String[] headers) {
       List<Attribute> attributes = Arrays.stream(headers)
                                          .map(AttributeUtil::cleanAttributeName)
                                          .map(Attribute::new).collect(Collectors.toList());
-      collection.setAttributes(attributes);
-      return collectionFacade.createCollection(collection);
+      return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
    }
 
    private long addDocumentsToDb(String collectionId, List<Document> documents) {
