@@ -42,10 +42,12 @@ import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.exception.FeatureNotAllowedException;
 import io.lumeer.core.exception.NoPermissionException;
 import io.lumeer.core.exception.NoResourcePermissionException;
+import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.annotation.UserDataStorage;
 import io.lumeer.engine.api.data.DataStorage;
@@ -59,6 +61,7 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +113,9 @@ public class PermissionsChecker {
    private FreshdeskFacade freshdeskFacade;
 
    @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   @Inject
    @UserDataStorage
    private DataStorage dataStorage;
 
@@ -148,6 +154,17 @@ public class PermissionsChecker {
 
    public PermissionAdapter getPermissionAdapter() {
       return permissionAdapter;
+   }
+
+   public void checkSystemPermission() {
+      if (!hasSystemPermission()) {
+         throw new NoSystemPermissionException();
+      }
+   }
+
+   public boolean hasSystemPermission() {
+      List<String> adminEmails = configurationProducer.getArray(DefaultConfigurationProducer.ADMIN_USER_EMAILS);
+      return adminEmails.contains(authenticatedUser.getUserEmail());
    }
 
    /**

@@ -27,7 +27,6 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
-import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -39,7 +38,6 @@ import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -108,7 +106,7 @@ public class OrganizationFacade extends AbstractFacade {
    private void checkCreateOrganization(List<Organization> organizations) {
       var hasManagedOrganization = organizations.stream().anyMatch(organization -> permissionsChecker.hasRole(organization, RoleType.Manage));
       if (hasManagedOrganization) {
-         this.checkSystemPermission();
+         permissionsChecker.checkSystemPermission();
       }
    }
 
@@ -127,7 +125,7 @@ public class OrganizationFacade extends AbstractFacade {
 
    public void deleteOrganization(final String organizationId) {
       Organization organization = organizationDao.getOrganizationById(organizationId);
-      if (!hasSystemPermission()) {
+      if (!permissionsChecker.hasSystemPermission()) {
          permissionsChecker.checkCanDelete(organization);
       }
 
@@ -281,6 +279,7 @@ public class OrganizationFacade extends AbstractFacade {
    private void deleteOrganizationScopedRepositories(Organization organization) {
       projectDao.setOrganization(organization);
 
+      workspaceKeeper.setOrganization(organization);
       projectDao.getAllProjects().forEach(project -> projectFacade.deleteProjectScopedRepositories(project));
 
       projectDao.deleteRepository(organization);
@@ -293,16 +292,5 @@ public class OrganizationFacade extends AbstractFacade {
       userCache.clear();
 
       delayedActionDao.deleteAllScheduledActions(organization.getId());
-   }
-
-   private void checkSystemPermission() {
-      if (!hasSystemPermission()) {
-         throw new NoSystemPermissionException();
-      }
-   }
-
-   private boolean hasSystemPermission() {
-      List<String> allowedEmails = Arrays.asList("support@lumeer.io", "mvecera@lumeer.io", "kubedo8@gmail.com", "aturing@lumeer.io");
-      return allowedEmails.contains(authenticatedUser.getUserEmail());
    }
 }
