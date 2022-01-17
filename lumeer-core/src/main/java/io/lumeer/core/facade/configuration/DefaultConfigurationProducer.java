@@ -22,11 +22,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
@@ -90,6 +93,10 @@ public class DefaultConfigurationProducer implements Serializable {
 
    public static final String EVENT_LOG_URL = "event_log_url";
 
+   public static final String ADMIN_USER_EMAILS = "admin_user_emails";
+   public static final String WHITELIST_USER_EMAILS = "whitelist_user_emails";
+   public static final String WHITELIST_USER_DOMAINS = "whitelist_user_domains";
+
    public DefaultConfigurationProducer() {
       synchronized (this) {
          if (defaultConfiguration == null) {
@@ -122,6 +129,10 @@ public class DefaultConfigurationProducer implements Serializable {
 
    public String get(final String key) {
       return defaultConfiguration.get(key);
+   }
+
+   public List<String> getArray(final String key) {
+      return Arrays.stream(defaultConfiguration.getOrDefault(key, "").split(",")).collect(Collectors.toList());
    }
 
    public DeployEnvironment getEnvironment() {

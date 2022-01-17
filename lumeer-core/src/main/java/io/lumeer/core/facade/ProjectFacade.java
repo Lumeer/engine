@@ -348,7 +348,7 @@ public class ProjectFacade extends AbstractFacade {
                         .forEach(list -> selectionListDao.createList(list));
    }
 
-   private void deleteProjectScopedRepositories(Project project) {
+   void deleteProjectScopedRepositories(Project project) {
       collectionDao.deleteRepository(project);
       documentDao.deleteRepository(project);
       viewDao.deleteRepository(project);
