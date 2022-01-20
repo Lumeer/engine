@@ -57,14 +57,14 @@ import javax.inject.Inject;
 public class PaymentFacade extends AbstractFacade {
 
    private static final Map<String, Double> FULL_PRICES = Map.ofEntries(
-         entry("CZK", 219.00d),
-         entry("EUR", 8.39d),
-         entry("USD", 9.59d)
+         entry("CZK", 290.00d),
+         entry("EUR", 11.50d),
+         entry("USD", 13.00d)
    );
    private static final Map<String, Double> DISCOUNT_PRICES = Map.ofEntries(
-         entry("CZK", 189.0d),
-         entry("EUR", 6.99d),
-         entry("USD", 7.99d)
+         entry("CZK", 220.0d),
+         entry("EUR", 9.00d),
+         entry("USD", 10.00d)
    );
 
    @Inject

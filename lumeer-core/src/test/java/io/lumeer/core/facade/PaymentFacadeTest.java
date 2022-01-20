@@ -43,7 +43,7 @@ public class PaymentFacadeTest {
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            Math.round(10 * 6 * 8.39),
+            Math.round(10 * 6 * 11.50),
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2018-10-30T00:00:00.000+0100"),
@@ -54,11 +54,11 @@ public class PaymentFacadeTest {
             "EUR",
             "url",
             null
-            )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
+            )).getAmount()).isEqualTo(Math.round(10 * 6 * 11.50));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            Math.round(10 * 12 * 6.99),
+            Math.round(10 * 12 * 9.00),
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2019-04-30T00:00:00.000+0100"),
@@ -69,11 +69,11 @@ public class PaymentFacadeTest {
             "EUR",
             "url",
             null
-      )).getAmount()).isEqualTo(Math.round(10 * 12 * 6.99));
+      )).getAmount()).isEqualTo(Math.round(10 * 12 * 9.00));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            Math.round(10 * 5 * 8.39),
+            Math.round(10 * 5 * 11.50),
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2018-10-30T00:00:00.000+0100"),
@@ -84,11 +84,11 @@ public class PaymentFacadeTest {
             "EUR",
             "url",
             null
-      )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
+      )).getAmount()).isEqualTo(Math.round(10 * 6 * 11.50));
 
       assertThat(paymentFacade.checkPaymentValues(new Payment("x",
             getDate("2018-05-31T00:00:00.000+0100"),
-            Math.round(10 * 6 * 8.39) - 1,
+            Math.round(10 * 6 * 11.50) - 1,
             "id",
             getDate("2018-04-30T00:00:00.000+0100"),
             getDate("2018-10-30T00:00:00.000+0100"),
@@ -99,7 +99,7 @@ public class PaymentFacadeTest {
             "EUR",
             "url",
             null
-      )).getAmount()).isEqualTo(Math.round(10 * 6 * 8.39));
+      )).getAmount()).isEqualTo(Math.round(10 * 6 * 11.50));
    }
 
    private Date getDate(final String date) {
