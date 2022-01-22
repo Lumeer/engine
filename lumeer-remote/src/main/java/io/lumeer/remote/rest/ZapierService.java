@@ -172,8 +172,12 @@ public class ZapierService extends AbstractService {
 
       final List<DataDocument> result = zapierFacade.updateDocument(collectionId, key, data);
 
-      if (result.size() <= 0 && createUpdate != null && createUpdate) {
-         return zapierFacade.createDocument(collectionId, data).append("updated_count", 1).append("id", id);
+      if (result.size() <= 0) {
+         if (createUpdate != null && createUpdate) {
+            return zapierFacade.createDocument(collectionId, data).append("updated_count", 1).append("id", id);
+         } else {
+            return new DataDocument("updated_count", 0);
+         }
       }
 
       return result.get(0).append("updated_count", result.size()).append("id", id);
