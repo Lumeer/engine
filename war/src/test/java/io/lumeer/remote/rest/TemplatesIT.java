@@ -149,12 +149,12 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    @Test
    public void testTemplatesImportExport() throws InterruptedException {
       var p1 = createProject(CODE1);
-      var p2= createProject(CODE2);
+      var p2 = createProject(CODE2);
 
       byte[] templateContent = new byte[0];
 
       try (
-         final InputStream input = TemplatesIT.class.getResourceAsStream("/test.json")
+            final InputStream input = TemplatesIT.class.getResourceAsStream("/test.json")
       ) {
          templateContent = input.readAllBytes();
       } catch (IOException | NullPointerException e) {
@@ -171,19 +171,11 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       Thread.sleep(500); // allow functions to be executed
 
-      response = client.target(projectUrl + p1.getId() + "/raw")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      var exportedTemplate = response.readEntity(String.class);
-
-      entity = Entity.json(exportedTemplate);
-      response = client.target(projectUrl + p2.getId() + "/raw")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity).invoke();
+      response = client.target(projectUrl + p2.getId() + "/copy")
+                       .queryParam("organizationId", organization.getId())
+                       .queryParam("projectId", p1.getId())
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildPost(entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -192,7 +184,6 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       workspaceKeeper.setOrganization(organization);
       workspaceKeeper.setProject(p2);
-      projectDao.switchOrganization();
       collectionDao.setProject(p2);
       linkTypeDao.setProject(p2);
       sequenceDao.setProject(p2);
