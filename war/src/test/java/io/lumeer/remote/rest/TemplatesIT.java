@@ -25,6 +25,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
@@ -34,7 +35,7 @@ import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
-import io.lumeer.core.facade.CopyFacade;
+import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
@@ -43,7 +44,14 @@ import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.SequenceDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.ViewDao;
 
+import com.fasterxml.jackson.databind.AnnotationIntrospector;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,8 +78,6 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
    private static final String CODE1 = "TPROJ1";
    private static final String CODE2 = "TPROJ2";
-   private static final String CODE3 = "TPROJ3";
-   private static final String CODE4 = "TPROJ4";
 
    private static final String NAME = "Testing project";
    private static final String COLOR = "#ff0000";
@@ -95,6 +101,12 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    private UserDao userDao;
 
    @Inject
+   private ViewDao viewDao;
+
+   @Inject
+   private ProjectFacade projectFacade;
+
+   @Inject
    private OrganizationDao organizationDao;
 
    @Inject
@@ -108,9 +120,6 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
    @Inject
    private SequenceDao sequenceDao;
-
-   @Inject
-   private CopyFacade copyFacade;
 
    @Inject
    private SelectionListDao selectionListDao;
@@ -149,12 +158,12 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    @Test
    public void testTemplatesImportExport() throws InterruptedException {
       var p1 = createProject(CODE1);
-      var p2= createProject(CODE2);
+      var p2 = createProject(CODE2);
 
       byte[] templateContent = new byte[0];
 
       try (
-         final InputStream input = TemplatesIT.class.getResourceAsStream("/test.json")
+            final InputStream input = TemplatesIT.class.getResourceAsStream("/test.json")
       ) {
          templateContent = input.readAllBytes();
       } catch (IOException | NullPointerException e) {
@@ -171,19 +180,11 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       Thread.sleep(500); // allow functions to be executed
 
-      response = client.target(projectUrl + p1.getId() + "/raw")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
-
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      var exportedTemplate = response.readEntity(String.class);
-
-      entity = Entity.json(exportedTemplate);
-      response = client.target(projectUrl + p2.getId() + "/raw")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildPost(entity).invoke();
+      response = client.target(projectUrl + p2.getId() + "/copy")
+                       .queryParam("organizationId", organization.getId())
+                       .queryParam("projectId", p1.getId())
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildPost(entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -192,11 +193,26 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       workspaceKeeper.setOrganization(organization);
       workspaceKeeper.setProject(p2);
-      projectDao.switchOrganization();
       collectionDao.setProject(p2);
       linkTypeDao.setProject(p2);
       sequenceDao.setProject(p2);
+      viewDao.setProject(p2);
       selectionListDao.setOrganization(organization);
+
+      ProjectContent importedContent = readProjectContent(templateContent);
+      ProjectContent content = projectFacade.getRawProjectContent(p2.getId());
+      assertThat(content.getCollections().size()).isEqualTo(importedContent.getCollections().size());
+      assertThat(content.getLinkTypes().size()).isEqualTo(importedContent.getLinkTypes().size());
+      assertThat(content.getVariables().size()).isEqualTo(importedContent.getVariables().size());
+      assertThat(content.getLinkTypes().size()).isEqualTo(importedContent.getLinkTypes().size());
+      assertThat(content.getLinkInstances().size()).isEqualTo(importedContent.getLinkInstances().size());
+      assertThat(content.getDocuments().size()).isEqualTo(importedContent.getDocuments().size());
+      assertThat(content.getComments().size()).isEqualTo(importedContent.getComments().size());
+      assertThat(content.getVariables().size()).isEqualTo(importedContent.getVariables().size());
+      assertThat(content.getFavoriteCollectionIds().size()).isEqualTo(importedContent.getFavoriteCollectionIds().size());
+      assertThat(content.getFavoriteViewIds().size()).isEqualTo(importedContent.getFavoriteViewIds().size());
+      assertThat(content.getSequences().size()).isEqualTo(importedContent.getSequences().size());
+      assertThat(content.getSelectionLists().size()).isEqualTo(importedContent.getSelectionLists().size());
 
       var collectionsList = collectionDao.getAllCollections();
       assertThat(collectionsList).extracting(Collection::getName).containsOnly("Data", "Tasks");
@@ -242,6 +258,25 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       assertThat(variables.size()).isEqualTo(1);
       assertThat(variables.get(0).getKey()).isEqualTo("public_var");
       assertThat(variables.get(0).getValue()).isEqualTo("normal");
+
+      var views = viewDao.getAllViews();
+      assertThat(views.size()).isEqualTo(1);
+      assertThat(views.get(0).getName()).isEqualTo("Datons");
+   }
+
+   private ProjectContent readProjectContent(byte[] content) {
+      ObjectMapper mapper = new ObjectMapper();
+      AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
+      AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
+      AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
+      mapper.setAnnotationIntrospector(pair);
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      try {
+         return mapper.readValue(content, ProjectContent.class);
+      } catch (IOException ignore) {
+         ignore.printStackTrace();
+      }
+      return null;
    }
 
 }
