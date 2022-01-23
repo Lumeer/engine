@@ -154,12 +154,58 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       project.getPermissions().updateGroupPermissions(groupPermission);
       return projectDao.createProject(project);
    }
+   @Test
+   public void testTemplatesImportByRawEndpoints() throws InterruptedException {
+      var p1 = createProject(CODE1);
+      var p2= createProject(CODE2);
+
+      byte[] templateContent = readAndSaveTemplateContent(p1);
+
+      Response response = client.target(projectUrl + p1.getId() + "/raw")
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildGet().invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      var exportedTemplate = response.readEntity(String.class);
+
+      Entity entity = Entity.json(exportedTemplate);
+      response = client.target(projectUrl + p2.getId() + "/raw")
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildPost(entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Thread.sleep(500); // allow functions to be executed
+
+      assertTemplatesContent(p2, templateContent);
+   }
 
    @Test
-   public void testTemplatesImportExport() throws InterruptedException {
+   public void testTemplatesImportByCopyProject() throws InterruptedException {
       var p1 = createProject(CODE1);
       var p2 = createProject(CODE2);
 
+      byte[] templateContent = readAndSaveTemplateContent(p1);
+
+      Entity entity = Entity.json(templateContent);
+      Response response = client.target(projectUrl + p2.getId() + "/copy")
+                       .queryParam("organizationId", organization.getId())
+                       .queryParam("projectId", p1.getId())
+                       .request(MediaType.APPLICATION_JSON)
+                       .buildPost(entity).invoke();
+
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      Thread.sleep(500); // allow functions to be executed
+
+      assertTemplatesContent(p2, templateContent);
+   }
+
+   private byte[] readAndSaveTemplateContent(Project project) throws InterruptedException {
       byte[] templateContent = new byte[0];
 
       try (
@@ -171,7 +217,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       }
 
       Entity entity = Entity.json(templateContent);
-      Response response = client.target(projectUrl + p1.getId() + "/raw")
+      Response response = client.target(projectUrl + project.getId() + "/raw")
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildPost(entity).invoke();
 
@@ -180,27 +226,20 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       Thread.sleep(500); // allow functions to be executed
 
-      response = client.target(projectUrl + p2.getId() + "/copy")
-                       .queryParam("organizationId", organization.getId())
-                       .queryParam("projectId", p1.getId())
-                       .request(MediaType.APPLICATION_JSON)
-                       .buildPost(entity).invoke();
+      return templateContent;
+   }
 
-      assertThat(response).isNotNull();
-      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
-
-      Thread.sleep(500); // allow functions to be executed
-
+   private void assertTemplatesContent(Project project, byte[] templateContent) {
       workspaceKeeper.setOrganization(organization);
-      workspaceKeeper.setProject(p2);
-      collectionDao.setProject(p2);
-      linkTypeDao.setProject(p2);
-      sequenceDao.setProject(p2);
-      viewDao.setProject(p2);
+      workspaceKeeper.setProject(project);
+      collectionDao.setProject(project);
+      linkTypeDao.setProject(project);
+      sequenceDao.setProject(project);
+      viewDao.setProject(project);
       selectionListDao.setOrganization(organization);
 
       ProjectContent importedContent = readProjectContent(templateContent);
-      ProjectContent content = projectFacade.getRawProjectContent(p2.getId());
+      ProjectContent content = projectFacade.getRawProjectContent(project.getId());
       assertThat(content.getCollections().size()).isEqualTo(importedContent.getCollections().size());
       assertThat(content.getLinkTypes().size()).isEqualTo(importedContent.getLinkTypes().size());
       assertThat(content.getVariables().size()).isEqualTo(importedContent.getVariables().size());
@@ -247,13 +286,13 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       assertThat(sequences.size()).isEqualTo(1);
       assertThat(sequences.get(0).getSeq()).isEqualTo(1);
 
-      var selectionLists = selectionListDao.getAllLists(List.of(p2.getId()));
+      var selectionLists = selectionListDao.getAllLists(List.of(project.getId()));
 
       assertThat(selectionLists).extracting(SelectionList::getName).contains("3 states");
 
       assertThat(selectionLists.size()).isEqualTo(6);
 
-      var variables = resourceVariableDao.getInProject(organization.getId(), p2.getId());
+      var variables = resourceVariableDao.getInProject(organization.getId(), project.getId());
 
       assertThat(variables.size()).isEqualTo(1);
       assertThat(variables.get(0).getKey()).isEqualTo("public_var");
