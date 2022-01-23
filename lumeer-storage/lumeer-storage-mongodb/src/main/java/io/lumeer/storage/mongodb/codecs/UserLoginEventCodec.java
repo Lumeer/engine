@@ -82,9 +82,7 @@ public class UserLoginEventCodec implements CollectibleCodec<UserLoginEvent> {
          date = ZonedDateTime.ofInstant(bson.getDate(DATE).toInstant(), ZoneOffset.UTC);
       }
 
-      UserLoginEvent userLoginEvent = new UserLoginEvent(id, userId, date);
-
-      return userLoginEvent;
+      return new UserLoginEvent(id, userId, date);
    }
 
    @Override

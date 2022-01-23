@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.OrganizationLoginsInfo;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
@@ -27,6 +28,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.cache.WorkspaceCache;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
@@ -37,9 +39,14 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.ResourceVariableDao;
 import io.lumeer.storage.api.dao.SelectionListDao;
 import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserLoginDao;
 
+import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
@@ -83,6 +90,12 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private ResourceVariableDao resourceVariableDao;
+
+   @Inject
+   private UserLoginDao userLoginDao;
+
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
 
    public Organization createOrganization(final Organization organization) {
       Utils.checkCodeSafe(organization.getCode());
@@ -254,6 +267,84 @@ public class OrganizationFacade extends AbstractFacade {
 
          return serviceLimits.fitsLimits(projectDescription);
       }).collect(Collectors.toList());
+   }
+
+   public int deleteOldOrganizations(int months) {
+      permissionsChecker.checkSystemPermission();
+
+      Map<String, Organization> organizationsMap = organizationDao.getAllOrganizations().stream()
+                                                                  .collect(Collectors.toMap(Organization::getId, o -> o));
+
+      int safeMonths = Math.max(months, 6);
+      List<OrganizationLoginsInfo> loginsInfos = getOrganizationsLoginsInfoToDelete(false, safeMonths);
+      loginsInfos.forEach(info -> {
+         Organization organization = organizationsMap.get(info.getOrganizationId());
+         if (organization != null) {
+            deleteOrganizationScopedRepositories(organization);
+
+            organizationDao.deleteOrganization(organization.getId());
+            workspaceCache.removeOrganization(organization.getId());
+         }
+      });
+      return loginsInfos.size();
+   }
+
+   public List<OrganizationLoginsInfo> getOrganizationsLoginsInfoToDelete(boolean descending, int months) {
+      permissionsChecker.checkSystemPermission();
+
+      List<String> whitelistedDomains = configurationProducer.getArray(DefaultConfigurationProducer.WHITELIST_USER_DOMAINS);
+      List<String> whitelistedEmails = configurationProducer.getArray(DefaultConfigurationProducer.WHITELIST_USER_EMAILS);
+      return getOrganizationsLoginsInfo(descending)
+            .stream()
+            .filter(info -> isLastLoginOlderThanMonths(info, months) && !containsWhitelistedUsers(info, whitelistedDomains, whitelistedEmails))
+            .collect(Collectors.toList());
+   }
+
+   public boolean isLastLoginOlderThanMonths(OrganizationLoginsInfo info, int months) {
+      return info.getLastLoginDate().plusMonths(months).isBefore(ZonedDateTime.now());
+   }
+
+   public boolean containsWhitelistedUsers(OrganizationLoginsInfo info, List<String> whitelistedDomains, List<String> whitelistedEmails) {
+      return info.getUserEmails().stream().anyMatch(email -> {
+         if (whitelistedEmails.contains(email)) {
+            return true;
+         }
+         var emailDomain = email.substring(email.indexOf("@") + 1);
+         return !emailDomain.isEmpty() && whitelistedDomains.contains(emailDomain);
+      });
+   }
+
+   public List<OrganizationLoginsInfo> getOrganizationsLoginsInfo(boolean descending) {
+      permissionsChecker.checkSystemPermission();
+
+      List<User> users = userDao.getAllUsers();
+      Map<String, ZonedDateTime> usersLastLogins = userLoginDao.getUsersLastLogins();
+
+      return organizationDao.getAllOrganizations().stream().map(organization -> {
+                               List<User> usersByOrganization = users.stream()
+                                                                     .filter(user -> permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
+                                                                     .collect(Collectors.toList());
+
+                               Set<String> usersIds = usersByOrganization.stream().map(User::getId).collect(Collectors.toSet());
+                               Set<String> usersEmails = usersByOrganization.stream().map(User::getEmail).collect(Collectors.toSet());
+
+                               List<ZonedDateTime> lastLogins = usersLastLogins.entrySet().stream()
+                                                                               .filter(entry -> usersIds.contains(entry.getKey()))
+                                                                               .map(Map.Entry::getValue)
+                                                                               .filter(Objects::nonNull)
+                                                                               .sorted()
+                                                                               .collect(Collectors.toList());
+                               ZonedDateTime lastLogin = lastLogins.size() > 0 ? lastLogins.get(lastLogins.size() - 1) : null;
+
+                               workspaceKeeper.setOrganization(organization);
+                               projectDao.setOrganization(organization);
+
+                               long projects = projectDao.getProjectsCount();
+
+                               return new OrganizationLoginsInfo(organization.getId(), organization.getCode(), projects, usersEmails, lastLogin);
+                            })
+                            .sorted(descending ? Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate).reversed() : Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate))
+                            .collect(Collectors.toList());
    }
 
    private void createOrganizationInUser(final String organizationId) {

@@ -154,16 +154,17 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       project.getPermissions().updateGroupPermissions(groupPermission);
       return projectDao.createProject(project);
    }
+
    @Test
    public void testTemplatesImportByRawEndpoints() throws InterruptedException {
       var p1 = createProject(CODE1);
-      var p2= createProject(CODE2);
+      var p2 = createProject(CODE2);
 
       byte[] templateContent = readAndSaveTemplateContent(p1);
 
       Response response = client.target(projectUrl + p1.getId() + "/raw")
-                       .request(MediaType.APPLICATION_JSON)
-                       .buildGet().invoke();
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildGet().invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
@@ -192,10 +193,10 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
       Entity entity = Entity.json(templateContent);
       Response response = client.target(projectUrl + p2.getId() + "/copy")
-                       .queryParam("organizationId", organization.getId())
-                       .queryParam("projectId", p1.getId())
-                       .request(MediaType.APPLICATION_JSON)
-                       .buildPost(entity).invoke();
+                                .queryParam("organizationId", organization.getId())
+                                .queryParam("projectId", p1.getId())
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPost(entity).invoke();
 
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
