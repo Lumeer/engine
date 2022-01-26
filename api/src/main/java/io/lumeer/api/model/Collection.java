@@ -89,6 +89,21 @@ public class Collection extends Resource implements AttributesResource, HealthCh
       this.purpose = purpose;
    }
 
+   public Collection(final Resource resource,
+         final Set<Attribute> attributes,
+         final Map<String, Rule> rules,
+         final String dataDescription,
+         final CollectionPurpose purpose) {
+      super(resource);
+
+      this.attributes = attributes != null ? new LinkedHashSet<>(attributes) : new LinkedHashSet<>();
+      this.documentsCount = 0L;
+      this.lastAttributeNum = 0;
+      this.rules = rules;
+      this.dataDescription = dataDescription;
+      this.purpose = purpose;
+   }
+
    @Override
    public Collection copy() {
       final Collection o = new Collection(this.code, this.name, this.icon, this.color, new Permissions(this.getPermissions()));

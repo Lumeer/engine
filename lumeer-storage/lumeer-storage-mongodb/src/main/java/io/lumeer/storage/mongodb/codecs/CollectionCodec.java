@@ -103,14 +103,12 @@ public class CollectionCodec extends ResourceCodec implements CollectibleCodec<C
          purpose = new CollectionPurpose(CollectionPurposeType.None, new DataDocument());
       }
 
-      Collection collection = new Collection(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), attributes, rules, dataDescription, purpose);
-      collection.setId(resource.getId());
+      Collection collection = new Collection(resource, attributes, rules, dataDescription, purpose);
       if (lastTimeUsed != null) {
          collection.setLastTimeUsed(ZonedDateTime.ofInstant(lastTimeUsed.toInstant(), ZoneOffset.UTC));
       }
       collection.setDefaultAttributeId(defaultAttributeId);
       collection.setLastAttributeNum(lastAttributeNum);
-      collection.setAttributes(attributes);
       collection.setVersion(resource.getVersion());
 
       return collection;

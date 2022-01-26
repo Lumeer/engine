@@ -83,7 +83,7 @@ public abstract class Resource implements WithId, HealthChecking {
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
       this.priority = resource.getPriority();
-      this.permissions = new Permissions(resource.getPermissions());
+      this.permissions = resource.getPermissions() != null ? new Permissions(resource.getPermissions()) : new Permissions();
       this.version = resource.getVersion();
       this.createdBy = resource.getCreatedBy();
       this.creationDate = resource.getCreationDate();

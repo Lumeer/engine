@@ -79,8 +79,7 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
                                                                  .collect(Collectors.toList());
       }
 
-      View view = new View(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), query, additionalQueries, perspective, config, settings, authorId, folders);
-      view.setId(resource.getId());
+      View view = new View(resource, query, additionalQueries, perspective, config, settings, authorId, folders);
       view.setVersion(resource.getVersion());
 
       if (lastTimeUsed != null) {

@@ -23,6 +23,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -36,6 +37,7 @@ public class Project extends Resource implements Updatable<Project> {
    private TemplateMetadata templateMetadata;
    private int collectionsCount;
    private boolean isPublic;
+   private String templateId;
 
    public Project() {
    }
@@ -54,6 +56,12 @@ public class Project extends Resource implements Updatable<Project> {
       super(code, name, icon, color, description, order, permissions);
       this.templateMetadata = templateMetadata;
       this.isPublic = isPublic;
+   }
+
+   public Project(final Resource resource, final boolean isPublic, final TemplateMetadata templateMetadata) {
+      super(resource);
+      this.isPublic = isPublic;
+      this.templateMetadata = templateMetadata;
    }
 
    @Override
@@ -114,6 +122,15 @@ public class Project extends Resource implements Updatable<Project> {
 
    public void setCollectionsCount(final int collectionsCount) {
       this.collectionsCount = collectionsCount;
+   }
+
+   @JsonIgnore
+   public String getTemplateId() {
+      return templateId;
+   }
+
+   public void setTemplateId(final String templateId) {
+      this.templateId = templateId;
    }
 
    @Override

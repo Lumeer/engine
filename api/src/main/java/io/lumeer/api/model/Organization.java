@@ -48,6 +48,10 @@ public class Organization extends Resource implements Updatable<Organization> {
       super(code, name, icon, color, description, order, permissions);
    }
 
+   public Organization(final Resource resource) {
+      super(resource);
+   }
+
    @Override
    public Organization copy() {
       final Organization o = new Organization();

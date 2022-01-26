@@ -37,6 +37,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Project> {
 
    public static final String TEMPLATE_METADATA = "templateMetadata";
+   public static final String TEMPLATE_ID = "templateId";
    public static final String IS_PUBLIC = "isPublic";
 
    public ProjectCodec(final CodecRegistry registry) {
@@ -55,16 +56,18 @@ public class ProjectCodec extends ResourceCodec implements CollectibleCodec<Proj
       }
 
       boolean isPublic = bson.getBoolean(IS_PUBLIC, false);
-      Project project = new Project(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions(), isPublic, templateMetadata);
-      project.setId(resource.getId());
+      String templateId = bson.getString(TEMPLATE_ID);
+      Project project = new Project(resource, isPublic, templateMetadata);
       project.setVersion(resource.getVersion());
+      project.setTemplateId(templateId);
       return project;
    }
 
    @Override
    public void encode(final BsonWriter writer, final Project project, final EncoderContext encoderContext) {
       Document bson = encodeResource(project)
-            .append(IS_PUBLIC, project.isPublic());
+            .append(IS_PUBLIC, project.isPublic())
+            .append(TEMPLATE_ID, project.getTemplateId());
       if (project.getTemplateMetadata() != null) {
          bson = bson.append(TEMPLATE_METADATA, project.getTemplateMetadata());
       }

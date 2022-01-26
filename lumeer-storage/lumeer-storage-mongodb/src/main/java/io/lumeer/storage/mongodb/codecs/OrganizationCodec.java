@@ -44,8 +44,7 @@ public class OrganizationCodec extends ResourceCodec implements CollectibleCodec
       Document bson = documentCodec.decode(reader, decoderContext);
       SimpleResource resource = decodeResource(bson, ResourceType.ORGANIZATION);
 
-      Organization organization = new Organization(resource.getCode(), resource.getName(), resource.getIcon(), resource.getColor(), resource.getDescription(), resource.getPriority(), resource.getPermissions());
-      organization.setId(resource.getId());
+      Organization organization = new Organization(resource);
       organization.setVersion(resource.getVersion());
       return organization;
    }
