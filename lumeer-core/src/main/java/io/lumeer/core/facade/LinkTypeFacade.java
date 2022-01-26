@@ -117,6 +117,7 @@ public class LinkTypeFacade extends AbstractFacade {
       linkType.setAttributes(null);
       linkType.setLastAttributeNum(0);
       linkType.setLinksCount(0L);
+      mapLinkTypeCreationValues(linkType);
 
       LinkType storedLinkType = linkTypeDao.createLinkType(linkType);
       linkDataDao.createDataRepository(storedLinkType.getId());
@@ -148,6 +149,7 @@ public class LinkTypeFacade extends AbstractFacade {
       LinkType updatingLinkType = new LinkType(storedLinkType);
       updatingLinkType.patch(linkType, permissionsChecker.getActualRoles(storedLinkType));
       keepUnmodifiableFields(updatingLinkType, storedLinkType);
+      mapLinkTypeUpdateValues(linkType);
 
       return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
    }
@@ -203,6 +205,7 @@ public class LinkTypeFacade extends AbstractFacade {
                    .forEach(collection -> {
                       final Collection originalCollection = collection.copy();
                       filterAutoLinkRulesByLinkType(collection, linkTypeId);
+                      mapResourceUpdateValues(collection);
                       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
                    });
    }
@@ -272,6 +275,7 @@ public class LinkTypeFacade extends AbstractFacade {
          attribute.patchCreation(actualRoles);
          bookedAttributesLinkType.createAttribute(attribute);
       }
+      mapLinkTypeUpdateValues(linkType);
 
       permissionsChecker.checkFunctionsLimit(linkType);
       linkTypeDao.updateLinkType(linkType.getId(), bookedAttributesLinkType, linkType);
@@ -299,11 +303,11 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType upsertRule(final String linkTypeId, final String ruleId, final Rule rule) {
-      final LinkType storedLinkType = checkLinkTypePermission(linkTypeId, RoleType.TechConfig);
+      final LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.TechConfig);
 
-      LinkType originalLinkType = new LinkType(storedLinkType);
+      LinkType originalLinkType = new LinkType(linkType);
 
-      Map<String, Rule> rules = Objects.requireNonNullElse(storedLinkType.getRules(), new HashMap<>());
+      Map<String, Rule> rules = Objects.requireNonNullElse(linkType.getRules(), new HashMap<>());
 
       Rule originalRule = rules.get(ruleId);
       rule.checkConfiguration(originalRule);
@@ -311,9 +315,10 @@ public class LinkTypeFacade extends AbstractFacade {
       permissionsChecker.checkRulePermissions(rule);
 
       rules.put(ruleId, rule);
-      storedLinkType.setRules(rules);
+      linkType.setRules(rules);
+      mapLinkTypeUpdateValues(linkType);
 
-      final LinkType updatedLinkType = linkTypeDao.updateLinkType(storedLinkType.getId(), storedLinkType, originalLinkType);
+      final LinkType updatedLinkType = linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType);
       return mapLinkTypeData(updatedLinkType);
    }
 
@@ -345,6 +350,7 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       linkType.updateAttribute(attributeId, updatingAttribute);
+      mapLinkTypeUpdateValues(linkType);
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
       conversionFacade.convertStoredDocuments(linkType, originalAttribute, updatingAttribute);
@@ -359,6 +365,8 @@ public class LinkTypeFacade extends AbstractFacade {
       linkDataDao.deleteAttribute(linkTypeId, attributeId);
 
       linkType.deleteAttribute(attributeId);
+      mapLinkTypeUpdateValues(linkType);
+
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
 
       fileAttachmentFacade.removeAllFileAttachments(linkTypeId, attributeId, FileAttachment.AttachmentType.LINK);

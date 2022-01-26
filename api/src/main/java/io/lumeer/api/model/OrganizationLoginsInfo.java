@@ -28,18 +28,20 @@ public class OrganizationLoginsInfo  {
 
    private final String organizationId;
    private final String organizationCode;
-   private final Long projectsCount;
-   private final Long usersCount;
+   private final Integer projectsCount;
+   private final Set<String> projectsCodes;
+   private final Integer usersCount;
    private final Set<String> userEmails;
    private final ZonedDateTime lastLoginDate;
    private final String lastLogin;
 
-   public OrganizationLoginsInfo(final String organizationId, final String organizationCode, final Long projectsCount, final Set<String> userEmails, final ZonedDateTime lastLoginDate) {
+   public OrganizationLoginsInfo(final String organizationId, final String organizationCode, final Set<String> projectsCodes, final Set<String> userEmails, final ZonedDateTime lastLoginDate) {
       this.organizationId = organizationId;
       this.organizationCode = organizationCode;
-      this.projectsCount = projectsCount;
+      this.projectsCount = projectsCodes.size();
+      this.projectsCodes = projectsCodes;
       this.userEmails = userEmails;
-      this.usersCount = (long) userEmails.size();
+      this.usersCount =userEmails.size();
       this.lastLoginDate = lastLoginDate;
       this.lastLogin = lastLoginDate != null ? lastLoginDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")) : null;
    }
@@ -52,11 +54,15 @@ public class OrganizationLoginsInfo  {
       return organizationCode;
    }
 
-   public Long getProjectsCount() {
+   public Set<String> getProjectsCodes() {
+      return projectsCodes;
+   }
+
+   public Integer getProjectsCount() {
       return projectsCount;
    }
 
-   public Long getUsersCount() {
+   public Integer getUsersCount() {
       return usersCount;
    }
 

@@ -31,6 +31,10 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
+
 public abstract class ResourceCodec {
 
    public static final String ID = "_id";
@@ -43,6 +47,10 @@ public abstract class ResourceCodec {
    public static final String DESCRIPTION = "description";
    public static final String PERMISSIONS = "permissions";
    public static final String ROLES = "roles";
+   public static final String CREATION_DATE = "creationDate";
+   public static final String UPDATE_DATE = "updateDate";
+   public static final String CREATED_BY = "createdBy";
+   public static final String UPDATED_BY = "updatedBy";
 
    protected final Codec<Document> documentCodec;
 
@@ -65,11 +73,21 @@ public abstract class ResourceCodec {
       } else {
          permissions = PermissionsCodec.convertFromDocumentLegacy(bson.get(PERMISSIONS, Document.class), resourceType);
       }
+      Date creationDate = bson.getDate(CREATION_DATE);
+      ZonedDateTime creationZonedDate = creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null;
+      String createdBy = bson.getString(CREATED_BY);
+      Date updateDate = bson.getDate(UPDATE_DATE);
+      ZonedDateTime updatedZonedDate = updateDate != null ? ZonedDateTime.ofInstant(updateDate.toInstant(), ZoneOffset.UTC) : null;
+      String updatedBy = bson.getString(UPDATED_BY);
 
-      SimpleResource view = new SimpleResource(code, name, icon, color, description, order, permissions);
-      view.setId(id);
-      view.setVersion(version == null ? 0 : version);
-      return view;
+      SimpleResource resource = new SimpleResource(code, name, icon, color, description, order, permissions);
+      resource.setId(id);
+      resource.setVersion(version == null ? 0 : version);
+      resource.setCreatedBy(createdBy);
+      resource.setCreationDate(creationZonedDate);
+      resource.setUpdatedBy(updatedBy);
+      resource.setUpdateDate(updatedZonedDate);
+      return resource;
    }
 
    protected Document encodeResource(Resource value) {
@@ -80,7 +98,16 @@ public abstract class ResourceCodec {
           .append(COLOR, value.getColor())
           .append(PRIORITY, value.getPriority())
           .append(DESCRIPTION, value.getDescription())
-          .append(ROLES, value.getPermissions());
+          .append(ROLES, value.getPermissions())
+          .append(CREATED_BY, value.getCreatedBy())
+          .append(UPDATED_BY, value.getUpdatedBy());
+
+      if (value.getCreationDate() != null) {
+         bson.append(CREATION_DATE, Date.from(value.getCreationDate().toInstant()));
+      }
+      if (value.getUpdateDate() != null) {
+         bson.append(UPDATE_DATE, Date.from(value.getUpdateDate().toInstant()));
+      }
 
       return bson;
    }

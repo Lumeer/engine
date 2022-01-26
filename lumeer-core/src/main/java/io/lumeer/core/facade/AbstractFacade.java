@@ -28,6 +28,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
 
+import java.time.ZonedDateTime;
 import javax.inject.Inject;
 
 abstract class AbstractFacade {
@@ -63,6 +64,26 @@ abstract class AbstractFacade {
       } else {
          return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, userCache.getUserById(userId));
       }
+   }
+
+   protected <T extends Resource> void mapResourceCreationValues(final T resource) {
+      resource.setCreatedBy(authenticatedUser.getCurrentUserId());
+      resource.setCreationDate(ZonedDateTime.now());
+   }
+
+   protected <T extends Resource> void mapResourceUpdateValues(final T resource) {
+      resource.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      resource.setUpdateDate(ZonedDateTime.now());
+   }
+
+   protected void mapLinkTypeCreationValues(final LinkType resource) {
+      resource.setCreatedBy(authenticatedUser.getCurrentUserId());
+      resource.setCreationDate(ZonedDateTime.now());
+   }
+
+   protected void mapLinkTypeUpdateValues(final LinkType resource) {
+      resource.setUpdatedBy(authenticatedUser.getCurrentUserId());
+      resource.setUpdateDate(ZonedDateTime.now());
    }
 
    protected <T extends Resource> T mapResource(final T resource) {

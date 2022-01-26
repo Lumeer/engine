@@ -38,7 +38,10 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +58,10 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
    public static final String RULES = "rules";
    public static final String ROLES = "roles";
    public static final String ROLES_TYPE = "rolesType";
+   public static final String CREATION_DATE = "creationDate";
+   public static final String UPDATE_DATE = "updateDate";
+   public static final String CREATED_BY = "createdBy";
+   public static final String UPDATED_BY = "updatedBy";
 
    private final Codec<Document> documentCodec;
 
@@ -89,11 +96,21 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
 
       Permissions permissions = PermissionsCodec.convertFromDocument(bson.get(ROLES, Document.class));
       LinkPermissionsType permissionsType = LinkPermissionsType.fromString(bson.getString(ROLES_TYPE));
+      Date creationDate = bson.getDate(CREATION_DATE);
+      ZonedDateTime creationZonedDate = creationDate != null ? ZonedDateTime.ofInstant(creationDate.toInstant(), ZoneOffset.UTC) : null;
+      String createdBy = bson.getString(CREATED_BY);
+      Date updateDate = bson.getDate(UPDATE_DATE);
+      ZonedDateTime updatedZonedDate = updateDate != null ? ZonedDateTime.ofInstant(updateDate.toInstant(), ZoneOffset.UTC) : null;
+      String updatedBy = bson.getString(UPDATED_BY);
 
       LinkType linkType = new LinkType(name, collectionCodes, attributes, rules, permissions, permissionsType);
       linkType.setId(id);
       linkType.setVersion(version == null ? 0 : version);
       linkType.setLastAttributeNum(lastAttributeNum);
+      linkType.setCreatedBy(createdBy);
+      linkType.setCreationDate(creationZonedDate);
+      linkType.setUpdatedBy(updatedBy);
+      linkType.setUpdateDate(updatedZonedDate);
       return linkType;
    }
 
@@ -106,7 +123,16 @@ public class LinkTypeCodec implements CollectibleCodec<LinkType> {
           .append(LAST_ATTRIBUTE_NUM, value.getLastAttributeNum())
           .append(ROLES, value.getPermissions())
           .append(ROLES_TYPE, value.getPermissionsType() != null ? value.getPermissionsType().getValue() : null)
-          .append(RULES, value.getRules());
+          .append(RULES, value.getRules())
+          .append(CREATED_BY, value.getCreatedBy())
+          .append(UPDATED_BY, value.getUpdatedBy());
+
+      if (value.getCreationDate() != null) {
+         bson.append(CREATION_DATE, Date.from(value.getCreationDate().toInstant()));
+      }
+      if (value.getUpdateDate() != null) {
+         bson.append(UPDATE_DATE, Date.from(value.getUpdateDate().toInstant()));
+      }
 
       documentCodec.encode(writer, bson, encoderContext);
    }

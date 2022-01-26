@@ -107,6 +107,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
+      mapResourceCreationValues(organization);
 
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
@@ -129,6 +130,7 @@ public class OrganizationFacade extends AbstractFacade {
 
       Organization updatingOrganization = storedOrganization.copy();
       updatingOrganization.patch(organization, permissionsChecker.getActualRoles(storedOrganization));
+      mapResourceUpdateValues(organization);
 
       Organization updatedOrganization = organizationDao.updateOrganization(organizationId, updatingOrganization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, updatedOrganization);
@@ -198,6 +200,8 @@ public class OrganizationFacade extends AbstractFacade {
       } else {
          organization.getPermissions().addUserPermissions(userPermissions);
       }
+      mapResourceUpdateValues(organization);
+
       organizationDao.updateOrganization(organization.getId(), organization, originalOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
 
@@ -216,6 +220,8 @@ public class OrganizationFacade extends AbstractFacade {
       });
 
       organization.getPermissions().removeUserPermission(userId);
+      mapResourceUpdateValues(organization);
+
       organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
    }
@@ -227,6 +233,8 @@ public class OrganizationFacade extends AbstractFacade {
       final Organization organization = storedOrganization.copy();
 
       organization.getPermissions().updateGroupPermissions(groupPermissions);
+      mapResourceUpdateValues(organization);
+
       organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
 
@@ -247,6 +255,8 @@ public class OrganizationFacade extends AbstractFacade {
       });
 
       organization.getPermissions().removeGroupPermission(groupId);
+      mapResourceUpdateValues(organization);
+
       organizationDao.updateOrganization(organization.getId(), organization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, organization);
    }
@@ -339,9 +349,9 @@ public class OrganizationFacade extends AbstractFacade {
                                workspaceKeeper.setOrganization(organization);
                                projectDao.setOrganization(organization);
 
-                               long projects = projectDao.getProjectsCount();
+                               Set<String> projectsCodes = projectDao.getProjectsCodes();
 
-                               return new OrganizationLoginsInfo(organization.getId(), organization.getCode(), projects, usersEmails, lastLogin);
+                               return new OrganizationLoginsInfo(organization.getId(), organization.getCode(), projectsCodes, usersEmails, lastLogin);
                             })
                             .sorted(descending ? Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate).reversed() : Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate))
                             .collect(Collectors.toList());

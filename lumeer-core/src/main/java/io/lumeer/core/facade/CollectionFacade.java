@@ -184,6 +184,7 @@ public class CollectionFacade extends AbstractFacade {
       updatingCollection.patch(collection, permissionsChecker.getActualRoles(storedCollection));
       updatingCollection.setLastTimeUsed(ZonedDateTime.now());
       keepUnmodifiableFields(updatingCollection, storedCollection);
+      mapResourceUpdateValues(collection);
 
       return mapCollection(collectionDao.updateCollection(storedCollection.getId(), updatingCollection, storedCollection));
    }
@@ -201,6 +202,7 @@ public class CollectionFacade extends AbstractFacade {
       Collection updatingCollection = storedCollection.copy();
       updatingCollection.setRules(collection.getRules());
       keepUnmodifiableFields(updatingCollection, storedCollection);
+      mapResourceUpdateValues(collection);
 
       return mapCollection(collectionDao.updateCollection(storedCollection.getId(), updatingCollection, storedCollection));
    }
@@ -215,12 +217,12 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    public Collection upsertRule(final String collectionId, final String ruleId, final Rule rule) {
-      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(storedCollection, RoleType.TechConfig);
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, RoleType.TechConfig);
 
-      final Collection originalCollection = storedCollection.copy();
+      final Collection originalCollection = collection.copy();
 
-      Map<String, Rule> rules = Objects.requireNonNullElse(storedCollection.getRules(), new HashMap<>());
+      Map<String, Rule> rules = Objects.requireNonNullElse(collection.getRules(), new HashMap<>());
 
       Rule originalRule = rules.get(ruleId);
       rule.checkConfiguration(originalRule);
@@ -228,21 +230,23 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRulePermissions(rule);
 
       rules.put(ruleId, rule);
-      storedCollection.setRules(rules);
+      collection.setRules(rules);
+      mapResourceUpdateValues(collection);
 
-      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
+      final Collection updatedCollection = collectionDao.updateCollection(collection.getId(), collection, originalCollection);
       return mapCollection(updatedCollection);
    }
 
    public Collection updatePurpose(final String collectionId, final CollectionPurpose purpose) {
-      final Collection storedCollection = collectionDao.getCollectionById(collectionId);
-      permissionsChecker.checkRole(storedCollection, RoleType.TechConfig);
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, RoleType.TechConfig);
 
-      final Collection originalCollection = storedCollection.copy();
+      final Collection originalCollection = collection.copy();
 
-      storedCollection.setPurpose(purpose);
+      collection.setPurpose(purpose);
+      mapResourceUpdateValues(collection);
 
-      final Collection updatedCollection = collectionDao.updateCollection(storedCollection.getId(), storedCollection, originalCollection);
+      final Collection updatedCollection = collectionDao.updateCollection(collection.getId(), collection, originalCollection);
       return mapCollection(updatedCollection);
    }
 
@@ -374,6 +378,8 @@ public class CollectionFacade extends AbstractFacade {
          bookedAttributesCollection.createAttribute(attribute);
       }
 
+      mapResourceUpdateValues(bookedAttributesCollection);
+
       permissionsChecker.checkFunctionsLimit(collection);
       bookedAttributesCollection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection);
@@ -431,6 +437,7 @@ public class CollectionFacade extends AbstractFacade {
 
       collection.updateAttribute(attributeId, updatingAttribute);
       collection.setLastTimeUsed(ZonedDateTime.now());
+      mapResourceUpdateValues(collection);
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
       conversionFacade.convertStoredDocuments(collection, originalAttribute, updatingAttribute);
@@ -466,6 +473,7 @@ public class CollectionFacade extends AbstractFacade {
       }
 
       collection.setLastTimeUsed(ZonedDateTime.now());
+      mapResourceUpdateValues(collection);
       filterAutoLinkRulesByAttribute(collection, collectionId, attributeId);
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
 
@@ -487,6 +495,7 @@ public class CollectionFacade extends AbstractFacade {
                    .forEach(collection -> {
                       final Collection originalCollection = collection.copy();
                       filterAutoLinkRulesByAttribute(collection, collectionId, attributeId);
+                      mapResourceUpdateValues(collection);
                       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
                    });
    }
@@ -547,6 +556,7 @@ public class CollectionFacade extends AbstractFacade {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, RoleType.UserConfig);
+      mapResourceUpdateValues(collection);
 
       final Collection updatedCollection = handler.apply(collection);
 
@@ -579,6 +589,7 @@ public class CollectionFacade extends AbstractFacade {
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Collection.ROLES);
       collection.getPermissions().updateUserPermissions(defaultUserPermission);
+      mapResourceCreationValues(collection);
 
       return collectionDao.createCollection(collection);
    }
