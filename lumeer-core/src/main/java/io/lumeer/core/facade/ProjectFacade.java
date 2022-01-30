@@ -172,6 +172,7 @@ public class ProjectFacade extends AbstractFacade {
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
+      mapResourceCreationValues(project);
 
       Project storedProject = projectDao.createProject(project);
 
@@ -192,6 +193,7 @@ public class ProjectFacade extends AbstractFacade {
 
       Project updatingProject = storedProject.copy();
       updatingProject.patch(project, permissionsChecker.getActualRoles(storedProject));
+      mapResourceUpdateValues(project);
 
       Project updatedProject = projectDao.updateProject(projectId, updatingProject, storedProject);
       workspaceCache.updateProject(projectId, updatedProject);
@@ -291,6 +293,8 @@ public class ProjectFacade extends AbstractFacade {
       } else {
          project.getPermissions().addUserPermissions(userPermissions);
       }
+      mapResourceUpdateValues(project);
+
       projectDao.updateProject(project.getId(), project, originalProject);
       workspaceCache.updateProject(projectId, project);
 
@@ -303,6 +307,8 @@ public class ProjectFacade extends AbstractFacade {
 
       final Project project = storedProject.copy();
       project.getPermissions().removeUserPermission(userId);
+      mapResourceUpdateValues(project);
+
       projectDao.updateProject(project.getId(), project, storedProject);
       workspaceCache.updateProject(projectId, project);
    }
@@ -315,6 +321,8 @@ public class ProjectFacade extends AbstractFacade {
 
       final Project project = storedProject.copy();
       project.getPermissions().updateGroupPermissions(groupPermissions);
+      mapResourceUpdateValues(project);
+
       projectDao.updateProject(project.getId(), project, storedProject);
       workspaceCache.updateProject(projectId, project);
 
@@ -329,6 +337,8 @@ public class ProjectFacade extends AbstractFacade {
 
       final Project project = storedProject.copy();
       project.getPermissions().removeGroupPermission(groupId);
+      mapResourceUpdateValues(project);
+      
       projectDao.updateProject(project.getId(), project, storedProject);
       workspaceCache.updateProject(projectId, project);
    }

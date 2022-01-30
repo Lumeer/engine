@@ -107,7 +107,6 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
       }
    }
 
-
    public void createComments(final List<ResourceComment> comments) {
       if (comments != null && comments.size() > 0) {
          databaseCollection().insertMany(comments);
@@ -160,7 +159,7 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
                         Filters.and(
                               Filters.eq(ResourceCommentCodec.RESOURCE_TYPE, resourceType.toString()),
                               Filters.eq(ResourceCommentCodec.PARENT_ID, parentId))),
-                  Aggregates.group("$"+ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
+                  Aggregates.group("$" + ResourceCommentCodec.RESOURCE_ID, Accumulators.sum("count", 1))
             )
       ).into(new ArrayList<>());
 
@@ -271,7 +270,6 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
       return result.into(new ArrayList<>());
    }
 
-
    @Override
    public long updateParentId(final ResourceType resourceType, final String resourceId, final String parentId) {
       final UpdateResult result = databaseCollection().updateMany(
@@ -283,7 +281,6 @@ public class MongoResourceCommentDao extends MongoProjectScopedDao implements Re
 
       return result.getModifiedCount();
    }
-
 
    private String databaseCollectionName(Project project) {
       return PREFIX + project.getId();

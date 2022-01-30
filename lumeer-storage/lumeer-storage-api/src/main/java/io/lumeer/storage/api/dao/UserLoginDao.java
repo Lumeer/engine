@@ -19,6 +19,7 @@
 package io.lumeer.storage.api.dao;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 public interface UserLoginDao {
 
@@ -27,5 +28,7 @@ public interface UserLoginDao {
    void createLoginRepository();
 
    ZonedDateTime getPreviousLoginDate(final String userId);
+
+   Map<String, ZonedDateTime> getUsersLastLogins();
 
 }

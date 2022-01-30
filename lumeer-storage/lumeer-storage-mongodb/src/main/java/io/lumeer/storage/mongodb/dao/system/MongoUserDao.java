@@ -168,6 +168,11 @@ public class MongoUserDao extends MongoSystemScopedDao implements UserDao {
    }
 
    @Override
+   public List<User> getAllUsers() {
+      return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
    public long getAllUsersCount(final String organizationId) {
       return databaseCollection().countDocuments(organizationIdFilter(organizationId));
    }

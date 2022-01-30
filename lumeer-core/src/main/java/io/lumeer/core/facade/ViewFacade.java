@@ -95,6 +95,7 @@ public class ViewFacade extends AbstractFacade {
 
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), View.ROLES);
       view.getPermissions().updateUserPermissions(defaultUserPermission);
+      mapResourceCreationValues(view);
 
       return mapView(viewDao.createView(view));
    }
@@ -124,6 +125,7 @@ public class ViewFacade extends AbstractFacade {
       updatingView.patch(view, permissionsChecker.getActualRoles(storedView));
       updatingView.setAuthorId(storedView.getAuthorId());
       updatingView.setLastTimeUsed(ZonedDateTime.now());
+      mapResourceUpdateValues(view);
 
       return mapView(viewDao.updateView(id, updatingView));
    }
@@ -201,6 +203,8 @@ public class ViewFacade extends AbstractFacade {
       view.getPermissions().clearGroupPermissions();
       view.getPermissions().updateUserPermissions(permissions.getUserPermissions());
       view.getPermissions().updateGroupPermissions(permissions.getGroupPermissions());
+      mapResourceUpdateValues(view);
+
       viewDao.updateView(view.getId(), view, originalView);
 
       return view.getPermissions();
@@ -213,6 +217,8 @@ public class ViewFacade extends AbstractFacade {
       final View originalView = view.copy();
       view.getPermissions().clearUserPermissions();
       view.getPermissions().updateUserPermissions(userPermissions);
+      mapResourceUpdateValues(view);
+
       viewDao.updateView(view.getId(), view, originalView);
 
       return view.getPermissions().getUserPermissions();
@@ -223,6 +229,8 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       view.getPermissions().removeUserPermission(userId);
+      mapResourceUpdateValues(view);
+
       viewDao.updateView(view.getId(), view);
    }
 
@@ -232,6 +240,8 @@ public class ViewFacade extends AbstractFacade {
 
       view.getPermissions().clearGroupPermissions();
       view.getPermissions().updateGroupPermissions(groupPermissions);
+      mapResourceUpdateValues(view);
+
       viewDao.updateView(view.getId(), view);
 
       return view.getPermissions().getGroupPermissions();
@@ -242,6 +252,8 @@ public class ViewFacade extends AbstractFacade {
       permissionsChecker.checkRole(view, RoleType.UserConfig);
 
       view.getPermissions().removeGroupPermission(groupId);
+      mapResourceUpdateValues(view);
+
       viewDao.updateView(view.getId(), view);
    }
 

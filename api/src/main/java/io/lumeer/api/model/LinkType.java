@@ -19,6 +19,7 @@
 
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.model.common.WithId;
@@ -29,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, AttributesResource {
@@ -63,6 +66,15 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, At
    private Map<String, Rule> rules;
    private LinkPermissionsType permissionsType;
    private Permissions permissions;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime creationDate;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   private ZonedDateTime updateDate;
+
+   private String createdBy;
+   private String updatedBy;
 
    @JsonCreator
    public LinkType(@JsonProperty(NAME) final String name,
@@ -90,6 +102,10 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, At
       this.rules = linkType.rules != null ? linkType.rules.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> new Rule(e.getValue()))) : null;
       this.permissions = linkType.getPermissions() != null ? new Permissions(linkType.getPermissions()) : new Permissions();
       this.permissionsType = linkType.getPermissionsType();
+      this.createdBy = linkType.getCreatedBy();
+      this.creationDate = linkType.getCreationDate();
+      this.updatedBy = linkType.getUpdatedBy();
+      this.updateDate = linkType.getUpdateDate();
    }
 
    public String getId() {
@@ -188,6 +204,42 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, At
 
    public LinkPermissionsType getPermissionsType() {
       return permissionsType;
+   }
+
+   @JsonIgnore
+   public String getCreatedBy() {
+      return createdBy;
+   }
+
+   public void setCreatedBy(final String createdBy) {
+      this.createdBy = createdBy;
+   }
+
+   @JsonIgnore
+   public ZonedDateTime getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(final ZonedDateTime creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @JsonIgnore
+   public String getUpdatedBy() {
+      return updatedBy;
+   }
+
+   public void setUpdatedBy(final String updatedBy) {
+      this.updatedBy = updatedBy;
+   }
+
+   @JsonIgnore
+   public ZonedDateTime getUpdateDate() {
+      return updateDate;
+   }
+
+   public void setUpdateDate(final ZonedDateTime updateDate) {
+      this.updateDate = updateDate;
    }
 
    @Override

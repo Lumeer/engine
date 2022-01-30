@@ -34,6 +34,10 @@ public class SimpleResource extends Resource {
       o.id = this.id;
       o.nonRemovable = this.nonRemovable;
       o.version = this.version;
+      o.createdBy = this.createdBy;
+      o.creationDate = this.creationDate;
+      o.updatedBy = this.updatedBy;
+      o.updateDate = this.updateDate;
 
       return o;
    }

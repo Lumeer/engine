@@ -18,12 +18,16 @@
  */
 package io.lumeer.api.model.common;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.HealthChecking;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.ResourceType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import java.time.ZonedDateTime;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public abstract class Resource implements WithId, HealthChecking {
 
@@ -45,8 +49,16 @@ public abstract class Resource implements WithId, HealthChecking {
    protected long version;
    protected String description;
    protected boolean nonRemovable;
-
    protected Permissions permissions;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   protected ZonedDateTime creationDate;
+
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   protected ZonedDateTime updateDate;
+
+   protected String createdBy;
+   protected String updatedBy;
 
    protected Resource() {
    }
@@ -71,8 +83,12 @@ public abstract class Resource implements WithId, HealthChecking {
       this.description = resource.getDescription();
       this.nonRemovable = resource.isNonRemovable();
       this.priority = resource.getPriority();
-      this.permissions = new Permissions(resource.getPermissions());
+      this.permissions = resource.getPermissions() != null ? new Permissions(resource.getPermissions()) : new Permissions();
       this.version = resource.getVersion();
+      this.createdBy = resource.getCreatedBy();
+      this.creationDate = resource.getCreationDate();
+      this.updatedBy = resource.getUpdatedBy();
+      this.updateDate = resource.getUpdateDate();
    }
 
    public abstract <T extends Resource> T copy();
@@ -158,6 +174,42 @@ public abstract class Resource implements WithId, HealthChecking {
 
    public void setPriority(final Long priority) {
       this.priority = priority;
+   }
+
+   @JsonIgnore
+   public String getCreatedBy() {
+      return createdBy;
+   }
+
+   public void setCreatedBy(final String createdBy) {
+      this.createdBy = createdBy;
+   }
+
+   @JsonIgnore
+   public ZonedDateTime getCreationDate() {
+      return creationDate;
+   }
+
+   public void setCreationDate(final ZonedDateTime creationDate) {
+      this.creationDate = creationDate;
+   }
+
+   @JsonIgnore
+   public String getUpdatedBy() {
+      return updatedBy;
+   }
+
+   public void setUpdatedBy(final String updatedBy) {
+      this.updatedBy = updatedBy;
+   }
+
+   @JsonIgnore
+   public ZonedDateTime getUpdateDate() {
+      return updateDate;
+   }
+
+   public void setUpdateDate(final ZonedDateTime updateDate) {
+      this.updateDate = updateDate;
    }
 
    @Override

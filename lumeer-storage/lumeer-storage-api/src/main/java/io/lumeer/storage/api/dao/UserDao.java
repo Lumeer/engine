@@ -45,6 +45,8 @@ public interface UserDao {
 
    List<User> getAllUsers(String organizationId);
 
+   List<User> getAllUsers();
+
    long getReferralsCount(final String referral);
 
    long getAllUsersCount(String organizationId);

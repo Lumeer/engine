@@ -90,6 +90,25 @@ public class View extends Resource implements Updatable<View> {
       this.folders = folders;
    }
 
+   public View(final Resource resource,
+         final Query query,
+         final List<Query> additionalQueries,
+         final Perspective perspective,
+         final Object config,
+         final Object settings,
+         final String authorId,
+         final List<String> folders) {
+      super(resource);
+
+      this.query = query;
+      this.additionalQueries = additionalQueries;
+      this.perspective = perspective;
+      this.config = config;
+      this.settings = settings;
+      this.authorId = authorId;
+      this.folders = folders;
+   }
+
    @Override
    public View copy() {
       final View o = new View();
