@@ -285,8 +285,7 @@ public class OrganizationFacade extends AbstractFacade {
       Map<String, Organization> organizationsMap = organizationDao.getAllOrganizations().stream()
                                                                   .collect(Collectors.toMap(Organization::getId, o -> o));
 
-      int safeMonths = Math.max(months, 6);
-      List<OrganizationLoginsInfo> loginsInfos = getOrganizationsLoginsInfoToDelete(false, safeMonths);
+      List<OrganizationLoginsInfo> loginsInfos = getOrganizationsLoginsInfoToDelete(false, months);
       loginsInfos.forEach(info -> {
          Organization organization = organizationsMap.get(info.getOrganizationId());
          if (organization != null) {
@@ -302,11 +301,12 @@ public class OrganizationFacade extends AbstractFacade {
    public List<OrganizationLoginsInfo> getOrganizationsLoginsInfoToDelete(boolean descending, int months) {
       permissionsChecker.checkSystemPermission();
 
+      int safeMonths = Math.max(months, 9);
       List<String> whitelistedDomains = configurationProducer.getArray(DefaultConfigurationProducer.WHITELIST_USER_DOMAINS);
       List<String> whitelistedEmails = configurationProducer.getArray(DefaultConfigurationProducer.WHITELIST_USER_EMAILS);
       return getOrganizationsLoginsInfo(descending)
             .stream()
-            .filter(info -> isLastLoginOlderThanMonths(info, months) && !containsWhitelistedUsers(info, whitelistedDomains, whitelistedEmails))
+            .filter(info -> isLastLoginOlderThanMonths(info, safeMonths) && !containsWhitelistedUsers(info, whitelistedDomains, whitelistedEmails))
             .collect(Collectors.toList());
    }
 
