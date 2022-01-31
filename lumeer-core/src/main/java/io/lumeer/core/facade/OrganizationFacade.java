@@ -311,6 +311,9 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public boolean isLastLoginOlderThanMonths(OrganizationLoginsInfo info, int months) {
+      if (info.getLastLoginDate() == null) {
+         return true;
+      }
       return info.getLastLoginDate().plusMonths(months).isBefore(ZonedDateTime.now());
    }
 
@@ -329,6 +332,8 @@ public class OrganizationFacade extends AbstractFacade {
 
       List<User> users = userDao.getAllUsers();
       Map<String, ZonedDateTime> usersLastLogins = userLoginDao.getUsersLastLogins();
+
+      Comparator<OrganizationLoginsInfo> comparator = Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate, Comparator.nullsFirst(Comparator.naturalOrder()));
 
       return organizationDao.getAllOrganizations().stream().map(organization -> {
                                List<User> usersByOrganization = users.stream()
@@ -353,7 +358,7 @@ public class OrganizationFacade extends AbstractFacade {
 
                                return new OrganizationLoginsInfo(organization.getId(), organization.getCode(), projectsCodes, usersEmails, lastLogin);
                             })
-                            .sorted(descending ? Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate).reversed() : Comparator.comparing(OrganizationLoginsInfo::getLastLoginDate))
+                            .sorted(descending ? comparator.reversed() : comparator)
                             .collect(Collectors.toList());
    }
 
