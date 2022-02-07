@@ -30,6 +30,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.UserInvitation;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.exception.BadFormatException;
@@ -141,14 +142,13 @@ public class UserFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testCreateUsersToWorkspace() {
-      List<User> users = Arrays.asList(prepareUser(organizationId1, USER1), prepareUser(organizationId1, USER2));
-      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users, InvitationType.JOIN_ONLY);
+      List<UserInvitation> users = Arrays.asList(new UserInvitation(USER1, InvitationType.JOIN_ONLY), new UserInvitation(USER2, InvitationType.JOIN_ONLY));
+      userFacade.createUsersInWorkspace(organizationId1, project.getId(), users);
 
       Arrays.asList(USER1, USER2).forEach(user -> {
          User stored = getUser(organizationId1, user);
 
          assertThat(stored).isNotNull();
-         assertThat(stored.getName()).isEqualTo(user);
          assertThat(stored.getEmail()).isEqualTo(user);
          assertThat(stored.getOrganizations()).containsOnly(organizationId1);
       });

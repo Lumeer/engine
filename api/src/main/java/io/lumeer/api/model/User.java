@@ -194,6 +194,12 @@ public class User implements HealthChecking {
       this.organizations = organizations;
    }
 
+   public void setOrganization(final String organizationId) {
+      Set<String> organizations = new HashSet<>();
+      organizations.add(organizationId);
+      setOrganizations(organizations);
+   }
+
    public DefaultWorkspace getDefaultWorkspace() {
       return defaultWorkspace;
    }

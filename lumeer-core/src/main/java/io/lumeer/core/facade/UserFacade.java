@@ -28,6 +28,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.UserInvitation;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 import io.lumeer.api.util.UserUtil;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -147,16 +149,16 @@ public class UserFacade extends AbstractFacade {
       }
    }
 
-   public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<User> users, final InvitationType invitationType) {
+   public List<User> createUsersInWorkspace(final String organizationId, final String projectId, final List<UserInvitation> invitations) {
       // we need at least project management rights
       checkProjectPermissions(organizationId, projectId, RoleType.UserConfig);
-
-      users.forEach(u -> u.setEmail(u.getEmail().toLowerCase()));
 
       // check if the users are already in the organization
       final List<User> usersInOrganization = getUsers(organizationId);
       final List<String> orgUserEmails = usersInOrganization.stream().map(User::getEmail).collect(Collectors.toList());
-      final List<String> usersInRequest = users.stream().map(User::getEmail).collect(Collectors.toList());
+      final List<UserInvitation> validInvitations = invitations.stream().filter(inv -> !inv.getEmail().isEmpty()).collect(Collectors.toList());
+      final List<String> usersInRequest = validInvitations.stream().map(UserInvitation::getEmail).collect(Collectors.toList());
+      final Map<String, InvitationType> invitationTypeMap = validInvitations.stream().collect(Collectors.toMap(UserInvitation::getEmail, UserInvitation::getInvitationType));
 
       final List<User> newUsers;
       final Organization organization;
@@ -169,8 +171,7 @@ public class UserFacade extends AbstractFacade {
          organization = checkOrganizationPermissions(organizationId, RoleType.UserConfig);
          checkUsersCreate(organizationId, userEmailsToAdd.size());
 
-         users.forEach(user -> checkOrganizationInUser(organizationId, user));
-         newUsers = createUsersInOrganization(organizationId, users);
+         newUsers = createUsersByInvitationsInOrganization(organizationId, projectId, validInvitations);
       } else { // we will just amend the rights at the project level
          organization = organizationFacade.getOrganizationById(organizationId);
          newUsers = usersInOrganization.stream().filter(user -> usersInRequest.contains(user.getEmail())).collect(Collectors.toList());
@@ -181,7 +182,7 @@ public class UserFacade extends AbstractFacade {
                                       .filter(user -> !permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
                                       .collect(Collectors.toList());
       addUsersToOrganization(organization, organizationUsers);
-      addUsersToProject(organization, projectId, newUsers, invitationType);
+      addUsersToProject(organization, projectId, newUsers, invitationTypeMap);
 
       logUsersInvitation(newUsers, organization);
 
@@ -201,15 +202,24 @@ public class UserFacade extends AbstractFacade {
       }
    }
 
-   private List<User> createUsersInOrganization(String organizationId, List<User> users) {
-      return users.stream().map(user -> {
+   private List<User> createUsersByInvitationsInOrganization(String organizationId, String projectId, List<UserInvitation> invitations) {
+      return invitations.stream().map(invitation -> {
 
-         User storedUser = userDao.getUserByEmail(user.getEmail());
+         User storedUser = userDao.getUserByEmail(invitation.getEmail());
          if (storedUser == null) {
-            return createUserAndSendNotification(organizationId, user);
+            User newUser = new User(invitation.getEmail());
+            newUser.setOrganization(organizationId);
+            newUser.setDefaultWorkspace(new DefaultWorkspace(organizationId, projectId));
+
+            return createUserAndSendNotification(organizationId, newUser);
          }
 
-         User updatedUser = updateExistingUser(organizationId, storedUser, user);
+         storedUser.setOrganizations(UserUtil.mergeOrganizations(storedUser.getOrganizations(), Set.of(organizationId)));
+         if (storedUser.getDefaultWorkspace() == null) {
+            storedUser.setDefaultWorkspace(new DefaultWorkspace(organizationId, projectId));
+         }
+
+         User updatedUser = updateExistingUser(organizationId, storedUser);
 
          return keepOnlyCurrentOrganization(updatedUser, organizationId);
       }).collect(Collectors.toList());
@@ -217,27 +227,28 @@ public class UserFacade extends AbstractFacade {
 
    private void addUsersToOrganization(Organization organization, List<User> users) {
       if (!users.isEmpty()) {
-         var newPermissions = buildUserPermission(organization, users, InvitationType.JOIN_ONLY);
+         var invitationTypeMap = users.stream().collect(Collectors.toMap(User::getEmail, user -> InvitationType.JOIN_ONLY));
+         var newPermissions = buildUserPermission(organization, users, invitationTypeMap);
          organizationFacade.updateUserPermissions(organization.getId(), newPermissions);
       }
    }
 
-   private Set<Permission> buildUserPermission(final Resource resource, final List<User> users, final InvitationType invitationType) {
+   private Set<Permission> buildUserPermission(final Resource resource, final List<User> users, final Map<String, InvitationType> invitationTypeMap) {
       return users.stream()
                   .map(user -> {
                      var existingPermissions = resource.getPermissions().getUserPermissions().stream().filter(permission -> permission.getId().equals(user.getId())).findFirst();
                      var minimalSet = new HashSet<>(Set.of(new Role(RoleType.Read)));
                      existingPermissions.ifPresent(permission -> minimalSet.addAll(permission.getRoles()));
-                     return Permission.buildWithRoles(user.getId(), RoleUtils.getInvitationRoles(invitationType, resource.getType(), minimalSet));
+                     return Permission.buildWithRoles(user.getId(), RoleUtils.getInvitationRoles(invitationTypeMap.get(user.getEmail()), resource.getType(), minimalSet));
                   })
                   .collect(Collectors.toSet());
    }
 
-   private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final InvitationType invitationType) {
+   private void addUsersToProject(Organization organization, final String projectId, final List<User> users, final Map<String, InvitationType> invitationTypeMap) {
       if (!users.isEmpty()) {
          workspaceKeeper.setOrganizationId(organization.getId());
          var project = projectDao.getProjectById(projectId);
-         var newPermissions = buildUserPermission(project, users, invitationType);
+         var newPermissions = buildUserPermission(project, users, invitationTypeMap);
          projectFacade.updateUserPermissions(projectId, newPermissions);
       }
    }
@@ -281,6 +292,13 @@ public class UserFacade extends AbstractFacade {
       final var updatedUser = updateUserAndSendNotification(organizationId, storedUser.getId(), mergedUser);
 
       logUserVerified(storedUser, updatedUser);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return updatedUser;
+   }
+
+   private User updateExistingUser(String organizationId, User user) {
+      final var updatedUser = updateUserAndSendNotification(organizationId, user.getId(), user);
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return updatedUser;
@@ -500,9 +518,7 @@ public class UserFacade extends AbstractFacade {
 
    private boolean checkOrganizationInUser(String organizationId, User user) {
       if (user.getOrganizations() == null || user.getOrganizations().isEmpty()) {
-         var organizations = new HashSet<String>();
-         organizations.add(organizationId);
-         user.setOrganizations(organizations);
+         user.setOrganization(organizationId);
          return false;
       } else {
          if (user.getOrganizations().size() != 1 || !user.getOrganizations().contains(organizationId)) {
