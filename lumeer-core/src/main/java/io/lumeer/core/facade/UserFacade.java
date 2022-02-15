@@ -29,6 +29,7 @@ import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserInvitation;
+import io.lumeer.api.model.UserOnboarding;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 import io.lumeer.api.util.UserUtil;
@@ -281,10 +282,20 @@ public class UserFacade extends AbstractFacade {
       final User currentUser = getCurrentUser();
       currentUser.setHints(hints);
 
-      User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
+      User updatedUser = updateUserAndSendNotification(null, currentUser.getId(), currentUser);
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
 
       return updatedUser.getHints();
+   }
+
+   public UserOnboarding updateOnboarding(final UserOnboarding onboarding) {
+      final User currentUser = getCurrentUser();
+      currentUser.setOnboarding(onboarding);
+
+      User updatedUser = updateUserAndSendNotification(null, currentUser.getId(), currentUser);
+      userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      return updatedUser.getOnboarding();
    }
 
    private User updateExistingUser(String organizationId, User storedUser, User user) {

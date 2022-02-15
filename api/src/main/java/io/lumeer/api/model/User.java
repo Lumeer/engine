@@ -55,6 +55,7 @@ public class User implements HealthChecking {
    public static final String NOTIFICATIONS_SETTINGS = "notifications";
    public static final String HINTS = "hints";
    public static final String TIME_ZONE = "timeZone";
+   public static final String ONBOARDING = "onboarding";
 
    @JsonView(UserViews.DefaultView.class)
    private String id;
@@ -115,12 +116,16 @@ public class User implements HealthChecking {
    @JsonView(UserViews.DefaultView.class)
    private String timeZone;
 
+   @JsonView(UserViews.DefaultView.class)
+   @JsonProperty(ONBOARDING)
+   private UserOnboarding onboarding;
+
    public User(final String email) {
       this.email = email;
       this.organizations = new HashSet<>();
    }
 
-   public User(final String id, final String name, final String email, final Set<String> organizations){
+   public User(final String id, final String name, final String email, final Set<String> organizations) {
       this.id = id;
       this.name = name;
       this.email = email;
@@ -310,6 +315,14 @@ public class User implements HealthChecking {
       this.timeZone = timeZone;
    }
 
+   public UserOnboarding getOnboarding() {
+      return onboarding;
+   }
+
+   public void setOnboarding(final UserOnboarding onboarding) {
+      this.onboarding = onboarding;
+   }
+
    @Override
    public String toString() {
       return "User{" +
@@ -328,6 +341,7 @@ public class User implements HealthChecking {
             ", referral=" + referral +
             ", affiliatePartner=" + affiliatePartner +
             ", emailVerified=" + emailVerified +
+            ", onboarding=" + onboarding +
             ", notifications=" + notifications +
             ", hints=" + hints +
             ", timeZone=" + timeZone +

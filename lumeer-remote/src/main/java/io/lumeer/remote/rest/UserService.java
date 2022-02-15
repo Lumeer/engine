@@ -23,6 +23,7 @@ import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserInvitation;
+import io.lumeer.api.model.UserOnboarding;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -192,5 +193,11 @@ public class UserService extends AbstractService {
    @Path("current/hints")
    public DataDocument updateHints(final DataDocument hints) {
       return userFacade.updateHints(hints);
+   }
+
+   @PUT
+   @Path("current/onboarding")
+   public UserOnboarding updateHints(final UserOnboarding onboarding) {
+      return userFacade.updateOnboarding(onboarding);
    }
 }

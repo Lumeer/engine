@@ -42,6 +42,7 @@ public class UserUtil {
       user.setWishes(updatedUser.getWishes() != null ? updatedUser.getWishes() : existingUser.getWishes());
       user.setNotifications(updatedUser.getNotifications() != null ? updatedUser.getNotifications() : existingUser.getNotifications());
       user.setHints(updatedUser.getHints() != null ? updatedUser.getHints() : existingUser.getHints());
+      user.setOnboarding(existingUser.getOnboarding());
       user.setEmailVerified(existingUser.isEmailVerified());
       user.setAffiliatePartner(existingUser.isAffiliatePartner());
 

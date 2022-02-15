@@ -26,6 +26,7 @@ import io.lumeer.api.model.NotificationSetting;
 import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.UserOnboarding;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.bson.BsonObjectId;
@@ -70,6 +71,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
    public static final String HINTS = "hints";
    public static final String TIME_ZONE = "timeZone";
+   public static final String ONBOARDING = "onboarding";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
    public static final String DEFAULT_PROJECT_ID = "defaultProjectId";
@@ -146,8 +148,8 @@ public class UserCodec implements CollectibleCodec<User> {
       List<Document> notifications = bson.getList(NOTIFICATIONS, Document.class);
       if (notifications != null && notifications.size() != 2 && notifications.size() != 0) { // it is not empty and it does not contain just the following 2 settings
          notificationSettings = new ArrayList<>(notifications).stream()
-               .map(NotificationSettingCodec::convertFromDocument)
-               .collect(Collectors.toList());
+                                                              .map(NotificationSettingCodec::convertFromDocument)
+                                                              .collect(Collectors.toList());
          if (notificationSettings.stream().filter(ns -> ns.getNotificationType() == NotificationType.TASK_COMMENTED && ns.getNotificationChannel() == NotificationChannel.Internal).findFirst().isEmpty()) {
             notificationSettings.add(new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Internal, NotificationFrequency.Immediately));
             notificationSettings.add(new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Internal, NotificationFrequency.Immediately));
@@ -159,7 +161,7 @@ public class UserCodec implements CollectibleCodec<User> {
                notificationSettings.stream().filter(ns -> ns.getNotificationType() == NotificationType.TASK_REOPENED && ns.getNotificationChannel() == NotificationChannel.Email).findFirst().isEmpty()) {
             notificationSettings.add(new NotificationSetting(NotificationType.TASK_REOPENED, NotificationChannel.Email, NotificationFrequency.Immediately));
          }
-      } else  {
+      } else {
          notificationSettings = List.of(
                new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
                new NotificationSetting(NotificationType.PROJECT_SHARED, NotificationChannel.Internal, NotificationFrequency.Immediately),
@@ -207,6 +209,10 @@ public class UserCodec implements CollectibleCodec<User> {
       user.setEmailVerified(emailVerified != null && emailVerified);
       user.setTimeZone(timeZone);
 
+      Document onboarding = bson.get(ONBOARDING, Document.class);
+      UserOnboarding userOnboarding = onboarding != null ? UserOnboardingCodec.convertFromDocument(onboarding) : new UserOnboarding();
+      user.setOnboarding(userOnboarding);
+
       return user;
    }
 
@@ -224,7 +230,8 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(NOTIFICATIONS, user.getNotificationsSettingsList())
           .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage())
           .append(HINTS, user.getHints())
-          .append(TIME_ZONE, user.getTimeZone());
+          .append(TIME_ZONE, user.getTimeZone())
+          .append(ONBOARDING, user.getOnboarding());
 
       if (user.getDefaultWorkspace() != null) {
          bson.append(DEFAULT_ORGANIZATION_ID, user.getDefaultWorkspace().getOrganizationId());

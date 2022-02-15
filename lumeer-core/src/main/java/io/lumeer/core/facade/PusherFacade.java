@@ -54,6 +54,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.PusherClient;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.event.AddFavoriteItem;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
@@ -928,10 +929,10 @@ public class PusherFacade extends AbstractFacade {
    public void updateCurrentUserNotification(@Observes final UpdateCurrentUser updateCurrentUser) {
       if (isEnabled()) {
          try {
-            // we use RELOAD event to differentiate from general user updates
-            sendNotificationsBatch(List.of(
-                  createEventForObject(updateCurrentUser.getUser(), RELOAD_EVENT_SUFFIX, updateCurrentUser.getUser().getId())
-            ));
+            String userId = updateCurrentUser.getUser().getId();
+            ObjectWithParent object = new ObjectWithParent(getAppId(), userId, Utils.computeIfNotNull(getOrganization(), Organization::getId));
+            Event event = new Event(eventChannel(userId), "CurrentUser" + RELOAD_EVENT_SUFFIX, object);
+            sendNotificationsBatch(Collections.singletonList(event));
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
          }
