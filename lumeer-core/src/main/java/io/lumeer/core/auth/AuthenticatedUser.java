@@ -21,7 +21,6 @@ package io.lumeer.core.auth;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.cache.UserCache;
@@ -37,7 +36,6 @@ import io.lumeer.storage.api.dao.UserLoginDao;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import javax.enterprise.context.SessionScoped;
@@ -124,72 +122,40 @@ public class AuthenticatedUser implements Serializable {
       User userByAuthId = userDao.getUserByAuthId(authId);
       if (userByAuthId != null) {
          if (!userByAuthId.getEmail().equalsIgnoreCase(email)) {
-            userByAuthId.setName(name);
             userByAuthId.setEmail(email.toLowerCase());
-
-            if (!userByAuthId.isEmailVerified() && emailVerified) {
-               eventLogFacade.logEvent(userByAuthId, "Email verified.");
-            }
-
-            userByAuthId.setEmailVerified(emailVerified);
-
-            createDemoWorkspaceIfNeeded(userByAuthId);
-            userDao.updateUser(userByAuthId.getId(), userByAuthId);
-         } else {
-            createDemoWorkspaceIfNeeded(userByAuthId);
-            if (userByAuthId.getName() == null || !userByAuthId.getName().equals(name)) {
-               userByAuthId.setName(name);
-            }
-
-            if (!userByAuthId.isEmailVerified() && emailVerified) {
-               eventLogFacade.logEvent(userByAuthId, "Email verified.");
-            }
-
-            userByAuthId.setEmailVerified(emailVerified);
-            userDao.updateUser(userByAuthId.getId(), userByAuthId);
          }
-         if (firstLogin) {
-            userLoginDao.userLoggedIn(userByAuthId.getId());
-            eventLogFacade.logEvent(userByAuthId, "Logged in");
-         }
+         checkUserAndUpdate(userByAuthId, name, emailVerified, firstLogin);
       } else {
          User userByEmail = userDao.getUserByEmail(email);
          if (userByEmail != null) {
-            userByEmail.setName(name);
             userByEmail.setEmail(userByEmail.getEmail().toLowerCase());
-
-            if (!userByEmail.isEmailVerified() && emailVerified) {
-               eventLogFacade.logEvent(userByEmail, "Email verified.");
-            }
-
-            userByEmail.setEmailVerified(emailVerified);
             if (userByEmail.getAuthIds() != null) {
                userByEmail.getAuthIds().add(authId);
             } else {
                userByEmail.setAuthIds(new HashSet<>(Collections.singletonList(authId)));
             }
-            createDemoWorkspaceIfNeeded(userByEmail);
-            userDao.updateUser(userByEmail.getId(), userByEmail);
-            if (firstLogin) {
-               userLoginDao.userLoggedIn(userByEmail.getId());
-               eventLogFacade.logEvent(userByEmail, "Logged in");
-            }
+
+            checkUserAndUpdate(userByEmail, name, emailVerified, firstLogin);
          } else {
             User createdUser = createNewUser(email, authId);
-            createdUser.setName(name);
-
-            if (!createdUser.isEmailVerified() && emailVerified) {
-               eventLogFacade.logEvent(createdUser, "Email verified.");
-            }
-
-            createdUser.setEmailVerified(emailVerified);
-            createDemoWorkspaceIfNeeded(createdUser);
-            userDao.updateUser(createdUser.getId(), createdUser);
-            if (firstLogin) {
-               userLoginDao.userLoggedIn(createdUser.getId());
-               eventLogFacade.logEvent(createdUser, "Logged in");
-            }
+            checkUserAndUpdate(createdUser, name, emailVerified, firstLogin);
          }
+      }
+   }
+
+   private void checkUserAndUpdate(User user, String name, boolean emailVerified, boolean firstLogin) {
+      user.setName(name);
+
+      if (!user.isEmailVerified() && emailVerified) {
+         eventLogFacade.logEvent(user, "Email verified.");
+      }
+      user.setEmailVerified(emailVerified);
+
+      createDemoWorkspaceIfNeeded(user);
+      userDao.updateUser(user.getId(), user);
+      if (firstLogin) {
+         userLoginDao.userLoggedIn(user.getId());
+         eventLogFacade.logEvent(user, "Logged in");
       }
    }
 
@@ -240,16 +206,6 @@ public class AuthenticatedUser implements Serializable {
       }
    }
 
-   private Project createDemoProject(final User user) {
-      final String code = generateProjectCode();
-      final Permission userPermission = Permission.buildWithRoles(user.getId(), Project.ROLES);
-      Project project = new Project(code, "Project", getDemoIcon(), getDemoColor(), null, null, null,false, null);
-      project.getPermissions().updateUserPermissions(userPermission);
-      project.setNonRemovable(true);
-
-      return projectDao.createProject(project);
-   }
-
    private String generateOrganizationCode(String userEmail) {
       String cons = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
 
@@ -278,18 +234,6 @@ public class AuthenticatedUser implements Serializable {
          num++;
       }
       return codeWithSuffix;
-   }
-
-   private String generateProjectCode() {
-      final Set<String> existingCodes = projectDao.getProjectsCodes();
-      final String prefix = "PRJ";
-      int no = 1;
-
-      while (existingCodes.contains(prefix + no)) {
-         no++;
-      }
-
-      return prefix + no;
    }
 
    private String getDemoIcon() {

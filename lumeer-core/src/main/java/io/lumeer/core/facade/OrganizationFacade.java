@@ -262,7 +262,7 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public List<Organization> getOrganizationsCapableForProject(final ProjectDescription projectDescription) {
-      return getOrganizations().stream().filter(org -> permissionsChecker.hasRole(org, RoleType.DataContribute)
+      return getOrganizations().stream().filter(org -> permissionsChecker.hasRole(org, RoleType.ProjectContribute)
       ).filter(org -> {
          final ServiceLimits serviceLimits = paymentFacade.getCurrentServiceLimits(org);
          final long projects = projectDao.getProjectsCount(org);

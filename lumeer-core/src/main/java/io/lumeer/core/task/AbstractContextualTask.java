@@ -113,13 +113,13 @@ public abstract class AbstractContextualTask implements ContextualTask {
       this.recursionDepth = recursionDepth;
 
       collectionAdapter = new CollectionAdapter(daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getFavoriteItemDao(), daoContextSnapshot.getDocumentDao());
-      permissionAdapter = new PermissionAdapter(daoContextSnapshot.getUserDao(), daoContextSnapshot.getGroupDao(),daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
+      permissionAdapter = new PermissionAdapter(daoContextSnapshot.getUserDao(), daoContextSnapshot.getGroupDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
       resourceAdapter = new ResourceAdapter(permissionAdapter, daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getUserDao());
       viewAdapter = new ViewAdapter(resourceAdapter, daoContextSnapshot.getFavoriteItemDao());
       documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
       linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
-      pusherAdapter = new PusherAdapter(getAppId(), new FacadeAdapter(permissionAdapter),  resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
+      pusherAdapter = new PusherAdapter(getAppId(), new FacadeAdapter(permissionAdapter), resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
       fileAttachmentAdapter = new FileAttachmentAdapter(getLumeerS3Client(), daoContextSnapshot.getFileAttachmentDao(), environment.name());
 
       return this;
@@ -398,7 +398,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       final List<Event> events = new ArrayList<>();
 
       userMessageRequests.stream().filter(m -> StringUtils.isNotEmpty(m.getMessage())).forEach(m ->
-         events.add(createEventForUserMessage(m, initiator.getId()))
+            events.add(createEventForUserMessage(m, initiator.getId()))
       );
 
       getPusherClient().trigger(events);
@@ -489,7 +489,6 @@ public abstract class AbstractContextualTask implements ContextualTask {
          });
       }
       collectionIds.removeAll(updatedIds);
-
 
       if (collectionIds.size() > 0) {
          collectionIds.forEach(id -> {

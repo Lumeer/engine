@@ -20,9 +20,10 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
-import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.UserInvitation;
+import io.lumeer.api.model.UserOnboarding;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -89,11 +90,11 @@ public class UserService extends AbstractService {
    }
 
    @POST
-   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/users/{invitationType}")
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/projects/{projectId:[0-9a-fA-F]{24}}/users/invite")
    @JsonView(UserViews.DefaultView.class)
    @HealthCheck
-   public List<User> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, @PathParam("invitationType") final InvitationType invitationType, final List<User> users) {
-      return userFacade.createUsersInWorkspace(organizationId, projectId, users, invitationType != null ? invitationType : InvitationType.JOIN_ONLY);
+   public List<User> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, final List<UserInvitation> invitations) {
+      return userFacade.createUsersInWorkspace(organizationId, projectId, invitations);
    }
 
    @PUT
@@ -192,5 +193,11 @@ public class UserService extends AbstractService {
    @Path("current/hints")
    public DataDocument updateHints(final DataDocument hints) {
       return userFacade.updateHints(hints);
+   }
+
+   @PUT
+   @Path("current/onboarding")
+   public UserOnboarding updateHints(final UserOnboarding onboarding) {
+      return userFacade.updateOnboarding(onboarding);
    }
 }
