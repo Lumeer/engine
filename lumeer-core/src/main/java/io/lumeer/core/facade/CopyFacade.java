@@ -106,6 +106,8 @@ public class CopyFacade extends AbstractFacade {
       checkProjectContribute(project);
 
       templateFacade.installTemplate(project, organizationId, projectContent, new Date());
+
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Imported to project: " + getOrganization().getCode() + " / " + project.getCode());
    }
 
    private void copyProject(Project project, String organizationId, java.util.function.Function<ProjectDao, Project> projectFunction) {

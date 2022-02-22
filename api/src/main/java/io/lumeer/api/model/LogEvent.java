@@ -18,15 +18,19 @@
  */
 package io.lumeer.api.model;
 
-public class AppId {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-   private final String value;
+public class LogEvent {
 
-   public AppId(final String value) {
-      this.value = value;
+   private final String event;
+
+   @JsonCreator
+   public LogEvent(@JsonProperty("event") final String event) {
+      this.event = event;
    }
 
-   public String getValue() {
-      return value;
+   public String getEvent() {
+      return event;
    }
 }

@@ -228,7 +228,7 @@ public class ProjectService extends AbstractService {
    @Path("{projectId:[0-9a-fA-F]{24}}/raw")
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
-      return projectFacade.getRawProjectContent(projectId);
+      return projectFacade.exportProjectContent(projectId);
    }
 
    @POST

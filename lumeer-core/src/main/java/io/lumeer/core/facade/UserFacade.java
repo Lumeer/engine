@@ -24,6 +24,7 @@ import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.ProductDemo;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
@@ -59,6 +60,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -288,12 +290,29 @@ public class UserFacade extends AbstractFacade {
       return updatedUser.getHints();
    }
 
+   public void logEvent(final String message) {
+      if (message != null && !message.trim().isEmpty()) {
+         eventLogFacade.logEvent(getCurrentUser(), message);
+      }
+   }
+
    public UserOnboarding updateOnboarding(final UserOnboarding onboarding) {
       final User currentUser = getCurrentUser();
+      final UserOnboarding currentOnboarding = currentUser.getOnboarding();
       currentUser.setOnboarding(onboarding);
 
       User updatedUser = updateUserAndSendNotification(null, currentUser.getId(), currentUser);
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      if (Optional.ofNullable(currentOnboarding.getInvitedUsers()).orElse(0) == 0 && Optional.ofNullable(updatedUser.getOnboarding().getInvitedUsers()).orElse(0) > 0) {
+         eventLogFacade.logEvent(updatedUser, "Invited " + updatedUser.getOnboarding().getInvitedUsers() + " users in onboarding process");
+      }
+      if (!currentOnboarding.isVideoPlayed() && updatedUser.getOnboarding().isVideoPlayed()) {
+         eventLogFacade.logEvent(updatedUser, "Onboarding video played");
+      }
+      if (Optional.ofNullable(currentOnboarding.getVideoPlayedSeconds()).orElse(0) == 0 && Optional.ofNullable(updatedUser.getOnboarding().getVideoPlayedSeconds()).orElse(0) > 0) {
+         eventLogFacade.logEvent(updatedUser, "Watched onboarding video for " + updatedUser.getOnboarding().getVideoPlayedSeconds() + " seconds");
+      }
 
       return updatedUser.getOnboarding();
    }
@@ -486,6 +505,11 @@ public class UserFacade extends AbstractFacade {
       freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " sent feedback in app", feedback.getMessage());
 
       return feedbackDao.createFeedback(feedback);
+   }
+
+   public void scheduleDemo(ProductDemo demo) {
+      User currentUser = authenticatedUser.getCurrentUser();
+      freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " wants to schedule demo", demo.getMessage());
    }
 
    public boolean isUserAffiliate(final String userId) {

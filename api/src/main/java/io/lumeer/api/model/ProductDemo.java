@@ -21,16 +21,16 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class LogEvent {
+public class ProductDemo {
 
-   private final String event;
+   private final String message;
 
    @JsonCreator
-   public LogEvent(@JsonProperty("event") final String event) {
-      this.event = event;
+   public ProductDemo(@JsonProperty("message") final String message) {
+      this.message = message;
    }
 
-   public String getEvent() {
-      return event;
+   public String getMessage() {
+      return message;
    }
 }
