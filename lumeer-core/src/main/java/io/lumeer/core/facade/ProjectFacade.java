@@ -209,6 +209,8 @@ public class ProjectFacade extends AbstractFacade {
       workspaceCache.removeProject(projectId);
 
       projectDao.deleteProject(project.getId());
+
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Deleted project " + project.getCode());
    }
 
    public Project getProjectByCode(final String projectCode) {
@@ -338,7 +340,7 @@ public class ProjectFacade extends AbstractFacade {
       final Project project = storedProject.copy();
       project.getPermissions().removeGroupPermission(groupId);
       mapResourceUpdateValues(project);
-      
+
       projectDao.updateProject(project.getId(), project, storedProject);
       workspaceCache.updateProject(projectId, project);
    }
@@ -395,10 +397,21 @@ public class ProjectFacade extends AbstractFacade {
       permissionsChecker.checkCreationLimits(project, projectDao.getProjectsCount());
    }
 
+   public ProjectContent exportProjectContent(final String projectId) {
+      final Project storedProject = projectDao.getProjectById(projectId);
+      final ProjectContent content = getRawProjectContent(storedProject);
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Exported from project: " + getOrganization().getCode() + " / " + storedProject.getCode());
+      return content;
+   }
+
    public ProjectContent getRawProjectContent(final String projectId) {
       final Project storedProject = projectDao.getProjectById(projectId);
-      if (!storedProject.isPublic() && !permissionsChecker.canReadAllInWorkspace()) {
-         throw new NoResourcePermissionException(storedProject);
+      return getRawProjectContent(storedProject);
+   }
+
+   public ProjectContent getRawProjectContent(final Project project) {
+      if (!project.isPublic() && !permissionsChecker.canReadAllInWorkspace()) {
+         throw new NoResourcePermissionException(project);
       }
 
       final ProjectContent content = new ProjectContent();
@@ -408,14 +421,14 @@ public class ProjectFacade extends AbstractFacade {
       content.setLinkTypes(linkTypeDao.getAllLinkTypes().stream().map(LinkTypeWithId::new).collect(Collectors.toList()));
       String userId = Utils.computeIfNotNull(authenticatedUser, AuthenticatedUser::getCurrentUserId);
       if (userId != null) {
-         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(userId, projectId));
-         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(userId, projectId));
+         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(userId, project.getId()));
+         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(userId, project.getId()));
       } else {
-         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(projectId));
-         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(projectId));
+         content.setFavoriteCollectionIds(favoriteItemDao.getFavoriteCollectionIds(project.getId()));
+         content.setFavoriteViewIds(favoriteItemDao.getFavoriteViewIds(project.getId()));
       }
       content.setSequences(sequenceDao.getAllSequences());
-      content.setSelectionLists(selectionListDao.getAllLists(List.of(projectId)));
+      content.setSelectionLists(selectionListDao.getAllLists(List.of(project.getId())));
 
       final List<LinkInstanceWithId> linkInstances = new ArrayList<>();
       final Map<String, List<DataDocument>> linksData = new HashMap<>();
@@ -437,15 +450,15 @@ public class ProjectFacade extends AbstractFacade {
 
       content.setComments(resourceCommentDao.getAllComments().stream().map(ResourceCommentWrapper::new).collect(Collectors.toList()));
 
-      if (permissionsChecker.hasRole(storedProject, RoleType.TechConfig)) {
-         content.setVariables(resourceVariableDao.getInProject(getOrganization().getId(), projectId).stream()
+      if (permissionsChecker.hasRole(project, RoleType.TechConfig)) {
+         content.setVariables(resourceVariableDao.getInProject(getOrganization().getId(), project.getId()).stream()
                                                  .filter(variable -> !variable.getSecure())
                                                  .collect(Collectors.toList()));
       }
 
       content.setTemplateMeta(
             new ProjectMeta(
-                  storedProject.getCode(),
+                  project.getCode(),
                   content.getCollections().size(),
                   content.getLinkTypes().size(),
                   content.getViews().size(),
@@ -453,6 +466,7 @@ public class ProjectFacade extends AbstractFacade {
             ));
 
       return content;
+
    }
 
    private DataDocument translateDataDocument(final DataDocument doc) {

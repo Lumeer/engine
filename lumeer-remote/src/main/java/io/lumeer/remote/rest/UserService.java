@@ -20,7 +20,9 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.LogEvent;
 import io.lumeer.api.model.PaymentStats;
+import io.lumeer.api.model.ProductDemo;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserInvitation;
 import io.lumeer.api.model.UserOnboarding;
@@ -142,7 +144,7 @@ public class UserService extends AbstractService {
    }
 
    @GET
-   @Path("currentWithLastLogin")
+   @Path("current-extended")
    @JsonView(UserViews.FullView.class)
    public User getUserWithLastLogin() {
       return userFacade.getCurrentUserWithLastLogin();
@@ -183,6 +185,14 @@ public class UserService extends AbstractService {
       return Response.ok().build();
    }
 
+   @POST
+   @Path("product-demo")
+   public Response scheduleDemo(ProductDemo demo) {
+      userFacade.scheduleDemo(demo);
+
+      return Response.ok().build();
+   }
+
    @GET
    @Path("check")
    public Response checkAuthentication() {
@@ -199,5 +209,13 @@ public class UserService extends AbstractService {
    @Path("current/onboarding")
    public UserOnboarding updateHints(final UserOnboarding onboarding) {
       return userFacade.updateOnboarding(onboarding);
+   }
+
+   @POST
+   @Path("current/log")
+   public Response logEvent(final LogEvent logEvent) {
+      userFacade.logEvent(logEvent.getEvent());
+
+      return Response.ok().build();
    }
 }
