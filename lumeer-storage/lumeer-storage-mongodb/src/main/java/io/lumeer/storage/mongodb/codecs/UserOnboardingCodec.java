@@ -33,6 +33,7 @@ public class UserOnboardingCodec implements Codec<UserOnboarding> {
 
    public static final String TEMPLATE = "template";
    public static final String INVITED_USERS = "invitedUsers";
+   public static final String HELP_OPENED = "helpOpened";
    public static final String VIDEO_SHOWED = "videoShowed";
    public static final String VIDEO_PLAYED = "videoPlayed";
    public static final String VIDEO_PLAYED_SECONDS = "videoPlayedSeconds";
@@ -53,11 +54,12 @@ public class UserOnboardingCodec implements Codec<UserOnboarding> {
    public static UserOnboarding convertFromDocument(final Document document) {
       String template = document.getString(TEMPLATE);
       Integer invitedUsers = document.getInteger(INVITED_USERS);
+      boolean helpOpened = document.getBoolean(HELP_OPENED, false);
       boolean videoShowed = document.getBoolean(VIDEO_SHOWED, false);
       boolean videoPlayed = document.getBoolean(VIDEO_PLAYED, false);
       Integer videoPlayedSeconds = document.getInteger(VIDEO_PLAYED_SECONDS);
 
-      return new UserOnboarding(template, invitedUsers, videoShowed, videoPlayed, videoPlayedSeconds);
+      return new UserOnboarding(template, invitedUsers, helpOpened, videoShowed, videoPlayed, videoPlayedSeconds);
    }
 
    @Override
@@ -65,6 +67,7 @@ public class UserOnboardingCodec implements Codec<UserOnboarding> {
       Document bson = new Document()
             .append(TEMPLATE, value.getTemplate())
             .append(INVITED_USERS, value.getInvitedUsers())
+            .append(HELP_OPENED, value.isHelpOpened())
             .append(VIDEO_SHOWED, value.isVideoShowed())
             .append(VIDEO_PLAYED, value.isVideoPlayed())
             .append(VIDEO_PLAYED_SECONDS, value.getVideoPlayedSeconds());

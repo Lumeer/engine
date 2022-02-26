@@ -31,12 +31,14 @@ public class UserOnboarding {
 
    public static final String TEMPLATE = "template";
    public static final String INVITED_USERS = "invitedUsers";
+   public static final String HELP_OPENED = "helpOpened";
    public static final String VIDEO_SHOWED = "videoShowed";
    public static final String VIDEO_PLAYED = "videoPlayed";
    public static final String VIDEO_PLAYED_SECONDS = "videoPlayedSeconds";
 
    private String template = null;
    private Integer invitedUsers = null;
+   private boolean helpOpened = false;
    private boolean videoShowed = false;
    private boolean videoPlayed = false;
    private Integer videoPlayedSeconds = null;
@@ -47,10 +49,12 @@ public class UserOnboarding {
    @JsonCreator
    public UserOnboarding(@JsonProperty(TEMPLATE) final String template,
          @JsonProperty(INVITED_USERS) final Integer invitedUsers,
+         @JsonProperty(HELP_OPENED) final boolean helpOpened,
          @JsonProperty(VIDEO_SHOWED) final boolean videoShowed,
          @JsonProperty(VIDEO_PLAYED) final boolean videoPlayed,
          @JsonProperty(VIDEO_PLAYED_SECONDS) final Integer videoPlayedSeconds) {
       this.template = template;
+      this.helpOpened = helpOpened;
       this.invitedUsers = invitedUsers;
       this.videoShowed = videoShowed;
       this.videoPlayed = videoPlayed;
@@ -67,6 +71,10 @@ public class UserOnboarding {
 
    public boolean isVideoShowed() {
       return videoShowed;
+   }
+
+   public boolean isHelpOpened() {
+      return helpOpened;
    }
 
    public boolean isVideoPlayed() {
@@ -86,12 +94,12 @@ public class UserOnboarding {
          return false;
       }
       final UserOnboarding that = (UserOnboarding) o;
-      return videoShowed == that.videoShowed && videoPlayed == that.videoPlayed && Objects.equals(template, that.template) && Objects.equals(invitedUsers, that.invitedUsers) && Objects.equals(videoPlayedSeconds, that.videoPlayedSeconds);
+      return helpOpened == that.helpOpened && videoShowed == that.videoShowed && videoPlayed == that.videoPlayed && Objects.equals(template, that.template) && Objects.equals(invitedUsers, that.invitedUsers) && Objects.equals(videoPlayedSeconds, that.videoPlayedSeconds);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(template, invitedUsers, videoShowed, videoPlayed, videoPlayedSeconds);
+      return Objects.hash(template, invitedUsers, helpOpened, videoShowed, videoPlayed, videoPlayedSeconds);
    }
 
    @Override
@@ -99,6 +107,7 @@ public class UserOnboarding {
       return "UserOnboarding{" +
             "template='" + template + '\'' +
             ", invitedUsers=" + invitedUsers +
+            ", helpOpened=" + helpOpened +
             ", videoShowed=" + videoShowed +
             ", videoPlayed=" + videoPlayed +
             ", videoPlayedSeconds=" + videoPlayedSeconds +
