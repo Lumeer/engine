@@ -60,6 +60,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
@@ -298,7 +299,7 @@ public class UserFacade extends AbstractFacade {
 
    public UserOnboarding updateOnboarding(final UserOnboarding onboarding) {
       final User currentUser = getCurrentUser();
-      final UserOnboarding currentOnboarding = currentUser.getOnboarding();
+      final UserOnboarding currentOnboarding = Objects.requireNonNullElse(currentUser.getOnboarding(), new UserOnboarding());
       currentUser.setOnboarding(onboarding);
 
       User updatedUser = updateUserAndSendNotification(null, currentUser.getId(), currentUser);
@@ -312,6 +313,9 @@ public class UserFacade extends AbstractFacade {
       }
       if (Optional.ofNullable(currentOnboarding.getVideoPlayedSeconds()).orElse(0) == 0 && Optional.ofNullable(updatedUser.getOnboarding().getVideoPlayedSeconds()).orElse(0) > 0) {
          eventLogFacade.logEvent(updatedUser, "Watched onboarding video for " + updatedUser.getOnboarding().getVideoPlayedSeconds() + " seconds");
+      }
+      if (!currentOnboarding.isHelpOpened() && updatedUser.getOnboarding().isHelpOpened()) {
+         eventLogFacade.logEvent(updatedUser, "Opened help for the first time");
       }
 
       return updatedUser.getOnboarding();
