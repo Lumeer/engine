@@ -20,8 +20,10 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Rule;
+import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.LinkTypeFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
@@ -56,6 +58,9 @@ public class LinkTypeService extends AbstractService {
 
    @Inject
    private LinkTypeFacade linkTypeFacade;
+
+   @Inject
+   private AuditFacade auditFacade;
 
    @PostConstruct
    public void init() {
@@ -124,5 +129,11 @@ public class LinkTypeService extends AbstractService {
       linkTypeFacade.deleteLinkTypeAttribute(linkTypeId, attributeId);
 
       return Response.ok().link(getParentUri(attributeId), "parent").build();
+   }
+
+   @GET
+   @Path("{linkTypeId:[0-9a-fA-F]{24}}/audit")
+   public List<AuditRecord> getAuditLogs(@PathParam("linkTypeId") String linkTypeId) {
+      return auditFacade.getAuditRecordsForLinkType(linkTypeId);
    }
 }

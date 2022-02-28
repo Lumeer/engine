@@ -104,6 +104,7 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    @Override
    public DataDocument updateData(final String collectionId, final String documentId, final DataDocument data) {
       Document document = new Document(data);
+      document.remove(ID);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document updatedDocument = dataCollection(collectionId).findOneAndReplace(idFilter(documentId), document, options);

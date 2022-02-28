@@ -18,10 +18,7 @@
  */
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.AuditRecord
-import io.lumeer.api.model.Payment
-import io.lumeer.api.model.ResourceType
-import io.lumeer.api.model.User
+import io.lumeer.api.model.*
 import io.lumeer.engine.api.data.DataDocument
 import io.lumeer.storage.api.dao.AuditDao
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot
@@ -35,15 +32,34 @@ private const val UPDATE_MERGE_WINDOW_MINUTES: Long = 5 // number of minutes to 
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
+   fun getAuditRecords(serviceLevel: Payment.ServiceLevel) =
+      if (serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(FREE_MAX_RECORDS)
+      else
+         auditDao.findAuditRecords(ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+
+   fun getAuditRecords(parentId: String, resourceType: ResourceType, serviceLevel: Payment.ServiceLevel) =
+      if (serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(parentId, resourceType, FREE_MAX_RECORDS)
+      else
+         auditDao.findAuditRecords(parentId, resourceType, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+
    fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, serviceLevel: Payment.ServiceLevel) =
          if (serviceLevel == Payment.ServiceLevel.FREE)
             auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_MAX_RECORDS)
          else
             auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
-   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, oldState: DataDocument, oldStateDecoded: DataDocument, newState: DataDocument, newStateDecoded: DataDocument) =
+   fun registerDelete(parentId: String, resourceType: ResourceType, resourceId: String, user: User?,  automation: String?, oldState: DataDocument): AuditRecord {
+      val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, automation, partialOldState, DataDocument())
+      auditRecord.type = AuditType.Deleted
+      return auditDao.createAuditRecord(auditRecord)
+   }
+
+   fun registerDataChange(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, oldState: DataDocument, oldStateDecoded: DataDocument, newState: DataDocument, newStateDecoded: DataDocument) =
          getChanges(oldStateDecoded, newStateDecoded).takeIf { it.isNotEmpty() }?.let { changes ->
-            val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
+            val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId, AuditType.Updated)
 
             if (lastAuditRecord != null && changesOverlap(lastAuditRecord, user?.id, automation, changes)) {
                changes.keys.forEach {
@@ -77,6 +93,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
                auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_MAX_WEEKS))
 
                val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, automation, partialOldState, changes)
+               auditRecord.type = AuditType.Updated
                auditDao.createAuditRecord(auditRecord)
             }
          }
@@ -88,7 +105,7 @@ class AuditAdapter(private val auditDao: AuditDao) {
       else -> true
    }
 
-   fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
+   private fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
       val result = DataDocument(newState.filterKeys { it != DataDocument.ID })
       oldState.keys.filter { it != DataDocument.ID }.forEach {
          // remove everything that did not change, keeping newly added values

@@ -21,6 +21,7 @@ package io.lumeer.storage.mongodb.dao.project;
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.AuditRecord;
+import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.AuditDao;
@@ -72,7 +73,6 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       auditLogCollection.createIndex(Indexes.ascending(AuditRecord.RESOURCE_TYPE, AuditRecord.PARENT_ID, AuditRecord.RESOURCE_ID, AuditRecord.CHANGE_DATE, AuditRecord.USER), new IndexOptions().unique(false));
    }
 
-
    @Override
    public AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId) {
       final Bson filters = Filters.and(
@@ -81,18 +81,54 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
             Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
       );
 
-      return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).limit(1).first();
+      return findAuditRecords(filters, 1).stream().findFirst().orElse(null);
    }
 
    @Override
-   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId) {
+   public AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId, final AuditType type) {
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
+            Filters.eq(AuditRecord.RESOURCE_ID, resourceId),
+            Filters.or(Filters.eq(AuditRecord.TYPE, type.toString()), Filters.eq(AuditRecord.TYPE, null))
       );
 
-      return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).into(new ArrayList<>());
+      return findAuditRecords(filters, 1).stream().findFirst().orElse(null);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final ZonedDateTime noOlderThan) {
+      final Bson filters = Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()));
+
+      return findAuditRecords(filters, -1);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final int countLimit) {
+      final Bson filters = new Document();
+
+      return findAuditRecords(filters, countLimit);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final ZonedDateTime noOlderThan) {
+      final Bson filters = Filters.and(
+            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
+            Filters.eq(AuditRecord.PARENT_ID, parentId),
+            Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
+      );
+
+      return findAuditRecords(filters, -1);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final int countLimit) {
+      final Bson filters = Filters.and(
+            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
+            Filters.eq(AuditRecord.PARENT_ID, parentId)
+      );
+
+      return findAuditRecords(filters, countLimit);
    }
 
    @Override
@@ -104,7 +140,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
             Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
       );
 
-      return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).into(new ArrayList<>());
+      return findAuditRecords(filters, -1);
    }
 
    @Override
@@ -115,7 +151,15 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
             Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
       );
 
-      return databaseCollection().find(filters).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).limit(countLimit).into(new ArrayList<>());
+      return findAuditRecords(filters, countLimit);
+   }
+
+   private List<AuditRecord> findAuditRecords(final Bson filter, final int countLimit) {
+      if (countLimit > 0) {
+         return databaseCollection().find(filter).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).limit(countLimit).into(new ArrayList<>());
+      } else {
+         return databaseCollection().find(filter).sort(Sorts.descending(AuditRecord.CHANGE_DATE)).into(new ArrayList<>());
+      }
    }
 
    @Override
@@ -144,6 +188,15 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       } catch (MongoException ex) {
          throw new StorageException("Cannot update audit log record: " + record, ex);
       }
+   }
+
+   @Override
+   public AuditRecord getAuditRecord(final String id) {
+      final AuditRecord record = databaseCollection().find(idFilter(id)).first();
+      if (record == null) {
+         throw new StorageException("Audit log record '" + id + "' not found.");
+      }
+      return record;
    }
 
    @Override

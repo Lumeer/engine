@@ -106,11 +106,9 @@ public class SingleStage extends Stage {
          return List.of();
       }
 
-      final List<Document> documents = operations.stream().map(DocumentCreationOperation::getEntity).map(document -> {
+      final List<Document> documents = operations.stream().map(DocumentCreationOperation::getEntity).peek(document -> {
          document.setCreatedBy(task.getInitiator().getId());
          document.setCreationDate(ZonedDateTime.now());
-
-         return document;
       }).collect(toList());
 
       return task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
@@ -192,7 +190,7 @@ public class SingleStage extends Stage {
          var oldDataDecoded = constraintManager.decodeDataTypes(collection, beforePatch);
          var patchedDataDecoded = constraintManager.decodeDataTypes(collection, patchedData);
 
-         auditAdapter.registerUpdate(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
+         auditAdapter.registerDataChange(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
                task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new documents
@@ -391,7 +389,7 @@ public class SingleStage extends Stage {
          var oldDataDecoded = constraintManager.decodeDataTypes(linkType, beforePatch);
          var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
 
-         auditAdapter.registerUpdate(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
+         auditAdapter.registerDataChange(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
                task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new links

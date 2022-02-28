@@ -110,12 +110,6 @@ public class DocumentService extends AbstractService {
       return auditFacade.getAuditRecordsForDocument(collectionId, documentId);
    }
 
-   @POST
-   @Path("{documentId:[0-9a-fA-F]{24}}/audit/{auditLogId:[0-9a-fA-F]{24}}/revert")
-   public Document revertAuditLog(@PathParam("documentId") String documentId, @PathParam("auditLogId") String auditLogId) {
-      return auditFacade.revertLastDocumentAuditOperation(collectionId, documentId, auditLogId);
-   }
-
    @DELETE
    @Path("{documentId:[0-9a-fA-F]{24}}")
    public Response deleteDocument(@PathParam("documentId") String documentId) {

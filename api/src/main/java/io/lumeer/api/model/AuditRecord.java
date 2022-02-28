@@ -45,6 +45,7 @@ public class AuditRecord implements WithId {
    public static final String OLD_STATE = "oldState";
    public static final String NEW_STATE = "newState";
    public static final String AUTOMATION = "automation";
+   public static final String TYPE = "type";
 
    private String id;
 
@@ -63,6 +64,8 @@ public class AuditRecord implements WithId {
 
    private DataDocument oldState;
    private DataDocument newState;
+
+   private AuditType type;
 
    public AuditRecord() {
    }
@@ -174,6 +177,14 @@ public class AuditRecord implements WithId {
       this.userEmail = userEmail;
    }
 
+   public AuditType getType() {
+      return type;
+   }
+
+   public void setType(final AuditType type) {
+      this.type = type;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -205,6 +216,7 @@ public class AuditRecord implements WithId {
             ", automation='" + automation + '\'' +
             ", oldState=" + oldState +
             ", newState=" + newState +
+            ", type=" + type +
             '}';
    }
 }
