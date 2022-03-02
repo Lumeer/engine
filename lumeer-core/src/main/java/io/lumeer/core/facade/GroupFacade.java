@@ -80,7 +80,7 @@ public class GroupFacade extends AbstractFacade {
       if (group.getUsers() == null) {
          group.setUsers(new ArrayList<>());
       }
-      group.setUsers(new ArrayList<>(new HashSet<>(group.getUsers())));
+      group.setUsers(group.getUsers().stream().distinct().collect(Collectors.toList()));
 
       permissionsChecker.getPermissionAdapter().invalidateUserCache();
       return mapGroupData(groupDao.updateGroup(groupId, group));
