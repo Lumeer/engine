@@ -56,7 +56,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
    private final CronTaskChecker checker = new CronTaskChecker();
 
-   @Schedule(hour = "*", minute = "*/2") // every single hour
+   @Schedule(hour = "*") // every single hour
    public void process() {
       final List<Organization> organizations = organizationDao.getAllOrganizations();
 
