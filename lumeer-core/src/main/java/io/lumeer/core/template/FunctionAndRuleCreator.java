@@ -156,6 +156,10 @@ public class FunctionAndRuleCreator extends WithIdCreator {
          if (endsOn != null) {
             rule.getConfiguration().put(CronRule.CRON_ENDS_ON, new Date(endsOn));
          }
+         final Long lastRun = rule.getConfiguration().getLong(CronRule.CRON_LAST_RUN);
+         if (lastRun != null) {
+            rule.getConfiguration().put(CronRule.CRON_LAST_RUN, new Date(lastRun));
+         }
 
          processLongToInt(CronRule.CRON_EXECUTIONS_LEFT, rule.getConfiguration());
          processLongToInt(CronRule.CRON_HOUR, rule.getConfiguration());

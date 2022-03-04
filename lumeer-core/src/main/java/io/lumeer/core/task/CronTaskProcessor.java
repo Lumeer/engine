@@ -18,14 +18,7 @@
  */
 package io.lumeer.core.task;
 
-import io.lumeer.api.model.AllowedPermissions;
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Rule;
-import io.lumeer.api.model.User;
-import io.lumeer.api.model.View;
+import io.lumeer.api.model.*;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -36,16 +29,18 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
+import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Singleton
 @Startup
@@ -85,48 +80,64 @@ public class CronTaskProcessor extends WorkspaceContext {
       if (rules.size() > 0) {
          final ContextualTaskFactory taskFactory = getTaskFactory(dao);
 
-         rules.forEach(entry -> {
+         final String signature = UUID.randomUUID().toString();
+         final ZonedDateTime now = ZonedDateTime.now();
+
+         final Map<String, CronRule> rulesToExecute = new HashMap<>();
+
+         rules.stream().forEach(entry -> {
             final CronRule rule = new CronRule(entry.getValue());
-            if (checker.shouldExecute(rule, ZonedDateTime.now())) {
 
-               log.log(
-                     Level.INFO,
-                     "Running cron rule on %s/%s, %s, '%s'.",
-                     new String[] {
-                           dao.getOrganization().getCode(),
-                           dao.getProject().getCode(),
-                           collection.getName(),
-                           rule.getRule().getName()
-                     }
-               );
-
-               final String signature = UUID.randomUUID().toString();
-               rule.setLastRun(ZonedDateTime.now());
-               rule.setExecuting(signature);
-
-               final Collection bookedCollection = dao.getCollectionDao().updateCollectionRules(collection);
-
-               // is it us who tried last?
-               final String executing = new CronRule(bookedCollection.getRules().get(entry.getKey())).getExecuting();
-               if (executing == null || "".equals(executing)) {
-
-                  final List<Document> documents = getDocuments(rule, collection, dao);
-
-                  taskExecutor.submitTask(
-                        getTask(
-                              taskFactory,
-                              entry.getValue().getName() != null ? entry.getValue().getName() : entry.getKey(),
-                              entry.getValue(),
-                              collection,
-                              documents
-                        )
-                  );
-
+         if (checker.shouldExecute(rule, ZonedDateTime.now())) {
+               // it is not ok to have previously signed rule and not updated lastRun (i.e. pass the checker above)
+               // this is a sign of an error in previous execution, let's revert normal state and let it pass to another round
+               if (rule.getExecuting() != null && !"".equals(rule.getExecuting())) {
                   rule.setExecuting(null);
-                  dao.getCollectionDao().updateCollectionRules(collection);
+               } else {
+                  rule.setLastRun(now);
+                  rule.setExecuting(signature);
+                  rulesToExecute.put(entry.getKey(), rule);
                }
             }
          });
+
+         // bookedCollection is the previous version of collection before updating the rules!!!
+         final Collection bookedCollection = dao.getCollectionDao().updateCollectionRules(collection);
+
+         rulesToExecute.forEach((key, rule) -> {
+            log.log(
+                  Level.INFO,
+                  String.format("Running cron rule on %s/%s, %s, '%s'.",
+                        dao.getOrganization().getCode(),
+                        dao.getProject().getCode(),
+                        collection.getName(),
+                        rule.getRule().getName()
+                  )
+            );
+
+            // is it us who tried last?
+            final String executing = new CronRule(bookedCollection.getRules().get(key)).getExecuting();
+            if (executing == null || "".equals(executing)) {
+
+               final List<Document> documents = getDocuments(rule, collection, dao);
+
+               taskExecutor.submitTask(
+                     getTask(
+                           taskFactory,
+                           rule.getRule().getName() != null ? rule.getRule().getName() : key,
+                           rule.getRule(),
+                           collection,
+                           documents
+                     )
+               );
+            }
+         });
+
+         // Make sure we have the rules with updated lastRun and simply clean the signatures no matter what (lastRun is updated anyway)
+         final Collection latestCollection = dao.getCollectionDao().getCollectionById(collection.getId());
+         rulesToExecute.keySet().forEach(key -> new CronRule(latestCollection.getRules().get(key)).setExecuting(null));
+         latestCollection.getRules().forEach((key, r) -> System.out.println(key + ": " + r.getConfiguration().getString("executing")));
+         dao.getCollectionDao().updateCollectionRules(latestCollection);
       }
    }
 
