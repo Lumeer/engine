@@ -33,6 +33,9 @@ import java.util.logging.Level
 import java.util.logging.Logger
 import java.lang.Double
 import java.lang.Float
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 
 data class DataFilterJsonTask(val documents: List<Document>,
@@ -161,11 +164,21 @@ data class DataFilterJsonTask(val documents: List<Document>,
                 }
             }
 
+            val localDateTimeSerializer: JsonSerializer<LocalDateTime> = JsonSerializer<LocalDateTime> { dt, srcType, _ ->
+                JsonPrimitive(dt.toInstant(ZoneOffset.UTC).epochSecond)
+            }
+
+            val zonedDateTimeSerializer2: JsonSerializer<ZonedDateTime> = JsonSerializer<ZonedDateTime> { dt, srcType, _ ->
+                JsonPrimitive(dt.toInstant().epochSecond)
+            }
+
             return GsonBuilder()
                     .addSerializationExclusionStrategy(strategy)
                     .registerTypeAdapter(ConditionType::class.java, conditionTypeSerializer)
                     .registerTypeAdapter(Double::class.java, doubleSerializer)
                     .registerTypeAdapter(Float::class.java, floatSerializer)
+                    .registerTypeAdapter(LocalDateTime::class.java, localDateTimeSerializer)
+                    .registerTypeAdapter(ZonedDateTime::class.java, zonedDateTimeSerializer2)
                     .create()
                     .toJson(dataFilterJson)
         }

@@ -33,14 +33,14 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
+import javax.enterprise.context.SessionScoped;
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 
 @SessionScoped
 public class AuthenticatedUser implements Serializable {
@@ -182,8 +182,8 @@ public class AuthenticatedUser implements Serializable {
 
       ((WorkspaceKeeper) selectedWorkspace).setOrganizationId(organization.getId());
 
-      freshdeskFacade.logTicket(user, "A new user " + user.getEmail() + " logged for the first time in the system",
-            "Organization " + organization.getCode() + " was created for them.");
+      eventLogFacade.logEvent(user, "A new user " + user.getEmail() + " logged for the first time in the system. " +
+              "Organization " + organization.getCode() + " was created for them.");
    }
 
    private Organization createDemoOrganization(User user) {
