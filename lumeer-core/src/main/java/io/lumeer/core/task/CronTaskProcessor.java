@@ -56,7 +56,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
    private final CronTaskChecker checker = new CronTaskChecker();
 
-   @Schedule(hour = "*") // every single hour
+   @Schedule(hour = "*", minute = "*/15") // every 15 minutes
    public void process() {
       final List<Organization> organizations = organizationDao.getAllOrganizations();
 
@@ -136,7 +136,6 @@ public class CronTaskProcessor extends WorkspaceContext {
          // Make sure we have the rules with updated lastRun and simply clean the signatures no matter what (lastRun is updated anyway)
          final Collection latestCollection = dao.getCollectionDao().getCollectionById(collection.getId());
          rulesToExecute.keySet().forEach(key -> new CronRule(latestCollection.getRules().get(key)).setExecuting(null));
-         latestCollection.getRules().forEach((key, r) -> System.out.println(key + ": " + r.getConfiguration().getString("executing")));
          dao.getCollectionDao().updateCollectionRules(latestCollection);
       }
    }
