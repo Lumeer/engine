@@ -298,7 +298,7 @@ public class AuditFacade extends AbstractFacade {
       final DataDocument oldDataDecoded = constraintManager.decodeDataTypes(collection, oldDocument.getData());
       final DataDocument newDataDecoded = constraintManager.decodeDataTypes(collection, newDocument.getData());
 
-      return auditAdapter.registerDataChange(collection.getId(), ResourceType.DOCUMENT, oldDocument.getId(), user, null, oldDocument.getData(), oldDataDecoded, newDocument.getData(), newDataDecoded);
+      return auditAdapter.registerDataChange(collection.getId(), ResourceType.DOCUMENT, oldDocument.getId(), user, null, getCurrentViewId(), oldDocument.getData(), oldDataDecoded, newDocument.getData(), newDataDecoded);
    }
 
    private AuditRecord registerDocumentDelete(final Document oldDocument) {
@@ -309,7 +309,7 @@ public class AuditFacade extends AbstractFacade {
       final User user = authenticatedUser.getCurrentUser();
       final Collection collection = collectionDao.getCollectionById(oldDocument.getCollectionId());
 
-      return auditAdapter.registerDelete(collection.getId(), ResourceType.DOCUMENT, oldDocument.getId(), user, null, oldDocument.getData());
+      return auditAdapter.registerDelete(collection.getId(), ResourceType.DOCUMENT, oldDocument.getId(), user, null, getCurrentViewId(), oldDocument.getData());
    }
 
    private AuditRecord registerLinkUpdate(final LinkInstance oldLink, final LinkInstance newLink) {
@@ -323,7 +323,7 @@ public class AuditFacade extends AbstractFacade {
       final DataDocument oldDataDecoded = constraintManager.decodeDataTypes(linkType, oldLink.getData());
       final DataDocument newDataDecoded = constraintManager.decodeDataTypes(linkType, newLink.getData());
 
-      return auditAdapter.registerDataChange(linkType.getId(), ResourceType.LINK, oldLink.getId(), user, null, oldLink.getData(), oldDataDecoded, newLink.getData(), newDataDecoded);
+      return auditAdapter.registerDataChange(linkType.getId(), ResourceType.LINK, oldLink.getId(), user, null, getCurrentViewId(), oldLink.getData(), oldDataDecoded, newLink.getData(), newDataDecoded);
    }
 
    private AuditRecord registerLinkDelete(final LinkInstance oldLink) {
@@ -334,7 +334,7 @@ public class AuditFacade extends AbstractFacade {
       final User user = authenticatedUser.getCurrentUser();
       final LinkType linkType = linkTypeDao.getLinkType(oldLink.getLinkTypeId());
 
-      return auditAdapter.registerDelete(linkType.getId(), ResourceType.LINK, oldLink.getId(), user, null, oldLink.getData());
+      return auditAdapter.registerDelete(linkType.getId(), ResourceType.LINK, oldLink.getId(), user, null, getCurrentViewId(), oldLink.getData());
    }
 
    private List<AuditRecord> decode(final List<AuditRecord> auditRecords) {

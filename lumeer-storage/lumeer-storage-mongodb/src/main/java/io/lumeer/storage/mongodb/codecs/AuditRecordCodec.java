@@ -86,6 +86,7 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       record.setAutomation(bson.getString(AuditRecord.AUTOMATION));
       record.setUserName(bson.getString(AuditRecord.USER_NAME));
       record.setUserEmail(bson.getString(AuditRecord.USER_EMAIL));
+      record.setViewId(bson.getString(AuditRecord.VIEW));
 
       final Date changeDate = bson.getDate(AuditRecord.CHANGE_DATE);
       record.setChangeDate(changeDate != null ? ZonedDateTime.ofInstant(changeDate.toInstant(), ZoneOffset.UTC) : null);
@@ -111,6 +112,7 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
           .append(AuditRecord.USER, record.getUser())
           .append(AuditRecord.USER_NAME, record.getUserName())
           .append(AuditRecord.USER_EMAIL, record.getUserEmail())
+          .append(AuditRecord.VIEW, record.getViewId())
           .append(AuditRecord.AUTOMATION, record.getAutomation())
           .append(AuditRecord.TYPE, record.getType() != null ? record.getType().toString() : AuditType.Updated.toString())
           .append(AuditRecord.OLD_STATE, new Document(record.getOldState() != null ? record.getOldState() : new DataDocument()))

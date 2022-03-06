@@ -191,7 +191,7 @@ public class SingleStage extends Stage {
          var patchedDataDecoded = constraintManager.decodeDataTypes(collection, patchedData);
 
          auditAdapter.registerDataChange(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
-               task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
+               task.getInitiator(), automationName, null, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new documents
          boolean created = false;
@@ -390,7 +390,7 @@ public class SingleStage extends Stage {
          var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
 
          auditAdapter.registerDataChange(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
-               task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
+               task.getInitiator(), automationName, null, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new links
          boolean created = false;
