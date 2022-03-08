@@ -698,7 +698,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       public <T extends ContextualTask> T getInstance(final Class<T> clazz) {
          try {
             T t = clazz.getConstructor().newInstance();
-            t.initialize(initiator, contextSnapshot, pusherClient, lumeerS3Client, new RequestDataKeeper(), constraintManager, environment, 0);
+            t.initialize(initiator, contextSnapshot.shallowCopy(), pusherClient, lumeerS3Client, new RequestDataKeeper(), constraintManager, environment, 0);
 
             return t;
          } catch (Exception e) {

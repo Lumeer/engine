@@ -120,6 +120,41 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    private final SelectionListDao selectionListDao;
    private final ResourceVariableDao resourceVariableDao;
 
+   private MongoDaoContextSnapshot(final MongoDaoContextSnapshot originalDao) {
+      this.systemDatabase = originalDao.systemDatabase;
+      this.userDatabase = originalDao.userDatabase;
+
+      this.organization = originalDao.organization;
+      this.project = originalDao.project;
+      this.workspaceSnapshot = originalDao.workspaceSnapshot;
+
+      this.organizationDao = originalDao.organizationDao;
+      this.projectDao = originalDao.projectDao;
+      this.collectionDao = originalDao.collectionDao;
+      this.companyContactDao = originalDao.companyContactDao;
+      this.dataDao = originalDao.dataDao;
+      this.documentDao = originalDao.documentDao;
+      this.favoriteItemDao = originalDao.favoriteItemDao;
+      this.functionDao = originalDao.functionDao;
+      this.feedbackDao = originalDao.feedbackDao;
+      this.groupDao = originalDao.groupDao;
+      this.linkInstanceDao = originalDao.linkInstanceDao;
+      this.linkDataDao = originalDao.linkDataDao;
+      this.linkTypeDao = originalDao.linkTypeDao;
+      this.paymentDao = originalDao.paymentDao;
+      this.userDao = originalDao.userDao;
+      this.userLoginDao = originalDao.userLoginDao;
+      this.userNotificationDao = originalDao.userNotificationDao;
+      this.viewDao = originalDao.viewDao;
+      this.sequenceDao = originalDao.sequenceDao;
+      this.resourceCommentDao = originalDao.resourceCommentDao;
+      this.delayedActionDao = originalDao.delayedActionDao;
+      this.auditDao = originalDao.auditDao;
+      this.fileAttachmentDao = originalDao.fileAttachmentDao;
+      this.selectionListDao = originalDao.selectionListDao;
+      this.resourceVariableDao = originalDao.resourceVariableDao;
+   }
+
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
       this.systemDatabase = (MongoDatabase) systemDataStorage.getDatabase();
       this.userDatabase = (MongoDatabase) userDataStorage.getDatabase();
@@ -352,5 +387,10 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    public long increaseEmailCounter() {
       emailCounter.increment();
       return emailCounter.longValue();
+   }
+
+   @Override
+   public DaoContextSnapshot shallowCopy() {
+      return new MongoDaoContextSnapshot(this);
    }
 }
