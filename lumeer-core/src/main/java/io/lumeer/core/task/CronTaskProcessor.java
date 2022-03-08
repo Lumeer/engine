@@ -88,10 +88,10 @@ public class CronTaskProcessor extends WorkspaceContext {
          rules.stream().forEach(entry -> {
             final CronRule rule = new CronRule(entry.getValue());
 
-            if ("620b987c8e43bf296c085aa7".equals(collection.getId()) || checker.shouldExecute(rule, ZonedDateTime.now())) {
+            if (checker.shouldExecute(rule, ZonedDateTime.now())) {
                // it is not ok to have previously signed rule and not updated lastRun (i.e. pass the checker above)
                // this is a sign of an error in previous execution, let's revert normal state and let it pass to another round
-               if (checker.shouldExecute(rule, ZonedDateTime.now()) && rule.getExecuting() != null && !"".equals(rule.getExecuting())) {
+               if (rule.getExecuting() != null && !"".equals(rule.getExecuting())) {
                   log.info(
                           String.format("Fixing rule execution signature on %s/%s, %s, '%s'.",
                                   dao.getOrganization().getCode(),
@@ -103,7 +103,7 @@ public class CronTaskProcessor extends WorkspaceContext {
                   rule.setExecuting(null);
                } else {
                   log.info(
-                          String.format("Planning to run rule %s/%s, %s, '%s'.",
+                          String.format("Planning to run rule on %s/%s, %s, '%s'.",
                                   dao.getOrganization().getCode(),
                                   dao.getProject().getCode(),
                                   collection.getName(),
