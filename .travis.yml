@@ -3,6 +3,11 @@ install: true
 services:
   - mongodb
 script: ./travis.sh
-dist: bionic
-jdk:
-  - openjdk13
+dist: focal
+before_install:
+  - curl -s "https://get.sdkman.io" | bash
+  - source "$HOME/.sdkman/bin/sdkman-init.sh"
+  - sdk install java 11.0.12-open
+  - sdk use java 11.0.12-open
+#jdk:
+#  - openjdk17
