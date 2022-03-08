@@ -3,6 +3,6 @@ install: true
 services:
   - mongodb
 script: ./travis.sh
-dist: bionic
+dist: focal
 jdk:
-  - openjdk13
+  - openjdk17
