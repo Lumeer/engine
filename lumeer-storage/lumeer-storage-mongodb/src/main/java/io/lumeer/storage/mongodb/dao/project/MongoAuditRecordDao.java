@@ -43,6 +43,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditDao {
 
@@ -97,15 +98,18 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    }
 
    @Override
-   public List<AuditRecord> findAuditRecords(final ZonedDateTime noOlderThan) {
-      final Bson filters = Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()));
+   public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan) {
+      final Bson filters = Filters.and(
+                  projectFilter(collectionIds, linkTypeIds, viewIds),
+                  Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
+            );
 
       return findAuditRecords(filters, -1);
    }
 
    @Override
-   public List<AuditRecord> findAuditRecords(final int countLimit) {
-      final Bson filters = new Document();
+   public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit) {
+      final Bson filters = projectFilter(collectionIds, linkTypeIds, viewIds);
 
       return findAuditRecords(filters, countLimit);
    }
@@ -228,6 +232,32 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
       );
 
       databaseCollection().deleteMany(filters);
+   }
+
+   private Bson projectFilter(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds) {
+      return Filters.or(
+            Filters.eq(AuditRecord.RESOURCE_TYPE, ResourceType.PROJECT.toString()),
+            Filters.and(
+                  Filters.eq(AuditRecord.RESOURCE_TYPE, ResourceType.VIEW.toString()),
+                  Filters.in(AuditRecord.RESOURCE_ID, viewIds)
+            ),
+            Filters.and(
+                  Filters.eq(AuditRecord.RESOURCE_TYPE, ResourceType.COLLECTION.toString()),
+                  Filters.in(AuditRecord.RESOURCE_ID, collectionIds)
+            ),
+            Filters.and(
+                  Filters.eq(AuditRecord.RESOURCE_TYPE, ResourceType.DOCUMENT.toString()),
+                  Filters.in(AuditRecord.PARENT_ID, collectionIds)
+            ),
+            Filters.and(
+                  Filters.eq(AuditRecord.RESOURCE_TYPE, ResourceType.LINK_TYPE.toString()),
+                  Filters.in(AuditRecord.RESOURCE_ID, linkTypeIds)
+            ),
+            Filters.and(
+                  Filters.eq(AuditRecord.RESOURCE_TYPE, ResourceType.LINK.toString()),
+                  Filters.in(AuditRecord.PARENT_ID, linkTypeIds)
+            )
+      );
    }
 
    private String databaseCollectionName(Project project) {

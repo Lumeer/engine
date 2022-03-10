@@ -32,11 +32,11 @@ private const val UPDATE_MERGE_WINDOW_MINUTES: Long = 5 // number of minutes to 
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
-   fun getAuditRecords(serviceLevel: Payment.ServiceLevel) =
+   fun getAuditRecords(collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, serviceLevel: Payment.ServiceLevel) =
       if (serviceLevel == Payment.ServiceLevel.FREE)
-         auditDao.findAuditRecords(FREE_MAX_RECORDS)
+         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, FREE_MAX_RECORDS)
       else
-         auditDao.findAuditRecords(ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
    fun getAuditRecords(parentId: String, resourceType: ResourceType, serviceLevel: Payment.ServiceLevel) =
       if (serviceLevel == Payment.ServiceLevel.FREE)
@@ -54,6 +54,13 @@ class AuditAdapter(private val auditDao: AuditDao) {
       val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
       val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, DataDocument())
       auditRecord.type = AuditType.Deleted
+      return auditDao.createAuditRecord(auditRecord)
+   }
+
+   fun registerCreate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, newState: DataDocument): AuditRecord {
+      val partialNewState = DataDocument(newState.filterKeys { it != DataDocument.ID })
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, DataDocument(), partialNewState)
+      auditRecord.type = AuditType.Created
       return auditDao.createAuditRecord(auditRecord)
    }
 
@@ -117,10 +124,6 @@ class AuditAdapter(private val auditDao: AuditDao) {
       }
 
       return result
-   }
-
-   fun removeAllAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String) {
-      auditDao.deleteAuditRecords(parentId, resourceType, resourceId)
    }
 
    companion object {

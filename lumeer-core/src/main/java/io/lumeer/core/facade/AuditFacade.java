@@ -18,25 +18,37 @@
  */
 package io.lumeer.core.facade;
 
+import static java.util.stream.Collectors.*;
+
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.PermissionAdapter;
+import io.lumeer.core.adapter.ResourceAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.LinkInstanceUtils;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.CreateDocument;
+import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
@@ -46,17 +58,20 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.ViewDao;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -97,12 +112,22 @@ public class AuditFacade extends AbstractFacade {
    private FavoriteItemDao favoriteItemDao;
 
    @Inject
+   private ViewDao viewDao;
+
+   @Inject
+   private UserDao userDao;
+
+   @Inject
+   private GroupDao groupDao;
+
+   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    private AuditAdapter auditAdapter;
    private DocumentAdapter documentAdapter;
    private ConstraintManager constraintManager;
    private LinkInstanceAdapter linkInstanceAdapter;
+   private ResourceAdapter resourceAdapter;
 
    @PostConstruct
    public void init() {
@@ -111,6 +136,13 @@ public class AuditFacade extends AbstractFacade {
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       linkInstanceAdapter = new LinkInstanceAdapter(resourceCommentDao);
+
+      PermissionAdapter permissionAdapter = new PermissionAdapter(userDao, groupDao, viewDao, linkTypeDao, collectionDao);
+      resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
+   }
+
+   public void documentCreated(@Observes final CreateDocument createDocument) {
+      registerDocumentCreate(createDocument.getDocument());
    }
 
    public void documentUpdated(@Observes final UpdateDocument updateDocument) {
@@ -118,8 +150,11 @@ public class AuditFacade extends AbstractFacade {
    }
 
    public void documentRemoved(@Observes final RemoveDocument removeDocument) {
-      // auditAdapter.removeAllAuditRecords(removeDocument.getDocument().getCollectionId(), ResourceType.DOCUMENT, removeDocument.getDocument().getId());
       registerDocumentDelete(removeDocument.getDocument());
+   }
+
+   public void linkInstanceCreated(@Observes final CreateLinkInstance createLinkInstance) {
+      registerLinkCreate(createLinkInstance.getLinkInstance());
    }
 
    public void linkInstanceUpdated(@Observes final UpdateLinkInstance updateLinkInstance) {
@@ -127,26 +162,50 @@ public class AuditFacade extends AbstractFacade {
    }
 
    public void linkInstanceRemoved(@Observes final RemoveLinkInstance removeLinkInstance) {
-      // auditAdapter.removeAllAuditRecords(removeLinkInstance.getLinkInstance().getLinkTypeId(), ResourceType.LINK, removeLinkInstance.getLinkInstance().getId());
       registerLinkDelete(removeLinkInstance.getLinkInstance());
    }
 
    public List<AuditRecord> getAuditRecordsForProject() {
-      // TODO permissions ???
+      checkProjectRole(RoleType.Manage);
 
-      return decode(auditAdapter.getAuditRecords(getServiceLevel()));
+      Map<String, Collection> collectionsMap = resourceAdapter.getCollections(getOrganization(), getProject(), getCurrentUserId())
+                                                              .stream().collect(Collectors.toMap(Resource::getId, c -> c));
+      Map<String, LinkType> linkTypesMap = resourceAdapter.getLinkTypes(getOrganization(), getProject(), getCurrentUserId())
+                                                          .stream().collect(Collectors.toMap(LinkType::getId, c -> c));
+      // currently not supported
+      Set<String> viewIds = Collections.emptySet();
+
+      List<AuditRecord> auditRecords = auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel());
+
+      collectionsMap.values().forEach(collection -> {
+         var collectionAuditRecords = auditRecords.stream()
+                                                  .filter(record -> ResourceType.DOCUMENT.equals(record.getResourceType()) && collection.getId().equals(record.getParentId()))
+                                                  .collect(toList());
+         decodeWithTitle(collection, collectionAuditRecords);
+      });
+
+      linkTypesMap.values().forEach(linkType -> {
+         var linkAuditRecords = auditRecords.stream()
+                                            .filter(record -> ResourceType.LINK.equals(record.getResourceType()) && linkType.getId().equals(record.getParentId()))
+                                            .collect(toList());
+         decodeWithTitle(linkType, linkAuditRecords);
+      });
+
+      return auditRecords;
    }
 
    public List<AuditRecord> getAuditRecordsForCollection(final String collectionId) {
-      // TODO permissions ???
+      Collection collection = collectionDao.getCollectionById(collectionId);
+      permissionsChecker.checkRole(collection, RoleType.Manage);
 
-      return decode(auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, getServiceLevel()));
+      return decodeWithTitle(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, getServiceLevel()));
    }
 
    public List<AuditRecord> getAuditRecordsForLinkType(final String linkTypeId) {
-      // TODO permissions ???
+      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+      permissionsChecker.checkRoleInLinkType(linkType, RoleType.Manage);
 
-      return decode(auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, getServiceLevel()));
+      return decodeWithTitle(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, getServiceLevel()));
    }
 
    public List<AuditRecord> getAuditRecordsForDocument(final String collectionId, final String documentId) {
@@ -154,7 +213,9 @@ public class AuditFacade extends AbstractFacade {
       final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
       permissionsChecker.checkEditDocument(collection, document);
 
-      return decode(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, getServiceLevel()));
+      return auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, getServiceLevel())
+                         .stream().peek(log -> decode(collection, log))
+                         .collect(toList());
    }
 
    public List<AuditRecord> getAuditRecordsForLink(final String linkTypeId, final String linkInstanceId) {
@@ -162,7 +223,9 @@ public class AuditFacade extends AbstractFacade {
       final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
-      return decode(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, getServiceLevel()));
+      return auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, getServiceLevel())
+                         .stream().peek(link -> decode(linkType, link))
+                         .collect(toList());
    }
 
    public void revertAudit(final String auditRecordId) {
@@ -287,6 +350,18 @@ public class AuditFacade extends AbstractFacade {
       // TODO push
    }
 
+   private AuditRecord registerDocumentCreate(final Document newDocument) {
+      if (newDocument == null) {
+         throw new UnsupportedOperationException("Cannot create audit record from different or incomplete documents.");
+      }
+
+      final User user = authenticatedUser.getCurrentUser();
+      final Collection collection = collectionDao.getCollectionById(newDocument.getCollectionId());
+      final DataDocument newDataDecoded = constraintManager.decodeDataTypes(collection, newDocument.getData());
+
+      return auditAdapter.registerCreate(collection.getId(), ResourceType.DOCUMENT, newDocument.getId(), user, null, getCurrentViewId(), newDataDecoded);
+   }
+
    private AuditRecord registerDocumentUpdate(final Document oldDocument, final Document newDocument) {
       if (oldDocument == null || newDocument == null || oldDocument.getData() == null || newDocument.getData() == null ||
             !oldDocument.getId().equals(newDocument.getId())) {
@@ -310,6 +385,18 @@ public class AuditFacade extends AbstractFacade {
       final Collection collection = collectionDao.getCollectionById(oldDocument.getCollectionId());
 
       return auditAdapter.registerDelete(collection.getId(), ResourceType.DOCUMENT, oldDocument.getId(), user, null, getCurrentViewId(), oldDocument.getData());
+   }
+
+   private AuditRecord registerLinkCreate(final LinkInstance newLink) {
+      if (newLink == null) {
+         throw new UnsupportedOperationException("Cannot create audit record from different or incomplete link instances.");
+      }
+
+      final User user = authenticatedUser.getCurrentUser();
+      final LinkType linkType = linkTypeDao.getLinkType(newLink.getLinkTypeId());
+      final DataDocument newDataDecoded = constraintManager.decodeDataTypes(linkType, newLink.getData());
+
+      return auditAdapter.registerCreate(linkType.getId(), ResourceType.LINK, newLink.getId(), user, null, getCurrentViewId(), newDataDecoded);
    }
 
    private AuditRecord registerLinkUpdate(final LinkInstance oldLink, final LinkInstance newLink) {
@@ -337,28 +424,26 @@ public class AuditFacade extends AbstractFacade {
       return auditAdapter.registerDelete(linkType.getId(), ResourceType.LINK, oldLink.getId(), user, null, getCurrentViewId(), oldLink.getData());
    }
 
-   private List<AuditRecord> decode(final List<AuditRecord> auditRecords) {
-      final List<AuditRecord> decodedRecords = new ArrayList<>();
-      final Map<String, Collection> collectionsMap = new HashMap<>();
-      final Map<String, LinkType> linkTypesMap = new HashMap<>();
+   private List<AuditRecord> decodeWithTitle(final Collection collection, final List<AuditRecord> auditRecords) {
+      var documentsIds = auditRecords.stream().map(AuditRecord::getResourceId)
+                                     .collect(toSet());
 
-      for (AuditRecord record : auditRecords) {
-         if (ResourceType.DOCUMENT.equals(record.getResourceType())) {
-            final Collection collection = collectionsMap.computeIfAbsent(record.getParentId(), parentId -> collectionDao.getCollectionById(parentId));
-            decode(collection, record);
-         } else if (ResourceType.LINK.equals(record.getResourceType())) {
-            final LinkType linkType = linkTypesMap.computeIfAbsent(record.getParentId(), parentId -> linkTypeDao.getLinkType(parentId));
-            decode(linkType, record);
-         }
+      var defaultAttribute = CollectionUtil.getDefaultAttribute(collection);
+      var defaultAttributeId = defaultAttribute != null ? defaultAttribute.getId() : "";
+      var defaultConstraint = Utils.computeIfNotNull(defaultAttribute, Attribute::getConstraint);
 
-         decodedRecords.add(record);
+      Map<String, Object> defaultValues = Collections.emptyMap();
+      if (!defaultAttributeId.isEmpty()) {
+         defaultValues = dataDao.getData(collection.getId(), documentsIds, defaultAttributeId)
+                                .stream().collect(toMap(DataDocument::getId, d -> d.get(defaultAttributeId)));
       }
 
-      return decodedRecords;
-   }
+      for (AuditRecord auditRecord : auditRecords) {
+         decode(collection, auditRecord);
+         decodeTitle(auditRecord, defaultAttributeId, defaultConstraint, defaultValues);
+      }
 
-   private List<AuditRecord> decode(final Collection collection, final List<AuditRecord> auditRecords) {
-      return auditRecords.stream().peek(record -> decode(collection, record)).collect(Collectors.toList());
+      return auditRecords;
    }
 
    private void decode(final Collection collection, final AuditRecord record) {
@@ -371,8 +456,36 @@ public class AuditFacade extends AbstractFacade {
       }
    }
 
-   private List<AuditRecord> decode(final LinkType linkType, final List<AuditRecord> auditRecords) {
-      return auditRecords.stream().peek(record -> decode(linkType, record)).collect(Collectors.toList());
+   private List<AuditRecord> decodeWithTitle(final LinkType linkType, final List<AuditRecord> auditRecords) {
+      var linkIds = auditRecords.stream().map(AuditRecord::getResourceId)
+                                .collect(toSet());
+
+      var defaultAttribute = linkType.getAttributes().stream().findFirst().orElse(null);
+      var defaultAttributeId = defaultAttribute != null ? defaultAttribute.getId() : "";
+      var defaultConstraint = Utils.computeIfNotNull(defaultAttribute, Attribute::getConstraint);
+
+      Map<String, Object> defaultValues = Collections.emptyMap();
+      if (!defaultAttributeId.isEmpty()) {
+         defaultValues = linkDataDao.getData(linkType.getId(), linkIds, defaultAttributeId)
+                                    .stream().collect(toMap(DataDocument::getId, d -> d.get(defaultAttributeId)));
+      }
+
+      for (AuditRecord auditRecord : auditRecords) {
+         decode(linkType, auditRecord);
+         decodeTitle(auditRecord, defaultAttributeId, defaultConstraint, defaultValues);
+      }
+
+      return auditRecords;
+   }
+
+   private void decodeTitle(final AuditRecord auditRecord, final String defaultAttributeId, final Constraint defaultConstraint, final Map<String, Object> defaultValues) {
+      if (AuditType.Deleted.equals(auditRecord.getType())) {
+         var title = Utils.computeIfNotNull(auditRecord.getOldState(), state -> state.get(defaultAttributeId));
+         var titleDecoded = constraintManager.decode(title, defaultConstraint);
+         auditRecord.setTitle(titleDecoded);
+      } else {
+         auditRecord.setTitle(defaultValues.get(auditRecord.getResourceId()));
+      }
    }
 
    private void decode(final LinkType linkType, final AuditRecord record) {
@@ -391,5 +504,9 @@ public class AuditFacade extends AbstractFacade {
          return limits.getServiceLevel();
       }
       return Payment.ServiceLevel.FREE;
+   }
+
+   private void checkProjectRole(RoleType role) {
+      permissionsChecker.checkRole(getProject(), role);
    }
 }

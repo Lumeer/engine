@@ -138,6 +138,13 @@ public class SingleStage extends Stage {
 
       final Set<String> unprocessedCreatedDocuments = createdDocuments.stream().map(Document::getId).collect(toSet());
 
+      createdDocuments.forEach(document -> {
+         final Collection collection = collectionsMap.get(document.getCollectionId());
+         final DataDocument newDataDecoded = constraintManager.encodeDataTypes(collection, document.getData());
+
+         auditAdapter.registerCreate(collection.getId(), ResourceType.DOCUMENT, document.getId(), task.getInitiator(), automationName, null, newDataDecoded);
+      });
+
       changesByDocumentId.forEach((id, changeList) -> {
          unprocessedCreatedDocuments.remove(id);
          final Document document = changeList.get(0).getEntity();
@@ -278,7 +285,11 @@ public class SingleStage extends Stage {
             final Set<String> removedFromLinkTypes = removedLinks.stream().map(LinkInstance::getLinkTypeId).collect(toSet());
             changesTracker.addRemovedLinkInstances(removedLinks);
             task.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstancesByDocumentsIds(Set.of(document.getId()));
-            removedLinks.forEach(link -> auditAdapter.removeAllAuditRecords(link.getLinkTypeId(), ResourceType.LINK, link.getId()));
+            removedLinks.forEach(link -> {
+               var linkType = allLinkTypes.get(link.getLinkTypeId());
+               var decodedDeletedData = constraintManager.decodeDataTypes(linkType, link.getData());
+               auditAdapter.registerDelete(link.getLinkTypeId(), ResourceType.LINK, link.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
+            });
 
             removedFromLinkTypes.forEach(linkTypeId -> {
                // decrease link instances count in link types map
@@ -303,7 +314,9 @@ public class SingleStage extends Stage {
 
             task.getDaoContextSnapshot().getDocumentDao().deleteDocument(document.getId(), document.getData());
             task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
-            auditAdapter.removeAllAuditRecords(document.getCollectionId(), ResourceType.DOCUMENT, document.getId());
+
+            var decodedDeletedData = constraintManager.decodeDataTypes(collection, document.getData());
+            auditAdapter.registerDelete(document.getCollectionId(), ResourceType.DOCUMENT, document.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
          });
 
          return documents;

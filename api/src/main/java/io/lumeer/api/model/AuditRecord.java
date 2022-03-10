@@ -63,6 +63,7 @@ public class AuditRecord implements WithId {
    private String userName;
    private String userEmail;
    private String automation;
+   private Object title;
 
    private DataDocument oldState;
    private DataDocument newState;
@@ -194,6 +195,14 @@ public class AuditRecord implements WithId {
 
    public void setViewId(final String viewId) {
       this.viewId = viewId;
+   }
+
+   public Object getTitle() {
+      return title;
+   }
+
+   public void setTitle(final Object title) {
+      this.title = title;
    }
 
    @Override

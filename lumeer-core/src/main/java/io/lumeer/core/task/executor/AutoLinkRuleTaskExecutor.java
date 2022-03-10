@@ -26,7 +26,9 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.rule.AutoLinkRule;
 import io.lumeer.core.adapter.AuditAdapter;
+import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.FunctionFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.matcher.DocumentMatcher;
@@ -45,6 +47,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class AutoLinkRuleTaskExecutor {
+
+   private static final DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
+   private static final ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
 
    private static final Logger log = Logger.getLogger(AutoLinkRuleTaskExecutor.class.getName());
 
@@ -123,7 +128,10 @@ public class AutoLinkRuleTaskExecutor {
             ruleTask.getDaoContextSnapshot().getLinkDataDao().deleteData(matcher.getLinkType().getId(), removeIds);
             changesTracker.updateLinkTypesMap(Map.of(matcher.getLinkType().getId(), matcher.getLinkType()));
             changesTracker.addRemovedLinkInstances(linksForRemoval);
-            linksForRemoval.forEach(l -> auditAdapter.removeAllAuditRecords(l.getLinkTypeId(), ResourceType.LINK, l.getId()));
+            linksForRemoval.forEach(link -> {
+               var decodedDeletedData = constraintManager.decodeDataTypes(matcher.getLinkType(), link.getData());
+               auditAdapter.registerDelete(link.getLinkTypeId(), ResourceType.LINK, link.getId(), ruleTask.getInitiator(), ruleName, null, decodedDeletedData);
+            });
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);
@@ -181,6 +189,10 @@ public class AutoLinkRuleTaskExecutor {
             ruleTask.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances);
             changesTracker.updateLinkTypesMap(Map.of(matcher.getLinkType().getId(), matcher.getLinkType()));
             changesTracker.addCreatedLinkInstances(linkInstances);
+            linkInstances.forEach(link -> {
+               var decodedCreatedData = constraintManager.decodeDataTypes(matcher.getLinkType(), link.getData());
+               auditAdapter.registerCreate(link.getLinkTypeId(), ResourceType.LINK, link.getId(), ruleTask.getInitiator(), ruleName, null, decodedCreatedData);
+            });
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
             final List<String> skipCollectionIds = List.of(thisCollection);

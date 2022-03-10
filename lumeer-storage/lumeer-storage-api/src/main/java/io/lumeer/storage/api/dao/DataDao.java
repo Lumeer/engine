@@ -54,6 +54,8 @@ public interface DataDao {
 
    List<DataDocument> getData(String collectionId, Set<String> documentIds);
 
+   List<DataDocument> getData(String collectionId, Set<String> documentIds, String parameter);
+
    List<DataDocument> getData(String collectionId, Integer skip, Integer limit);
 
    List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, Collection collection);
