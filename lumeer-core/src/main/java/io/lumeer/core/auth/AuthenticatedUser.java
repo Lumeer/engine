@@ -21,18 +21,24 @@ package io.lumeer.core.auth;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.cache.UserCache;
 import io.lumeer.core.facade.EventLogFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.util.Colors;
 import io.lumeer.core.util.Icons;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -51,6 +57,7 @@ public class AuthenticatedUser implements Serializable {
       long lastUpdated = 0;
       String accessToken = "";
    }
+
    public static final String DEFAULT_USER_FULL_NAME = "Alan Turing";
 
    public static final String DEFAULT_USERNAME = "aturing";
@@ -82,9 +89,17 @@ public class AuthenticatedUser implements Serializable {
    @Inject
    private EventLogFacade eventLogFacade;
 
-   private AuthUserInfo authUserInfo = new AuthUserInfo();
+   @Inject
+   private AuditDao auditDao;
 
+   private AuthUserInfo authUserInfo = new AuthUserInfo();
+   private AuditAdapter auditAdapter;
    private Random rnd = new Random();
+
+   @PostConstruct
+   public void init() {
+      auditAdapter = new AuditAdapter(auditDao);
+   }
 
    void checkUser(final boolean firstLogin) {
       Set<String> authIds = authUserInfo.user != null && authUserInfo.user.getAuthIds() != null ? authUserInfo.user.getAuthIds() : Collections.emptySet();
@@ -156,6 +171,23 @@ public class AuthenticatedUser implements Serializable {
       if (firstLogin) {
          userLoginDao.userLoggedIn(user.getId());
          eventLogFacade.logEvent(user, "Logged in");
+
+         checkUserWorkspace(user);
+      }
+   }
+
+   private void checkUserWorkspace(User user) {
+      if (user.getDefaultWorkspace() != null) {
+         try {
+            Organization organization = organizationDao.getOrganizationById(user.getDefaultWorkspace().getOrganizationId());
+            projectDao.setOrganization(organization);
+
+            Project project = projectDao.getProjectById(user.getDefaultWorkspace().getProjectId());
+            auditDao.setProject(project);
+
+            auditAdapter.registerEnter(user.getDefaultWorkspace().getOrganizationId(), ResourceType.PROJECT, project.getId(), user);
+         } catch (ResourceNotFoundException ignore) {
+         }
       }
    }
 
@@ -183,7 +215,7 @@ public class AuthenticatedUser implements Serializable {
       ((WorkspaceKeeper) selectedWorkspace).setOrganizationId(organization.getId());
 
       eventLogFacade.logEvent(user, "A new user " + user.getEmail() + " logged for the first time in the system. " +
-              "Organization " + organization.getCode() + " was created for them.");
+            "Organization " + organization.getCode() + " was created for them.");
    }
 
    private Organization createDemoOrganization(User user) {

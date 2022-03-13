@@ -16,32 +16,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.api.model;
+package io.lumeer.engine.api.event;
 
-import java.util.Arrays;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
 
-public enum AuditType {
+public class UpdateDefaultWorkspace {
 
-   Entered,
-   Created,
-   Updated,
-   Deleted,
-   Reverted;
+   private final Organization organization;
+   private final Project project;
 
-   public static AuditType fromString(String type) {
-      if (type == null) {
-         return null;
-      }
-      try {
-         return Arrays.stream(values()).filter(role -> role.toString().equalsIgnoreCase(type)).findFirst().orElse(null);
-      } catch (IllegalArgumentException exception) {
-         return null;
-      }
+   public UpdateDefaultWorkspace(final  Organization organization, final Project project) {
+      this.organization = organization;
+      this.project = project;
    }
 
+   public Organization getOrganization() {
+      return organization;
+   }
 
-   @Override
-   public String toString() {
-      return name().toLowerCase();
+   public Project getProject() {
+      return project;
    }
 }

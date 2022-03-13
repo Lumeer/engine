@@ -50,6 +50,12 @@ class AuditAdapter(private val auditDao: AuditDao) {
       else
          auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
+   fun registerEnter(parentId: String, resourceType: ResourceType, resourceId: String, user: User?): AuditRecord {
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, null, null, DataDocument(), DataDocument())
+      auditRecord.type = AuditType.Entered
+      return auditDao.createAuditRecord(auditRecord)
+   }
+
    fun registerDelete(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument): AuditRecord {
       val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
       val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, DataDocument())

@@ -23,11 +23,12 @@ import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-public interface AuditDao extends ProjectScopedDao {
+public interface AuditDao extends ProjectScopedDao, Serializable {
 
    AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId);
    AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId, final AuditType type);

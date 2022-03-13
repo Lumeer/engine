@@ -42,6 +42,7 @@ import io.lumeer.engine.api.event.CreateOrUpdateUser;
 import io.lumeer.engine.api.event.ReloadGroups;
 import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.UpdateCurrentUser;
+import io.lumeer.engine.api.event.UpdateDefaultWorkspace;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.GroupDao;
@@ -107,6 +108,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private Event<UpdateCurrentUser> updateCurrentUserEvent;
+
+   @Inject
+   private Event<UpdateDefaultWorkspace> updateDefaultWorkspaceEvent;
 
    @Inject
    private Event<RemoveUser> removeUserEvent;
@@ -485,6 +489,8 @@ public class UserFacade extends AbstractFacade {
          organization = checkOrganizationPermissionsByCode(workspace.getOrganizationCode(), RoleType.Read);
       }
 
+      projectDao.setOrganization(organization);
+
       Project project;
       if (workspace.getProjectId() != null) {
          project = checkProjectPermissions(organization.getId(), workspace.getProjectId(), RoleType.Read);
@@ -499,6 +505,10 @@ public class UserFacade extends AbstractFacade {
       User updatedUser = userDao.updateUser(currentUser.getId(), currentUser);
 
       userCache.updateUser(updatedUser.getEmail(), updatedUser);
+
+      if (updateDefaultWorkspaceEvent != null) {
+         updateDefaultWorkspaceEvent.fire(new UpdateDefaultWorkspace(organization, project));
+      }
    }
 
    public Feedback createFeedback(Feedback feedback) {

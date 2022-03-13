@@ -28,7 +28,9 @@ import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
@@ -56,6 +58,7 @@ import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.engine.api.event.RemoveLinkInstance;
+import io.lumeer.engine.api.event.UpdateDefaultWorkspace;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
 import io.lumeer.storage.api.dao.AuditDao;
@@ -162,6 +165,10 @@ public class AuditFacade extends AbstractFacade {
       linkTypeAdapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
 
       pusherAdapter = new PusherAdapter(requestDataKeeper.getAppId(), getFacadeAdapter(), resourceAdapter, permissionAdapter, viewDao, linkTypeDao, collectionDao);
+   }
+
+   public void workspaceUpdated(@Observes final UpdateDefaultWorkspace updateDefaultWorkspace) {
+      registerProjectEnter(updateDefaultWorkspace.getOrganization(), updateDefaultWorkspace.getProject());
    }
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
@@ -423,6 +430,12 @@ public class AuditFacade extends AbstractFacade {
             }).collect(toList());
 
       sendPushNotification(events);
+   }
+
+   private void registerProjectEnter(final Organization organization, final Project project) {
+      auditDao.setProject(project);
+
+      auditAdapter.registerEnter(organization.getId(), ResourceType.PROJECT, project.getId(), authenticatedUser.getCurrentUser());
    }
 
    private AuditRecord registerDocumentCreate(final Document newDocument) {
