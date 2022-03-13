@@ -416,7 +416,7 @@ public class AuditFacade extends AbstractFacade {
 
          linkTypeAdapter.updateLinkTypeMetadata(linkType, keysToAdd, keysToRemove);
 
-         sendLinkNotification(linkType, linkInstance, PusherFacade.UPDATE_EVENT_SUFFIX);
+         sendLinkNotification(linkType, storedLinkInstance, PusherFacade.UPDATE_EVENT_SUFFIX);
       }
    }
 
@@ -567,13 +567,15 @@ public class AuditFacade extends AbstractFacade {
    }
 
    private void decodeTitle(final AuditRecord auditRecord, final String defaultAttributeId, final Constraint defaultConstraint, final Map<String, Object> defaultValues) {
+      Object title;
       if (AuditType.Deleted.equals(auditRecord.getType())) {
-         var title = Utils.computeIfNotNull(auditRecord.getOldState(), state -> state.get(defaultAttributeId));
-         var titleDecoded = constraintManager.decode(title, defaultConstraint);
-         auditRecord.setTitle(titleDecoded);
+         title = Utils.computeIfNotNull(auditRecord.getOldState(), state -> state.get(defaultAttributeId));
       } else {
-         auditRecord.setTitle(defaultValues.get(auditRecord.getResourceId()));
+         title = defaultValues.get(auditRecord.getResourceId());
       }
+
+      var titleDecoded = constraintManager.decode(title, defaultConstraint);
+      auditRecord.setTitle(titleDecoded);
    }
 
    private void decode(final LinkType linkType, final AuditRecord record) {
