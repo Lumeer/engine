@@ -142,11 +142,11 @@ public class AuditFacadeIT extends IntegrationTestBase {
       doc = documentFacade.createDocument(collection.getId(), doc);
 
       var audit = auditFacade.getAuditRecordsForDocument(collection.getId(), doc.getId());
-      assertThat(audit).isEmpty();
+      assertThat(audit).hasSize(1);
 
       documentFacade.updateDocumentData(collection.getId(), doc.getId(), new DataDocument("B", "y").append("C", "z").append("D", "w"));
       audit = auditFacade.getAuditRecordsForDocument(collection.getId(), doc.getId());
-      assertThat(audit).hasSize(1);
+      assertThat(audit).hasSize(2);
 
       assertThat(audit.get(0).getOldState()).containsExactlyEntriesOf(Map.of("A", "x"));
 
@@ -158,7 +158,7 @@ public class AuditFacadeIT extends IntegrationTestBase {
       documentFacade.updateDocumentData(collection.getId(), doc.getId(), new DataDocument("B", "y").append("C", "z").append("D", "v"));
       audit = auditFacade.getAuditRecordsForDocument(collection.getId(), doc.getId());
 
-      assertThat(audit).hasSize(1);
+      assertThat(audit).hasSize(2);
       assertThat(audit.get(0).getOldState()).containsExactlyEntriesOf(Map.of("A", "x"));
       newState = new HashMap<String, Object>();
       newState.put("A", null);
@@ -168,7 +168,7 @@ public class AuditFacadeIT extends IntegrationTestBase {
       documentFacade.updateDocumentData(collection.getId(), doc.getId(), new DataDocument("B", "y").append("C", "z"));
       audit = auditFacade.getAuditRecordsForDocument(collection.getId(), doc.getId());
 
-      assertThat(audit).hasSize(1);
+      assertThat(audit).hasSize(2);
       assertThat(audit.get(0).getOldState()).containsExactlyEntriesOf(Map.of("A", "x"));
       newState = new HashMap<String, Object>();
       newState.put("A", null);
@@ -177,6 +177,6 @@ public class AuditFacadeIT extends IntegrationTestBase {
       documentFacade.updateDocumentData(collection.getId(), doc.getId(), new DataDocument("A", "x").append("B", "y").append("C", "z"));
       audit = auditFacade.getAuditRecordsForDocument(collection.getId(), doc.getId());
 
-      assertThat(audit).hasSize(0);
+      assertThat(audit).hasSize(1);
    }
 }
