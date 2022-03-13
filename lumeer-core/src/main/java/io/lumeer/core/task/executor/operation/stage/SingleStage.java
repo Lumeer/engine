@@ -93,7 +93,7 @@ public class SingleStage extends Stage {
          automationName = null;
       }
 
-      linkTypeAdapter = new LinkTypeAdapter(task.getDaoContextSnapshot().getLinkInstanceDao());
+      linkTypeAdapter = new LinkTypeAdapter(task.getDaoContextSnapshot().getLinkTypeDao(), task.getDaoContextSnapshot().getLinkInstanceDao());
    }
 
    @Override

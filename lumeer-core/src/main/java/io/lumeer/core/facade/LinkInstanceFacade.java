@@ -28,6 +28,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -101,11 +102,13 @@ public class LinkInstanceFacade extends AbstractFacade {
    private ConstraintManager constraintManager;
 
    private LinkInstanceAdapter adapter;
+   private LinkTypeAdapter linkTypeAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       adapter = new LinkInstanceAdapter(resourceCommentDao);
+      linkTypeAdapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
    }
 
    public LinkInstanceAdapter getAdapter() {
@@ -198,7 +201,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       final LinkInstance originalLinkInstance = new LinkInstance(stored);
       final String linkTypeId = Objects.requireNonNullElse(linkInstance.getLinkTypeId(), stored.getLinkTypeId());
 
-      updateLinkTypeMetadata(linkType, Collections.emptySet(), Collections.emptySet());
+      linkTypeAdapter.updateLinkTypeMetadata(linkType, Collections.emptySet(), Collections.emptySet());
 
       final DataDocument data = linkDataDao.getData(linkType.getId(), linkInstanceId);
       stored.setDocumentIds(linkInstance.getDocumentIds());
@@ -226,7 +229,7 @@ public class LinkInstanceFacade extends AbstractFacade {
 
       final Set<String> attributesIdsToDec = new HashSet<>(oldData.keySet());
       attributesIdsToDec.removeAll(data.keySet());
-      updateLinkTypeMetadata(linkType, attributesIdsToAdd, attributesIdsToDec);
+      linkTypeAdapter.updateLinkTypeMetadata(linkType, attributesIdsToAdd, attributesIdsToDec);
 
       final DataDocument updatedData = linkDataDao.updateData(linkType.getId(), linkInstanceId, data);
 
@@ -257,11 +260,6 @@ public class LinkInstanceFacade extends AbstractFacade {
       }
    }
 
-   private void updateLinkTypeMetadata(LinkType linkType, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
-      linkType.setAttributes(new ArrayList<>(ResourceUtils.incOrDecAttributes(linkType.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
-      linkTypeDao.updateLinkType(linkType.getId(), linkType, new LinkType(linkType));
-   }
-
    public LinkInstance patchLinkInstanceData(final String linkInstanceId, final DataDocument updateData) {
       var linkTypeAndInstance = checkEditLink(linkInstanceId);
       final LinkType linkType = linkTypeAndInstance.getFirst();
@@ -275,7 +273,7 @@ public class LinkInstanceFacade extends AbstractFacade {
       final Set<String> attributesIdsToAdd = new HashSet<>(data.keySet());
       attributesIdsToAdd.removeAll(oldData.keySet());
 
-      updateLinkTypeMetadata(linkType, attributesIdsToAdd, Collections.emptySet());
+      linkTypeAdapter.updateLinkTypeMetadata(linkType, attributesIdsToAdd, Collections.emptySet());
 
       final DataDocument updatedData = linkDataDao.patchData(linkType.getId(), linkInstanceId, data);
 

@@ -36,15 +36,20 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.AuditAdapter;
+import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
+import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
+import io.lumeer.core.adapter.PusherAdapter;
 import io.lumeer.core.adapter.ResourceAdapter;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.LinkInstanceUtils;
+import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
@@ -65,6 +70,8 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+
+import org.marvec.pusher.data.Event;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -123,15 +130,26 @@ public class AuditFacade extends AbstractFacade {
    @Inject
    private DefaultConfigurationProducer configurationProducer;
 
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
+   @Inject
+   private PusherHelperFacade pusherHelperFacade;
+
    private AuditAdapter auditAdapter;
    private DocumentAdapter documentAdapter;
    private ConstraintManager constraintManager;
    private LinkInstanceAdapter linkInstanceAdapter;
    private ResourceAdapter resourceAdapter;
+   private CollectionAdapter collectionAdapter;
+   private LinkTypeAdapter linkTypeAdapter;
+   private PusherAdapter pusherAdapter;
+   private PusherClient pusherClient = null;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
+      pusherClient = pusherHelperFacade.getPusherClient();
       auditAdapter = new AuditAdapter(auditDao);
 
       documentAdapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
@@ -139,6 +157,11 @@ public class AuditFacade extends AbstractFacade {
 
       PermissionAdapter permissionAdapter = new PermissionAdapter(userDao, groupDao, viewDao, linkTypeDao, collectionDao);
       resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
+
+      collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
+      linkTypeAdapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
+
+      pusherAdapter = new PusherAdapter(requestDataKeeper.getAppId(), getFacadeAdapter(), resourceAdapter, permissionAdapter, viewDao, linkTypeDao, collectionDao);
    }
 
    public void documentCreated(@Observes final CreateDocument createDocument) {
@@ -283,24 +306,58 @@ public class AuditFacade extends AbstractFacade {
       permissionsChecker.checkEditDocument(collection, document);
 
       if (auditRecord.getOldState() != null) {
-         var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());
-         keysToBeRemoved.removeAll(auditRecord.getOldState().keySet());
+         var keysToAdd = new HashSet<>(auditRecord.getOldState().keySet());
+         keysToAdd.removeAll(auditRecord.getNewState().keySet());
+
+         var keysToRemove = new HashSet<>(auditRecord.getNewState().keySet());
+         keysToRemove.removeAll(auditRecord.getOldState().keySet());
 
          document.getData().putAll(auditRecord.getOldState());
-         keysToBeRemoved.forEach(key -> document.getData().remove(key));
+         keysToRemove.forEach(key -> document.getData().remove(key));
 
-         dataDao.updateData(auditRecord.getParentId(), auditRecord.getResourceId(), document.getData());
-         auditDao.deleteAuditRecord(auditRecord.getId());
+         DataDocument storedData = dataDao.updateData(auditRecord.getParentId(), auditRecord.getResourceId(), document.getData());
+         checkAuditOnObjectRevert(auditRecord);
+
+         document.setUpdatedBy(getCurrentUserId());
+         document.setUpdateDate(ZonedDateTime.now());
+
+         Document storedDocument = documentDao.updateDocument(document.getId(), document);
+         storedDocument.setData(storedData);
+
+         collectionAdapter.updateCollectionMetadata(collection, keysToAdd, keysToRemove);
+
+         sendDocumentPushNotifications(collection, storedDocument, PusherFacade.UPDATE_EVENT_SUFFIX);
       }
-
-      document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
-
-      documentAdapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
-
-      // TODO push
    }
 
-   private Document revertDocumentDelete(final AuditRecord requestedRecord) {
+   private void checkAuditOnObjectRevert(final AuditRecord auditRecord) {
+      auditDao.deleteAuditRecord(auditRecord.getId());
+
+      var currentUser = authenticatedUser.getCurrentUser();
+      if (!currentUser.getId().equals(auditRecord.getUser())) {
+         auditAdapter.registerRevert(auditRecord.getParentId(), auditRecord.getResourceType(), auditRecord.getResourceId(), currentUser, null, null, auditRecord.getNewState(), auditRecord.getOldState());
+      }
+   }
+
+   private void sendDocumentPushNotifications(final Collection collection, final Document document, final String event) {
+      document.setData(constraintManager.decodeDataTypes(collection, document.getData()));
+
+      List<Event> events = resourceAdapter.getDocumentReaders(getOrganization(), getProject(), collection, document)
+                                          .stream().map(userId -> {
+               var userDocument = documentAdapter.mapDocumentData(document, getCurrentUserId(), workspaceKeeper.getProjectId());
+               return pusherAdapter.createEvent(getOrganization(), getProject(), userDocument, event, userId);
+            }).collect(toList());
+
+      sendPushNotification(events);
+   }
+
+   private void sendPushNotification(final List<Event> events) {
+      if (pusherClient != null && events.size() > 0) {
+         pusherClient.trigger(events);
+      }
+   }
+
+   private void revertDocumentDelete(final AuditRecord requestedRecord) {
       final AuditRecord auditRecord = auditDao.findLatestAuditRecord(requestedRecord.getParentId(), ResourceType.DOCUMENT, requestedRecord.getResourceId(), AuditType.Deleted);
       if (auditRecord == null || !auditRecord.getId().equals(requestedRecord.getId())) {
          throw new UnsupportedOperationException("Cannot revert audit record that is not the last.");
@@ -311,15 +368,14 @@ public class AuditFacade extends AbstractFacade {
 
       final Document document = new Document(collection.getId(), ZonedDateTime.now(), getCurrentUserId());
       document.setData(auditRecord.getOldState());
+      permissionsChecker.checkDocumentLimits(document);
 
       final Document storedDocument = documentDao.createDocument(document);
       DataDocument storedData = dataDao.createData(collection.getId(), storedDocument.getId(), document.getData());
+      storedDocument.setData(storedData);
 
-      // TODO update collection metadata
-
-      storedDocument.setData(constraintManager.decodeDataTypes(collection, storedData));
-
-      return documentAdapter.mapDocumentData(storedDocument, getCurrentUserId(), workspaceKeeper.getProjectId());
+      collectionAdapter.updateCollectionMetadata(collection, document.getData().keySet(), Collections.emptySet());
+      sendDocumentPushNotifications(collection, storedDocument, PusherFacade.CREATE_EVENT_SUFFIX);
    }
 
    public void revertLinkChange(final AuditRecord requestedRecord) {
@@ -333,21 +389,40 @@ public class AuditFacade extends AbstractFacade {
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
       if (auditRecord.getOldState() != null) {
-         var keysToBeRemoved = new HashSet<>(auditRecord.getNewState().keySet());
-         keysToBeRemoved.removeAll(auditRecord.getOldState().keySet());
+         var keysToAdd = new HashSet<>(auditRecord.getOldState().keySet());
+         keysToAdd.removeAll(auditRecord.getNewState().keySet());
+
+         var keysToRemove = new HashSet<>(auditRecord.getNewState().keySet());
+         keysToRemove.removeAll(auditRecord.getOldState().keySet());
 
          linkInstance.getData().putAll(auditRecord.getOldState());
-         keysToBeRemoved.forEach(key -> linkInstance.getData().remove(key));
+         keysToRemove.forEach(key -> linkInstance.getData().remove(key));
 
-         linkDataDao.updateData(auditRecord.getParentId(), auditRecord.getResourceId(), linkInstance.getData());
-         auditDao.deleteAuditRecord(auditRecord.getId());
+         DataDocument storedData = linkDataDao.updateData(auditRecord.getParentId(), auditRecord.getResourceId(), linkInstance.getData());
+         checkAuditOnObjectRevert(auditRecord);
+
+         linkInstance.setUpdateDate(ZonedDateTime.now());
+         linkInstance.setUpdatedBy(getCurrentUserId());
+
+         LinkInstance storedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
+         storedLinkInstance.setData(storedData);
+
+         linkTypeAdapter.updateLinkTypeMetadata(linkType, keysToAdd, keysToRemove);
+
+         sendLinkNotification(linkType, linkInstance, PusherFacade.UPDATE_EVENT_SUFFIX);
       }
+   }
 
+   private void sendLinkNotification(final LinkType linkType, final LinkInstance linkInstance, final String event) {
       linkInstance.setData(constraintManager.decodeDataTypes(linkType, linkInstance.getData()));
 
-      linkInstanceAdapter.mapLinkInstanceData(linkInstance);
+      List<Event> events = resourceAdapter.getLinkTypeReaders(getOrganization(), getProject(), linkType)
+                                          .stream().map(userId -> {
+               var userLinkInstance = linkInstanceAdapter.mapLinkInstanceData(linkInstance);
+               return pusherAdapter.createEvent(getOrganization(), getProject(), userLinkInstance, event, userId);
+            }).collect(toList());
 
-      // TODO push
+      sendPushNotification(events);
    }
 
    private AuditRecord registerDocumentCreate(final Document newDocument) {

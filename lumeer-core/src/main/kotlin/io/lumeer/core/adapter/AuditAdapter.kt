@@ -64,6 +64,14 @@ class AuditAdapter(private val auditDao: AuditDao) {
       return auditDao.createAuditRecord(auditRecord)
    }
 
+   fun registerRevert(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument, newState: DataDocument): AuditRecord {
+      val partialNewState = DataDocument(newState.filterKeys { it != DataDocument.ID })
+      val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, partialNewState)
+      auditRecord.type = AuditType.Reverted
+      return auditDao.createAuditRecord(auditRecord)
+   }
+
    fun registerDataChange(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument, oldStateDecoded: DataDocument, newState: DataDocument, newStateDecoded: DataDocument) =
       getChanges(oldStateDecoded, newStateDecoded).takeIf { it.isNotEmpty() }?.let { changes ->
          val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId, AuditType.Updated)

@@ -24,7 +24,8 @@ public enum AuditType {
 
    Created,
    Updated,
-   Deleted;
+   Deleted,
+   Reverted;
 
    public static AuditType fromString(String type) {
       if (type == null) {
