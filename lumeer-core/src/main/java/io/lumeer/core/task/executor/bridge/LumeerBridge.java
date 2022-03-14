@@ -416,13 +416,16 @@ public class LumeerBridge {
             final SmtpConfiguration smtpConfiguration = getSmtpConfiguration(smtpConfig);
 
             if (smtpConfiguration != null) {
-               if (getAttachmentsSize(d.getDocument(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
+               if (d != null && getAttachmentsSize(d.getDocument(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
                   cause = new IllegalStateException("Attachments size is larger than 5MB.");
                   throw cause;
                }
 
                final SendSmtpEmailRequest sendSmtpEmailRequest = new SendSmtpEmailRequest(subject, to, body, fromName, smtpConfiguration);
-               sendSmtpEmailRequest.setAttachment(d.getDocument(), attrId);
+
+               if (d != null) {
+                  sendSmtpEmailRequest.setAttachment(d.getDocument(), attrId);
+               }
 
                operations.add(new SendSmtpEmailOperation(sendSmtpEmailRequest));
             }
