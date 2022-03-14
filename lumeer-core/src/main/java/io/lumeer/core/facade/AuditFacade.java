@@ -384,6 +384,8 @@ public class AuditFacade extends AbstractFacade {
 
       collectionAdapter.updateCollectionMetadata(collection, document.getData().keySet(), Collections.emptySet());
       sendDocumentPushNotifications(collection, storedDocument, PusherFacade.CREATE_EVENT_SUFFIX);
+
+      checkAuditOnObjectRevert(auditRecord);
    }
 
    public void revertLinkChange(final AuditRecord requestedRecord) {
