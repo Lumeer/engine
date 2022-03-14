@@ -78,6 +78,7 @@ import org.marvec.pusher.data.Event;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -520,6 +521,7 @@ public class AuditFacade extends AbstractFacade {
       var defaultAttributeId = defaultAttribute != null ? defaultAttribute.getId() : "";
       var defaultConstraint = Utils.computeIfNotNull(defaultAttribute, Attribute::getConstraint);
 
+      Map<String, Object> documentValues = new HashMap<>();
       Map<String, Object> defaultValues = Collections.emptyMap();
       if (!defaultAttributeId.isEmpty()) {
          defaultValues = dataDao.getData(collection.getId(), documentsIds, defaultAttributeId)
@@ -528,7 +530,7 @@ public class AuditFacade extends AbstractFacade {
 
       for (AuditRecord auditRecord : auditRecords) {
          decode(collection, auditRecord);
-         decodeTitle(auditRecord, defaultAttributeId, defaultConstraint, defaultValues);
+         decodeTitle(auditRecord, defaultAttributeId, defaultConstraint, defaultValues, documentValues);
       }
 
       return auditRecords;
@@ -552,6 +554,7 @@ public class AuditFacade extends AbstractFacade {
       var defaultAttributeId = defaultAttribute != null ? defaultAttribute.getId() : "";
       var defaultConstraint = Utils.computeIfNotNull(defaultAttribute, Attribute::getConstraint);
 
+      Map<String, Object> linkValues = new HashMap<>();
       Map<String, Object> defaultValues = Collections.emptyMap();
       if (!defaultAttributeId.isEmpty()) {
          defaultValues = linkDataDao.getData(linkType.getId(), linkIds, defaultAttributeId)
@@ -560,22 +563,27 @@ public class AuditFacade extends AbstractFacade {
 
       for (AuditRecord auditRecord : auditRecords) {
          decode(linkType, auditRecord);
-         decodeTitle(auditRecord, defaultAttributeId, defaultConstraint, defaultValues);
+         decodeTitle(auditRecord, defaultAttributeId, defaultConstraint, defaultValues, linkValues);
       }
 
       return auditRecords;
    }
 
-   private void decodeTitle(final AuditRecord auditRecord, final String defaultAttributeId, final Constraint defaultConstraint, final Map<String, Object> defaultValues) {
+   private void decodeTitle(final AuditRecord auditRecord, final String defaultAttributeId, final Constraint defaultConstraint, final Map<String, Object> defaultValues, final Map<String, Object> cachedDecodedValues) {
       Object title;
-      if (AuditType.Deleted.equals(auditRecord.getType())) {
-         title = Utils.computeIfNotNull(auditRecord.getOldState(), state -> state.get(defaultAttributeId));
+      if (cachedDecodedValues.containsKey(auditRecord.getResourceId())) {
+         title = cachedDecodedValues.get(auditRecord.getResourceId());
       } else {
-         title = defaultValues.get(auditRecord.getResourceId());
+         if (AuditType.Deleted.equals(auditRecord.getType())) {
+            title = Utils.computeIfNotNull(auditRecord.getOldState(), state -> state.get(defaultAttributeId));
+         } else {
+            title = defaultValues.get(auditRecord.getResourceId());
+         }
+         title = constraintManager.decode(title, defaultConstraint);
+         cachedDecodedValues.put(auditRecord.getResourceId(), title);
       }
 
-      var titleDecoded = constraintManager.decode(title, defaultConstraint);
-      auditRecord.setTitle(titleDecoded);
+      auditRecord.setTitle(title);
    }
 
    private void decode(final LinkType linkType, final AuditRecord record) {
