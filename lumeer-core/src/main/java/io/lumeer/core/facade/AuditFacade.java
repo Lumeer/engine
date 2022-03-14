@@ -375,6 +375,7 @@ public class AuditFacade extends AbstractFacade {
       permissionsChecker.checkCreateDocuments(collection);
 
       final Document document = new Document(collection.getId(), ZonedDateTime.now(), getCurrentUserId());
+      document.setId(auditRecord.getResourceId());
       document.setData(auditRecord.getOldState());
       permissionsChecker.checkDocumentLimits(document);
 
