@@ -40,11 +40,13 @@ public class AuditRecord implements WithId {
    public static final String RESOURCE_ID = "resourceId";
    public static final String CHANGE_DATE = "changeDate";
    public static final String USER = "user";
+   public static final String VIEW = "view";
    public static final String USER_NAME = "userName";
    public static final String USER_EMAIL = "userEmail";
    public static final String OLD_STATE = "oldState";
    public static final String NEW_STATE = "newState";
    public static final String AUTOMATION = "automation";
+   public static final String TYPE = "type";
 
    private String id;
 
@@ -57,12 +59,16 @@ public class AuditRecord implements WithId {
    private ZonedDateTime changeDate;
 
    private String user;
+   private String viewId;
    private String userName;
    private String userEmail;
    private String automation;
+   private Object title;
 
    private DataDocument oldState;
    private DataDocument newState;
+
+   private AuditType type;
 
    public AuditRecord() {
    }
@@ -70,8 +76,8 @@ public class AuditRecord implements WithId {
    @JsonCreator
    public AuditRecord(@JsonProperty(PARENT_ID) final String parentId, @JsonProperty(RESOURCE_TYPE) final ResourceType resourceType,
          @JsonProperty(RESOURCE_ID) final String resourceId, @JsonProperty(CHANGE_DATE) final ZonedDateTime changeDate,
-         @JsonProperty(USER) final String user, @JsonProperty(USER) final String userName, @JsonProperty(USER) final String userEmail,
-         @JsonProperty(AUTOMATION) final String automation, @JsonProperty(OLD_STATE) final DataDocument oldState,
+         @JsonProperty(USER) final String user, @JsonProperty(USER_NAME) final String userName, @JsonProperty(USER_EMAIL) final String userEmail,
+         @JsonProperty(VIEW) final String viewId, @JsonProperty(AUTOMATION) final String automation, @JsonProperty(OLD_STATE) final DataDocument oldState,
          @JsonProperty(NEW_STATE) final DataDocument newState) {
       this.parentId = parentId;
       this.resourceType = resourceType;
@@ -80,6 +86,7 @@ public class AuditRecord implements WithId {
       this.user = user;
       this.userName = userName;
       this.userEmail = userEmail;
+      this.viewId = viewId;
       this.automation = automation;
       this.oldState = oldState;
       this.newState = newState;
@@ -174,6 +181,30 @@ public class AuditRecord implements WithId {
       this.userEmail = userEmail;
    }
 
+   public AuditType getType() {
+      return type;
+   }
+
+   public void setType(final AuditType type) {
+      this.type = type;
+   }
+
+   public String getViewId() {
+      return viewId;
+   }
+
+   public void setViewId(final String viewId) {
+      this.viewId = viewId;
+   }
+
+   public Object getTitle() {
+      return title;
+   }
+
+   public void setTitle(final Object title) {
+      this.title = title;
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {
@@ -202,9 +233,11 @@ public class AuditRecord implements WithId {
             ", user='" + user + '\'' +
             ", userName='" + userName + '\'' +
             ", userEmail='" + userEmail + '\'' +
+            ", view='" + viewId + '\'' +
             ", automation='" + automation + '\'' +
             ", oldState=" + oldState +
             ", newState=" + newState +
+            ", type=" + type +
             '}';
    }
 }

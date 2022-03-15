@@ -206,7 +206,7 @@ public class PusherFacade extends AbstractFacade {
       permissionAdapter = permissionsChecker.getPermissionAdapter();
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
       resourceAdapter = new ResourceAdapter(permissionAdapter, collectionDao, linkTypeDao, viewDao, userDao);
-      linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
+      linkTypeAdapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
       viewAdapter = new ViewAdapter(resourceAdapter, favoriteItemDao);
       resourceVariableAdapter = new ResourceVariableAdapter();
 

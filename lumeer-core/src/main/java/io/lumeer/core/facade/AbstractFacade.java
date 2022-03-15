@@ -58,6 +58,10 @@ abstract class AbstractFacade {
       return authenticatedUser.getCurrentUserId();
    }
 
+   protected String getCurrentViewId() {
+      return permissionsChecker.getViewId();
+   }
+
    protected <T extends Resource> T mapResource(final T resource, final String userId) {
       if (authenticatedUser.getCurrentUserId().equals(userId)) {
          return getFacadeAdapter().mapResource(getOrganization(), getProject(), resource, authenticatedUser.getCurrentUser());

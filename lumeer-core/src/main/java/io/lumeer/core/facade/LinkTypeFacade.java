@@ -91,7 +91,7 @@ public class LinkTypeFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      adapter = new LinkTypeAdapter(linkInstanceDao);
+      adapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
       resourceAdapter = new ResourceAdapter(permissionsChecker.getPermissionAdapter(), collectionDao, linkTypeDao, viewDao, userDao);
    }
 

@@ -28,7 +28,9 @@ import io.lumeer.api.model.rule.AutoLinkRule;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 
 public class CollectionUtil {
@@ -68,6 +70,19 @@ public class CollectionUtil {
 
       return (autoLinkRule.getCollection1().equals(collectionId) && autoLinkRule.getAttribute1().equals(attributeId))
             || (autoLinkRule.getCollection2().equals(collectionId) && autoLinkRule.getAttribute2().equals(attributeId));
+   }
+
+   public static Attribute getDefaultAttribute(final Collection collection) {
+      if(collection == null || collection.getAttributes() == null) {
+         return null;
+      }
+
+      var defaultAttribute = getAttribute(collection, collection.getDefaultAttributeId());
+      if(defaultAttribute != null) {
+         return defaultAttribute;
+      }
+
+      return collection.getAttributes().stream().min(Comparator.comparing(Attribute::getId)).orElse(null);
    }
 
    public static Attribute getAttribute(final Collection collection, final String attributeId) {

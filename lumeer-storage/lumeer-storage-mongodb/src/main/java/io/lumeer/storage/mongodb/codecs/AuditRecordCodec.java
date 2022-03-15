@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.AuditRecord;
+import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.mongodb.MongoUtils;
@@ -38,6 +39,7 @@ import org.bson.types.ObjectId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.Objects;
 
 public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
 
@@ -84,6 +86,7 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
       record.setAutomation(bson.getString(AuditRecord.AUTOMATION));
       record.setUserName(bson.getString(AuditRecord.USER_NAME));
       record.setUserEmail(bson.getString(AuditRecord.USER_EMAIL));
+      record.setViewId(bson.getString(AuditRecord.VIEW));
 
       final Date changeDate = bson.getDate(AuditRecord.CHANGE_DATE);
       record.setChangeDate(changeDate != null ? ZonedDateTime.ofInstant(changeDate.toInstant(), ZoneOffset.UTC) : null);
@@ -93,6 +96,9 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
 
       final Document newState = bson.get(AuditRecord.NEW_STATE, Document.class);
       record.setNewState(newState != null ? MongoUtils.convertDocument(newState) : new DataDocument());
+
+      final AuditType type = Objects.requireNonNullElse(AuditType.fromString(bson.getString(AuditRecord.TYPE)), AuditType.Updated);
+      record.setType(type);
 
       return record;
    }
@@ -106,7 +112,9 @@ public class AuditRecordCodec implements CollectibleCodec<AuditRecord> {
           .append(AuditRecord.USER, record.getUser())
           .append(AuditRecord.USER_NAME, record.getUserName())
           .append(AuditRecord.USER_EMAIL, record.getUserEmail())
+          .append(AuditRecord.VIEW, record.getViewId())
           .append(AuditRecord.AUTOMATION, record.getAutomation())
+          .append(AuditRecord.TYPE, record.getType() != null ? record.getType().toString() : AuditType.Updated.toString())
           .append(AuditRecord.OLD_STATE, new Document(record.getOldState() != null ? record.getOldState() : new DataDocument()))
           .append(AuditRecord.NEW_STATE, new Document(record.getNewState() != null ? record.getNewState() : new DataDocument()));
 

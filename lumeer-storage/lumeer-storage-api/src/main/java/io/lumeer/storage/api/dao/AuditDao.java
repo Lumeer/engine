@@ -19,21 +19,33 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.AuditRecord;
+import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 
+import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
-public interface AuditDao extends ProjectScopedDao {
+public interface AuditDao extends ProjectScopedDao, Serializable {
 
    AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId);
-   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId);
+   AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId, final AuditType type);
+
+   List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan);
+   List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit);
+
+   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final ZonedDateTime noOlderThan);
+   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final int countLimit);
+
    List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime noOlderThan);
    List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final int countLimit);
 
    AuditRecord createAuditRecord(final AuditRecord record);
    AuditRecord updateAuditRecord(final AuditRecord record);
+
+   AuditRecord getAuditRecord(final String id);
 
    void deleteAuditRecord(final String id);
    void deleteAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId);

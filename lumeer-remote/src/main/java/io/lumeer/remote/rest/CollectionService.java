@@ -19,11 +19,13 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Rule;
+import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.CollectionFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
@@ -59,6 +61,9 @@ public class CollectionService extends AbstractService {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private AuditFacade auditFacade;
 
    @PostConstruct
    public void init() {
@@ -205,6 +210,12 @@ public class CollectionService extends AbstractService {
       collectionFacade.removeFavoriteCollection(collectionId);
 
       return Response.ok().build();
+   }
+
+   @GET
+   @Path("{collectionId:[0-9a-fA-F]{24}}/audit")
+   public List<AuditRecord> getAuditLogs(@PathParam("collectionId") String collectionId) {
+      return auditFacade.getAuditRecordsForCollection(collectionId);
    }
 
 }

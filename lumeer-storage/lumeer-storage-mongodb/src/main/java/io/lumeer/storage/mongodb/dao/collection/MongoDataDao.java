@@ -23,10 +23,8 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Pagination;
-import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.DataDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;
 import io.lumeer.storage.api.query.SearchQueryStem;
@@ -40,6 +38,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -54,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -104,6 +102,7 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    @Override
    public DataDocument updateData(final String collectionId, final String documentId, final DataDocument data) {
       Document document = new Document(data);
+      document.remove(ID);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document updatedDocument = dataCollection(collectionId).findOneAndReplace(idFilter(documentId), document, options);
@@ -168,6 +167,16 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
          return Collections.emptyList();
       }
       return MongoUtils.convertIterableToList(dataCollection(collectionId).find(idsFilter));
+   }
+
+   @Override
+   public List<DataDocument> getData(final String collectionId, final Set<String> documentIds, final String parameter) {
+      Bson idsFilter = MongoFilters.idsFilter(documentIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+
+      return MongoUtils.convertIterableToList(dataCollection(collectionId).find(idsFilter).projection(Projections.include(parameter)));
    }
 
    @Override

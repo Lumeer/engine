@@ -83,7 +83,7 @@ public class FunctionFacade extends AbstractFacade {
 
    @PostConstruct
    public void init() {
-      linkTypeAdapter = new LinkTypeAdapter(linkInstanceDao);
+      linkTypeAdapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
    }
 
    public static FunctionFacade getInstance(final FunctionDao functionDao, final CollectionDao collectionDao, final DocumentDao documentDao, final LinkInstanceDao linkInstanceDao, final LinkTypeDao linkTypeDao, final ContextualTaskFactory taskFactory) {

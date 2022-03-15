@@ -18,6 +18,7 @@
  */
 package io.lumeer.remote.rest;
 
+import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -26,6 +27,7 @@ import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
@@ -74,6 +76,9 @@ public class ProjectService extends AbstractService {
 
    @Inject
    private TemplateFacade templateFacade;
+
+   @Inject
+   private AuditFacade auditFacade;
 
    @PostConstruct
    public void init() {
@@ -261,5 +266,13 @@ public class ProjectService extends AbstractService {
       }
 
       return organizationFacade.getOrganizationsCapableForProject(desc);
+   }
+
+   @GET
+   @Path("{projectId:[0-9a-fA-F]{24}}/audit")
+   public List<AuditRecord> getAuditLogs(@PathParam("projectId") String projectId) {
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+
+      return auditFacade.getAuditRecordsForProject();
    }
 }

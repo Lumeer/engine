@@ -93,7 +93,7 @@ public class SingleStage extends Stage {
          automationName = null;
       }
 
-      linkTypeAdapter = new LinkTypeAdapter(task.getDaoContextSnapshot().getLinkInstanceDao());
+      linkTypeAdapter = new LinkTypeAdapter(task.getDaoContextSnapshot().getLinkTypeDao(), task.getDaoContextSnapshot().getLinkInstanceDao());
    }
 
    @Override
@@ -106,11 +106,9 @@ public class SingleStage extends Stage {
          return List.of();
       }
 
-      final List<Document> documents = operations.stream().map(DocumentCreationOperation::getEntity).map(document -> {
+      final List<Document> documents = operations.stream().map(DocumentCreationOperation::getEntity).peek(document -> {
          document.setCreatedBy(task.getInitiator().getId());
          document.setCreationDate(ZonedDateTime.now());
-
-         return document;
       }).collect(toList());
 
       return task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
@@ -139,6 +137,13 @@ public class SingleStage extends Stage {
       final Map<String, List<DocumentOperation>> changesByDocumentId = Utils.categorize(operations.stream(), change -> change.getEntity().getId());
 
       final Set<String> unprocessedCreatedDocuments = createdDocuments.stream().map(Document::getId).collect(toSet());
+
+      createdDocuments.forEach(document -> {
+         final Collection collection = collectionsMap.get(document.getCollectionId());
+         final DataDocument newDataDecoded = constraintManager.encodeDataTypes(collection, document.getData());
+
+         auditAdapter.registerCreate(collection.getId(), ResourceType.DOCUMENT, document.getId(), task.getInitiator(), automationName, null, newDataDecoded);
+      });
 
       changesByDocumentId.forEach((id, changeList) -> {
          unprocessedCreatedDocuments.remove(id);
@@ -192,8 +197,8 @@ public class SingleStage extends Stage {
          var oldDataDecoded = constraintManager.decodeDataTypes(collection, beforePatch);
          var patchedDataDecoded = constraintManager.decodeDataTypes(collection, patchedData);
 
-         auditAdapter.registerUpdate(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
-               task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
+         auditAdapter.registerDataChange(updatedDocument.getCollectionId(), ResourceType.DOCUMENT, updatedDocument.getId(),
+               task.getInitiator(), automationName, null, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new documents
          boolean created = false;
@@ -280,7 +285,11 @@ public class SingleStage extends Stage {
             final Set<String> removedFromLinkTypes = removedLinks.stream().map(LinkInstance::getLinkTypeId).collect(toSet());
             changesTracker.addRemovedLinkInstances(removedLinks);
             task.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstancesByDocumentsIds(Set.of(document.getId()));
-            removedLinks.forEach(link -> auditAdapter.removeAllAuditRecords(link.getLinkTypeId(), ResourceType.LINK, link.getId()));
+            removedLinks.forEach(link -> {
+               var linkType = allLinkTypes.get(link.getLinkTypeId());
+               var decodedDeletedData = constraintManager.decodeDataTypes(linkType, link.getData());
+               auditAdapter.registerDelete(link.getLinkTypeId(), ResourceType.LINK, link.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
+            });
 
             removedFromLinkTypes.forEach(linkTypeId -> {
                // decrease link instances count in link types map
@@ -305,7 +314,9 @@ public class SingleStage extends Stage {
 
             task.getDaoContextSnapshot().getDocumentDao().deleteDocument(document.getId(), document.getData());
             task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
-            auditAdapter.removeAllAuditRecords(document.getCollectionId(), ResourceType.DOCUMENT, document.getId());
+
+            var decodedDeletedData = constraintManager.decodeDataTypes(collection, document.getData());
+            auditAdapter.registerDelete(document.getCollectionId(), ResourceType.DOCUMENT, document.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
          });
 
          return documents;
@@ -391,8 +402,8 @@ public class SingleStage extends Stage {
          var oldDataDecoded = constraintManager.decodeDataTypes(linkType, beforePatch);
          var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
 
-         auditAdapter.registerUpdate(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
-               task.getInitiator(), automationName, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
+         auditAdapter.registerDataChange(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
+               task.getInitiator(), automationName, null, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
          // add patched data to new links
          boolean created = false;

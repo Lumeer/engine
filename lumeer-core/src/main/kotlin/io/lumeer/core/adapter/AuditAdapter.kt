@@ -18,10 +18,7 @@
  */
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.AuditRecord
-import io.lumeer.api.model.Payment
-import io.lumeer.api.model.ResourceType
-import io.lumeer.api.model.User
+import io.lumeer.api.model.*
 import io.lumeer.engine.api.data.DataDocument
 import io.lumeer.storage.api.dao.AuditDao
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot
@@ -35,51 +32,92 @@ private const val UPDATE_MERGE_WINDOW_MINUTES: Long = 5 // number of minutes to 
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
+   fun getAuditRecords(collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, serviceLevel: Payment.ServiceLevel) =
+      if (serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, FREE_MAX_RECORDS)
+      else
+         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+
+   fun getAuditRecords(parentId: String, resourceType: ResourceType, serviceLevel: Payment.ServiceLevel) =
+      if (serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(parentId, resourceType, FREE_MAX_RECORDS)
+      else
+         auditDao.findAuditRecords(parentId, resourceType, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+
    fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, serviceLevel: Payment.ServiceLevel) =
-         if (serviceLevel == Payment.ServiceLevel.FREE)
-            auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_MAX_RECORDS)
-         else
-            auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+      if (serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_MAX_RECORDS)
+      else
+         auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
 
-   fun registerUpdate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, oldState: DataDocument, oldStateDecoded: DataDocument, newState: DataDocument, newStateDecoded: DataDocument) =
-         getChanges(oldStateDecoded, newStateDecoded).takeIf { it.isNotEmpty() }?.let { changes ->
-            val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId)
+   fun registerEnter(parentId: String, resourceType: ResourceType, resourceId: String, user: User?): AuditRecord {
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, null, null, DataDocument(), DataDocument())
+      auditRecord.type = AuditType.Entered
+      return auditDao.createAuditRecord(auditRecord)
+   }
 
-            if (lastAuditRecord != null && changesOverlap(lastAuditRecord, user?.id, automation, changes)) {
-               changes.keys.forEach {
-                  if (!lastAuditRecord.oldState.containsKey(it) && !lastAuditRecord.newState.containsKey(it))
-                     lastAuditRecord.oldState[it] = oldState[it]
-               }
-               lastAuditRecord.newState.putAll(changes)
-               changes.keys.forEach {
-                  if (lastAuditRecord.oldState[it] == lastAuditRecord.newState[it]) {
-                     lastAuditRecord.oldState.remove(it)
-                     lastAuditRecord.newState.remove(it)
-                  }
-               }
-               lastAuditRecord.changeDate = ZonedDateTime.now()
+   fun registerDelete(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument): AuditRecord {
+      val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, DataDocument())
+      auditRecord.type = AuditType.Deleted
+      return auditDao.createAuditRecord(auditRecord)
+   }
 
-               if (lastAuditRecord.newState.isEmpty()) {
-                  auditDao.deleteAuditRecord(lastAuditRecord.id)
-                  lastAuditRecord
-               } else
-                  auditDao.updateAuditRecord(lastAuditRecord)
-            } else {
-               // we will keep only those values that changed
-               val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
-               val oldStateKeys = HashSet(partialOldState.keys)
-               oldStateKeys.forEach {
-                  if (!changes.containsKey(it)) partialOldState.remove(it)
-               }
+   fun registerCreate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, newState: DataDocument): AuditRecord {
+      val partialNewState = DataDocument(newState.filterKeys { it != DataDocument.ID })
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, DataDocument(), partialNewState)
+      auditRecord.type = AuditType.Created
+      return auditDao.createAuditRecord(auditRecord)
+   }
 
-               // we need to clean the history only when adding new entries
-               // we keep business level history in case the user upgraded
-               auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_MAX_WEEKS))
+   fun registerRevert(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument, newState: DataDocument): AuditRecord {
+      val partialNewState = DataDocument(newState.filterKeys { it != DataDocument.ID })
+      val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
+      val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, partialNewState)
+      auditRecord.type = AuditType.Reverted
+      return auditDao.createAuditRecord(auditRecord)
+   }
 
-               val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, automation, partialOldState, changes)
-               auditDao.createAuditRecord(auditRecord)
+   fun registerDataChange(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument, oldStateDecoded: DataDocument, newState: DataDocument, newStateDecoded: DataDocument) =
+      getChanges(oldStateDecoded, newStateDecoded).takeIf { it.isNotEmpty() }?.let { changes ->
+         val lastAuditRecord = auditDao.findLatestAuditRecord(parentId, resourceType, resourceId, AuditType.Updated)
+
+         if (lastAuditRecord != null && changesOverlap(lastAuditRecord, user?.id, automation, changes)) {
+            changes.keys.forEach {
+               if (!lastAuditRecord.oldState.containsKey(it) && !lastAuditRecord.newState.containsKey(it))
+                  lastAuditRecord.oldState[it] = oldState[it]
             }
+            lastAuditRecord.newState.putAll(changes)
+            changes.keys.forEach {
+               if (lastAuditRecord.oldState[it] == lastAuditRecord.newState[it]) {
+                  lastAuditRecord.oldState.remove(it)
+                  lastAuditRecord.newState.remove(it)
+               }
+            }
+            lastAuditRecord.changeDate = ZonedDateTime.now()
+
+            if (lastAuditRecord.newState.isEmpty()) {
+               auditDao.deleteAuditRecord(lastAuditRecord.id)
+               lastAuditRecord
+            } else
+               auditDao.updateAuditRecord(lastAuditRecord)
+         } else {
+            // we will keep only those values that changed
+            val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
+            val oldStateKeys = HashSet(partialOldState.keys)
+            oldStateKeys.forEach {
+               if (!changes.containsKey(it)) partialOldState.remove(it)
+            }
+
+            // we need to clean the history only when adding new entries
+            // we keep business level history in case the user upgraded
+            auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_MAX_WEEKS))
+
+            val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, changes)
+            auditRecord.type = AuditType.Updated
+            auditDao.createAuditRecord(auditRecord)
          }
+      }
 
    private fun changesOverlap(lastAuditRecord: AuditRecord, userId: String?, automation: String?, changes: DataDocument): Boolean = when {
       (StringUtils.isNotEmpty(lastAuditRecord.user) || StringUtils.isNotEmpty(userId)) && lastAuditRecord.user != userId -> false
@@ -88,22 +126,18 @@ class AuditAdapter(private val auditDao: AuditDao) {
       else -> true
    }
 
-   fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
+   private fun getChanges(oldState: DataDocument, newState: DataDocument): DataDocument {
       val result = DataDocument(newState.filterKeys { it != DataDocument.ID })
       oldState.keys.filter { it != DataDocument.ID }.forEach {
          // remove everything that did not change, keeping newly added values
          if (result.containsKey(it) && result[it] == oldState[it])
             result.remove(it)
          else
-            // make sure that deleted values are present in the changes
+         // make sure that deleted values are present in the changes
             if (!result.containsKey(it)) result[it] = null
       }
 
       return result
-   }
-
-   fun removeAllAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String) {
-      auditDao.deleteAuditRecords(parentId, resourceType, resourceId)
    }
 
    companion object {

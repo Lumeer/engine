@@ -58,6 +58,8 @@ public interface LinkDataDao {
 
    List<DataDocument> getData(String linkTypeId, Set<String> linkInstanceIds);
 
+   List<DataDocument> getData(String linkTypeId, Set<String> linkInstanceIds, String parameter);
+
    List<DataDocument> searchData(SearchQueryStem stem, Pagination pagination, LinkType linkType);
 
    List<DataDocument> searchDataByFulltexts(Set<String> fulltexts, Pagination pagination, List<LinkType> linkTypes);

@@ -117,7 +117,7 @@ public abstract class AbstractContextualTask implements ContextualTask {
       resourceAdapter = new ResourceAdapter(permissionAdapter, daoContextSnapshot.getCollectionDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getViewDao(), daoContextSnapshot.getUserDao());
       viewAdapter = new ViewAdapter(resourceAdapter, daoContextSnapshot.getFavoriteItemDao());
       documentAdapter = new DocumentAdapter(daoContextSnapshot.getResourceCommentDao(), daoContextSnapshot.getFavoriteItemDao());
-      linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkInstanceDao());
+      linkTypeAdapter = new LinkTypeAdapter(daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getLinkInstanceDao());
       linkInstanceAdapter = new LinkInstanceAdapter(daoContextSnapshot.getResourceCommentDao());
       pusherAdapter = new PusherAdapter(getAppId(), new FacadeAdapter(permissionAdapter), resourceAdapter, permissionAdapter, daoContextSnapshot.getViewDao(), daoContextSnapshot.getLinkTypeDao(), daoContextSnapshot.getCollectionDao());
       fileAttachmentAdapter = new FileAttachmentAdapter(getLumeerS3Client(), daoContextSnapshot.getFileAttachmentDao(), environment.name());

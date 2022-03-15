@@ -87,6 +87,16 @@ public class Document implements WithId {
       this.metaData = metaData;
    }
 
+   public Document(final String collectionId, final ZonedDateTime creationDate, final String createdBy) {
+      this.collectionId = collectionId;
+      this.creationDate = creationDate;
+      this.updateDate = null;
+      this.createdBy = createdBy;
+      this.updatedBy = null;
+      this.dataVersion = 0;
+      this.metaData = new DataDocument();
+   }
+
    public String getId() {
       return id;
    }

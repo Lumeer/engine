@@ -38,6 +38,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -103,6 +104,7 @@ public class MongoLinkDataDao extends MongoCollectionScopedDao implements LinkDa
    @Override
    public DataDocument updateData(final String linkTypeId, final String linkInstanceId, final DataDocument data) {
       Document document = new Document(data);
+      document.remove(ID);
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
 
       Document updatedDocument = linkDataCollection(linkTypeId).findOneAndReplace(idFilter(linkInstanceId), document, options);
@@ -181,6 +183,16 @@ public class MongoLinkDataDao extends MongoCollectionScopedDao implements LinkDa
          return Collections.emptyList();
       }
       return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find(idsFilter));
+   }
+
+   @Override
+   public List<DataDocument> getData(final String linkTypeId, final Set<String> linkIds, final String parameter) {
+      Bson idsFilter = MongoFilters.idsFilter(linkIds);
+      if (idsFilter == null) {
+         return Collections.emptyList();
+      }
+
+      return MongoUtils.convertIterableToList(linkDataCollection(linkTypeId).find(idsFilter).projection(Projections.include(parameter)));
    }
 
    @Override

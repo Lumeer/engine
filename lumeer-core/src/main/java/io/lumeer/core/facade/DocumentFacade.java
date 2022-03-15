@@ -30,6 +30,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -119,11 +120,13 @@ public class DocumentFacade extends AbstractFacade {
    private ConstraintManager constraintManager;
 
    private DocumentAdapter adapter;
+   private CollectionAdapter collectionAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       adapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
+      collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
    }
 
    public DocumentAdapter getAdapter() {
@@ -154,7 +157,7 @@ public class DocumentFacade extends AbstractFacade {
 
       Document storedDocumentCopy = new Document(storedDocument);
 
-      updateCollectionMetadata(collection, data.keySet(), Collections.emptySet());
+      collectionAdapter.updateCollectionMetadata(collection, data.keySet(), Collections.emptySet());
 
       storedDocument.setData(constraintManager.decodeDataTypes(collection, storedData));
 
@@ -197,7 +200,7 @@ public class DocumentFacade extends AbstractFacade {
          storedDocument.setData(constraintManager.decodeDataTypes(collection, storedDocument.getData()));
       });
 
-      updateCollectionMetadata(collection, usages);
+      collectionAdapter.updateCollectionMetadata(collection, usages);
 
       if (sendNotification && importCollectionContentEvent != null) {
          importCollectionContentEvent.fire(new ImportCollectionContent(collection));
@@ -241,7 +244,7 @@ public class DocumentFacade extends AbstractFacade {
          return document;
       }
 
-      updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec);
+      collectionAdapter.updateCollectionMetadata(collection, attributesIdsToAdd, attributesIdsToDec);
 
       DataDocument updatedData = dataDao.updateData(collection.getId(), documentId, data);
 
@@ -292,7 +295,7 @@ public class DocumentFacade extends AbstractFacade {
             var tuple = createDocument(collection, document);
             createdDocuments.add(tuple.getSecond());
             currentDocumentId = tuple.getFirst().getId();
-            updateCollectionMetadata(collection, tuple.getSecond().getData().keySet(), Collections.emptySet());
+            collectionAdapter.updateCollectionMetadata(collection, tuple.getSecond().getData().keySet(), Collections.emptySet());
          }
 
          var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
@@ -371,7 +374,7 @@ public class DocumentFacade extends AbstractFacade {
          return document;
       }
 
-      updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet());
+      collectionAdapter.updateCollectionMetadata(collection, attributesIdsToAdd, Collections.emptySet());
 
       DataDocument patchedData = dataDao.patchData(collection.getId(), documentId, data);
 
@@ -449,7 +452,7 @@ public class DocumentFacade extends AbstractFacade {
       final Collection collection = tuple.getFirst();
       final Document document = tuple.getSecond();
 
-      updateCollectionMetadata(collection, Collections.emptySet(), document.getData().keySet());
+      collectionAdapter.updateCollectionMetadata(collection, Collections.emptySet(), document.getData().keySet());
 
       documentDao.deleteDocument(documentId, document.getData());
       dataDao.deleteData(collection.getId(), documentId);
@@ -538,23 +541,9 @@ public class DocumentFacade extends AbstractFacade {
          this.createChainEvent.fire(new CreateDocumentsAndLinks(documents, Collections.emptyList()));
       }
 
-      updateCollectionMetadata(collection, usages);
+      collectionAdapter.updateCollectionMetadata(collection, usages);
 
       return documents;
-   }
-
-   private void updateCollectionMetadata(Collection collection, Set<String> attributesIdsToInc, Set<String> attributesIdsToDec) {
-      final Collection originalCollection = collection.copy();
-      collection.setAttributes(new HashSet<>(ResourceUtils.incOrDecAttributes(collection.getAttributes(), attributesIdsToInc, attributesIdsToDec)));
-      collection.setLastTimeUsed(ZonedDateTime.now());
-      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
-   }
-
-   private void updateCollectionMetadata(final Collection collection, final Map<String, Integer> attributesToInc) {
-      final Collection originalCollection = collection.copy();
-      collection.setAttributes(new HashSet<>(ResourceUtils.incAttributes(collection.getAttributes(), attributesToInc)));
-      collection.setLastTimeUsed(ZonedDateTime.now());
-      collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
    public Document getDocument(String collectionId, String documentId) {

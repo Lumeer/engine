@@ -19,7 +19,11 @@
 package io.lumeer.core.adapter
 
 import io.lumeer.api.model.Collection
-import io.lumeer.storage.api.dao.*
+import io.lumeer.api.util.ResourceUtils
+import io.lumeer.storage.api.dao.CollectionDao
+import io.lumeer.storage.api.dao.DocumentDao
+import io.lumeer.storage.api.dao.FavoriteItemDao
+import java.time.ZonedDateTime
 
 class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: FavoriteItemDao, val documentDao: DocumentDao) {
 
@@ -46,6 +50,20 @@ class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: F
          it.isFavorite = favoriteCollectionIds.contains(it.id)
          it.documentsCount = documentsCounts[it.id] ?: 0
       }
+   }
+
+   fun updateCollectionMetadata(collection: Collection, attributesIdsToInc: Set<String>, attributesIdsToDec: Set<String>) {
+      val originalCollection = collection.copy()
+      collection.attributes = HashSet(ResourceUtils.incOrDecAttributes(collection.attributes, attributesIdsToInc, attributesIdsToDec))
+      collection.lastTimeUsed = ZonedDateTime.now()
+      collectionDao.updateCollection(collection.id, collection, originalCollection)
+   }
+
+   fun updateCollectionMetadata(collection: Collection, attributesToInc: Map<String, Int>) {
+      val originalCollection = collection.copy()
+      collection.attributes = HashSet(ResourceUtils.incAttributes(collection.attributes, attributesToInc))
+      collection.lastTimeUsed = ZonedDateTime.now()
+      collectionDao.updateCollection(collection.id, collection, originalCollection)
    }
 
 }
