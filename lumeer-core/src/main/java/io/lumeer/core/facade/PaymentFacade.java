@@ -30,6 +30,8 @@ import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.util.Utils;
+import io.lumeer.engine.api.cache.Cache;
+import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
@@ -49,6 +51,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -94,7 +97,15 @@ public class PaymentFacade extends AbstractFacade {
    @Inject
    private Event<UpdateServiceLimits> updateServiceLimitsEvent;
 
-   private Payment currentPayment = null;
+   @Inject
+   private CacheFactory cacheFactory;
+
+   private Cache<Payment> paymentCache;
+
+   @PostConstruct
+   public void initCache() {
+      paymentCache = cacheFactory.getCache();
+   }
 
    public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
       checkManagePermissions(organization);
@@ -132,17 +143,10 @@ public class PaymentFacade extends AbstractFacade {
    }
 
    private Payment getCurrentPayment(final Organization organization) {
-      if (currentPayment == null) {
+      return paymentCache.computeIfAbsent(organization.getId(), organizationId -> {
          final Date now = new Date();
-         final Payment latestPayment = getPaymentAt(organization, now);
-
-         // is the payment active? be tolerant to dates/time around the interval border
-         if (latestPayment != null) {
-            currentPayment = latestPayment;
-         }
-      }
-
-      return currentPayment;
+         return getPaymentAt(organization, now);
+      });
    }
 
    private Payment getPaymentAt(final Organization organization, final Date date) {
@@ -232,7 +236,7 @@ public class PaymentFacade extends AbstractFacade {
    public Payment updatePayment(final String organizationId, final String id) {
       final Organization organization = getOrganizationUnsafe(organizationId);
 
-      currentPayment = null;
+      paymentCache.remove(organizationId);
       workspaceKeeper.clearServiceLimits(organization);
 
       final Payment payment = paymentDao.getPaymentByDbId(organization, id);
