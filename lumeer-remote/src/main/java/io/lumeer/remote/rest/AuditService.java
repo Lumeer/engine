@@ -63,6 +63,12 @@ public class AuditService extends AbstractService {
       return auditFacade.getAuditRecordsForProject();
    }
 
+   @GET
+   @Path("users/{userId:[0-9a-fA-F]{24}}")
+   public List<AuditRecord> getAuditLogs(@PathParam("userId") String userId) {
+      return auditFacade.getAuditRecordsForProjectAndUser(userId);
+   }
+
    @POST
    @Path("{auditLogId:[0-9a-fA-F]{24}}/revert")
    public Response revertAuditLog(@PathParam("auditLogId") String auditLogId) {

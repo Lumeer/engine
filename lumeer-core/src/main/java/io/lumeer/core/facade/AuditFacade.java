@@ -197,6 +197,14 @@ public class AuditFacade extends AbstractFacade {
    }
 
    public List<AuditRecord> getAuditRecordsForProject() {
+      return getAuditRecordsForProject(null);
+   }
+
+   public List<AuditRecord> getAuditRecordsForProjectAndUser(final String userId) {
+      return getAuditRecordsForProject(userId);
+   }
+
+   private List<AuditRecord> getAuditRecordsForProject(final String userId) {
       checkProjectRole(RoleType.Manage);
 
       Map<String, Collection> collectionsMap = resourceAdapter.getCollections(getOrganization(), getProject(), getCurrentUserId())
@@ -206,7 +214,8 @@ public class AuditFacade extends AbstractFacade {
       // currently not supported
       Set<String> viewIds = Collections.emptySet();
 
-      List<AuditRecord> auditRecords = auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel());
+      List<AuditRecord> auditRecords = userId != null ? auditAdapter.getAuditRecords(userId, collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel())
+      : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel());
 
       collectionsMap.values().forEach(collection -> {
          var collectionAuditRecords = auditRecords.stream()

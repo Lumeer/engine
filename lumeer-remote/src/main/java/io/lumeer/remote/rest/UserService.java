@@ -99,6 +99,13 @@ public class UserService extends AbstractService {
       return userFacade.createUsersInWorkspace(organizationId, projectId, invitations);
    }
 
+   @GET
+   @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
+   @JsonView(UserViews.DefaultView.class)
+   public User getUser(@PathParam("organizationId") String organizationId, @PathParam("userId") String userId) {
+      return userFacade.getUser(organizationId, userId);
+   }
+
    @PUT
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    @JsonView(UserViews.DefaultView.class)
