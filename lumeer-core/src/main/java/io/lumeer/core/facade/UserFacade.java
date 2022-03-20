@@ -274,6 +274,12 @@ public class UserFacade extends AbstractFacade {
       return created;
    }
 
+   public User getUser(String organizationId, String userId) {
+      checkOrganizationPermissions(organizationId, RoleType.Read);
+
+      return keepOnlyCurrentOrganization(userDao.getUserById(userId), organizationId);
+   }
+
    public User updateUser(String organizationId, String userId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);

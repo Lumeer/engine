@@ -32,6 +32,12 @@ private const val UPDATE_MERGE_WINDOW_MINUTES: Long = 5 // number of minutes to 
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
+   fun getAuditRecords(userId: String, collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, serviceLevel: Payment.ServiceLevel) =
+      if (serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, FREE_MAX_RECORDS)
+      else
+         auditDao.findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+
    fun getAuditRecords(collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, serviceLevel: Payment.ServiceLevel) =
       if (serviceLevel == Payment.ServiceLevel.FREE)
          auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, FREE_MAX_RECORDS)

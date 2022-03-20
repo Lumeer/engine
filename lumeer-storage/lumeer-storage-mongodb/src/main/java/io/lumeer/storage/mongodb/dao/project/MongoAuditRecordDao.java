@@ -108,8 +108,29 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    }
 
    @Override
+   public List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan) {
+      final Bson filters = Filters.and(
+            Filters.eq(AuditRecord.USER, userId),
+            projectFilter(collectionIds, linkTypeIds, viewIds),
+            Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
+      );
+
+      return findAuditRecords(filters, -1);
+   }
+
+   @Override
    public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit) {
       final Bson filters = projectFilter(collectionIds, linkTypeIds, viewIds);
+
+      return findAuditRecords(filters, countLimit);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit) {
+      final Bson filters = Filters.and(
+            Filters.eq(AuditRecord.USER, userId),
+            projectFilter(collectionIds, linkTypeIds, viewIds)
+      );
 
       return findAuditRecords(filters, countLimit);
    }
