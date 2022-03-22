@@ -28,8 +28,9 @@ public class NavigationRequest {
    private final String attributeId;
    private final boolean sidebar;
    private final boolean newWindow;
+   private final String search;
 
-   public NavigationRequest(final String organizationCode, final String projectCode, final String viewId, final String collectionId, final String documentId, final String attributeId, final boolean sidebar, final boolean newWindow) {
+   public NavigationRequest(final String organizationCode, final String projectCode, final String viewId, final String collectionId, final String documentId, final String attributeId, final boolean sidebar, final boolean newWindow, final String search) {
       this.organizationCode = organizationCode;
       this.projectCode = projectCode;
       this.viewId = viewId;
@@ -38,6 +39,7 @@ public class NavigationRequest {
       this.attributeId = attributeId;
       this.sidebar = sidebar;
       this.newWindow = newWindow;
+      this.search = search;
    }
 
    public String getOrganizationCode() {
@@ -72,6 +74,10 @@ public class NavigationRequest {
       return newWindow;
    }
 
+   public String getSearch() {
+      return search;
+   }
+
    @Override
    public String toString() {
       return "NavigationRequest{" +
@@ -83,6 +89,7 @@ public class NavigationRequest {
             ", attributeId='" + attributeId + '\'' +
             ", sidebar=" + sidebar +
             ", newWindow=" + newWindow +
+            ", search=" + search +
             '}';
    }
 }
