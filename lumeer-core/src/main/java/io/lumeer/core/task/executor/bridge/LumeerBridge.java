@@ -278,6 +278,38 @@ public class LumeerBridge {
    }
 
    @SuppressWarnings("unused")
+   public String getViewName(final String viewId) {
+      try {
+         if (StringUtils.isNotEmpty(viewId)) {
+            final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
+
+            return view.getName();
+         }
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+
+      return "";
+   }
+
+   @SuppressWarnings("unused")
+   public String getViewName(final List<String> viewIds) {
+      try {
+         if (viewIds != null) {
+            return viewIds.stream().filter(StringUtils::isNotEmpty).map(viewId ->
+               task.getDaoContextSnapshot().getViewDao().getViewById(viewId).getName()
+            ).collect(Collectors.joining(", "));
+         }
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+
+      return "";
+   }
+
+   @SuppressWarnings("unused")
    public List<DocumentBridge> readView(final String viewId) {
       try {
          final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
@@ -584,6 +616,27 @@ public class LumeerBridge {
             cause = e;
             throw e;
          }
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void removeDocumentsInView(final String viewId) {
+      try {
+         final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
+         final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
+         final Language language = Language.fromString(task.getCurrentLocale());
+
+         final Set<RoleType> roles = PermissionUtils.getUserRolesInResource(task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(), view, task.getInitiator(), task.getGroups());
+         final AllowedPermissions permissions = new AllowedPermissions(roles);
+
+         final List<Document> documents = DocumentUtils.getDocuments(task.getDaoContextSnapshot(), query, task.getInitiator(), language, permissions, task.getTimeZone());
+
+         documents.stream()
+                 .filter(d -> task.getDaoContextSnapshot().increaseDeletionCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS)
+                 .forEach(d -> operations.add(new DocumentRemovalOperation(d)));
+      } catch (Exception e) {
+         cause = e;
+         throw e;
       }
    }
 
@@ -903,6 +956,16 @@ public class LumeerBridge {
 
    @SuppressWarnings("unused")
    public void navigate(final String viewId, final DocumentBridge documentBridge, final boolean sidebar, final boolean newWindow) {
+      navigate(viewId, documentBridge, "", sidebar, newWindow);
+   }
+
+   @SuppressWarnings("unused")
+   public void navigate(final String viewId, final String search, final boolean sidebar, final boolean newWindow) {
+      navigate(viewId, null, search, sidebar, newWindow);
+   }
+
+   @SuppressWarnings("unused")
+   private void navigate(final String viewId, final DocumentBridge documentBridge, final String search, final boolean sidebar, final boolean newWindow) {
       try {
          final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
          if (workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
@@ -910,13 +973,13 @@ public class LumeerBridge {
             final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
             if (view != null && view.getQuery().getStems().size() > 0 && StringUtils.isNotEmpty(view.getQuery().getStems().get(0).getCollectionId())) {
                final String collectionId = view.getQuery().getStems().get(0).getCollectionId();
-               final String documentId = documentBridge.getDocument().getId();
+               final String documentId = documentBridge != null ? documentBridge.getDocument().getId() : null;
                final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(collectionId);
                final String attributeId = StringUtils.isNotEmpty(collection.getDefaultAttributeId()) ? collection.getDefaultAttributeId() :
-                     (collection.getAttributes() != null && !collection.getAttributes().isEmpty() ? collection.getAttributes().iterator().next().getId() : "");
+                       (collection.getAttributes() != null && !collection.getAttributes().isEmpty() ? collection.getAttributes().iterator().next().getId() : "");
                final NavigationRequest navigationRequest = new NavigationRequest(
-                     workspace.getOrganization().get().getCode(), workspace.getProject().get().getCode(),
-                     viewId, collectionId, documentId, attributeId, sidebar, newWindow
+                       workspace.getOrganization().get().getCode(), workspace.getProject().get().getCode(),
+                       viewId, collectionId, documentId, attributeId, sidebar, newWindow, search
                );
 
                operations.add(new NavigationOperation(navigationRequest));
