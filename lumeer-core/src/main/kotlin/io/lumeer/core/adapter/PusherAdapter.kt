@@ -31,13 +31,13 @@ import org.marvec.pusher.data.BackupDataEvent
 import org.marvec.pusher.data.Event
 
 class PusherAdapter(
-      private val appId: AppId?,
-      private val facadeAdapter: FacadeAdapter,
-      private val resourceAdapter: ResourceAdapter,
-      private val permissionAdapter: PermissionAdapter,
-      private val viewDao: ViewDao,
-      private val linkTypeDao: LinkTypeDao,
-      private val collectionDao: CollectionDao,
+   private val appId: AppId?,
+   private val facadeAdapter: FacadeAdapter,
+   private val resourceAdapter: ResourceAdapter,
+   private val permissionAdapter: PermissionAdapter,
+   private val viewDao: ViewDao,
+   private val linkTypeDao: LinkTypeDao,
+   private val collectionDao: CollectionDao,
 ) {
 
    fun checkLinkTypePermissionsChange(organization: Organization, project: Project?, user: User, originalLinkType: LinkType, updatedLinkType: LinkType): List<Event> {
@@ -45,8 +45,8 @@ class PusherAdapter(
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
       val removedReadersNotifications = rolesDifference.removedUsers
-            .map { userId -> createEventForRemove(originalLinkType.javaClass.simpleName, ResourceId(appId, originalLinkType.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
-            .toMutableList()
+         .map { userId -> createEventForRemove(originalLinkType.javaClass.simpleName, ResourceId(appId, originalLinkType.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
+         .toMutableList()
 
       if (changedUsers.isEmpty()) {
          return removedReadersNotifications
@@ -59,10 +59,11 @@ class PusherAdapter(
       val linkTypesBefore = allLinkTypes.plus(originalLinkType)
       val linkTypesAfter = allLinkTypes.plus(updatedLinkType)
 
-      return changedUsers.fold(removedReadersNotifications) { notifications, userId ->
-         notifications.addAll(createCollectionsChangeNotifications(organization, project, Pair(linkTypesBefore, linkTypesAfter), Pair(allCollections, allCollections), Pair(allViews, allViews), userId))
-         return notifications
+      changedUsers.forEach { userId ->
+         removedReadersNotifications.addAll(createCollectionsChangeNotifications(organization, project, Pair(linkTypesBefore, linkTypesAfter), Pair(allCollections, allCollections), Pair(allViews, allViews), userId))
       }
+
+      return removedReadersNotifications
    }
 
    fun checkCollectionsPermissionsChange(organization: Organization, project: Project?, user: User, originalCollection: Collection, updatedCollection: Collection): List<Event> {
@@ -70,8 +71,8 @@ class PusherAdapter(
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
       val removedReadersNotifications = rolesDifference.removedUsers
-            .map { userId -> createEventForRemove(originalCollection.javaClass.simpleName, ResourceId(appId, originalCollection.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
-            .toMutableList()
+         .map { userId -> createEventForRemove(originalCollection.javaClass.simpleName, ResourceId(appId, originalCollection.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
+         .toMutableList()
 
       if (changedUsers.isEmpty()) {
          return removedReadersNotifications
@@ -79,15 +80,16 @@ class PusherAdapter(
 
       val allLinkTypes = linkTypeDao.allLinkTypes
       val allViews = viewDao.allViews
-      val allCollections = collectionDao.allCollections.filter { it.id != originalCollection.id}
+      val allCollections = collectionDao.allCollections.filter { it.id != originalCollection.id }
 
       val collectionsBefore = allCollections.plus(originalCollection)
       val collectionsAfter = allCollections.plus(updatedCollection)
 
-      return changedUsers.fold(removedReadersNotifications) { notifications, userId ->
-         notifications.addAll(createLinksChangeNotifications(organization, project, Pair(allLinkTypes, allLinkTypes), Pair(collectionsBefore, collectionsAfter), Pair(allViews, allViews), userId))
-         return notifications
+      changedUsers.forEach { userId ->
+         removedReadersNotifications.addAll(createLinksChangeNotifications(organization, project, Pair(allLinkTypes, allLinkTypes), Pair(collectionsBefore, collectionsAfter), Pair(allViews, allViews), userId))
       }
+
+      return removedReadersNotifications
    }
 
    fun checkViewPermissionsChange(organization: Organization, project: Project?, user: User, originalView: View?, updatedView: View): List<Event> {
@@ -99,8 +101,8 @@ class PusherAdapter(
       val changedUsers = rolesDifference.changedUsers().toMutableSet().minus(user.id)
 
       val removedReadersNotifications = rolesDifference.removedUsers
-            .map { userId -> createEventForRemove(originalView.javaClass.simpleName, ResourceId(appId, originalView.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
-            .toMutableList()
+         .map { userId -> createEventForRemove(originalView.javaClass.simpleName, ResourceId(appId, originalView.id, organization.id.orEmpty(), project?.id.orEmpty()), userId) }
+         .toMutableList()
 
       if (changedUsers.isEmpty()) {
          return removedReadersNotifications
@@ -113,10 +115,11 @@ class PusherAdapter(
       val viewsBefore = allViews.plus(originalView)
       val viewsAfter = allViews.plus(updatedView)
 
-      return changedUsers.fold(removedReadersNotifications) { notifications, userId ->
-         notifications.addAll(createCollectionsAndLinksChangeNotifications(organization, project, Pair(allLinkTypes, allLinkTypes), Pair(allCollections, allCollections), Pair(viewsBefore, viewsAfter), userId))
-         return notifications
+      changedUsers.forEach { userId ->
+         removedReadersNotifications.addAll(createCollectionsAndLinksChangeNotifications(organization, project, Pair(allLinkTypes, allLinkTypes), Pair(allCollections, allCollections), Pair(viewsBefore, viewsAfter), userId))
       }
+
+      return removedReadersNotifications
    }
 
    private fun createCollectionsChangeNotifications(organization: Organization, project: Project?, linkTypes: Pair<List<LinkType>, List<LinkType>>, collections: Pair<List<Collection>, List<Collection>>, views: Pair<List<View>, List<View>>, userId: String): List<Event> {
@@ -158,6 +161,7 @@ class PusherAdapter(
    }
 
    private fun createCollectionsAndLinksChangeNotifications(organization: Organization, project: Project?, linkTypes: Pair<List<LinkType>, List<LinkType>>, collections: Pair<List<Collection>, List<Collection>>, views: Pair<List<View>, List<View>>, userId: String): List<Event> {
+      println("createCollectionsAndLinksChangeNotifications " + userId)
       return createCollectionsChangeNotifications(organization, project, linkTypes, collections, views, userId).plus(createLinksChangeNotifications(organization, project, linkTypes, collections, views, userId))
    }
 

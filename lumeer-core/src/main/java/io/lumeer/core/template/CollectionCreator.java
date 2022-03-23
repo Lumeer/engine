@@ -28,6 +28,7 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -39,11 +40,13 @@ public class CollectionCreator extends WithIdCreator {
 
    private final CollectionFacade collectionFacade;
    private final ConstraintManager constraintManager;
+   private final ObjectMapper mapper;
 
    private CollectionCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
       super(templateParser);
       this.collectionFacade = collectionFacade;
       this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
+      this.mapper = createObjectMapper();
    }
 
    public static void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
@@ -112,7 +115,7 @@ public class CollectionCreator extends WithIdCreator {
    }
 
    private void createAttributes(final Collection collection, final JSONObject o) {
-      final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"))
+      final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"), mapper)
             .stream().map(attribute -> TemplateParserUtils.mapAttributeConstraintConfig(templateParser, attribute))
             .collect(Collectors.toList());
       collectionFacade.createCollectionAttributesWithoutPushNotification(collection.getId(), attributes);

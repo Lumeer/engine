@@ -23,6 +23,7 @@ import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.LinkTypeFacade;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -33,10 +34,12 @@ import java.util.stream.Collectors;
 public class LinkTypeCreator extends WithIdCreator {
 
    private final LinkTypeFacade linkTypeFacade;
+   private final ObjectMapper mapper;
 
    private LinkTypeCreator(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade) {
       super(templateParser);
       this.linkTypeFacade = linkTypeFacade;
+      this.mapper = createObjectMapper();
    }
 
    public static void createLinkTypes(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade) {
@@ -57,7 +60,7 @@ public class LinkTypeCreator extends WithIdCreator {
    }
 
    private void createAttributes(final LinkType linkType, final JSONObject o) {
-      final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"))
+      final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"), mapper)
                                                             .stream().map(attribute -> TemplateParserUtils.mapAttributeConstraintConfig(templateParser, attribute))
                                                             .collect(Collectors.toList());
       linkTypeFacade.createLinkTypeAttributesWithoutPushNotification(linkType.getId(), attributes);
