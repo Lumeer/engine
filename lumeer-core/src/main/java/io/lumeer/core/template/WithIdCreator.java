@@ -22,6 +22,12 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.data.DataDocument;
 
+import com.fasterxml.jackson.databind.AnnotationIntrospector;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import org.json.simple.JSONObject;
 
 import java.time.ZonedDateTime;
@@ -73,5 +79,16 @@ public class WithIdCreator {
       });
 
       return data;
+   }
+
+   protected ObjectMapper createObjectMapper() {
+      ObjectMapper mapper = new ObjectMapper();
+      AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
+      AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
+      AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
+      mapper.setAnnotationIntrospector(pair);
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+      return mapper;
    }
 }

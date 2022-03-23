@@ -28,24 +28,14 @@ import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
-import com.fasterxml.jackson.databind.AnnotationIntrospector;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
-import java.sql.Date;
-import java.time.DateTimeException;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class ViewCreator extends WithIdCreator {
@@ -59,12 +49,7 @@ public class ViewCreator extends WithIdCreator {
       this.viewFacade = viewFacade;
       this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
 
-      mapper = new ObjectMapper();
-      AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
-      AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
-      AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
-      mapper.setAnnotationIntrospector(pair);
-      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+      this.mapper = createObjectMapper();
    }
 
    public static void createViews(final TemplateParser templateParser, final ViewFacade viewFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
@@ -146,7 +131,6 @@ public class ViewCreator extends WithIdCreator {
          ));
       });
 
-      final Query result = new Query(newStems, query.getFulltexts(), query.getPage(), query.getPageSize());
-      return result;
+      return new Query(newStems, query.getFulltexts(), query.getPage(), query.getPageSize());
    }
 }

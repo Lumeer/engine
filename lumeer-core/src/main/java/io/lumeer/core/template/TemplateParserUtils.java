@@ -19,14 +19,17 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeLock;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.util.AttributeUtil;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.io.IOException;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -37,17 +40,17 @@ import java.util.regex.Pattern;
 
 public class TemplateParserUtils {
 
-   public static List<Attribute> getAttributes(final JSONArray a) {
+   public static List<Attribute> getAttributes(final JSONArray a, final ObjectMapper mapper) {
       final var attrs = new ArrayList<Attribute>();
 
       a.forEach(o -> {
-         attrs.add(getAttribute((JSONObject) o));
+         attrs.add(getAttribute((JSONObject) o, mapper));
       });
 
       return attrs;
    }
 
-   private static Attribute getAttribute(final JSONObject o) {
+   private static Attribute getAttribute(final JSONObject o, final ObjectMapper mapper) {
       final var attr = new Attribute((String) o.get(Attribute.NAME));
       attr.setId((String) o.get(Attribute.ID));
       attr.setDescription((String) o.get(Attribute.DESCRIPTION));
@@ -55,8 +58,19 @@ public class TemplateParserUtils {
       if (o.get("constraint") != null) {
          attr.setConstraint(getAttributeConstraint((JSONObject) o.get("constraint")));
       }
+      if (o.get("lock") != null) {
+         attr.setLock(getAttributeLock((JSONObject) o.get("lock"), mapper));
+      }
 
       return attr;
+   }
+
+   private static AttributeLock getAttributeLock(final JSONObject o, final ObjectMapper mapper) {
+      try {
+         return mapper.readValue(o.toJSONString(), AttributeLock.class);
+      } catch (IOException e) {
+         return null;
+      }
    }
 
    private static Constraint getAttributeConstraint(final JSONObject o) {
@@ -112,13 +126,13 @@ public class TemplateParserUtils {
 
       int lastEnd = 0;
       while (matcher.find()) {
-         sb.append(text.substring(lastEnd, matcher.start()));
-         sb.append(text.substring(matcher.start(1), matcher.end(1)));
+         sb.append(text, lastEnd, matcher.start());
+         sb.append(text, matcher.start(1), matcher.end(1));
          sb.append(replacer.apply(text.substring(matcher.start(2), matcher.end(2))));
-         sb.append(text.substring(matcher.start(3), matcher.end(3)));
+         sb.append(text, matcher.start(3), matcher.end(3));
          lastEnd = matcher.end();
       }
-      sb.append(text.substring(lastEnd, text.length()));
+      sb.append(text.substring(lastEnd));
 
       return sb.toString();
    }
