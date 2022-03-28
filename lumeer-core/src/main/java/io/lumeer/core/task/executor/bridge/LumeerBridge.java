@@ -153,7 +153,7 @@ public class LumeerBridge {
    public String[] getUserTeams(final String userEmail) {
       final User user = task.getDaoContextSnapshot().getUserDao().getUserByEmail(userEmail);
 
-      return task.getDaoContextSnapshot().getGroupDao().getAllGroups().stream().filter(group ->
+      return user == null ? new String[0] : task.getDaoContextSnapshot().getGroupDao().getAllGroups().stream().filter(group ->
          group.getUsers().stream().anyMatch(u -> u.equals(user.getId()))
       ).map(Group::getName).toArray(String[]::new);
    }
