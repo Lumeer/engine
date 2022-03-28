@@ -162,7 +162,7 @@ public class LumeerBridge {
    public String[] getUserTeamIds(final String userEmail) {
       final User user = task.getDaoContextSnapshot().getUserDao().getUserByEmail(userEmail);
 
-      return task.getDaoContextSnapshot().getGroupDao().getAllGroups().stream().filter(group ->
+      return user == null ? new String[0] : task.getDaoContextSnapshot().getGroupDao().getAllGroups().stream().filter(group ->
               group.getUsers().stream().anyMatch(u -> u.equals(user.getId()))
       ).map(g -> "@" + g.getId()).toArray(String[]::new);
    }
@@ -454,6 +454,26 @@ public class LumeerBridge {
       }
    }
 
+   private void registerAttachment(final SendSmtpEmailRequest req, final DocumentBridge d, final String attrId) throws IllegalStateException {
+      if (d != null) {
+         if (getAttachmentsSize(d.getDocument(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
+            throw new IllegalStateException("Attachments size is larger than 5MB.");
+         }
+
+         req.setAttachment(d.getDocument(), attrId);
+      }
+   }
+
+   private void registerAttachment(final SendSmtpEmailRequest req, final LinkBridge l, final String attrId) throws IllegalStateException {
+      if (l != null) {
+         if (getAttachmentsSize(l.getLink(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
+            throw new IllegalStateException("Attachments size is larger than 5MB.");
+         }
+
+         req.setAttachment(l.getLink(), attrId);
+      }
+   }
+
    @SuppressWarnings("unused")
    public void sendEmail(final String to, final String fromName, final String subject, final String body, final DocumentBridge d, final String attrId, final Value smtpConfig) throws Exception {
       if (task.getDaoContextSnapshot().increaseEmailCounter() <= Task.MAX_EMAILS) {
@@ -466,16 +486,8 @@ public class LumeerBridge {
             final SmtpConfiguration smtpConfiguration = getSmtpConfiguration(smtpConfig);
 
             if (smtpConfiguration != null) {
-               if (d != null && getAttachmentsSize(d.getDocument(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
-                  cause = new IllegalStateException("Attachments size is larger than 5MB.");
-                  throw cause;
-               }
-
                final SendSmtpEmailRequest sendSmtpEmailRequest = new SendSmtpEmailRequest(subject, to, body, fromName, smtpConfiguration);
-
-               if (d != null) {
-                  sendSmtpEmailRequest.setAttachment(d.getDocument(), attrId);
-               }
+               registerAttachment(sendSmtpEmailRequest, d, attrId);
 
                operations.add(new SendSmtpEmailOperation(sendSmtpEmailRequest));
             }
@@ -500,13 +512,8 @@ public class LumeerBridge {
          final SmtpConfiguration smtpConfiguration = getSmtpConfiguration(smtpConfig);
 
          if (smtpConfiguration != null) {
-            if (getAttachmentsSize(l.getLink(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
-               cause = new IllegalStateException("Attachments size is larger than 5MB.");
-               throw cause;
-            }
-
             final SendSmtpEmailRequest sendSmtpEmailRequest = new SendSmtpEmailRequest(subject, to, body, fromName, smtpConfiguration);
-            sendSmtpEmailRequest.setAttachment(l.getLink(), attrId);
+            registerAttachment(sendSmtpEmailRequest, l, attrId);
 
             operations.add(new SendSmtpEmailOperation(sendSmtpEmailRequest));
          }
