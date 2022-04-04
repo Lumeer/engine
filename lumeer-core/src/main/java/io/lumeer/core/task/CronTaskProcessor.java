@@ -56,7 +56,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
    private final CronTaskChecker checker = new CronTaskChecker();
 
-   @Schedule(hour = "*", minute = "*/15") // every 15 minutes
+   @Schedule(hour = "*", minute = "*/1") // every 15 minutes
    public void process() {
       final List<Organization> organizations = organizationDao.getAllOrganizations();
 
@@ -85,7 +85,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
          final Map<String, CronRule> rulesToExecute = new HashMap<>();
 
-         rules.stream().forEach(entry -> {
+         rules.forEach(entry -> {
             final CronRule rule = new CronRule(entry.getValue());
 
             if (checker.shouldExecute(rule, ZonedDateTime.now())) {
@@ -93,25 +93,28 @@ public class CronTaskProcessor extends WorkspaceContext {
                // this is a sign of an error in previous execution, let's revert normal state and let it pass to another round
                if (rule.getExecuting() != null && !"".equals(rule.getExecuting())) {
                   log.info(
-                          String.format("Fixing rule execution signature on %s/%s, %s, '%s'.",
-                                  dao.getOrganization().getCode(),
-                                  dao.getProject().getCode(),
-                                  collection.getName(),
-                                  rule.getRule().getName()
-                          )
+                        String.format("Fixing rule execution signature on %s/%s, %s, '%s'.",
+                              dao.getOrganization().getCode(),
+                              dao.getProject().getCode(),
+                              collection.getName(),
+                              rule.getRule().getName()
+                        )
                   );
                   rule.setExecuting(null);
                } else {
                   log.info(
-                          String.format("Planning to run rule on %s/%s, %s, '%s'.",
-                                  dao.getOrganization().getCode(),
-                                  dao.getProject().getCode(),
-                                  collection.getName(),
-                                  rule.getRule().getName()
-                          )
+                        String.format("Planning to run rule on %s/%s, %s, '%s'.",
+                              dao.getOrganization().getCode(),
+                              dao.getProject().getCode(),
+                              collection.getName(),
+                              rule.getRule().getName()
+                        )
                   );
                   rule.setLastRun(now);
                   rule.setExecuting(signature);
+                  if (rule.getExecutionsLeft() != null) {
+                     rule.setExecutionsLeft(Math.max(rule.getExecutionsLeft() - 1, 0));
+                  }
                   rulesToExecute.put(entry.getKey(), rule);
                }
             }
