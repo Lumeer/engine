@@ -57,9 +57,9 @@ class CronTaskChecker {
       }
 
       val runOn = rule.lastRun
-            .plusDays(rule.interval.toLong())
-            .withHour(rule.hour)
-            .truncatedTo(ChronoUnit.HOURS)
+         .plusDays(rule.interval.toLong())
+         .withHour(rule.hour)
+         .truncatedTo(ChronoUnit.HOURS)
 
       return shouldRunByHour(runOn, rule, date)
    }
@@ -77,10 +77,10 @@ class CronTaskChecker {
       }
 
       val runOn = rule.lastRun
-            .plusMonths(rule.interval.toLong())
-            .withDayOfMonth(dayOfMonth)
-            .withHour(rule.hour)
-            .truncatedTo(ChronoUnit.HOURS)
+         .plusMonths(rule.interval.toLong())
+         .withDayOfMonth(dayOfMonth)
+         .withHour(rule.hour)
+         .truncatedTo(ChronoUnit.HOURS)
 
       return shouldRunByHour(runOn, rule, date)
    }
@@ -98,18 +98,18 @@ class CronTaskChecker {
 
       if (areSameWeeks(rule.lastRun, date)) {
          val runOn = rule.lastRun
-               .with(ChronoField.DAY_OF_WEEK, date.dayOfWeek.value.toLong())
-               .withHour(rule.hour)
-               .truncatedTo(ChronoUnit.HOURS)
+            .with(ChronoField.DAY_OF_WEEK, date.dayOfWeek.value.toLong())
+            .withHour(rule.hour)
+            .truncatedTo(ChronoUnit.HOURS)
 
          return rule.lastRun.dayOfWeek != date.dayOfWeek && shouldRunByHour(runOn, rule, date)
       }
 
       val runOn = rule.lastRun
-            .plusWeeks(rule.interval.toLong())
-            .with(ChronoField.DAY_OF_WEEK, date.dayOfWeek.value.toLong())
-            .withHour(rule.hour)
-            .truncatedTo(ChronoUnit.HOURS)
+         .plusWeeks(rule.interval.toLong())
+         .with(ChronoField.DAY_OF_WEEK, date.dayOfWeek.value.toLong())
+         .withHour(rule.hour)
+         .truncatedTo(ChronoUnit.HOURS)
 
       return shouldRunByHour(runOn, rule, date)
    }
@@ -122,13 +122,13 @@ class CronTaskChecker {
       val d1Monday = d1.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong())
       val d2Monday = d2.with(ChronoField.DAY_OF_WEEK, DayOfWeek.MONDAY.value.toLong())
       return d1Monday.year == d2Monday.year &&
-         d1Monday.get(ChronoField.ALIGNED_WEEK_OF_YEAR) == d2Monday.get(ChronoField.ALIGNED_WEEK_OF_YEAR)
+            d1Monday.get(ChronoField.ALIGNED_WEEK_OF_YEAR) == d2Monday.get(ChronoField.ALIGNED_WEEK_OF_YEAR)
    }
 
    private fun shouldRunOnDay(rule: CronRule, date: ZonedDateTime): Boolean {
       val createdAt = rule.rule.createdAt ?: date
       val shouldBeExecutedAt = date.withHour(rule.hour)
-            .truncatedTo(ChronoUnit.HOURS)
+         .truncatedTo(ChronoUnit.HOURS)
       return createdAt.isBefore(shouldBeExecutedAt) && rule.hour <= date.hour
    }
 
