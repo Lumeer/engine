@@ -30,6 +30,7 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
 
    protected String format;
    protected String locale;
+   protected Boolean utc;
    protected boolean initialized = false;
    protected String userLocale;
 
@@ -48,6 +49,13 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
             this.format = format;
             this.userLocale = userLocale;
             initialized = true;
+         }
+
+         var asUtc = config.get("asUtc");
+         if (asUtc != null) {
+            asUtc = Boolean.valueOf(asUtc.toString());
+         } else {
+            asUtc = false;
          }
       }
    }

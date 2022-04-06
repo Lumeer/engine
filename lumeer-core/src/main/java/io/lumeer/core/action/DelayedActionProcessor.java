@@ -395,7 +395,8 @@ public class DelayedActionProcessor extends WorkspaceContext {
                JsFunctionsParser.formatMomentJsDate(
                      dueDate.toInstant().toEpochMilli(),// originalData.getDate(DelayedAction.DATA_TASK_DUE_DATE).getTime(),
                      format,
-                     language.toString().toLowerCase()
+                     language.toString().toLowerCase(),
+                     false
                )
          );
 
