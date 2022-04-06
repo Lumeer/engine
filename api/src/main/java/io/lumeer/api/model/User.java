@@ -117,6 +117,9 @@ public class User implements HealthChecking {
    private String timeZone;
 
    @JsonView(UserViews.DefaultView.class)
+   private String language;
+
+   @JsonView(UserViews.DefaultView.class)
    @JsonProperty(ONBOARDING)
    private UserOnboarding onboarding;
 
@@ -315,6 +318,14 @@ public class User implements HealthChecking {
       this.timeZone = timeZone;
    }
 
+   public String getLanguage() {
+      return language;
+   }
+
+   public void setLanguage(final String language) {
+      this.language = language;
+   }
+
    public UserOnboarding getOnboarding() {
       return onboarding;
    }
@@ -344,6 +355,7 @@ public class User implements HealthChecking {
             ", onboarding=" + onboarding +
             ", notifications=" + notifications +
             ", hints=" + hints +
+            ", language=" + language +
             ", timeZone=" + timeZone +
             '}';
    }

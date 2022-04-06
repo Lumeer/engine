@@ -474,6 +474,11 @@ public class UserFacade extends AbstractFacade {
          sendPushNotification = true;
       }
 
+      if (user.getLanguage() != null) {
+         currentUser.setLanguage(user.getLanguage());
+         sendPushNotification = true;
+      }
+
       final User updatedUser;
       if (sendPushNotification) {
          updatedUser = updateUserAndSendNotification(null, currentUser.getId(), currentUser);
