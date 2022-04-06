@@ -30,11 +30,15 @@ import java.nio.charset.StandardCharsets;
 public class JsFunctionsParser implements AutoCloseable {
 
    public static final String FORMAT_JS_DATE = "formatMomentJsDate";
+   public static final String FORMAT_JS_UTC_DATE = "formatMomentJsUtcDate";
    public static final String PARSE_JS_DATE = "parseMomentJsDate";
+   public static final String PARSE_JS_UTC_DATE = "parseMomentJsUtcDate";
 
    private static Context context = null;
    private static Value formatMomentJsDate;
+   private static Value formatMomentJsUtcDate;
    private static Value parseMomentJsDate;
+   private static Value parseMomentJsUtcDate;
    private static String momentJsCode;
    private static String heJsCode;
    private static String numbroJsCode;
@@ -52,7 +56,9 @@ public class JsFunctionsParser implements AutoCloseable {
          momentJsCode += new String(stream2.readAllBytes(), StandardCharsets.UTF_8);
          momentJsCode +=
                "; function " + FORMAT_JS_DATE  + "(time, format, locale) { return moment(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
-               "; function " + PARSE_JS_DATE + "(date, format, locale) { return moment((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } ";
+               "; function " + FORMAT_JS_DATE  + "(time, format, locale) { return moment(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
+               "; function " + PARSE_JS_DATE + "(date, format, locale) { return moment((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } " +
+               "; function " + PARSE_JS_UTC_DATE + "(date, format, locale) { return moment.utc((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } ";
          heJsCode = new String(stream3.readAllBytes(), StandardCharsets.UTF_8);
          numbroJsCode = new String(stream4.readAllBytes(), StandardCharsets.UTF_8);
          numbroJsCode += new String(stream5.readAllBytes(), StandardCharsets.UTF_8);
@@ -73,13 +79,13 @@ public class JsFunctionsParser implements AutoCloseable {
       return numbroJsCode;
    }
 
-   public static Long parseMomentJsDate(final String date, final String format, final String locale) {
+   public static Long parseMomentJsDate(final String date, final String format, final String locale, final Boolean utc) {
       if (context == null) {
          initContext();
       }
 
       try {
-         var result = parseMomentJsDate.execute(date, format, locale);
+         var result = utc ? parseMomentJsUtcDate.execute(date, format, locale) : parseMomentJsDate.execute(date, format, locale);
 
          if (result.isNull()) {
             return null;
@@ -107,13 +113,13 @@ public class JsFunctionsParser implements AutoCloseable {
       return null;
    }
 
-   public static String formatMomentJsDate(final long time, final String format, final String locale) {
+   public static String formatMomentJsDate(final long time, final String format, final String locale, final Boolean utc) {
       if (context == null) {
          initContext();
       }
 
       try {
-         var result = formatMomentJsDate.execute(time, format, locale);
+         var result = utc ? formatMomentJsUtcDate.execute(time, format, locale) : formatMomentJsDate.execute(time, format, locale);
 
          return result.asString();
       } catch (Exception e) {
@@ -135,7 +141,9 @@ public class JsFunctionsParser implements AutoCloseable {
             var result = context.eval("js", momentJsCode);
 
             formatMomentJsDate = context.getBindings("js").getMember(FORMAT_JS_DATE);
+            formatMomentJsUtcDate = context.getBindings("js").getMember(FORMAT_JS_UTC_DATE);
             parseMomentJsDate = context.getBindings("js").getMember(PARSE_JS_DATE);
+            parseMomentJsUtcDate = context.getBindings("js").getMember(PARSE_JS_UTC_DATE);
          }
       }
    }

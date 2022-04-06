@@ -55,7 +55,7 @@ public class NoneToDateConverter extends AbstractDateConverter {
             }
 
             try {
-               var instant = JsFunctionsParser.parseMomentJsDate(originalValueStr, format, userLocale);
+               var instant = JsFunctionsParser.parseMomentJsDate(originalValueStr, format, userLocale, utc);
 
                if (instant != null) {
                   return new DataDocument(toAttribute.getId(), new Date(instant));
