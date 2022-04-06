@@ -71,6 +71,7 @@ public class UserCodec implements CollectibleCodec<User> {
    public static final String NOTIFICATIONS_LANGUAGE = "notificationsLanguage";
    public static final String HINTS = "hints";
    public static final String TIME_ZONE = "timeZone";
+   public static final String LANGUAGE = "language";
    public static final String ONBOARDING = "onboarding";
 
    public static final String DEFAULT_ORGANIZATION_ID = "defaultOrganizationId";
@@ -140,7 +141,7 @@ public class UserCodec implements CollectibleCodec<User> {
       Boolean emailVerified = bson.getBoolean(EMAIL_VERIFIED);
 
       String referral = bson.getString(REFERRAL);
-
+      String language = bson.getString(LANGUAGE);
       String timeZone = bson.getString(TIME_ZONE);
 
       List<NotificationSetting> notificationSettings;
@@ -208,6 +209,7 @@ public class UserCodec implements CollectibleCodec<User> {
       user.setAffiliatePartner(affiliatePartner != null && affiliatePartner);
       user.setEmailVerified(emailVerified != null && emailVerified);
       user.setTimeZone(timeZone);
+      user.setLanguage(language);
 
       Document onboarding = bson.get(ONBOARDING, Document.class);
       UserOnboarding userOnboarding = onboarding != null ? UserOnboardingCodec.convertFromDocument(onboarding) : new UserOnboarding();
@@ -230,6 +232,7 @@ public class UserCodec implements CollectibleCodec<User> {
           .append(NOTIFICATIONS, user.getNotificationsSettingsList())
           .append(NOTIFICATIONS_LANGUAGE, user.getNotificationsLanguage())
           .append(HINTS, user.getHints())
+          .append(LANGUAGE, user.getLanguage())
           .append(TIME_ZONE, user.getTimeZone())
           .append(ONBOARDING, user.getOnboarding());
 
