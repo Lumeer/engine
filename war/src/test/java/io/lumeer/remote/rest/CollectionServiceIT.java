@@ -103,7 +103,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
 
-   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
 
    private String collectionsUrl;
 
@@ -357,7 +357,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_LOCK, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_LOCK, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       Entity entity = Entity.json(updatedAttribute);
 
       Response response = client.target(collectionsUrl).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)

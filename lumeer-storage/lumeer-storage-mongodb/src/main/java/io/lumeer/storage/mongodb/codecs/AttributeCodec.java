@@ -41,6 +41,7 @@ public class AttributeCodec implements Codec<Attribute> {
    public static final String CONSTRAINT = "constraint";
    public static final String FUNCTION = "function";
    public static final String USAGE_COUNT = "usageCount";
+   public static final String SUGGEST_VALUES = "suggestValues";
 
    private final Codec<Document> documentCodec;
 
@@ -63,8 +64,9 @@ public class AttributeCodec implements Codec<Attribute> {
       AttributeLock lock = AttributeLockCodec.convertFromDocument(document.get(LOCK, Document.class));
       Function function = FunctionCodec.convertFromDocument(document.get(FUNCTION, Document.class));
       Integer usageCount = document.getInteger(USAGE_COUNT);
+      Boolean suggestValues = document.getBoolean(SUGGEST_VALUES);
 
-      return new Attribute(id, name, description, constraint, lock, function, usageCount);
+      return new Attribute(id, name, description, constraint, lock, function, usageCount, suggestValues);
    }
 
    @Override
@@ -76,7 +78,8 @@ public class AttributeCodec implements Codec<Attribute> {
             .append(LOCK, value.getLock())
             .append(CONSTRAINT, value.getConstraint())
             .append(FUNCTION, value.getFunction())
-            .append(USAGE_COUNT, value.getUsageCount());
+            .append(USAGE_COUNT, value.getUsageCount())
+            .append(SUGGEST_VALUES, value.getSuggestValues());
 
       documentCodec.encode(writer, bson, encoderContext);
    }
