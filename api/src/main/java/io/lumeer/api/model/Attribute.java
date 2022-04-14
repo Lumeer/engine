@@ -39,6 +39,7 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
    public static final String FUNCTION = "function";
    public static final String DESCRIPTION = "description";
    public static final String USAGE_COUNT = "usageCount";
+   public static final String SUGGEST_VALUES = "suggestValues";
 
    private String id;
    private String name;
@@ -47,6 +48,7 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
    private AttributeLock lock;
    private Function function;
    private Integer usageCount;
+   private Boolean suggestValues;
 
    public Attribute(final String id) {
       this.id = id;
@@ -62,7 +64,8 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
          @JsonProperty(CONSTRAINT) final Constraint constraint,
          @JsonProperty(LOCK) final AttributeLock lock,
          @JsonProperty(FUNCTION) final Function function,
-         @JsonProperty(USAGE_COUNT) final Integer usageCount) {
+         @JsonProperty(USAGE_COUNT) final Integer usageCount,
+         @JsonProperty(SUGGEST_VALUES) final Boolean suggestValues) {
       this.name = name;
       this.id = id;
       this.description = description;
@@ -70,6 +73,7 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
       this.lock = lock;
       this.function = function;
       this.usageCount = usageCount;
+      this.suggestValues = suggestValues;
    }
 
    public String getName() {
@@ -133,9 +137,17 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
       this.lock = lock;
    }
 
+   public Boolean getSuggestValues() {
+      return suggestValues;
+   }
+
+   public void setSuggestValues(final Boolean suggestValues) {
+      this.suggestValues = suggestValues;
+   }
+
    @JsonIgnore
    public Attribute copy() {
-      return new Attribute(getId(), getName(), getDescription(), getConstraint(), getLock(), getFunction(), getUsageCount());
+      return new Attribute(getId(), getName(), getDescription(), getConstraint(), getLock(), getFunction(), getUsageCount(), getSuggestValues());
    }
 
    @Override
@@ -183,6 +195,7 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
          setDescription(resource.getDescription());
          setConstraint(resource.getConstraint());
          setLock(resource.getLock());
+         setSuggestValues(resource.getSuggestValues());
       }
       if (roles.contains(RoleType.TechConfig)) {
          setFunction(resource.getFunction());
