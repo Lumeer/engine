@@ -56,7 +56,7 @@ public class JsFunctionsParser implements AutoCloseable {
          momentJsCode += new String(stream2.readAllBytes(), StandardCharsets.UTF_8);
          momentJsCode +=
                "; function " + FORMAT_JS_DATE  + "(time, format, locale) { return moment(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
-               "; function " + FORMAT_JS_DATE  + "(time, format, locale) { return moment(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
+               "; function " + FORMAT_JS_UTC_DATE  + "(time, format, locale) { return moment.utc(time).locale(locale).format((format || '').replace(/'/g, '\\\\\\'')); }" +
                "; function " + PARSE_JS_DATE + "(date, format, locale) { return moment((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } " +
                "; function " + PARSE_JS_UTC_DATE + "(date, format, locale) { return moment.utc((date || '').replace(/'/g, '\\\\\\''), (format || '').replace(/'/g, '\\\\\\''), locale).valueOf(); } ";
          heJsCode = new String(stream3.readAllBytes(), StandardCharsets.UTF_8);
@@ -85,7 +85,7 @@ public class JsFunctionsParser implements AutoCloseable {
       }
 
       try {
-         var result = utc ? parseMomentJsUtcDate.execute(date, format, locale) : parseMomentJsDate.execute(date, format, locale);
+         var result = Boolean.TRUE.equals(utc) ? parseMomentJsUtcDate.execute(date, format, locale) : parseMomentJsDate.execute(date, format, locale);
 
          if (result.isNull()) {
             return null;
@@ -119,7 +119,7 @@ public class JsFunctionsParser implements AutoCloseable {
       }
 
       try {
-         var result = utc ? formatMomentJsUtcDate.execute(time, format, locale) : formatMomentJsDate.execute(time, format, locale);
+         var result = Boolean.TRUE.equals(utc)  ? formatMomentJsUtcDate.execute(time, format, locale) : formatMomentJsDate.execute(time, format, locale);
 
          return result.asString();
       } catch (Exception e) {
