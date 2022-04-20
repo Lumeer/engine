@@ -18,12 +18,16 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Language;
+import io.lumeer.api.model.NotificationsSettings;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.ProductDemo;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
@@ -44,8 +48,10 @@ import io.lumeer.engine.api.event.RemoveUser;
 import io.lumeer.engine.api.event.UpdateCurrentUser;
 import io.lumeer.engine.api.event.UpdateDefaultWorkspace;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
+import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.InitialUserDataDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -54,10 +60,12 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -130,21 +138,19 @@ public class UserFacade extends AbstractFacade {
    @Inject
    private EventLogFacade eventLogFacade;
 
+   @Inject
+   private InitialUserDataDao initialUserDataDao;
+
+   @Inject
+   private DefaultViewConfigDao defaultViewConfigDao;
+
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
       checkUsersCreate(organizationId, 1);
 
       user.setEmail(user.getEmail().toLowerCase());
-      User storedUser = userDao.getUserByEmail(user.getEmail());
-
-      if (storedUser == null) {
-         return createUserAndSendNotification(organizationId, user);
-      }
-
-      User updatedUser = updateExistingUser(organizationId, storedUser, user);
-
-      return keepOnlyCurrentOrganization(updatedUser, organizationId);
+      return createUsersWithDefaultData(organizationId, null, Collections.singletonList(user)).get(0);
    }
 
    public void checkUserTimeZone(final User user, final String timeZone) {
@@ -210,16 +216,25 @@ public class UserFacade extends AbstractFacade {
       }
    }
 
-   private List<User> createUsersByInvitationsInOrganization(String organizationId, String projectId, List<UserInvitation> invitations) {
-      return invitations.stream().map(invitation -> {
+   private List<User> createUsersByInvitationsInOrganization(final String organizationId, final String projectId, final List<UserInvitation> invitations) {
+      var users = invitations.stream().map(invitation -> new User(invitation.getEmail())).collect(Collectors.toList());
+      return createUsersWithDefaultData(organizationId, projectId, users);
+   }
 
-         User storedUser = userDao.getUserByEmail(invitation.getEmail());
+   private List<User> createUsersWithDefaultData(final String organizationId, @Nullable final String projectId, final List<User> users) {
+      List<InitialUserData> dataList = initialUserDataDao.get(organizationId);
+      Map<String, List<DefaultViewConfig>> defaultViewConfigsMap = new HashMap<>();
+      List<Project> projects = projectDao.getAllProjects();
+
+      List<User> createdUsers = users.stream().map(user -> {
+
+         User storedUser = userDao.getUserByEmail(user.getEmail());
          if (storedUser == null) {
-            User newUser = new User(invitation.getEmail());
-            newUser.setOrganization(organizationId);
-            newUser.setDefaultWorkspace(new DefaultWorkspace(organizationId, projectId));
+            user.setOrganization(organizationId);
+            user.setDefaultWorkspace(new DefaultWorkspace(organizationId, projectId));
+            patchNewUserDefaultData(user, projects, dataList, defaultViewConfigsMap);
 
-            return createUserAndSendNotification(organizationId, newUser);
+            return createUserAndSendNotification(organizationId, user);
          }
 
          storedUser.setOrganizations(UserUtil.mergeOrganizations(storedUser.getOrganizations(), Set.of(organizationId)));
@@ -231,6 +246,16 @@ public class UserFacade extends AbstractFacade {
 
          return keepOnlyCurrentOrganization(updatedUser, organizationId);
       }).collect(Collectors.toList());
+
+      for (Project project : projects) {
+         List<DefaultViewConfig> configs = defaultViewConfigsMap.getOrDefault(project.getId(), new ArrayList<>());
+         if (configs.size() > 0) {
+            defaultViewConfigDao.setProject(project);
+            defaultViewConfigDao.insertConfigs(configs);
+         }
+      }
+
+      return createdUsers;
    }
 
    private void addUsersToOrganization(Organization organization, List<User> users) {
@@ -272,6 +297,37 @@ public class UserFacade extends AbstractFacade {
       }
 
       return created;
+   }
+
+   private void patchNewUserDefaultData(User user, List<Project> projects, List<InitialUserData> dataList, Map<String, List<DefaultViewConfig>> configsMap) {
+      // global settings
+      InitialUserData data = dataList.stream().filter(datum -> datum.getProjectId() == null).findFirst().orElse(null);
+      if (data != null) {
+         user.setLanguage(data.getLanguage());
+         user.setNotifications(new NotificationsSettings(data.getNotifications(), data.getLanguage()));
+      }
+
+      for (Project project : projects) {
+         InitialUserData projectData = dataList.stream().filter(datum -> Objects.equals(datum.getProjectId(), project.getId())).findFirst().orElse(data);
+         if (projectData != null && projectData.getDashboard() != null) {
+            configsMap.computeIfAbsent(project.getId(), id -> new ArrayList<>());
+            configsMap.get(project.getId()).add(new DefaultViewConfig("default", Perspective.Search.getValue(), projectData.getDashboard(), ZonedDateTime.now()));
+         }
+      }
+   }
+
+   private User createDefaultUserData(String organizationId) {
+      List<InitialUserData> dataList = initialUserDataDao.get(organizationId);
+
+      InitialUserData data = dataList.stream().filter(datum -> datum.getProjectId() == null).findFirst().orElse(null);
+      if (data != null) {
+         var user = new User(null);
+         user.setLanguage(data.getLanguage());
+         user.setNotifications(new NotificationsSettings(data.getNotifications(), data.getLanguage()));
+         return user;
+      }
+
+      return null;
    }
 
    public User getUser(String organizationId, String userId) {

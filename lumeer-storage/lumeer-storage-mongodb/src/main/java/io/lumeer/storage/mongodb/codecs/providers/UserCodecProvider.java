@@ -19,8 +19,10 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
+import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserOnboarding;
+import io.lumeer.storage.mongodb.codecs.InitialUserDataCodec;
 import io.lumeer.storage.mongodb.codecs.UserCodec;
 import io.lumeer.storage.mongodb.codecs.UserOnboardingCodec;
 
@@ -37,6 +39,9 @@ public class UserCodecProvider implements CodecProvider {
       }
       if (clazz == UserOnboarding.class) {
          return (Codec<T>) new UserOnboardingCodec(registry);
+      }
+      if (clazz == InitialUserData.class) {
+         return (Codec<T>) new InitialUserDataCodec(registry);
       }
 
       return null;

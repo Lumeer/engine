@@ -33,6 +33,7 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.InitialUserDataDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -90,6 +91,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private ResourceVariableDao resourceVariableDao;
+
+   @Inject
+   private InitialUserDataDao initialUserDataDao;
 
    @Inject
    private UserLoginDao userLoginDao;
@@ -380,6 +384,7 @@ public class OrganizationFacade extends AbstractFacade {
       favoriteItemDao.createRepository(organization);
       selectionListDao.createRepository(organization);
       resourceVariableDao.createRepository(organization);
+      initialUserDataDao.createRepository(organization);
    }
 
    private void deleteOrganizationScopedRepositories(Organization organization) {
@@ -394,6 +399,7 @@ public class OrganizationFacade extends AbstractFacade {
       favoriteItemDao.deleteRepository(organization);
       selectionListDao.deleteRepository(organization);
       resourceVariableDao.deleteRepository(organization);
+      initialUserDataDao.deleteRepository(organization);
 
       userCache.clear();
 

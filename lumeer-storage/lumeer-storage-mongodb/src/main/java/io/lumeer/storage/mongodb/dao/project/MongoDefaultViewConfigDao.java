@@ -67,6 +67,12 @@ public class MongoDefaultViewConfigDao extends MongoProjectScopedDao implements 
    }
 
    @Override
+   public List<DefaultViewConfig> insertConfigs(final List<DefaultViewConfig> configs) {
+      databaseCollection().insertMany(configs);
+      return configs;
+   }
+
+   @Override
    public DefaultViewConfig updateConfig(final DefaultViewConfig config) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
                                                                      .upsert(true);

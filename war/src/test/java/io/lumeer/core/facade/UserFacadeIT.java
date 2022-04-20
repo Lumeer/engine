@@ -38,6 +38,7 @@ import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.InitialUserDataDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -93,6 +94,9 @@ public class UserFacadeIT extends IntegrationTestBase {
    private FeedbackDao feedbackDao;
 
    @Inject
+   private InitialUserDataDao initialUserDataDao;
+
+   @Inject
    private PermissionsChecker permissionsChecker;
 
    @Before
@@ -118,6 +122,7 @@ public class UserFacadeIT extends IntegrationTestBase {
       organization3.setPermissions(new Permissions());
       organizationIdNotPermission = organizationDao.createOrganization(organization3).getId();
 
+      initialUserDataDao.setOrganization(organization);
       projectDao.setOrganization(organization);
       Project project = new Project();
       project.setCode("Lalala");

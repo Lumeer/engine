@@ -27,6 +27,10 @@ import java.util.Set;
 public class UserUtil {
 
    public static User mergeUsers(final User existingUser, final User updatedUser) {
+      if (updatedUser == null) {
+         return existingUser;
+      }
+
       final var user = new User(existingUser.getEmail());
 
       user.setId(existingUser.getId());
