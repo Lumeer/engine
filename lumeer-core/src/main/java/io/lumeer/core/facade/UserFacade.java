@@ -222,7 +222,7 @@ public class UserFacade extends AbstractFacade {
    }
 
    private List<User> createUsersWithDefaultData(final String organizationId, @Nullable final String projectId, final List<User> users) {
-      List<InitialUserData> dataList = initialUserDataDao.get(organizationId);
+      List<InitialUserData> dataList = initialUserDataDao.get();
       Map<String, List<DefaultViewConfig>> defaultViewConfigsMap = new HashMap<>();
       List<Project> projects = projectDao.getAllProjects();
 
@@ -247,8 +247,13 @@ public class UserFacade extends AbstractFacade {
          return keepOnlyCurrentOrganization(updatedUser, organizationId);
       }).collect(Collectors.toList());
 
+      Map<String, String> emailToIdMap = createdUsers.stream().collect(Collectors.toMap(User::getEmail, User::getId));
+
       for (Project project : projects) {
-         List<DefaultViewConfig> configs = defaultViewConfigsMap.getOrDefault(project.getId(), new ArrayList<>());
+         List<DefaultViewConfig> configs = defaultViewConfigsMap.getOrDefault(project.getId(), new ArrayList<>())
+               .stream().peek(config -> config.setUserId(emailToIdMap.get(config.getUserId())))
+               .collect(Collectors.toList());
+
          if (configs.size() > 0) {
             defaultViewConfigDao.setProject(project);
             defaultViewConfigDao.insertConfigs(configs);
@@ -303,31 +308,20 @@ public class UserFacade extends AbstractFacade {
       // global settings
       InitialUserData data = dataList.stream().filter(datum -> datum.getProjectId() == null).findFirst().orElse(null);
       if (data != null) {
-         user.setLanguage(data.getLanguage());
-         user.setNotifications(new NotificationsSettings(data.getNotifications(), data.getLanguage()));
+         var language = data.getLanguage() != null ? data.getLanguage().toString() : null;
+         user.setLanguage(language);
+         user.setNotifications(new NotificationsSettings(data.getNotifications(), language));
       }
 
       for (Project project : projects) {
          InitialUserData projectData = dataList.stream().filter(datum -> Objects.equals(datum.getProjectId(), project.getId())).findFirst().orElse(data);
          if (projectData != null && projectData.getDashboard() != null) {
             configsMap.computeIfAbsent(project.getId(), id -> new ArrayList<>());
-            configsMap.get(project.getId()).add(new DefaultViewConfig("default", Perspective.Search.getValue(), projectData.getDashboard(), ZonedDateTime.now()));
+            var defaultViewConfig = new DefaultViewConfig("default", Perspective.Search.getValue(), projectData.getDashboard(), ZonedDateTime.now());
+            defaultViewConfig.setUserId(user.getEmail());
+            configsMap.get(project.getId()).add(defaultViewConfig);
          }
       }
-   }
-
-   private User createDefaultUserData(String organizationId) {
-      List<InitialUserData> dataList = initialUserDataDao.get(organizationId);
-
-      InitialUserData data = dataList.stream().filter(datum -> datum.getProjectId() == null).findFirst().orElse(null);
-      if (data != null) {
-         var user = new User(null);
-         user.setLanguage(data.getLanguage());
-         user.setNotifications(new NotificationsSettings(data.getNotifications(), data.getLanguage()));
-         return user;
-      }
-
-      return null;
    }
 
    public User getUser(String organizationId, String userId) {

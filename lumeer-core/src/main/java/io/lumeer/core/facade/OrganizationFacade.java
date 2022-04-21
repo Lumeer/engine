@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.OrganizationLoginsInfo;
 import io.lumeer.api.model.Permission;
@@ -281,6 +282,18 @@ public class OrganizationFacade extends AbstractFacade {
 
          return serviceLimits.fitsLimits(projectDescription);
       }).collect(Collectors.toList());
+   }
+
+   public InitialUserData getInitialUserData() {
+      permissionsChecker.checkSystemPermission();
+
+      return initialUserDataDao.get().stream().filter(datum -> datum.getProjectId() == null).findFirst().orElse(null);
+   }
+
+   public InitialUserData setInitialUserData(InitialUserData data) {
+      permissionsChecker.checkSystemPermission();
+
+      return initialUserDataDao.upsert(data);
    }
 
    public int deleteOldOrganizations(int months) {

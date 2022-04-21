@@ -29,29 +29,20 @@ public class InitialUserData {
    public static final String NOTIFICATIONS = "notifications";
    public static final String LANGUAGE = "language";
 
-   private String organizationId;
    private String projectId;
 
    private List<NotificationSetting> notifications;
-   private String language;
+   private Language language;
    private Object dashboard;
 
    @JsonCreator
    public InitialUserData(
          @JsonProperty(DASHBOARD) final Object dashboard,
          @JsonProperty(NOTIFICATIONS) final List<NotificationSetting> notifications,
-         @JsonProperty(LANGUAGE) final String language) {
+         @JsonProperty(LANGUAGE) final Language language) {
       this.dashboard = dashboard;
       this.notifications = notifications;
       this.language = language;
-   }
-
-   public String getOrganizationId() {
-      return organizationId;
-   }
-
-   public void setOrganizationId(final String organizationId) {
-      this.organizationId = organizationId;
    }
 
    public String getProjectId() {
@@ -62,7 +53,7 @@ public class InitialUserData {
       this.projectId = projectId;
    }
 
-   public String getLanguage() {
+   public Language getLanguage() {
       return language;
    }
 
@@ -77,7 +68,6 @@ public class InitialUserData {
    @Override
    public String toString() {
       return "InitialUserData{" +
-            "organizationId='" + organizationId + '\'' +
             ", projectId='" + projectId + '\'' +
             ", notifications=" + notifications +
             ", language='" + language + '\'' +

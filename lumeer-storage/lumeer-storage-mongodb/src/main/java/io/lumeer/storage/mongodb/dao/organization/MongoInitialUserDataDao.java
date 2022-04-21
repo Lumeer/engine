@@ -65,22 +65,12 @@ public class MongoInitialUserDataDao extends MongoOrganizationScopedDao implemen
       final List<Document> indexes = collection.listIndexes().into(new ArrayList<>());
 
       if (indexes.isEmpty()) {
-         collection.createIndex(Indexes.ascending(InitialUserDataCodec.ORGANIZATION_ID, InitialUserDataCodec.PROJECT_ID), new IndexOptions().unique(true));
+         collection.createIndex(Indexes.ascending(InitialUserDataCodec.PROJECT_ID), new IndexOptions().unique(true));
       }
    }
 
    @Override
-   public InitialUserData create(final InitialUserData data) {
-      try {
-         databaseCollection().insertOne(data);
-         return data;
-      } catch (MongoException ex) {
-         throw new StorageException("Cannot create initial user data " + data, ex);
-      }
-   }
-
-   @Override
-   public InitialUserData update(final InitialUserData data) {
+   public InitialUserData upsert(final InitialUserData data) {
       FindOneAndReplaceOptions options = new FindOneAndReplaceOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       try {
          return databaseCollection().findOneAndReplace(dataFilter(data), data, options);
@@ -90,13 +80,7 @@ public class MongoInitialUserDataDao extends MongoOrganizationScopedDao implemen
    }
 
    private Bson dataFilter(InitialUserData data) {
-      if (data.getProjectId() != null) {
-         return Filters.and(
-               Filters.eq(InitialUserDataCodec.ORGANIZATION_ID, data.getOrganizationId()),
-               Filters.eq(InitialUserDataCodec.PROJECT_ID, data.getProjectId())
-         );
-      }
-      return Filters.eq(InitialUserDataCodec.ORGANIZATION_ID, data.getOrganizationId());
+      return Filters.eq(InitialUserDataCodec.PROJECT_ID, data.getProjectId());
    }
 
    @Override
@@ -108,9 +92,8 @@ public class MongoInitialUserDataDao extends MongoOrganizationScopedDao implemen
    }
 
    @Override
-   public List<InitialUserData> get(final String organizationId) {
-      Bson filter = Filters.eq(InitialUserDataCodec.ORGANIZATION_ID, organizationId);
-      return databaseCollection().find(filter).into(new ArrayList<>());
+   public List<InitialUserData> get() {
+      return databaseCollection().find(new Document()).into(new ArrayList<>());
    }
 
    MongoCollection<InitialUserData> databaseCollection() {

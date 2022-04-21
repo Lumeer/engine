@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.CompanyContact;
+import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.Permission;
@@ -223,10 +224,18 @@ public class OrganizationService extends AbstractService {
             returnUrl);
    }
 
+   @POST
+   @Path("{organizationId:[0-9a-fA-F]{24}}/initial-user-data")
+   public InitialUserData setInitialUserData(@PathParam("organizationId") final String organizationId, final InitialUserData initialUserData) {
+      workspaceKeeper.setOrganizationId(organizationId);
+      return organizationFacade.setInitialUserData(initialUserData);
+   }
+
    @GET
-   @Path("{organizationId:[0-9a-fA-F]{24}}/contact")
-   public CompanyContact getCompanyContact(@PathParam("organizationId") final String organizationId) {
-      return companyContactFacade.getCompanyContact(organizationFacade.getOrganizationById(organizationId));
+   @Path("{organizationId:[0-9a-fA-F]{24}}/initial-user-data")
+   public InitialUserData getInitialUserData(@PathParam("organizationId") final String organizationId) {
+      workspaceKeeper.setOrganizationId(organizationId);
+      return organizationFacade.getInitialUserData();
    }
 
    @PUT

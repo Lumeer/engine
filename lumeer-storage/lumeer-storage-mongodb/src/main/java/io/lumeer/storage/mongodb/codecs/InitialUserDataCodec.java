@@ -19,6 +19,7 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.InitialUserData;
+import io.lumeer.api.model.Language;
 import io.lumeer.api.model.NotificationSetting;
 
 import org.bson.BsonReader;
@@ -35,7 +36,6 @@ import java.util.stream.Collectors;
 
 public class InitialUserDataCodec implements Codec<InitialUserData> {
 
-   public static final String ORGANIZATION_ID = "userId";
    public static final String PROJECT_ID = "projectId";
    public static final String LANGUAGE = "language";
    public static final String DASHBOARD = "dashboard";
@@ -51,10 +51,9 @@ public class InitialUserDataCodec implements Codec<InitialUserData> {
    public InitialUserData decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       Document bson = configCodec.decode(bsonReader, decoderContext);
 
-      String organizationId = bson.getString(ORGANIZATION_ID);
       String projectId = bson.getString(PROJECT_ID);
       Object dashboardConfig = bson.get(DASHBOARD);
-      String language = bson.getString(LANGUAGE);
+      Language language = Language.fromString(bson.getString(LANGUAGE));
       List<Document> notificationsList = bson.getList(NOTIFICATIONS, Document.class);
       List<NotificationSetting> notifications = new ArrayList<>();
       if(notificationsList != null) {
@@ -62,7 +61,6 @@ public class InitialUserDataCodec implements Codec<InitialUserData> {
       }
 
       var data = new InitialUserData(dashboardConfig, notifications, language);
-      data.setOrganizationId(organizationId);
       data.setProjectId(projectId);
 
       return data;
@@ -71,11 +69,10 @@ public class InitialUserDataCodec implements Codec<InitialUserData> {
    @Override
    public void encode(final BsonWriter bsonWriter, final InitialUserData config, final EncoderContext encoderContext) {
       Document bson = new Document()
-            .append(ORGANIZATION_ID, config.getOrganizationId())
             .append(PROJECT_ID, config.getProjectId())
-            .append(LANGUAGE, config.getLanguage())
+            .append(LANGUAGE, config.getLanguage() != null ? config.getLanguage().toString() : null)
             .append(DASHBOARD, config.getDashboard())
-            .append(NOTIFICATIONS, config.getLanguage());
+            .append(NOTIFICATIONS, config.getNotifications());
 
 
       configCodec.encode(bsonWriter, bson, encoderContext);

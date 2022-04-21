@@ -27,11 +27,9 @@ public interface InitialUserDataDao extends OrganizationScopedDao {
 
    void ensureIndexes(Organization organization);
 
-   InitialUserData create(InitialUserData data);
-
-   InitialUserData update(InitialUserData data);
+   InitialUserData upsert(InitialUserData data);
 
    void delete(InitialUserData data);
 
-   List<InitialUserData> get(String organizationId);
+   List<InitialUserData> get();
 }
