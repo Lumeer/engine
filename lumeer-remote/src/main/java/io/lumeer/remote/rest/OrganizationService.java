@@ -238,6 +238,12 @@ public class OrganizationService extends AbstractService {
       return organizationFacade.getInitialUserData();
    }
 
+   @GET
+   @Path("{organizationId:[0-9a-fA-F]{24}}/contact")
+   public CompanyContact getCompanyContact(@PathParam("organizationId") final String organizationId) {
+      return companyContactFacade.getCompanyContact(organizationFacade.getOrganizationById(organizationId));
+   }
+
    @PUT
    @Path("{organizationId:[0-9a-fA-F]{24}}/contact")
    @HealthCheck
