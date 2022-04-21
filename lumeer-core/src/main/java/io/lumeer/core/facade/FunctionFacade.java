@@ -95,6 +95,8 @@ public class FunctionFacade extends AbstractFacade {
       facade.linkTypeDao = linkTypeDao;
       facade.contextualTaskFactory = taskFactory;
 
+      facade.init();
+
       return facade;
    }
 

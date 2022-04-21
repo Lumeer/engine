@@ -134,9 +134,8 @@ public class AutoLinkRuleTaskExecutor {
             });
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
-            final List<String> skipCollectionIds = List.of(thisCollection);
             linksForRemoval.forEach(linkInstance -> {
-               taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(matcher.getLinkType(), Collections.singletonList(linkInstance), skipCollectionIds));
+               taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(matcher.getLinkType(), Collections.singletonList(linkInstance)));
             });
          }
 
@@ -195,9 +194,8 @@ public class AutoLinkRuleTaskExecutor {
             });
 
             final FunctionFacade functionFacade = ruleTask.getFunctionFacade();
-            final List<String> skipCollectionIds = List.of(thisCollection);
             linkInstances.forEach(linkInstance -> {
-               taskExecutor.submitTask(functionFacade.createTaskForCreatedLinks(matcher.getLinkType(), Collections.singletonList(linkInstance), skipCollectionIds));
+               taskExecutor.submitTask(functionFacade.createTaskForCreatedLinks(matcher.getLinkType(), Collections.singletonList(linkInstance)));
             });
          }
       }

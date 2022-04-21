@@ -391,59 +391,62 @@ public class SingleStage extends Stage {
 
          final DataDocument beforePatch = task.getDaoContextSnapshot().getLinkDataDao().getData(linkInstance.getLinkTypeId(), linkInstance.getId());
 
-         DataDocument patchedData = task.getDaoContextSnapshot().getLinkDataDao()
-                                        .patchData(linkInstance.getLinkTypeId(), linkInstance.getId(), newData);
+         // thanks to an auto-link rule, the link could have ceased to exist
+         if (task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstances(Set.of(linkInstance.getId())).size() > 0){
+            DataDocument patchedData = task.getDaoContextSnapshot().getLinkDataDao()
+                 .patchData(linkInstance.getLinkTypeId(), linkInstance.getId(), newData);
 
-         LinkInstance updatedLink = task.getDaoContextSnapshot().getLinkInstanceDao()
-                                        .updateLinkInstance(linkInstance.getId(), linkInstance);
+            LinkInstance updatedLink = task.getDaoContextSnapshot().getLinkInstanceDao()
+                    .updateLinkInstance(linkInstance.getId(), linkInstance);
 
-         updatedLink.setData(patchedData);
+            updatedLink.setData(patchedData);
 
-         var oldDataDecoded = constraintManager.decodeDataTypes(linkType, beforePatch);
-         var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
+            var oldDataDecoded = constraintManager.decodeDataTypes(linkType, beforePatch);
+            var patchedDataDecoded = constraintManager.decodeDataTypes(linkType, patchedData);
 
-         auditAdapter.registerDataChange(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
-               task.getInitiator(), automationName, null, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
+            auditAdapter.registerDataChange(updatedLink.getLinkTypeId(), ResourceType.LINK, updatedLink.getId(),
+                    task.getInitiator(), automationName, null, beforePatch, oldDataDecoded, patchedData, patchedDataDecoded);
 
-         // add patched data to new links
-         boolean created = false;
-         if (StringUtils.isNotEmpty(linkInstance.getTemplateId())) {
-            final LinkInstance link = linksByCorrelationId.get(linkInstance.getTemplateId());
+            // add patched data to new links
+            boolean created = false;
+            if (StringUtils.isNotEmpty(linkInstance.getTemplateId())) {
+               final LinkInstance link = linksByCorrelationId.get(linkInstance.getTemplateId());
 
-            if (link != null) {
-               link.setData(patchedData);
-               created = true;
-            }
-         }
-
-         if (task instanceof RuleTask) {
-            if (created) {
-               taskProcessingFacade.onCreateLink(new CreateLinkInstance(updatedLink));
-            } else {
-               if (task.getRecursionDepth() == 0) {
-                  // there are now 3 versions of the document:
-                  // 1) the document before user triggered an update - original document (null when triggered by action button)
-                  // 2) the document with the new user entered value - before patch
-                  // 3) the document with the value computed by the rule based on the previous two - updated document
-                  // this rule got executed because of change from 1 to 2
-                  // for the recursive rules, we need to trigger rules for changes between 2 and 3
-                  final UpdateLinkInstance updateLinkInstanceEvent;
-                  final LinkInstance orig = new LinkInstance(linkInstance);
-                  orig.setData(beforePatch);
-                  updateLinkInstanceEvent = new UpdateLinkInstance(updatedLink, orig);
-
-                  taskProcessingFacade.onUpdateLink(updateLinkInstanceEvent, ((RuleTask) task).getRule().getName());
-               } else {
-                  taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+               if (link != null) {
+                  link.setData(patchedData);
+                  created = true;
                }
             }
+
+            if (task instanceof RuleTask) {
+               if (created) {
+                  taskProcessingFacade.onCreateLink(new CreateLinkInstance(updatedLink));
+               } else {
+                  if (task.getRecursionDepth() == 0) {
+                     // there are now 3 versions of the document:
+                     // 1) the document before user triggered an update - original document (null when triggered by action button)
+                     // 2) the document with the new user entered value - before patch
+                     // 3) the document with the value computed by the rule based on the previous two - updated document
+                     // this rule got executed because of change from 1 to 2
+                     // for the recursive rules, we need to trigger rules for changes between 2 and 3
+                     final UpdateLinkInstance updateLinkInstanceEvent;
+                     final LinkInstance orig = new LinkInstance(linkInstance);
+                     orig.setData(beforePatch);
+                     updateLinkInstanceEvent = new UpdateLinkInstance(updatedLink, orig);
+
+                     taskProcessingFacade.onUpdateLink(updateLinkInstanceEvent, ((RuleTask) task).getRule().getName());
+                  } else {
+                     taskExecutor.submitTask(functionFacade.creatTaskForChangedLink(linkType, originalLinkInstance, updatedLink, aggregatedUpdate.keySet()));
+                  }
+               }
+            }
+
+            patchedData = constraintManager.decodeDataTypes(linkType, patchedData);
+            updatedLink.setData(patchedData);
+
+            updatedLinks.computeIfAbsent(linkInstance.getLinkTypeId(), key -> new ArrayList<>())
+                    .add(updatedLink);
          }
-
-         patchedData = constraintManager.decodeDataTypes(linkType, patchedData);
-         updatedLink.setData(patchedData);
-
-         updatedLinks.computeIfAbsent(linkInstance.getLinkTypeId(), key -> new ArrayList<>())
-                     .add(updatedLink);
       });
 
       unprocessedCreatedLinks.forEach(id -> {
