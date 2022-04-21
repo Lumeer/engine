@@ -80,6 +80,7 @@ public class UserService extends AbstractService {
    @JsonView(UserViews.DefaultView.class)
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users")
    public List<User> getUsers(@PathParam("organizationId") String organizationId) {
+      workspaceKeeper.setOrganizationId(organizationId);
       return userFacade.getUsers(organizationId);
    }
 
@@ -88,6 +89,7 @@ public class UserService extends AbstractService {
    @JsonView(UserViews.DefaultView.class)
    @HealthCheck
    public User createUserInOrganization(@PathParam("organizationId") String organizationId, User user) {
+      workspaceKeeper.setOrganizationId(organizationId);
       return userFacade.createUser(organizationId, user);
    }
 
@@ -96,6 +98,7 @@ public class UserService extends AbstractService {
    @JsonView(UserViews.DefaultView.class)
    @HealthCheck
    public List<User> createUsersInOrganization(@PathParam("organizationId") final String organizationId, @PathParam("projectId") final String projectId, final List<UserInvitation> invitations) {
+      workspaceKeeper.setOrganizationId(organizationId);
       return userFacade.createUsersInWorkspace(organizationId, projectId, invitations);
    }
 
@@ -103,6 +106,7 @@ public class UserService extends AbstractService {
    @Path("organizations/{organizationId:[0-9a-fA-F]{24}}/users/{userId:[0-9a-fA-F]{24}}")
    @JsonView(UserViews.DefaultView.class)
    public User getUser(@PathParam("organizationId") String organizationId, @PathParam("userId") String userId) {
+      workspaceKeeper.setOrganizationId(organizationId);
       return userFacade.getUser(organizationId, userId);
    }
 
@@ -112,6 +116,7 @@ public class UserService extends AbstractService {
    @HealthCheck
    public User updateUserInOrganization(@PathParam("organizationId") String organizationId,
          @PathParam("userId") String userId, User user) {
+      workspaceKeeper.setOrganizationId(organizationId);
       return userFacade.updateUser(organizationId, userId, user);
    }
 

@@ -18,6 +18,7 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.OrganizationLoginsInfo;
 import io.lumeer.api.model.Permission;
@@ -33,6 +34,7 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.DelayedActionDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
 import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.InitialUserDataDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -90,6 +92,9 @@ public class OrganizationFacade extends AbstractFacade {
 
    @Inject
    private ResourceVariableDao resourceVariableDao;
+
+   @Inject
+   private InitialUserDataDao initialUserDataDao;
 
    @Inject
    private UserLoginDao userLoginDao;
@@ -279,6 +284,18 @@ public class OrganizationFacade extends AbstractFacade {
       }).collect(Collectors.toList());
    }
 
+   public InitialUserData getInitialUserData() {
+      permissionsChecker.checkSystemPermission();
+
+      return initialUserDataDao.get().stream().filter(datum -> datum.getProjectId() == null).findFirst().orElse(null);
+   }
+
+   public InitialUserData setInitialUserData(InitialUserData data) {
+      permissionsChecker.checkSystemPermission();
+
+      return initialUserDataDao.upsert(data);
+   }
+
    public int deleteOldOrganizations(int months) {
       permissionsChecker.checkSystemPermission();
 
@@ -380,6 +397,7 @@ public class OrganizationFacade extends AbstractFacade {
       favoriteItemDao.createRepository(organization);
       selectionListDao.createRepository(organization);
       resourceVariableDao.createRepository(organization);
+      initialUserDataDao.createRepository(organization);
    }
 
    private void deleteOrganizationScopedRepositories(Organization organization) {
@@ -394,6 +412,7 @@ public class OrganizationFacade extends AbstractFacade {
       favoriteItemDao.deleteRepository(organization);
       selectionListDao.deleteRepository(organization);
       resourceVariableDao.deleteRepository(organization);
+      initialUserDataDao.deleteRepository(organization);
 
       userCache.clear();
 

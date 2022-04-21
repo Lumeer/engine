@@ -18,18 +18,18 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.DefaultViewConfig;
+import io.lumeer.api.model.InitialUserData;
+import io.lumeer.api.model.Organization;
 
 import java.util.List;
 
-public interface DefaultViewConfigDao extends ProjectScopedDao {
+public interface InitialUserDataDao extends OrganizationScopedDao {
 
-   List<DefaultViewConfig> insertConfigs(final List<DefaultViewConfig> configs);
+   void ensureIndexes(Organization organization);
 
-   DefaultViewConfig updateConfig(final DefaultViewConfig config);
+   InitialUserData upsert(InitialUserData data);
 
-   List<DefaultViewConfig> getConfigs(final String userId);
+   void delete(InitialUserData data);
 
-   void deleteByCollection(final String collectionId);
-
+   List<InitialUserData> get();
 }

@@ -7,7 +7,6 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
-import io.lumeer.core.facade.UserFacade;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 
@@ -45,9 +44,6 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private UserDao userDao;
-
-   @Inject
-   private UserFacade userFacade;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -156,7 +152,14 @@ public class UserServiceIT extends ServiceIntegrationTestBase {
    }
 
    private User createUser(String organizationId, String user) {
-      return userFacade.createUser(organizationId, prepareUser(organizationId, user));
+      var storedUser = userDao.getUserByEmail(user);
+      if (storedUser == null) {
+         return userDao.createUser(prepareUser(organizationId, user));
+      }
+      var organizations = new HashSet<>(storedUser.getOrganizations());
+      organizations.add(organizationId);
+      storedUser.setOrganizations(organizations);
+      return userDao.updateUser(storedUser.getId(), storedUser);
    }
 
    private User getUser(String organizationId, String user) {

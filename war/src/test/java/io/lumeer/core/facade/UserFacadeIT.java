@@ -20,12 +20,20 @@ package io.lumeer.core.facade;
 
 import static org.assertj.core.api.Assertions.*;
 
+import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Feedback;
+import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.InvitationType;
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.NotificationChannel;
+import io.lumeer.api.model.NotificationFrequency;
+import io.lumeer.api.model.NotificationSetting;
+import io.lumeer.api.model.NotificationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
@@ -37,22 +45,28 @@ import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.storage.api.dao.DefaultViewConfigDao;
 import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.InitialUserDataDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.bson.Document;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.inject.Inject;
@@ -93,6 +107,12 @@ public class UserFacadeIT extends IntegrationTestBase {
    private FeedbackDao feedbackDao;
 
    @Inject
+   private InitialUserDataDao initialUserDataDao;
+
+   @Inject
+   private DefaultViewConfigDao defaultViewConfigDao;
+
+   @Inject
    private PermissionsChecker permissionsChecker;
 
    @Before
@@ -118,12 +138,14 @@ public class UserFacadeIT extends IntegrationTestBase {
       organization3.setPermissions(new Permissions());
       organizationIdNotPermission = organizationDao.createOrganization(organization3).getId();
 
+      initialUserDataDao.setOrganization(organization);
       projectDao.setOrganization(organization);
       Project project = new Project();
       project.setCode("Lalala");
       project.setPermissions(new Permissions());
       project.getPermissions().updateUserPermissions(new Permission(createdUser.getId(), Project.ROLES));
       this.project = projectDao.createProject(project);
+      defaultViewConfigDao.setProject(project);
 
       permissionsChecker.getPermissionAdapter().invalidateUserCache();
    }
@@ -138,6 +160,44 @@ public class UserFacadeIT extends IntegrationTestBase {
       assertThat(stored.getName()).isEqualTo(USER1);
       assertThat(stored.getEmail()).isEqualTo(USER1);
       assertThat(stored.getOrganizations()).containsOnly(organizationId1);
+   }
+
+   @Test
+   public void testCreateUserWithInitialData() throws IOException {
+      String dashboardJson = "{\"search\":{\"documents\":{\"groupBy\":\"priority\",\"sortBy\":[{\"attribute\":\"state\"},{\"attribute\":\"dueDate\",\"type\":\"desc\"},{\"attribute\":\"priority\"},{\"attribute\":\"lastUsed\"}]}}}";
+      ObjectMapper mapper = new ObjectMapper();
+      Map<String, Object> dashboard = mapper.readValue(dashboardJson, Map.class);
+      List<NotificationSetting> notificationSettings = List.of(
+            new NotificationSetting(NotificationType.DUE_DATE_SOON, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.PAST_DUE_DATE, NotificationChannel.Internal, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.DUE_DATE_CHANGED, NotificationChannel.Internal, NotificationFrequency.Immediately),
+
+            new NotificationSetting(NotificationType.ORGANIZATION_SHARED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_COMMENTED, NotificationChannel.Email, NotificationFrequency.Immediately),
+            new NotificationSetting(NotificationType.TASK_MENTIONED, NotificationChannel.Email, NotificationFrequency.Immediately)
+      );
+
+      InitialUserData data = new InitialUserData(dashboard, notificationSettings, Language.CS);
+      initialUserDataDao.upsert(data);
+
+      userFacade.createUser(organizationId1, prepareUser(organizationId1, USER1));
+
+      User stored = getUser(organizationId1, USER1);
+
+      assertThat(stored).isNotNull();
+      assertThat(stored.getName()).isEqualTo(USER1);
+      assertThat(stored.getEmail()).isEqualTo(USER1);
+      assertThat(stored.getLanguage()).isEqualTo(Language.CS.toString());
+      assertThat(stored.getNotificationsSettingsList()).hasSizeGreaterThanOrEqualTo(6);
+      assertThat(stored.getNotificationsSettingsList()).containsAll(notificationSettings);
+      assertThat(stored.getNotificationsLanguage()).isEqualTo(Language.CS.toString());
+      assertThat(stored.getOrganizations()).containsOnly(organizationId1);
+
+      List<DefaultViewConfig> configs = defaultViewConfigDao.getConfigs(stored.getId());
+      assertThat(configs).hasSize(1);
+      assertThat(configs.get(0).getKey()).isEqualTo("default");
+      assertThat(configs.get(0).getPerspective()).isEqualTo(Perspective.Search.toString());
+      assertThat(mapper.writeValueAsString(configs.get(0).getConfig())).isEqualTo(dashboardJson);
    }
 
    @Test
