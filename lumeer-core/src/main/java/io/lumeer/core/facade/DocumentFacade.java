@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
-import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.DocumentsChain;
 import io.lumeer.api.model.FileAttachment;
@@ -460,13 +459,6 @@ public class DocumentFacade extends AbstractFacade {
       dataDao.deleteData(collection.getId(), documentId);
 
       deleteDocumentBasedData(collectionId, documentId);
-
-      // remove all file attachments
-      collection.getAttributes().forEach(attribute -> {
-         if (attribute.getConstraint() != null && attribute.getConstraint().getType().equals(ConstraintType.FileAttachment)) {
-            fileAttachmentFacade.removeAllFileAttachments(collectionId, documentId, attribute.getId(), FileAttachment.AttachmentType.DOCUMENT);
-         }
-      });
    }
 
    private void deleteDocumentBasedData(String collectionId, String documentId) {

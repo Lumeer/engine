@@ -41,6 +41,7 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.PostConstruct;
 
 public class MongoFileAttachmentDao extends MongoSystemScopedDao implements FileAttachmentDao {
@@ -151,6 +152,19 @@ public class MongoFileAttachmentDao extends MongoSystemScopedDao implements File
                   Filters.eq(FileAttachmentCodec.COLLECTION_ID, collectionId),
                   Filters.eq(FileAttachmentCodec.DOCUMENT_ID, documentId),
                   Filters.eq(FileAttachmentCodec.ATTRIBUTE_ID, attributeId),
+                  Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
+            );
+
+      return databaseCollection().find(attachmentFilter).into(new ArrayList<>());
+   }
+
+   @Override
+   public List<FileAttachment> findAllFileAttachments(final Organization organization, final Project project, final Set<String> resourceIds, final FileAttachment.AttachmentType type) {
+      final Bson attachmentFilter =
+            Filters.and(
+                  Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
+                  Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
+                  Filters.eq(FileAttachmentCodec.DOCUMENT_ID, resourceIds),
                   Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
             );
 

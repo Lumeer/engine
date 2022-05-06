@@ -24,8 +24,9 @@ import io.lumeer.api.model.Organization
 import io.lumeer.api.model.Project
 import io.lumeer.core.util.LumeerS3Client
 import io.lumeer.storage.api.dao.FileAttachmentDao
-import java.nio.ByteBuffer
 import java.util.function.Consumer
+
+private const val MAX_IDS_QUERY = 500
 
 class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachmentDao: FileAttachmentDao, val environment: String) {
 
@@ -37,16 +38,20 @@ class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachme
 
    fun getAllFileAttachments(organization: Organization, project: Project, collectionId: String, documentId: String, attributeId: String, type: AttachmentType): List<FileAttachment> =
       fileAttachmentDao.findAllFileAttachments(
-            organization,
-            project,
-            collectionId, documentId, attributeId, type)
+         organization,
+         project,
+         collectionId, documentId, attributeId, type
+      )
+
+   fun getAllFileAttachments(organization: Organization, project: Project, resourceIds: Set<String>, type: AttachmentType): List<FileAttachment> =
+      fileAttachmentDao.findAllFileAttachments(organization, project, resourceIds, type)
 
    fun getFileAttachmentNames(organization: Organization, project: Project, collectionId: String, documentId: String, attributeId: String, type: AttachmentType): String =
-         fileAttachmentDao.findAllFileAttachments(
-               organization,
-               project,
-               collectionId, documentId, attributeId, type
-         ).joinToString(",", "[", "]") { "'" + "${it.id}:${it.fileName}".replace("([\\'\\\\])".toRegex(), "\\\\$1") + "'" }
+      fileAttachmentDao.findAllFileAttachments(
+         organization,
+         project,
+         collectionId, documentId, attributeId, type
+      ).joinToString(",", "[", "]") { "'" + "${it.id}:${it.fileName}".replace("([\\'\\\\])".toRegex(), "\\\\$1") + "'" }
 
    fun removeFileAttachments(attachmentLocation: String) {
       if (lumeerS3Client.isInitialized) {
@@ -66,7 +71,12 @@ class FileAttachmentAdapter(val lumeerS3Client: LumeerS3Client, val fileAttachme
       if (lumeerS3Client.isInitialized) {
          fileAttachments.forEach(Consumer { fileAttachment -> lumeerS3Client.deleteObject(getFileAttachmentKey(fileAttachment)) })
       }
-      fileAttachmentDao.removeFileAttachments(fileAttachments.map { it.id })
+
+      // large queries throw error in mongoDB
+      fileAttachments.map { it.id }.chunked(MAX_IDS_QUERY).forEach { ids ->
+         fileAttachmentDao.removeFileAttachments(ids)
+      }
+
    }
 
    fun readFileAttachment(fileAttachment: FileAttachment): ByteArray {

@@ -23,6 +23,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 
 import java.util.List;
+import java.util.Set;
 
 public interface FileAttachmentDao {
 
@@ -43,6 +44,8 @@ public interface FileAttachmentDao {
    List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, FileAttachment.AttachmentType type);
 
    List<FileAttachment> findAllFileAttachments(Organization organization, Project project, String collectionId, String documentId, String attributeId, FileAttachment.AttachmentType type);
+
+   List<FileAttachment> findAllFileAttachments(Organization organization, Project project, Set<String> resourceIds, FileAttachment.AttachmentType type);
 
    boolean removeFileAttachment(String fileAttachmentId);
 

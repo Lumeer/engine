@@ -115,10 +115,6 @@ class AuditAdapter(private val auditDao: AuditDao) {
                if (!changes.containsKey(it)) partialOldState.remove(it)
             }
 
-            // we need to clean the history only when adding new entries
-            // we keep business level history in case the user upgraded
-            auditDao.cleanAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minusWeeks(BUSINESS_MAX_WEEKS))
-
             val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, changes)
             auditRecord.type = AuditType.Updated
             auditDao.createAuditRecord(auditRecord)
