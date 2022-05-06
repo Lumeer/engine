@@ -269,9 +269,11 @@ public class DocumentFacade extends AbstractFacade {
 
    public DocumentsChain createDocumentsChain(List<Document> documents, List<LinkInstance> linkInstances) {
       var collectionsMap = documents.stream()
+                                    .filter(document -> document.getId() == null)
                                     .map(document -> checkCreateDocuments(document.getCollectionId()))
                                     .collect(Collectors.toMap(Resource::getId, Function.identity()));
       var linkTypesMap = linkInstances.stream()
+                                      .filter(linkInstance -> linkInstance.getId() == null)
                                       .map(linkInstanceId -> checkCreateLinks(linkInstanceId.getLinkTypeId()))
                                       .collect(Collectors.toMap(LinkType::getId, Function.identity()));
 
@@ -300,13 +302,13 @@ public class DocumentFacade extends AbstractFacade {
 
          var linkInstance = linkInstances.size() > linkInstanceIndex ? linkInstances.get(linkInstanceIndex) : null;
          if (previousDocumentId != null && linkInstance != null) {
-            var linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
             linkInstance.setDocumentIds(Arrays.asList(previousDocumentId, currentDocumentId));
             if (linkInstance.getId() != null) {
                var updatedLinkInstance = linkInstanceDao.updateLinkInstance(linkInstance.getId(), linkInstance);
                updatedLinkInstance.setData(linkInstance.getData());
                createdLinks.add(updatedLinkInstance);
             } else {
+               var linkType = linkTypesMap.get(linkInstance.getLinkTypeId());
                var linkData = linkInstanceFacade.createLinkInstance(linkType, linkInstance);
                createdLinks.add(linkData.getSecond());
             }

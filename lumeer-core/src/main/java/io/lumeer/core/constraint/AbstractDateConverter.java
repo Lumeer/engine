@@ -48,14 +48,14 @@ public abstract class AbstractDateConverter extends AbstractConstraintConverter 
          if (StringUtils.isNotEmpty(format)) {
             this.format = format;
             this.userLocale = userLocale;
-            initialized = true;
+            this.initialized = true;
          }
 
          var asUtc = config.get("asUtc");
          if (asUtc != null) {
-            asUtc = Boolean.valueOf(asUtc.toString());
+            this.utc = Boolean.valueOf(asUtc.toString());
          } else {
-            asUtc = false;
+            this.utc = false;
          }
       }
    }
