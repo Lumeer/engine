@@ -164,7 +164,7 @@ public class MongoFileAttachmentDao extends MongoSystemScopedDao implements File
             Filters.and(
                   Filters.eq(FileAttachmentCodec.ORGANIZATION_ID, organization.getId()),
                   Filters.eq(FileAttachmentCodec.PROJECT_ID, project.getId()),
-                  Filters.eq(FileAttachmentCodec.DOCUMENT_ID, resourceIds),
+                  Filters.in(FileAttachmentCodec.DOCUMENT_ID, resourceIds),
                   Filters.eq(FileAttachmentCodec.ATTACHMENT_TYPE, type.ordinal())
             );
 

@@ -124,8 +124,7 @@ public class CronTaskProcessor extends WorkspaceContext {
          final Collection bookedCollection = dao.getCollectionDao().updateCollectionRules(collection);
 
          rulesToExecute.forEach((key, rule) -> {
-            log.log(
-                  Level.INFO,
+            log.info(
                   String.format("Running cron rule on %s/%s, %s, '%s'.",
                         dao.getOrganization().getCode(),
                         dao.getProject().getCode(),

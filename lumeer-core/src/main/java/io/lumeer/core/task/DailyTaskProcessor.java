@@ -36,6 +36,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
@@ -52,7 +53,9 @@ public class DailyTaskProcessor extends WorkspaceContext {
    @Inject
    private FileAttachmentDao fileAttachmentDao;
 
-   @Schedule(hour = "6") // every day at 6:00 am
+   private static final Logger log = Logger.getLogger(DailyTaskProcessor.class.getName());
+
+   @Schedule(hour = "4", minute = "3") // every day at 4:03 am
    public void process() {
 
       final List<Organization> organizations = organizationDao.getAllOrganizations();
@@ -60,6 +63,8 @@ public class DailyTaskProcessor extends WorkspaceContext {
       final FileAttachmentAdapter fileAttachmentAdapter = new FileAttachmentAdapter(lumeerS3Client, fileAttachmentDao, configurationProducer.getEnvironment().name());
 
       final List<FileAttachment> attachmentsToDelete = new ArrayList<>();
+
+      log.info(String.format("Running for %d organizations.", organizations.size()));
 
       organizations.forEach(organization -> {
          final DataStorage userDataStorage = getDataStorage(organization.getId());
@@ -73,20 +78,37 @@ public class DailyTaskProcessor extends WorkspaceContext {
 
             List<AuditRecord> deletedAuditRecords = projDao.getAuditDao().findAuditRecords(cleanOlderThan, AuditType.Deleted);
 
+            final List<FileAttachment> projectAttachmentsToDelete = new ArrayList<>();
+
             Set<String> documentIds = deletedAuditRecords.stream().filter(record -> ResourceType.DOCUMENT.equals(record.getResourceType()))
                                                          .map(AuditRecord::getResourceId).collect(Collectors.toSet());
-            attachmentsToDelete.addAll(fileAttachmentAdapter.getAllFileAttachments(organization, project, documentIds, FileAttachment.AttachmentType.DOCUMENT));
+            projectAttachmentsToDelete.addAll(fileAttachmentAdapter.getAllFileAttachments(organization, project, documentIds, FileAttachment.AttachmentType.DOCUMENT));
 
             Set<String> linkIds = deletedAuditRecords.stream().filter(record -> ResourceType.LINK.equals(record.getResourceType()))
                                                      .map(AuditRecord::getResourceId).collect(Collectors.toSet());
-            attachmentsToDelete.addAll(fileAttachmentAdapter.getAllFileAttachments(organization, project, linkIds, FileAttachment.AttachmentType.LINK));
+            projectAttachmentsToDelete.addAll(fileAttachmentAdapter.getAllFileAttachments(organization, project, linkIds, FileAttachment.AttachmentType.LINK));
 
+            if (projectAttachmentsToDelete.size() > 0) {
+               log.info(
+                     String.format("Will remove %d attachments on %s/%s.",
+                           projectAttachmentsToDelete.size(),
+                           organization.getCode(),
+                           organization.getCode()
+                     )
+               );
+            }
+
+            attachmentsToDelete.addAll(projectAttachmentsToDelete);
             projDao.getAuditDao().cleanAuditRecords(cleanOlderThan);
          });
 
       });
 
-      fileAttachmentAdapter.removeFileAttachments(attachmentsToDelete);
+      if (attachmentsToDelete.size() > 0) {
+         log.info(String.format("Removing %d attachments.", attachmentsToDelete.size()));
+
+         fileAttachmentAdapter.removeFileAttachments(attachmentsToDelete);
+      }
    }
 
 }
