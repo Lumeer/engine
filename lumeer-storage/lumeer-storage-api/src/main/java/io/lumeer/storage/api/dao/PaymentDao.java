@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.api.dao;
 
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.PaymentStats;
 
@@ -27,23 +26,23 @@ import java.util.List;
 
 public interface PaymentDao extends OrganizationScopedDao {
 
-   Payment createPayment(final Organization organization, final Payment payment);
+   Payment createPayment(final String organizationId, final Payment payment);
 
-   List<Payment> getPayments(final Organization organization);
+   List<Payment> getPayments(final String organizationId);
 
    /* Uses database id */
-   Payment updatePayment(final Organization organization, final String id, final Payment payment);
+   Payment updatePayment(final String organizationId, final String id, final Payment payment);
 
    /* Uses payment id */
-   Payment updatePayment(final Organization organization, final Payment payment);
+   Payment updatePayment(final String organizationId, final Payment payment);
 
-   Payment getPayment(final Organization organization, final String paymentId);
+   Payment getPayment(final String organizationId, final String paymentId);
 
-   Payment getPaymentByDbId(final Organization organization, final String id);
+   Payment getPaymentByDbId(final String organizationId, final String id);
 
-   Payment getPaymentAt(final Organization organization, final Date date);
+   Payment getPaymentAt(final String organizationId, final Date date);
 
-   Payment getLatestPayment(final Organization organization);
+   Payment getLatestPayment(final String organizationId);
 
    PaymentStats getReferralPayments(final String referral);
 }

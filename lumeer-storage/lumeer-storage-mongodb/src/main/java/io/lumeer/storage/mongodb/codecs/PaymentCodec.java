@@ -32,7 +32,12 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class PaymentCodec implements CollectibleCodec<Payment> {
 
@@ -50,6 +55,7 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
    public static final String GW_URL = "gwUrl";
    public static final String VERSION = "version";
    public static final String REFERRAL = "referral";
+   public static final String PARAMS = "params";
 
    private final Codec<Document> documentCodec;
 
@@ -79,9 +85,11 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
       String currency = bson.getString(CURRENCY);
       String gwUrl = bson.getString(GW_URL);
       String referral = bson.getString(REFERRAL);
+      Map<Payment.PaymentParam, Object> params = decodeParams(bson.get(PARAMS, new HashMap<>()));
 
       Payment payment = new Payment(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl, referral);
       payment.setVersion(version == null ? 1 : version);
+      payment.setParams(params);
       return payment;
    }
 
@@ -99,9 +107,27 @@ public class PaymentCodec implements CollectibleCodec<Payment> {
             .append(LANGUAGE, payment.getLanguage())
             .append(CURRENCY, payment.getCurrency())
             .append(GW_URL, payment.getGwUrl())
-            .append(REFERRAL, payment.getReferral());
+            .append(REFERRAL, payment.getReferral())
+            .append(PARAMS, encodeParams(payment));
 
       documentCodec.encode(bsonWriter, document, encoderContext);
+   }
+
+   private Map<String, Object> encodeParams(Payment payment) {
+      if (payment.getParams() != null) {
+         return payment.getParams().entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey().getValue(), Map.Entry::getValue));
+      }
+      return Collections.emptyMap();
+   }
+
+   private static Map<Payment.PaymentParam, Object> decodeParams(Map<String, Object> params) {
+      if (params != null) {
+         return params.keySet().stream()
+                      .map(Payment.PaymentParam::fromString)
+                      .filter(Objects::nonNull)
+                      .collect(Collectors.toMap(key -> key, key -> params.get(key.getValue())));
+      }
+      return Collections.emptyMap();
    }
 
    @Override

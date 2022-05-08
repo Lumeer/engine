@@ -21,17 +21,12 @@ package io.lumeer.storage.mongodb.dao.organization;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.PaymentStats;
-import io.lumeer.api.model.ReferralPayment;
-import io.lumeer.api.model.ResourceType;
 import io.lumeer.engine.api.event.CreateOrUpdatePayment;
-import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ReferralPaymentDao;
 import io.lumeer.storage.api.dao.UserDao;
-import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.codecs.PaymentCodec;
-import io.lumeer.storage.mongodb.codecs.UserCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
@@ -50,8 +45,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.LongAccumulator;
-import java.util.concurrent.atomic.LongAdder;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -71,11 +64,11 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
    private UserDao userDao;
 
    @Override
-   public Payment createPayment(final Organization organization, final Payment payment) {
+   public Payment createPayment(final String organizationId, final Payment payment) {
       try {
-         databaseCollection(organization).insertOne(payment);
+         databaseCollection(organizationId).insertOne(payment);
          if (createOrUpdatePaymentEvent != null) {
-            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, payment));
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organizationId, payment));
          }
          return payment;
       } catch (MongoException ex) {
@@ -84,30 +77,30 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
    }
 
    @Override
-   public List<Payment> getPayments(final Organization organization) {
-      return databaseCollection(organization).find().sort(Sorts.descending(Payment.DATE)).into(new ArrayList<>());
+   public List<Payment> getPayments(final String organizationId) {
+      return databaseCollection(organizationId).find().sort(Sorts.descending(Payment.DATE)).into(new ArrayList<>());
    }
 
    @Override
-   public Payment updatePayment(final Organization organization, final String id, final Payment payment) {
-      return updatePayment(organization, payment, MongoFilters.idFilter(id));
+   public Payment updatePayment(final String organizationId, final String id, final Payment payment) {
+      return updatePayment(organizationId, payment, MongoFilters.idFilter(id));
    }
 
    @Override
-   public Payment updatePayment(final Organization organization, final Payment payment) {
-      return updatePayment(organization, payment, paymentIdFilter(payment.getPaymentId()));
+   public Payment updatePayment(final String organizationId, final Payment payment) {
+      return updatePayment(organizationId, payment, paymentIdFilter(payment.getPaymentId()));
    }
 
-   private Payment updatePayment(final Organization organization, final Payment payment, final Bson filter) {
+   private Payment updatePayment(final String organizationId, final Payment payment, final Bson filter) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
       try {
          Bson update = new Document("$set", payment).append("$inc", new Document(PaymentCodec.VERSION, 1L));
-         final Payment returnedPayment = databaseCollection(organization).findOneAndUpdate(filter, update, options);
+         final Payment returnedPayment = databaseCollection(organizationId).findOneAndUpdate(filter, update, options);
          if (returnedPayment == null) {
             throw new StorageException("Payment '" + payment.getId() + "' has not been updated.");
          }
          if (createOrUpdatePaymentEvent != null) {
-            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organization, returnedPayment));
+            createOrUpdatePaymentEvent.fire(new CreateOrUpdatePayment(organizationId, returnedPayment));
          }
          return returnedPayment;
       } catch (MongoException ex) {
@@ -116,18 +109,18 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
    }
 
    @Override
-   public Payment getPayment(final Organization organization, final String paymentId) {
-      return databaseCollection(organization).find(paymentIdFilter(paymentId)).first();
+   public Payment getPayment(final String organizationId, final String paymentId) {
+      return databaseCollection(organizationId).find(paymentIdFilter(paymentId)).first();
    }
 
    @Override
-   public Payment getPaymentByDbId(final Organization organization, final String id) {
-      return databaseCollection(organization).find(MongoFilters.idFilter(id)).first();
+   public Payment getPaymentByDbId(final String organizationId, final String id) {
+      return databaseCollection(organizationId).find(MongoFilters.idFilter(id)).first();
    }
 
    @Override
-   public Payment getLatestPayment(final Organization organization) {
-      return databaseCollection(organization).find(paymentStateFilter(Payment.PaymentState.PAID.ordinal()))
+   public Payment getLatestPayment(final String organizationId) {
+      return databaseCollection(organizationId).find(paymentStateFilter(Payment.PaymentState.PAID.ordinal()))
                                              .sort(Sorts.descending(PaymentCodec.VALID_UNTIL)).limit(1).first();
    }
 
@@ -146,8 +139,8 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
    }
 
    @Override
-   public Payment getPaymentAt(final Organization organization, final Date date) {
-      return databaseCollection(organization)
+   public Payment getPaymentAt(final String organizationId, final Date date) {
+      return databaseCollection(organizationId)
             .find(Filters.and(paymentStateFilter(Payment.PaymentState.PAID.ordinal()),
                   paymentValidUntilFilter(date), paymentStartFilter(date)))
             .sort(Sorts.descending(PaymentCodec.VALID_UNTIL)).limit(1).first();
@@ -171,9 +164,9 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
 
    @Override
    public void createRepository(final Organization organization) {
-      database.createCollection(databaseCollectionName(organization));
+      database.createCollection(databaseCollectionName(organization.getId()));
 
-      MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization));
+      MongoCollection<Document> groupCollection = database.getCollection(databaseCollectionName(organization.getId()));
       groupCollection.createIndex(Indexes.ascending(PaymentCodec.PAYMENT_ID), new IndexOptions().unique(false));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.DATE), new IndexOptions().unique(true));
       groupCollection.createIndex(Indexes.descending(PaymentCodec.START), new IndexOptions().unique(true));
@@ -183,17 +176,14 @@ public class MongoPaymentDao extends MongoOrganizationScopedDao implements Payme
 
    @Override
    public void deleteRepository(final Organization organization) {
-      database.getCollection(databaseCollectionName(organization)).drop();
+      database.getCollection(databaseCollectionName(organization.getId())).drop();
    }
 
-   private MongoCollection<Payment> databaseCollection(final Organization organization) {
-      return database.getCollection(databaseCollectionName(organization), Payment.class);
+   private MongoCollection<Payment> databaseCollection(final String organizationId) {
+      return database.getCollection(databaseCollectionName(organizationId), Payment.class);
    }
 
-   private String databaseCollectionName(final Organization organization) {
-      if (organization == null) {
-         throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
-      }
-      return PREFIX + organization.getId();
+   private String databaseCollectionName(final String organizationId) {
+      return PREFIX + organizationId;
    }
 }
