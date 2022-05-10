@@ -44,14 +44,16 @@ public interface AuditDao extends ProjectScopedDao, Serializable {
    List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime noOlderThan);
    List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final int countLimit);
 
+   List<AuditRecord> findAuditRecords(final ZonedDateTime olderThan, final AuditType type);
+   void cleanAuditRecords(final ZonedDateTime olderThan);
+
+
    AuditRecord createAuditRecord(final AuditRecord record);
    AuditRecord updateAuditRecord(final AuditRecord record);
 
    AuditRecord getAuditRecord(final String id);
 
    void deleteAuditRecord(final String id);
-   void deleteAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId);
-   void cleanAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime cleanOlderThan);
 
    void ensureIndexes(final Project project);
 }

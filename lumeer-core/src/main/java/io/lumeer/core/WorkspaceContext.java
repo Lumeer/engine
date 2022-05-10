@@ -48,7 +48,7 @@ public abstract class WorkspaceContext {
    private DataStorageFactory dataStorageFactory;
 
    @Inject
-   private DefaultConfigurationProducer configurationProducer;
+   protected DefaultConfigurationProducer configurationProducer;
 
    protected DataStorage getDataStorage(final String organizationId) {
       final List<StorageConnection> connections = systemDatabaseConfigurationFacade.getDataStorage(organizationId);

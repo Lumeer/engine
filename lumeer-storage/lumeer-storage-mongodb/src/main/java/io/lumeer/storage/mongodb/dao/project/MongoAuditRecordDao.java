@@ -27,6 +27,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
+import io.lumeer.storage.mongodb.codecs.AuditRecordCodec;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -100,9 +101,9 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    @Override
    public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan) {
       final Bson filters = Filters.and(
-                  projectFilter(collectionIds, linkTypeIds, viewIds),
-                  Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
-            );
+            projectFilter(collectionIds, linkTypeIds, viewIds),
+            Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
+      );
 
       return findAuditRecords(filters, -1);
    }
@@ -233,26 +234,20 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    }
 
    @Override
-   public void deleteAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId) {
-      final Bson filters = Filters.and(
-            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
-            Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
+   public List<AuditRecord> findAuditRecords(final ZonedDateTime olderThan, final AuditType type) {
+      final Bson filter = Filters.and(
+            Filters.eq(AuditRecord.TYPE, type.toString()),
+            Filters.lt(AuditRecord.CHANGE_DATE, Date.from(olderThan.toInstant()))
       );
 
-      databaseCollection().deleteMany(filters);
+      return  databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override
-   public void cleanAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime cleanOlderThan) {
-      final Bson filters = Filters.and(
-            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
-            Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOURCE_ID, resourceId),
-            Filters.lt(AuditRecord.CHANGE_DATE, Date.from(cleanOlderThan.toInstant()))
-      );
+   public void cleanAuditRecords(final ZonedDateTime olderThan) {
+      final Bson filter = Filters.lt(AuditRecord.CHANGE_DATE, Date.from(olderThan.toInstant()));
 
-      databaseCollection().deleteMany(filters);
+      databaseCollection().deleteMany(filter);
    }
 
    private Bson projectFilter(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds) {
