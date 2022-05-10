@@ -24,6 +24,7 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.engine.IntegrationTestBase;
+import io.lumeer.storage.api.dao.PaymentDao;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -33,6 +34,8 @@ import org.junit.runner.RunWith;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
@@ -48,6 +51,9 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @Inject
    private PaymentFacade paymentFacade;
+
+   @Inject
+   private PaymentDao paymentDao;
 
    @Inject
    private PaymentGatewayFacade paymentGatewayFacade;
@@ -71,7 +77,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testServiceLevels() {
-      final Payment payment = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false);
+      final Payment payment = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false, new HashMap<>());
 
       ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
@@ -97,8 +103,22 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testPaymentParams() {
+      final Map<Payment.PaymentParam, Object> params = new HashMap<>();
+      params.put(Payment.PaymentParam.FILE_SIZE_MB, 300);
+      params.put(Payment.PaymentParam.AUDIT_DAYS, 45);
+      final String paymentId = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false, params).getId();
+
+      final Payment payment = paymentDao.getPaymentByDbId(organization.getId(), paymentId);
+
+      assertThat(payment).isNotNull();
+      assertThat(payment.getParamInt(Payment.PaymentParam.FILE_SIZE_MB, 0)).isEqualTo(300);
+      assertThat(payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, 0)).isEqualTo(45);
+   }
+
+   @Test
    public void testCornerCases() {
-      createPayment("2009-04-01T00:00:00.000+0100", "2009-04-30T23:59:59.999+0100", true);
+      createPayment("2009-04-01T00:00:00.000+0100", "2009-04-30T23:59:59.999+0100", true, new HashMap<>());
 
       ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2009-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
@@ -128,7 +148,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testTimezones() {
-      createPayment("2008-04-01T00:00:00.000-0500", "2008-04-30T23:59:59.999-0500", true);
+      createPayment("2008-04-01T00:00:00.000-0500", "2008-04-30T23:59:59.999-0500", true, new HashMap<>());
 
       ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2008-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
@@ -158,7 +178,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testSubsequentPayments() {
-      createPayment("2007-04-01T00:00:00.000-0500", "2007-04-30T23:59:59.999-0500", true);
+      createPayment("2007-04-01T00:00:00.000-0500", "2007-04-30T23:59:59.999-0500", true, new HashMap<>());
       ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("Normally, we are on the BASIC tier in a paid period.")
@@ -167,7 +187,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
             .as("There is no subsequent payments, so the subscription ends in April.")
             .isEqualTo(getDate("2007-04-30T23:59:59.999-0500").getTime());
 
-      createPayment("2007-05-01T00:00:00.000-0500", "2007-05-31T23:59:59.999-0500", true);
+      createPayment("2007-05-01T00:00:00.000-0500", "2007-05-31T23:59:59.999-0500", true, new HashMap<>());
       limits = paymentFacade.getServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
       assertThat(limits.getValidUntil().getTime())
             .as("There is a subsequent payment, so the subscription should last longer.")
@@ -183,11 +203,12 @@ public class PaymentFacadeIT extends IntegrationTestBase {
       return organizationFacade.createOrganization(organization);
    }
 
-   private Payment createPayment(final String from, final String until, final boolean paid) {
+   private Payment createPayment(final String from, final String until, final boolean paid, final Map<Payment.PaymentParam, Object> params) {
       Payment payment = new Payment(null, new Date(), 1770, "",
             getDate(from),
             getDate(until),
             Payment.PaymentState.CREATED, Payment.ServiceLevel.BASIC, 10, "cz", "CZK", null, null);
+      payment.setParams(params);
       final Payment storedPayment = paymentFacade.createPayment(organization, payment, "", "");
 
       if (paid) {

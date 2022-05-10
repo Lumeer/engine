@@ -18,9 +18,7 @@
  */
 package io.lumeer.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -35,12 +33,14 @@ public class ServiceLimits {
    public static final String GROUPS = "groups";
    public static final String DOCUMENTS = "documents";
    public static final String DB_SIZE_MB = "dbSizeMb";
+   public static final String FILE_SIZE_MB = "fileSizeMb";
+   public static final String AUDIT_DAYS = "auditDays";
    public static final String VALID_UNTIL = "validUntil";
    public static final String RULES_PER_COLLECTION = "rulesPerCollection";
    public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true);
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false, 10, 14);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -52,6 +52,8 @@ public class ServiceLimits {
    private int rulesPerCollection;
    private int functionsPerCollection;
    private boolean groups;
+   private int fileSizeMb;
+   private int auditDays;
 
    static {
       final Calendar c = Calendar.getInstance();
@@ -59,23 +61,19 @@ public class ServiceLimits {
       FREE_LIMITS.validUntil = c.getTime();
    }
 
-   @JsonCreator
-   public ServiceLimits(@JsonProperty(SERVICE_LEVEL) final Payment.ServiceLevel serviceLevel, @JsonProperty(USERS) final int users,
-         @JsonProperty(PROJECTS) final int projects, @JsonProperty(FILES) final int files,
-         @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb,
-         @JsonProperty(VALID_UNTIL) final Date validUntil,
-         @JsonProperty(RULES_PER_COLLECTION) final int rulesPerCollection,
-         @JsonProperty(FUNCTIONS_PER_COLLECTION) final int functionsPerCollection, @JsonProperty(GROUPS) final boolean groups) {
+   public ServiceLimits(final Payment.ServiceLevel serviceLevel, final int users, final int projects, final int files, final int documents, final int dbSizeMb, final Date validUntil, final int rulesPerCollection, final int functionsPerCollection, final boolean groups, final int fileSizeMb, final int auditDays) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;
       this.files = files;
-      this.groups = groups;
       this.documents = documents;
       this.dbSizeMb = dbSizeMb;
       this.validUntil = validUntil;
       this.rulesPerCollection = rulesPerCollection;
       this.functionsPerCollection = functionsPerCollection;
+      this.groups = groups;
+      this.fileSizeMb = fileSizeMb;
+      this.auditDays = auditDays;
    }
 
    public Payment.ServiceLevel getServiceLevel() {
@@ -116,6 +114,14 @@ public class ServiceLimits {
 
    public boolean isGroups() {
       return groups;
+   }
+
+   public int getAuditDays() {
+      return auditDays;
+   }
+
+   public int getFileSizeMb() {
+      return fileSizeMb;
    }
 
    @Override

@@ -19,9 +19,13 @@
 package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 
 public class Payment {
@@ -40,30 +44,6 @@ public class Payment {
    public static final String GW_URL = "gwUrl";
    public static final String REFERRAL = "referral";
 
-   public enum PaymentState {
-      CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
-
-      public static PaymentState fromInt(int i) {
-         if (i < 0 || i > PaymentState.values().length) {
-            throw new IndexOutOfBoundsException("There is no such PaymentState with index " + i);
-         }
-
-         return values()[i];
-      }
-   }
-
-   public enum ServiceLevel {
-      FREE, BASIC, CORPORATE;
-
-      public static ServiceLevel fromInt(int i) {
-         if (i < 0 || i > ServiceLevel.values().length) {
-            throw new IndexOutOfBoundsException("There is no such ServiceLevel with index " + i);
-         }
-
-         return values()[i];
-      }
-   }
-
    private String id;
    private Date date;
    private long amount;
@@ -78,6 +58,7 @@ public class Payment {
    private String gwUrl;
    private long version;
    private String referral;
+   private Map<PaymentParam, Object> params;
 
    @JsonCreator
    public Payment(@JsonProperty(ID) final String id,
@@ -213,6 +194,28 @@ public class Payment {
       this.referral = referral;
    }
 
+   public Map<PaymentParam, Object> getParams() {
+      return params;
+   }
+
+   public void setParams(final Map<PaymentParam, Object> params) {
+      this.params = params;
+   }
+
+   @JsonIgnore
+   public Object getParam(PaymentParam param) {
+      return params != null ? params.get(param) : null;
+   }
+
+   @JsonIgnore
+   public Integer getParamInt(PaymentParam param, int defaultValue) {
+      var object = getParam(param);
+      if (object != null) {
+         return Integer.parseInt(String.valueOf(object));
+      }
+      return defaultValue;
+   }
+
    @Override
    public String toString() {
       return "Payment{" +
@@ -259,5 +262,61 @@ public class Payment {
    @Override
    public int hashCode() {
       return Objects.hash(id, date, amount, paymentId, start, validUntil, state, serviceLevel, users, language, currency, gwUrl);
+   }
+
+   public enum PaymentState {
+      CREATED, PAYMENT_METHOD_CHOSEN, AUTHORIZED, PAID, CANCELED, TIMEOUTED, REFUNDED;
+
+      public static PaymentState fromInt(int i) {
+         if (i < 0 || i > PaymentState.values().length) {
+            throw new IndexOutOfBoundsException("There is no such PaymentState with index " + i);
+         }
+
+         return values()[i];
+      }
+   }
+
+   public enum PaymentParam {
+      FILE_SIZE_MB("fileSizeMb"),
+      AUDIT_DAYS("auditDays");
+
+      private final String value;
+
+      PaymentParam(String value) {
+         this.value = value;
+      }
+
+      @JsonValue
+      public String getValue() {
+         return value;
+      }
+
+      public static PaymentParam fromString(String type) {
+         if (type == null) {
+            return null;
+         }
+         try {
+            return Arrays.stream(values()).filter(role -> role.toString().equalsIgnoreCase(type)).findFirst().orElse(null);
+         } catch (IllegalArgumentException exception) {
+            return null;
+         }
+      }
+
+      @Override
+      public String toString() {
+         return value;
+      }
+   }
+
+   public enum ServiceLevel {
+      FREE, BASIC, CORPORATE;
+
+      public static ServiceLevel fromInt(int i) {
+         if (i < 0 || i > ServiceLevel.values().length) {
+            throw new IndexOutOfBoundsException("There is no such ServiceLevel with index " + i);
+         }
+
+         return values()[i];
+      }
    }
 }

@@ -115,11 +115,11 @@ public class PaymentFacade extends AbstractFacade {
          payment.setReferral(currentUser.getReferral());
       }
 
-      final Payment storedPayment = paymentDao.createPayment(organization, payment);
+      final Payment storedPayment = paymentDao.createPayment(organization.getId(), payment);
 
       final Payment establishedPayment = paymentGateway.createPayment(storedPayment, returnUrl, notifyUrl + "/" + storedPayment.getId());
 
-      final Payment result = paymentDao.updatePayment(organization, storedPayment.getId(), establishedPayment);
+      final Payment result = paymentDao.updatePayment(organization.getId(), storedPayment.getId(), establishedPayment);
 
       freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "New payment for organization " + organization.getCode(),
             "A new order of Lumeer was placed for " + payment.getUsers() + " users with amount of "
@@ -139,7 +139,7 @@ public class PaymentFacade extends AbstractFacade {
    public List<Payment> getPayments(final Organization organization) {
       checkManagePermissions(organization);
 
-      return paymentDao.getPayments(organization);
+      return paymentDao.getPayments(organization.getId());
    }
 
    private Payment getCurrentPayment(final Organization organization) {
@@ -150,7 +150,7 @@ public class PaymentFacade extends AbstractFacade {
    }
 
    private Payment getPaymentAt(final Organization organization, final Date date) {
-      final Payment payment = paymentDao.getPaymentAt(organization, date);
+      final Payment payment = paymentDao.getPaymentAt(organization.getId(), date);
 
       // is the payment active? be tolerant to dates/time around the interval border
       if (payment != null
@@ -179,10 +179,7 @@ public class PaymentFacade extends AbstractFacade {
 
       if (payment != null && validUntil.isPresent()) {
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
-            serviceLimits = new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
-                  ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
-                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
-                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
+            serviceLimits = computeServiceLimits(payment, validUntil.get());
             workspaceKeeper.setServiceLimits(organization, serviceLimits);
             return serviceLimits;
          }
@@ -223,14 +220,20 @@ public class PaymentFacade extends AbstractFacade {
 
       if (payment != null && validUntil.isPresent()) {
          if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
-            return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
-                  ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
-                  ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil.get(),
-                  ServiceLimits.BASIC_LIMITS.getRulesPerCollection(), ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups());
+            return computeServiceLimits(payment, validUntil.get());
          }
       }
 
       return ServiceLimits.FREE_LIMITS;
+   }
+
+   private ServiceLimits computeServiceLimits(Payment payment, Date validUntil) {
+      var fileSizeDb = payment.getParamInt(Payment.PaymentParam.FILE_SIZE_MB, ServiceLimits.BASIC_LIMITS.getFileSizeMb());
+      var auditDays = payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, ServiceLimits.BASIC_LIMITS.getAuditDays());
+      return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
+            ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
+            ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil, ServiceLimits.BASIC_LIMITS.getRulesPerCollection(),
+            ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups(), fileSizeDb, auditDays);
    }
 
    public Payment updatePayment(final String organizationId, final String id) {
@@ -239,7 +242,7 @@ public class PaymentFacade extends AbstractFacade {
       paymentCache.remove(organizationId);
       workspaceKeeper.clearServiceLimits(organization);
 
-      final Payment payment = paymentDao.getPaymentByDbId(organization, id);
+      final Payment payment = paymentDao.getPaymentByDbId(organization.getId(), id);
       final Payment.PaymentState newState = paymentGateway.getPaymentStatus(payment.getPaymentId());
 
       if (payment.getState() != Payment.PaymentState.PAID && newState == Payment.PaymentState.PAID && StringUtils.isNotEmpty(payment.getReferral())) {
@@ -253,7 +256,7 @@ public class PaymentFacade extends AbstractFacade {
 
       payment.setState(newState);
 
-      final Payment result = paymentDao.updatePayment(organization, payment);
+      final Payment result = paymentDao.updatePayment(organization.getId(), payment);
 
       freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationId,
             "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name() +
@@ -282,7 +285,7 @@ public class PaymentFacade extends AbstractFacade {
    public Payment getPayment(final Organization organization, final String paymentId) {
       checkManagePermissions(organization);
 
-      return paymentDao.getPayment(organization, paymentId);
+      return paymentDao.getPayment(organization.getId(), paymentId);
    }
 
    public Payment checkPaymentValues(final Payment payment) {

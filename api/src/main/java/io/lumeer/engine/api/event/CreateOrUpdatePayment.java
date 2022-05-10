@@ -18,16 +18,15 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 
 public class CreateOrUpdatePayment {
 
-   private final Organization organization;
+   private final String organizationId;
    private final Payment payment;
 
-   public CreateOrUpdatePayment(final Organization organization, final Payment payment) {
-      this.organization = organization;
+   public CreateOrUpdatePayment(final String organizationId, final Payment payment) {
+      this.organizationId = organizationId;
       this.payment = payment;
    }
 
@@ -35,7 +34,7 @@ public class CreateOrUpdatePayment {
       return payment;
    }
 
-   public Organization getOrganization() {
-      return organization;
+   public String getOrganizationId() {
+      return organizationId;
    }
 }

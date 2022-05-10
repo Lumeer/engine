@@ -623,8 +623,9 @@ public class PusherFacade extends AbstractFacade {
    public void createOrUpdatePayment(@Observes final CreateOrUpdatePayment createOrUpdatePayment) {
       if (isEnabled()) {
          try {
-            ObjectWithParent object = new ObjectWithParent(getAppId(), createOrUpdatePayment.getPayment(), createOrUpdatePayment.getOrganization().getId());
-            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(createOrUpdatePayment.getOrganization(), RoleType.Manage);
+            Organization organization = organizationDao.getOrganizationById(createOrUpdatePayment.getOrganizationId());
+            ObjectWithParent object = new ObjectWithParent(getAppId(), createOrUpdatePayment.getPayment(), organization.getId());
+            Set<String> userIds = permissionAdapter.getOrganizationUsersByRole(organization, RoleType.Manage);
             sendNotificationsByUsers(object, userIds, UPDATE_EVENT_SUFFIX);
          } catch (Exception e) {
             log.log(Level.WARNING, "Unable to send push notification: ", e);
