@@ -229,7 +229,7 @@ public class PaymentFacade extends AbstractFacade {
 
    private ServiceLimits computeServiceLimits(Payment payment, Date validUntil) {
       var fileSizeDb = payment.getParamInt(Payment.PaymentParam.FILE_SIZE_MB, ServiceLimits.BASIC_LIMITS.getFileSizeMb());
-      var auditDays = payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, ServiceLimits.BASIC_LIMITS.getAuditDaysMb());
+      var auditDays = payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, ServiceLimits.BASIC_LIMITS.getAuditDays());
       return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
             ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
             ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil, ServiceLimits.BASIC_LIMITS.getRulesPerCollection(),

@@ -26,6 +26,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.adapter.FileAttachmentAdapter;
+import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
@@ -48,6 +49,9 @@ import javax.inject.Inject;
 public class DailyTaskProcessor extends WorkspaceContext {
 
    @Inject
+   private PaymentFacade paymentFacade;
+
+   @Inject
    private OrganizationDao organizationDao;
 
    @Inject
@@ -68,7 +72,8 @@ public class DailyTaskProcessor extends WorkspaceContext {
 
       organizations.forEach(organization -> {
          final DataStorage userDataStorage = getDataStorage(organization.getId());
-         var cleanOlderThan = ZonedDateTime.now().minusMonths(1);
+         var limits = paymentFacade.getCurrentServiceLimits(organization);
+         var cleanOlderThan = ZonedDateTime.now().minusDays(limits.getAuditDays());
 
          final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
          final List<Project> projects = orgDao.getProjectDao().getAllProjects();

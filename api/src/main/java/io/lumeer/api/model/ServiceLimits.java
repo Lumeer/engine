@@ -18,9 +18,7 @@
  */
 package io.lumeer.api.model;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -55,7 +53,7 @@ public class ServiceLimits {
    private int functionsPerCollection;
    private boolean groups;
    private int fileSizeMb;
-   private int auditDaysMb;
+   private int auditDays;
 
    static {
       final Calendar c = Calendar.getInstance();
@@ -63,7 +61,7 @@ public class ServiceLimits {
       FREE_LIMITS.validUntil = c.getTime();
    }
 
-   public ServiceLimits(final Payment.ServiceLevel serviceLevel, final int users, final int projects, final int files, final int documents, final int dbSizeMb, final Date validUntil, final int rulesPerCollection, final int functionsPerCollection, final boolean groups, final int fileSizeMb, final int auditDaysMb) {
+   public ServiceLimits(final Payment.ServiceLevel serviceLevel, final int users, final int projects, final int files, final int documents, final int dbSizeMb, final Date validUntil, final int rulesPerCollection, final int functionsPerCollection, final boolean groups, final int fileSizeMb, final int auditDays) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;
@@ -75,7 +73,7 @@ public class ServiceLimits {
       this.functionsPerCollection = functionsPerCollection;
       this.groups = groups;
       this.fileSizeMb = fileSizeMb;
-      this.auditDaysMb = auditDaysMb;
+      this.auditDays = auditDays;
    }
 
    public Payment.ServiceLevel getServiceLevel() {
@@ -118,8 +116,8 @@ public class ServiceLimits {
       return groups;
    }
 
-   public int getAuditDaysMb() {
-      return auditDaysMb;
+   public int getAuditDays() {
+      return auditDays;
    }
 
    public int getFileSizeMb() {

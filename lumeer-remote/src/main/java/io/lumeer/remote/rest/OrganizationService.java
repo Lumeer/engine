@@ -212,13 +212,13 @@ public class OrganizationService extends AbstractService {
       Must pass RETURN_URL header for the successful redirect. */
    @POST
    @Path("{organizationId:[0-9a-fA-F]{24}}/payments")
-   public Payment createPayment(@PathParam("organizationId") final String organizationCode, final Payment payment,
+   public Payment createPayment(@PathParam("organizationId") final String organizationId, final Payment payment,
          @Context final HttpServletRequest servletContext) {
       final String notifyUrl = servletContext.getRequestURL().toString().replaceAll("/payments$", "").replaceFirst("organizations", "paymentNotify");
       final String returnUrl = servletContext.getHeader("RETURN_URL");
 
       return paymentFacade.createPayment(
-            organizationFacade.getOrganizationById(organizationCode),
+            organizationFacade.getOrganizationById(organizationId),
             paymentFacade.checkPaymentValues(payment),
             notifyUrl,
             returnUrl);
