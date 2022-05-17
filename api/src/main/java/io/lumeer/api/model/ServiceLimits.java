@@ -18,7 +18,9 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -61,7 +63,15 @@ public class ServiceLimits {
       FREE_LIMITS.validUntil = c.getTime();
    }
 
-   public ServiceLimits(final Payment.ServiceLevel serviceLevel, final int users, final int projects, final int files, final int documents, final int dbSizeMb, final Date validUntil, final int rulesPerCollection, final int functionsPerCollection, final boolean groups, final int fileSizeMb, final int auditDays) {
+   @JsonCreator
+   public ServiceLimits(@JsonProperty(SERVICE_LEVEL) final Payment.ServiceLevel serviceLevel, @JsonProperty(USERS) final int users,
+                        @JsonProperty(PROJECTS) final int projects, @JsonProperty(FILES) final int files,
+                        @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb,
+                        @JsonProperty(VALID_UNTIL) final Date validUntil,
+                        @JsonProperty(RULES_PER_COLLECTION) final int rulesPerCollection,
+                        @JsonProperty(FUNCTIONS_PER_COLLECTION) final int functionsPerCollection,
+                        @JsonProperty(GROUPS) final boolean groups,
+                        @JsonProperty(FILE_SIZE_MB) final int fileSizeMb, @JsonProperty(AUDIT_DAYS) final int auditDays) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;

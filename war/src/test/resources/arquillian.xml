@@ -18,14 +18,14 @@
    <container qualifier="wildfly-managed">
       <configuration>
          <property name="jbossHome">${project.build.directory}/wildfly-17.0.1.Final</property>
-         <property name="javaVmArguments">-Xmx2g -Xms1g --add-modules=java.se</property>
+         <property name="javaVmArguments">-Xmx2g -Xms1g --add-modules=java.se --add-exports=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.management/javax.management=ALL-UNNAMED --add-opens=java.naming/javax.naming=ALL-UNNAMED</property>
       </configuration>
    </container>
 
    <container qualifier="debug">
       <configuration>
          <property name="jbossHome">${project.build.directory}/wildfly-17.0.1.Final</property>
-         <property name="javaVmArguments">-Xmx2g -Xms1g --add-modules=java.se -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5105</property>
+         <property name="javaVmArguments">-Xmx2g -Xms1g --add-modules=java.se --add-exports=java.desktop/sun.awt=ALL-UNNAMED --add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.util.concurrent=ALL-UNNAMED --add-opens=java.management/javax.management=ALL-UNNAMED --add-opens=java.naming/javax.naming=ALL-UNNAMED -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5105</property>
       </configuration>
    </container>
 </arquillian>
