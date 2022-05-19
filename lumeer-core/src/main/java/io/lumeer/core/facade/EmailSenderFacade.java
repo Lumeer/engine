@@ -164,7 +164,7 @@ public class EmailSenderFacade {
       try {
          final InputStream input = EmailSenderFacade.class.getResourceAsStream("/email-templates/subject.properties");
          if (input != null) {
-            properties.load(new InputStreamReader(input));
+            properties.load(new InputStreamReader(input, StandardCharsets.UTF_8.name()));
             properties.forEach((key, value) -> {
                subjectLines.put(key.toString(), value.toString());
             });

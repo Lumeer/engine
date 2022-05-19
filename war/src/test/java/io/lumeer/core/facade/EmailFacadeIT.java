@@ -1,4 +1,4 @@
-package io.lumeer.core.facade;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,9 +16,9 @@ package io.lumeer.core.facade;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.facade;
 
 import io.lumeer.engine.IntegrationTestBase;
-
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Ignore;
 import org.junit.Test;
