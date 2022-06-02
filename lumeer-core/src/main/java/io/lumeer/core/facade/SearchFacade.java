@@ -480,12 +480,12 @@ public class SearchFacade extends AbstractFacade {
    private boolean canReadQueryResources(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap) {
       return query.getStems().stream().allMatch(stem -> {
          var collection = collectionsMap.get(stem.getCollectionId());
-         if (!permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read)) {
+         if (collection == null || !permissionsChecker.hasRoleInCollectionWithView(collection, RoleType.Read)) {
             return false;
          }
          var linkTypes = stem.getLinkTypeIds().stream().map(linkTypesMap::get).collect(Collectors.toList());
          for (LinkType linkType : linkTypes) {
-            if (!permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleType.Read)) {
+            if (linkType == null || !permissionsChecker.hasRoleInLinkTypeWithView(linkType, RoleType.Read)) {
                return false;
             }
          }
