@@ -73,6 +73,7 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.marvec.pusher.data.Event;
 
@@ -214,8 +215,8 @@ public class AuditFacade extends AbstractFacade {
       // currently not supported
       Set<String> viewIds = Collections.emptySet();
 
-      List<AuditRecord> auditRecords = userId != null ? auditAdapter.getAuditRecords(userId, collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel())
-      : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel());
+      List<AuditRecord> auditRecords = userId != null ? auditAdapter.getAuditRecords(userId, collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits())
+      : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits());
 
       collectionsMap.values().forEach(collection -> {
          var collectionAuditRecords = auditRecords.stream()
@@ -238,14 +239,14 @@ public class AuditFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, RoleType.Manage);
 
-      return decodeWithTitle(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, getServiceLevel()));
+      return decodeWithTitle(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, getServiceLimits()));
    }
 
    public List<AuditRecord> getAuditRecordsForLinkType(final String linkTypeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       permissionsChecker.checkRoleInLinkType(linkType, RoleType.Manage);
 
-      return decodeWithTitle(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, getServiceLevel()));
+      return decodeWithTitle(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, getServiceLimits()));
    }
 
    public List<AuditRecord> getAuditRecordsForDocument(final String collectionId, final String documentId) {
@@ -253,7 +254,7 @@ public class AuditFacade extends AbstractFacade {
       final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
       permissionsChecker.checkEditDocument(collection, document);
 
-      return auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, getServiceLevel())
+      return auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, getServiceLimits())
                          .stream().peek(log -> decode(collection, log))
                          .collect(toList());
    }
@@ -263,13 +264,13 @@ public class AuditFacade extends AbstractFacade {
       final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
-      return auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, getServiceLevel())
+      return auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, getServiceLimits())
                          .stream().peek(link -> decode(linkType, link))
                          .collect(toList());
    }
 
    public void revertAudit(final String auditRecordId) {
-      final Payment.ServiceLevel level = getServiceLevel();
+      final Payment.ServiceLevel level = getServiceLimits().getServiceLevel();
       if (level.equals(Payment.ServiceLevel.FREE)) {
          throw new UnsupportedOperationException("Reverting audit log entries is not available on the free plan.");
       }
@@ -608,12 +609,11 @@ public class AuditFacade extends AbstractFacade {
       }
    }
 
-   private Payment.ServiceLevel getServiceLevel() {
+   private ServiceLimits getServiceLimits() {
       if (workspaceKeeper.getOrganization().isPresent()) {
-         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
-         return limits.getServiceLevel();
+         return paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
       }
-      return Payment.ServiceLevel.FREE;
+      throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
    }
 
    private void checkProjectRole(RoleType role) {

@@ -113,6 +113,15 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
       return getFunction() != null && getFunction().getJs() != null && !getFunction().getJs().isEmpty();
    }
 
+   @JsonIgnore
+   public boolean functionChangedOrAdded(Attribute originalAttribute) {
+      if (originalAttribute != null) {
+         String originalJs = originalAttribute.getFunction() != null ? originalAttribute.getFunction().getJs() : "";
+         return isFunctionDefined() && !getFunction().getJs().equals(originalJs);
+      }
+      return isFunctionDefined();
+   }
+
    public Integer getUsageCount() {
       return usageCount != null ? usageCount : 0;
    }

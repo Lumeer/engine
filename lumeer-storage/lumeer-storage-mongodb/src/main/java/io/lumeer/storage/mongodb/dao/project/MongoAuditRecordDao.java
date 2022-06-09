@@ -27,7 +27,6 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
-import io.lumeer.storage.mongodb.codecs.AuditRecordCodec;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
@@ -100,37 +99,30 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
 
    @Override
    public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan) {
+      return findAuditRecords(collectionIds, linkTypeIds, viewIds, noOlderThan, -1);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan, final int countLimit) {
       final Bson filters = Filters.and(
             projectFilter(collectionIds, linkTypeIds, viewIds),
             Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
       );
-
-      return findAuditRecords(filters, -1);
-   }
-
-   @Override
-   public List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan) {
-      final Bson filters = Filters.and(
-            Filters.eq(AuditRecord.USER, userId),
-            projectFilter(collectionIds, linkTypeIds, viewIds),
-            Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
-      );
-
-      return findAuditRecords(filters, -1);
-   }
-
-   @Override
-   public List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit) {
-      final Bson filters = projectFilter(collectionIds, linkTypeIds, viewIds);
 
       return findAuditRecords(filters, countLimit);
    }
 
    @Override
-   public List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit) {
+   public List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan) {
+      return findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, noOlderThan, -1);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan, final int countLimit) {
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.USER, userId),
-            projectFilter(collectionIds, linkTypeIds, viewIds)
+            projectFilter(collectionIds, linkTypeIds, viewIds),
+            Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
       );
 
       return findAuditRecords(filters, countLimit);
@@ -138,20 +130,15 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
 
    @Override
    public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final ZonedDateTime noOlderThan) {
+      return findAuditRecords(parentId, resourceType, noOlderThan, -1);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final ZonedDateTime noOlderThan, final int countLimit) {
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
             Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
-      );
-
-      return findAuditRecords(filters, -1);
-   }
-
-   @Override
-   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final int countLimit) {
-      final Bson filters = Filters.and(
-            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
-            Filters.eq(AuditRecord.PARENT_ID, parentId)
       );
 
       return findAuditRecords(filters, countLimit);
@@ -159,22 +146,16 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
 
    @Override
    public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime noOlderThan) {
+      return findAuditRecords(parentId, resourceType, resourceId, noOlderThan, -1);
+   }
+
+   @Override
+   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime noOlderThan, final int countLimit) {
       final Bson filters = Filters.and(
             Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
             Filters.eq(AuditRecord.PARENT_ID, parentId),
             Filters.eq(AuditRecord.RESOURCE_ID, resourceId),
             Filters.gte(AuditRecord.CHANGE_DATE, Date.from(noOlderThan.toInstant()))
-      );
-
-      return findAuditRecords(filters, -1);
-   }
-
-   @Override
-   public List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final int countLimit) {
-      final Bson filters = Filters.and(
-            Filters.eq(AuditRecord.RESOURCE_TYPE, resourceType.toString()),
-            Filters.eq(AuditRecord.PARENT_ID, parentId),
-            Filters.eq(AuditRecord.RESOURCE_ID, resourceId)
       );
 
       return findAuditRecords(filters, countLimit);
@@ -240,7 +221,7 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
             Filters.lt(AuditRecord.CHANGE_DATE, Date.from(olderThan.toInstant()))
       );
 
-      return  databaseCollection().find(filter).into(new ArrayList<>());
+      return databaseCollection().find(filter).into(new ArrayList<>());
    }
 
    @Override

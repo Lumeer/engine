@@ -27,34 +27,33 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 private const val FREE_MAX_RECORDS: Int = 3 // number of last records available
-private const val BUSINESS_MAX_WEEKS: Long = 2 // number of last weeks of records available
 private const val UPDATE_MERGE_WINDOW_MINUTES: Long = 5 // number of minutes to merge record changes by the same originator (user or automation)
 
 class AuditAdapter(private val auditDao: AuditDao) {
 
-   fun getAuditRecords(userId: String, collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, serviceLevel: Payment.ServiceLevel) =
-      if (serviceLevel == Payment.ServiceLevel.FREE)
-         auditDao.findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, FREE_MAX_RECORDS)
+   fun getAuditRecords(userId: String, collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, limits: ServiceLimits) =
+      if (limits.serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS), FREE_MAX_RECORDS)
       else
-         auditDao.findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+         auditDao.findAuditRecords(userId, collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS))
 
-   fun getAuditRecords(collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, serviceLevel: Payment.ServiceLevel) =
-      if (serviceLevel == Payment.ServiceLevel.FREE)
-         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, FREE_MAX_RECORDS)
+   fun getAuditRecords(collectionIds: Set<String>, linkTypeIds: Set<String>, viewIds: Set<String>, limits: ServiceLimits) =
+      if (limits.serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS), FREE_MAX_RECORDS)
       else
-         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+         auditDao.findAuditRecords(collectionIds, linkTypeIds, viewIds, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS))
 
-   fun getAuditRecords(parentId: String, resourceType: ResourceType, serviceLevel: Payment.ServiceLevel) =
-      if (serviceLevel == Payment.ServiceLevel.FREE)
-         auditDao.findAuditRecords(parentId, resourceType, FREE_MAX_RECORDS)
+   fun getAuditRecords(parentId: String, resourceType: ResourceType, limits: ServiceLimits) =
+      if (limits.serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(parentId, resourceType, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS), FREE_MAX_RECORDS)
       else
-         auditDao.findAuditRecords(parentId, resourceType, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+         auditDao.findAuditRecords(parentId, resourceType, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS))
 
-   fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, serviceLevel: Payment.ServiceLevel) =
-      if (serviceLevel == Payment.ServiceLevel.FREE)
-         auditDao.findAuditRecords(parentId, resourceType, resourceId, FREE_MAX_RECORDS)
+   fun getAuditRecords(parentId: String, resourceType: ResourceType, resourceId: String, limits: ServiceLimits) =
+      if (limits.serviceLevel == Payment.ServiceLevel.FREE)
+         auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS), FREE_MAX_RECORDS)
       else
-         auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(BUSINESS_MAX_WEEKS, ChronoUnit.WEEKS))
+         auditDao.findAuditRecords(parentId, resourceType, resourceId, ZonedDateTime.now().minus(limits.auditDays.toLong(), ChronoUnit.DAYS))
 
    fun registerEnter(parentId: String, resourceType: ResourceType, resourceId: String, user: User?): AuditRecord {
       val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, null, null, DataDocument(), DataDocument())
