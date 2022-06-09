@@ -216,7 +216,7 @@ public class AuditFacade extends AbstractFacade {
       Set<String> viewIds = Collections.emptySet();
 
       List<AuditRecord> auditRecords = userId != null ? auditAdapter.getAuditRecords(userId, collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits())
-      : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits());
+            : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits());
 
       collectionsMap.values().forEach(collection -> {
          var collectionAuditRecords = auditRecords.stream()
