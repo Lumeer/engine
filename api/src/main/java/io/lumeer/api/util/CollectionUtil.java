@@ -89,6 +89,10 @@ public class CollectionUtil {
       return ResourceUtils.findAttribute(collection.getAttributes(), attributeId);
    }
 
+   public static Attribute getAttributeByName(final Collection collection, final String attributeName) {
+      return ResourceUtils.findAttributeByName(collection.getAttributes(), attributeName);
+   }
+
    public static boolean isDueDateInUTC(final Collection collection) {
       final CollectionPurpose purpose = collection.getPurpose();
 

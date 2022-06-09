@@ -79,4 +79,16 @@ public class ResourceUtils {
       }
       return null;
    }
+
+   public static Attribute findAttributeByName(java.util.Collection<Attribute> attributes, String attributeName) {
+      if (attributes == null || attributeName == null) {
+         return null;
+      }
+      for (Attribute attribute : attributes) {
+         if (attribute.getName().equals(attributeName)) {
+            return attribute;
+         }
+      }
+      return null;
+   }
 }
