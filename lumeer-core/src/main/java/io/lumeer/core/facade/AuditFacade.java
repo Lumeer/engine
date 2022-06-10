@@ -232,14 +232,14 @@ public class AuditFacade extends AbstractFacade {
 
       collectionsMap.values().forEach(collection -> {
          var collectionAuditRecords = auditRecords.stream()
-                                                  .filter(record -> ResourceType.DOCUMENT.equals(record.getResourceType()) && collection.getId().equals(record.getParentId()))
+                                                  .filter(record -> record.getResourceType() == ResourceType.DOCUMENT && collection.getId().equals(record.getParentId()))
                                                   .collect(toList());
          decodeWithTitle(collection, collectionAuditRecords);
       });
 
       linkTypesMap.values().forEach(linkType -> {
          var linkAuditRecords = auditRecords.stream()
-                                            .filter(record -> ResourceType.LINK.equals(record.getResourceType()) && linkType.getId().equals(record.getParentId()))
+                                            .filter(record -> record.getResourceType() == ResourceType.LINK && linkType.getId().equals(record.getParentId()))
                                             .collect(toList());
          decodeWithTitle(linkType, linkAuditRecords);
       });

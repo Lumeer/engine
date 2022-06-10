@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditDao {
 
@@ -215,9 +216,9 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    }
 
    @Override
-   public List<AuditRecord> findAuditRecords(final ZonedDateTime olderThan, final AuditType type) {
+   public List<AuditRecord> findAuditRecords(final ZonedDateTime olderThan, final Set<AuditType> types) {
       final Bson filter = Filters.and(
-            Filters.eq(AuditRecord.TYPE, type.toString()),
+            Filters.in(AuditRecord.TYPE, types.stream().map(AuditType::toString).collect(Collectors.toList())),
             Filters.lt(AuditRecord.CHANGE_DATE, Date.from(olderThan.toInstant()))
       );
 
