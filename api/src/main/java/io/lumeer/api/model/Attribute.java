@@ -96,6 +96,11 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
       return constraint;
    }
 
+   @JsonIgnore
+   public ConstraintType getConstraintType() {
+      return constraint != null ? constraint.getType() : null;
+   }
+
    public void setConstraint(final Constraint constraint) {
       this.constraint = constraint;
    }
