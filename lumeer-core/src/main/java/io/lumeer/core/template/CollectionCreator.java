@@ -41,16 +41,18 @@ public class CollectionCreator extends WithIdCreator {
    private final CollectionFacade collectionFacade;
    private final ConstraintManager constraintManager;
    private final ObjectMapper mapper;
+   private final boolean skipLimits;
 
-   private CollectionCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
+   private CollectionCreator(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer, final boolean skipLimits) {
       super(templateParser);
       this.collectionFacade = collectionFacade;
       this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
       this.mapper = createObjectMapper();
+      this.skipLimits = skipLimits;
    }
 
-   public static void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {
-      final CollectionCreator creator = new CollectionCreator(templateParser, collectionFacade, defaultConfigurationProducer);
+   public static void createCollections(final TemplateParser templateParser, final CollectionFacade collectionFacade, final DefaultConfigurationProducer defaultConfigurationProducer, final boolean skipLimits) {
+      final CollectionCreator creator = new CollectionCreator(templateParser, collectionFacade, defaultConfigurationProducer, skipLimits);
       creator.createCollections();
    }
 
@@ -65,7 +67,7 @@ public class CollectionCreator extends WithIdCreator {
             collection.setName(collectionsPrefix + ": " + collection.getName());
          }
          collection.setCode(null);
-         final Collection storedCollection = collectionFacade.createCollection(collection, true);
+         final Collection storedCollection = collectionFacade.createCollection(collection, skipLimits);
          templateParser.getDict().addCollection(templateId, storedCollection);
 
          createAttributes(storedCollection, (JSONObject) o);
@@ -118,7 +120,7 @@ public class CollectionCreator extends WithIdCreator {
       final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"), mapper)
             .stream().map(attribute -> TemplateParserUtils.mapAttributeConstraintConfig(templateParser, attribute))
             .collect(Collectors.toList());
-      collectionFacade.createCollectionAttributesWithoutPushNotification(collection.getId(), attributes);
+      collectionFacade.createCollectionAttributesWithoutPushNotification(collection.getId(), attributes, skipLimits);
    }
 
    private Collection getCollection(final JSONObject o) {

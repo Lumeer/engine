@@ -154,13 +154,13 @@ public class ConversionFacade {
    }
 
    private void removeFileAttachments(final Collection collection, final Attribute originalAttribute, final Attribute newAttribute) {
-      if (originalAttribute.getConstraint() != null && originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && (newAttribute.getConstraint() == null || newAttribute.getConstraint().getType() != ConstraintType.FileAttachment)) {
+      if (originalAttribute.getConstraintType() == ConstraintType.FileAttachment && newAttribute.getConstraintType() != ConstraintType.FileAttachment) {
          fileAttachmentFacade.removeAllFileAttachments(collection.getId(), originalAttribute.getId(), FileAttachment.AttachmentType.DOCUMENT);
       }
    }
 
    private void removeFileAttachments(final LinkType linkType, final Attribute originalAttribute, final Attribute newAttribute) {
-      if (originalAttribute.getConstraint() != null && originalAttribute.getConstraint().getType() == ConstraintType.FileAttachment && (newAttribute.getConstraint() == null || newAttribute.getConstraint().getType() != ConstraintType.FileAttachment)) {
+      if (originalAttribute.getConstraintType() == ConstraintType.FileAttachment && newAttribute.getConstraintType() != ConstraintType.FileAttachment) {
          fileAttachmentFacade.removeAllFileAttachments(linkType.getId(), originalAttribute.getId(), FileAttachment.AttachmentType.LINK);
       }
    }
@@ -180,16 +180,8 @@ public class ConversionFacade {
    }
 
    private boolean areConstraintsDifferent(final Attribute originalAttribute, final Attribute newAttribute) {
-      if (originalAttribute.getConstraint() == null && newAttribute.getConstraint() == null) {
-         return false;
-      }
-
-      if (originalAttribute.getConstraint() != null && newAttribute.getConstraint() != null) {
-         return originalAttribute.getConstraint().getType() != newAttribute.getConstraint().getType() ||
-               (originalAttribute.getConstraint().getType() == ConstraintType.Select && areSelectConstraintDifferent(originalAttribute, newAttribute));
-      }
-
-      return true;
+      return originalAttribute.getConstraintType() != newAttribute.getConstraintType() ||
+            (originalAttribute.getConstraintType() == ConstraintType.Select && areSelectConstraintDifferent(originalAttribute, newAttribute));
    }
 
    @SuppressWarnings("unchecked")

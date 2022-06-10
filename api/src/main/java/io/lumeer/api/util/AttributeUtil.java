@@ -92,19 +92,19 @@ public class AttributeUtil {
             removedIds.add(attributeId);
          } else if (!originalAttributesMap.containsKey(attributeId) && currentAttributesMap.containsKey(attributeId)) {
             Attribute attribute = currentAttributesMap.get(attributeId);
-            if (attribute.getFunction() != null && attribute.getFunction().getJs() != null) {
+            if (attribute.isFunctionDefined()) {
                createdFunction.add(attribute);
             }
          } else {
             Attribute originalAttribute = originalAttributesMap.get(attributeId);
             Attribute currentAttribute = currentAttributesMap.get(attributeId);
 
-            if (!functionIsDefined(originalAttribute) && functionIsDefined(currentAttribute)) {
+            if (!originalAttribute.isFunctionDefined() && currentAttribute.isFunctionDefined()) {
                createdFunction.add(currentAttribute);
-            } else if (functionIsDefined(originalAttribute) && !functionIsDefined(currentAttribute)) {
+            } else if (originalAttribute.isFunctionDefined() && !currentAttribute.isFunctionDefined()) {
                removedFunction.add(attributeId);
-            } else if (functionIsDefined(originalAttribute) && functionIsDefined(currentAttribute)) {
-               if (!originalAttribute.getFunction().getXml().equals(currentAttribute.getFunction().getXml())) {
+            } else if (originalAttribute.isFunctionDefined() && currentAttribute.isFunctionDefined()) {
+               if (!originalAttribute.getFunction().getJs().equals(currentAttribute.getFunction().getJs())) {
                   updatedFunction.add(currentAttribute);
                }
             }
@@ -113,10 +113,6 @@ public class AttributeUtil {
       }
 
       return new AttributesDiff(createdFunction, updatedFunction, removedFunction, removedIds);
-   }
-
-   public static boolean functionIsDefined(Attribute attribute) {
-      return attribute.getFunction() != null && attribute.getFunction().getJs() != null && !attribute.getFunction().getJs().isEmpty();
    }
 
    private static Map<String, Attribute> convertAttributesToMap(java.util.Collection<Attribute> attributes) {

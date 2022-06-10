@@ -35,15 +35,17 @@ public class LinkTypeCreator extends WithIdCreator {
 
    private final LinkTypeFacade linkTypeFacade;
    private final ObjectMapper mapper;
+   private final boolean skipLimits;
 
-   private LinkTypeCreator(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade) {
+   private LinkTypeCreator(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade, final boolean skipLimits) {
       super(templateParser);
       this.linkTypeFacade = linkTypeFacade;
       this.mapper = createObjectMapper();
+      this.skipLimits = skipLimits;
    }
 
-   public static void createLinkTypes(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade) {
-      final LinkTypeCreator creator = new LinkTypeCreator(templateParser, linkTypeFacade);
+   public static void createLinkTypes(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade, final boolean skipLimits) {
+      final LinkTypeCreator creator = new LinkTypeCreator(templateParser, linkTypeFacade, skipLimits);
       creator.createLinkTypes();
    }
 
@@ -52,7 +54,7 @@ public class LinkTypeCreator extends WithIdCreator {
       collections.forEach(o -> {
          final String templateId = TemplateParserUtils.getId((JSONObject) o);
          final LinkType linkType = getLinkType((JSONObject) o);
-         final LinkType storedLinkType = linkTypeFacade.createLinkType(linkType);
+         final LinkType storedLinkType = linkTypeFacade.createLinkType(linkType, skipLimits);
          templateParser.getDict().addLinkType(templateId, storedLinkType);
 
          createAttributes(storedLinkType, (JSONObject) o);
@@ -63,7 +65,7 @@ public class LinkTypeCreator extends WithIdCreator {
       final List<Attribute> attributes = TemplateParserUtils.getAttributes((JSONArray) ((JSONObject) o).get("attributes"), mapper)
                                                             .stream().map(attribute -> TemplateParserUtils.mapAttributeConstraintConfig(templateParser, attribute))
                                                             .collect(Collectors.toList());
-      linkTypeFacade.createLinkTypeAttributesWithoutPushNotification(linkType.getId(), attributes);
+      linkTypeFacade.createLinkTypeAttributesWithoutPushNotification(linkType.getId(), attributes, skipLimits);
    }
 
    private LinkType getLinkType(final JSONObject o) {

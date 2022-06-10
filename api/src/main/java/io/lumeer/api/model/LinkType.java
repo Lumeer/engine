@@ -242,6 +242,17 @@ public class LinkType implements WithId, HealthChecking, Updatable<LinkType>, At
       this.updateDate = updateDate;
    }
 
+   @JsonIgnore
+   public boolean someFunctionChangedOrAdded(LinkType originalLinkType) {
+      Map<String, Attribute> attributesMap = originalLinkType.getAttributes().stream().collect(Collectors.toMap(Attribute::getId, attribute -> attribute));
+      return getAttributes().stream().anyMatch(attribute -> attribute.functionChangedOrAdded(attributesMap.get(attribute.getId())));
+   }
+
+   @JsonIgnore
+   public boolean someRuleChangedOrAdded(LinkType originalLinkType) {
+      return getRules().entrySet().stream().anyMatch(entry -> !entry.getValue().equals(originalLinkType.getRules().get(entry.getKey())));
+   }
+
    @Override
    public boolean equals(final Object o) {
       if (this == o) {

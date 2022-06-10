@@ -174,22 +174,21 @@ public class PaymentFacade extends AbstractFacade {
          return serviceLimits;
       }
 
+      serviceLimits = computeServiceLimits(organization);
+      workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
+      return serviceLimits;
+   }
+
+   public ServiceLimits computeServiceLimits(final Organization organization) {
       final Payment payment = getCurrentPayment(organization);
       final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, new Date()));
-
-      if (payment != null && validUntil.isPresent()) {
-         if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
-            serviceLimits = computeServiceLimits(payment, validUntil.get());
-            workspaceKeeper.setServiceLimits(organization, serviceLimits);
-            return serviceLimits;
-         }
+      if (payment != null && validUntil.isPresent() && payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
+         return computeServiceLimits(payment, validUntil.get());
       }
 
       if (permissionsChecker.skipPayments()) {
          return ServiceLimits.BASIC_LIMITS;
       }
-
-      workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
 
       return ServiceLimits.FREE_LIMITS;
    }

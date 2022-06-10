@@ -36,7 +36,6 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.rule.BlocklyRule;
-import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
 import io.lumeer.core.exception.FeatureNotAllowedException;
@@ -61,7 +60,6 @@ import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -572,29 +570,23 @@ public class PermissionsChecker {
    }
 
    public void checkFunctionsLimit(final Collection collection) {
-      if (skipLimits()) {
-         return;
-      }
-
-      final ServiceLimits limits = getServiceLimits();
-      if (limits.getFunctionsPerCollection() >= 0) {
-         long functions = collection.getAttributes().stream().filter(attribute -> attribute.getFunction() != null && !Utils.isEmpty(attribute.getFunction().getJs())).count();
-         if (functions > limits.getFunctionsPerCollection()) {
-            throw new ServiceLimitsExceededException(collection.getAttributes(), limits.getFunctionsPerCollection());
-         }
-      }
+      checkFunctionsLimit(collection.getAttributes());
    }
 
    public void checkFunctionsLimit(final LinkType linkType) {
+      checkFunctionsLimit(new HashSet<>(linkType.getAttributes()));
+   }
+
+   private void checkFunctionsLimit(final Set<Attribute> attributes) {
       if (skipLimits()) {
          return;
       }
 
       final ServiceLimits limits = getServiceLimits();
       if (limits.getFunctionsPerCollection() >= 0) {
-         long functions = linkType.getAttributes().stream().filter(attribute -> attribute.getFunction() != null && !Utils.isEmpty(attribute.getFunction().getJs())).count();
+         long functions = attributes.stream().filter(Attribute::isFunctionDefined).count();
          if (functions > limits.getFunctionsPerCollection()) {
-            throw new ServiceLimitsExceededException(linkType.getAttributes(), limits.getFunctionsPerCollection());
+            throw new ServiceLimitsExceededException(attributes, limits.getFunctionsPerCollection());
          }
       }
    }

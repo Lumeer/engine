@@ -34,17 +34,17 @@ public interface AuditDao extends ProjectScopedDao, Serializable {
    AuditRecord findLatestAuditRecord(final String parentId, final ResourceType resourceType, final String resourceId, final AuditType type);
 
    List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan);
-   List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit);
+   List<AuditRecord> findAuditRecords(final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan, final int countLimit);
    List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan);
-   List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final int countLimit);
+   List<AuditRecord> findAuditRecords(final String userId, final Set<String> collectionIds, final Set<String> linkTypeIds, final Set<String> viewIds, final ZonedDateTime noOlderThan, final int countLimit);
 
    List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final ZonedDateTime noOlderThan);
-   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final int countLimit);
+   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final ZonedDateTime noOlderThan, final int countLimit);
 
    List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime noOlderThan);
-   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final int countLimit);
+   List<AuditRecord> findAuditRecords(final String parentId, final ResourceType resourceType, final String resourceId, final ZonedDateTime noOlderThan, final int countLimit);
 
-   List<AuditRecord> findAuditRecords(final ZonedDateTime olderThan, final AuditType type);
+   List<AuditRecord> findAuditRecords(final ZonedDateTime olderThan, final Set<AuditType> types);
    void cleanAuditRecords(final ZonedDateTime olderThan);
 
 

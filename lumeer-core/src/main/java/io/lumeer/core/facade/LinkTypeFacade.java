@@ -100,12 +100,18 @@ public class LinkTypeFacade extends AbstractFacade {
    }
 
    public LinkType createLinkType(LinkType linkType) {
+      return createLinkType(linkType, false);
+   }
+
+   public LinkType createLinkType(LinkType linkType, boolean skipLimits) {
       checkProjectRole(RoleType.LinkContribute);
       checkLinkTypeCollections(linkType);
-      permissionsChecker.checkFunctionsLimit(linkType);
-      permissionsChecker.checkRulesLimit(linkType);
+
+      if (!skipLimits) {
+         permissionsChecker.checkFunctionsLimit(linkType);
+         permissionsChecker.checkRulesLimit(linkType);
+      }
       permissionsChecker.checkRulesPermissions(linkType.getRules());
-      permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
 
       if (linkType.getPermissionsType() == LinkPermissionsType.Custom) {
          Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), LinkType.ROLES);
@@ -140,8 +146,12 @@ public class LinkTypeFacade extends AbstractFacade {
       }
 
       if (!skipFceLimits) {
-         permissionsChecker.checkFunctionsLimit(linkType);
-         permissionsChecker.checkRulesLimit(linkType);
+         if (linkType.someRuleChangedOrAdded(storedLinkType)) {
+            permissionsChecker.checkRulesLimit(linkType);
+         }
+         if (linkType.someFunctionChangedOrAdded(storedLinkType)) {
+            permissionsChecker.checkFunctionsLimit(linkType);
+         }
       }
       permissionsChecker.checkRulesPermissions(linkType.getRules());
       permissionsChecker.checkAttributesFunctionAccess(linkType.getAttributes());
@@ -159,15 +169,14 @@ public class LinkTypeFacade extends AbstractFacade {
       if (!storedLinkType.getCollectionIds().containsAll(linkType.getCollectionIds())) {
          throw new BadFormatException("Can not change LinkType collectionIds property");
       }
-
-      if (!skipFceLimits) {
-         permissionsChecker.checkFunctionsLimit(linkType);
-         permissionsChecker.checkRulesLimit(linkType);
-      }
       permissionsChecker.checkRulesPermissions(linkType.getRules());
 
       LinkType updatingLinkType = new LinkType(storedLinkType);
       updatingLinkType.setRules(linkType.getRules());
+      if (!skipFceLimits && updatingLinkType.someRuleChangedOrAdded(storedLinkType)) {
+         permissionsChecker.checkRulesLimit(linkType);
+      }
+
       keepUnmodifiableFields(updatingLinkType, storedLinkType);
 
       return mapLinkTypeData(linkTypeDao.updateLinkType(id, updatingLinkType, storedLinkType));
@@ -274,16 +283,20 @@ public class LinkTypeFacade extends AbstractFacade {
          attribute.setId(AttributesResource.ATTRIBUTE_PREFIX + lastAttributeNum++);
          attribute.patchCreation(actualRoles);
          bookedAttributesLinkType.createAttribute(attribute);
-      }
-      mapLinkTypeUpdateValues(linkType);
 
-      permissionsChecker.checkFunctionsLimit(linkType);
+         if (attribute.isFunctionDefined()) {
+            permissionsChecker.checkFunctionsLimit(bookedAttributesLinkType);
+
+         }
+      }
+
+      mapLinkTypeUpdateValues(linkType);
       linkTypeDao.updateLinkType(linkType.getId(), bookedAttributesLinkType, linkType);
 
       return attributes;
    }
 
-   public java.util.Collection<Attribute> createLinkTypeAttributesWithoutPushNotification(final String linkTypeId, final java.util.Collection<Attribute> attributes) {
+   public java.util.Collection<Attribute> createLinkTypeAttributesWithoutPushNotification(final String linkTypeId, final java.util.Collection<Attribute> attributes, boolean skipLimits) {
       LinkType linkType = checkLinkTypePermission(linkTypeId, RoleType.AttributeEdit);
       permissionsChecker.checkAttributesFunctionAccess(attributes);
       LinkType originalLinkType = new LinkType(linkType);
@@ -294,9 +307,12 @@ public class LinkTypeFacade extends AbstractFacade {
       for (Attribute attribute : sortedAttributes) {
          attribute.patchCreation(actualRoles);
          linkType.createAttribute(attribute);
+
+         if (!skipLimits && attribute.isFunctionDefined()) {
+            permissionsChecker.checkFunctionsLimit(linkType);
+         }
       }
 
-      permissionsChecker.checkFunctionsLimit(linkType);
       linkTypeDao.updateLinkType(linkType.getId(), linkType, originalLinkType, false);
 
       return attributes;
@@ -345,12 +361,12 @@ public class LinkTypeFacade extends AbstractFacade {
          updatingAttribute.setFunction(null);
       }
 
-      if (!skipFceLimits) {
-         permissionsChecker.checkFunctionsLimit(linkType);
-      }
-
       linkType.updateAttribute(attributeId, updatingAttribute);
       mapLinkTypeUpdateValues(linkType);
+
+      if (!skipFceLimits && updatingAttribute.functionChangedOrAdded(originalAttribute)) {
+         permissionsChecker.checkFunctionsLimit(linkType);
+      }
 
       linkTypeDao.updateLinkType(linkTypeId, linkType, originalLinkType);
       conversionFacade.convertStoredDocuments(linkType, originalAttribute, updatingAttribute);
