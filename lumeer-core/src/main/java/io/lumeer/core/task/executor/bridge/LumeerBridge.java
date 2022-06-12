@@ -38,6 +38,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
+import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.LinkTypeUtil;
 import io.lumeer.api.util.PermissionUtils;
@@ -183,6 +184,42 @@ public class LumeerBridge {
    public void showMessage(final String type, final String message) {
       if (task.getDaoContextSnapshot().increaseMessageCounter() <= Task.MAX_MESSAGES) {
          operations.add(new UserMessageOperation(new UserMessageRequest(type, message)));
+      }
+   }
+
+   @SuppressWarnings("unused")
+   public void copyValues(final DocumentBridge from, final DocumentBridge to, final List<String> attributes) {
+      if (from != null && to != null) {
+         if (from.getDocument().getId() != null) {
+            to.getDocument().createIfAbsentMetaData().put(Document.META_ORIGINAL_DOCUMENT_ID, from.getDocument().getId());
+
+            if (from.getDocument().createIfAbsentMetaData().get(Document.META_PARENT_ID) != null) {
+               to.getDocument().getMetaData().put(Document.META_ORIGINAL_PARENT_ID, from.getDocument().getMetaData().getString(Document.META_PARENT_ID));
+            }
+         }
+
+         final Collection fromCollection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(from.getDocument().getCollectionId());
+         final Collection toCollection = from.getDocument().getCollectionId().equals(to.getDocument().getCollectionId()) ? fromCollection : task.getDaoContextSnapshot().getCollectionDao().getCollectionById(to.getDocument().getCollectionId());
+         final Map<String, String> attributesToCopy = new HashMap<>();
+
+         fromCollection.getAttributes()
+                       .stream()
+                       .filter(attr -> attributes == null || attributes.size() == 0 || attributes.contains(attr.getName()))
+                       .forEach(attr -> {
+            var a = CollectionUtil.getAttributeByName(toCollection, attr.getName());
+
+            if (a != null) {
+               attributesToCopy.put(attr.getId(), a.getId());
+            }
+         });
+
+         if (to.getDocument().getData() == null) {
+            to.getDocument().setData(new DataDocument());
+         }
+
+         attributesToCopy.forEach((fromId, toId) ->
+            setDocumentAttributeInternal(to, toId, from.getDocument().getData().get(fromId))
+         );
       }
    }
 
@@ -594,22 +631,28 @@ public class LumeerBridge {
 
    public DocumentOperation setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
       try {
-         final DocumentOperation operation = new DocumentOperation(d.getDocument(), attrId, convertValue(value));
-         operations.add(operation);
-
-         if (d.getDocument() != null) {
-            if (d.getDocument().getData() != null) {
-               d.getDocument().getData().append(attrId, convertValue(value));
-            } else {
-               d.getDocument().setData(new DataDocument().append(attrId, convertValue(value)));
-            }
-         }
+         final DocumentOperation operation = setDocumentAttributeInternal(d, attrId, convertValue(value));
 
          return operation;
       } catch (Exception e) {
          cause = e;
          throw e;
       }
+   }
+
+   private DocumentOperation setDocumentAttributeInternal(final DocumentBridge d, final String attrId, final Object value) {
+      final DocumentOperation operation = new DocumentOperation(d.getDocument(), attrId, value);
+      operations.add(operation);
+
+      if (d.getDocument() != null) {
+         if (d.getDocument().getData() != null) {
+            d.getDocument().getData().append(attrId, value);
+         } else {
+            d.getDocument().setData(new DataDocument().append(attrId, value));
+         }
+      }
+
+      return operation;
    }
 
    public void copyDocumentAttributes(final DocumentBridge source, final DocumentBridge target) {
