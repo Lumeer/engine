@@ -22,6 +22,7 @@ import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.RoleUtils;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -37,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -222,6 +224,17 @@ public class Collection extends Resource implements AttributesResource, HealthCh
 
    public CollectionPurposeType getPurposeType() {
       return purpose != null ? purpose.getType() : CollectionPurposeType.None;
+   }
+
+   @JsonIgnore
+   public boolean someFunctionChangedOrAdded(Collection originalCollection) {
+      Map<String, Attribute> attributesMap = originalCollection.getAttributes().stream().collect(Collectors.toMap(Attribute::getId, attribute -> attribute));
+      return getAttributes().stream().anyMatch(attribute -> attribute.functionChangedOrAdded(attributesMap.get(attribute.getId())));
+   }
+
+   @JsonIgnore
+   public boolean someRuleChangedOrAdded(Collection originalCollection) {
+      return getRules().entrySet().stream().anyMatch(entry -> !entry.getValue().equals(originalCollection.getRules().get(entry.getKey())));
    }
 
    @Override

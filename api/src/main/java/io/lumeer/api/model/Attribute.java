@@ -96,6 +96,11 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
       return constraint;
    }
 
+   @JsonIgnore
+   public ConstraintType getConstraintType() {
+      return constraint != null ? constraint.getType() : null;
+   }
+
    public void setConstraint(final Constraint constraint) {
       this.constraint = constraint;
    }
@@ -111,6 +116,15 @@ public class Attribute implements HealthChecking, Updatable<Attribute> {
    @JsonIgnore
    public boolean isFunctionDefined() {
       return getFunction() != null && getFunction().getJs() != null && !getFunction().getJs().isEmpty();
+   }
+
+   @JsonIgnore
+   public boolean functionChangedOrAdded(Attribute originalAttribute) {
+      if (originalAttribute != null) {
+         String originalJs = originalAttribute.getFunction() != null ? originalAttribute.getFunction().getJs() : "";
+         return isFunctionDefined() && !getFunction().getJs().equals(originalJs);
+      }
+      return isFunctionDefined();
    }
 
    public Integer getUsageCount() {

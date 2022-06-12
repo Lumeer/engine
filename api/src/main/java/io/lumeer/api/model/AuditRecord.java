@@ -23,12 +23,16 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -151,6 +155,26 @@ public class AuditRecord implements WithId {
 
    public DataDocument getOldState() {
       return oldState;
+   }
+
+   @JsonIgnore
+   public Set<String> getAddedKeys() {
+      if (getOldState() != null) {
+         var addedKeys = new HashSet<>(getOldState().keySet());
+         addedKeys.removeAll(getNewState().keySet());
+         return addedKeys;
+      }
+      return Collections.emptySet();
+   }
+
+   @JsonIgnore
+   public Set<String> getRemovedKeys() {
+      if (getOldState() != null && getNewState() != null) {
+         var removedKeys = new HashSet<>(getNewState().keySet());
+         removedKeys.removeAll(getOldState().keySet());
+         return removedKeys;
+      }
+      return Collections.emptySet();
    }
 
    public void setOldState(final DataDocument oldState) {

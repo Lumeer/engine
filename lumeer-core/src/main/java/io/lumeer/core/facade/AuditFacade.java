@@ -25,7 +25,9 @@ import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
@@ -40,6 +42,7 @@ import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
+import io.lumeer.core.adapter.FileAttachmentAdapter;
 import io.lumeer.core.adapter.LinkInstanceAdapter;
 import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.adapter.PermissionAdapter;
@@ -51,6 +54,7 @@ import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.DocumentUtils;
 import io.lumeer.core.util.LinkInstanceUtils;
+import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -66,6 +70,7 @@ import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
@@ -73,13 +78,14 @@ import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.marvec.pusher.data.Event;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,6 +138,9 @@ public class AuditFacade extends AbstractFacade {
    private GroupDao groupDao;
 
    @Inject
+   private FileAttachmentDao fileAttachmentDao;
+
+   @Inject
    private DefaultConfigurationProducer configurationProducer;
 
    @Inject
@@ -148,6 +157,7 @@ public class AuditFacade extends AbstractFacade {
    private CollectionAdapter collectionAdapter;
    private LinkTypeAdapter linkTypeAdapter;
    private PusherAdapter pusherAdapter;
+   private FileAttachmentAdapter fileAttachmentAdapter;
    private PusherClient pusherClient = null;
 
    @PostConstruct
@@ -166,6 +176,9 @@ public class AuditFacade extends AbstractFacade {
       linkTypeAdapter = new LinkTypeAdapter(linkTypeDao, linkInstanceDao);
 
       pusherAdapter = new PusherAdapter(requestDataKeeper.getAppId(), getFacadeAdapter(), resourceAdapter, permissionAdapter, viewDao, linkTypeDao, collectionDao);
+
+      final LumeerS3Client lumeerS3Client = new LumeerS3Client(configurationProducer);
+      fileAttachmentAdapter = new FileAttachmentAdapter(lumeerS3Client, fileAttachmentDao, configurationProducer.getEnvironment().name());
    }
 
    public void workspaceUpdated(@Observes final UpdateDefaultWorkspace updateDefaultWorkspace) {
@@ -214,19 +227,19 @@ public class AuditFacade extends AbstractFacade {
       // currently not supported
       Set<String> viewIds = Collections.emptySet();
 
-      List<AuditRecord> auditRecords = userId != null ? auditAdapter.getAuditRecords(userId, collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel())
-      : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLevel());
+      List<AuditRecord> auditRecords = userId != null ? auditAdapter.getAuditRecords(userId, collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits())
+            : auditAdapter.getAuditRecords(collectionsMap.keySet(), linkTypesMap.keySet(), viewIds, getServiceLimits());
 
       collectionsMap.values().forEach(collection -> {
          var collectionAuditRecords = auditRecords.stream()
-                                                  .filter(record -> ResourceType.DOCUMENT.equals(record.getResourceType()) && collection.getId().equals(record.getParentId()))
+                                                  .filter(record -> record.getResourceType() == ResourceType.DOCUMENT && collection.getId().equals(record.getParentId()))
                                                   .collect(toList());
          decodeWithTitle(collection, collectionAuditRecords);
       });
 
       linkTypesMap.values().forEach(linkType -> {
          var linkAuditRecords = auditRecords.stream()
-                                            .filter(record -> ResourceType.LINK.equals(record.getResourceType()) && linkType.getId().equals(record.getParentId()))
+                                            .filter(record -> record.getResourceType() == ResourceType.LINK && linkType.getId().equals(record.getParentId()))
                                             .collect(toList());
          decodeWithTitle(linkType, linkAuditRecords);
       });
@@ -238,14 +251,14 @@ public class AuditFacade extends AbstractFacade {
       Collection collection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(collection, RoleType.Manage);
 
-      return decodeWithTitle(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, getServiceLevel()));
+      return decodeWithTitle(collection, auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, getServiceLimits()));
    }
 
    public List<AuditRecord> getAuditRecordsForLinkType(final String linkTypeId) {
       LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
       permissionsChecker.checkRoleInLinkType(linkType, RoleType.Manage);
 
-      return decodeWithTitle(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, getServiceLevel()));
+      return decodeWithTitle(linkType, auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, getServiceLimits()));
    }
 
    public List<AuditRecord> getAuditRecordsForDocument(final String collectionId, final String documentId) {
@@ -253,7 +266,7 @@ public class AuditFacade extends AbstractFacade {
       final Document document = DocumentUtils.loadDocumentWithData(documentDao, dataDao, collection, documentId);
       permissionsChecker.checkEditDocument(collection, document);
 
-      return auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, getServiceLevel())
+      return auditAdapter.getAuditRecords(collectionId, ResourceType.DOCUMENT, documentId, getServiceLimits())
                          .stream().peek(log -> decode(collection, log))
                          .collect(toList());
    }
@@ -263,13 +276,13 @@ public class AuditFacade extends AbstractFacade {
       final LinkInstance linkInstance = LinkInstanceUtils.loadLinkInstanceWithData(linkInstanceDao, linkDataDao, linkInstanceId);
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
-      return auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, getServiceLevel())
+      return auditAdapter.getAuditRecords(linkTypeId, ResourceType.LINK, linkInstanceId, getServiceLimits())
                          .stream().peek(link -> decode(linkType, link))
                          .collect(toList());
    }
 
    public void revertAudit(final String auditRecordId) {
-      final Payment.ServiceLevel level = getServiceLevel();
+      final Payment.ServiceLevel level = getServiceLimits().getServiceLevel();
       if (level.equals(Payment.ServiceLevel.FREE)) {
          throw new UnsupportedOperationException("Reverting audit log entries is not available on the free plan.");
       }
@@ -323,11 +336,8 @@ public class AuditFacade extends AbstractFacade {
       permissionsChecker.checkEditDocument(collection, document);
 
       if (auditRecord.getOldState() != null) {
-         var keysToAdd = new HashSet<>(auditRecord.getOldState().keySet());
-         keysToAdd.removeAll(auditRecord.getNewState().keySet());
-
-         var keysToRemove = new HashSet<>(auditRecord.getNewState().keySet());
-         keysToRemove.removeAll(auditRecord.getOldState().keySet());
+         var keysToAdd = auditRecord.getAddedKeys();
+         var keysToRemove = auditRecord.getRemovedKeys();
 
          document.getData().putAll(auditRecord.getOldState());
          keysToRemove.forEach(key -> document.getData().remove(key));
@@ -344,7 +354,38 @@ public class AuditFacade extends AbstractFacade {
          collectionAdapter.updateCollectionMetadata(collection, keysToAdd, keysToRemove);
 
          sendDocumentPushNotifications(collection, storedDocument, PusherFacade.UPDATE_EVENT_SUFFIX);
+         checkDeletedFileAttachments(auditRecord, storedData, collection.getAttributes());
       }
+   }
+
+   private void checkDeletedFileAttachments(final AuditRecord auditRecord, final DataDocument storedData, final java.util.Collection<Attribute> attributes) {
+      List<Attribute> fileChangedAttributes = attributes.stream()
+                                                        .filter(attribute -> attribute.getConstraintType() == ConstraintType.FileAttachment && attachmentsChangedForAttribute(auditRecord, attribute))
+                                                        .collect(toList());
+      List<FileAttachment> attachmentsToDelete = new ArrayList<>();
+      FileAttachment.AttachmentType attachmentType = auditRecord.getResourceType() == ResourceType.DOCUMENT ? FileAttachment.AttachmentType.DOCUMENT : FileAttachment.AttachmentType.LINK;
+      fileChangedAttributes.forEach(attribute -> {
+         var attachmentString = storedData.getString(attribute.getId(), "");
+         fileAttachmentAdapter.getAllFileAttachments(getOrganization(), getProject(), auditRecord.getParentId(), auditRecord.getResourceId(), attribute.getId(), attachmentType).stream()
+                              .filter(fileAttachment -> !attachmentString.contains(fileAttachment.getUniqueName()))
+                              .forEach(attachmentsToDelete::add);
+      });
+
+      if (attachmentsToDelete.size() > 0) {
+         fileAttachmentAdapter.removeFileAttachments(attachmentsToDelete);
+      }
+
+   }
+
+   private boolean attachmentsChangedForAttribute(final AuditRecord auditRecord, final Attribute attribute) {
+      if (auditRecord.getRemovedKeys().contains(attribute.getId())) {
+         return true;
+      }
+
+      var previousValue = auditRecord.getOldState() != null ? auditRecord.getOldState().getString(attribute.getId()) : "";
+      var newValue = auditRecord.getNewState() != null ? auditRecord.getNewState().getString(attribute.getId()) : "";
+
+      return previousValue != newValue;
    }
 
    private void checkAuditOnObjectRevert(final AuditRecord auditRecord) {
@@ -409,11 +450,8 @@ public class AuditFacade extends AbstractFacade {
       permissionsChecker.checkEditLinkInstance(linkType, linkInstance);
 
       if (auditRecord.getOldState() != null) {
-         var keysToAdd = new HashSet<>(auditRecord.getOldState().keySet());
-         keysToAdd.removeAll(auditRecord.getNewState().keySet());
-
-         var keysToRemove = new HashSet<>(auditRecord.getNewState().keySet());
-         keysToRemove.removeAll(auditRecord.getOldState().keySet());
+         var keysToAdd = auditRecord.getAddedKeys();
+         var keysToRemove = auditRecord.getRemovedKeys();
 
          linkInstance.getData().putAll(auditRecord.getOldState());
          keysToRemove.forEach(key -> linkInstance.getData().remove(key));
@@ -430,6 +468,7 @@ public class AuditFacade extends AbstractFacade {
          linkTypeAdapter.updateLinkTypeMetadata(linkType, keysToAdd, keysToRemove);
 
          sendLinkNotification(linkType, storedLinkInstance, PusherFacade.UPDATE_EVENT_SUFFIX);
+         checkDeletedFileAttachments(auditRecord, storedData, linkType.getAttributes());
       }
    }
 
@@ -608,12 +647,11 @@ public class AuditFacade extends AbstractFacade {
       }
    }
 
-   private Payment.ServiceLevel getServiceLevel() {
+   private ServiceLimits getServiceLimits() {
       if (workspaceKeeper.getOrganization().isPresent()) {
-         final ServiceLimits limits = paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
-         return limits.getServiceLevel();
+         return paymentFacade.getCurrentServiceLimits(workspaceKeeper.getOrganization().get());
       }
-      return Payment.ServiceLevel.FREE;
+      throw new ResourceNotFoundException(ResourceType.ORGANIZATION);
    }
 
    private void checkProjectRole(RoleType role) {

@@ -174,8 +174,12 @@ public class CollectionFacade extends AbstractFacade {
       permissionsChecker.checkRole(storedCollection, RoleType.Read);
 
       if (!skipFceLimits) {
-         permissionsChecker.checkRulesLimit(collection);
-         permissionsChecker.checkFunctionsLimit(collection);
+         if (collection.someRuleChangedOrAdded(storedCollection)) {
+            permissionsChecker.checkRulesLimit(collection);
+         }
+         if (collection.someFunctionChangedOrAdded(storedCollection)) {
+            permissionsChecker.checkFunctionsLimit(collection);
+         }
       }
       permissionsChecker.checkRulesPermissions(collection.getRules());
       permissionsChecker.checkAttributesFunctionAccess(collection.getAttributes());
@@ -192,15 +196,14 @@ public class CollectionFacade extends AbstractFacade {
    public Collection updateRules(final String collectionId, final Collection collection, final boolean skipFceLimits) {
       final Collection storedCollection = collectionDao.getCollectionById(collectionId);
       permissionsChecker.checkRole(storedCollection, RoleType.TechConfig);
-
-      if (!skipFceLimits) {
-         permissionsChecker.checkRulesLimit(collection);
-         permissionsChecker.checkFunctionsLimit(collection);
-      }
       permissionsChecker.checkRulesPermissions(collection.getRules());
 
       Collection updatingCollection = storedCollection.copy();
       updatingCollection.setRules(collection.getRules());
+      if (!skipFceLimits && updatingCollection.someRuleChangedOrAdded(storedCollection)) {
+         permissionsChecker.checkRulesLimit(collection);
+      }
+
       keepUnmodifiableFields(updatingCollection, storedCollection);
       mapResourceUpdateValues(collection);
 
@@ -376,18 +379,20 @@ public class CollectionFacade extends AbstractFacade {
          attribute.setId(AttributesResource.ATTRIBUTE_PREFIX + lastAttributeNum++);
          attribute.patchCreation(actualRoles);
          bookedAttributesCollection.createAttribute(attribute);
+
+         if (attribute.isFunctionDefined()) {
+            permissionsChecker.checkFunctionsLimit(bookedAttributesCollection);
+         }
       }
 
       mapResourceUpdateValues(bookedAttributesCollection);
-
-      permissionsChecker.checkFunctionsLimit(collection);
       bookedAttributesCollection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection);
 
       return attributes;
    }
 
-   public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final String collectionId, final java.util.Collection<Attribute> attributes) {
+   public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final String collectionId, final java.util.Collection<Attribute> attributes, boolean skipLimits) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
       final Collection originalCollection = collection.copy();
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
@@ -399,9 +404,12 @@ public class CollectionFacade extends AbstractFacade {
       for (Attribute attribute : sortedAttributes) {
          attribute.patchCreation(actualRoles);
          collection.createAttribute(attribute);
+
+         if (!skipLimits && attribute.isFunctionDefined()) {
+            permissionsChecker.checkFunctionsLimit(collection);
+         }
       }
 
-      permissionsChecker.checkFunctionsLimit(collection);
       collection.setLastTimeUsed(ZonedDateTime.now());
       collectionDao.updateCollection(collection.getId(), collection, originalCollection, false);
 
@@ -431,13 +439,13 @@ public class CollectionFacade extends AbstractFacade {
          updatingAttribute.setFunction(null);
       }
 
-      if (!skipFceLimits) {
-         permissionsChecker.checkFunctionsLimit(collection);
-      }
-
       collection.updateAttribute(attributeId, updatingAttribute);
       collection.setLastTimeUsed(ZonedDateTime.now());
       mapResourceUpdateValues(collection);
+
+      if (!skipFceLimits && updatingAttribute.functionChangedOrAdded(originalAttribute)) {
+         permissionsChecker.checkFunctionsLimit(collection);
+      }
 
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
       conversionFacade.convertStoredDocuments(collection, originalAttribute, updatingAttribute);

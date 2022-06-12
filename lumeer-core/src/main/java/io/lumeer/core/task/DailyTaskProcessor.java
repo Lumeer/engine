@@ -72,7 +72,7 @@ public class DailyTaskProcessor extends WorkspaceContext {
 
       organizations.forEach(organization -> {
          final DataStorage userDataStorage = getDataStorage(organization.getId());
-         var limits = paymentFacade.getCurrentServiceLimits(organization);
+         var limits = paymentFacade.computeServiceLimits(organization);
          var cleanOlderThan = ZonedDateTime.now().minusDays(limits.getAuditDays());
 
          final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
@@ -81,17 +81,10 @@ public class DailyTaskProcessor extends WorkspaceContext {
          projects.forEach(project -> {
             final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
 
-            List<AuditRecord> deletedAuditRecords = projDao.getAuditDao().findAuditRecords(cleanOlderThan, AuditType.Deleted);
+            final List<AuditRecord> allAuditRecords = projDao.getAuditDao().findAuditRecords(cleanOlderThan, Set.of(AuditType.Updated, AuditType.Deleted));
 
-            final List<FileAttachment> projectAttachmentsToDelete = new ArrayList<>();
-
-            Set<String> documentIds = deletedAuditRecords.stream().filter(record -> ResourceType.DOCUMENT.equals(record.getResourceType()))
-                                                         .map(AuditRecord::getResourceId).collect(Collectors.toSet());
-            projectAttachmentsToDelete.addAll(fileAttachmentAdapter.getAllFileAttachments(organization, project, documentIds, FileAttachment.AttachmentType.DOCUMENT));
-
-            Set<String> linkIds = deletedAuditRecords.stream().filter(record -> ResourceType.LINK.equals(record.getResourceType()))
-                                                     .map(AuditRecord::getResourceId).collect(Collectors.toSet());
-            projectAttachmentsToDelete.addAll(fileAttachmentAdapter.getAllFileAttachments(organization, project, linkIds, FileAttachment.AttachmentType.LINK));
+            final List<FileAttachment> projectAttachmentsToDelete = getAttachmentsToDeleteByDeletedDocuments(fileAttachmentAdapter, organization, project, allAuditRecords);
+            projectAttachmentsToDelete.addAll(getAttachmentsToDeleteByUpdatedDocuments(fileAttachmentAdapter, organization, project, allAuditRecords));
 
             if (projectAttachmentsToDelete.size() > 0) {
                log.info(
@@ -114,6 +107,70 @@ public class DailyTaskProcessor extends WorkspaceContext {
 
          fileAttachmentAdapter.removeFileAttachments(attachmentsToDelete);
       }
+   }
+
+   private List<FileAttachment> getAttachmentsToDeleteByDeletedDocuments(final FileAttachmentAdapter adapter, final Organization organization, final Project project, final List<AuditRecord> auditRecords) {
+      List<AuditRecord> deletedAuditRecords = auditRecords.stream().filter(auditRecord -> auditRecord.getType() == AuditType.Deleted).collect(Collectors.toList());
+      final List<FileAttachment> projectAttachmentsToDelete = new ArrayList<>();
+
+      Set<String> documentIds = deletedAuditRecords.stream().filter(record -> record.getResourceType() == ResourceType.DOCUMENT)
+                                                   .map(AuditRecord::getResourceId).collect(Collectors.toSet());
+      if (documentIds.size() > 0) {
+         projectAttachmentsToDelete.addAll(adapter.getAllFileAttachments(organization, project, documentIds, FileAttachment.AttachmentType.DOCUMENT));
+      }
+
+      Set<String> linkIds = deletedAuditRecords.stream().filter(record -> record.getResourceType() == ResourceType.LINK)
+                                               .map(AuditRecord::getResourceId).collect(Collectors.toSet());
+      if (linkIds.size() > 0) {
+         projectAttachmentsToDelete.addAll(adapter.getAllFileAttachments(organization, project, linkIds, FileAttachment.AttachmentType.LINK));
+      }
+      return projectAttachmentsToDelete;
+   }
+
+   private List<FileAttachment> getAttachmentsToDeleteByUpdatedDocuments(final FileAttachmentAdapter adapter, final Organization organization, final Project project, final List<AuditRecord> auditRecords) {
+      final List<AuditRecord> updatedAuditRecords = auditRecords.stream().filter(auditRecord -> auditRecord.getType() == AuditType.Updated).collect(Collectors.toList());
+      final List<FileAttachment> projectAttachmentsToDelete = new ArrayList<>();
+
+      Set<String> documentIds = updatedAuditRecords.stream().filter(record -> record.getResourceType() == ResourceType.DOCUMENT)
+                                                   .map(AuditRecord::getResourceId).collect(Collectors.toSet());
+      if (documentIds.size() > 0) {
+         adapter.getAllFileAttachments(organization, project, documentIds, FileAttachment.AttachmentType.DOCUMENT)
+                .stream().filter(fileAttachment -> fileAttachmentWasDeletedInAudit(fileAttachment, auditRecords))
+                .forEach(projectAttachmentsToDelete::add);
+      }
+
+      Set<String> linkIds = updatedAuditRecords.stream().filter(record -> record.getResourceType() == ResourceType.LINK)
+                                               .map(AuditRecord::getResourceId).collect(Collectors.toSet());
+      if (linkIds.size() > 0) {
+         adapter.getAllFileAttachments(organization, project, linkIds, FileAttachment.AttachmentType.LINK)
+                .stream().filter(fileAttachment -> fileAttachmentWasDeletedInAudit(fileAttachment, auditRecords))
+                .forEach(projectAttachmentsToDelete::add);
+      }
+
+      return projectAttachmentsToDelete;
+   }
+
+   private boolean fileAttachmentWasDeletedInAudit(final FileAttachment fileAttachment, final List<AuditRecord> auditRecords) {
+      return auditRecords.stream().anyMatch(auditRecord -> {
+         if (fileAttachment.getAttachmentType() == FileAttachment.AttachmentType.DOCUMENT && auditRecord.getResourceType() != ResourceType.DOCUMENT) {
+            return false;
+         }
+         if (fileAttachment.getAttachmentType() == FileAttachment.AttachmentType.LINK && auditRecord.getResourceType() != ResourceType.LINK) {
+            return false;
+         }
+         if (!fileAttachment.getDocumentId().equals(auditRecord.getResourceId())) {
+            return false;
+         }
+
+         var previousValue = auditRecord.getOldState() != null ? auditRecord.getOldState().getString(fileAttachment.getAttributeId(), null) : null;
+         var newValue = auditRecord.getNewState() != null ? auditRecord.getNewState().getString(fileAttachment.getAttributeId(), null) : null;
+
+         if (previousValue != null && newValue != null) {
+            return previousValue.contains(fileAttachment.getUniqueName()) && !newValue.contains(fileAttachment.getUniqueName());
+         }
+
+         return false;
+      });
    }
 
 }
