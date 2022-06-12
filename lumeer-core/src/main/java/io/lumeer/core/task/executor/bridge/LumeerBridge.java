@@ -187,6 +187,7 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings("unused")
    public void copyValues(final DocumentBridge from, final DocumentBridge to, final List<String> attributes) {
       if (from != null && to != null) {
          if (from.getDocument().getId() != null) {
@@ -217,7 +218,7 @@ public class LumeerBridge {
          }
 
          attributesToCopy.forEach((fromId, toId) ->
-               to.getDocument().getData().put(toId, from.getDocument().getData().get(fromId))
+            setDocumentAttributeInternal(to, toId, from.getDocument().getData().get(fromId))
          );
       }
    }
@@ -630,22 +631,28 @@ public class LumeerBridge {
 
    public DocumentOperation setDocumentAttribute(final DocumentBridge d, final String attrId, final Value value) {
       try {
-         final DocumentOperation operation = new DocumentOperation(d.getDocument(), attrId, convertValue(value));
-         operations.add(operation);
-
-         if (d.getDocument() != null) {
-            if (d.getDocument().getData() != null) {
-               d.getDocument().getData().append(attrId, convertValue(value));
-            } else {
-               d.getDocument().setData(new DataDocument().append(attrId, convertValue(value)));
-            }
-         }
+         final DocumentOperation operation = setDocumentAttributeInternal(d, attrId, convertValue(value));
 
          return operation;
       } catch (Exception e) {
          cause = e;
          throw e;
       }
+   }
+
+   private DocumentOperation setDocumentAttributeInternal(final DocumentBridge d, final String attrId, final Object value) {
+      final DocumentOperation operation = new DocumentOperation(d.getDocument(), attrId, value);
+      operations.add(operation);
+
+      if (d.getDocument() != null) {
+         if (d.getDocument().getData() != null) {
+            d.getDocument().getData().append(attrId, value);
+         } else {
+            d.getDocument().setData(new DataDocument().append(attrId, value));
+         }
+      }
+
+      return operation;
    }
 
    public void copyDocumentAttributes(final DocumentBridge source, final DocumentBridge target) {

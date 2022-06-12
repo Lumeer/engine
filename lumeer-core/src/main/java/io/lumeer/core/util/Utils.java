@@ -25,8 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
@@ -122,5 +124,14 @@ public abstract class Utils {
                return map1;
             }
       );
+   }
+
+   public static <T> Set<T> mergeSets(final Set<T> setA, final Set<T> setB) {
+      final Set<T> result = new HashSet<>();
+
+      result.addAll(setA);
+      result.addAll(setB);
+
+      return result;
    }
 }

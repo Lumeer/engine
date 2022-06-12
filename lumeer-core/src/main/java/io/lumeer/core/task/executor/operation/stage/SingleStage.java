@@ -101,6 +101,38 @@ public class SingleStage extends Stage {
       return commitOperations();
    }
 
+   private List<Document> recreateDocumentsHierarchy(final List<Document> createdDocuments) {
+      final Map<String, Document> documentsById = createdDocuments.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
+      final Map<String, String> originalParents = new HashMap<>();
+      final Set<String> changedDocuments = new HashSet<>();
+
+      // find new document ids
+      createdDocuments.forEach(d -> {
+         final String originalId = d.createIfAbsentMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID);
+         if (StringUtils.isNotEmpty(originalId)) {
+            originalParents.put(originalId, d.getId());
+         }
+      });
+
+      // set parent ids if the original parent is copied
+      createdDocuments.forEach(d -> {
+         final String originalParentId = d.getMetaData().getString(Document.META_ORIGINAL_PARENT_ID);
+
+         if (StringUtils.isNotEmpty(originalParentId) && originalParents.containsKey(originalParentId)) {
+            d.getMetaData().put(Document.META_PARENT_ID, originalParents.get(originalParentId));
+            changedDocuments.add(d.getId());
+         }
+      });
+
+      changedDocuments.forEach(id -> {
+         final Document updatedDocument = task.getDaoContextSnapshot().getDocumentDao().updateDocument(id, documentsById.get(id));
+         updatedDocument.setData(documentsById.get(id).getData());
+         documentsById.put(id, updatedDocument);
+      });
+
+      return new ArrayList(documentsById.values());
+   }
+
    private List<Document> createDocuments(final List<DocumentCreationOperation> operations) {
       if (operations.isEmpty()) {
          return List.of();
@@ -111,7 +143,8 @@ public class SingleStage extends Stage {
          document.setCreationDate(ZonedDateTime.now());
       }).collect(toList());
 
-      return task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
+      final List<Document> createdDocuments = task.getDaoContextSnapshot().getDocumentDao().createDocuments(documents);
+      return recreateDocumentsHierarchy(createdDocuments);
    }
 
    private List<Document> commitDocumentOperations(final List<DocumentOperation> operations,
@@ -127,7 +160,9 @@ public class SingleStage extends Stage {
       final Map<String, List<Document>> updatedDocuments = new HashMap<>(); // Collection -> [Document]
       Map<String, Set<String>> documentIdsByCollection = operations.stream().map(Operation::getEntity)
                                                                    .collect(Collectors.groupingBy(Document::getCollectionId, mapping(Document::getId, toSet())));
-      final Map<String, Collection> collectionsMap = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(documentIdsByCollection.keySet())
+      final Set<String> collectionFromCreatedDocuments = createdDocuments.stream().map(Document::getCollectionId).collect(toSet());
+      final Set<String> collectionsToRead = Utils.mergeSets(documentIdsByCollection.keySet(), collectionFromCreatedDocuments);
+      final Map<String, Collection> collectionsMap = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(collectionsToRead)
                                                          .stream().collect(Collectors.toMap(Collection::getId, coll -> coll));
       final Set<String> collectionsChanged = new HashSet<>();
 
@@ -482,6 +517,7 @@ public class SingleStage extends Stage {
 
       // first create all new documents
       final List<Document> createdDocuments = createDocuments(operations.stream().filter(operation -> operation instanceof DocumentCreationOperation && operation.isComplete()).map(operation -> (DocumentCreationOperation) operation).collect(toList()));
+      final Map<String, Document> createdDocumentsById = createdDocuments.stream().collect(toMap(Document::getId, Function.identity()));
       final Map<String, List<Document>> toBeRemovedDocumentsByCollection = Utils.categorize(operations.stream().filter(operation -> operation instanceof DocumentRemovalOperation && operation.isComplete()).map(operation -> ((DocumentRemovalOperation) operation).getEntity()), Document::getCollectionId);
       // get data structures for efficient manipulation with the new documents
       final Map<String, List<Document>> documentsByCollection = DocumentUtils.getDocumentsByCollection(createdDocuments);
@@ -499,6 +535,15 @@ public class SingleStage extends Stage {
          final Document doc = (Document) operation.getEntity();
          if (StringUtils.isEmpty(doc.getId()) && StringUtils.isNotEmpty(doc.createIfAbsentMetaData().getString(Document.META_CORRELATION_ID))) {
             doc.setId(correlationIdsToIds.get(doc.getMetaData().getString(Document.META_CORRELATION_ID)));
+         }
+
+         // transfer parent id from created documents
+         // because we put the documents in the original hierarchy during documents creation (when copy values was used)
+         if (createdDocumentsById.containsKey(doc.getId())) {
+            final String parentId = createdDocumentsById.get(doc.getId()).createIfAbsentMetaData().getString(Document.META_PARENT_ID);
+            if (StringUtils.isNotEmpty(parentId)) {
+               doc.createIfAbsentMetaData().put(Document.META_PARENT_ID, parentId);
+            }
          }
       });
       operations.stream().filter(operation -> operation instanceof LinkCreationOperation).forEach(operation -> {
