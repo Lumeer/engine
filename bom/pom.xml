@@ -117,7 +117,7 @@
       <version.arquillian-container>3.0.1.Final</version.arquillian-container>
       <version.shrinkwrap>3.1.4</version.shrinkwrap>
       <version.javassist>3.25.0-GA</version.javassist>
-      <version.wildfly>17.0.1.Final</version.wildfly>
+      <version.wildfly>21.0.1.Final</version.wildfly>
       <version.amq>5.14.0</version.amq>
       <version.mockito>3.3.3</version.mockito>
       <version.bytebuddy>1.10.10</version.bytebuddy>
