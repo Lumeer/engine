@@ -28,6 +28,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
+import io.lumeer.core.adapter.PaymentAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.cache.Cache;
@@ -44,12 +45,8 @@ import org.assertj.core.util.Lists;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -102,9 +99,13 @@ public class PaymentFacade extends AbstractFacade {
 
    private Cache<Payment> paymentCache;
 
+   private PaymentAdapter paymentAdapter;
+
    @PostConstruct
    public void initCache() {
       paymentCache = cacheFactory.getCache();
+
+      paymentAdapter = new PaymentAdapter(paymentDao, paymentCache);
    }
 
    public Payment createPayment(final Organization organization, final Payment payment, final String notifyUrl, final String returnUrl) {
@@ -142,26 +143,6 @@ public class PaymentFacade extends AbstractFacade {
       return paymentDao.getPayments(organization.getId());
    }
 
-   private Payment getCurrentPayment(final Organization organization) {
-      return paymentCache.computeIfAbsent(organization.getId(), organizationId -> {
-         final Date now = new Date();
-         return getPaymentAt(organization, now);
-      });
-   }
-
-   private Payment getPaymentAt(final Organization organization, final Date date) {
-      final Payment payment = paymentDao.getPaymentAt(organization.getId(), date);
-
-      // is the payment active? be tolerant to dates/time around the interval border
-      if (payment != null
-            && date.before(new Date(payment.getValidUntil().getTime() + TimeUnit.SECONDS.toMillis(1)))
-            && date.after(new Date(payment.getStart().getTime() - TimeUnit.SECONDS.toMillis(1)))) {
-         return payment;
-      }
-
-      return null;
-   }
-
    public Map<String, ServiceLimits> getAllServiceLimits(List<Organization> organizations) {
       return organizations.stream().collect(Collectors.toMap(Organization::getId, this::getCurrentServiceLimits));
    }
@@ -174,65 +155,9 @@ public class PaymentFacade extends AbstractFacade {
          return serviceLimits;
       }
 
-      serviceLimits = computeServiceLimits(organization);
+      serviceLimits = paymentAdapter.computeServiceLimits(organization, permissionsChecker.skipPayments());
       workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
       return serviceLimits;
-   }
-
-   public ServiceLimits computeServiceLimits(final Organization organization) {
-      final Payment payment = getCurrentPayment(organization);
-      final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, new Date()));
-      if (payment != null && validUntil.isPresent() && payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
-         return computeServiceLimits(payment, validUntil.get());
-      }
-
-      if (permissionsChecker.skipPayments()) {
-         return ServiceLimits.BASIC_LIMITS;
-      }
-
-      return ServiceLimits.FREE_LIMITS;
-   }
-
-   private List<Payment> getFutureContinuousPayments(final Organization organization, final Date date) {
-      final List<Payment> result = new ArrayList<>();
-
-      Payment payment = getPaymentAt(organization, date);
-
-      while (payment != null) {
-         result.add(payment);
-         payment = getPaymentAt(organization, new Date(payment.getValidUntil().getTime() + TimeUnit.MINUTES.toMillis(1)));
-      }
-
-      return result;
-   }
-
-   private Optional<Date> getValidUntil(final List<Payment> continuousPayments) {
-      long time = continuousPayments.stream().map(payment -> payment.getValidUntil().getTime()).max(Long::compareTo).orElse(-1L);
-      return Optional.ofNullable(time >= 0 ? new Date(time) : null);
-   }
-
-   public ServiceLimits getServiceLimitsAt(final Organization organization, final Date date) {
-      checkManagePermissions(organization);
-
-      final Payment payment = getPaymentAt(organization, date);
-      final Optional<Date> validUntil = getValidUntil(getFutureContinuousPayments(organization, date));
-
-      if (payment != null && validUntil.isPresent()) {
-         if (payment.getServiceLevel() == Payment.ServiceLevel.BASIC) {
-            return computeServiceLimits(payment, validUntil.get());
-         }
-      }
-
-      return ServiceLimits.FREE_LIMITS;
-   }
-
-   private ServiceLimits computeServiceLimits(Payment payment, Date validUntil) {
-      var fileSizeDb = payment.getParamInt(Payment.PaymentParam.FILE_SIZE_MB, ServiceLimits.BASIC_LIMITS.getFileSizeMb());
-      var auditDays = payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, ServiceLimits.BASIC_LIMITS.getAuditDays());
-      return new ServiceLimits(Payment.ServiceLevel.BASIC, Math.min(ServiceLimits.BASIC_LIMITS.getUsers(), payment.getUsers()),
-            ServiceLimits.BASIC_LIMITS.getProjects(), ServiceLimits.BASIC_LIMITS.getFiles(), ServiceLimits.BASIC_LIMITS.getDocuments(),
-            ServiceLimits.BASIC_LIMITS.getDbSizeMb(), validUntil, ServiceLimits.BASIC_LIMITS.getRulesPerCollection(),
-            ServiceLimits.BASIC_LIMITS.getFunctionsPerCollection(), ServiceLimits.BASIC_LIMITS.isGroups(), fileSizeDb, auditDays);
    }
 
    public Payment updatePayment(final String organizationId, final String id) {

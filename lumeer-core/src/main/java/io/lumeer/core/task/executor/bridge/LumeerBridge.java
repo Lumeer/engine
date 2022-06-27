@@ -35,13 +35,14 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.LinkTypeUtil;
 import io.lumeer.api.util.PermissionUtils;
+import io.lumeer.core.adapter.PaymentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.pdf.PdfCreator;
@@ -111,6 +112,7 @@ public class LumeerBridge {
    private static final DefaultConfigurationProducer configurationProducer = new DefaultConfigurationProducer();
    private static final ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
    private final ContextualTask task;
+   private final ServiceLimits serviceLimits;
    private final ChangesTracker changesTracker = new ChangesTracker();
    private Set<Operation<?>> operations = new HashSet<>();
    private Exception cause = null;
@@ -121,6 +123,8 @@ public class LumeerBridge {
 
    public LumeerBridge(final ContextualTask task) {
       this.task = task;
+      PaymentAdapter paymentAdapter = new PaymentAdapter(task.getDaoContextSnapshot().getPaymentDao(), null);
+      serviceLimits = paymentAdapter.computeServiceLimits(task.getDaoContextSnapshot().getOrganization(), false);
    }
 
    @SuppressWarnings("unused")
@@ -224,7 +228,7 @@ public class LumeerBridge {
    }
 
    public DocumentBridge createDocument(final String collectionId) {
-      if (task.getDaoContextSnapshot().increaseCreationCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS) {
+      if (task.getDaoContextSnapshot().increaseCreationCounter() <= getMaxCreatedRecords()) {
          try {
             final Document d = new Document(collectionId, ZonedDateTime.now(), null, task.getInitiator().getId(), null, 0, null);
             d.createIfAbsentMetaData().put(Document.META_CORRELATION_ID, CREATE_PREFIX + UUID.randomUUID().toString());
@@ -493,8 +497,8 @@ public class LumeerBridge {
 
    private void registerAttachment(final SendSmtpEmailRequest req, final DocumentBridge d, final String attrId) throws IllegalStateException {
       if (d != null) {
-         if (getAttachmentsSize(d.getDocument(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
-            throw new IllegalStateException("Attachments size is larger than 5MB.");
+         if (getAttachmentsSize(d.getDocument(), attrId) > getMaxFileAttachmentSize()) {
+            throw new IllegalStateException("Attachments size is larger than " + getMaxFileAttachmentSizeMb() + "MB.");
          }
 
          req.setAttachment(d.getDocument(), attrId);
@@ -503,8 +507,8 @@ public class LumeerBridge {
 
    private void registerAttachment(final SendSmtpEmailRequest req, final LinkBridge l, final String attrId) throws IllegalStateException {
       if (l != null) {
-         if (getAttachmentsSize(l.getLink(), attrId) > Task.MAX_ATTACHMENT_SIZE) {
-            throw new IllegalStateException("Attachments size is larger than 5MB.");
+         if (getAttachmentsSize(l.getLink(), attrId) > getMaxFileAttachmentSize()) {
+            throw new IllegalStateException("Attachments size is larger than " + getMaxFileAttachmentSizeMb() + "MB.");
          }
 
          req.setAttachment(l.getLink(), attrId);
@@ -677,7 +681,7 @@ public class LumeerBridge {
 
    @SuppressWarnings("unused")
    public void removeDocument(final DocumentBridge d) {
-      if (task.getDaoContextSnapshot().increaseDeletionCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS) {
+      if (task.getDaoContextSnapshot().increaseDeletionCounter() <= getMaxCreatedRecords()) {
          try {
             operations.add(new DocumentRemovalOperation(d.getDocument()));
          } catch (Exception e) {
@@ -700,7 +704,7 @@ public class LumeerBridge {
          final List<Document> documents = DocumentUtils.getDocuments(task.getDaoContextSnapshot(), query, task.getInitiator(), language, permissions, task.getTimeZone());
 
          documents.stream()
-                 .filter(d -> task.getDaoContextSnapshot().increaseDeletionCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS)
+                 .filter(d -> task.getDaoContextSnapshot().increaseDeletionCounter() <= getMaxCreatedRecords())
                  .forEach(d -> operations.add(new DocumentRemovalOperation(d)));
       } catch (Exception e) {
          cause = e;
@@ -710,7 +714,7 @@ public class LumeerBridge {
 
    @SuppressWarnings("unused")
    public LinkBridge linkDocuments(final DocumentBridge d1, final DocumentBridge d2, final String linkTypeId) {
-      if (task.getDaoContextSnapshot().increaseCreationCounter() <= Task.MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS) {
+      if (task.getDaoContextSnapshot().increaseCreationCounter() <= getMaxCreatedRecords()) {
          try {
             final LinkInstance link = new LinkInstance(linkTypeId, List.of(
                   d1.getDocument().getId() != null ? d1.getDocument().getId() : d1.getDocument().createIfAbsentMetaData().getString(Document.META_CORRELATION_ID),
@@ -1208,5 +1212,17 @@ public class LumeerBridge {
 
    public void setOperations(final Set<Operation<?>> operations) {
       this.operations = operations;
+   }
+
+   private int getMaxCreatedRecords() {
+      return serviceLimits.getMaxCreatedRecords();
+   }
+
+   private int getMaxFileAttachmentSizeMb() {
+      return serviceLimits.getFileSizeMb();
+   }
+
+   private int getMaxFileAttachmentSize() {
+      return getMaxFileAttachmentSizeMb() * 1024 * 1024;
    }
 }

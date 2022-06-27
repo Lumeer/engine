@@ -30,10 +30,8 @@ import java.util.List;
  */
 public interface Task extends Serializable {
 
-   long MAX_CREATED_AND_DELETED_DOCUMENTS_AND_LINKS = 50L;
    long MAX_MESSAGES = 5L;
    long MAX_EMAILS = 3L;
-   long MAX_ATTACHMENT_SIZE = 5L * 1024 * 1024;
    int MAX_EMAIL_RECIPIENTS = 100;
    int MAX_VIEW_DOCUMENTS = 1000;
 

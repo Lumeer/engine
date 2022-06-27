@@ -26,11 +26,12 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.adapter.FileAttachmentAdapter;
-import io.lumeer.core.facade.PaymentFacade;
+import io.lumeer.core.adapter.PaymentAdapter;
 import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.time.ZonedDateTime;
@@ -49,7 +50,7 @@ import javax.inject.Inject;
 public class DailyTaskProcessor extends WorkspaceContext {
 
    @Inject
-   private PaymentFacade paymentFacade;
+   private PaymentDao paymentDao;
 
    @Inject
    private OrganizationDao organizationDao;
@@ -66,13 +67,15 @@ public class DailyTaskProcessor extends WorkspaceContext {
       final LumeerS3Client lumeerS3Client = new LumeerS3Client(configurationProducer);
       final FileAttachmentAdapter fileAttachmentAdapter = new FileAttachmentAdapter(lumeerS3Client, fileAttachmentDao, configurationProducer.getEnvironment().name());
 
+      final PaymentAdapter paymentAdapter = new PaymentAdapter(paymentDao, null);
+
       final List<FileAttachment> attachmentsToDelete = new ArrayList<>();
 
       log.info(String.format("Running for %d organizations.", organizations.size()));
 
       organizations.forEach(organization -> {
          final DataStorage userDataStorage = getDataStorage(organization.getId());
-         var limits = paymentFacade.computeServiceLimits(organization);
+         var limits = paymentAdapter.computeServiceLimits(organization, false);
          var cleanOlderThan = ZonedDateTime.now().minusDays(limits.getAuditDays());
 
          final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
