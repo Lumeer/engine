@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.core.adapter.PaymentAdapter;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.PaymentDao;
 
@@ -61,15 +62,19 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    @Inject
    private OrganizationFacade organizationFacade;
 
+   private PaymentAdapter paymentAdapter;
+
    @Before
    public void beforeMethod() { // @BeforeClass requires static method, this does not work with injections
       paymentGatewayFacade.setDryRun(true);
       organization = createOrganization();
+
+      paymentAdapter = new PaymentAdapter(paymentDao, null);
    }
 
    @Test
    public void testNoPayment() {
-      final ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, new Date());
+      final ServiceLimits limits = paymentAdapter.computeServiceLimitsAt(organization, new Date());
       assertThat(limits.getServiceLevel())
             .as("With no payments paid, we should have the FREE tier.")
             .isEqualTo(Payment.ServiceLevel.FREE);
@@ -79,24 +84,24 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    public void testServiceLevels() {
       final Payment payment = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false, new HashMap<>());
 
-      ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
+      ServiceLimits limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("With unpaid payment, we should still be on the FREE tier.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2010-04-15T12:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2010-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("With unpaid payment, we should still be on the FREE tier even before the terms.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2012-04-15T12:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2012-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("With unpaid payment, we should still be on the FREE tier and also after the terms.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
       paymentFacade.updatePayment(organization.getId(), payment.getId()); // now set it to paid
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2011-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("With paid payment, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
@@ -105,14 +110,14 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    @Test
    public void testPaymentParams() {
       final Map<Payment.PaymentParam, Object> params = new HashMap<>();
-      params.put(Payment.PaymentParam.FILE_SIZE_MB, 300);
+      params.put(Payment.PaymentParam.MAX_CREATED_RECORDS, 300);
       params.put(Payment.PaymentParam.AUDIT_DAYS, 45);
       final String paymentId = createPayment("2011-04-01T00:00:00.000+0100", "2011-04-30T23:59:59.999+0100", false, params).getId();
 
       final Payment payment = paymentDao.getPaymentByDbId(organization.getId(), paymentId);
 
       assertThat(payment).isNotNull();
-      assertThat(payment.getParamInt(Payment.PaymentParam.FILE_SIZE_MB, 0)).isEqualTo(300);
+      assertThat(payment.getParamInt(Payment.PaymentParam.MAX_CREATED_RECORDS, 0)).isEqualTo(300);
       assertThat(payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, 0)).isEqualTo(45);
    }
 
@@ -120,27 +125,27 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    public void testCornerCases() {
       createPayment("2009-04-01T00:00:00.000+0100", "2009-04-30T23:59:59.999+0100", true, new HashMap<>());
 
-      ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2009-04-15T12:00:00.000+0100"));
+      ServiceLimits limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2009-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("With paid payment, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2009-04-01T00:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2009-04-01T00:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("At the beginning of the paid period, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2009-04-30T23:59:59.999+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2009-04-30T23:59:59.999+0100"));
       assertThat(limits.getServiceLevel())
             .as("At the end of the paid period, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2009-03-31T23:59:59.999+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2009-03-31T23:59:59.999+0100"));
       assertThat(limits.getServiceLevel())
             .as("Before the beginning of the paid period, we should be on the FREE tier.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2009-05-01T00:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2009-05-01T00:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("After the end of the paid period, we should be on the FREE tier.")
             .isEqualTo(Payment.ServiceLevel.FREE);
@@ -150,27 +155,27 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    public void testTimezones() {
       createPayment("2008-04-01T00:00:00.000-0500", "2008-04-30T23:59:59.999-0500", true, new HashMap<>());
 
-      ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2008-04-15T12:00:00.000+0100"));
+      ServiceLimits limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2008-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("No matter what time zone, in the middle of the paid period, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2008-04-01T06:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2008-04-01T06:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("No matter the time zone, at the beginning of the paid period, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2008-05-01T05:59:59.999+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2008-05-01T05:59:59.999+0100"));
       assertThat(limits.getServiceLevel())
             .as("No matter the time zone, at the end of the paid period, we should be on the BASIC tier.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2008-04-01T05:59:59.999+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2008-04-01T05:59:59.999+0100"));
       assertThat(limits.getServiceLevel())
             .as("No matter the time zone, before the beginning of the paid period, we should be on the FREE tier.")
             .isEqualTo(Payment.ServiceLevel.FREE);
 
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2008-05-01T06:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2008-05-01T06:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("No matter the time zone, after the end of the paid period, we should be on the FREE tier.")
             .isEqualTo(Payment.ServiceLevel.FREE);
@@ -179,7 +184,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
    @Test
    public void testSubsequentPayments() {
       createPayment("2007-04-01T00:00:00.000-0500", "2007-04-30T23:59:59.999-0500", true, new HashMap<>());
-      ServiceLimits limits = paymentFacade.getServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
+      ServiceLimits limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
       assertThat(limits.getServiceLevel())
             .as("Normally, we are on the BASIC tier in a paid period.")
             .isEqualTo(Payment.ServiceLevel.BASIC);
@@ -188,7 +193,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
             .isEqualTo(getDate("2007-04-30T23:59:59.999-0500").getTime());
 
       createPayment("2007-05-01T00:00:00.000-0500", "2007-05-31T23:59:59.999-0500", true, new HashMap<>());
-      limits = paymentFacade.getServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
+      limits = paymentAdapter.computeServiceLimitsAt(organization, getDate("2007-04-15T12:00:00.000+0100"));
       assertThat(limits.getValidUntil().getTime())
             .as("There is a subsequent payment, so the subscription should last longer.")
             .isEqualTo(getDate("2007-05-31T23:59:59.999-0500").getTime());

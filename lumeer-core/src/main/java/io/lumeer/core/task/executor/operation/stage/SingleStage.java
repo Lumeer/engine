@@ -365,11 +365,10 @@ public class SingleStage extends Stage {
          return List.of();
       }
 
-      final List<LinkInstance> linkInstances = operations.stream().map(LinkCreationOperation::getEntity).map(link -> {
+      final List<LinkInstance> linkInstances = operations.stream().map(LinkCreationOperation::getEntity).peek(link -> {
          link.setCreatedBy(task.getInitiator().getId());
          link.setCreationDate(ZonedDateTime.now());
 
-         return link;
       }).collect(toList());
 
       return task.getDaoContextSnapshot().getLinkInstanceDao().createLinkInstances(linkInstances, false);

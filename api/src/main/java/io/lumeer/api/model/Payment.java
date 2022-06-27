@@ -278,6 +278,7 @@ public class Payment {
 
    public enum PaymentParam {
       FILE_SIZE_MB("fileSizeMb"),
+      MAX_CREATED_RECORDS("maxCreatedRecords"),
       AUDIT_DAYS("auditDays");
 
       private final String value;

@@ -37,12 +37,13 @@ public class ServiceLimits {
    public static final String DB_SIZE_MB = "dbSizeMb";
    public static final String FILE_SIZE_MB = "fileSizeMb";
    public static final String AUDIT_DAYS = "auditDays";
+   public static final String MAX_CREATED_RECORDS = "maxCreatedRecords";
    public static final String VALID_UNTIL = "validUntil";
    public static final String RULES_PER_COLLECTION = "rulesPerCollection";
    public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false, 10, 14);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14);
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false, 10, 14, 50);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14, 50);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -56,6 +57,7 @@ public class ServiceLimits {
    private boolean groups;
    private int fileSizeMb;
    private int auditDays;
+   private int maxCreatedRecords;
 
    static {
       final Calendar c = Calendar.getInstance();
@@ -65,13 +67,14 @@ public class ServiceLimits {
 
    @JsonCreator
    public ServiceLimits(@JsonProperty(SERVICE_LEVEL) final Payment.ServiceLevel serviceLevel, @JsonProperty(USERS) final int users,
-                        @JsonProperty(PROJECTS) final int projects, @JsonProperty(FILES) final int files,
-                        @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb,
-                        @JsonProperty(VALID_UNTIL) final Date validUntil,
-                        @JsonProperty(RULES_PER_COLLECTION) final int rulesPerCollection,
-                        @JsonProperty(FUNCTIONS_PER_COLLECTION) final int functionsPerCollection,
-                        @JsonProperty(GROUPS) final boolean groups,
-                        @JsonProperty(FILE_SIZE_MB) final int fileSizeMb, @JsonProperty(AUDIT_DAYS) final int auditDays) {
+         @JsonProperty(PROJECTS) final int projects, @JsonProperty(FILES) final int files,
+         @JsonProperty(DOCUMENTS) final int documents, @JsonProperty(DB_SIZE_MB) final int dbSizeMb,
+         @JsonProperty(VALID_UNTIL) final Date validUntil,
+         @JsonProperty(RULES_PER_COLLECTION) final int rulesPerCollection,
+         @JsonProperty(FUNCTIONS_PER_COLLECTION) final int functionsPerCollection,
+         @JsonProperty(GROUPS) final boolean groups,
+         @JsonProperty(FILE_SIZE_MB) final int fileSizeMb, @JsonProperty(AUDIT_DAYS) final int auditDays,
+         @JsonProperty(MAX_CREATED_RECORDS) final int maxCreatedRecords) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;
@@ -84,6 +87,7 @@ public class ServiceLimits {
       this.groups = groups;
       this.fileSizeMb = fileSizeMb;
       this.auditDays = auditDays;
+      this.maxCreatedRecords = maxCreatedRecords;
    }
 
    public Payment.ServiceLevel getServiceLevel() {
@@ -132,6 +136,10 @@ public class ServiceLimits {
 
    public int getFileSizeMb() {
       return fileSizeMb;
+   }
+
+   public int getMaxCreatedRecords() {
+      return maxCreatedRecords;
    }
 
    @Override
