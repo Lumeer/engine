@@ -18,8 +18,6 @@
  */
 package io.lumeer.core.task.executor.operation.stage;
 
-import static java.util.stream.Collectors.*;
-
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
@@ -57,9 +55,10 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
+import io.lumeer.engine.api.event.RemoveDocument;
+import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
-
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
@@ -72,6 +71,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.*;
 
 public class SingleStage extends Stage {
 
@@ -295,6 +296,10 @@ public class SingleStage extends Stage {
 
    private List<Document> removeDocuments(final List<DocumentRemovalOperation> operations) {
       if (!operations.isEmpty()) {
+         final FunctionFacade functionFacade = task.getFunctionFacade();
+         final TaskProcessingFacade taskProcessingFacade = task.getTaskProcessingFacade(taskExecutor, functionFacade);
+         final PurposeChangeProcessor purposeChangeProcessor = task.getPurposeChangeProcessor();
+
          final List<Document> documents = operations.stream().map(DocumentRemovalOperation::getEntity).collect(toList());
 
          final Map<String, Collection> allCollections = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(
@@ -352,6 +357,31 @@ public class SingleStage extends Stage {
 
             var decodedDeletedData = constraintManager.decodeDataTypes(collection, document.getData());
             auditAdapter.registerDelete(document.getCollectionId(), ResourceType.DOCUMENT, document.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
+
+            if (task instanceof RuleTask) {
+               if (task.getRecursionDepth() == 0) { // we can still call other rules
+                  final RemoveDocument removeDocument = new RemoveDocument(document);
+                  taskProcessingFacade.onRemoveDocument(removeDocument, ((RuleTask) task).getRule().getName());
+
+                  removedLinks.forEach(rl -> {
+                     final RemoveLinkInstance removeLinkInstance = new RemoveLinkInstance(rl);
+                     taskProcessingFacade.onRemoveLink(removeLinkInstance, ((RuleTask) task).getRule().getName());
+                  });
+               } else { // only functions get evaluated
+                  taskExecutor.submitTask(functionFacade.createTaskForRemovedDocument(collection, document));
+
+                  final Map<String, List<LinkInstance>> removedLinksByType = Utils.categorize(removedLinks.stream(), LinkInstance::getLinkTypeId);
+                  removedLinksByType.keySet().forEach(removedLinkTypeId -> {
+                     final LinkType removedFromLinkType = allLinkTypes.get(removedLinkTypeId);
+                     taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(removedFromLinkType, removedLinksByType.get(removedLinkTypeId)));
+                  });
+               }
+            }
+
+            // notify delayed actions about data change
+            if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
+               purposeChangeProcessor.processChanges(new RemoveDocument(document), collection);
+            }
          });
 
          return documents;
