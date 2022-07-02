@@ -331,28 +331,40 @@ public class TaskProcessingFacade {
    }
 
    public void onRemoveDocument(@Observes final RemoveDocument removeDocument) {
+      onRemoveDocument(removeDocument, null);
+   }
+
+   public void onRemoveDocument(final RemoveDocument removeDocument, final String skipTask) {
       final Collection collection = getCollectionForEvent(removeDocument);
       if (collection == null) {
          return;
       }
 
       FunctionTask functionTask = functionFacade.createTaskForRemovedDocument(collection, new Document(removeDocument.getDocument()));
-      List<RuleTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument.getDocument());
+      List<RuleTask> tasks = createDocumentRemoveRuleTasks(collection, removeDocument.getDocument(), skipTask);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       processTasks(functionTask, ruleTask);
    }
 
-   private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final Document removeDocument) {
+   private List<RuleTask> createDocumentRemoveRuleTasks(final Collection collection, final Document removeDocument, final String skipTask) {
       if (removeDocument != null) {
-         return createRuleTasksAfterDocumentEvent(collection, new Document(removeDocument), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasksAfterDocumentEvent(collection, new Document(removeDocument), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL))
+               .stream()
+               .filter(ruleTask -> skipTask == null || StringUtils.isEmpty(ruleTask.getRule().getName()) || !ruleTask.getRule().getName().equals(skipTask)) // skipTask is checked for null for performance reasons
+               .filter(ruleTask -> ruleTask.getRecursionDepth() == 0 || ruleTask.getRule().getType() != Rule.RuleType.BLOCKLY || new BlocklyRule(ruleTask.getRule()).isRecursive()) // either this is not recursion, or it is not blockly, or recursion is allowed
+               .collect(Collectors.toList());
       }
       return Collections.emptyList();
    }
 
-   private List<RuleTask> createLinkInstanceRemoveRuleTasks(final LinkType linkType, final LinkInstance linkInstance) {
+   private List<RuleTask> createLinkInstanceRemoveRuleTasks(final LinkType linkType, final LinkInstance linkInstance, final String skipTask) {
       if (linkInstance != null) {
-         return createRuleTasks(linkType, new LinkInstance(linkInstance), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL));
+         return createRuleTasks(linkType, new LinkInstance(linkInstance), null, Arrays.asList(Rule.RuleTiming.DELETE, Rule.RuleTiming.CREATE_DELETE, Rule.RuleTiming.UPDATE_DELETE, Rule.RuleTiming.ALL))
+               .stream()
+               .filter(ruleTask -> skipTask == null || StringUtils.isEmpty(ruleTask.getRule().getName()) || !ruleTask.getRule().getName().equals(skipTask)) // skipTask is checked for null for performance reasons
+               .filter(ruleTask -> ruleTask.getRecursionDepth() == 0 || ruleTask.getRule().getType() != Rule.RuleType.BLOCKLY || new BlocklyRule(ruleTask.getRule()).isRecursive()) // either this is not recursion, or it is not blockly, or recursion is allowed
+               .collect(Collectors.toList());
       }
       return Collections.emptyList();
    }
@@ -414,13 +426,17 @@ public class TaskProcessingFacade {
    }
 
    public void onRemoveLink(@Observes final RemoveLinkInstance removeLinkInstanceEvent) {
-      LinkType linkType = getLinkTypeForEvent(removeLinkInstanceEvent);
+      onRemoveLink(removeLinkInstanceEvent, null);
+   }
+
+   public void onRemoveLink(final RemoveLinkInstance removeLinkInstanceEvent, final String skipTask) {
+      final LinkType linkType = getLinkTypeForEvent(removeLinkInstanceEvent);
       if (linkType == null) {
          return;
       }
 
       FunctionTask functionTask = functionFacade.createTaskForRemovedLinks(linkType, Collections.singletonList(new LinkInstance(removeLinkInstanceEvent.getLinkInstance())));
-      List<RuleTask> tasks = createLinkInstanceRemoveRuleTasks(linkType, removeLinkInstanceEvent.getLinkInstance());
+      List<RuleTask> tasks = createLinkInstanceRemoveRuleTasks(linkType, removeLinkInstanceEvent.getLinkInstance(), skipTask);
       RuleTask ruleTask = createOrderedRuleTask(tasks);
 
       processTasks(functionTask, ruleTask);
