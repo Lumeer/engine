@@ -34,6 +34,7 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.cache.Cache;
 import io.lumeer.engine.api.cache.CacheFactory;
 import io.lumeer.engine.api.event.UpdateServiceLimits;
+import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.ReferralPaymentDao;
@@ -89,7 +90,7 @@ public class PaymentFacade extends AbstractFacade {
    private FreshdeskFacade freshdeskFacade;
 
    @Inject
-   private CompanyContactFacade companyContactFacade;
+   private CompanyContactDao companyContactDao;
 
    @Inject
    private Event<UpdateServiceLimits> updateServiceLimitsEvent;
@@ -184,7 +185,7 @@ public class PaymentFacade extends AbstractFacade {
 
       freshdeskFacade.logTicket(authenticatedUser.getCurrentUser(), "Payment status updated for organization " + organizationId,
             "Payment in amount of " + payment.getCurrency() + " " + payment.getAmount() + " is in state " + payment.getState().name() +
-                  ". Invoice might need to be prepared for " + companyContactFacade.getCompanyContact(organization));
+                  ". Invoice might need to be prepared for " + companyContactDao.getCompanyContact(organization));
 
       if (updateServiceLimitsEvent != null) {
          updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, getCurrentServiceLimits(organization)));

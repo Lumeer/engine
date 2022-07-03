@@ -784,6 +784,11 @@ public class LumeerBridge {
       }
    }
 
+   @SuppressWarnings({ "unused", "rawtypes" })
+   public int getListSize(final List list) {
+      return list == null ? 0 : list.size();
+   }
+
    @SuppressWarnings({ "rawtypes", "unchecked" })
    Object convertValue(final Value value) {
       if (value.isNumber()) {
