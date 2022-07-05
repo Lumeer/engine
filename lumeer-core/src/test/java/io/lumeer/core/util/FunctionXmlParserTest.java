@@ -304,7 +304,28 @@ public class FunctionXmlParserTest {
          + "  </value>\n"
          + "</block>\n"
          + "</xml>";
-   
+
+   public static final String xmlGetRecordsCount = "<xml xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+         + "    <variables>\n"
+         + "        <variable type=\"621104e99a5c9b46d82c37d7_document\" id=\"*ujL$F,nIoZR0.=d{zRJ\">thisRecord</variable>\n"
+         + "    </variables>\n"
+         + "    <block type=\"value_container\" id=\"/-b*VyMcre),o[))N7k~\" deletable=\"false\" x=\"126\" y=\"243\">\n"
+         + "        <value name=\"VALUE\">\n"
+         + "            <block type=\"get_records_count\" id=\"XTBu^2R?7K?+vuZK#]*I\">\n"
+         + "                <value name=\"RECORDS\">\n"
+         + "                    <block type=\"62a8e6362b86be322c7c8934-621104e99a5c9b46d82c37d7_62a4616a67ebf01f3f8ecc73_link\" id=\"KF2r@y@QH8P+y/nhEHt:\">\n"
+         + "                        <value name=\"DOCUMENT\">\n"
+         + "                            <block type=\"variables_get_621104e99a5c9b46d82c37d7_document\" id=\"y/Gi.:A^01SS?h,C7F6C\" editable=\"false\">\n"
+         + "                                <field name=\"VAR\" id=\"*ujL$F,nIoZR0.=d{zRJ\" variabletype=\"621104e99a5c9b46d82c37d7_document\">thisRecord</field>\n"
+         + "                            </block>\n"
+         + "                        </value>\n"
+         + "                    </block>\n"
+         + "                </value>\n"
+         + "            </block>\n"
+         + "        </value>\n"
+         + "    </block>\n"
+         + "</xml>";
+
    @Test
    public void parseFunctionXml() {
       List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xml);
@@ -366,6 +387,16 @@ public class FunctionXmlParserTest {
       assertThat(attributeReferences).hasSize(1);
       assertThat(attributeReferences).contains(
             new FunctionXmlParser.AttributeReference("a1", null, "5d81646d652b2314cb092faa")
+      );
+   }
+
+   @Test
+   public void parseGetRecordsCount() {
+      List<FunctionXmlParser.AttributeReference> attributeReferences = FunctionXmlParser.parseFunctionXml(xmlGetRecordsCount);
+
+      assertThat(attributeReferences).hasSize(1);
+      assertThat(attributeReferences).contains(
+            new FunctionXmlParser.AttributeReference(null, "62a4616a67ebf01f3f8ecc73", "62a8e6362b86be322c7c8934")
       );
    }
 

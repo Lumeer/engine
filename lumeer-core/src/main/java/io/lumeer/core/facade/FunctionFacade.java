@@ -106,6 +106,7 @@ public class FunctionFacade extends AbstractFacade {
          functionDao.createRows(functionRows);
       }
 
+      System.out.println("creating rows " + functionRows);
       Deque<FunctionParameterDocuments> queue = createQueueForCollection(collection, attribute, functionRows);
       return convertQueueToTask(queue);
    }
