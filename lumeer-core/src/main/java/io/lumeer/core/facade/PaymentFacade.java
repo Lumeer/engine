@@ -48,6 +48,7 @@ import java.time.Period;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
@@ -150,14 +151,10 @@ public class PaymentFacade extends AbstractFacade {
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
       checkReadPermissions(organization);
-      ServiceLimits serviceLimits = workspaceKeeper.getServiceLimits(organization);
-
-      if (serviceLimits != null) {
-         return serviceLimits;
-      }
-
-      serviceLimits = paymentAdapter.computeServiceLimits(organization, permissionsChecker.skipPayments());
-      workspaceKeeper.setServiceLimits(organization, ServiceLimits.FREE_LIMITS);
+      ServiceLimits serviceLimits = Optional.ofNullable(workspaceKeeper.getServiceLimits(organization)).orElse(
+            paymentAdapter.computeServiceLimits(organization, permissionsChecker.skipPayments())
+      );
+      workspaceKeeper.setServiceLimits(organization, serviceLimits);
       return serviceLimits;
    }
 
