@@ -21,6 +21,7 @@ package io.lumeer.core.auth;
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.Auth0Exception;
+import com.auth0.json.auth.TokenHolder;
 import com.auth0.json.mgmt.jobs.Job;
 import com.auth0.json.mgmt.users.User;
 import com.auth0.jwt.JWT;
@@ -40,6 +41,8 @@ public class UserAuth0Utils implements Serializable {
    private AuthenticatedUser authenticatedUser;
 
    private String domain;
+   private String clientId;
+   private String clientSecret;
    private String backendClientId;
    private String backendClientSecret;
 
@@ -80,6 +83,16 @@ public class UserAuth0Utils implements Serializable {
       mApi.users().update(authId, user).execute();
    }
 
+   public TokenHolder refreshToken(final String refreshToken) throws Auth0Exception {
+      final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
+      return auth0.renewAuth(refreshToken).execute();
+   }
+
+   public TokenHolder exchangeCode(final String authorizationCode) throws Auth0Exception {
+      final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
+      return auth0.exchangeCode(authorizationCode, "http://localhost:7000/auth").execute();
+   }
+
    private void refreshManagementApiToken() throws Auth0Exception {
       if (managementApiToken == null) {
          managementApiToken = requestManagementApiToken();
@@ -114,6 +127,14 @@ public class UserAuth0Utils implements Serializable {
 
    public void setDomain(final String domain) {
       this.domain = domain;
+   }
+
+   public void setClientId(final String clientId) {
+      this.clientId = clientId;
+   }
+
+   public void setClientSecret(final String clientSecret) {
+      this.clientSecret = clientSecret;
    }
 
    public void setBackendClientId(final String backendClientId) {

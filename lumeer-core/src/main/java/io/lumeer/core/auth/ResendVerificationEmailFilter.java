@@ -46,9 +46,6 @@ public class ResendVerificationEmailFilter implements AuthFilter, Serializable {
 
    @Override
    public void init(final FilterConfig filterConfig) throws ServletException {
-      userAuth0Utils.setDomain(filterConfig.getServletContext().getInitParameter("com.auth0.domain"));
-      userAuth0Utils.setBackendClientId(filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId"));
-      userAuth0Utils.setBackendClientSecret(filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret"));
    }
 
    @Override
