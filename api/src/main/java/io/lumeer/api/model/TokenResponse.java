@@ -6,10 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @JsonInclude(Include.NON_NULL)
 public class TokenResponse {
 
-   private String accessToken;
-   private String refreshToken;
-   private String tokenType;
-   private long expiresIn;
+   private final String accessToken;
+   private final String refreshToken;
+   private final String tokenType;
+   private final long expiresIn;
 
    public TokenResponse(final String accessToken, final String refreshToken, final String tokenType, final long expiresIn) {
       this.accessToken = accessToken;
