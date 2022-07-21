@@ -32,6 +32,7 @@ import io.lumeer.api.model.ProductDemo;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.TokenResponse;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserInvitation;
 import io.lumeer.api.model.UserOnboarding;
@@ -475,11 +476,6 @@ public class UserFacade extends AbstractFacade {
          user.setDefaultWorkspace(null);
       }
 
-      return user;
-   }
-
-   public User getCurrentUserWithLastLogin() {
-      final User user = getCurrentUser();
       user.setLastLoggedIn(userLoginDao.getPreviousLoginDate(user.getId()));
 
       return user;
@@ -514,7 +510,7 @@ public class UserFacade extends AbstractFacade {
          try {
             userAuth0Utils.renameUser(user.getName());
          } catch (Auth0Exception e) {
-            throw new UnsuccessfulOperationException("Unable to update user name: ", e);
+            throw new UnsuccessfulOperationException("Unable to update user name: " + user.getName(), e);
          }
          sendPushNotification = true;
       }
@@ -585,6 +581,15 @@ public class UserFacade extends AbstractFacade {
    public void scheduleDemo(ProductDemo demo) {
       User currentUser = authenticatedUser.getCurrentUser();
       freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " wants to schedule demo", demo.getMessage());
+   }
+
+   public TokenResponse exchangeCode(String code) {
+      try {
+         var tokenResponse = this.userAuth0Utils.exchangeCode(code);
+         return new TokenResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken(), tokenResponse.getTokenType(), tokenResponse.getExpiresIn());
+      } catch (Auth0Exception e) {
+         throw new UnsuccessfulOperationException("Unable to exchange code: " + code, e);
+      }
    }
 
    public boolean isUserAffiliate(final String userId) {

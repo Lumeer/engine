@@ -56,6 +56,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -89,6 +90,9 @@ public class Auth0Filter implements Filter {
    @Inject
    private PublicViewFilter publicViewFilter;
 
+   @Inject
+   private UserAuth0Utils userAuth0Utils;
+
    private FilterConfig filterConfig;
 
    private Map<String, AuthenticatedUser.AuthUserInfo> authUserCache = new ConcurrentHashMap<>();
@@ -116,6 +120,12 @@ public class Auth0Filter implements Filter {
    }
 
    private void initFilters() throws ServletException {
+      userAuth0Utils.setDomain(domain);
+      userAuth0Utils.setClientId(clientId);
+      userAuth0Utils.setClientSecret(clientSecret);
+      userAuth0Utils.setBackendClientId(filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId"));
+      userAuth0Utils.setBackendClientSecret(filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret"));
+
       allowedHostsFilter.init(filterConfig);
       headersFilter.init(filterConfig);
       optionsResendVerificationEmailFilter.init(filterConfig);
@@ -188,7 +198,7 @@ public class Auth0Filter implements Filter {
          return;
       }
 
-      if (req.getPathInfo() == null || !req.getPathInfo().startsWith("/paymentNotify/")) {
+      if (req.getPathInfo() == null || !shouldSkipAuthentication(req)) {
          final String accessToken = getAccessToken(req);
 
          // we do not have the token at all, or we failed to obtain verifier
@@ -283,6 +293,10 @@ public class Auth0Filter implements Filter {
          sentryFacade.reportError(e);
          res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
       }
+   }
+
+   private boolean shouldSkipAuthentication(HttpServletRequest req) {
+      return req.getPathInfo().startsWith("/paymentNotify/") || req.getPathInfo().startsWith("/auth/");
    }
 
    private AuthenticatedUser.AuthUserInfo getAuthenticatedUser(final String accessToken) {
