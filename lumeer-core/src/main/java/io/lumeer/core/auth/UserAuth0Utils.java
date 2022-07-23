@@ -92,7 +92,8 @@ public class UserAuth0Utils implements Serializable {
 
    public TokenHolder exchangeCode(final String authorizationCode) throws Auth0Exception {
       final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
-      return auth0.exchangeCode(authorizationCode, Objects.requireNonNullElse(redirectUri, "http://localhost:7000/auth")).execute();
+      final String notNullRedirectUri = StringUtils.isNotEmpty(redirectUri) ? redirectUri : "http://localhost:7000/auth";
+      return auth0.exchangeCode(authorizationCode, notNullRedirectUri).execute();
    }
 
    private void refreshManagementApiToken() throws Auth0Exception {
