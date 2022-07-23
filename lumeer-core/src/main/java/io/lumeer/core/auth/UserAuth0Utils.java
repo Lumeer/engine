@@ -31,6 +31,7 @@ import com.auth0.net.AuthRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.util.Objects;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -91,7 +92,7 @@ public class UserAuth0Utils implements Serializable {
 
    public TokenHolder exchangeCode(final String authorizationCode) throws Auth0Exception {
       final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
-      return auth0.exchangeCode(authorizationCode, redirectUri).execute();
+      return auth0.exchangeCode(authorizationCode, Objects.requireNonNullElse(redirectUri, "http://localhost:7000/auth")).execute();
    }
 
    private void refreshManagementApiToken() throws Auth0Exception {
