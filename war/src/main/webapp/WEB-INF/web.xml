@@ -23,5 +23,9 @@
 		<param-name>com.auth0.domain</param-name>
 		<param-value>lumeer.eu.auth0.com</param-value>
 	</context-param>
+	<context-param>
+		<param-name>com.auth0.redirectUri</param-name>
+		<param-value>http://localhost:7000/auth</param-value>
+	</context-param>
 
 </web-app>

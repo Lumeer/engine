@@ -40,6 +40,7 @@ public class UserAuth0Utils implements Serializable {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
+   private String redirectUri;
    private String domain;
    private String clientId;
    private String clientSecret;
@@ -90,7 +91,7 @@ public class UserAuth0Utils implements Serializable {
 
    public TokenHolder exchangeCode(final String authorizationCode) throws Auth0Exception {
       final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
-      return auth0.exchangeCode(authorizationCode, "http://localhost:7000/auth").execute();
+      return auth0.exchangeCode(authorizationCode, redirectUri).execute();
    }
 
    private void refreshManagementApiToken() throws Auth0Exception {
@@ -144,4 +145,6 @@ public class UserAuth0Utils implements Serializable {
    public void setBackendClientSecret(final String backendClientSecret) {
       this.backendClientSecret = backendClientSecret;
    }
+
+   public void setRedirectUri(final String redirectUri) { this.redirectUri = redirectUri; }
 }
