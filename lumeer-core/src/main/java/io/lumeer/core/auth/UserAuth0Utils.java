@@ -31,7 +31,6 @@ import com.auth0.net.AuthRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import java.util.Objects;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
