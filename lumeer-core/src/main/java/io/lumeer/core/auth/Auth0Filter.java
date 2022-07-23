@@ -125,6 +125,7 @@ public class Auth0Filter implements Filter {
       userAuth0Utils.setClientSecret(clientSecret);
       userAuth0Utils.setBackendClientId(filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientId"));
       userAuth0Utils.setBackendClientSecret(filterConfig.getServletContext().getInitParameter("com.auth0.backend.clientSecret"));
+      userAuth0Utils.setRedirectUri(filterConfig.getServletContext().getInitParameter("com.auth0.redirectUri"));
 
       allowedHostsFilter.init(filterConfig);
       headersFilter.init(filterConfig);

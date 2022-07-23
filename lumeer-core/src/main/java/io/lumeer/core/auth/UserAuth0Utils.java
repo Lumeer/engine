@@ -18,8 +18,6 @@
  */
 package io.lumeer.core.auth;
 
-import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
-
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.Auth0Exception;
@@ -42,9 +40,7 @@ public class UserAuth0Utils implements Serializable {
    @Inject
    private AuthenticatedUser authenticatedUser;
 
-   @Inject
-   private DefaultConfigurationProducer defaultConfigurationProducer;
-
+   private String redirectUri;
    private String domain;
    private String clientId;
    private String clientSecret;
@@ -95,18 +91,7 @@ public class UserAuth0Utils implements Serializable {
 
    public TokenHolder exchangeCode(final String authorizationCode) throws Auth0Exception {
       final AuthAPI auth0 = new AuthAPI(domain, clientId, clientSecret);
-      return auth0.exchangeCode(authorizationCode, getRedirectUri()).execute();
-   }
-
-   private String getRedirectUri() {
-      switch (defaultConfigurationProducer.getEnvironment()) {
-         case PRODUCTION:
-            return "https://get.lumeer.io/en/auth";
-         case STAGING:
-            return "https://devel.lumeer.io/en/auth";
-         default:
-            return "http://localhost:7000/auth";
-      }
+      return auth0.exchangeCode(authorizationCode, redirectUri).execute();
    }
 
    private void refreshManagementApiToken() throws Auth0Exception {
@@ -160,4 +145,6 @@ public class UserAuth0Utils implements Serializable {
    public void setBackendClientSecret(final String backendClientSecret) {
       this.backendClientSecret = backendClientSecret;
    }
+
+   public void setRedirectUri(final String redirectUri) { this.redirectUri = redirectUri; }
 }
