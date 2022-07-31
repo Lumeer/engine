@@ -25,6 +25,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.engine.api.data.DataDocument;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -79,14 +82,27 @@ public abstract class CollectionPurposeUtils {
 
    public static ZonedDateTime getDueDate(final Document document, final Collection collection) {
       final String dueDateAttributeId = collection.getPurpose().getDueDateAttributeId();
+      final Attribute dueDateAttribute = findAttribute(collection.getAttributes(), dueDateAttributeId);
 
-      if (StringUtils.isNotEmpty(dueDateAttributeId) && findAttribute(collection.getAttributes(), dueDateAttributeId) != null) {
+      if (StringUtils.isNotEmpty(dueDateAttributeId) && dueDateAttribute != null) {
          if (document.getData().get(dueDateAttributeId) instanceof Date) {
-            final Date dueDate = document.getData().getDate(dueDateAttributeId);
-            return ZonedDateTime.from(dueDate.toInstant().atZone(utcZone));
+            return getCorrectedDueTime(dueDateAttribute, ZonedDateTime.from(document.getData().getDate(dueDateAttributeId).toInstant().atZone(utcZone)));
          }
       }
 
       return null;
+   }
+
+   private static ZonedDateTime getCorrectedDueTime(final Attribute dueDateAttribute, final ZonedDateTime indicatedDueDate) {
+      if (AttributeUtil.formatHasTimeOptions(dueDateAttribute)) {
+         return indicatedDueDate;
+      }
+
+      // if there isn't a time dimension in the date, assume that this whole day is still available for completion
+      if (AttributeUtil.isUTC(dueDateAttribute)) {
+         return indicatedDueDate.with(ChronoField.HOUR_OF_DAY, 23).with(ChronoField.MINUTE_OF_HOUR, 59);
+      } else {
+         return indicatedDueDate.plus(23, ChronoUnit.HOURS).plus(59, ChronoUnit.MINUTES);
+      }
    }
 }
