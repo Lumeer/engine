@@ -38,7 +38,7 @@ public class AuthFacade extends AbstractFacade {
          var tokenResponse = this.userAuth0Utils.exchangeCode(code);
          return new TokenResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken(), tokenResponse.getTokenType(), tokenResponse.getExpiresIn());
       } catch (Auth0Exception e) {
-         throw new UnsuccessfulOperationException("Unable to exchange code: " + code, e);
+         throw new UnsuccessfulOperationException("Unable to exchange code: *******" + code.substring(code.length() - 3), e);
       }
    }
 
@@ -47,7 +47,7 @@ public class AuthFacade extends AbstractFacade {
          var tokenResponse = this.userAuth0Utils.refreshToken(token);
          return new TokenResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken(), tokenResponse.getTokenType(), tokenResponse.getExpiresIn());
       } catch (Auth0Exception e) {
-         throw new UnsuccessfulOperationException("Unable to refresh token: " + token, e);
+         throw new UnsuccessfulOperationException("Unable to refresh token: *******" + token.substring(token.length() - 3), e);
       }
    }
 }

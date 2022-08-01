@@ -32,7 +32,6 @@ import io.lumeer.api.model.ProductDemo;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.TokenResponse;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserInvitation;
 import io.lumeer.api.model.UserOnboarding;
@@ -581,15 +580,6 @@ public class UserFacade extends AbstractFacade {
    public void scheduleDemo(ProductDemo demo) {
       User currentUser = authenticatedUser.getCurrentUser();
       freshdeskFacade.logTicket(currentUser, "User " + currentUser.getEmail() + " wants to schedule demo", demo.getMessage());
-   }
-
-   public TokenResponse exchangeCode(String code) {
-      try {
-         var tokenResponse = this.userAuth0Utils.exchangeCode(code);
-         return new TokenResponse(tokenResponse.getAccessToken(), tokenResponse.getRefreshToken(), tokenResponse.getTokenType(), tokenResponse.getExpiresIn());
-      } catch (Auth0Exception e) {
-         throw new UnsuccessfulOperationException("Unable to exchange code: " + code, e);
-      }
    }
 
    public boolean isUserAffiliate(final String userId) {

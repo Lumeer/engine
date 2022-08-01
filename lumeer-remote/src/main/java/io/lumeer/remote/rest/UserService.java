@@ -23,7 +23,6 @@ import io.lumeer.api.model.Feedback;
 import io.lumeer.api.model.LogEvent;
 import io.lumeer.api.model.PaymentStats;
 import io.lumeer.api.model.ProductDemo;
-import io.lumeer.api.model.TokenResponse;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.UserInvitation;
 import io.lumeer.api.model.UserOnboarding;
@@ -53,7 +52,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -198,12 +196,6 @@ public class UserService extends AbstractService {
       userFacade.scheduleDemo(demo);
 
       return Response.ok().build();
-   }
-
-   @POST
-   @Path("exchange-code")
-   public TokenResponse exchangeCode(@QueryParam("code") String code) {
-      return userFacade.exchangeCode(code);
    }
 
    @GET
