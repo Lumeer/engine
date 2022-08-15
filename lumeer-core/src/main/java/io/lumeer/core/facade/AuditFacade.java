@@ -576,7 +576,9 @@ public class AuditFacade extends AbstractFacade {
       Map<String, Object> defaultValues = Collections.emptyMap();
       if (!defaultAttributeId.isEmpty()) {
          defaultValues = dataDao.getData(collection.getId(), documentsIds, defaultAttributeId)
-                                .stream().collect(toMap(DataDocument::getId, d -> d.get(defaultAttributeId)));
+                                .stream()
+                                .filter(document -> document.get(defaultAttributeId) != null)
+                                .collect(toMap(DataDocument::getId, d -> d.get(defaultAttributeId)));
       }
 
       for (AuditRecord auditRecord : auditRecords) {
@@ -609,7 +611,9 @@ public class AuditFacade extends AbstractFacade {
       Map<String, Object> defaultValues = Collections.emptyMap();
       if (!defaultAttributeId.isEmpty()) {
          defaultValues = linkDataDao.getData(linkType.getId(), linkIds, defaultAttributeId)
-                                    .stream().collect(toMap(DataDocument::getId, d -> d.get(defaultAttributeId)));
+                                    .stream()
+                                    .filter(document -> document.get(defaultAttributeId) != null)
+                                    .collect(toMap(DataDocument::getId, d -> d.get(defaultAttributeId)));
       }
 
       for (AuditRecord auditRecord : auditRecords) {

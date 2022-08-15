@@ -255,9 +255,9 @@ public class ProjectFacade extends AbstractFacade {
    }
 
    public Project getPublicProject(String code) {
-      var project = getProjectByCode(code);
+      var project = projectDao.getProjectByCode(code);
       if (project.isPublic()) {
-         return project;
+         return mapResource(project);
       }
       throw new ResourceNotFoundException(ResourceType.PROJECT);
    }
