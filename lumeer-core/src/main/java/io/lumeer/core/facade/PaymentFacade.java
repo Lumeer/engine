@@ -151,8 +151,12 @@ public class PaymentFacade extends AbstractFacade {
 
    public ServiceLimits getCurrentServiceLimits(final Organization organization) {
       checkReadPermissions(organization);
+      return getServiceLimits(organization);
+   }
+
+   private ServiceLimits getServiceLimits(final Organization organization) {
       ServiceLimits serviceLimits = Optional.ofNullable(workspaceKeeper.getServiceLimits(organization)).orElse(
-            paymentAdapter.computeServiceLimits(organization, permissionsChecker.skipPayments())
+              paymentAdapter.computeServiceLimits(organization, permissionsChecker.skipPayments())
       );
       workspaceKeeper.setServiceLimits(organization, serviceLimits);
       return serviceLimits;
@@ -185,7 +189,7 @@ public class PaymentFacade extends AbstractFacade {
                   ". Invoice might need to be prepared for " + companyContactDao.getCompanyContact(organization));
 
       if (updateServiceLimitsEvent != null) {
-         updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, getCurrentServiceLimits(organization)));
+         updateServiceLimitsEvent.fire(new UpdateServiceLimits(organization, getServiceLimits(organization)));
       }
 
       return result;
