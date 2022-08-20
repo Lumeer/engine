@@ -506,7 +506,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
 
    // get map of user id -> user
    private Map<String, User> getUsers(final List<User> users) {
-      return users.stream()
+      return users.stream().distinct()
                   .collect(Collectors.toMap(User::getId, Function.identity()));
    }
 
