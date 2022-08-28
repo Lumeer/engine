@@ -349,7 +349,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       setCollectionGroupRoles(collection, Set.of(new Role(RoleType.AttributeEdit)));
 
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, "", ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, "", ATTRIBUTE_CONSTRAINT, null, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       collectionFacade.createCollectionAttributes(collection.getId(), Set.of(attribute));
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -379,7 +379,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
       Runnable r = () -> {
          for (int i = 0; i < 20; i++) {
-            Attribute attribute = new Attribute(null, ATTRIBUTE_NAME, null, null, null, null, 0, null);
+            Attribute attribute = new Attribute(null, ATTRIBUTE_NAME, null, null, null, null, null, 0, null);
             final java.util.Collection<Attribute> createdAttributes = collectionFacade.createCollectionAttributes(collection.getId(), List.of(attribute));
             createdAttributes.forEach(a -> attributeIds.add(a.getId()));
          }
@@ -407,13 +407,13 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testUpdateCollectionAttributeUpdate() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
       setCollectionGroupRoles(collection, Set.of(new Role(RoleType.AttributeEdit)));
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, null, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       collectionFacade.updateCollectionAttribute(collection.getId(), ATTRIBUTE_ID, updatedAttribute);
 
       collection = collectionDao.getCollectionByCode(CODE);
@@ -431,7 +431,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteCollectionAttribute() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       Collection collection = createCollection(CODE, attribute);
       assertThat(collection.getAttributes()).isNotEmpty();
 
@@ -463,7 +463,7 @@ public class CollectionFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testDeleteAutoLinkRules() {
-      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+      Attribute attribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       Collection collection = createCollection(CODE, attribute);
 
       var rules = createRules(collection, attribute);
@@ -729,8 +729,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, null, null, 0, null),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, 0, null)
+                  new Attribute("a1", "Task", null, null, null, null, null, 0, null),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, null, 0, null)
             )
       );
 
@@ -805,8 +805,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, null, null, 0, null),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, 0, null)
+                  new Attribute("a1", "Task", null, null, null, null, null, 0, null),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, null, 0, null)
             )
       );
 
@@ -901,8 +901,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, null, null, 0, null),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, 0, null)
+                  new Attribute("a1", "Task", null, null, null, null, null, 0, null),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, null, 0, null)
             )
       );
 
@@ -972,8 +972,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, null, null, 0, null),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, 0, null)
+                  new Attribute("a1", "Task", null, null, null, null, null, 0, null),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, null, 0, null)
             )
       );
 
@@ -1032,8 +1032,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, null, null, 0, null),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, 0, null)
+                  new Attribute("a1", "Task", null, null, null, null, null, 0, null),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, null, 0, null)
             )
       );
 
@@ -1064,8 +1064,8 @@ public class CollectionFacadeIT extends IntegrationTestBase {
       collectionFacade.createCollectionAttributes(
             collection.getId(),
             Arrays.asList(
-                  new Attribute("a1", "Task", null, null, null, null, 0, null),
-                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, 0, null)
+                  new Attribute("a1", "Task", null, null, null, null, null, 0, null),
+                  new Attribute("a2", ATTRIBUTE_STATE, null, null, null, null, null, 0, null)
             )
       );
       collection = collectionFacade.getCollection(collection.getId()); // read it back with the attributes
