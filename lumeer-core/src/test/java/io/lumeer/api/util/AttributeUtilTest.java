@@ -53,6 +53,6 @@ public class AttributeUtilTest {
          config.put("asUtc", asUtc);
       }
 
-      return new Attribute("a0", "Due Date", "", new Constraint(ConstraintType.DateTime, config), null, null, 0, null);
+      return new Attribute("a0", "Due Date", "", new Constraint(ConstraintType.DateTime, config), null, null, null, 0, null);
    }
 }

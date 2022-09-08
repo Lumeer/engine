@@ -103,7 +103,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ATTRIBUTE_NAME2 = "fullname2";
 
-   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+   private static final Attribute ATTRIBUTE = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME, null, ATTRIBUTE_CONSTRAINT, null, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
 
    private String collectionsUrl;
 
@@ -345,7 +345,8 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
                                 .request(MediaType.APPLICATION_JSON)
                                 .buildGet().invoke();
 
-      List<? extends ZapierFacade.ZapierField> fields = response.readEntity(new GenericType<List<? extends ZapierFacade.ZapierField>>() {});
+      List<? extends ZapierFacade.ZapierField> fields = response.readEntity(new GenericType<List<? extends ZapierFacade.ZapierField>>() {
+      });
 
       assertThat(fields).hasSize(2);
       assertThat(fields.get(0)).isEqualTo(new ZapierFacade.ZapierField("_id", "_id", "string", true, false, false));
@@ -357,7 +358,7 @@ public class CollectionServiceIT extends ServiceIntegrationTestBase {
       Collection collection = createCollection(CODE);
       assertThat(collection.getAttributes()).hasSize(1);
 
-      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_LOCK, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
+      Attribute updatedAttribute = new Attribute(ATTRIBUTE_ID, ATTRIBUTE_NAME2, null, ATTRIBUTE_CONSTRAINT, ATTRIBUTE_LOCK, null, ATTRIBUTE_FUNCTION, ATTRIBUTE_COUNT, null);
       Entity entity = Entity.json(updatedAttribute);
 
       Response response = client.target(collectionsUrl).path(collection.getId()).path("attributes").path(ATTRIBUTE_ID)
