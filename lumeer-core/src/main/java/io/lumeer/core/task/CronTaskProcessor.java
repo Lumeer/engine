@@ -66,7 +66,6 @@ public class CronTaskProcessor extends WorkspaceContext {
          final List<Project> projects = orgDao.getProjectDao().getAllProjects();
 
          projects.stream().filter(this::isTimerAllowedInProject).forEach(project -> {
-            System.out.println("running project timers: " + organization.getCode() + " /// " + project.getCode());
             final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
             final List<Collection> collections = projDao.getCollectionDao().getAllCollections();
             collections.forEach(collection -> processRules(projDao, collection));
