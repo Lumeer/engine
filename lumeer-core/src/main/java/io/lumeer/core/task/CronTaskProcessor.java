@@ -55,7 +55,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
    private final CronTaskChecker checker = new CronTaskChecker();
 
-   @Schedule(hour = "*", minute = "*") // every 15 minutes
+   @Schedule(hour = "*", minute = "*/15") // every 15 minutes
    public void process() {
       final List<Organization> organizations = organizationDao.getAllOrganizations();
 
@@ -75,7 +75,7 @@ public class CronTaskProcessor extends WorkspaceContext {
 
    private boolean isTimerAllowedInProject(Project project) {
       if (project.isPublic()) {
-         return project.getTemplateMetadata() != null && project.getTemplateMetadata().isAllowRunTimer();
+         return project.getTemplateMetadata() == null || !project.getTemplateMetadata().isTemplate();
       }
       return true;
    }

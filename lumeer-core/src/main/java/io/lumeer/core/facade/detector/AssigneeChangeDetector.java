@@ -44,7 +44,7 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
       if (StringUtils.isNotEmpty(assigneeAttr) && isAttributeChanged(documentEvent, assigneeAttr)) {
          if (!(documentEvent instanceof CreateDocument)) {
             // delete previous due date and assignee events on the document
-            delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.TASK_REOPENED, NotificationType.DUE_DATE_CHANGED));
+            deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.DUE_DATE_SOON, NotificationType.PAST_DUE_DATE, NotificationType.TASK_ASSIGNED, NotificationType.TASK_REOPENED, NotificationType.DUE_DATE_CHANGED));
 
             if (!(documentEvent instanceof RemoveDocument) && !doneState) {
                final ZonedDateTime dueDate = getDueDate(documentEvent, collection);
@@ -52,22 +52,22 @@ public class AssigneeChangeDetector extends AbstractPurposeChangeDetector {
                // no need to send DUE_DATE_CHANGED because due date is part of assigned message
 
                if (dueDate != null) {
-                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
+                  scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.PAST_DUE_DATE, dueDate));
 
                   if (dueDate.minus(DUE_DATE_SOON_DAYS, ChronoUnit.DAYS).isAfter(ZonedDateTime.now())) {
-                     delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(DUE_DATE_SOON_DAYS, ChronoUnit.DAYS)));
+                     scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.DUE_DATE_SOON, dueDate.minus(DUE_DATE_SOON_DAYS, ChronoUnit.DAYS)));
                   }
                }
             }
          }
 
          if (documentEvent instanceof UpdateDocument) {
-            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UNASSIGNED, nowPlus(), getRemovedAssignees(documentEvent, collection)));
+            scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UNASSIGNED, nowPlus(), getRemovedAssignees(documentEvent, collection)));
          }
 
          if (!(documentEvent instanceof RemoveDocument) && !doneState) {
             // create new due date events on the document
-            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus(), getAddedAssignees(documentEvent, collection)));
+            scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_ASSIGNED, nowPlus(), getAddedAssignees(documentEvent, collection)));
          }
       }
    }

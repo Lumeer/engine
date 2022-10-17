@@ -32,12 +32,12 @@ class CommentChangeDetector : AbstractPurposeChangeDetector() {
         super.detectChanges(comment, document, collection)
 
         if (collection.purpose?.type == CollectionPurposeType.Tasks) {
-            delayedActionDao.scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_COMMENTED, nowPlus()))
+            scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_COMMENTED, nowPlus()))
         }
 
         val mentionedUsers = getMentionedUsers(comment.comment)
         if (mentionedUsers.isNotEmpty()) {
-            delayedActionDao.scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_MENTIONED, nowPlus(), mentionedUsers))
+            scheduleActions(getDelayedActions(DocumentCommentedEvent(document, comment), collection, NotificationType.TASK_MENTIONED, nowPlus(), mentionedUsers))
         }
     }
 
