@@ -69,13 +69,13 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    protected static final int DUE_DATE_SOON_DAYS = 3;
 
    private DelayedActionDao delayedActionDao;
-   protected UserDao userDao;
-   protected GroupDao groupDao;
-   protected SelectedWorkspace selectedWorkspace;
-   protected User currentUser;
-   protected RequestDataKeeper requestDataKeeper;
-   protected ConstraintManager constraintManager;
-   protected DefaultConfigurationProducer.DeployEnvironment environment;
+   private UserDao userDao;
+   private GroupDao groupDao;
+   private SelectedWorkspace selectedWorkspace;
+   private User currentUser;
+   private RequestDataKeeper requestDataKeeper;
+   private ConstraintManager constraintManager;
+   private DefaultConfigurationProducer.DeployEnvironment environment;
 
    private List<User> users;
    private List<Group> teams;
@@ -93,23 +93,11 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
    }
 
    protected void scheduleActions(final List<DelayedAction> delayedActions) {
-      if (isWorkflowEnabledInProject()) {
-         this.delayedActionDao.scheduleActions(delayedActions);
-      }
+      this.delayedActionDao.scheduleActions(delayedActions);
    }
 
    protected void deleteScheduledActions(final String partialResourcePath, final Set<NotificationType> notificationTypes) {
-      if (isWorkflowEnabledInProject()) {
-         delayedActionDao.deleteScheduledActions(partialResourcePath, notificationTypes);
-      }
-   }
-
-   private boolean isWorkflowEnabledInProject() {
-      Project project = this.selectedWorkspace.getProject().orElse(null);
-      if (project != null) {
-         return !project.isPublic() || project.getTemplateMetadata() == null || !project.getTemplateMetadata().isTemplate();
-      }
-      return false;
+      delayedActionDao.deleteScheduledActions(partialResourcePath, notificationTypes);
    }
 
    protected boolean isAttributeChanged(final DocumentEvent documentEvent, final String attributeId) {
