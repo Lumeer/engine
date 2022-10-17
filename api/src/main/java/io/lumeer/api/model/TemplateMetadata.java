@@ -33,21 +33,21 @@ public class TemplateMetadata {
    private final Long relativeDate;
    private final boolean showTopPanel;
    private final boolean isEditable;
-   private final boolean allowRunTimer;
+   private final boolean isTemplate;
    private String organizationId;
 
    @JsonCreator
    public TemplateMetadata(@JsonProperty("imageUrl") final String imageUrl,
          @JsonProperty("showTopPanel") final boolean showTopPanel,
          @JsonProperty("editable") final boolean isEditable,
-         @JsonProperty("allowRunTimer") final boolean allowRunTimer,
+         @JsonProperty("template") final boolean isTemplate,
          @JsonProperty("tags") final List<String> tags,
          @JsonProperty("relativeDate") final Long relativeDate,
          @JsonProperty("defaultView") final String defaultView,
          @JsonProperty("allowedDomains") final String allowedDomains) {
       this.imageUrl = imageUrl;
       this.isEditable = isEditable;
-      this.allowRunTimer = allowRunTimer;
+      this.isTemplate = isTemplate;
       this.tags = tags;
       this.relativeDate = relativeDate;
       this.showTopPanel = showTopPanel;
@@ -61,7 +61,7 @@ public class TemplateMetadata {
       this.tags = Collections.emptyList();
       this.allowedDomains = null;
       this.relativeDate = null;
-      this.allowRunTimer = true;
+      this.isTemplate = false;
       this.showTopPanel = false;
       this.isEditable = false;
    }
@@ -69,7 +69,7 @@ public class TemplateMetadata {
    public TemplateMetadata(TemplateMetadata metadata) {
       this.imageUrl = metadata.getImageUrl();
       this.isEditable = metadata.isEditable();
-      this.allowRunTimer = metadata.isAllowRunTimer();
+      this.isTemplate = metadata.isTemplate();
       this.tags = metadata.getTags();
       this.relativeDate = metadata.getRelativeDate();
       this.showTopPanel = metadata.isShowTopPanel();
@@ -109,8 +109,8 @@ public class TemplateMetadata {
       return organizationId;
    }
 
-   public boolean isAllowRunTimer() {
-      return allowRunTimer;
+   public boolean isTemplate() {
+      return isTemplate;
    }
 
    public void setOrganizationId(final String organizationId) {

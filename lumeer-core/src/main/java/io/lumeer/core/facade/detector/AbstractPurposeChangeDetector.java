@@ -68,7 +68,7 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
    protected static final int DUE_DATE_SOON_DAYS = 3;
 
-   protected DelayedActionDao delayedActionDao;
+   private DelayedActionDao delayedActionDao;
    protected UserDao userDao;
    protected GroupDao groupDao;
    protected SelectedWorkspace selectedWorkspace;
@@ -90,6 +90,26 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
       this.environment = environment;
+   }
+
+   protected void scheduleActions(final List<DelayedAction> delayedActions) {
+      if (isWorkflowEnabledInProject()) {
+         this.delayedActionDao.scheduleActions(delayedActions);
+      }
+   }
+
+   protected void deleteScheduledActions(final String partialResourcePath, final Set<NotificationType> notificationTypes) {
+      if (isWorkflowEnabledInProject()) {
+         delayedActionDao.deleteScheduledActions(partialResourcePath, notificationTypes);
+      }
+   }
+
+   private boolean isWorkflowEnabledInProject() {
+      Project project = this.selectedWorkspace.getProject().orElse(null);
+      if (project != null) {
+         return !project.isPublic() || project.getTemplateMetadata() == null || !project.getTemplateMetadata().isTemplate();
+      }
+      return false;
    }
 
    protected boolean isAttributeChanged(final DocumentEvent documentEvent, final String attributeId) {

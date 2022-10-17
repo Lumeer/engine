@@ -38,10 +38,10 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
 
       if (!(documentEvent instanceof CreateDocument) && !(documentEvent instanceof RemoveDocument)) {
          // delete previous due date and assignee events on the document
-         delayedActionDao.deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.TASK_UPDATED));
+         deleteScheduledActions(getResourcePath(documentEvent), Set.of(NotificationType.TASK_UPDATED));
          if (!doneState) {
             final Set<Assignee> observers = getObservers(documentEvent, collection);
-            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), observers));
+            scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), observers));
 
             // assignee != initiator, initiator != observer, no change in due date, state, nor assignee => send task update
             final String assigneeAttr = purpose.getAssigneeAttributeId();
@@ -55,9 +55,9 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
                      assignees.remove(new Assignee(assignee.getEmail(), true));
                      assignees.remove(new Assignee(assignee.getEmail(), false));
                   });
-                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), assignees));
+                  scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus(), assignees));
                } else {
-                  delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
+                  scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_UPDATED, nowPlus()));
                }
             }
          }
@@ -66,8 +66,8 @@ public class TaskUpdateChangeDetector extends AbstractPurposeChangeDetector {
       if (documentEvent instanceof RemoveDocument) {
          // create new due date events on the document
          if (!doneState) {
-            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus()));
-            delayedActionDao.scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus(), getObservers(documentEvent, collection)));
+            scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus()));
+            scheduleActions(getDelayedActions(documentEvent, collection, NotificationType.TASK_REMOVED, nowPlus(), getObservers(documentEvent, collection)));
          }
       }
    }

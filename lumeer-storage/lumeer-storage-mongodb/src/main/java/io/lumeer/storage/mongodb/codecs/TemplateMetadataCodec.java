@@ -34,7 +34,7 @@ import java.util.List;
 public class TemplateMetadataCodec implements Codec<TemplateMetadata> {
 
    public static final String IS_EDITABLE = "isEditable";
-   public static final String ALLOW_RUN_TIMER = "allowRunTimer";
+   public static final String IS_TEMPLATE = "isTemplate";
    public static final String SHOW_TOP_PANEL = "showTopPanel";
    public static final String TAGS = "tags";
    public static final String IMAGE_URL = "imageUrl";
@@ -57,21 +57,21 @@ public class TemplateMetadataCodec implements Codec<TemplateMetadata> {
 
    public static TemplateMetadata convertFromDocument(Document bson) {
       boolean editable = true; // bson.getBoolean(IS_EDITABLE);
-      boolean allowRunTimer = bson.getBoolean(ALLOW_RUN_TIMER, true);
-      boolean hideTopBar = bson.getBoolean(SHOW_TOP_PANEL);
+      boolean isTemplate = bson.getBoolean(IS_TEMPLATE, false);
+      boolean showTopPanel = bson.getBoolean(SHOW_TOP_PANEL);
       String imageUrl = bson.getString(IMAGE_URL);
       List<String> tags = bson.getList(TAGS, String.class);
       Long relativeDate = bson.getLong(RELATIVE_DATE);
       String defaultView = bson.getString(DEFAULT_VIEW);
       String allowedDomains = bson.getString(ALLOWED_DOMAINS);
 
-      return new TemplateMetadata(imageUrl, hideTopBar, editable, allowRunTimer, tags, relativeDate, defaultView, allowedDomains);
+      return new TemplateMetadata(imageUrl, showTopPanel, editable, isTemplate, tags, relativeDate, defaultView, allowedDomains);
    }
 
    @Override
    public void encode(final BsonWriter writer, final TemplateMetadata value, final EncoderContext encoderContext) {
       Document document = new Document(IS_EDITABLE, value.isEditable())
-            .append(ALLOW_RUN_TIMER, value.isAllowRunTimer())
+            .append(IS_TEMPLATE, value.isTemplate())
             .append(SHOW_TOP_PANEL, value.isShowTopPanel())
             .append(RELATIVE_DATE, value.getRelativeDate())
             .append(IMAGE_URL, value.getImageUrl())
