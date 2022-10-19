@@ -26,16 +26,18 @@ public class NavigationRequest {
    private final String collectionId;
    private final String documentId;
    private final String attributeId;
+   private final String correlationId;
    private final boolean sidebar;
    private final boolean newWindow;
    private final String search;
 
-   public NavigationRequest(final String organizationCode, final String projectCode, final String viewId, final String collectionId, final String documentId, final String attributeId, final boolean sidebar, final boolean newWindow, final String search) {
+   public NavigationRequest(final String organizationCode, final String projectCode, final String viewId, final String collectionId, final String documentId, final String correlationId, final String attributeId, final boolean sidebar, final boolean newWindow, final String search) {
       this.organizationCode = organizationCode;
       this.projectCode = projectCode;
       this.viewId = viewId;
       this.collectionId = collectionId;
       this.documentId = documentId;
+      this.correlationId = correlationId;
       this.attributeId = attributeId;
       this.sidebar = sidebar;
       this.newWindow = newWindow;
@@ -56,6 +58,10 @@ public class NavigationRequest {
 
    public String getCollectionId() {
       return collectionId;
+   }
+
+   public String getCorrelationId() {
+      return correlationId;
    }
 
    public String getDocumentId() {
@@ -81,15 +87,16 @@ public class NavigationRequest {
    @Override
    public String toString() {
       return "NavigationRequest{" +
-            "organizationCode='" + organizationCode + '\'' +
-            ", projectCode='" + projectCode + '\'' +
-            ", viewId='" + viewId + '\'' +
-            ", collectionId='" + collectionId + '\'' +
-            ", documentId='" + documentId + '\'' +
-            ", attributeId='" + attributeId + '\'' +
-            ", sidebar=" + sidebar +
-            ", newWindow=" + newWindow +
-            ", search=" + search +
-            '}';
+              "organizationCode='" + organizationCode + '\'' +
+              ", projectCode='" + projectCode + '\'' +
+              ", viewId='" + viewId + '\'' +
+              ", collectionId='" + collectionId + '\'' +
+              ", documentId='" + documentId + '\'' +
+              ", attributeId='" + attributeId + '\'' +
+              ", correlationId='" + correlationId + '\'' +
+              ", sidebar=" + sidebar +
+              ", newWindow=" + newWindow +
+              ", search='" + search + '\'' +
+              '}';
    }
 }

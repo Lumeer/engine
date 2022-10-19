@@ -640,7 +640,7 @@ public class SingleStage extends Stage {
          changesTracker.addPrintRequests(printRequests);
 
          final List<NavigationRequest> navigationRequests = operations.stream().filter(operation -> operation instanceof NavigationOperation).map(operation -> ((NavigationOperation) operation).getEntity()).collect(toList());
-         changesTracker.addNavigationRequests(navigationRequests);
+         changesTracker.addNavigationRequests(navigationRequests.stream().map(n -> mapCorrelationIds(n, correlationIdsToIds)).collect(toList()));
 
          final List<SendEmailRequest> sendEmailRequests = operations.stream().filter(operation -> operation instanceof SendEmailOperation).map(operation -> ((SendEmailOperation) operation).getEntity()).collect(toList());
          changesTracker.addSendEmailRequests(sendEmailRequests);
@@ -650,6 +650,25 @@ public class SingleStage extends Stage {
       task.propagateChanges(changedDocuments, changedLinkInstances);
 
       return changesTracker;
+   }
+
+   final private NavigationRequest mapCorrelationIds(final NavigationRequest navigationRequest, final Map<String, String> correlationIdsToIds) {
+      if (navigationRequest.getDocumentId() == null && navigationRequest.getCorrelationId() != null) {
+         return new NavigationRequest(
+                 navigationRequest.getOrganizationCode(),
+                 navigationRequest.getProjectCode(),
+                 navigationRequest.getViewId(),
+                 navigationRequest.getCollectionId(),
+                 correlationIdsToIds.get(navigationRequest.getCorrelationId()),
+                 null,
+                 navigationRequest.getAttributeId(),
+                 navigationRequest.isSidebar(),
+                 navigationRequest.isNewWindow(),
+                 navigationRequest.getSearch()
+         );
+      }
+
+      return navigationRequest;
    }
 
 }
