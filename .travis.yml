@@ -11,8 +11,5 @@ before_install:
   - source "$HOME/.sdkman/bin/sdkman-init.sh"
   - sdk install java 11.0.12-open
   - sdk use java 11.0.12-open
-before_script:
-  - sleep 15
-  - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
 #jdk:
 #  - openjdk17
