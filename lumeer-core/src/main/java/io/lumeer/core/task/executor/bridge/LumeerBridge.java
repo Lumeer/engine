@@ -1051,12 +1051,13 @@ public class LumeerBridge {
             if (view != null && view.getQuery().getStems().size() > 0 && StringUtils.isNotEmpty(view.getQuery().getStems().get(0).getCollectionId())) {
                final String collectionId = view.getQuery().getStems().get(0).getCollectionId();
                final String documentId = documentBridge != null ? documentBridge.getDocument().getId() : null;
+               final String correlationId = documentBridge != null ? documentBridge.getDocument().createIfAbsentMetaData().getString(Document.META_CORRELATION_ID) : null;
                final Collection collection = task.getDaoContextSnapshot().getCollectionDao().getCollectionById(collectionId);
                final String attributeId = StringUtils.isNotEmpty(collection.getDefaultAttributeId()) ? collection.getDefaultAttributeId() :
                        (collection.getAttributes() != null && !collection.getAttributes().isEmpty() ? collection.getAttributes().iterator().next().getId() : "");
                final NavigationRequest navigationRequest = new NavigationRequest(
                        workspace.getOrganization().get().getCode(), workspace.getProject().get().getCode(),
-                       viewId, collectionId, documentId, attributeId, sidebar, newWindow, search
+                       viewId, collectionId, documentId, correlationId, attributeId, sidebar, newWindow, search
                );
 
                operations.add(new NavigationOperation(navigationRequest));
