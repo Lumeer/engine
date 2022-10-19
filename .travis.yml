@@ -5,6 +5,8 @@ services:
 script: ./travis.sh
 dist: focal
 before_install:
+  - sudo systemctl restart mongod.service
+  - sleep 10
   - curl -s "https://get.sdkman.io" | bash
   - source "$HOME/.sdkman/bin/sdkman-init.sh"
   - sdk install java 11.0.12-open
