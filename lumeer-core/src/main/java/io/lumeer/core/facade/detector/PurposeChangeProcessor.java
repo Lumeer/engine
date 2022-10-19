@@ -22,6 +22,7 @@ import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.RequestDataKeeper;
@@ -64,6 +65,9 @@ public class PurposeChangeProcessor {
    }
 
    public void processChanges(final DocumentEvent documentEvent, final Collection collection) {
+      if (!this.isWorkflowEnabledInProject()) {
+         return;
+      }
       final Set<PurposeChangeDetector> detectors = changeDetectors.get(collection.getPurposeType());
 
       if (detectors != null) {
@@ -75,6 +79,9 @@ public class PurposeChangeProcessor {
    }
 
    public void processChanges(final ResourceComment comment, final Document document, final Collection collection) {
+      if (!this.isWorkflowEnabledInProject()) {
+         return;
+      }
       final Set<PurposeChangeDetector> detectors = commentChangeDetectors.get(collection.getPurposeType());
 
       if (detectors != null) {
@@ -83,5 +90,13 @@ public class PurposeChangeProcessor {
             detector.detectChanges(comment, document, collection);
          });
       }
+   }
+
+   private boolean isWorkflowEnabledInProject() {
+      Project project = this.selectedWorkspace.getProject().orElse(null);
+      if (project != null) {
+         return !project.isPublic() || project.getTemplateMetadata() == null || !project.getTemplateMetadata().isTemplate();
+      }
+      return false;
    }
 }

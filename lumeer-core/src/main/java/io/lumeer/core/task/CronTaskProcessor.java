@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -66,12 +65,19 @@ public class CronTaskProcessor extends WorkspaceContext {
          final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
          final List<Project> projects = orgDao.getProjectDao().getAllProjects();
 
-         projects.forEach(project -> {
+         projects.stream().filter(this::isTimerAllowedInProject).forEach(project -> {
             final DaoContextSnapshot projDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, project));
             final List<Collection> collections = projDao.getCollectionDao().getAllCollections();
             collections.forEach(collection -> processRules(projDao, collection));
          });
       });
+   }
+
+   private boolean isTimerAllowedInProject(Project project) {
+      if (project.isPublic()) {
+         return project.getTemplateMetadata() == null || !project.getTemplateMetadata().isTemplate();
+      }
+      return true;
    }
 
    private void processRules(final DaoContextSnapshot dao, final Collection collection) {

@@ -68,14 +68,14 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
 
    protected static final int DUE_DATE_SOON_DAYS = 3;
 
-   protected DelayedActionDao delayedActionDao;
-   protected UserDao userDao;
-   protected GroupDao groupDao;
-   protected SelectedWorkspace selectedWorkspace;
-   protected User currentUser;
-   protected RequestDataKeeper requestDataKeeper;
-   protected ConstraintManager constraintManager;
-   protected DefaultConfigurationProducer.DeployEnvironment environment;
+   private DelayedActionDao delayedActionDao;
+   private UserDao userDao;
+   private GroupDao groupDao;
+   private SelectedWorkspace selectedWorkspace;
+   private User currentUser;
+   private RequestDataKeeper requestDataKeeper;
+   private ConstraintManager constraintManager;
+   private DefaultConfigurationProducer.DeployEnvironment environment;
 
    private List<User> users;
    private List<Group> teams;
@@ -90,6 +90,14 @@ public abstract class AbstractPurposeChangeDetector implements PurposeChangeDete
       this.requestDataKeeper = requestDataKeeper;
       this.constraintManager = constraintManager;
       this.environment = environment;
+   }
+
+   protected void scheduleActions(final List<DelayedAction> delayedActions) {
+      this.delayedActionDao.scheduleActions(delayedActions);
+   }
+
+   protected void deleteScheduledActions(final String partialResourcePath, final Set<NotificationType> notificationTypes) {
+      delayedActionDao.deleteScheduledActions(partialResourcePath, notificationTypes);
    }
 
    protected boolean isAttributeChanged(final DocumentEvent documentEvent, final String attributeId) {
