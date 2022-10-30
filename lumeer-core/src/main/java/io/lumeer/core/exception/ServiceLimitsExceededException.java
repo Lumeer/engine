@@ -49,6 +49,11 @@ public class ServiceLimitsExceededException extends LumeerException {
       this.resource = null;
    }
 
+   public ServiceLimitsExceededException(final long limit, final long documents, final long addingDocuments) {
+      super("Cannot create another " + addingDocuments + " documents. Your database now contains " + documents + " (including supporting system documents). You are only allowed to have " + limit + " documents. Update your service level in organization settings.");
+      this.resource = null;
+   }
+
    public ServiceLimitsExceededException(final int usersLimit) {
       super("Cannot invite another user. You are only allowed to have " + usersLimit + " users. Update your service level in organization settings.");
       this.resource = null;
