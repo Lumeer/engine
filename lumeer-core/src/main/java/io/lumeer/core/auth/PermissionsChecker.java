@@ -533,7 +533,7 @@ public class PermissionsChecker {
       if (limits.getDocuments() > 0 && documentsCount + number > limits.getDocuments()) {
          final Optional<Organization> organization = selectedWorkspace.getOrganization();
          freshdeskFacade.logLimitsExceeded(authenticatedUser.getCurrentUser(), "DOCUMENT", organization.isPresent() ? organization.get().getId() : "<empty>");
-         throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, null);
+         throw new ServiceLimitsExceededException(limits.getDocuments(), documentsCount, number);
       }
    }
 
