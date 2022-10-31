@@ -22,8 +22,8 @@ public class TextPrintRequest extends GenericPrintRequest {
 
    private final String text;
 
-   public TextPrintRequest(final String organizationCode, final String projectCode, final String text) {
-      super(organizationCode, projectCode);
+   public TextPrintRequest(final String organizationCode, final String projectCode, final String text, final boolean skipPrintDialog) {
+      super(organizationCode, projectCode, skipPrintDialog);
       this.text = text;
    }
 
@@ -34,9 +34,10 @@ public class TextPrintRequest extends GenericPrintRequest {
    @Override
    public String toString() {
       return "TextPrintRequest{" +
-            "organizationCode='" + organizationCode + '\'' +
-            ", projectCode='" + projectCode + '\'' +
-            ", text='" + text + '\'' +
-            '}';
+              "organizationCode='" + organizationCode + '\'' +
+              ", projectCode='" + projectCode + '\'' +
+              ", skipPrintDialog=" + skipPrintDialog +
+              ", text='" + text + '\'' +
+              '}';
    }
 }

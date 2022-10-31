@@ -22,10 +22,12 @@ public class GenericPrintRequest {
 
    protected final String organizationCode;
    protected final String projectCode;
+   protected final boolean skipPrintDialog;
 
-   public GenericPrintRequest(final String organizationCode, final String projectCode) {
+   public GenericPrintRequest(final String organizationCode, final String projectCode, final boolean skipPrintDialog) {
       this.organizationCode = organizationCode;
       this.projectCode = projectCode;
+      this.skipPrintDialog = skipPrintDialog;
    }
 
    public String getOrganizationCode() {
@@ -34,5 +36,9 @@ public class GenericPrintRequest {
 
    public String getProjectCode() {
       return projectCode;
+   }
+
+   public boolean isSkipPrintDialog() {
+      return skipPrintDialog;
    }
 }
