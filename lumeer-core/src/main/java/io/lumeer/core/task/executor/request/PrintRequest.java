@@ -27,8 +27,8 @@ public class PrintRequest extends GenericPrintRequest {
    private final String attributeId;
    private final ResourceType type;
 
-   public PrintRequest(final String organizationCode, final String projectCode, final String resourceId, final String documentId, final String attributeId, final ResourceType type) {
-      super(organizationCode, projectCode);
+   public PrintRequest(final String organizationCode, final String projectCode, final String resourceId, final String documentId, final String attributeId, final ResourceType type, final boolean skipPrintDialog) {
+      super(organizationCode, projectCode, skipPrintDialog);
       this.resourceId = resourceId;
       this.documentId = documentId;
       this.attributeId = attributeId;
@@ -54,12 +54,13 @@ public class PrintRequest extends GenericPrintRequest {
    @Override
    public String toString() {
       return "PrintRequest{" +
-            "organizationCode='" + organizationCode + '\'' +
-            ", projectCode='" + projectCode + '\'' +
-            ", resourceId='" + resourceId + '\'' +
-            ", documentId='" + documentId + '\'' +
-            ", attributeId='" + attributeId + '\'' +
-            ", type=" + type +
-            '}';
+              "organizationCode='" + organizationCode + '\'' +
+              ", projectCode='" + projectCode + '\'' +
+              ", skipPrintDialog=" + skipPrintDialog +
+              ", resourceId='" + resourceId + '\'' +
+              ", documentId='" + documentId + '\'' +
+              ", attributeId='" + attributeId + '\'' +
+              ", type=" + type +
+              '}';
    }
 }

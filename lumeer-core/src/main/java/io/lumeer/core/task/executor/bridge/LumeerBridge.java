@@ -737,6 +737,11 @@ public class LumeerBridge {
 
    @SuppressWarnings("unused")
    public void printAttribute(final DocumentBridge d, final String attrId) {
+      printAttribute2(d, attrId, false); // overloading is not handled well in GraalVM
+   }
+
+   @SuppressWarnings("unused")
+   public void printAttribute2(final DocumentBridge d, final String attrId, final boolean skipPrintDialog) {
       final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
       if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
          final PrintRequest pq = new PrintRequest(
@@ -745,7 +750,8 @@ public class LumeerBridge {
                d.getDocument().getCollectionId(),
                d.getDocument().getId(),
                attrId,
-               ResourceType.COLLECTION
+               ResourceType.COLLECTION,
+               skipPrintDialog
          );
          operations.add(new PrintAttributeOperation(pq));
          printed = true; // we can trigger this only once per rule/function
@@ -754,12 +760,18 @@ public class LumeerBridge {
 
    @SuppressWarnings("unused")
    public void printText(final String text) {
+      printText2(text, false); // overloading is not handled well in GraalVM
+   }
+
+   @SuppressWarnings("unused")
+   public void printText2(final String text, final boolean skipPrintDialog) {
       final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
       if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
          final TextPrintRequest pq = new TextPrintRequest(
                workspace.getOrganization().get().getCode(),
                workspace.getProject().get().getCode(),
-               text
+               text,
+               skipPrintDialog
          );
 
          operations.add(new PrintTextOperation(pq));
@@ -769,6 +781,11 @@ public class LumeerBridge {
 
    @SuppressWarnings("unused")
    public void printAttribute(final LinkBridge l, final String attrId) {
+      printAttribute2(l, attrId, false); // overloading is not handled well in GraalVM
+   }
+
+   @SuppressWarnings("unused")
+   public void printAttribute2(final LinkBridge l, final String attrId, final boolean skipPrintDialog) {
       final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
       if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
          final PrintRequest pq = new PrintRequest(
@@ -777,7 +794,8 @@ public class LumeerBridge {
                l.getLink().getLinkTypeId(),
                l.getLink().getId(),
                attrId,
-               ResourceType.LINK
+               ResourceType.LINK,
+               skipPrintDialog
          );
          operations.add(new PrintAttributeOperation(pq));
          printed = true; // we can trigger this only once per rule/function
