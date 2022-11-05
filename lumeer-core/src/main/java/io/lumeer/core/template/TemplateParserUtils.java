@@ -19,6 +19,7 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AttributeFormatting;
 import io.lumeer.api.model.AttributeLock;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
@@ -54,12 +55,16 @@ public class TemplateParserUtils {
       final var attr = new Attribute((String) o.get(Attribute.NAME));
       attr.setId((String) o.get(Attribute.ID));
       attr.setDescription((String) o.get(Attribute.DESCRIPTION));
+      attr.setSuggestValues((Boolean) o.getOrDefault(Attribute.SUGGEST_VALUES, false));
 
       if (o.get("constraint") != null) {
          attr.setConstraint(getAttributeConstraint((JSONObject) o.get("constraint")));
       }
       if (o.get("lock") != null) {
          attr.setLock(getAttributeLock((JSONObject) o.get("lock"), mapper));
+      }
+      if (o.get("formatting") != null) {
+         attr.setFormatting(getFormatting((JSONObject) o.get("formatting"), mapper));
       }
 
       return attr;
@@ -68,6 +73,14 @@ public class TemplateParserUtils {
    private static AttributeLock getAttributeLock(final JSONObject o, final ObjectMapper mapper) {
       try {
          return mapper.readValue(o.toJSONString(), AttributeLock.class);
+      } catch (IOException e) {
+         return null;
+      }
+   }
+
+   private static AttributeFormatting getFormatting(final JSONObject o, final ObjectMapper mapper) {
+      try {
+         return mapper.readValue(o.toJSONString(), AttributeFormatting.class);
       } catch (IOException e) {
          return null;
       }
