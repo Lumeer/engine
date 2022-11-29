@@ -21,55 +21,43 @@ package io.lumeer.api.model;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Objects;
-
 public class ImportedCollection {
 
    public static final String COLLECTION = "collection";
    public static final String DATA = "data";
+   public static final String TYPE = "type";
+   public static final String ATTRIBUTE_ID = "mergeAttributeId";
 
    private Collection collection;
    private String data;
+   private String mergeAttributeId;
+   private ImportType type;
 
    @JsonCreator
    public ImportedCollection(@JsonProperty(COLLECTION) final Collection collection,
-         @JsonProperty(DATA) final String data) {
+         @JsonProperty(DATA) final String data,
+         @JsonProperty(TYPE) final ImportType type,
+         @JsonProperty(ATTRIBUTE_ID) final String mergeAttributeId) {
       this.collection = collection;
       this.data = data;
+      this.type = type;
+      this.mergeAttributeId = mergeAttributeId;
    }
 
    public Collection getCollection() {
       return collection;
    }
 
-   public void setCollection(final Collection collection) {
-      this.collection = collection;
-   }
-
    public String getData() {
       return data;
    }
 
-   public void setData(final String data) {
-      this.data = data;
+   public ImportType getType() {
+      return type;
    }
 
-   @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (!(o instanceof ImportedCollection)) {
-         return false;
-      }
-      final ImportedCollection importedCollection = (ImportedCollection) o;
-      return Objects.equals(getCollection(), importedCollection.getCollection()) &&
-            Objects.equals(getData(), importedCollection.getData());
-   }
-
-   @Override
-   public int hashCode() {
-      return Objects.hash(getCollection(), getData());
+   public String getMergeAttributeId() {
+      return mergeAttributeId;
    }
 
    @Override
@@ -77,6 +65,8 @@ public class ImportedCollection {
       return "ImportedCollection{" +
             "collection=" + collection +
             ", data='" + data + '\'' +
+            ", type=" + type +
+            ", mergeAttributeId=" + mergeAttributeId +
             '}';
    }
 }

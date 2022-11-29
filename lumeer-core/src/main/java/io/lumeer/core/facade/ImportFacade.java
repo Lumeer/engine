@@ -21,10 +21,21 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
+import io.lumeer.api.model.ImportType;
 import io.lumeer.api.model.ImportedCollection;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.util.AttributeUtil;
+import io.lumeer.core.adapter.SearchAdapter;
+import io.lumeer.core.constraint.ConstraintManager;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.engine.api.event.ImportCollectionContent;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 
 import com.univocity.parsers.csv.CsvParser;
 import com.univocity.parsers.csv.CsvParserSettings;
@@ -37,12 +48,16 @@ import java.io.StringReader;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
@@ -63,18 +78,69 @@ public class ImportFacade extends AbstractFacade {
    @Inject
    private CollectionDao collectionDao;
 
+   @Inject
+   private DocumentDao documentDao;
+
+   @Inject
+   private DataDao dataDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
+   private LinkDataDao linkDataDao;
+
+   @Inject
+   private DefaultConfigurationProducer configurationProducer;
+
+   @Inject
+   private Event<ImportCollectionContent> importCollectionContentEvent;
+
+   private SearchAdapter searchAdapter;
+
+   @PostConstruct
+   public void init() {
+      ConstraintManager constraintManager = ConstraintManager.getInstance(configurationProducer);
+
+      searchAdapter = new SearchAdapter(permissionsChecker.getPermissionAdapter(), constraintManager, documentDao, dataDao, linkInstanceDao, linkDataDao);
+   }
+
    public Collection importDocuments(String format, ImportedCollection importedCollection) {
       Collection collectionToCreate = importedCollection.getCollection();
       collectionToCreate.setName(generateCollectionName(collectionToCreate.getName()));
       Collection collection = collectionFacade.createCollection(collectionToCreate);
 
-      switch (format.toLowerCase()) {
-         case FORMAT_CSV:
-            parseCSVFile(collection, importedCollection.getData());
+      importDocuments(collection, format, importedCollection.getData(), ImportType.APPEND, null);
+
+      return collection;
+   }
+
+   public Collection importDocuments(String collectionId, String format, ImportedCollection importedCollection) {
+      Collection collection = collectionFacade.getCollection(collectionId);
+
+      importDocuments(collection, format, importedCollection.getData(), importedCollection.getType(), importedCollection.getMergeAttributeId());
+
+      return collection;
+   }
+
+   private void importDocuments(Collection collection, String format, String data, ImportType type, String key) {
+      permissionsChecker.checkCreateDocuments(collection);
+
+      switch (type) {
+         case OVERWRITE:
+            documentFacade.deleteAllDocuments(collection);
+            permissionsChecker.checkRole(collection, RoleType.DataDelete);
+            break;
+         case MERGE:
+            permissionsChecker.checkRole(collection, RoleType.DataWrite);
             break;
       }
 
-      return collection;
+      switch (format.toLowerCase()) {
+         case FORMAT_CSV:
+            parseCSVFile(collection, data, type, key);
+            break;
+      }
    }
 
    private String generateCollectionName(String collectionName) {
@@ -93,7 +159,7 @@ public class ImportFacade extends AbstractFacade {
       return nameWithSuffix;
    }
 
-   private void parseCSVFile(Collection collection, String data) {
+   private void parseCSVFile(Collection collection, String data, ImportType importType, String mergeAttributeId) {
       if (data == null || data.trim().isEmpty()) {
          return;
       }
@@ -113,36 +179,76 @@ public class ImportFacade extends AbstractFacade {
          return;
       }
 
-      List<Attribute> createdAttributes = createAttributes(collection.getId(), headers);
+      List<Attribute> createdAttributes = createAttributes(collection, headers);
       collection.setAttributes(new HashSet<>(createdAttributes));
       collection.setLastAttributeNum(collection.getLastAttributeNum() + createdAttributes.size());
       String[] headerIds = createdAttributes.stream().map(Attribute::getId).toArray(String[]::new);
 
+      Attribute mergeAttribute = ImportType.MERGE.equals(importType) ?
+            collection.getAttributes().stream().filter(attr -> attr.getId().equals(mergeAttributeId)).findFirst().orElse(null) : null;
+      Map<String, List<Document>> mergeDocuments = getDocumentsByKey(collection, mergeAttribute);
+
       int[] counts = new int[headers.length];
       long documentsCount = 0;
 
-      List<Document> documents = new ArrayList<>();
+      List<Document> documentsToCreate = new ArrayList<>();
+      List<Document> documentsToUpdate = new ArrayList<>();
       String[] row;
       while ((row = parser.parseNext()) != null) {
-         Document d = createDocumentFromRow(headerIds, row, counts);
-         addDocumentMetadata(collection.getId(), d);
-
-         documents.add(d);
-
-         if (documents.size() >= MAX_PARSED_DOCUMENTS) {
-            documentsCount+= addDocumentsToDb(collection.getId(), documents);
-            documents.clear();
+         Document document = createDocumentFromRow(headerIds, row, counts);
+         Document toMerge = checkMergeDocument(document, mergeAttribute, mergeDocuments);
+         if (toMerge != null) {
+            toMerge.setData(document.getData());
+            documentsToUpdate.add(toMerge);
+         } else {
+            addDocumentMetadata(collection.getId(), document);
+            documentsToCreate.add(document);
          }
 
       }
 
-      if (!documents.isEmpty()) {
-         documentsCount+= addDocumentsToDb(collection.getId(), documents);
+      if (documentsToUpdate.size() > 0) {
+         documentFacade.updateDocumentsMetaData(collection, documentsToUpdate, false);
+         documentFacade.updateDocumentsData(collection, documentsToUpdate, false);
+      }
+
+      while (documentsToCreate.size() > 0) {
+         List<Document> slice = Utils.sublistAndRemove(documentsToCreate, 0, MAX_PARSED_DOCUMENTS);
+         documentsCount += documentFacade.createDocuments(collection.getId(), slice, false).size();
       }
 
       parser.stopParsing();
 
       addCollectionMetadata(collection, headerIds, counts, documentsCount);
+
+      if (importCollectionContentEvent != null) {
+         importCollectionContentEvent.fire(new ImportCollectionContent(collection));
+      }
+   }
+
+   private Document checkMergeDocument(Document document, Attribute attribute, Map<String, List<Document>> allDocuments) {
+      if (attribute == null) {
+         return null;
+      }
+
+      String mergeKey = document.getData().getString(attribute.getId());
+      mergeKey = mergeKey != null ? mergeKey : "";
+      if (allDocuments.containsKey(mergeKey)) {
+         List<Document> toMerge = allDocuments.get(mergeKey);
+         return toMerge.remove(0);
+      }
+
+      return null;
+   }
+
+   private Map<String, List<Document>> getDocumentsByKey(Collection collection, Attribute attribute) {
+      if (attribute == null) {
+         return Collections.emptyMap();
+      }
+
+      return searchAdapter.getAllDocuments(collection, null, null)
+                          .stream()
+                          .collect(Collectors.groupingBy(document -> document.getData() != null ? document.getData().getString(attribute.getId()) : ""));
    }
 
    private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, long documentsCount) {
@@ -157,15 +263,14 @@ public class ImportFacade extends AbstractFacade {
       collectionDao.updateCollection(collection.getId(), collection, originalCollection);
    }
 
-   private List<Attribute> createAttributes(String collectionId, String[] headers) {
+   private List<Attribute> createAttributes(Collection collection, String[] headers) {
+      Set<String> currentCollectionNames = collection.getAttributes().stream()
+                                                     .map(Attribute::getName).collect(Collectors.toSet());
       List<Attribute> attributes = Arrays.stream(headers)
                                          .map(AttributeUtil::cleanAttributeName)
+                                         .filter(name -> !currentCollectionNames.contains(name))
                                          .map(Attribute::new).collect(Collectors.toList());
-      return new ArrayList<>(collectionFacade.createCollectionAttributes(collectionId, attributes));
-   }
-
-   private long addDocumentsToDb(String collectionId, List<Document> documents) {
-      return documentFacade.createDocuments(collectionId, documents, true).size();
+      return new ArrayList<>(collectionFacade.createCollectionAttributes(collection, attributes));
    }
 
    private void addDocumentMetadata(String collectionId, Document document) {

@@ -22,11 +22,13 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.AuditRecord;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurpose;
+import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Rule;
 import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.CollectionFacade;
+import io.lumeer.core.facade.ImportFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.HashSet;
@@ -44,6 +46,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -64,6 +67,9 @@ public class CollectionService extends AbstractService {
 
    @Inject
    private AuditFacade auditFacade;
+
+   @Inject
+   private ImportFacade importFacade;
 
    @PostConstruct
    public void init() {
@@ -100,6 +106,12 @@ public class CollectionService extends AbstractService {
    @GET
    public List<Collection> getCollections() {
       return collectionFacade.getAllCollections();
+   }
+
+   @POST
+   @Path("{collectionId:[0-9a-fA-F]{24}}/import")
+   public Collection importDocuments(@PathParam("collectionId") String collectionId, @QueryParam("format") String format, ImportedCollection importedCollection) {
+      return importFacade.importDocuments(collectionId, format, importedCollection);
    }
 
    @GET

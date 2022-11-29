@@ -265,7 +265,7 @@ public class CollectionFacade extends AbstractFacade {
    }
 
    private void deleteCollectionBasedData(final String collectionId) {
-      var documentIds = documentDao.getDocumentsByCollection(collectionId).stream().map(Document::getId).collect(Collectors.toSet());
+      var documentIds = documentDao.getDocumentsIdsByCollection(collectionId);
       resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentIds);
 
       documentDao.deleteDocuments(collectionId);
@@ -387,9 +387,7 @@ public class CollectionFacade extends AbstractFacade {
 
       mapResourceUpdateValues(bookedAttributesCollection);
       bookedAttributesCollection.setLastTimeUsed(ZonedDateTime.now());
-      collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection);
-
-      return attributes;
+      return collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection).getAttributes();
    }
 
    public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final String collectionId, final java.util.Collection<Attribute> attributes, boolean skipLimits) {

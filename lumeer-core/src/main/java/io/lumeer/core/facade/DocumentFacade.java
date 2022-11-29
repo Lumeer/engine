@@ -27,6 +27,7 @@ import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
 import io.lumeer.core.adapter.CollectionAdapter;
@@ -208,6 +209,27 @@ public class DocumentFacade extends AbstractFacade {
       return storedDocuments;
    }
 
+   protected List<Document> updateDocumentsData(final Collection collection, final List<Document> documents, final boolean sendNotification) {
+      permissionsChecker.checkRole(collection, RoleType.DataWrite);
+
+      Set<String> ids = documents.stream().map(Document::getId).collect(Collectors.toSet());
+
+      List<DataDocument> newData = documents.stream().map(document -> {
+         DataDocument data = constraintManager.encodeDataTypes(collection, document.getData());
+         data.setId(document.getId());
+         return data;
+      }).collect(Collectors.toList());
+
+      dataDao.deleteData(collection.getId(), ids);
+       dataDao.createData(collection.getId(), newData);
+
+      if (sendNotification && importCollectionContentEvent != null) {
+         importCollectionContentEvent.fire(new ImportCollectionContent(collection));
+      }
+
+      return documents;
+   }
+
    private List<Document> createDocuments(Collection collection, List<Document> documents) {
       documents.forEach(document -> {
          document.setCollectionId(collection.getId());
@@ -338,13 +360,10 @@ public class DocumentFacade extends AbstractFacade {
       return mapDocumentData(updatedDocument);
    }
 
-   public List<Document> updateDocumentsMetaData(final String collectionId, final List<Document> documents) {
+   protected List<Document> updateDocumentsMetaData(final Collection collection, final List<Document> documents, boolean sendPushNotification) {
       final List<Document> updatedDocuments = new ArrayList<>();
 
-      Collection collection = null;
       for (Document document : documents) {
-         var tuple = checkEditDocument(document.getId());
-         collection = tuple.getFirst();
          document.setUpdatedBy(getCurrentUserId());
          document.setUpdateDate(ZonedDateTime.now());
          final Document updatedDocument = documentDao.updateDocument(document.getId(), document);
@@ -352,11 +371,16 @@ public class DocumentFacade extends AbstractFacade {
          updatedDocuments.add(updatedDocument);
       }
 
-      if (importCollectionContentEvent != null && collection != null) {
+      if (sendPushNotification && importCollectionContentEvent != null && collection != null) {
          importCollectionContentEvent.fire(new ImportCollectionContent(collection));
       }
 
       return updatedDocuments;
+   }
+
+   public List<Document> updateDocumentsMetaData(final String collectionId, final List<Document> documents) {
+      final Collection collection = collectionDao.getCollectionById(collectionId);
+      return updateDocumentsMetaData(collection, documents, true);
    }
 
    public Document patchDocumentData(String collectionId, String documentId, DataDocument data) {
@@ -459,6 +483,19 @@ public class DocumentFacade extends AbstractFacade {
       dataDao.deleteData(collection.getId(), documentId);
 
       deleteDocumentBasedData(collectionId, documentId);
+   }
+
+   protected void deleteAllDocuments(Collection collection) {
+      permissionsChecker.checkRoleInCollectionWithView(collection, RoleType.DataDelete);
+
+      documentDao.deleteDocuments(collection.getId());
+      dataDao.deleteData(collection.getId());
+
+      var documentIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentIds);
+      linkInstanceDao.deleteLinkInstancesByDocumentsIds(documentIds);
+      favoriteItemDao.removeFavoriteDocumentsByCollectionFromUsers(getCurrentProject().getId(), collection.getId());
+      fileAttachmentFacade.removeAllFileAttachments(collection.getId(), FileAttachment.AttachmentType.DOCUMENT);
    }
 
    private void deleteDocumentBasedData(String collectionId, String documentId) {

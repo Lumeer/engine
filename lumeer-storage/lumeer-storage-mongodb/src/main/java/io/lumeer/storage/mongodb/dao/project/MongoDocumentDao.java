@@ -24,6 +24,7 @@ import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Pagination;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -41,6 +42,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
 import org.bson.conversions.Bson;
@@ -214,6 +216,15 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    @Override
    public List<Document> getDocumentsByCollection(final String collectionId) {
       return databaseCollection().find(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId)).into(new ArrayList<>());
+   }
+
+   @Override
+   public Set<String> getDocumentsIdsByCollection(final String collectionId) {
+      return databaseCollection().find(Filters.eq(DocumentCodec.COLLECTION_ID, collectionId))
+                                 .projection(Projections.include(DocumentCodec.ID))
+                                 .into(new ArrayList<>()).stream()
+                                 .map(Document::getId)
+                                 .collect(Collectors.toSet());
    }
 
    @Override

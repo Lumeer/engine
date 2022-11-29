@@ -44,6 +44,10 @@ public interface DataDao {
 
    void deleteData(String collectionId, String documentId);
 
+   void deleteData(String collectionId, Set<String> documentIds);
+
+   void deleteData(String collectionId);
+
    long deleteAttribute(String collectionId, String attributeId);
 
    DataDocument getData(String collectionId, String documentId);
