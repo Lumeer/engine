@@ -248,7 +248,15 @@ public class ImportFacade extends AbstractFacade {
 
       return searchAdapter.getAllDocuments(collection, null, null)
                           .stream()
-                          .collect(Collectors.groupingBy(document -> document.getData() != null ? document.getData().getString(attribute.getId()) : ""));
+                          .collect(Collectors.groupingBy(document -> this.getDocumentKey(document, attribute)));
+   }
+
+   private String getDocumentKey(Document document, Attribute attribute) {
+      Object value = document.getData() != null ? document.getData().get(attribute.getId()) : null;
+      if (value != null) {
+         return value.toString();
+      }
+      return "";
    }
 
    private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, long documentsCount) {
