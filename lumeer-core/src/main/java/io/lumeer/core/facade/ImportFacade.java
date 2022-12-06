@@ -123,8 +123,8 @@ public class ImportFacade extends AbstractFacade {
 
       switch (type) {
          case OVERWRITE:
-            documentFacade.deleteAllDocuments(collection);
             permissionsChecker.checkRole(collection, RoleType.DataDelete);
+            documentFacade.deleteAllDocuments(collection);
             break;
          case MERGE:
             permissionsChecker.checkRole(collection, RoleType.DataWrite);
