@@ -159,7 +159,7 @@ public class CollectionFacade extends AbstractFacade {
       dataDao.createDataRepository(storedCollection.getId());
 
       if (attributes.size() > 0 && permissionsChecker.hasRole(storedCollection, RoleType.AttributeEdit)) {
-         storedCollection.setAttributes(createCollectionAttributes(storedCollection, attributes));
+         storedCollection.setAttributes(createCollectionAttributes(storedCollection, attributes).getAttributes());
       }
 
       return storedCollection;
@@ -363,10 +363,10 @@ public class CollectionFacade extends AbstractFacade {
 
    public java.util.Collection<Attribute> createCollectionAttributes(final String collectionId, final java.util.Collection<Attribute> attributes) {
       final Collection collection = collectionDao.getCollectionById(collectionId);
-      return createCollectionAttributes(collection, attributes);
+      return createCollectionAttributes(collection, attributes).getAttributes();
    }
 
-   public java.util.Collection<Attribute> createCollectionAttributes(final Collection collection, final java.util.Collection<Attribute> attributes) {
+   public Collection createCollectionAttributes(final Collection collection, final java.util.Collection<Attribute> attributes) {
       permissionsChecker.checkRole(collection, RoleType.AttributeEdit);
       permissionsChecker.checkAttributesFunctionAccess(attributes);
 
@@ -387,7 +387,7 @@ public class CollectionFacade extends AbstractFacade {
 
       mapResourceUpdateValues(bookedAttributesCollection);
       bookedAttributesCollection.setLastTimeUsed(ZonedDateTime.now());
-      return collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection).getAttributes();
+      return collectionDao.updateCollection(collection.getId(), bookedAttributesCollection, collection);
    }
 
    public java.util.Collection<Attribute> createCollectionAttributesWithoutPushNotification(final String collectionId, final java.util.Collection<Attribute> attributes, boolean skipLimits) {

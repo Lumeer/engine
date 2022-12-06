@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
 import io.lumeer.api.model.ImportType;
 import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Organization;
@@ -222,6 +221,40 @@ public class ImportFacadeIT extends IntegrationTestBase {
       assertThat(collection.getColor()).isEqualTo(COLLECTION_COLOR);
       assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("h1", "h2", "h3", "h4");
       assertThat(collection.getLastAttributeNum()).isEqualTo(4);
+   }
+
+   @Test
+   public void testImportEmptyAndSameHeaders() {
+      final String correctCsv = ";;;h4;h4;h4\n"
+            + ";b;c;d\n";
+      ImportedCollection importedCollection = createImportObject(correctCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
+      assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("Untitled", "Untitled_2", "Untitled_3", "h4", "h4_2", "h4_3");
+      assertThat(collection.getLastAttributeNum()).isEqualTo(6);
+
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      collection = collectionDao.getCollectionById(collection.getId());
+      assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("Untitled", "Untitled_2", "Untitled_3", "h4", "h4_2", "h4_3");
+      assertThat(collection.getLastAttributeNum()).isEqualTo(6);
+   }
+
+   @Test
+   public void testImportHeadersDifferentOrder() {
+      final String csv1 = "h1;h2;h3\n"
+            + "a;b;c\n";
+      final String csv2 = "h2;h1;h3\n"
+            + "x;y;z\n";
+      final String csv3 = "h3;h2;h1\n"
+            + "g;h;j\n";
+
+      String collectionId = importFacade.importDocuments(ImportFacade.FORMAT_CSV, createImportObject(csv1)).getId();
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv2));
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv3));
+
+      List<DataDocument> data = dataDao.getData(collectionId);
+      assertThat(data).extracting("a1").containsOnly("a", "y", "j");
+      assertThat(data).extracting("a2").containsOnly("b", "x", "h");
+      assertThat(data).extracting("a3").containsOnly("c", "z", "g");
    }
 
    @Test
