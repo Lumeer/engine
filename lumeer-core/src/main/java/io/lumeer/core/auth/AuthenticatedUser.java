@@ -19,6 +19,7 @@
 package io.lumeer.core.auth;
 
 import io.lumeer.api.SelectedWorkspace;
+import io.lumeer.api.model.DefaultWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Project;
@@ -31,6 +32,7 @@ import io.lumeer.core.facade.EventLogFacade;
 import io.lumeer.core.facade.FreshdeskFacade;
 import io.lumeer.core.util.Colors;
 import io.lumeer.core.util.Icons;
+import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -177,7 +179,9 @@ public class AuthenticatedUser implements Serializable {
    }
 
    private void checkUserWorkspace(User user) {
-      if (user.getDefaultWorkspace() != null) {
+      final String organizationId = Utils.computeIfNotNull(user.getDefaultWorkspace(), DefaultWorkspace::getOrganizationId);
+      final String projectId = Utils.computeIfNotNull(user.getDefaultWorkspace(), DefaultWorkspace::getOrganizationId);
+      if (organizationId != null && projectId != null) {
          try {
             Organization organization = organizationDao.getOrganizationById(user.getDefaultWorkspace().getOrganizationId());
             projectDao.setOrganization(organization);
