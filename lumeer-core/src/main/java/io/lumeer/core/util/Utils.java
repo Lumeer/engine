@@ -24,6 +24,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,18 @@ import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public abstract class Utils {
+
+   public static <T> List<T> sublistAndRemove(List<T> list, Integer from, Integer to) {
+      if (from > list.size() - 1 || from > to) {
+         return Collections.emptyList();
+      }
+
+      List<T> sublist = list.subList(from, Math.min(to, list.size()));
+      List<T> slice = new ArrayList<>(sublist);
+      sublist.clear();
+
+      return slice;
+   }
 
    public static boolean isCodeSafe(final String code) {
       return code.matches("[A-Za-z0-9_]*");

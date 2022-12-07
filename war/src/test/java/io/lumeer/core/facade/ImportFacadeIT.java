@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ImportType;
 import io.lumeer.api.model.ImportedCollection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
@@ -37,6 +38,7 @@ import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DocumentDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -58,6 +60,9 @@ public class ImportFacadeIT extends IntegrationTestBase {
 
    @Inject
    private DataDao dataDao;
+
+   @Inject
+   private DocumentDao documentDao;
 
    @Inject
    private CollectionDao collectionDao;
@@ -129,6 +134,78 @@ public class ImportFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testImportOverwrite() {
+      final String csv = "h1;h2;h3;h4\n"
+            + "a;b;c;d\n"
+            + "a;x;c;d\n"
+            + "a;b;y;d\n"
+            + "a;b;z;v\n";
+      ImportedCollection importedCollection = createImportObject(csv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
+
+      Set<String> currentIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      assertThat(currentIds).hasSize(4);
+
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      currentIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      assertThat(currentIds).hasSize(12);
+
+      importedCollection = createImportObject(csv, ImportType.REPLACE);
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      Set<String> overwrittenIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      assertThat(overwrittenIds).hasSize(4);
+      assertThat(overwrittenIds).doesNotContainAnyElementsOf(currentIds);
+   }
+
+   @Test
+   public void testImportMerge() {
+      final String csv1 = "h1;h2;h3;h4\n"
+            + "a1;m;c;f\n"
+            + "a2;x;c;d\n"
+            + "a3;b;y;d\n"
+            + "a3;b;z;v\n";
+
+      ImportedCollection importedCollection = createImportObject(csv1);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
+
+      Set<String> currentIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      assertThat(currentIds).hasSize(4);
+
+      // import same csv and no additional documents should be created
+      importedCollection = createImportObject(csv1, ImportType.UPDATE);
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      Set<String> newIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      assertThat(newIds).hasSize(4);
+      assertThat(newIds).containsAll(currentIds);
+
+      List<DataDocument> data = dataDao.getData(collection.getId());
+      assertThat(data.get(0).values()).containsOnly(data.get(0).getId(), "a1", "m", "c", "f");
+      assertThat(data.get(1).values()).containsOnly(data.get(1).getId(), "a2", "x", "c", "d");
+      assertThat(data.get(2).values()).containsOnly(data.get(2).getId(), "a3", "b", "y", "d");
+      assertThat(data.get(3).values()).containsOnly(data.get(3).getId(), "a3", "b", "z", "v");
+
+      final String csv2 = "h1;h2;h3;h4\n"
+            + "a1;p;o;l\n"
+            + "a2;i;u;y\n"
+            + "a3;q;w;r\n"
+            + "a4;f;g;h\n";
+
+      importedCollection = createImportObject(csv2, ImportType.UPDATE);
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      newIds = documentDao.getDocumentsIdsByCollection(collection.getId());
+      assertThat(newIds).hasSize(5);
+      assertThat(newIds).containsAll(currentIds);
+
+      data = dataDao.getData(collection.getId());
+      assertThat(data.get(0).values()).containsOnly(data.get(0).getId(), "a3", "b", "z", "v");
+      assertThat(data.get(1).values()).containsOnly(data.get(1).getId(), "a1", "p", "o", "l");
+      assertThat(data.get(2).values()).containsOnly(data.get(2).getId(), "a2", "i", "u", "y");
+      assertThat(data.get(3).values()).containsOnly(data.get(3).getId(), "a3", "q", "w", "r");
+      assertThat(data.get(4).values()).containsOnly(data.get(4).getId(), "a4", "f", "g", "h");
+   }
+
+   @Test
    public void testImportCollectionInfo() {
       final String correctCsv = "h1;h2;h3;h4\n"
             + ";b;c;d\n"
@@ -144,6 +221,64 @@ public class ImportFacadeIT extends IntegrationTestBase {
       assertThat(collection.getColor()).isEqualTo(COLLECTION_COLOR);
       assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("h1", "h2", "h3", "h4");
       assertThat(collection.getLastAttributeNum()).isEqualTo(4);
+   }
+
+   @Test
+   public void testImportEmptyAndSameHeaders() {
+      final String correctCsv = ";;;h4;h4;h4\n"
+            + ";b;c;d\n";
+      ImportedCollection importedCollection = createImportObject(correctCsv);
+      Collection collection = importFacade.importDocuments(ImportFacade.FORMAT_CSV, importedCollection);
+      assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("Untitled", "Untitled_2", "Untitled_3", "h4", "h4_2", "h4_3");
+      assertThat(collection.getLastAttributeNum()).isEqualTo(6);
+
+      importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
+      collection = collectionDao.getCollectionById(collection.getId());
+      assertThat(collection.getAttributes()).extracting(Attribute::getName).containsOnly("Untitled", "Untitled_2", "Untitled_3", "h4", "h4_2", "h4_3");
+      assertThat(collection.getLastAttributeNum()).isEqualTo(6);
+   }
+
+   @Test
+   public void testImportHeadersDifferentOrder() {
+      final String csv1 = "h1;h2;h3\n"
+            + "a;b;c\n";
+      final String csv2 = "h2;h1;h3\n"
+            + "x;y;z\n";
+      final String csv3 = "h3;h2;h1\n"
+            + "g;h;j\n";
+
+      String collectionId = importFacade.importDocuments(ImportFacade.FORMAT_CSV, createImportObject(csv1)).getId();
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv2));
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv3));
+
+      List<DataDocument> data = dataDao.getData(collectionId);
+      assertThat(data).extracting("a1").containsOnly("a", "y", "j");
+      assertThat(data).extracting("a2").containsOnly("b", "x", "h");
+      assertThat(data).extracting("a3").containsOnly("c", "z", "g");
+   }
+
+   @Test
+   public void testMultipleImports() {
+      final String csv1 = "h1;h2;h3\n"
+            + "a;b;c\n";
+      final String csv2 = "h3;h4;h5\n"
+            + "x;y;z\n";
+      final String csv3 = "h6;h7;h8\n"
+            + "g;h;j\n";
+
+      String collectionId = importFacade.importDocuments(ImportFacade.FORMAT_CSV, createImportObject(csv1)).getId();
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv2));
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv3));
+
+      List<DataDocument> data = dataDao.getData(collectionId);
+      assertThat(data).extracting("a1").containsOnly("a", null);
+      assertThat(data).extracting("a2").containsOnly("b", null);
+      assertThat(data).extracting("a3").containsOnly("c", "x", null);
+      assertThat(data).extracting("a4").containsOnly("y", null);
+      assertThat(data).extracting("a5").containsOnly("z", null);
+      assertThat(data).extracting("a6").containsOnly("g", null);
+      assertThat(data).extracting("a7").containsOnly("h", null);
+      assertThat(data).extracting("a8").containsOnly("j", null);
    }
 
    @Test
@@ -288,7 +423,11 @@ public class ImportFacadeIT extends IntegrationTestBase {
    }
 
    private ImportedCollection createImportObject(String data) {
-      return new ImportedCollection(new Collection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, new Permissions()), data);
+      return createImportObject(data, ImportType.APPEND);
+   }
+
+   private ImportedCollection createImportObject(String data, ImportType type) {
+      return new ImportedCollection(new Collection(COLLECTION_CODE, COLLECTION_NAME, COLLECTION_ICON, COLLECTION_COLOR, new Permissions()), data, type, PREFIX + 1);
    }
 
 }

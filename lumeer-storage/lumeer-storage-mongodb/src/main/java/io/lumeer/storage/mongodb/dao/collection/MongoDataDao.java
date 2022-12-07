@@ -18,8 +18,7 @@
  */
 package io.lumeer.storage.mongodb.dao.collection;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.createFilterForFulltexts;
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Pagination;
@@ -133,6 +132,16 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    @Override
    public void deleteData(final String collectionId, final String documentId) {
       dataCollection(collectionId).deleteOne(idFilter(documentId));
+   }
+
+   @Override
+   public void deleteData(final String collectionId, final Set<String> documentIds) {
+      dataCollection(collectionId).deleteMany(idsFilter(documentIds));
+   }
+
+   @Override
+   public void deleteData(final String collectionId) {
+      dataCollection(collectionId).deleteMany(new Document());
    }
 
    @Override

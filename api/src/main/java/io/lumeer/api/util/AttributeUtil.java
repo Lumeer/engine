@@ -45,7 +45,7 @@ public class AttributeUtil {
             sb.append(letter);
          }
       }
-      return sb.toString();
+      return sb.toString().trim();
    }
 
    public static boolean isEqualOrChild(Attribute attribute, String attributeName) {

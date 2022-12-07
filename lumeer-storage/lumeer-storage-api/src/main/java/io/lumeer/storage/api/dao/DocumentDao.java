@@ -57,6 +57,8 @@ public interface DocumentDao extends ProjectScopedDao {
 
    List<Document> getDocumentsByCollection(String collectionId);
 
+   Set<String> getDocumentsIdsByCollection(String collectionId);
+
    List<Document> getDocumentsByCollection(String collectionId, Set<String> ids);
 
    List<Document> getDocumentsByCollection(String collectionId, Pagination pagination);
