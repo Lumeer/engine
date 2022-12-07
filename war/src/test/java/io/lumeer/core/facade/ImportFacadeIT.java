@@ -258,6 +258,30 @@ public class ImportFacadeIT extends IntegrationTestBase {
    }
 
    @Test
+   public void testMultipleImports() {
+      final String csv1 = "h1;h2;h3\n"
+            + "a;b;c\n";
+      final String csv2 = "h3;h4;h5\n"
+            + "x;y;z\n";
+      final String csv3 = "h6;h7;h8\n"
+            + "g;h;j\n";
+
+      String collectionId = importFacade.importDocuments(ImportFacade.FORMAT_CSV, createImportObject(csv1)).getId();
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv2));
+      importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv3));
+
+      List<DataDocument> data = dataDao.getData(collectionId);
+      assertThat(data).extracting("a1").containsOnly("a", null);
+      assertThat(data).extracting("a2").containsOnly("b", null);
+      assertThat(data).extracting("a3").containsOnly("c", "x", null);
+      assertThat(data).extracting("a4").containsOnly("y", null);
+      assertThat(data).extracting("a5").containsOnly("z", null);
+      assertThat(data).extracting("a6").containsOnly("g", null);
+      assertThat(data).extracting("a7").containsOnly("h", null);
+      assertThat(data).extracting("a8").containsOnly("j", null);
+   }
+
+   @Test
    public void testImportEmptyHeaderCSV() {
       final String noHeaderCsv = "\n"
             + "a;b;c;d\n"

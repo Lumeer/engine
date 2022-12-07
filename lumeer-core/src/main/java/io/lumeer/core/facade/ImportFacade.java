@@ -181,7 +181,7 @@ public class ImportFacade extends AbstractFacade {
       Map<String, List<Document>> mergeDocuments = getDocumentsByKey(collection, mergeAttribute);
 
       int[] counts = new int[headers.length];
-      long documentsCount = 0;
+      long documentsCount = collection.getDocumentsCount();
 
       List<Document> documentsToCreate = new ArrayList<>();
       List<Document> documentsToUpdate = new ArrayList<>();
@@ -280,9 +280,12 @@ public class ImportFacade extends AbstractFacade {
 
    private void addCollectionMetadata(Collection collection, String[] headersIds, int[] counts, long documentsCount) {
       final Collection originalCollection = collection.copy();
+      List<String> headerIdsList = Arrays.asList(headersIds);
       collection.getAttributes().forEach(attr -> {
-         int index = Arrays.asList(headersIds).indexOf(attr.getId());
-         attr.setUsageCount(counts[index]);
+         int index = headerIdsList.indexOf(attr.getId());
+         if (index != -1) {
+            attr.setUsageCount(counts[index]);
+         }
       });
       collection.setDocumentsCount(documentsCount);
 
