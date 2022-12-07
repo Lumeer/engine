@@ -19,5 +19,5 @@
 package io.lumeer.api.model;
 
 public enum ImportType {
-   APPEND, MERGE, OVERWRITE
+   APPEND, UPDATE, REPLACE
 }

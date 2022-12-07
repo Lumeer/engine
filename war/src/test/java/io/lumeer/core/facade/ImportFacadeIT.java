@@ -151,7 +151,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       currentIds = documentDao.getDocumentsIdsByCollection(collection.getId());
       assertThat(currentIds).hasSize(12);
 
-      importedCollection = createImportObject(csv, ImportType.OVERWRITE);
+      importedCollection = createImportObject(csv, ImportType.REPLACE);
       importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
       Set<String> overwrittenIds = documentDao.getDocumentsIdsByCollection(collection.getId());
       assertThat(overwrittenIds).hasSize(4);
@@ -173,7 +173,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
       assertThat(currentIds).hasSize(4);
 
       // import same csv and no additional documents should be created
-      importedCollection = createImportObject(csv1, ImportType.MERGE);
+      importedCollection = createImportObject(csv1, ImportType.UPDATE);
       importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
       Set<String> newIds = documentDao.getDocumentsIdsByCollection(collection.getId());
       assertThat(newIds).hasSize(4);
@@ -191,7 +191,7 @@ public class ImportFacadeIT extends IntegrationTestBase {
             + "a3;q;w;r\n"
             + "a4;f;g;h\n";
 
-      importedCollection = createImportObject(csv2, ImportType.MERGE);
+      importedCollection = createImportObject(csv2, ImportType.UPDATE);
       importFacade.importDocuments(collection.getId(), ImportFacade.FORMAT_CSV, importedCollection);
       newIds = documentDao.getDocumentsIdsByCollection(collection.getId());
       assertThat(newIds).hasSize(5);
