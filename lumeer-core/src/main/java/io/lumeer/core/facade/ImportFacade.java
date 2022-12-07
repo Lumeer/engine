@@ -122,11 +122,11 @@ public class ImportFacade extends AbstractFacade {
       permissionsChecker.checkCreateDocuments(collection);
 
       switch (type) {
-         case OVERWRITE:
+         case REPLACE:
             permissionsChecker.checkRole(collection, RoleType.DataDelete);
             documentFacade.deleteAllDocuments(collection);
             break;
-         case MERGE:
+         case UPDATE:
             permissionsChecker.checkRole(collection, RoleType.DataWrite);
             break;
       }
@@ -176,7 +176,7 @@ public class ImportFacade extends AbstractFacade {
       collection = createAttributes(collection, headers);
       String[] headerIds = createHeaderIds(collection, headers);
 
-      Attribute mergeAttribute = ImportType.MERGE.equals(importType) ?
+      Attribute mergeAttribute = ImportType.UPDATE.equals(importType) ?
             collection.getAttributes().stream().filter(attr -> attr.getId().equals(mergeAttributeId)).findFirst().orElse(null) : null;
       Map<String, List<Document>> mergeDocuments = getDocumentsByKey(collection, mergeAttribute);
 
