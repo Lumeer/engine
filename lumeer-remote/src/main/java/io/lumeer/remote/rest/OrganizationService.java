@@ -180,6 +180,13 @@ public class OrganizationService extends AbstractService {
       return paymentFacade.getAllServiceLimits(organizationFacade.getOrganizations());
    }
 
+
+   @GET
+   @Path("info/usersWithoutOrganizations")
+   public Map<String, Set<String>> getUsersWithoutReadableOrganizations() {
+      return organizationFacade.getUsersWithoutReadableOrganizations();
+   }
+
    @GET
    @Path("info/allProjects")
    public Map<String, List<Project>> getAllProjects() {
