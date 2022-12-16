@@ -203,6 +203,7 @@ public class Collection extends Resource implements AttributesResource, HealthCh
       this.dataDescription = dataDescription;
    }
 
+   @JsonIgnore
    public DataDocument getPurposeMetaData() {
       return getPurpose().getMetaData();
    }
@@ -222,6 +223,7 @@ public class Collection extends Resource implements AttributesResource, HealthCh
       return this.purpose;
    }
 
+   @JsonIgnore
    public CollectionPurposeType getPurposeType() {
       return purpose != null ? purpose.getType() : CollectionPurposeType.None;
    }

@@ -221,7 +221,7 @@ public class DocumentFacade extends AbstractFacade {
       }).collect(Collectors.toList());
 
       dataDao.deleteData(collection.getId(), ids);
-       dataDao.createData(collection.getId(), newData);
+      dataDao.createData(collection.getId(), newData);
 
       if (sendNotification && importCollectionContentEvent != null) {
          importCollectionContentEvent.fire(new ImportCollectionContent(collection));
