@@ -95,16 +95,8 @@ public class ResourceCommentFacade extends AbstractFacade {
    }
 
    public void storeResourceComments(final List<ResourceComment> comments) {
-      final List<ResourceComment> allowedComments = comments.stream().filter(c -> {
-         try {
-            checkPermissions(c.getResourceType(), c.getResourceId());
-            return true;
-         } catch (NoPermissionException e) {
-            return false;
-         }
-      }).collect(Collectors.toList());
-
-      resourceCommentDao.createComments(allowedComments);
+      // this is called from template creation so we do not need to check permissions
+      resourceCommentDao.createComments(comments);
    }
 
    private String getParentIdByComment(final ResourceComment comment) {

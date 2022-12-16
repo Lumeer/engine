@@ -74,14 +74,17 @@ public class ResourceCommentCreator extends WithIdCreator {
                var resourceComment = mapper.readValue(commentJson.toJSONString(), ResourceCommentWrapper.class);
 
                var translatedParentId = templateParser.translateString(resourceComment.getParentId(), constraintManager);
-               resourceComment.setParentId(translatedParentId != null ? translatedParentId.toString() : null);
-
                var translatedResourceId = templateParser.translateString(resourceComment.getResourceId(), constraintManager);
-               resourceComment.setResourceId(translatedResourceId != null ? translatedResourceId.toString() : null);
 
-               resourceComment.setId(null);
+               if (translatedParentId != null && translatedResourceId != null) {
+                  resourceComment.setParentId(translatedParentId.toString());
+                  resourceComment.setResourceId(translatedResourceId.toString());
 
-               result.add(resourceComment.getResourceComment());
+                  resourceComment.setId(null);
+
+                  result.add(resourceComment.getResourceComment());
+               }
+
             } catch (IOException e) {
                throw new TemplateNotAvailableException(e);
             }

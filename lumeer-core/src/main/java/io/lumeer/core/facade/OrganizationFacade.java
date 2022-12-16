@@ -28,6 +28,7 @@ import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
+import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.Utils;
@@ -44,7 +45,9 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.UserLoginDao;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -171,6 +174,26 @@ public class OrganizationFacade extends AbstractFacade {
                             .filter(organization -> permissionsChecker.hasRole(organization, RoleType.Read))
                             .map(this::mapResource)
                             .collect(Collectors.toList());
+   }
+
+   public Map<String, Set<String>> getUsersWithoutReadableOrganizations() {
+      permissionsChecker.checkSystemPermission();
+
+      List<Organization> organizations = organizationDao.getAllOrganizations();
+      List<User> users = userDao.getAllUsers();
+      Map<String, Set<String>> usersWithoutPermissions = new HashMap<>();
+      for (User user : users) {
+         Set<String> userOrganizations = user.getOrganizations() != null ? user.getOrganizations() : Collections.emptySet();
+         List<Organization> organizationsWithoutPermissions = organizations.stream()
+                                                                           .filter(organization -> !userOrganizations.contains(organization.getId()) && permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
+                                                                           .collect(Collectors.toList());
+
+         if (organizationsWithoutPermissions.size() > 0) {
+            usersWithoutPermissions.put(user.getEmail(), organizationsWithoutPermissions.stream().map(Resource::getCode).collect(Collectors.toSet()));
+         }
+      }
+
+      return usersWithoutPermissions;
    }
 
    public Set<String> getOrganizationsCodes() {
