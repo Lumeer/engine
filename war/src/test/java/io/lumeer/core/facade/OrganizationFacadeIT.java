@@ -47,9 +47,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Collections;
-import java.util.Set;
 import javax.inject.Inject;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 @RunWith(Arquillian.class)
 public class OrganizationFacadeIT extends IntegrationTestBase {
@@ -71,6 +72,9 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Inject
    private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private AuthenticatedUser authenticatedUser;
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
    private static final String STRANGER_USER = "stranger@nowhere.com";
@@ -108,11 +112,24 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Test
    public void testGetOrganizations() {
-      createOrganization(CODE1);
-      createOrganization(CODE2);
+      var id1 = createOrganization(CODE1);
+      var id2 = createOrganization(CODE2);
 
-      assertThat(organizationFacade.getOrganizations())
-            .extracting(Resource::getCode).containsOnly(CODE1, CODE2);
+      assertThat(organizationFacade.getOrganizations()).hasSize(0); // without adding the organizations to the user, they are not found
+
+      // user and authenticatedUser are two copies of the same user,
+      // however user object does not sync changes to authenticatedUser for OrganizationFacade to find them,
+      // so we need to update authenticatedUser directly
+      authenticatedUser.getCurrentUser().getOrganizations().add(id1);
+      authenticatedUser.getCurrentUser().getOrganizations().add(id2);
+
+      final List<Organization> organizations = organizationFacade.getOrganizations();
+
+      // if the assert failed, we already reverted the authenticated user to its original state
+      authenticatedUser.getCurrentUser().getOrganizations().remove(id1);
+      authenticatedUser.getCurrentUser().getOrganizations().remove(id2);
+
+      assertThat(organizations).extracting(Resource::getCode).containsOnly(CODE1, CODE2);
    }
 
    private String createOrganization(final String code) {
