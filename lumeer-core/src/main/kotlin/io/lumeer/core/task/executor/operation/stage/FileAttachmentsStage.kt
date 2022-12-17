@@ -1,15 +1,3 @@
-package io.lumeer.core.task.executor.operation.stage
-
-import io.lumeer.api.model.FileAttachment
-import io.lumeer.api.model.Organization
-import io.lumeer.api.model.Project
-import io.lumeer.core.adapter.FileAttachmentAdapter
-import io.lumeer.core.task.executor.ChangesTracker
-import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation
-import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation
-import io.lumeer.core.task.executor.operation.OperationExecutor
-import java.time.ZonedDateTime
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -28,6 +16,18 @@ import java.time.ZonedDateTime
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.task.executor.operation.stage
+
+import io.lumeer.api.model.FileAttachment
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Project
+import io.lumeer.core.adapter.FileAttachmentAdapter
+import io.lumeer.core.task.executor.ChangesTracker
+import io.lumeer.core.task.executor.operation.AddDocumentFileAttachmentOperation
+import io.lumeer.core.task.executor.operation.AddLinkFileAttachmentOperation
+import io.lumeer.core.task.executor.operation.OperationExecutor
+import java.time.ZonedDateTime
+
 class FileAttachmentsStage(executor: OperationExecutor) : Stage(executor) {
 
    private val fileAttachmentAdapter: FileAttachmentAdapter = task.fileAttachmentAdapter

@@ -21,7 +21,10 @@ package io.lumeer.core.task.executor.operation.stage;
 import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.ContextualTask;
+import io.lumeer.core.task.FunctionTask;
+import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
 import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.operation.Operation;
@@ -40,6 +43,7 @@ abstract public class Stage implements Callable<ChangesTracker> {
    protected Set<Operation<?>> operations;
    protected final ChangesTracker changesTracker = new ChangesTracker();
    protected final AuditAdapter auditAdapter;
+   protected final String automationName;
 
    public Stage(final OperationExecutor executor) {
       this.executor = executor;
@@ -47,6 +51,17 @@ abstract public class Stage implements Callable<ChangesTracker> {
       this.task = executor.getTask();
       this.operations = executor.getOperations();
       this.auditAdapter = AuditAdapter.getAuditAdapter(task.getDaoContextSnapshot());
+
+      if (task instanceof FunctionTask) {
+         var functionTask = (FunctionTask) task;
+         automationName = "=" + functionTask.getAttribute().getId();
+      } else if (task instanceof RuleTask) {
+         automationName = ((RuleTask) task).getRule().getName();
+      } else if (task instanceof AutoLinkBatchTask) {
+         automationName = ((AutoLinkBatchTask) task).getRule().getRule().getName();
+      } else {
+         automationName = null;
+      }
    }
 
    abstract public ChangesTracker call(); // remove exception from method signature

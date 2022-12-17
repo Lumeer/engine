@@ -1020,13 +1020,24 @@ public class PusherFacade extends AbstractFacade {
 
    public static class EventData {
       private final String appId;
+      private final boolean automationSource;
 
       public EventData(final String appId) {
          this.appId = appId;
+         this.automationSource = false;
+      }
+
+      public EventData(final String appId, final boolean automationSource) {
+         this.appId = appId;
+         this.automationSource = automationSource;
       }
 
       public String getAppId() {
          return appId;
+      }
+
+      public boolean isAutomationSource() {
+         return automationSource;
       }
    }
 
@@ -1049,7 +1060,11 @@ public class PusherFacade extends AbstractFacade {
       }
 
       public ResourceId(final AppId appId, final String id, final String organizationId, final String projectId, final String extraId) {
-         super(appId != null ? appId.getValue() : null);
+         this(appId, id, organizationId, projectId, extraId, false);
+      }
+
+      public ResourceId(final AppId appId, final String id, final String organizationId, final String projectId, final String extraId, final boolean automationSource) {
+         super(appId != null ? appId.getValue() : null, automationSource);
          this.id = id;
          this.organizationId = organizationId;
          this.projectId = projectId;

@@ -18,6 +18,8 @@
  */
 package io.lumeer.core.task.executor.operation.stage;
 
+import static java.util.stream.Collectors.*;
+
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Document;
@@ -28,7 +30,6 @@ import io.lumeer.core.adapter.LinkTypeAdapter;
 import io.lumeer.core.facade.FunctionFacade;
 import io.lumeer.core.facade.TaskProcessingFacade;
 import io.lumeer.core.facade.detector.PurposeChangeProcessor;
-import io.lumeer.core.task.AutoLinkBatchTask;
 import io.lumeer.core.task.FunctionTask;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;
@@ -55,10 +56,9 @@ import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateLinkInstance;
-import io.lumeer.engine.api.event.RemoveDocument;
-import io.lumeer.engine.api.event.RemoveLinkInstance;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.engine.api.event.UpdateLinkInstance;
+
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.ZonedDateTime;
@@ -67,32 +67,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.*;
-
 public class SingleStage extends Stage {
-
-   private final String automationName;
 
    private final LinkTypeAdapter linkTypeAdapter;
 
    public SingleStage(final OperationExecutor executor) {
       super(executor);
-
-      if (task instanceof FunctionTask) {
-         var functionTask = (FunctionTask) task;
-         automationName = "=" + functionTask.getAttribute().getId();
-      } else if (task instanceof RuleTask) {
-         automationName = ((RuleTask) task).getRule().getName();
-      } else if (task instanceof AutoLinkBatchTask) {
-         automationName = ((AutoLinkBatchTask) task).getRule().getRule().getName();
-      } else {
-         automationName = null;
-      }
 
       linkTypeAdapter = new LinkTypeAdapter(task.getDaoContextSnapshot().getLinkTypeDao(), task.getDaoContextSnapshot().getLinkInstanceDao());
    }
@@ -301,99 +285,6 @@ public class SingleStage extends Stage {
       return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
    }
 
-   private List<Document> removeDocuments(final List<DocumentRemovalOperation> operations) {
-      if (!operations.isEmpty()) {
-         final FunctionFacade functionFacade = task.getFunctionFacade();
-         final TaskProcessingFacade taskProcessingFacade = task.getTaskProcessingFacade(taskExecutor, functionFacade);
-         final PurposeChangeProcessor purposeChangeProcessor = task.getPurposeChangeProcessor();
-
-         final List<Document> documents = operations.stream().map(DocumentRemovalOperation::getEntity).collect(toList());
-
-         final Map<String, Collection> allCollections = task.getDaoContextSnapshot().getCollectionDao().getCollectionsByIds(
-               documents.stream().map(Document::getCollectionId).collect(toList())
-         ).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
-         final Map<String, LinkType> allLinkTypes = task.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes().stream().collect(Collectors.toMap(LinkType::getId, Function.identity()));
-         final Set<Collection> collectionsChanged = new HashSet<>();
-
-         documents.forEach(document -> {
-            final Collection collection = allCollections.get(document.getCollectionId());
-            collectionsChanged.add(collection);
-
-            final List<LinkInstance> removedLinks = task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesByDocumentIds(Set.of(document.getId()));
-            final Set<String> removedFromLinkTypes = removedLinks.stream().map(LinkInstance::getLinkTypeId).collect(toSet());
-            changesTracker.addRemovedLinkInstances(removedLinks);
-            task.getDaoContextSnapshot().getLinkInstanceDao().deleteLinkInstancesByDocumentsIds(Set.of(document.getId()));
-            removedLinks.forEach(link -> {
-               var linkType = allLinkTypes.get(link.getLinkTypeId());
-               var decodedDeletedData = constraintManager.decodeDataTypes(linkType, link.getData());
-               auditAdapter.registerDelete(link.getLinkTypeId(), ResourceType.LINK, link.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
-            });
-
-            removedFromLinkTypes.forEach(linkTypeId -> {
-               // decrease link instances count in link types map
-               if (changesTracker.getLinkTypesMap().containsKey(linkTypeId)) { // present in link types map
-                  final LinkType linkType = changesTracker.getLinkTypesMap().get(linkTypeId);
-                  linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
-               } else { // not yet in the map
-                  final LinkType linkType = allLinkTypes.get(linkTypeId);
-                  linkTypeAdapter.mapLinkTypeComputedProperties(linkType);
-                  changesTracker.updateLinkTypesMap(Map.of(linkType.getId(), linkType));
-               }
-
-               // decrease link instances count in updated link types in operations tracker
-               final Optional<LinkType> changedLinkType = changesTracker.getLinkTypes().stream().filter(l -> l.getId().equals(linkTypeId)).findFirst();
-               final LinkType linkType = allLinkTypes.get(linkTypeId);
-               if (changedLinkType.isPresent()) { // tracked in operations tracker
-                  changedLinkType.get().setLinksCount(linkType.getLinksCount());
-               } else { // not yet tracked
-                  changesTracker.getLinkTypes().add(linkType);
-               }
-            });
-
-            task.getDaoContextSnapshot().getDocumentDao().deleteDocument(document.getId(), document.getData());
-            task.getDaoContextSnapshot().getDataDao().deleteData(document.getCollectionId(), document.getId());
-
-            var decodedDeletedData = constraintManager.decodeDataTypes(collection, document.getData());
-            auditAdapter.registerDelete(document.getCollectionId(), ResourceType.DOCUMENT, document.getId(), task.getInitiator(), automationName, null, decodedDeletedData);
-
-            if (task instanceof RuleTask) {
-               if (task.getRecursionDepth() == 0) { // we can still call other rules
-                  final RemoveDocument removeDocument = new RemoveDocument(document);
-                  taskProcessingFacade.onRemoveDocument(removeDocument, ((RuleTask) task).getRule().getName());
-
-                  removedLinks.forEach(rl -> {
-                     final RemoveLinkInstance removeLinkInstance = new RemoveLinkInstance(rl);
-                     taskProcessingFacade.onRemoveLink(removeLinkInstance, ((RuleTask) task).getRule().getName());
-                  });
-               } else { // only functions get evaluated
-                  taskExecutor.submitTask(functionFacade.createTaskForRemovedDocument(collection, document));
-
-                  final Map<String, List<LinkInstance>> removedLinksByType = Utils.categorize(removedLinks.stream(), LinkInstance::getLinkTypeId);
-                  removedLinksByType.keySet().forEach(removedLinkTypeId -> {
-                     final LinkType removedFromLinkType = allLinkTypes.get(removedLinkTypeId);
-                     taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(removedFromLinkType, removedLinksByType.get(removedLinkTypeId)));
-                  });
-               }
-            }
-
-            // notify delayed actions about data change
-            if (collection.getPurposeType() == CollectionPurposeType.Tasks) {
-               purposeChangeProcessor.processChanges(new RemoveDocument(document), collection);
-            }
-         });
-
-         // update collection version in DB
-         final Set<Collection> collectionsUpdated = collectionsChanged.stream().map(collection -> task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null, false)).collect(toSet());
-
-         changesTracker.updateCollectionsMap(collectionsUpdated.stream().collect(toMap(Collection::getId, Function.identity())));
-         changesTracker.getCollections().addAll(collectionsUpdated);
-
-         return documents;
-      }
-
-      return List.of();
-   }
-
    private List<LinkInstance> createLinks(final List<LinkCreationOperation> operations) {
       if (operations.isEmpty()) {
          return List.of();
@@ -595,15 +486,6 @@ public class SingleStage extends Stage {
             createdDocuments,
             collectionsMap
       );
-
-      // remove documents
-      final List<Document> removedDocuments = removeDocuments(operations.stream().filter(operation -> operation instanceof DocumentRemovalOperation).map(operation -> (DocumentRemovalOperation) operation).collect(toList()));
-      changesTracker.addRemovedDocuments(removedDocuments);
-
-      // remove created documents that were deleted later
-      final Set<Document> unusedCreatedDocuments = new HashSet<>(changesTracker.getRemovedDocuments());
-      unusedCreatedDocuments.retainAll(changesTracker.getCreatedDocuments());
-      changesTracker.getCreatedDocuments().removeAll(unusedCreatedDocuments);
 
       // create new links
       final List<LinkCreationOperation> linkCreationOperations = operations.stream().filter(operation -> operation instanceof LinkCreationOperation && operation.isComplete()).map(operation -> (LinkCreationOperation) operation).collect(toList());

@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package io.lumeer.core.adapter
 
 import io.lumeer.api.model.LinkInstance
 import io.lumeer.api.model.ResourceType
 import io.lumeer.storage.api.dao.ResourceCommentDao
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot
 
 class LinkInstanceAdapter(val resourceCommentDao: ResourceCommentDao) {
 
@@ -38,6 +38,14 @@ class LinkInstanceAdapter(val resourceCommentDao: ResourceCommentDao) {
       return linkInstances.onEach {
          it.commentsCount = (commentCounts[it.id] ?: 0).toLong()
       }
+   }
+
+   fun deleteComments(linkInstanceId: String) {
+      resourceCommentDao.deleteComments(ResourceType.LINK, linkInstanceId)
+   }
+
+   fun deleteComments(linkInstanceIds: Set<String>) {
+      resourceCommentDao.deleteComments(ResourceType.LINK, linkInstanceIds)
    }
 
    private fun obtainCommentCounts(linkInstances: List<LinkInstance>): Map<String, Int> {
@@ -57,5 +65,9 @@ class LinkInstanceAdapter(val resourceCommentDao: ResourceCommentDao) {
       }
 
       return commentCounts
+   }
+
+   companion object {
+      fun createFromDaoSnapshot(dao: DaoContextSnapshot) = LinkInstanceAdapter(dao.resourceCommentDao)
    }
 }

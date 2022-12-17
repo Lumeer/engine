@@ -23,6 +23,7 @@ import io.lumeer.api.util.ResourceUtils
 import io.lumeer.storage.api.dao.CollectionDao
 import io.lumeer.storage.api.dao.DocumentDao
 import io.lumeer.storage.api.dao.FavoriteItemDao
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot
 import java.time.ZonedDateTime
 
 class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: FavoriteItemDao, val documentDao: DocumentDao) {
@@ -64,6 +65,10 @@ class CollectionAdapter(val collectionDao: CollectionDao, val favoriteItemDao: F
       collection.attributes = HashSet(ResourceUtils.incAttributes(collection.attributes, attributesToInc))
       collection.lastTimeUsed = ZonedDateTime.now()
       collectionDao.updateCollection(collection.id, collection, originalCollection)
+   }
+
+   companion object {
+      fun createFromDaoSnanpshot(dao: DaoContextSnapshot) = CollectionAdapter(dao.collectionDao, dao.favoriteItemDao, dao.documentDao)
    }
 
 }

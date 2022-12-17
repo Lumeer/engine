@@ -332,11 +332,11 @@ public abstract class AbstractContextualTask implements ContextualTask {
    }
 
    private PusherFacade.ResourceId getResourceId(final WithId idObject, final String extraId) {
-      return new PusherFacade.ResourceId(getAppId(), idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId);
+      return new PusherFacade.ResourceId(getAppId(), idObject.getId(), getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), extraId, true);
    }
 
    private PusherFacade.ResourceId getResourceId() {
-      return new PusherFacade.ResourceId(getAppId(), null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null);
+      return new PusherFacade.ResourceId(getAppId(), null, getDaoContextSnapshot().getOrganizationId(), getDaoContextSnapshot().getProjectId(), null, true);
    }
 
    private Event createEventForRemove(final String className, final PusherFacade.ResourceId object, final String userId) {
