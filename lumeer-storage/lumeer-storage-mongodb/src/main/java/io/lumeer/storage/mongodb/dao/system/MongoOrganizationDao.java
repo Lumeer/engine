@@ -18,8 +18,7 @@
  */
 package io.lumeer.storage.mongodb.dao.system;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.*;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
@@ -138,6 +137,11 @@ public class MongoOrganizationDao extends MongoSystemScopedDao implements Organi
    @Override
    public List<Organization> getAllOrganizations() {
       return databaseCollection().find().into(new ArrayList<>());
+   }
+
+   @Override
+   public List<Organization> getOrganizationsByIds(java.util.Collection<String> ids) {
+      return databaseCollection().find(idsFilter(ids)).into(new ArrayList<>());
    }
 
    private static Bson organizationsSearchFilter(final DatabaseQuery query) {

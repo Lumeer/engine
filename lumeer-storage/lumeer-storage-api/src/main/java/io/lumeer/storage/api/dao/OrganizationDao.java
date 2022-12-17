@@ -38,6 +38,8 @@ public interface OrganizationDao {
 
    List<Organization> getAllOrganizations();
 
+   List<Organization> getOrganizationsByIds(java.util.Collection<String> ids);
+
    void deleteOrganization(String organizationId);
 
    Organization updateOrganization(String organizationId, Organization organization);
