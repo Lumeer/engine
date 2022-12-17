@@ -180,7 +180,7 @@ public class AuthenticatedUser implements Serializable {
 
    private void checkUserWorkspace(User user) {
       final String organizationId = Utils.computeIfNotNull(user.getDefaultWorkspace(), DefaultWorkspace::getOrganizationId);
-      final String projectId = Utils.computeIfNotNull(user.getDefaultWorkspace(), DefaultWorkspace::getOrganizationId);
+      final String projectId = Utils.computeIfNotNull(user.getDefaultWorkspace(), DefaultWorkspace::getProjectId);
       if (organizationId != null && projectId != null) {
          try {
             Organization organization = organizationDao.getOrganizationById(user.getDefaultWorkspace().getOrganizationId());
