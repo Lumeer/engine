@@ -196,6 +196,26 @@ public class OrganizationFacade extends AbstractFacade {
       return usersWithoutPermissions;
    }
 
+   public void repairUsersWithoutReadableOrganizations() {
+      permissionsChecker.checkSystemPermission();
+
+      List<Organization> organizations = organizationDao.getAllOrganizations();
+      List<User> users = userDao.getAllUsers();
+      for (User user : users) {
+         Set<String> userOrganizations = user.getOrganizations() != null ? new HashSet<>(user.getOrganizations()) : new HashSet<>();
+         Set<String> organizationsWithoutPermissions = organizations.stream()
+                                                                           .filter(organization -> !userOrganizations.contains(organization.getId()) && permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
+                                                                           .map(Organization::getId)
+                                                                           .collect(Collectors.toSet());
+
+         if (organizationsWithoutPermissions.size() > 0) {
+            userOrganizations.addAll(organizationsWithoutPermissions);
+            user.setOrganizations(userOrganizations);
+            userDao.updateUser(user.getId(), user);
+         }
+      }
+   }
+
    public Set<String> getOrganizationsCodes() {
       return organizationDao.getOrganizationsCodes();
    }

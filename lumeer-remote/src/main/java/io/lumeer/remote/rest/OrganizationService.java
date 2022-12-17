@@ -187,6 +187,13 @@ public class OrganizationService extends AbstractService {
       return organizationFacade.getUsersWithoutReadableOrganizations();
    }
 
+   @POST
+   @Path("info/usersWithoutOrganizations/repair")
+   public Response repairUsersWithoutReadableOrganizations() {
+      organizationFacade.repairUsersWithoutReadableOrganizations();
+      return Response.ok().build();
+   }
+
    @GET
    @Path("info/allProjects")
    public Map<String, List<Project>> getAllProjects() {
