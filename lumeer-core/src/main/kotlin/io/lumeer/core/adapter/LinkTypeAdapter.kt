@@ -1,10 +1,3 @@
-package io.lumeer.core.adapter
-
-import io.lumeer.api.model.LinkType
-import io.lumeer.api.util.ResourceUtils
-import io.lumeer.storage.api.dao.LinkInstanceDao
-import io.lumeer.storage.api.dao.LinkTypeDao
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -23,6 +16,14 @@ import io.lumeer.storage.api.dao.LinkTypeDao
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.adapter
+
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.util.ResourceUtils
+import io.lumeer.storage.api.dao.LinkInstanceDao
+import io.lumeer.storage.api.dao.LinkTypeDao
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot
+
 class LinkTypeAdapter(val linkTypeDao: LinkTypeDao, val linkInstanceDao: LinkInstanceDao) {
 
    fun getLinkInstancesCounts(): Map<String, Long> = linkInstanceDao.linkInstancesCounts
@@ -42,5 +43,9 @@ class LinkTypeAdapter(val linkTypeDao: LinkTypeDao, val linkInstanceDao: LinkIns
       val linkTypeCopy = LinkType(linkType)
       linkType.attributes = ArrayList(ResourceUtils.incOrDecAttributes(linkType.attributes, attributesIdsToInc, attributesIdsToDec))
       linkTypeDao.updateLinkType(linkType.id, linkType, linkTypeCopy)
+   }
+
+   companion object {
+      fun createFromDaoSnapshot(dao: DaoContextSnapshot) = LinkTypeAdapter(dao.linkTypeDao, dao.linkInstanceDao)
    }
 }

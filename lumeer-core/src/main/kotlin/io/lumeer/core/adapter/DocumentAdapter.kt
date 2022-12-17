@@ -22,6 +22,7 @@ import io.lumeer.api.model.Document
 import io.lumeer.api.model.ResourceType
 import io.lumeer.storage.api.dao.FavoriteItemDao
 import io.lumeer.storage.api.dao.ResourceCommentDao
+import io.lumeer.storage.api.dao.context.DaoContextSnapshot
 
 class DocumentAdapter(private val resourceCommentDao: ResourceCommentDao, private val favoriteItemDao: FavoriteItemDao) {
 
@@ -49,6 +50,14 @@ class DocumentAdapter(private val resourceCommentDao: ResourceCommentDao, privat
         }
     }
 
+    fun deleteComments(documentId: String) {
+        resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentId)
+    }
+
+    fun deleteComments(documentIds: Set<String>) {
+        resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentIds)
+    }
+
     private fun obtainCommentCounts(documents: List<Document>): Map<String, Int> {
         val documentIds = documents.map { obj: Document -> obj.id }.toSet()
         if (documents.size < 100) {
@@ -66,5 +75,9 @@ class DocumentAdapter(private val resourceCommentDao: ResourceCommentDao, privat
         }
 
         return commentCounts
+    }
+
+    companion object {
+        fun createFromDaoSnapshot(dao: DaoContextSnapshot) = DocumentAdapter(dao.resourceCommentDao, dao.favoriteItemDao)
     }
 }
