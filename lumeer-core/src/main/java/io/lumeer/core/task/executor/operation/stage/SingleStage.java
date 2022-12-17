@@ -283,13 +283,20 @@ public class SingleStage extends Stage {
          });
       });
 
-      changesTracker.addCollections(collectionsChanged.stream().map(collectionsMap::get).collect(toSet()));
+      // update collections to get new version numbers in them
+      final Set<Collection> collectionsUpdated = collectionsChanged.stream().map(collectionId -> task.getDaoContextSnapshot()
+              .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null, false)).collect(toSet());
+      collectionsUpdated.forEach(c -> {
+         if (collectionsMap.containsKey(c.getId())) {
+            collectionsMap.put(c.getId(), c);
+         }
+      });
+
+      changesTracker.addCollections(collectionsUpdated);
       changesTracker.addUpdatedDocuments(updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toSet()));
       changesTracker.updateCollectionsMap(collectionsMapForCreatedDocuments);
       changesTracker.updateCollectionsMap(collectionsMap);
 
-      collectionsChanged.forEach(collectionId -> task.getDaoContextSnapshot()
-                                                     .getCollectionDao().updateCollection(collectionId, collectionsMap.get(collectionId), null, false));
 
       return updatedDocuments.values().stream().flatMap(java.util.Collection::stream).collect(toList());
    }
@@ -306,20 +313,11 @@ public class SingleStage extends Stage {
                documents.stream().map(Document::getCollectionId).collect(toList())
          ).stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
          final Map<String, LinkType> allLinkTypes = task.getDaoContextSnapshot().getLinkTypeDao().getAllLinkTypes().stream().collect(Collectors.toMap(LinkType::getId, Function.identity()));
+         final Set<Collection> collectionsChanged = new HashSet<>();
 
          documents.forEach(document -> {
-            // decrease documents count in collections map
-            if (!changesTracker.getCollectionsMap().containsKey(document.getCollectionId())) { // not yet tracked
-               final Collection collection = allCollections.get(document.getCollectionId());
-               changesTracker.updateCollectionsMap(Map.of(collection.getId(), collection));
-            }
-
-            // decrease documents count in updated collections in operations tracker
-            final Optional<Collection> changedCollection = changesTracker.getCollections().stream().filter(c -> c.getId().equals(document.getCollectionId())).findFirst();
             final Collection collection = allCollections.get(document.getCollectionId());
-            if (changedCollection.isEmpty()) { // not yet tracked
-               changesTracker.getCollections().add(collection);
-            }
+            collectionsChanged.add(collection);
 
             final List<LinkInstance> removedLinks = task.getDaoContextSnapshot().getLinkInstanceDao().getLinkInstancesByDocumentIds(Set.of(document.getId()));
             final Set<String> removedFromLinkTypes = removedLinks.stream().map(LinkInstance::getLinkTypeId).collect(toSet());
@@ -383,6 +381,12 @@ public class SingleStage extends Stage {
                purposeChangeProcessor.processChanges(new RemoveDocument(document), collection);
             }
          });
+
+         // update collection version in DB
+         final Set<Collection> collectionsUpdated = collectionsChanged.stream().map(collection -> task.getDaoContextSnapshot().getCollectionDao().updateCollection(collection.getId(), collection, null, false)).collect(toSet());
+
+         changesTracker.updateCollectionsMap(collectionsUpdated.stream().collect(toMap(Collection::getId, Function.identity())));
+         changesTracker.getCollections().addAll(collectionsUpdated);
 
          return documents;
       }
