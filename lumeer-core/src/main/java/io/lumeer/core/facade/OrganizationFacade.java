@@ -170,7 +170,13 @@ public class OrganizationFacade extends AbstractFacade {
    }
 
    public List<Organization> getOrganizations() {
-      return organizationDao.getAllOrganizations().stream()
+      User currentUser = authenticatedUser.getCurrentUser();
+      Set<String> userOrganizations = currentUser.getOrganizations() != null ? currentUser.getOrganizations() : new HashSet<>();
+      if (userOrganizations.isEmpty()) {
+         return Collections.emptyList();
+      }
+
+      return organizationDao.getOrganizationsByIds(userOrganizations).stream()
                             .filter(organization -> permissionsChecker.hasRole(organization, RoleType.Read))
                             .map(this::mapResource)
                             .collect(Collectors.toList());
@@ -204,9 +210,9 @@ public class OrganizationFacade extends AbstractFacade {
       for (User user : users) {
          Set<String> userOrganizations = user.getOrganizations() != null ? new HashSet<>(user.getOrganizations()) : new HashSet<>();
          Set<String> organizationsWithoutPermissions = organizations.stream()
-                                                                           .filter(organization -> !userOrganizations.contains(organization.getId()) && permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
-                                                                           .map(Organization::getId)
-                                                                           .collect(Collectors.toSet());
+                                                                    .filter(organization -> !userOrganizations.contains(organization.getId()) && permissionsChecker.hasRole(organization, RoleType.Read, user.getId()))
+                                                                    .map(Organization::getId)
+                                                                    .collect(Collectors.toSet());
 
          if (organizationsWithoutPermissions.size() > 0) {
             userOrganizations.addAll(organizationsWithoutPermissions);
