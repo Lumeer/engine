@@ -28,11 +28,8 @@ import io.lumeer.core.task.RuleTask
 import io.lumeer.core.task.executor.ChangesTracker
 import io.lumeer.core.task.executor.operation.DocumentRemovalOperation
 import io.lumeer.core.task.executor.operation.OperationExecutor
-import io.lumeer.core.util.Utils
 import io.lumeer.engine.api.event.RemoveDocument
 import io.lumeer.engine.api.event.RemoveLinkInstance
-import java.util.function.Function
-import java.util.stream.Collectors.toMap
 
 class RemoveDocumentsStage(executor: OperationExecutor) : Stage(executor) {
 
@@ -66,8 +63,8 @@ class RemoveDocumentsStage(executor: OperationExecutor) : Stage(executor) {
         val updatedLinkTypes = task.daoContextSnapshot.linkTypeDao.getLinkTypesByIds(updatedLinkTypeIds.toSet())
 
         // remove all data - documents, links, favorites, comments
-        removeLinks(removedLinks, documents, updatedLinkTypes.stream().collect(toMap({ it.id }, Function.identity())))
-        removeDocuments(documents, updatedCollections.stream().collect(toMap({ it.id }, Function.identity())))
+        removeLinks(removedLinks, documents, updatedLinkTypes.associateBy { it.id })
+        removeDocuments(documents, updatedCollections.associateBy { it.id })
 
         // update document and link instance counts
         collectionAdapter.mapCollectionsComputedProperties(updatedCollections, task.initiator.id, task.daoContextSnapshot.projectId)
@@ -78,18 +75,24 @@ class RemoveDocumentsStage(executor: OperationExecutor) : Stage(executor) {
         val savedLinkTypes = updatedLinkTypes.map { task.daoContextSnapshot.linkTypeDao.updateLinkType(it.id, it, null, false) }
 
         // update saved changes in changes tracker
-        changesTracker.updateCollectionsMap(savedCollections.stream().collect(toMap({ c -> c.id }, Function.identity())))
+        changesTracker.updateCollectionsMap(savedCollections.associateBy { it.id })
         changesTracker.collections.addAll(savedCollections)
 
-        changesTracker.updateLinkTypesMap(savedLinkTypes.stream().collect(toMap({lt -> lt.id }, Function.identity())))
+        changesTracker.updateLinkTypesMap(savedLinkTypes.associateBy { it.id })
         changesTracker.linkTypes.addAll(savedLinkTypes)
     }
+
+    // groupBy, associateBy
 
     private fun removeLinks(removedLinks: List<LinkInstance>, documents: List<Document>, linkTypes: Map<String, LinkType>) {
         changesTracker.addRemovedLinkInstances(removedLinks)
 
         task.daoContextSnapshot.linkInstanceDao.deleteLinkInstancesByDocumentsIds(documents.map { it.id }.toSet())
         linkInstanceAdapter.deleteComments(removedLinks.map { it.id }.toSet())
+
+        removedLinks.groupBy { it.linkTypeId }.forEach { (linkTypeId, linkInstances) ->
+            task.daoContextSnapshot.linkDataDao.deleteData(linkTypeId, linkInstances.map { it.id }.toSet())
+        }
 
         removedLinks.forEach { link ->
             val linkType = linkTypes[link.linkTypeId]
@@ -103,7 +106,7 @@ class RemoveDocumentsStage(executor: OperationExecutor) : Stage(executor) {
                     taskProcessingFacade.onRemoveLink(RemoveLinkInstance(rl), task.rule.name)
                 }
             } else {  // only functions get evaluated
-                val removedLinksByType = Utils.categorize(removedLinks.stream()) { it.linkTypeId }
+                val removedLinksByType = removedLinks.groupBy { it.linkTypeId }
                 removedLinksByType.keys.forEach { removedLinkTypeId ->
                     taskExecutor.submitTask(functionFacade.createTaskForRemovedLinks(linkTypes[removedLinkTypeId], removedLinksByType[removedLinkTypeId]))
                 }
@@ -112,7 +115,7 @@ class RemoveDocumentsStage(executor: OperationExecutor) : Stage(executor) {
     }
 
     private fun removeDocuments(documents: List<Document>, collections: Map<String, io.lumeer.api.model.Collection>) {
-        val documentsByCollectionIds = Utils.categorize(documents.stream()) { it.collectionId }
+        val documentsByCollectionIds = documents.groupBy { it.collectionId }
 
         changesTracker.addRemovedDocuments(documents)
 
