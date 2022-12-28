@@ -36,6 +36,7 @@ import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.LinkDataDao;
 import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 
 import java.net.URI;
@@ -218,25 +219,33 @@ public class FileAttachmentFacade extends AbstractFacade {
    }
 
    private List<FileAttachment> filterDocumentsAttachments(final List<FileAttachment> attachments, final String collectionId) {
-      Collection collection = collectionDao.getCollectionById(collectionId);
-      Set<String> documentIds = attachments.stream().map(FileAttachment::getDocumentId).collect(Collectors.toSet());
-      List<Document> documents = documentDao.getDocumentsByCollection(collectionId, documentIds);
-      Map<String, Document> documentsMap = DocumentUtils.loadDocumentsData(dataDao, collection, documents).stream().collect(Collectors.toMap(Document::getId, doc -> doc));
+      try {
+         Collection collection = collectionDao.getCollectionById(collectionId);
+         Set<String> documentIds = attachments.stream().map(FileAttachment::getDocumentId).collect(Collectors.toSet());
+         List<Document> documents = documentDao.getDocumentsByCollection(collectionId, documentIds);
+         Map<String, Document> documentsMap = DocumentUtils.loadDocumentsData(dataDao, collection, documents).stream().collect(Collectors.toMap(Document::getId, doc -> doc));
 
-      return attachments.stream()
-                        .filter(fileAttachment -> permissionsChecker.canReadDocument(collection, documentsMap.get(fileAttachment.getDocumentId())))
-                        .collect(Collectors.toList());
+         return attachments.stream()
+                           .filter(fileAttachment -> permissionsChecker.canReadDocument(collection, documentsMap.get(fileAttachment.getDocumentId())))
+                           .collect(Collectors.toList());
+      } catch (ResourceNotFoundException e) {
+         return List.of();
+      }
    }
 
    private List<FileAttachment> filterLinkAttachments(final List<FileAttachment> attachments, final String linkTypeId) {
-      LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
-      Set<String> linkIds = attachments.stream().map(FileAttachment::getDocumentId).collect(Collectors.toSet());
-      List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkIds);
-      Map<String, LinkInstance> linkInstanceMap = LinkInstanceUtils.loadLinkInstancesData(linkDataDao, linkType, linkInstances).stream().collect(Collectors.toMap(LinkInstance::getId, doc -> doc));
+      try {
+         LinkType linkType = linkTypeDao.getLinkType(linkTypeId);
+         Set<String> linkIds = attachments.stream().map(FileAttachment::getDocumentId).collect(Collectors.toSet());
+         List<LinkInstance> linkInstances = linkInstanceDao.getLinkInstances(linkIds);
+         Map<String, LinkInstance> linkInstanceMap = LinkInstanceUtils.loadLinkInstancesData(linkDataDao, linkType, linkInstances).stream().collect(Collectors.toMap(LinkInstance::getId, doc -> doc));
 
-      return attachments.stream()
-                        .filter(fileAttachment -> permissionsChecker.canReadLinkInstance(linkType, linkInstanceMap.get(fileAttachment.getDocumentId())))
-                        .collect(Collectors.toList());
+         return attachments.stream()
+                           .filter(fileAttachment -> permissionsChecker.canReadLinkInstance(linkType, linkInstanceMap.get(fileAttachment.getDocumentId())))
+                           .collect(Collectors.toList());
+      } catch (ResourceNotFoundException e) {
+         return List.of();
+      }
    }
 
    public FileAttachment renameFileAttachment(final FileAttachment fileAttachment) {
