@@ -22,7 +22,23 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.*;
+import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.FileAttachment;
+import io.lumeer.api.model.Group;
+import io.lumeer.api.model.Language;
+import io.lumeer.api.model.LinkInstance;
+import io.lumeer.api.model.LinkType;
+import io.lumeer.api.model.Query;
+import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.ResourceVariable;
+import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.SelectionList;
+import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.LinkTypeUtil;
@@ -67,7 +83,6 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
-import com.floreysoft.jmte.Engine;
 import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.Value;
 
@@ -90,6 +105,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+
+import com.floreysoft.jmte.Engine;
 
 public class LumeerBridge {
    private static final String CREATE_PREFIX = "CREATE_";
