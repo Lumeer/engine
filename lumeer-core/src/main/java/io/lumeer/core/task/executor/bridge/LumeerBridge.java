@@ -630,6 +630,8 @@ public class LumeerBridge {
       var parts = item.split(splitter);
       if (parts.length == 2) {
          patterns.put(parts[0], parts[1]);
+      } else if (parts.length == 1) {
+         patterns.put(parts[0], "");
       } else {
          throw new IllegalStateException(String.format("Illegal number of parts in a replacement pattern. Splitting with %s and found %d parts.", splitter, parts.length));
       }
