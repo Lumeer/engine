@@ -51,4 +51,13 @@ public class SelectOption {
    public String getDisplayValue() {
       return displayValue;
    }
+
+   @Override
+   public String toString() {
+      return "SelectOption{" +
+              "value='" + value + '\'' +
+              ", displayValue='" + displayValue + '\'' +
+              ", background='" + background + '\'' +
+              '}';
+   }
 }

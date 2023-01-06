@@ -35,6 +35,7 @@ import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.SelectionList;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
@@ -82,7 +83,6 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
-import com.floreysoft.jmte.Engine;
 import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.Value;
 
@@ -105,6 +105,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
+
+import com.floreysoft.jmte.Engine;
 
 public class LumeerBridge {
    private static final String CREATE_PREFIX = "CREATE_";
@@ -805,6 +807,28 @@ public class LumeerBridge {
    @SuppressWarnings({ "unused", "rawtypes" })
    public int getListSize(final List list) {
       return list == null ? 0 : list.size();
+   }
+
+   @SuppressWarnings({ "unused" })
+   public String getSelectionListValues(final String listName) {
+      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists().stream().filter(l -> l.getName().equals(listName)).findFirst();
+
+      if (found.isEmpty()) {
+         return "";
+      }
+
+      return found.get().getOptions().stream().map(o -> o.getValue()).collect(Collectors.joining(","));
+   }
+
+   @SuppressWarnings({ "unused" })
+   public String getSelectionListDisplayValues(final String listName) {
+      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists().stream().filter(l -> l.getName().equals(listName)).findFirst();
+
+      if (found.isEmpty() && !found.get().getDisplayValues()) {
+         return "";
+      }
+
+      return found.get().getOptions().stream().map(o -> o.getDisplayValue()).collect(Collectors.joining(","));
    }
 
    @SuppressWarnings({ "rawtypes", "unchecked" })
