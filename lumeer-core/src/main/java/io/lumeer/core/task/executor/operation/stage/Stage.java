@@ -30,7 +30,7 @@ import io.lumeer.core.task.executor.ChangesTracker;
 import io.lumeer.core.task.executor.operation.Operation;
 import io.lumeer.core.task.executor.operation.OperationExecutor;
 
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 abstract public class Stage implements Callable<ChangesTracker> {
@@ -40,7 +40,7 @@ abstract public class Stage implements Callable<ChangesTracker> {
    protected final OperationExecutor executor;
    protected final TaskExecutor taskExecutor;
    protected final ContextualTask task;
-   protected Set<Operation<?>> operations;
+   protected List<Operation<?>> operations;
    protected final ChangesTracker changesTracker = new ChangesTracker();
    protected final AuditAdapter auditAdapter;
    protected final String automationName;

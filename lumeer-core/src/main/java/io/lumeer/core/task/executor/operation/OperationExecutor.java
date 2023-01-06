@@ -30,16 +30,16 @@ import io.lumeer.core.task.executor.operation.stage.SingleStage;
 import io.lumeer.core.task.executor.operation.stage.Stage;
 import io.lumeer.core.task.executor.operation.stage.ViewsUpdatingStage;
 
-import java.util.Set;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 public class OperationExecutor implements Callable<ChangesTracker> {
 
    private final TaskExecutor taskExecutor;
    private final ContextualTask task;
-   private final Set<Operation<?>> operations;
+   private final List<Operation<?>> operations;
 
-   public OperationExecutor(final TaskExecutor taskExecutor, final ContextualTask task, final Set<Operation<?>> operations) {
+   public OperationExecutor(final TaskExecutor taskExecutor, final ContextualTask task, final List<Operation<?>> operations) {
       this.taskExecutor = taskExecutor;
       this.task = task;
       this.operations = operations;
@@ -53,7 +53,7 @@ public class OperationExecutor implements Callable<ChangesTracker> {
       return task;
    }
 
-   public Set<Operation<?>> getOperations() {
+   public List<Operation<?>> getOperations() {
       return operations;
    }
 
