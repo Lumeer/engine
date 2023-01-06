@@ -22,22 +22,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 import io.lumeer.api.SelectedWorkspace;
-import io.lumeer.api.model.AllowedPermissions;
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.FileAttachment;
-import io.lumeer.api.model.Group;
-import io.lumeer.api.model.Language;
-import io.lumeer.api.model.LinkInstance;
-import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Query;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.ResourceVariable;
-import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.ServiceLimits;
-import io.lumeer.api.model.User;
-import io.lumeer.api.model.View;
+import io.lumeer.api.model.*;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.LinkTypeUtil;
@@ -805,6 +790,28 @@ public class LumeerBridge {
    @SuppressWarnings({ "unused", "rawtypes" })
    public int getListSize(final List list) {
       return list == null ? 0 : list.size();
+   }
+
+   @SuppressWarnings({ "unused" })
+   public String getSelectionListValues(final String listName) {
+      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists().stream().filter(l -> l.getName().equals(listName)).findFirst();
+
+      if (found.isEmpty()) {
+         return "";
+      }
+
+      return found.get().getOptions().stream().map(o -> o.getValue()).collect(Collectors.joining(","));
+   }
+
+   @SuppressWarnings({ "unused" })
+   public String getSelectionListDisplayValues(final String listName) {
+      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists().stream().filter(l -> l.getName().equals(listName)).findFirst();
+
+      if (found.isEmpty() && !found.get().getDisplayValues()) {
+         return "";
+      }
+
+      return found.get().getOptions().stream().map(o -> o.getDisplayValue()).collect(Collectors.joining(","));
    }
 
    @SuppressWarnings({ "rawtypes", "unchecked" })
