@@ -116,7 +116,7 @@ public class LumeerBridge {
    private final ContextualTask task;
    private final ServiceLimits serviceLimits;
    private final ChangesTracker changesTracker = new ChangesTracker();
-   private Set<Operation<?>> operations = new HashSet<>();
+   private List<Operation<?>> operations = new ArrayList<>();
    private Exception cause = null;
    private boolean dryRun = false;
    private boolean printed = false;
@@ -1187,7 +1187,7 @@ public class LumeerBridge {
             appendOperation(sb, collection.getName(), collection.getAttributes(), documentChange);
          } else if (operation instanceof LinkOperation) {
             final LinkOperation linkChange = (LinkOperation) operation;
-            final LinkType linkType = linkTypes.computeIfAbsent(linkChange.getEntity().getId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
+            final LinkType linkType = linkTypes.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
             appendOperation(sb, linkType.getName(), linkType.getAttributes(), linkChange);
          } else if (operation instanceof UserMessageOperation || operation instanceof  PrintAttributeOperation || operation instanceof NavigationOperation || operation instanceof SendEmailOperation) {
             sb.append(operation.toString());
@@ -1256,11 +1256,11 @@ public class LumeerBridge {
       this.dryRun = dryRun;
    }
 
-   public Set<Operation<?>> getOperations() {
+   public List<Operation<?>> getOperations() {
       return operations;
    }
 
-   public void setOperations(final Set<Operation<?>> operations) {
+   public void setOperations(final List<Operation<?>> operations) {
       this.operations = operations;
    }
 

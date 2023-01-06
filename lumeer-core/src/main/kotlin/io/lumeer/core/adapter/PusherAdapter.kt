@@ -161,7 +161,6 @@ class PusherAdapter(
    }
 
    private fun createCollectionsAndLinksChangeNotifications(organization: Organization, project: Project?, linkTypes: Pair<List<LinkType>, List<LinkType>>, collections: Pair<List<Collection>, List<Collection>>, views: Pair<List<View>, List<View>>, userId: String): List<Event> {
-      println("createCollectionsAndLinksChangeNotifications " + userId)
       return createCollectionsChangeNotifications(organization, project, linkTypes, collections, views, userId).plus(createLinksChangeNotifications(organization, project, linkTypes, collections, views, userId))
    }
 

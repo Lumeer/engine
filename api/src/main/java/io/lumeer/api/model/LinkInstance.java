@@ -202,6 +202,7 @@ public class LinkInstance implements WithId {
       return "LinkInstance{" +
             "id='" + id + '\'' +
             ", linkTypeId='" + linkTypeId + '\'' +
+            ", templateId='" + templateId + '\'' +
             ", creationDate=" + creationDate +
             ", updateDate=" + updateDate +
             ", createdBy='" + createdBy + '\'' +

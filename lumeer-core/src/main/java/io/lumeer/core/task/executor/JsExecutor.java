@@ -30,8 +30,8 @@ import io.lumeer.core.util.JsFunctionsParser;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -101,7 +101,7 @@ public class JsExecutor {
    }
 
    public void setErrorInAttribute(final Document document, final String attributeId, final TaskExecutor taskExecutor) {
-      final OperationExecutor operationExecutor = new OperationExecutor(taskExecutor, task, Set.of(new DocumentOperation(document, attributeId, "ERR!")));
+      final OperationExecutor operationExecutor = new OperationExecutor(taskExecutor, task, List.of(new DocumentOperation(document, attributeId, "ERR!")));
       operationExecutor.call();
    }
 
