@@ -18,27 +18,26 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
-import com.mongodb.MongoException;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.Indexes;
-import com.mongodb.client.result.DeleteResult;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+
 import io.lumeer.api.model.InformationRecord;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.storage.api.dao.InformationStoreDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
+
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
+import com.mongodb.MongoException;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.Indexes;
+import com.mongodb.client.result.DeleteResult;
 
 public class MongoInformationStoreDao extends MongoOrganizationScopedDao implements InformationStoreDao {
 
@@ -47,14 +46,14 @@ public class MongoInformationStoreDao extends MongoOrganizationScopedDao impleme
    private static final long TIME_TO_KEEP = 60L * 60 * 1000;
 
    @Override
-   public void ensureIndexes(Organization organization) {
+   public void ensureIndexes(final Organization organization) {
       MongoCollection<Document> collection = database.getCollection(databaseCollectionName(organization));
       collection.createIndex(Indexes.ascending(InformationRecord.USER_ID), new IndexOptions().unique(true));
       collection.createIndex(Indexes.descending(InformationRecord.DATE), new IndexOptions().unique(false));
    }
 
    @Override
-   public InformationRecord addInformation(InformationRecord informationRecord) {
+   public InformationRecord addInformation(final InformationRecord informationRecord) {
       try {
          databaseCollection().insertOne(informationRecord);
 
@@ -65,19 +64,23 @@ public class MongoInformationStoreDao extends MongoOrganizationScopedDao impleme
    }
 
    @Override
-   public List<InformationRecord> findInformation(String id, String userId) {
+   public InformationRecord findInformation(final String id, final String userId) {
       final Bson filter = Filters.and(
               idFilter(id),
               Filters.eq(InformationRecord.USER_ID, userId)
       );
 
-      return databaseCollection().find(filter).into(new ArrayList<>())
-              .stream()
-              .collect(Collectors.toList());
+      final InformationRecord result = databaseCollection().find(filter).first();
+
+      if (result == null) {
+         throw new StorageException("Information record '" + id + "' not found.");
+      }
+
+      return result;
    }
 
    @Override
-   public void deleteInformation(String id) {
+   public void deleteInformation(final String id) {
       final DeleteResult result = databaseCollection().deleteOne(idFilter(id));
       if (result.getDeletedCount() != 1) {
          throw new StorageException("Information record '" + id + "' has not been deleted.");
@@ -92,14 +95,14 @@ public class MongoInformationStoreDao extends MongoOrganizationScopedDao impleme
    }
 
    @Override
-   public void createRepository(Organization organization) {
+   public void createRepository(final Organization organization) {
       database.createCollection(databaseCollectionName(organization));
 
       ensureIndexes(organization);
    }
 
    @Override
-   public void deleteRepository(Organization organization) {
+   public void deleteRepository(final Organization organization) {
       database.getCollection(databaseCollectionName(organization)).drop();
    }
 
@@ -114,11 +117,11 @@ public class MongoInformationStoreDao extends MongoOrganizationScopedDao impleme
       return databaseCollectionName(getOrganization().get());
    }
 
-   private String databaseCollectionName(Organization organization) {
+   private String databaseCollectionName(final Organization organization) {
       return databaseCollectionName(organization.getId());
    }
 
-   private String databaseCollectionName(String organizationId) {
+   private String databaseCollectionName(final String organizationId) {
       return PREFIX + organizationId;
    }
 

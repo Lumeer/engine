@@ -16,17 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.storage.api.dao;
+package io.lumeer.core.adapter
 
-import io.lumeer.api.model.InformationRecord;
-import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.InformationRecord
+import io.lumeer.storage.api.dao.InformationStoreDao
+import java.time.ZonedDateTime
 
-public interface InformationStoreDao extends OrganizationScopedDao {
-    void ensureIndexes(Organization organization);
+class InformationStoreAdapter(private val informationStoreDao: InformationStoreDao) {
 
-    InformationRecord addInformation(final InformationRecord informationRecord);
-    InformationRecord findInformation(final String id, final String userId);
-    void deleteInformation(final String id);
-    void deleteStaleInformation();
+   fun addInformation(informationRecord: InformationRecord, userId: String): InformationRecord {
+      informationStoreDao.deleteStaleInformation()
 
+      val rec = InformationRecord(null, userId, ZonedDateTime.now(), informationRecord.source, informationRecord.target, informationRecord.data)
+
+      return informationStoreDao.addInformation(rec)
+   }
+
+   fun getInformation(id: String, userId: String) = informationStoreDao.findInformation(id, userId)
 }

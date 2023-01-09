@@ -33,6 +33,13 @@ import java.util.Date;
 
 public class InformationRecordCodec implements CollectibleCodec<InformationRecord> {
 
+   public static final String ID = "_id";
+   public static final String USER_ID = "userId";
+   public static final String DATE = "date";
+   public static final String SOURCE = "source";
+   public static final String TARGET = "target";
+   public static final String DATA = "data";
+
    private final Codec<Document> documentCodec;
 
    public InformationRecordCodec(final CodecRegistry registry) {
@@ -65,15 +72,15 @@ public class InformationRecordCodec implements CollectibleCodec<InformationRecor
    public InformationRecord decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
       final Document bson = documentCodec.decode(bsonReader, decoderContext);
 
-      final String id = bson.getObjectId(InformationRecord.ID).toHexString();
-      final String userId = bson.getString(InformationRecord.USER_ID);
-      final String source = bson.getString(InformationRecord.SOURCE);
-      final String target = bson.getString(InformationRecord.TARGET);
-      final String data = bson.getString(InformationRecord.DATA);
+      final String id = bson.getObjectId(ID).toHexString();
+      final String userId = bson.getString(USER_ID);
+      final String source = bson.getString(SOURCE);
+      final String target = bson.getString(TARGET);
+      final String data = bson.getString(DATA);
 
       ZonedDateTime date = null;
-      if (bson.getDate(InformationRecord.DATE) != null) {
-         date = ZonedDateTime.ofInstant(bson.getDate(InformationRecord.DATE).toInstant(), ZoneOffset.UTC);
+      if (bson.getDate(DATE) != null) {
+         date = ZonedDateTime.ofInstant(bson.getDate(DATE).toInstant(), ZoneOffset.UTC);
       }
 
       return new InformationRecord(id, userId, date, source, target, data);
@@ -81,12 +88,12 @@ public class InformationRecordCodec implements CollectibleCodec<InformationRecor
 
    @Override
    public void encode(final BsonWriter bsonWriter, final InformationRecord informationRecord, final EncoderContext encoderContext) {
-      final Document bson = informationRecord.getId() != null ? new Document(InformationRecord.ID, new ObjectId(informationRecord.getId())) : new Document();
-      bson.append(InformationRecord.USER_ID, informationRecord.getUserId())
-              .append(InformationRecord.DATE, new Date(informationRecord.getDate().toInstant().toEpochMilli()))
-              .append(InformationRecord.SOURCE, informationRecord.getSource())
-              .append(InformationRecord.TARGET, informationRecord.getTarget())
-              .append(InformationRecord.DATA, informationRecord.getData());
+      final Document bson = informationRecord.getId() != null ? new Document(ID, new ObjectId(informationRecord.getId())) : new Document();
+      bson.append(USER_ID, informationRecord.getUserId())
+              .append(DATE, new Date(informationRecord.getDate().toInstant().toEpochMilli()))
+              .append(SOURCE, informationRecord.getSource())
+              .append(TARGET, informationRecord.getTarget())
+              .append(DATA, informationRecord.getData());
 
       documentCodec.encode(bsonWriter, bson, encoderContext);
    }
