@@ -27,8 +27,9 @@ import java.util.List;
  */
 public interface HealthChecking {
 
-   int MAX_STRING_LENGTH = 512;
-   int MAX_LONG_STRING_LENGTH = 10240;
+   long MAX_STRING_LENGTH = 512;
+   long MAX_LONG_STRING_LENGTH = 10240;
+   long MAX_MESSAGE_SIZE = 10L * 1024 * 1024;
 
    /**
     * Checks object health.
@@ -37,7 +38,7 @@ public interface HealthChecking {
     */
    void checkHealth() throws InsaneObjectException;
 
-   default void checkStringLength(final String name, final String value, final int maxLength) throws InsaneObjectException {
+   default void checkStringLength(final String name, final String value, final long maxLength) throws InsaneObjectException {
       if (value != null && value.length() > maxLength) {
          throw new InsaneObjectException(String.format("Value of %s is longer than %d.", name, maxLength));
       }

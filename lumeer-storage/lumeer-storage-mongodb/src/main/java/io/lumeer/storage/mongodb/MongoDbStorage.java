@@ -34,47 +34,7 @@ import io.lumeer.engine.api.data.StorageConnection;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 import io.lumeer.storage.mongodb.codecs.BigDecimalCodec;
 import io.lumeer.storage.mongodb.codecs.RoleTypeCodec;
-import io.lumeer.storage.mongodb.codecs.providers.AttributeCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.AttributeFilterCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.AttributeFormattingCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.AttributeLockCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.AuditRecordCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.CollectionCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.CollectionPurposeCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.CompanyContactCodedProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ConditionValueCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ConstraintCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.DashboardDataCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.DefaultViewConfigCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.DelayedActionCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.DocumentCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.FeedbackCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.FileAttachmentCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.FunctionCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.FunctionRowCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.GroupCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.LinkInstanceCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.LinkTypeCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.NotificationSettingCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.OrganizationCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.PaymentCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.PermissionCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.PermissionsCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ProjectCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.QueryCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.QueryStemCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ReferralPaymentCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ResourceCommentCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ResourceVariableCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.RoleCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.RuleCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.SelectionCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.SequenceCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.TemplateMetadataCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.UserCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.UserLoginEventCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.UserNotificationCodecProvider;
-import io.lumeer.storage.mongodb.codecs.providers.ViewCodecProvider;
+import io.lumeer.storage.mongodb.codecs.providers.*;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.ErrorCategory;
@@ -164,7 +124,7 @@ public class MongoDbStorage implements DataStorage {
                new DefaultViewConfigCodecProvider(), new ReferralPaymentCodecProvider(), new TemplateMetadataCodecProvider(), new ResourceCommentCodecProvider(),
                new DelayedActionCodecProvider(), new NotificationSettingCodecProvider(), new CollectionPurposeCodecProvider(), new AuditRecordCodecProvider(),
                new RoleCodecProvider(), new SelectionCodecProvider(), new DashboardDataCodecProvider(), new ResourceVariableCodecProvider(),
-               new AttributeFormattingCodecProvider()
+               new AttributeFormattingCodecProvider(), new InformationRecordCodecProvider()
          );
          final CodecRegistry registry = CodecRegistries.fromRegistries(defaultRegistry, codecRegistry, providersRegistry);
 

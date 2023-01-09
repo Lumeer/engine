@@ -22,42 +22,12 @@ import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.engine.api.data.DataStorage;
-import io.lumeer.storage.api.dao.AuditDao;
-import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.dao.CompanyContactDao;
-import io.lumeer.storage.api.dao.DataDao;
-import io.lumeer.storage.api.dao.DelayedActionDao;
-import io.lumeer.storage.api.dao.DocumentDao;
-import io.lumeer.storage.api.dao.FavoriteItemDao;
-import io.lumeer.storage.api.dao.FeedbackDao;
-import io.lumeer.storage.api.dao.FileAttachmentDao;
-import io.lumeer.storage.api.dao.FunctionDao;
-import io.lumeer.storage.api.dao.GroupDao;
-import io.lumeer.storage.api.dao.LinkDataDao;
-import io.lumeer.storage.api.dao.LinkInstanceDao;
-import io.lumeer.storage.api.dao.LinkTypeDao;
-import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.PaymentDao;
-import io.lumeer.storage.api.dao.ProjectDao;
-import io.lumeer.storage.api.dao.ResourceCommentDao;
-import io.lumeer.storage.api.dao.ResourceVariableDao;
-import io.lumeer.storage.api.dao.SelectionListDao;
-import io.lumeer.storage.api.dao.SequenceDao;
-import io.lumeer.storage.api.dao.UserDao;
-import io.lumeer.storage.api.dao.UserLoginDao;
-import io.lumeer.storage.api.dao.UserNotificationDao;
-import io.lumeer.storage.api.dao.ViewDao;
+import io.lumeer.storage.api.dao.*;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.dao.context.WorkspaceSnapshot;
 import io.lumeer.storage.mongodb.dao.collection.MongoDataDao;
 import io.lumeer.storage.mongodb.dao.collection.MongoLinkDataDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoCompanyContactDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoFavoriteItemDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoPaymentDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoProjectDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoResourceVariableDao;
-import io.lumeer.storage.mongodb.dao.organization.MongoSelectionListDao;
+import io.lumeer.storage.mongodb.dao.organization.*;
 import io.lumeer.storage.mongodb.dao.project.MongoAuditRecordDao;
 import io.lumeer.storage.mongodb.dao.project.MongoCollectionDao;
 import io.lumeer.storage.mongodb.dao.project.MongoDocumentDao;
@@ -119,6 +89,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
    private final FileAttachmentDao fileAttachmentDao;
    private final SelectionListDao selectionListDao;
    private final ResourceVariableDao resourceVariableDao;
+   private final InformationStoreDao informationStoreDao;
 
    private MongoDaoContextSnapshot(final MongoDaoContextSnapshot originalDao) {
       this.systemDatabase = originalDao.systemDatabase;
@@ -153,6 +124,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       this.fileAttachmentDao = originalDao.fileAttachmentDao;
       this.selectionListDao = originalDao.selectionListDao;
       this.resourceVariableDao = originalDao.resourceVariableDao;
+      this.informationStoreDao = originalDao.informationStoreDao;
    }
 
    MongoDaoContextSnapshot(final DataStorage systemDataStorage, final DataStorage userDataStorage, final SelectedWorkspace selectedWorkspace) {
@@ -198,6 +170,7 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       this.fileAttachmentDao = initSystemScopedDao(new MongoFileAttachmentDao());
       this.selectionListDao = initOrganizationScopedDao(new MongoSelectionListDao());
       this.resourceVariableDao = initOrganizationScopedDao(new MongoResourceVariableDao());
+      this.informationStoreDao = initOrganizationScopedDao(new MongoInformationStoreDao());
    }
 
    private <T extends MongoSystemScopedDao> T initSystemScopedDao(T dao) {
@@ -361,8 +334,14 @@ public class MongoDaoContextSnapshot implements DaoContextSnapshot {
       return workspaceSnapshot;
    }
 
+   @Override
    public ResourceVariableDao getResourceVariableDao() {
       return resourceVariableDao;
+   }
+
+   @Override
+   public InformationStoreDao getInformationStoreDao() {
+      return informationStoreDao;
    }
 
    @Override
