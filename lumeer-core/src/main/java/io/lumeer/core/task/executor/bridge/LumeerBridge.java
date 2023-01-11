@@ -28,6 +28,7 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.Group;
+import io.lumeer.api.model.InformationRecord;
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
@@ -771,10 +772,12 @@ public class LumeerBridge {
    public void printText2(final String text, final boolean skipPrintDialog) {
       final SelectedWorkspace workspace = task.getDaoContextSnapshot().getSelectedWorkspace();
       if (!printed && workspace.getOrganization().isPresent() && workspace.getProject().isPresent()) {
+         final InformationRecord rec = task.getDaoContextSnapshot().getInformationStoreDao().addInformation(new InformationRecord(null, task.getInitiator().getId(), ZonedDateTime.now(), "", "", text));
+
          final TextPrintRequest pq = new TextPrintRequest(
                workspace.getOrganization().get().getCode(),
                workspace.getProject().get().getCode(),
-               text,
+               rec.getId(),
                skipPrintDialog
          );
 
