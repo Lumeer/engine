@@ -816,7 +816,7 @@ public class LumeerBridge {
 
    @SuppressWarnings({ "unused" })
    public String getSelectionListValues(final String listName) {
-      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists().stream().filter(l -> l.getName().equals(listName)).findFirst();
+      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists(List.of(task.getDaoContextSnapshot().getProjectId())).stream().filter(l -> l.getName().equals(listName)).findFirst();
 
       if (found.isEmpty()) {
          return "";
@@ -827,7 +827,7 @@ public class LumeerBridge {
 
    @SuppressWarnings({ "unused" })
    public String getSelectionListDisplayValues(final String listName) {
-      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists().stream().filter(l -> l.getName().equals(listName)).findFirst();
+      final Optional<SelectionList> found = task.getDaoContextSnapshot().getSelectionListDao().getAllLists(List.of(task.getDaoContextSnapshot().getProjectId())).stream().filter(l -> l.getName().equals(listName)).findFirst();
 
       if (found.isEmpty() && !found.get().getDisplayValues()) {
          return "";
