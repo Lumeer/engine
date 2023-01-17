@@ -183,10 +183,10 @@ public class AuthenticatedUser implements Serializable {
       final String projectId = Utils.computeIfNotNull(user.getDefaultWorkspace(), DefaultWorkspace::getProjectId);
       if (organizationId != null && projectId != null) {
          try {
-            Organization organization = organizationDao.getOrganizationById(user.getDefaultWorkspace().getOrganizationId());
+            Organization organization = organizationDao.getOrganizationById(organizationId);
             projectDao.setOrganization(organization);
 
-            Project project = projectDao.getProjectById(user.getDefaultWorkspace().getProjectId());
+            Project project = projectDao.getProjectById(projectId);
             auditDao.setProject(project);
 
             auditAdapter.registerEnter(user.getDefaultWorkspace().getOrganizationId(), ResourceType.PROJECT, project.getId(), user);
