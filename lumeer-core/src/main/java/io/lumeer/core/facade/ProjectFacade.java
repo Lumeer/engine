@@ -69,6 +69,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -175,7 +176,7 @@ public class ProjectFacade extends AbstractFacade {
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
       mapResourceCreationValues(project);
-      project.setCode(checkOrGenerateCode(project.getCode()));
+      project.setCode(checkOrGenerateCode(project.getCode(), Collections.emptyList()));
 
       Project storedProject = projectDao.createProject(project);
 
@@ -189,8 +190,9 @@ public class ProjectFacade extends AbstractFacade {
       return storedProject;
    }
 
-   private String checkOrGenerateCode(String code) {
+   private String checkOrGenerateCode(String code, java.util.Collection<String> excludeCodes) {
       Set<String> existingCodes = projectDao.getProjectsCodes();
+      existingCodes.removeAll(excludeCodes);
       return CodeGenerator.checkCode(existingCodes, Objects.requireNonNullElse(code, "EMPTY"), 2,6);
    }
 
@@ -207,7 +209,7 @@ public class ProjectFacade extends AbstractFacade {
       Project updatingProject = storedProject.copy();
       updatingProject.patch(project, permissionsChecker.getActualRoles(storedProject));
       mapResourceUpdateValues(updatingProject);
-      updatingProject.setCode(checkOrGenerateCode(updatingProject.getCode()));
+      updatingProject.setCode(checkOrGenerateCode(updatingProject.getCode(), Collections.singleton(storedProject.getCode())));
 
       Project updatedProject = projectDao.updateProject(projectId, updatingProject, storedProject);
       workspaceCache.updateProject(projectId, updatedProject);

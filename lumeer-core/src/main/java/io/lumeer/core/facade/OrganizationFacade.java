@@ -110,7 +110,7 @@ public class OrganizationFacade extends AbstractFacade {
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
       mapResourceCreationValues(organization);
-      organization.setCode(checkOrGenerateCode(organization.getCode()));
+      organization.setCode(checkOrGenerateCode(organization.getCode(), Collections.emptySet()));
 
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
@@ -120,8 +120,9 @@ public class OrganizationFacade extends AbstractFacade {
       return storedOrganization;
    }
 
-   private String checkOrGenerateCode(String code) {
+   private String checkOrGenerateCode(String code, java.util.Collection<String> excludeCodes) {
       Set<String> existingCodes = organizationDao.getOrganizationsCodes();
+      existingCodes.removeAll(excludeCodes);
       return CodeGenerator.checkCode(existingCodes, Objects.requireNonNullElse(code, "EMPTY").toUpperCase(), 2, 6);
    }
 
@@ -144,7 +145,7 @@ public class OrganizationFacade extends AbstractFacade {
       Organization updatingOrganization = storedOrganization.copy();
       updatingOrganization.patch(organization, permissionsChecker.getActualRoles(storedOrganization));
       mapResourceUpdateValues(updatingOrganization);
-      updatingOrganization.setCode(checkOrGenerateCode(updatingOrganization.getCode()));
+      updatingOrganization.setCode(checkOrGenerateCode(updatingOrganization.getCode(), Collections.singleton(storedOrganization.getCode())));
 
       Organization updatedOrganization = organizationDao.updateOrganization(organizationId, updatingOrganization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, updatedOrganization);
