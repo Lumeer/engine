@@ -19,6 +19,7 @@
 package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.CompanyContact;
+import io.lumeer.api.model.Group;
 import io.lumeer.api.model.InitialUserData;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Payment;
@@ -26,8 +27,10 @@ import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ServiceLimits;
+import io.lumeer.api.model.WorkspacesData;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.facade.CompanyContactFacade;
+import io.lumeer.core.facade.GroupFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.PaymentFacade;
 import io.lumeer.core.facade.ProjectFacade;
@@ -71,6 +74,9 @@ public class OrganizationService extends AbstractService {
    private ProjectFacade projectFacade;
 
    @Inject
+   private GroupFacade groupFacade;
+
+   @Inject
    private WorkspaceKeeper workspaceKeeper;
 
    @POST
@@ -105,15 +111,15 @@ public class OrganizationService extends AbstractService {
       return organizationFacade.getOrganizationByCode(organizationCode);
    }
 
-   @GET
-   public List<Organization> getOrganizations() {
-      return organizationFacade.getOrganizations();
+   @POST
+   @Path("code/{organizationCode:[a-zA-Z0-9_]{2,6}}/check")
+   public Boolean checkCode(@PathParam("organizationCode") String organizationCode) {
+      return organizationFacade.checkCode(organizationCode);
    }
 
    @GET
-   @Path("info/codes")
-   public Set<String> getOrganizationsCodes() {
-      return organizationFacade.getOrganizationsCodes();
+   public List<Organization> getOrganizations() {
+      return organizationFacade.getOrganizations();
    }
 
    @GET
@@ -174,12 +180,6 @@ public class OrganizationService extends AbstractService {
       return paymentFacade.getCurrentServiceLimits(organizationFacade.getOrganizationById(organizationId));
    }
 
-   @GET
-   @Path("info/serviceLimits")
-   public Map<String, ServiceLimits> getAllServiceLimits() {
-      return paymentFacade.getAllServiceLimits(organizationFacade.getOrganizations());
-   }
-
 
    @GET
    @Path("info/usersWithoutOrganizations")
@@ -195,31 +195,23 @@ public class OrganizationService extends AbstractService {
    }
 
    @GET
-   @Path("info/allProjects")
-   public Map<String, List<Project>> getAllProjects() {
-      final Map<String, List<Project>> result = new HashMap<>();
+   @Path("workspaces/all")
+   public WorkspacesData getWorkspaceData() {
+      List<Organization> organizations = organizationFacade.getOrganizations();
+      Map<String, List<Project>> projects = new HashMap<>();
+      Map<String, List<Group>> groups = new HashMap<>();
+      Map<String, ServiceLimits> serviceLimits = new HashMap<>();
 
       organizationFacade.getOrganizations().forEach(o -> {
          workspaceKeeper.setOrganization(o);
          projectFacade.switchOrganization();
-         result.put(o.getId(), projectFacade.getProjects());
+         groupFacade.switchOrganization();
+         projects.put(o.getId(), projectFacade.getProjects());
+         serviceLimits.put(o.getId(), paymentFacade.getCurrentServiceLimits(o));
+         groups.put(o.getId(), groupFacade.getGroups());
       });
 
-      return result;
-   }
-
-   @GET
-   @Path("info/allProjectCodes")
-   public Map<String, Set<String>> getAllProjectCodes() {
-      final Map<String, Set<String>> result = new HashMap<>();
-
-      organizationFacade.getOrganizations().forEach(o -> {
-         workspaceKeeper.setOrganization(o);
-         projectFacade.switchOrganization();
-         result.put(o.getId(), projectFacade.getProjectsCodes());
-      });
-
-      return result;
+      return new WorkspacesData(organizations, projects, serviceLimits, groups);
    }
 
    /* Creates a new payment. Communicates with payment gateway. Returns the payment updated with payment ID.

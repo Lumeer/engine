@@ -282,7 +282,7 @@ public class ViewFacade extends AbstractFacade {
 
    private String generateViewCode(String viewName) {
       Set<String> existingCodes = viewDao.getAllViewCodes();
-      return CodeGenerator.generate(existingCodes, viewName);
+      return CodeGenerator.generateHash(existingCodes, viewName);
    }
 
    public List<DefaultViewConfig> getDefaultConfigs() {

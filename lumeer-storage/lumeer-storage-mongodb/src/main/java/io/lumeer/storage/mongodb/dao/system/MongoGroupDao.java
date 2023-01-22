@@ -167,6 +167,11 @@ public class MongoGroupDao extends MongoOrganizationScopedDao implements GroupDa
       return null;
    }
 
+   @Override
+   public void switchOrganization() {
+      init();
+   }
+
    MongoCollection<Group> databaseCollection() {
       return database.getCollection(databaseCollectionName(), Group.class);
    }

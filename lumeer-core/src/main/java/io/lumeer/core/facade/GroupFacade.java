@@ -151,6 +151,13 @@ public class GroupFacade extends AbstractFacade {
       return group;
    }
 
+   public void switchOrganization() {
+      workspaceKeeper.getOrganization().ifPresent(o -> {
+         permissionsChecker.checkRole(o, RoleType.Read);
+         groupDao.switchOrganization();
+      });
+   }
+
    private Organization checkPermissions(RoleType roleType) {
       if (workspaceKeeper.getOrganization().isEmpty()) {
          throw new ResourceNotFoundException(ResourceType.ORGANIZATION);

@@ -43,6 +43,7 @@ import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.exception.NoResourcePermissionException;
+import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.core.util.SelectionListUtils;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -72,6 +73,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -173,17 +175,28 @@ public class ProjectFacade extends AbstractFacade {
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Project.ROLES);
       project.getPermissions().updateUserPermissions(defaultUserPermission);
       mapResourceCreationValues(project);
+      project.setCode(checkOrGenerateCode(project.getCode()));
 
       Project storedProject = projectDao.createProject(project);
 
       createProjectScopedRepositories(storedProject);
       addProjectScopedPredefinedData(storedProject);
 
-      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Created project " + project.getCode());
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Created project " + storedProject.getCode());
 
-      mailerService.setUserTemplate(authenticatedUser.getCurrentUser(), StringUtils.stripEnd(project.getCode().toLowerCase(), "0123456789"));
+      mailerService.setUserTemplate(authenticatedUser.getCurrentUser(), StringUtils.stripEnd(storedProject.getCode().toLowerCase(), "0123456789"));
 
       return storedProject;
+   }
+
+   private String checkOrGenerateCode(String code) {
+      Set<String> existingCodes = projectDao.getProjectsCodes();
+      return CodeGenerator.checkCode(existingCodes, Objects.requireNonNullElse(code, "EMPTY"), 2,6);
+   }
+
+   public boolean checkCode(String code) {
+      Utils.checkCodeSafe(code.toUpperCase());
+      return !projectDao.getProjectsCodes().contains(code.toUpperCase());
    }
 
    public Project updateProject(final String projectId, final Project project) {
@@ -193,7 +206,8 @@ public class ProjectFacade extends AbstractFacade {
 
       Project updatingProject = storedProject.copy();
       updatingProject.patch(project, permissionsChecker.getActualRoles(storedProject));
-      mapResourceUpdateValues(project);
+      mapResourceUpdateValues(updatingProject);
+      updatingProject.setCode(checkOrGenerateCode(updatingProject.getCode()));
 
       Project updatedProject = projectDao.updateProject(projectId, updatingProject, storedProject);
       workspaceCache.updateProject(projectId, updatedProject);
@@ -264,10 +278,6 @@ public class ProjectFacade extends AbstractFacade {
 
    private List<Project> getAllProjects() {
       return projectDao.getAllProjects();
-   }
-
-   public Set<String> getProjectsCodes() {
-      return projectDao.getProjectsCodes();
    }
 
    public Permissions getProjectPermissions(final String projectId) {
