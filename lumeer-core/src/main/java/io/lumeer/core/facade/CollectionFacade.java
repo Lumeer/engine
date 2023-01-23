@@ -602,7 +602,7 @@ public class CollectionFacade extends AbstractFacade {
 
    private String generateCollectionCode(String collectionName) {
       Set<String> existingCodes = collectionDao.getAllCollectionCodes();
-      return CodeGenerator.generate(existingCodes, collectionName);
+      return CodeGenerator.generateHash(existingCodes, collectionName);
    }
 
    public void runRule(final Collection collection, final String ruleId) {

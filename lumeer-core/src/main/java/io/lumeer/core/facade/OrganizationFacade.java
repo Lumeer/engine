@@ -31,6 +31,7 @@ import io.lumeer.api.model.User;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.*;
 
@@ -109,6 +110,7 @@ public class OrganizationFacade extends AbstractFacade {
       Permission defaultUserPermission = Permission.buildWithRoles(getCurrentUserId(), Organization.ROLES);
       organization.getPermissions().updateUserPermissions(defaultUserPermission);
       mapResourceCreationValues(organization);
+      organization.setCode(checkOrGenerateCode(organization.getCode(), Collections.emptySet()));
 
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
@@ -116,6 +118,17 @@ public class OrganizationFacade extends AbstractFacade {
       createOrganizationScopedRepositories(storedOrganization);
 
       return storedOrganization;
+   }
+
+   private String checkOrGenerateCode(String code, java.util.Collection<String> excludeCodes) {
+      Set<String> existingCodes = organizationDao.getOrganizationsCodes();
+      existingCodes.removeAll(excludeCodes);
+      return CodeGenerator.checkCode(existingCodes, Objects.requireNonNullElse(code, "EMPTY").toUpperCase(), 2, 6);
+   }
+
+   public boolean checkCode(String code) {
+      Utils.checkCodeSafe(code.toUpperCase());
+      return !organizationDao.getOrganizationsCodes().contains(code.toUpperCase());
    }
 
    private void checkCreateOrganization(List<Organization> organizations) {
@@ -131,7 +144,8 @@ public class OrganizationFacade extends AbstractFacade {
 
       Organization updatingOrganization = storedOrganization.copy();
       updatingOrganization.patch(organization, permissionsChecker.getActualRoles(storedOrganization));
-      mapResourceUpdateValues(organization);
+      mapResourceUpdateValues(updatingOrganization);
+      updatingOrganization.setCode(checkOrGenerateCode(updatingOrganization.getCode(), Collections.singleton(storedOrganization.getCode())));
 
       Organization updatedOrganization = organizationDao.updateOrganization(organizationId, updatingOrganization, storedOrganization);
       workspaceCache.updateOrganization(organizationId, updatedOrganization);
@@ -213,10 +227,6 @@ public class OrganizationFacade extends AbstractFacade {
             userDao.updateUser(user.getId(), user);
          }
       }
-   }
-
-   public Set<String> getOrganizationsCodes() {
-      return organizationDao.getOrganizationsCodes();
    }
 
    private Organization checkRoleAndGetOrganization(final String organizationId, final RoleType role) {

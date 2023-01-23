@@ -43,4 +43,6 @@ public interface GroupDao extends OrganizationScopedDao {
    Group getGroup(String id);
 
    Group getGroupByName(String name);
+
+   void switchOrganization();
 }

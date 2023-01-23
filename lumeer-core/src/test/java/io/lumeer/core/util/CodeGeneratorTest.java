@@ -37,21 +37,33 @@ public class CodeGeneratorTest {
    private static final String TOKEN2_CODE = "df3e6b0bb66ceaad";
 
    @Test
+   public void testCheckCodeMinLength() {
+      String code = CodeGenerator.checkCode(Collections.emptySet(), "A", 2, 6);
+      assertThat(code).hasSize(2);
+   }
+
+   @Test
+   public void testCheckCodeMaxLength() {
+      String code = CodeGenerator.checkCode(Collections.emptySet(), "ABCDEFGHI", 2, 6);
+      assertThat(code).hasSize(6);
+   }
+
+   @Test
    public void testGenerateEmptyExistingCodes() {
-      String code = CodeGenerator.generate(Collections.emptySet(), TOKEN);
+      String code = CodeGenerator.generateHash(Collections.emptySet(), TOKEN);
       assertCode(code, TOKEN0_CODE);
    }
 
    @Test
    public void testGenerate() {
-      String code = CodeGenerator.generate(Collections.emptySet(), TOKEN);
+      String code = CodeGenerator.generateHash(Collections.emptySet(), TOKEN);
       assertCode(code, TOKEN0_CODE);
    }
 
    @Test
    public void testGenerateExisting() {
       Set<String> existingCodes = new HashSet<>(Arrays.asList(TOKEN0_CODE, TOKEN1_CODE));
-      String code = CodeGenerator.generate(existingCodes, TOKEN);
+      String code = CodeGenerator.generateHash(existingCodes, TOKEN);
       assertCode(code, TOKEN2_CODE);
    }
 

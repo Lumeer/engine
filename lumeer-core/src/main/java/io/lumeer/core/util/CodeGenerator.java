@@ -33,7 +33,17 @@ public class CodeGenerator {
 
    private static final String ALGORITHM = "SHA-256";
 
-   public static String generate(Set<String> existingCodes, String token) {
+   public static String checkCode(Set<String> existingCodes, String prefix, int minChars, int maxChars) {
+      String currentCode = prefix.substring(0, Math.min(prefix.length(), maxChars));
+      int counter = 1;
+      while (existingCodes.contains(currentCode) || currentCode.length() < minChars) {
+         int suffixLength = Integer.toString(counter).length();
+         currentCode = prefix.substring(0, Math.min(maxChars - suffixLength, prefix.length())) + counter++;
+      }
+      return currentCode;
+   }
+
+   public static String generateHash(Set<String> existingCodes, String token) {
       int counter = 0;
       String code = hash(token);
       while (existingCodes.contains(code)) {

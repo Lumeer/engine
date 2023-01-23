@@ -168,6 +168,12 @@ public class ProjectService extends AbstractService {
       return project;
    }
 
+   @POST
+   @Path("code/{projectCode:[a-zA-Z0-9_]{2,6}}/check")
+   public Boolean checkCode(@PathParam("projectCode") String projectCode) {
+      return projectFacade.checkCode(projectCode);
+   }
+
    @GET
    public List<Project> getProjects() {
       List<Project> projects = projectFacade.getProjects();
@@ -187,12 +193,6 @@ public class ProjectService extends AbstractService {
       }
 
       return Response.notModified().build();
-   }
-
-   @GET
-   @Path("info/codes")
-   public Set<String> getProjectsCodes() {
-      return projectFacade.getProjectsCodes();
    }
 
    @GET

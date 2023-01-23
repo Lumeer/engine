@@ -111,8 +111,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProjectNoRole() {
-      String projectCode = "testGetProjectNoRole_code";
-      String projectName = "testGetProjectNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
@@ -123,8 +123,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProjectReadRole() {
-      String projectCode = "testGetProjectReadRole_code";
-      String projectName = "testGetProjectReadRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read)))));
 
@@ -138,8 +138,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateProjectNoRole() {
-      String projectCode = "testUpdateProjectNoRole_id";
-      String projectName = "testUpdateProjectNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String newProjectName = "NewName2";
@@ -152,8 +152,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateProjectManageRole() {
-      String projectCode = "testUpdateProjectManageRole_code";
-      String projectName = "testUpdateProjectManageRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
       String newProjectName = "NewName";
@@ -169,14 +169,14 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProjectsSomeReadRoles() {
-      String projectCode1 = "ProjectServiceTestProject_code1";
-      String projectName1 = "ProjectServiceTestProject1";
-      String projectCode2 = "ProjectServiceTestProject_code2";
-      String projectName2 = "ProjectServiceTestProject2";
-      String projectCode3 = "ProjectServiceTestProject_code3";
-      String projectName3 = "ProjectServiceTestProject3";
-      String projectCode4 = "ProjectServiceTestProject_code4";
-      String projectName4 = "ProjectServiceTestProject4";
+      String projectCode1 = "CODE1";
+      String projectName1 = "name1";
+      String projectCode2 = "CODE2";
+      String projectName2 = "name2";
+      String projectCode3 = "CODE3";
+      String projectName3 = "name3";
+      String projectCode4 = "CODE4";
+      String projectName4 = "name4";
       List<String> projectCodes = Arrays.asList(projectCode1, projectCode2, projectCode3, projectCode4);
       List<String> projectNames = Arrays.asList(projectName1, projectName2, projectName3, projectName4);
 
@@ -201,8 +201,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testDeleteProjectInOrganizationNoRole() {
-      String projectCode = "ProjectServiceTestProject_code1";
-      String projectName = "ProjectServiceTestProject1";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
@@ -213,8 +213,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testDeleteProjectInOrganizationManageRole() {
-      String projectCode = "ProjectServiceTestProject_code1";
-      String projectName = "ProjectServiceTestProject1";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)))));
 
@@ -225,8 +225,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateCollectionInProjectNoRole() {
-      String projectCode = "testCreateCollectionInProjectNoRole_code1";
-      String projectName = "estCreateCollectionInProjectNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String collectionName = "CollectionName";
@@ -240,8 +240,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testCreateCollectionInProjectWriteRole() {
-      String projectCode = "testCreateCollectionInProjectWriteRole_code1";
-      String projectName = "testCreateCollectionInProjectWriteRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       String collectionName = "CollectionName";
       String collectionCode = "ColCode2";
@@ -254,8 +254,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProjectPermissionsNoRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
@@ -266,8 +266,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testGetProjectPermissionsManageRole() {
-      String projectCode = "testGetProjectPermissionsManageRole_code1";
-      String projectName = "testGetProjectPermissionsManageRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
@@ -279,8 +279,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissionsNoRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
@@ -292,8 +292,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateUserPermissionsManageRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
@@ -305,8 +305,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void tesRemoveUserPermissionsNoRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
 
@@ -317,8 +317,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void tesRemoveUserPermissionsManageRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(),Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
 
@@ -329,8 +329,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissionsNoRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String group = "testGroup4";
@@ -343,8 +343,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testUpdateGroupPermissionsManageRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       String group = "testGroup5";
@@ -357,8 +357,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermissionsNoRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.removeUserPermission(project.getId(), this.user.getId());
       String group = "testGroup6";
@@ -370,8 +370,8 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Test
    public void testRemoveGroupPermissionsManageRole() {
-      String projectCode = "testGetProjectPermissionsNoRole_code1";
-      String projectName = "testGetProjectPermissionsNoRole";
+      String projectCode = "CODE";
+      String projectName = "name";
       final Project project = createProject(projectCode, projectName);
       projectFacade.updateUserPermissions(project.getId(), Set.of(Permission.buildWithRoles(this.user.getId(), Set.of(new Role(RoleType.Read), new Role(RoleType.UserConfig)))));
       String group = "testGroup7";
