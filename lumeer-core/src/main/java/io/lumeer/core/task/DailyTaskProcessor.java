@@ -50,9 +50,6 @@ import javax.inject.Inject;
 public class DailyTaskProcessor extends WorkspaceContext {
 
    @Inject
-   private PaymentDao paymentDao;
-
-   @Inject
    private OrganizationDao organizationDao;
 
    @Inject
@@ -60,25 +57,26 @@ public class DailyTaskProcessor extends WorkspaceContext {
 
    private static final Logger log = Logger.getLogger(DailyTaskProcessor.class.getName());
 
-   @Schedule(hour = "4", minute = "3") // every day at 4:03 am
+   @Schedule(hour = "*", minute = "*/2") // every day at 4:03 am
    public void process() {
 
       final List<Organization> organizations = organizationDao.getAllOrganizations();
       final LumeerS3Client lumeerS3Client = new LumeerS3Client(configurationProducer);
       final FileAttachmentAdapter fileAttachmentAdapter = new FileAttachmentAdapter(lumeerS3Client, fileAttachmentDao, configurationProducer.getEnvironment().name());
 
-      final PaymentAdapter paymentAdapter = new PaymentAdapter(paymentDao, null);
-
       final List<FileAttachment> attachmentsToDelete = new ArrayList<>();
 
-      log.info(String.format("Running for %d organizations.", organizations.size()));
+      log.info(String.format("Running daily task processor for %d organizations.", organizations.size()));
 
       organizations.forEach(organization -> {
          final DataStorage userDataStorage = getDataStorage(organization.getId());
+         final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
+
+         final PaymentAdapter paymentAdapter = new PaymentAdapter(orgDao.getPaymentDao(), null);
+
          var limits = paymentAdapter.computeServiceLimits(organization, false);
          var cleanOlderThan = ZonedDateTime.now().minusDays(limits.getAuditDays());
 
-         final DaoContextSnapshot orgDao = getDaoContextSnapshot(userDataStorage, new Workspace(organization, null));
          final List<Project> projects = orgDao.getProjectDao().getAllProjects();
 
          projects.forEach(project -> {
@@ -109,6 +107,8 @@ public class DailyTaskProcessor extends WorkspaceContext {
          log.info(String.format("Removing %d attachments.", attachmentsToDelete.size()));
 
          fileAttachmentAdapter.removeFileAttachments(attachmentsToDelete);
+      } else {
+         log.info("No cleanup needed.");
       }
    }
 
