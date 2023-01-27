@@ -566,9 +566,6 @@ public class FunctionFacade extends AbstractFacade {
    public void onDeleteLinkAttribute(String linkTypeId, String attributeId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyLinkType(linkTypeId, attributeId);
 
-      System.out.println("mažu");
-      functionRows.forEach(System.out::println);
-
       deleteRows(functionRows);
    }
 
