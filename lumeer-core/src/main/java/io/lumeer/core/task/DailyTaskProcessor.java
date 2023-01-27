@@ -57,7 +57,7 @@ public class DailyTaskProcessor extends WorkspaceContext {
 
    private static final Logger log = Logger.getLogger(DailyTaskProcessor.class.getName());
 
-   @Schedule(hour = "*", minute = "*/2") // every day at 4:03 am
+   @Schedule(hour = "4", minute = "3") // every day at 4:03 am
    public void process() {
 
       final List<Organization> organizations = organizationDao.getAllOrganizations();
