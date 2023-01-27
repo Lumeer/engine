@@ -18,7 +18,6 @@
  */
 package io.lumeer.storage.mongodb.codecs;
 
-import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 

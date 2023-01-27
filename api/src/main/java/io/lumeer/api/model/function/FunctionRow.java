@@ -105,7 +105,8 @@ public class FunctionRow {
    @Override
    public String toString() {
       return "FunctionRow2{" +
-            "resourceId='" + resourceId + '\'' +
+            "id='" + id + '\'' +
+            ", resourceId='" + resourceId + '\'' +
             ", type=" + type +
             ", attributeId='" + attributeId + '\'' +
             ", dependentCollectionId='" + dependentCollectionId + '\'' +
