@@ -43,7 +43,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
 
+@ApplicationScoped
 public class MongoFileAttachmentDao extends MongoSystemScopedDao implements FileAttachmentDao {
 
    public static final String COLLECTION_NAME = "fileAttachments";
