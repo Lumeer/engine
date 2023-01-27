@@ -21,16 +21,21 @@ package io.lumeer.storage.mongodb.codecs;
 import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.codecs.Codec;
+import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.ObjectId;
 
-public class FunctionRowCodec implements Codec<FunctionRow> {
+public class FunctionRowCodec implements CollectibleCodec<FunctionRow> {
 
+   public static final String ID = "_id";
    public static String RESOURCE_ID = "resourceId";
    public static String TYPE = "resourceType";
    public static String ATTRIBUTE_ID = "attributeId";
@@ -45,9 +50,32 @@ public class FunctionRowCodec implements Codec<FunctionRow> {
    }
 
    @Override
+   public FunctionRow generateIdIfAbsentFromDocument(final FunctionRow variable) {
+      if (!documentHasId(variable)) {
+         variable.setId(new ObjectId().toHexString());
+      }
+      return variable;
+   }
+
+   @Override
+   public boolean documentHasId(final FunctionRow functionRow) {
+      return functionRow.getId() != null;
+   }
+
+   @Override
+   public BsonValue getDocumentId(final FunctionRow functionRow) {
+      if (!documentHasId(functionRow)) {
+         throw new IllegalStateException("The document does not contain an id");
+      }
+
+      return new BsonObjectId(new ObjectId(functionRow.getId()));
+   }
+
+   @Override
    public FunctionRow decode(final BsonReader reader, final DecoderContext decoderContext) {
       Document bson = documentCodec.decode(reader, decoderContext);
 
+      String id = bson.getObjectId(ID).toHexString();
       String resourceId = bson.getString(RESOURCE_ID);
       FunctionResourceType type = FunctionResourceType.valueOf(bson.getString(TYPE));
       String attributeId = bson.getString(ATTRIBUTE_ID);
@@ -55,13 +83,14 @@ public class FunctionRowCodec implements Codec<FunctionRow> {
       String dependentLinkTypeId = bson.getString(DEPENDENT_LINK_TYPE_ID);
       String dependentAttributeId = bson.getString(DEPENDENT_ATTRIBUTE_ID);
 
-      return new FunctionRow(resourceId, type, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
+      return new FunctionRow(id, resourceId, type, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
    }
 
    @Override
    public void encode(final BsonWriter writer, final FunctionRow function, final EncoderContext encoderContext) {
-      Document bson = new Document()
-            .append(RESOURCE_ID, function.getResourceId())
+      final Document bson = documentHasId(function) ? new Document(ID, new ObjectId(function.getId())) : new Document();
+
+      bson.append(RESOURCE_ID, function.getResourceId())
             .append(TYPE, function.getType().toString())
             .append(ATTRIBUTE_ID, function.getAttributeId())
             .append(DEPENDENT_COLLECTION_ID, function.getDependentCollectionId())

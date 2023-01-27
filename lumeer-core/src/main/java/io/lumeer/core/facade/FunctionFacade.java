@@ -548,30 +548,34 @@ public class FunctionFacade extends AbstractFacade {
    public void onDeleteCollection(String collectionId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyCollection(collectionId, null);
 
-      deleteByRows(FunctionResourceType.COLLECTION, functionRows);
+      deleteRowsByResourceId(FunctionResourceType.COLLECTION, functionRows);
    }
 
    public void onDeleteLinkType(String linkTypeId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyLinkType(linkTypeId, null);
 
-      deleteByRows(FunctionResourceType.LINK, functionRows);
+      deleteRowsByResourceId(FunctionResourceType.LINK, functionRows);
    }
 
    public void onDeleteCollectionAttribute(String collectionId, String attributeId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyCollection(collectionId, attributeId);
 
-      deleteByRows(FunctionResourceType.COLLECTION, functionRows);
+      deleteRows(functionRows);
    }
 
    public void onDeleteLinkAttribute(String linkTypeId, String attributeId) {
       List<FunctionRow> functionRows = functionDao.searchByAnyLinkType(linkTypeId, attributeId);
 
-      deleteByRows(FunctionResourceType.LINK, functionRows);
+      deleteRows(functionRows);
    }
 
-   private void deleteByRows(FunctionResourceType type, List<FunctionRow> functionRows) {
+   private void deleteRowsByResourceId(FunctionResourceType type, List<FunctionRow> functionRows) {
       String[] resourceIdsToDelete = functionRows.stream().map(FunctionRow::getResourceId).toArray(String[]::new);
       functionDao.deleteByResources(type, resourceIdsToDelete);
+   }
+
+   private void deleteRows(List<FunctionRow> functionRows) {
+      functionDao.deleteByIds(functionRows.stream().map(FunctionRow::getId).collect(Collectors.toList()));
    }
 
    private Set<Document> findDocumentsForRow(FunctionRow row, Set<String> documentIds) {

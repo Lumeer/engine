@@ -22,6 +22,7 @@ import java.util.Objects;
 
 public class FunctionRow {
 
+   private String id;
    private String resourceId;
    private FunctionResourceType type;
    private String attributeId;
@@ -30,20 +31,29 @@ public class FunctionRow {
    private String dependentAttributeId;
 
    public static FunctionRow createForCollection(final String resourceId, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId){
-      return new FunctionRow(resourceId, FunctionResourceType.COLLECTION, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
+      return new FunctionRow(null, resourceId, FunctionResourceType.COLLECTION, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
    }
 
    public static FunctionRow createForLink(final String resourceId, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId){
-      return new FunctionRow(resourceId, FunctionResourceType.LINK, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
+      return new FunctionRow(null, resourceId, FunctionResourceType.LINK, attributeId, dependentCollectionId, dependentLinkTypeId, dependentAttributeId);
    }
 
-   public FunctionRow(final String resourceId, final FunctionResourceType type, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId) {
+   public FunctionRow(final String id, final String resourceId, final FunctionResourceType type, final String attributeId, final String dependentCollectionId, final String dependentLinkTypeId, final String dependentAttributeId) {
+      this.id = id;
       this.resourceId = resourceId;
       this.type = type;
       this.attributeId = attributeId;
       this.dependentCollectionId = dependentCollectionId;
       this.dependentLinkTypeId = dependentLinkTypeId;
       this.dependentAttributeId = dependentAttributeId;
+   }
+
+   public String getId() {
+      return id;
+   }
+
+   public void setId(String id) {
+      this.id = id;
    }
 
    public String getResourceId() {
@@ -95,7 +105,8 @@ public class FunctionRow {
    @Override
    public String toString() {
       return "FunctionRow2{" +
-            "resourceId='" + resourceId + '\'' +
+            "id='" + id + '\'' +
+            ", resourceId='" + resourceId + '\'' +
             ", type=" + type +
             ", attributeId='" + attributeId + '\'' +
             ", dependentCollectionId='" + dependentCollectionId + '\'' +
