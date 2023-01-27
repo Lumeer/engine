@@ -474,6 +474,8 @@ public class TaskProcessingFacade {
          return;
       }
 
+      System.out.println("On update link type");
+
       List<Task> tasks = new ArrayList<>();
       AttributesDiff attributesDiff = checkAttributesDiff(updateLinkType.getOriginalLinkType().getAttributes(), updateLinkType.getLinkType().getAttributes());
       String linkTypeId = updateLinkType.getOriginalLinkType().getId();

@@ -42,4 +42,6 @@ public interface FunctionDao extends ProjectScopedDao {
    void deleteByCollection(String collectionsId, String attributeId);
 
    void deleteByLinkType(String linkTypeId, String attributeId);
+
+   void deleteByIds(List<String> ids);
 }

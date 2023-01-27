@@ -36,10 +36,12 @@ import com.mongodb.client.model.Indexes;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MongoFunctionDao extends MongoProjectScopedDao implements FunctionDao {
 
@@ -135,6 +137,12 @@ public class MongoFunctionDao extends MongoProjectScopedDao implements FunctionD
    @Override
    public void deleteByResources(final FunctionResourceType type, final String... resourceIds) {
       Bson filter = and(in(FunctionRowCodec.RESOURCE_ID, resourceIds), eq(FunctionRowCodec.TYPE, type.toString()));
+      databaseCollection().deleteMany(filter);
+   }
+
+   @Override
+   public void deleteByIds(final List<String> ids) {
+      final Bson filter = in(FunctionRowCodec.ID, ids.stream().map(ObjectId::new).collect(Collectors.toList()));
       databaseCollection().deleteMany(filter);
    }
 
