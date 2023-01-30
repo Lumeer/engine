@@ -37,6 +37,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.ResourceVariable;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.SelectionList;
+import io.lumeer.api.model.Sequence;
 import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.api.model.User;
 import io.lumeer.api.model.View;
@@ -142,6 +143,17 @@ public class LumeerBridge {
 
          return String.format(format, sequenceValue);
       }
+   }
+
+   @SuppressWarnings("unused")
+   public int getCurrentSequenceNumber(final String sequenceName) {
+      final Sequence seq = task.getDaoContextSnapshot().getSequenceDao().getSequence(sequenceName);
+
+      if (seq != null) {
+         return seq.getSeq();
+      }
+
+      return 0;
    }
 
    @SuppressWarnings("unused")
