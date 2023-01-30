@@ -34,6 +34,9 @@ public interface SequenceDao extends ProjectScopedDao {
 
    int getNextSequenceNo(final String indexName);
 
+   int changeSequenceBy(final String indexName, final int change);
+
    void resetSequence(final String indexName);
 
+   void resetSequence(final String indexName, final int initValue);
 }

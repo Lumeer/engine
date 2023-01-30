@@ -134,9 +134,33 @@ public class MongoSequenceDao extends MongoProjectScopedDao implements SequenceD
    }
 
    @Override
+   public synchronized int changeSequenceBy(final String indexName, final int change) {
+      final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions();
+      options.returnDocument(ReturnDocument.AFTER);
+
+      final Sequence seq = databaseCollection().findOneAndUpdate(eq(SequenceCodec.NAME, indexName), inc(SequenceCodec.SEQ, change),
+            options);
+
+      if (seq == null) { // the sequence did not exist
+         resetSequence(indexName, change);
+         return change;
+      } else {
+         return seq.getSeq();
+      }
+   }
+
+   @Override
    public synchronized void resetSequence(final String indexName) {
       final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
       final Sequence sequence = new Sequence(indexName, 0);
+      Bson update = new org.bson.Document("$set", sequence);
+      databaseCollection().findOneAndUpdate(eq(SequenceCodec.NAME, indexName), update, options);
+   }
+
+   @Override
+   public synchronized void resetSequence(final String indexName, final int initValue) {
+      final FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER).upsert(true);
+      final Sequence sequence = new Sequence(indexName, initValue);
       Bson update = new org.bson.Document("$set", sequence);
       databaseCollection().findOneAndUpdate(eq(SequenceCodec.NAME, indexName), update, options);
    }
