@@ -31,8 +31,8 @@ class DataFilter {
         fun filterDocumentsAndLinksByQuery(documents: List<Document>,
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
-                                           constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
+                                           constraintData: ConstraintData, includeChildren: Boolean, includeNonLinkedDocuments: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
+            val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, includeNonLinkedDocuments, language)
             return task.call()
         }
 
@@ -40,8 +40,8 @@ class DataFilter {
         fun filterDocumentsAndLinksByQueryFromJson(documents: List<Document>,
                                                    collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                                    query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
-                                                   constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
+                                                   constraintData: ConstraintData, includeChildren: Boolean, includeNonLinkedDocuments: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
+            val task = DataFilterJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, includeNonLinkedDocuments, language)
             return task.call()
         }
 
@@ -50,7 +50,7 @@ class DataFilter {
                                                    collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                                    query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
                                                    constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterDecodingJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language)
+            val task = DataFilterDecodingJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, false, language)
             return task.call()
         }
     }

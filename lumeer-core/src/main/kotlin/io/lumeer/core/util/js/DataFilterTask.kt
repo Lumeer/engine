@@ -39,6 +39,7 @@ data class DataFilterTask(val documents: List<Document>,
                           val linkTypesPermissions: Map<String, AllowedPermissions>,
                           val constraintData: ConstraintData,
                           val includeChildren: Boolean,
+                          val includeNonLinkedDocuments: Boolean,
                           val language: Language = Language.EN) : Callable<Tuple<List<Document>, List<LinkInstance>>> {
 
     override fun call(): Tuple<List<Document>, List<LinkInstance>> {
@@ -58,6 +59,7 @@ data class DataFilterTask(val documents: List<Document>,
                 JvmObjectProxy.fromMap(linkTypesPermissions, locale),
                 JvmObjectProxy(constraintData, ConstraintData::class.java),
                 includeChildren,
+                includeNonLinkedDocuments,
                 language.toLanguageTag())
 
             if (result != null) {
@@ -111,7 +113,7 @@ data class DataFilterTask(val documents: List<Document>,
         init {
             try {
                 DataFilterTask::class.java.getResourceAsStream("/lumeer-data-filters.min.js").use { stream ->
-                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function ${FILTER_JS}(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren, language) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections, language), Filter.createConstraintsInLinkTypes(linkTypes, language), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren); }")
+                    filterJsCode = String(stream.readAllBytes(), StandardCharsets.UTF_8).plus("; function ${FILTER_JS}(documents, collections, linkTypes, linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren, includeNonLinkedDocuments, language) { return Filter.filterDocumentsAndLinksByQuery(documents, Filter.createConstraintsInCollections(collections, language), Filter.createConstraintsInLinkTypes(linkTypes, language), linkInstances, query, collectionPermissions, linkTypePermissions, constraintData, includeChildren, includeNonLinkedDocuments); }")
                 }
             } catch (ioe: IOException) {
                 filterJsCode = null
