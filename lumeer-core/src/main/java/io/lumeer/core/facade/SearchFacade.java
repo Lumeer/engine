@@ -318,7 +318,7 @@ public class SearchFacade extends AbstractFacade {
             var collection = getOtherCollection(linkType, collectionsMap, Utils.computeIfNotNull(previousCollection, Collection::getId));
             if (linkType != null && previousCollection != null) {
                var links = getLinkInstancesByLinkType(linkType, getDocumentsIds(previousDocuments));
-               var documents = getDocumentsByCollection(collection, getLinkDocumentsIds(links), documentFilter);
+               var documents = getDocumentsByCollection(collection, documentFilter, false);
 
                currentDocuments.addAll(documents);
                currentLinkInstances.addAll(links);
@@ -329,7 +329,7 @@ public class SearchFacade extends AbstractFacade {
          }
 
          if (!currentDocuments.isEmpty()) {
-            var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, language);
+            var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(currentDocuments), allCollections, allLinkTypes, new ArrayList<>(currentLinkInstances), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, true, language);
             allDocuments.addAll(result.getFirst());
             allLinkInstances.addAll(result.getSecond());
          }
@@ -408,7 +408,7 @@ public class SearchFacade extends AbstractFacade {
             final List<Document> pagedDocuments = getDocumentsByCollection(collection, page, fetchSize);
             final List<Document> filteredDocuments = filterDocumentsByDocumentFilter(pagedDocuments, documentFilter);
             if (!filteredDocuments.isEmpty()) {
-               var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(filteredDocuments), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, language);
+               var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(filteredDocuments), collections, Collections.emptyList(), new ArrayList<>(), query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildDocuments, false, language);
                allDocuments.addAll(result.getFirst());
             }
             hasMoreDocuments = !pagedDocuments.isEmpty();
@@ -427,7 +427,7 @@ public class SearchFacade extends AbstractFacade {
          while (hasMoreLinks) {
             final List<LinkInstance> linkInstances = getLinkInstancesByLinkType(linkType, page, fetchSize);
             if (!linkInstances.isEmpty()) {
-               var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, language);
+               var result = DataFilter.filterDocumentsAndLinksByQueryFromJson(new ArrayList<>(), collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, true, false, language);
                allLinkInstances.addAll(result.getSecond());
             }
             hasMoreLinks = !linkInstances.isEmpty();
@@ -459,13 +459,6 @@ public class SearchFacade extends AbstractFacade {
 
    private Set<String> getDocumentsIds(final java.util.Collection<Document> documents) {
       return documents.stream().map(Document::getId).collect(Collectors.toSet());
-   }
-
-   private Set<String> getLinkDocumentsIds(final java.util.Collection<LinkInstance> linkInstances) {
-      return linkInstances.stream()
-                          .map(LinkInstance::getDocumentIds)
-                          .flatMap(List::stream)
-                          .collect(Collectors.toSet());
    }
 
    private Query checkQuery(final Query query, final Map<String, Collection> collectionsMap, final Map<String, LinkType> linkTypesMap, boolean shouldCheckQuery) {
@@ -523,11 +516,6 @@ public class SearchFacade extends AbstractFacade {
 
    private List<Document> getDocumentsByCollection(Collection collection, @Nullable final Function<Document, Boolean> documentFilter, boolean isPublic) {
       var documents = isPublic ? searchAdapter.getAllDocuments(collection, null, null) : searchAdapter.getDocuments(getOrganization(), getProject(), collection, authenticatedUser.getCurrentUserId());
-      return filterDocumentsByDocumentFilter(documents, documentFilter);
-   }
-
-   private List<Document> getDocumentsByCollection(Collection collection, @NotNull Set<String> documentIds, @Nullable final Function<Document, Boolean> documentFilter) {
-      var documents = searchAdapter.getDocuments(getOrganization(), getProject(), collection, documentIds, authenticatedUser.getCurrentUserId());
       return filterDocumentsByDocumentFilter(documents, documentFilter);
    }
 

@@ -73,14 +73,14 @@ class DataFiltersJsParserTest {
                 listOf(collection1),
                 listOf(),
                 listOf(),
-                simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true, false
         )
         val simpleResult2 = DataFilter.filterDocumentsAndLinksByQueryFromJson(
                 listOf(document1, document2),
                 listOf(collection1),
                 listOf(),
                 listOf(),
-                simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                simpleQuery, collectionsPermissions, linkTypPermissions, constraintData, true, false
         )
 
         Assertions.assertThat(simpleResult.first).containsOnly(document1, document2)
@@ -94,14 +94,14 @@ class DataFiltersJsParserTest {
                 listOf(collection1, collection2),
                 listOf(linkType),
                 listOf(link1, link2),
-                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true, false
         )
         val linkResult2 = DataFilter.filterDocumentsAndLinksByQueryFromJson(
                 listOf(document1, document2, document3, document4),
                 listOf(collection1, collection2),
                 listOf(linkType),
                 listOf(link1, link2),
-                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true, false
         )
 
         Assertions.assertThat(linkResult.first).containsOnly(document1, document3)
@@ -179,7 +179,7 @@ class DataFiltersJsParserTest {
                     listOf(collection1, collection2),
                     listOf(linkType),
                     links,
-                    linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true
+                    linkQuery, collectionsPermissions, linkTypPermissions, constraintData, true, false
             )
         }
 

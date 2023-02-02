@@ -47,6 +47,7 @@ data class DataFilterJsonTask(val documents: List<Document>,
                               val linkTypesPermissions: Map<String, AllowedPermissions>,
                               val constraintData: ConstraintData,
                               val includeChildren: Boolean,
+                              val includeNonLinkedDocuments: Boolean,
                               val language: Language = Language.EN) : Callable<Tuple<List<Document>, List<LinkInstance>>> {
 
     override fun call(): Tuple<List<Document>, List<LinkInstance>> {
@@ -56,7 +57,7 @@ data class DataFilterJsonTask(val documents: List<Document>,
         return try {
             val filterJsValue = getFunction(context)
 
-            val json = convertToJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, language.toLanguageTag()))
+            val json = convertToJson(DataFilterJson(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, includeNonLinkedDocuments, language.toLanguageTag()))
 
             val result = filterJsValue.execute(json)
 
@@ -204,4 +205,5 @@ data class DataFilterJson(val documents: List<Document>,
                           val linkTypesPermissions: Map<String, AllowedPermissions>,
                           val constraintData: ConstraintData,
                           val includeChildren: Boolean,
+                          val includeNonLinkedDocuments: Boolean,
                           val language: String)
