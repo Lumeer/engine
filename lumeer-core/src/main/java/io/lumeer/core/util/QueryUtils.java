@@ -23,6 +23,7 @@ public class QueryUtils {
    public static Set<String> getViewCollectionIds(View view, java.util.Collection<LinkType> linkTypes) {
       Set<String> collectionIds = getQueryCollectionIds(view.getQuery(), linkTypes);
       collectionIds.addAll(getViewAdditionalCollectionIds(view, linkTypes));
+      collectionIds.addAll(view.getCollectionIdsFromSettingsPermissions());
       return collectionIds;
    }
 

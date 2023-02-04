@@ -23,6 +23,7 @@ import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.ViewSettings;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.common.SimpleResource;
 
@@ -67,7 +68,7 @@ public class ViewCodec extends ResourceCodec implements CollectibleCodec<View> {
       Query query = QueryCodec.convertFromDocument(bson.get(QUERY, Document.class));
       Perspective perspective = decodePerspective(bson);
       Object config = bson.get(CONFIG);
-      Object settings = bson.get(SETTINGS);
+      ViewSettings settings = ViewSettingsCodec.convertFromDocument(bson.get(SETTINGS, Document.class));
       String authorId = bson.getString(AUTHOR_ID);
       Date lastTimeUsed = bson.getDate(LAST_TIME_USED);
       List<String> folders = bson.getList(FOLDERS, String.class);

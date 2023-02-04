@@ -20,9 +20,12 @@ package io.lumeer.core.template;
 
 import io.lumeer.api.model.CollectionAttributeFilter;
 import io.lumeer.api.model.LinkAttributeFilter;
+import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.QueryStem;
+import io.lumeer.api.model.ResourcesPermissions;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.ViewSettings;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ViewFacade;
@@ -68,7 +71,8 @@ public class ViewCreator extends WithIdCreator {
             view.setCode(null);
             view.setQuery(translateQuery(view.getQuery()));
             view.setConfig(templateParser.translateConfig(view.getConfig(), constraintManager));
-            view.setSettings(templateParser.translateConfig(view.getSettings(), constraintManager));
+            view.setSettings(translateViewSettings(view.getSettings()));
+            view.setPermissions(new Permissions());
             view = viewFacade.createView(view);
             templateParser.getDict().addView(templateId, view);
          } catch (IOException e) {
@@ -133,4 +137,17 @@ public class ViewCreator extends WithIdCreator {
 
       return new Query(newStems, query.getFulltexts(), query.getPage(), query.getPageSize());
    }
+
+   private ViewSettings translateViewSettings(final ViewSettings viewSettings) {
+      if (viewSettings == null) {
+         return new ViewSettings();
+      }
+      Object attributes = templateParser.translateConfig(viewSettings.getAttributes(), constraintManager);
+      Object data = templateParser.translateConfig(viewSettings.getData(), constraintManager);
+      Object modals = templateParser.translateConfig(viewSettings.getModals(), constraintManager);
+      ResourcesPermissions resourcesPermissions = new ResourcesPermissions();
+
+      return new ViewSettings(attributes, data, modals, resourcesPermissions);
+   }
+
 }

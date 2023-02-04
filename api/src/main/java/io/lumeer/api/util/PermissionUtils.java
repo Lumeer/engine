@@ -72,7 +72,11 @@ public class PermissionUtils {
       if (resource instanceof Organization) {
          return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups((Organization) resource, user, groups));
       }
-      return getUserRolesInResource(organization, project, resource.getType(), resource.getPermissions(), user, getUserGroups(organization, user, groups));
+      return getUserRolesInPermissions(organization, project, resource.getType(), resource.getPermissions(), user, groups);
+   }
+
+   public static Set<RoleType> getUserRolesInPermissions(@Nullable Organization organization, @Nullable Project project, ResourceType resourceType, Permissions permissions, User user, List<Group> groups) {
+      return getUserRolesInResource(organization, project, resourceType, permissions, user, getUserGroups(organization, user, groups));
    }
 
    public static Set<RoleType> getGroupRolesInResource(@Nullable Organization organization, @Nullable Project project, Resource resource, Group group) {

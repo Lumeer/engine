@@ -50,7 +50,7 @@ public class View extends Resource implements Updatable<View> {
    private List<Query> additionalQueries;
    private Perspective perspective;
    private Object config;
-   private Object settings;
+   private ViewSettings settings;
    private String authorId;
    private Map<String, Set<RoleType>> authorCollectionsRights;
    private Map<String, Set<RoleType>> authorLinkTypesRights;
@@ -76,7 +76,7 @@ public class View extends Resource implements Updatable<View> {
          @JsonProperty(ADDITIONAL_QUERIES) final List<Query> additionalQueries,
          @JsonProperty(PERSPECTIVE) final Perspective perspective,
          @JsonProperty(CONFIG) final Object config,
-         @JsonProperty(SETTINGS) final Object settings,
+         @JsonProperty(SETTINGS) final ViewSettings settings,
          @JsonProperty(AUTHOR_ID) final String authorId,
          @JsonProperty(FOLDERS) final List<String> folders) {
       super(code, name, icon, color, description, order, permissions);
@@ -95,7 +95,7 @@ public class View extends Resource implements Updatable<View> {
          final List<Query> additionalQueries,
          final Perspective perspective,
          final Object config,
-         final Object settings,
+         final ViewSettings settings,
          final String authorId,
          final List<String> folders) {
       super(resource);
@@ -154,6 +154,7 @@ public class View extends Resource implements Updatable<View> {
    public Set<String> getAllLinkTypeIds() {
       Set<String> linkTypeIds = new HashSet<>(getQuery() != null ? getQuery().getLinkTypeIds() : Collections.emptyList());
       linkTypeIds.addAll(getAdditionalLinkTypeIds());
+      linkTypeIds.addAll(getLinkTypeIdsFromSettingsPermissions());
       return linkTypeIds;
    }
 
@@ -162,6 +163,24 @@ public class View extends Resource implements Updatable<View> {
       Set<String> linkTypeIds = new HashSet<>();
       getAdditionalQueries().forEach(query -> linkTypeIds.addAll(query.getLinkTypeIds()));
       return linkTypeIds;
+   }
+
+   @JsonIgnore
+   public Set<String> getCollectionIdsFromSettingsPermissions() {
+      if (getSettings() != null && getSettings().getPermissions() != null) {
+         var permissions = getSettings().getPermissions().getCollections();
+         return permissions != null ? permissions.keySet() : Collections.emptySet();
+      }
+      return Collections.emptySet();
+   }
+
+   @JsonIgnore
+   public Set<String> getLinkTypeIdsFromSettingsPermissions() {
+      if (getSettings() != null && getSettings().getPermissions() != null) {
+         var permissions = getSettings().getPermissions().getLinkTypes();
+         return permissions != null ? permissions.keySet() : Collections.emptySet();
+      }
+      return Collections.emptySet();
    }
 
    public Perspective getPerspective() {
@@ -228,11 +247,11 @@ public class View extends Resource implements Updatable<View> {
       this.favorite = favorite;
    }
 
-   public Object getSettings() {
+   public ViewSettings getSettings() {
       return settings;
    }
 
-   public void setSettings(final Object settings) {
+   public void setSettings(final ViewSettings settings) {
       this.settings = settings;
    }
 
