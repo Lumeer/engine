@@ -30,7 +30,7 @@ class ViewAdapter(private val resourceAdapter: ResourceAdapter, private val favo
    fun isFavorite(viewId: String, userId: String, projectId: String): Boolean = getFavoriteViewIds(userId, projectId).contains(viewId)
 
    fun mapViewsData(organization: Organization, project: Project, views: List<View>, userId: String, projectId: String): List<View> {
-      val favoriteIds = getFavoriteViewIds(userId, projectId);
+      val favoriteIds = getFavoriteViewIds(userId, projectId)
       return views.onEach {
          it.isFavorite = favoriteIds.contains(it.id)
          it.authorCollectionsRights = resourceAdapter.getViewAuthorCollectionsRoles(organization, project, it)

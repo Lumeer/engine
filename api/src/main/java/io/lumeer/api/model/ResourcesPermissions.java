@@ -19,10 +19,12 @@
 package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 public class ResourcesPermissions {
 
@@ -49,8 +51,18 @@ public class ResourcesPermissions {
       return collections;
    }
 
+   @JsonIgnore
+   public Set<String> getCollectionsIds() {
+      return collections != null ? collections.keySet() : Collections.emptySet();
+   }
+
    public Map<String, Permissions> getLinkTypes() {
       return linkTypes;
+   }
+
+   @JsonIgnore
+   public Set<String> getLinkTypesIds() {
+      return linkTypes != null ? linkTypes.keySet() : Collections.emptySet();
    }
 
    @Override
