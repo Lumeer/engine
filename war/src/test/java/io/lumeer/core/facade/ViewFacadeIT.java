@@ -216,6 +216,7 @@ public class ViewFacadeIT extends IntegrationTestBase {
       assertThat(storedView.getName()).isEqualTo(NAME);
 
       setViewGroupRoles(view, Set.of(new Role(RoleType.Read), new Role(RoleType.Manage)));
+      updatedView.setPermissions(view.getPermissions());
 
       viewFacade.updateView(view.getId(), updatedView);
 
