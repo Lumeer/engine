@@ -251,7 +251,7 @@ public class ViewFacade extends AbstractFacade {
    private void checkQueryResourcesReadable(View view, String userId) {
       final List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
       final Set<String> linkTypeIds = linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet());
-      final Set<String> collectionIds = QueryUtils.getViewCollectionIds(view, linkTypes);
+      final Set<String> collectionIds = QueryUtils.getViewAllCollectionIds(view, linkTypes);
 
       if (!areCollectionsAndLinksReadable(linkTypeIds, collectionIds, userId)) {
          throw new NoResourcePermissionException(view);

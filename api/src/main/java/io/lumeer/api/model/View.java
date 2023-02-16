@@ -152,9 +152,15 @@ public class View extends Resource implements Updatable<View> {
 
    @JsonIgnore
    public Set<String> getAllLinkTypeIds() {
+      Set<String> linkTypeIds = getQueriesLinkTypeIds();
+      linkTypeIds.addAll(getLinkTypeIdsFromSettingsPermissions());
+      return linkTypeIds;
+   }
+
+   @JsonIgnore
+   public Set<String> getQueriesLinkTypeIds() {
       Set<String> linkTypeIds = new HashSet<>(getQuery() != null ? getQuery().getLinkTypeIds() : Collections.emptyList());
       linkTypeIds.addAll(getAdditionalLinkTypeIds());
-      linkTypeIds.addAll(getLinkTypeIdsFromSettingsPermissions());
       return linkTypeIds;
    }
 
