@@ -22,6 +22,7 @@ import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Perspective;
 import io.lumeer.api.model.Query;
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.ViewSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,7 +47,7 @@ public class ViewWithId extends View {
          @JsonProperty(ADDITIONAL_QUERIES) final List<Query> additionalQueries,
          @JsonProperty(PERSPECTIVE) final Perspective perspective,
          @JsonProperty(CONFIG) final Object config,
-         @JsonProperty(SETTINGS) final Object settings,
+         @JsonProperty(SETTINGS) final ViewSettings settings,
          @JsonProperty(AUTHOR_ID) final String authorId,
          @JsonProperty(FOLDERS) final List<String> folders) {
       super(code, name, icon, color, description, order, permissions, query, additionalQueries, perspective, config, settings, authorId, folders);

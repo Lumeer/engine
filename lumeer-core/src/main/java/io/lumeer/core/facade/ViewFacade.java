@@ -23,6 +23,7 @@ import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.ResourcesPermissions;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.View;
 import io.lumeer.core.adapter.ResourceAdapter;
@@ -41,6 +42,7 @@ import io.lumeer.storage.api.dao.ViewDao;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
@@ -86,7 +88,8 @@ public class ViewFacade extends AbstractFacade {
 
    public View createView(View view) {
       permissionsChecker.checkRole(getProject(), RoleType.ViewContribute);
-      checkCollectionsAndLinksReadable(view);
+      checkQueryResourcesReadable(view, getCurrentUserId());
+      checkSettingsResourcesReadable(view, getCurrentUserId());
       view.setAuthorId(getCurrentUserId());
       view.setLastTimeUsed(ZonedDateTime.now());
       view.setId(null);
@@ -104,24 +107,18 @@ public class ViewFacade extends AbstractFacade {
 
    public View updateView(final String id, final View view) {
       View storedView = viewDao.getViewById(id);
+      String authorId = Objects.requireNonNullElse(storedView.getAuthorId(), getCurrentUserId());
       permissionsChecker.checkRole(storedView, RoleType.Read);
+      checkQueryResourcesReadable(view, authorId);
+      checkSettingsResourcesReadable(view, getCurrentUserId());
 
       View updatingView = storedView.copy();
-      updatingView.patch(view, getRoleTypesForView(storedView));
-      updatingView.setAuthorId(storedView.getAuthorId());
+      updatingView.patch(view, permissionsChecker.getActualRoles(view));
+      updatingView.setAuthorId(authorId);
       updatingView.setLastTimeUsed(ZonedDateTime.now());
       mapResourceUpdateValues(view);
 
       return mapView(viewDao.updateView(id, updatingView));
-   }
-
-   private Set<RoleType> getRoleTypesForView(final View view) {
-      Set<RoleType> roleTypes = permissionsChecker.getActualRoles(view);
-      if (roleTypes.contains(RoleType.QueryConfig) && !areCollectionsAndLinksReadable(view)) {
-         // prevent user from adding collections or links to query which he can not access
-         roleTypes.remove(RoleType.QueryConfig);
-      }
-      return roleTypes;
    }
 
    private View mapView(View view) {
@@ -251,30 +248,37 @@ public class ViewFacade extends AbstractFacade {
       viewDao.updateView(view.getId(), view);
    }
 
-   private void checkCollectionsAndLinksReadable(View view) {
-      if (!areCollectionsAndLinksReadable(view)) {
+   private void checkQueryResourcesReadable(View view, String userId) {
+      final List<LinkType> linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
+      final Set<String> linkTypeIds = linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet());
+      final Set<String> collectionIds = QueryUtils.getViewAllCollectionIds(view, linkTypes);
+
+      if (!areCollectionsAndLinksReadable(linkTypeIds, collectionIds, userId)) {
          throw new NoResourcePermissionException(view);
       }
    }
 
-   private boolean areCollectionsAndLinksReadable(View view) {
-      List<LinkType> linkTypes = Collections.emptyList();
-      if (!view.getQuery().getLinkTypeIds().isEmpty()) {
-         linkTypes = linkTypeDao.getLinkTypesByIds(view.getQuery().getLinkTypeIds());
-         for (LinkType linkType : linkTypes) {
-            if (!permissionsChecker.hasRoleInLinkType(linkType, RoleType.Read)) {
-               return false;
-            }
+   private void checkSettingsResourcesReadable(View view, String userId) {
+      final ResourcesPermissions permissions = view.getSettings() != null ? view.getSettings().getPermissions() : new ResourcesPermissions();
+      final Set<String> collectionIds = permissions != null ? permissions.getCollectionsIds() : Collections.emptySet();
+      final Set<String> linkTypeIds = permissions != null ? permissions.getLinkTypesIds() : Collections.emptySet();
+
+      if (!areCollectionsAndLinksReadable(linkTypeIds, collectionIds, userId)) {
+         throw new NoResourcePermissionException(view);
+      }
+   }
+
+
+   private boolean areCollectionsAndLinksReadable(Set<String> linkTypeIds, Set<String> collectionIds, String userId) {
+      for (LinkType linkType : linkTypeDao.getLinkTypesByIds(linkTypeIds)) {
+         if (!permissionsChecker.hasRoleInLinkType(linkType, RoleType.Read, userId)) {
+            return false;
          }
-         linkTypes.forEach(linkType -> permissionsChecker.checkRoleInLinkType(linkType, RoleType.Read, getCurrentUserId()));
       }
 
-      final Set<String> queryCollectionIds = QueryUtils.getViewCollectionIds(view, linkTypes);
-      if (!queryCollectionIds.isEmpty()) {
-         for (Collection collection : collectionDao.getCollectionsByIds(queryCollectionIds)) {
-            if (!permissionsChecker.hasRole(collection, RoleType.Read)) {
-               return false;
-            }
+      for (Collection collection : collectionDao.getCollectionsByIds(collectionIds)) {
+         if (!permissionsChecker.hasRole(collection, RoleType.Read, userId)) {
+            return false;
          }
       }
       return true;

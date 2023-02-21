@@ -20,7 +20,9 @@
 package io.lumeer.storage.mongodb.codecs.providers;
 
 import io.lumeer.api.model.View;
+import io.lumeer.api.model.ViewSettings;
 import io.lumeer.storage.mongodb.codecs.ViewCodec;
+import io.lumeer.storage.mongodb.codecs.ViewSettingsCodec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -32,6 +34,8 @@ public class ViewCodecProvider implements CodecProvider {
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
       if (clazz == View.class) {
          return (Codec<T>) new ViewCodec(registry);
+      } else if (clazz == ViewSettings.class) {
+         return (Codec<T>) new ViewSettingsCodec(registry);
       }
 
       return null;

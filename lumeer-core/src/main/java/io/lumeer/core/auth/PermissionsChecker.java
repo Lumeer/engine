@@ -271,9 +271,12 @@ public class PermissionsChecker {
    public boolean hasRoleInLinkTypeWithView(LinkType linkType, RoleType role) {
       return permissionAdapter.hasRoleInLinkTypeWithView(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
    }
-
    public boolean hasRoleInLinkType(LinkType linkType, RoleType role) {
-      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, authenticatedUser.getCurrentUserId());
+      return hasRoleInLinkType(linkType, role, authenticatedUser.getCurrentUserId());
+   }
+
+   public boolean hasRoleInLinkType(LinkType linkType, RoleType role, String userId) {
+      return permissionAdapter.hasRoleInLinkType(getOrganization(), getProject(), linkType, role, userId);
    }
 
    public void checkAnyRoleInLinkType(LinkType linkType, Set<RoleType> roles) {

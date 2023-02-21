@@ -19,8 +19,12 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
+import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
+import io.lumeer.api.model.ResourcesPermissions;
+import io.lumeer.storage.mongodb.codecs.PermissionCodec;
 import io.lumeer.storage.mongodb.codecs.PermissionsCodec;
+import io.lumeer.storage.mongodb.codecs.ResourcesPermissionsCodec;
 
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
@@ -30,8 +34,12 @@ public class PermissionsCodecProvider implements CodecProvider {
 
    @Override
    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-      if (clazz == Permissions.class) {
+      if (clazz == Permission.class) {
+         return (Codec<T>) new PermissionCodec(registry);
+      } else if (clazz == Permissions.class) {
          return (Codec<T>) new PermissionsCodec(registry);
+      } else if (clazz == ResourcesPermissions.class) {
+         return (Codec<T>) new ResourcesPermissionsCodec(registry);
       }
 
       return null;

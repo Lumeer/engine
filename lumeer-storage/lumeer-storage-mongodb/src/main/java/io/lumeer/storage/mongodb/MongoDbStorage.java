@@ -114,7 +114,7 @@ public class MongoDbStorage implements DataStorage {
          final CodecRegistry defaultRegistry = MongoClient.getDefaultCodecRegistry();
          final CodecRegistry codecRegistry = CodecRegistries.fromCodecs(new BigDecimalCodec(), new RoleTypeCodec());
          final CodecRegistry providersRegistry = CodecRegistries.fromProviders(
-               new PermissionsCodecProvider(), new PermissionCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider(),
+               new PermissionsCodecProvider(), new QueryCodecProvider(), new ViewCodecProvider(),
                new AttributeCodecProvider(), new LinkInstanceCodecProvider(), new LinkTypeCodecProvider(), new UserCodecProvider(),
                new GroupCodecProvider(), new PaymentCodecProvider(), new CompanyContactCodedProvider(), new UserLoginEventCodecProvider(),
                new FeedbackCodecProvider(), new OrganizationCodecProvider(), new ProjectCodecProvider(), new CollectionCodecProvider(),

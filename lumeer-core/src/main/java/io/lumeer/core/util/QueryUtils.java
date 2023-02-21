@@ -15,12 +15,18 @@ public class QueryUtils {
    }
 
    public static Set<String> getViewsCollectionIds(java.util.Collection<View> views, java.util.Collection<LinkType> linkTypes) {
-      return views.stream().map(view -> QueryUtils.getViewCollectionIds(view, linkTypes))
+      return views.stream().map(view -> QueryUtils.getViewAllCollectionIds(view, linkTypes))
                     .flatMap(Set::stream)
                     .collect(Collectors.toSet());
    }
 
-   public static Set<String> getViewCollectionIds(View view, java.util.Collection<LinkType> linkTypes) {
+   public static Set<String> getViewAllCollectionIds(View view, java.util.Collection<LinkType> linkTypes) {
+      Set<String> collectionIds = getViewQueriesCollectionIds(view, linkTypes);
+      collectionIds.addAll(view.getCollectionIdsFromSettingsPermissions());
+      return collectionIds;
+   }
+
+   public static Set<String> getViewQueriesCollectionIds(View view, java.util.Collection<LinkType> linkTypes) {
       Set<String> collectionIds = getQueryCollectionIds(view.getQuery(), linkTypes);
       collectionIds.addAll(getViewAdditionalCollectionIds(view, linkTypes));
       return collectionIds;
