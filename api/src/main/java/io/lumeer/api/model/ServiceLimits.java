@@ -43,7 +43,7 @@ public class ServiceLimits {
    public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
    public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false, 10, 14, 50);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14, 50);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14, 250);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
