@@ -36,6 +36,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.PATCH;
 
+import com.auth0.json.auth.TokenHolder;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import java.util.List;
@@ -45,6 +46,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -223,4 +225,29 @@ public class UserService extends AbstractService {
 
       return Response.ok().build();
    }
+
+   @POST
+   @Path("current/emailVerified")
+   public Response verifyUserEmail() {
+      userFacade.setUserEmailVerified();
+
+      return Response.ok().build();
+   }
+
+   @DELETE
+   @Path("current")
+   public Response removeCurrentUser() {
+      userFacade.removeUser();
+
+      return Response.ok().build();
+   }
+
+   @POST
+   @Path("login")
+   @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+   public Response userLogin(@FormParam("userName") final String userName, @FormParam("password") final String password) {
+      final TokenHolder holder = userFacade.userLogin(userName, password);
+      return Response.ok(holder).build();
+   }
+
 }

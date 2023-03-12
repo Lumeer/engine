@@ -59,6 +59,8 @@ import io.lumeer.storage.api.dao.UserLoginDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import com.auth0.exception.Auth0Exception;
+import com.auth0.json.auth.TokenHolder;
+
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +79,7 @@ import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
 @RequestScoped
 public class UserFacade extends AbstractFacade {
@@ -143,6 +146,9 @@ public class UserFacade extends AbstractFacade {
 
    @Inject
    private DefaultViewConfigDao defaultViewConfigDao;
+
+   @Inject
+   private HttpServletRequest request;
 
    public User createUser(String organizationId, User user) {
       checkOrganizationInUser(organizationId, user);
@@ -584,6 +590,56 @@ public class UserFacade extends AbstractFacade {
 
    public boolean isUserAffiliate(final String userId) {
       return userDao.getUserById(userId).isAffiliatePartner();
+   }
+
+   /**
+    * Sets the current user's email as verified.
+    */
+   public void setUserEmailVerified() {
+      permissionsChecker.checkSystemPermission();
+
+      try {
+         userAuth0Utils.setEmailVerified(authenticatedUser.getCurrentUser());
+      } catch (Auth0Exception e) {
+         throw new UnsuccessfulOperationException("Unable to set user email as verified.", e);
+      }
+
+   }
+
+   /**
+    * Removes current user from Auth0. The user token becomes invalid.
+    */
+   public void removeUser() {
+      permissionsChecker.checkSystemPermission();
+
+      try {
+         userAuth0Utils.deleteUser(authenticatedUser.getCurrentUser());
+      } catch (Auth0Exception e) {
+         throw new UnsuccessfulOperationException("Unable to delete user.", e);
+      }
+   }
+
+   /**
+    * Obtains tokens for the given user. Allows API logins with username and password.
+    * @param userName Username of a user to log in.
+    * @param password User's password.
+    * @return the token information.
+    */
+   public TokenHolder userLogin(final String userName, final String password) {
+      if (StringUtils.isNotEmpty(userName) && StringUtils.isNotEmpty(password)) {
+         try {
+            Thread.sleep(1000); // always take your time so that this is not misused for quick password guessing
+            String audience = request.getRequestURL().toString();
+            audience = audience.substring(0, audience.length() - request.getRequestURI().length());
+            audience += request.getContextPath();
+
+            return userAuth0Utils.userLogin(userName, password, audience);
+         } catch (Auth0Exception | InterruptedException e) {
+            // do nothing, the login just fails
+         }
+      }
+
+      return new TokenHolder();
    }
 
    private User keepOnlyCurrentOrganization(User user, String organizationId) {

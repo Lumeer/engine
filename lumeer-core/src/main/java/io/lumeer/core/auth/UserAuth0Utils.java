@@ -31,6 +31,7 @@ import com.auth0.net.AuthRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 
@@ -82,6 +83,27 @@ public class UserAuth0Utils implements Serializable {
       final User user = new User();
       user.setName(newUserName);
       mApi.users().update(authId, user).execute();
+   }
+
+   public void setEmailVerified(final io.lumeer.api.model.User lumeerUser) throws Auth0Exception {
+      final String authId = lumeerUser.getAuthIds().iterator().next();
+      refreshManagementApiToken();
+      final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
+      final User user = new User();
+      user.setEmailVerified(true);
+      mApi.users().update(authId, user).execute();
+   }
+
+   public void deleteUser(final io.lumeer.api.model.User lumeerUser) throws Auth0Exception {
+      final String authId = lumeerUser.getAuthIds().iterator().next();
+      refreshManagementApiToken();
+      final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
+      mApi.users().delete(authId).execute();
+   }
+
+   public TokenHolder userLogin(final String user, final String password, final String audience) throws Auth0Exception {
+      final AuthAPI auth0 = new AuthAPI(domain, backendClientId, backendClientSecret);
+      return auth0.login(user, password).setScope("openid email profile").setAudience("https://get.lumeer.io/lumeer-engine").execute();
    }
 
    public TokenHolder refreshToken(final String refreshToken) throws Auth0Exception {
