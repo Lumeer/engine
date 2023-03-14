@@ -51,6 +51,7 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Triple;
 import org.marvec.pusher.data.Event;
 
 import java.time.ZoneOffset;
@@ -206,9 +207,9 @@ public class DelayedActionProcessor extends WorkspaceContext {
          final Language lang = userLanguages.getOrDefault(action.getReceiver(), Language.EN);
 
          final User receiverUser = userIds.containsKey(action.getReceiver()) ? users.get(userIds.get(action.getReceiver())) : null;
-         final Collection collection = checkActionResourceExistsAndFillData(action, receiverUser);
+         final Triple<Organization, Project, Collection> context = checkActionResourceExistsAndFillData(action, receiverUser);
 
-         if (collection != null) {
+         if (context != null && context.getMiddle().isWorkflowEnabled()) {
 
             // if we do not know anything about the user, make sure to send the notification; otherwise check the user settings
             if (receiverUser == null || isNotificationEnabled(action, receiverUser)) {
@@ -231,7 +232,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
             }
 
             // reschedule past due actions
-            if (!rescheduleDueDateAction(actions, action, receiverUser, collection)) {
+            if (!rescheduleDueDateAction(actions, action, receiverUser, context.getRight())) {
                markActionAsCompleted(actions, action);
             }
          } else {
@@ -264,7 +265,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
       }
    }
 
-   private Collection checkActionResourceExistsAndFillData(final DelayedAction action, final User receiver) {
+   private Triple<Organization, Project, Collection> checkActionResourceExistsAndFillData(final DelayedAction action, final User receiver) {
       final String organizationId = action.getData().getString(DelayedAction.DATA_ORGANIZATION_ID);
       final String projectId = action.getData().getString(DelayedAction.DATA_PROJECT_ID);
       final String collectionId = action.getData().getString(DelayedAction.DATA_COLLECTION_ID);
@@ -310,7 +311,7 @@ public class DelayedActionProcessor extends WorkspaceContext {
                         return null;
                      }
 
-                     return collection;
+                     return Triple.of(organization, project, collection);
                   }
                }
             }
