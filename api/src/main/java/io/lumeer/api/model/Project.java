@@ -133,6 +133,10 @@ public class Project extends Resource implements Updatable<Project> {
       this.templateId = templateId;
    }
 
+   public boolean isWorkflowEnabled() {
+      return !isPublic || templateMetadata == null || !templateMetadata.isTemplate();
+   }
+
    @Override
    public void patch(final Project resource, final Set<RoleType> roles) {
       patchResource(this, resource, roles);

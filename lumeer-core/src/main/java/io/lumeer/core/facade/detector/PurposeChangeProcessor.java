@@ -93,10 +93,7 @@ public class PurposeChangeProcessor {
    }
 
    private boolean isWorkflowEnabledInProject() {
-      Project project = this.selectedWorkspace.getProject().orElse(null);
-      if (project != null) {
-         return !project.isPublic() || project.getTemplateMetadata() == null || !project.getTemplateMetadata().isTemplate();
-      }
-      return false;
+      final Project project = this.selectedWorkspace.getProject().orElse(null);
+      return project != null ? project.isWorkflowEnabled() : false;
    }
 }
