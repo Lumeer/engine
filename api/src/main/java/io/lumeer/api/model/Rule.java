@@ -175,7 +175,7 @@ public class Rule implements HealthChecking {
    }
 
    private boolean shouldResetCreatedAt(Rule originalRule) {
-      if (originalRule == null) {
+      if (originalRule == null || originalRule.getType() != getType()) {
          return true;
       }
 
