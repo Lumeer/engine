@@ -193,7 +193,7 @@ public class ProjectFacade extends AbstractFacade {
    private String checkOrGenerateCode(String code, java.util.Collection<String> excludeCodes) {
       Set<String> existingCodes = projectDao.getProjectsCodes();
       existingCodes.removeAll(excludeCodes);
-      return CodeGenerator.checkCode(existingCodes, Objects.requireNonNullElse(code, "EMPTY"), 2,6);
+      return CodeGenerator.checkCode(existingCodes, Objects.requireNonNullElse(code, "EMPTY"), 2,5);
    }
 
    public boolean checkCode(String code) {
