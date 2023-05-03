@@ -62,10 +62,10 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
 
-   private static final String CODE1 = "TPROJ1";
-   private static final String CODE2 = "TPROJ2";
-   private static final String CODE3 = "TPROJ3";
-   private static final String CODE4 = "TPROJ4";
+   private static final String CODE1 = "TPRJ1";
+   private static final String CODE2 = "TPRJ2";
+   private static final String CODE3 = "TPRJ3";
+   private static final String CODE4 = "TPRJ4";
 
    private static final String NAME = "Testing project";
    private static final String COLOR = "#ff0000";
