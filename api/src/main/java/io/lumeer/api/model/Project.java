@@ -151,6 +151,6 @@ public class Project extends Resource implements Updatable<Project> {
    public void checkHealth() throws InsaneObjectException {
       super.checkHealth();
 
-      checkStringLength("code", code, 5);
+      checkStringLength("code", code, 6);
    }
 }
