@@ -26,13 +26,16 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.SampleDataType;
+import io.lumeer.api.model.TemplateData;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.AuditFacade;
-import io.lumeer.core.facade.CopyFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
 import io.lumeer.remote.rest.annotation.HealthCheck;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.util.List;
 import java.util.Set;
@@ -42,6 +45,7 @@ import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -72,13 +76,13 @@ public class ProjectService extends AbstractService {
    private OrganizationFacade organizationFacade;
 
    @Inject
-   private CopyFacade copyFacade;
-
-   @Inject
    private TemplateFacade templateFacade;
 
    @Inject
    private AuditFacade auditFacade;
+
+  @Inject
+  private RequestDataKeeper requestDataKeeper;
 
    @PostConstruct
    public void init() {
@@ -98,9 +102,15 @@ public class ProjectService extends AbstractService {
    public Response installTemplate(@PathParam("projectId") final String projectId, @PathParam("templateId") final String templateId) {
       workspaceKeeper.setProjectId(projectId);
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final Project project = projectFacade.getProjectById(projectId);
-         copyFacade.deepCopyTemplate(project, templateId);
+      if (workspaceKeeper.getOrganization().isPresent() && workspaceKeeper.getProject().isPresent()) {
+         var organizationId = templateFacade.getTemplateOrganizationId(requestDataKeeper.getUserLanguage());
+         if (this.isProduction()) {
+            TemplateData templateData = templateFacade.getTemplateData(organizationId, templateId);
+            templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), organizationId, templateData);
+         } else {
+            TemplateData templateData = getTemplateDataFromProduction(organizationId, templateId);
+            templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), organizationId, templateData);
+         }
          return Response.ok().build();
       }
 
@@ -112,9 +122,14 @@ public class ProjectService extends AbstractService {
    public Response copyProject(@PathParam("projectId") final String projectId, @QueryParam("organizationId") final String copyOrganizationId, @QueryParam("projectId") final String copyProjectId) {
       workspaceKeeper.setProjectId(projectId);
 
-      if (workspaceKeeper.getOrganization().isPresent() && copyOrganizationId != null && copyProjectId != null) {
-         final Project project = projectFacade.getProjectById(projectId);
-         copyFacade.deepCopyProject(project, copyOrganizationId, copyProjectId);
+      if (workspaceKeeper.getOrganization().isPresent() && workspaceKeeper.getProject().isPresent() && copyOrganizationId != null && copyProjectId != null) {
+         if (this.isProduction()) {
+            TemplateData templateData = templateFacade.getTemplateData(copyOrganizationId, copyProjectId);
+            templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), copyOrganizationId, templateData);
+         } else {
+            TemplateData templateData = getTemplateDataFromProduction(copyOrganizationId, copyProjectId);
+            templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), copyOrganizationId, templateData);
+         }
          return Response.ok().build();
       }
 
@@ -126,9 +141,16 @@ public class ProjectService extends AbstractService {
    public Response copySampleData(@PathParam("projectId") final String projectId, @PathParam("type") final SampleDataType sampleDataType) {
       workspaceKeeper.setProjectId(projectId);
 
-      if (workspaceKeeper.getOrganization().isPresent() && sampleDataType != null) {
-         final Project project = projectFacade.getProjectById(projectId);
-         copyFacade.deepCopySampleData(project, sampleDataType);
+      if (workspaceKeeper.getOrganization().isPresent() && workspaceKeeper.getProject().isPresent() && sampleDataType != null) {
+         var copyOrganizationId = templateFacade.getSampleDataOrganizationId(requestDataKeeper.getUserLanguage());
+         var copyProjectCode = sampleDataType.toString();
+         if (this.isProduction()) {
+            TemplateData templateData = templateFacade.getTemplateDataByCode(copyOrganizationId, copyProjectCode);
+            templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), copyOrganizationId, templateData);
+         } else {
+            TemplateData templateData = getTemplateDataByCodeFromProduction(copyOrganizationId, copyProjectCode);
+            templateFacade.installTemplate(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), copyOrganizationId, templateData);
+         }
          return Response.ok().build();
       }
 
@@ -172,6 +194,13 @@ public class ProjectService extends AbstractService {
    @Path("code/{projectCode:[a-zA-Z0-9_]{2,6}}/check")
    public Boolean checkCode(@PathParam("projectCode") String projectCode) {
       return projectFacade.checkCode(projectCode);
+   }
+
+   @GET
+   @Path("code/{projectCode:[a-zA-Z0-9_]{2,6}}/template")
+   public TemplateData getRawProjectContentByCode(@PathParam("projectCode") String projectCode) {
+     Project project = projectFacade.getPublicProjectByCode(projectCode);
+     return templateFacade.getTemplateData(organizationId, project.getId());
    }
 
    @GET
@@ -229,6 +258,12 @@ public class ProjectService extends AbstractService {
       return Response.ok().link(getParentUri("groups", groupId), "parent").build();
    }
 
+  @GET
+  @Path("{projectId:[0-9a-fA-F]{24}}/template")
+  public TemplateData getTemplateData(@PathParam("projectId") String projectId) {
+    return templateFacade.getTemplateData(organizationId, projectId);
+  }
+
    @GET
    @Path("{projectId:[0-9a-fA-F]{24}}/raw")
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
@@ -241,9 +276,8 @@ public class ProjectService extends AbstractService {
    public Response addProjectContent(@PathParam("projectId") String projectId, final ProjectContent projectContent) {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
 
-      if (workspaceKeeper.getOrganization().isPresent()) {
-         final Project project = projectFacade.getProjectById(projectId);
-         copyFacade.installProjectContent(project, organizationId, projectContent);
+      if (workspaceKeeper.getOrganization().isPresent() && workspaceKeeper.getProject().isPresent()) {
+         templateFacade.installProjectContent(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), projectContent);
          return Response.ok().build();
       }
 
@@ -275,4 +309,20 @@ public class ProjectService extends AbstractService {
 
       return auditFacade.getAuditRecordsForProject();
    }
+
+   private TemplateData getTemplateDataFromProduction(String organizationId, String projectId) {
+     try {
+       return callProductionApi("organizations/" + organizationId + "projects/" + projectId + "template", new TypeReference<TemplateData>() {});
+     } catch (Exception e) {
+       throw new InternalServerErrorException(e);
+     }
+  }
+
+  private TemplateData getTemplateDataByCodeFromProduction(String organizationId, String projectCode) {
+    try {
+      return callProductionApi("organizations/" + organizationId + "projects/code/" + projectCode + "template", new TypeReference<TemplateData>() {});
+    } catch (Exception e) {
+      throw new InternalServerErrorException(e);
+    }
+  }
 }

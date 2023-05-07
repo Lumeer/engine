@@ -249,7 +249,15 @@ public class ProjectFacade extends AbstractFacade {
 
    public Project getPublicProjectById(final String projectId) {
       final Project project = projectDao.getProjectById(projectId);
+      return checkPublicProject(project);
+   }
 
+   public Project getPublicProjectByCode(final String projectCode) {
+      Project project = projectDao.getProjectByCode(projectCode);
+      return checkPublicProject(project);
+   }
+
+   private Project checkPublicProject(Project project) {
       if (!project.isPublic()) {
          throw new NoResourcePermissionException(project);
       }

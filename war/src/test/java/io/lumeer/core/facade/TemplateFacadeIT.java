@@ -46,7 +46,6 @@ import io.lumeer.storage.api.dao.UserDao;
 
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -57,7 +56,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 @RunWith(Arquillian.class)
-public class CopyFacadeIT extends IntegrationTestBase {
+public class TemplateFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
    private static final String PROJECT_CODE = "TEMPL";
@@ -82,9 +81,6 @@ public class CopyFacadeIT extends IntegrationTestBase {
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
-
-   @Inject
-   private CopyFacade copyFacade;
 
    @Inject
    private TemplateFacade templateFacade;
@@ -147,24 +143,14 @@ public class CopyFacadeIT extends IntegrationTestBase {
    }
 
    @Test
-   @Ignore
-   public void testTemplateImport() {
-      copyFacade.deepCopyTemplate(project, TEMPLATE);
-
-      var collections = collectionFacade.getCollections();
-      var templateCollections = collections.stream().filter(collection -> collection.getName().startsWith(TEMPLATE));
-      assertThat(templateCollections).hasSize(4);
-   }
-
-   @Test
    @SuppressWarnings("unchecked")
    public void testTemplateImportLocal() {
-      assertThatThrownBy(() -> templateFacade.installTemplate(project, organization.getId(), TEMPLATE, Language.EN))
+      assertThatThrownBy(() -> templateFacade.installTemplate(organization, project, TEMPLATE, Language.EN))
             .isInstanceOf(NoResourcePermissionException.class);
 
       setProjectUserRoles(Set.of(new Role(RoleType.Read), new Role(RoleType.CollectionContribute), new Role(RoleType.ViewContribute), new Role(RoleType.LinkContribute), new Role(RoleType.TechConfig)));
 
-      templateFacade.installTemplate(project, organization.getId(), TEMPLATE, Language.EN);
+      templateFacade.installTemplate(organization, project, TEMPLATE, Language.EN);
 
       var collections = collectionFacade.getCollections();
       assertThat(collections).hasSize(4);
