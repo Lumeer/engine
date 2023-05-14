@@ -20,6 +20,7 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.TemplateData;
 import io.lumeer.core.facade.TemplateFacade;
 
 import javax.enterprise.context.RequestScoped;
@@ -48,9 +49,21 @@ public class TemplateService extends AbstractService {
 
    @GET
    @Path("code/{templateCode:[a-zA-Z0-9_]{2,6}}")
-   public Project getTemplate(@QueryParam("l") Language language, @PathParam("templateCode") String templateCode) {
+   public Project getTemplate(@QueryParam("l") final Language language, @PathParam("templateCode") final String templateCode) {
       var nonNullLanguage = Objects.requireNonNullElse(language, Language.EN);
 
       return templateFacade.getTemplate(nonNullLanguage, templateCode);
+   }
+
+   @GET
+   @Path("data/code/{organizationId:[0-9a-fA-F]{24}}/{templateCode:[a-zA-Z0-9_]{2,6}}")
+   public TemplateData getTemplateDataByCode(@PathParam("organizationId") final String organizationId, @PathParam("templateCode") final String templateCode) {
+      return templateFacade.getTemplateDataByCode(organizationId, templateCode);
+   }
+
+   @GET
+   @Path("data/{organizationId:[0-9a-fA-F]{24}}/{templateId:[0-9a-fA-F]{24}}")
+   public TemplateData getTemplateData(@PathParam("organizationId") final String organizationId, @PathParam("templateId") final String templateId) {
+      return templateFacade.getTemplateData(organizationId, templateId);
    }
 }

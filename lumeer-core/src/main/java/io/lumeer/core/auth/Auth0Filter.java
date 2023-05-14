@@ -296,7 +296,7 @@ public class Auth0Filter implements Filter {
    }
 
    private boolean shouldSkipAuthentication(HttpServletRequest req) {
-      return req.getPathInfo().startsWith("/paymentNotify/") || req.getPathInfo().startsWith("/auth/") || req.getPathInfo().startsWith("/users/login");
+      return req.getPathInfo().startsWith("/paymentNotify/") || req.getPathInfo().startsWith("/auth/") || req.getPathInfo().startsWith("/users/login") || req.getPathInfo().startsWith("/templates/");
    }
 
    private AuthenticatedUser.AuthUserInfo getAuthenticatedUser(final String accessToken) {
