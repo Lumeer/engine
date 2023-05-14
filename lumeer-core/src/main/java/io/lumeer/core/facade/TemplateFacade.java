@@ -19,10 +19,14 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.api.model.Language;
+import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ProjectContent;
+import io.lumeer.api.model.RoleType;
+import io.lumeer.api.model.TemplateData;
 import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.core.template.CollectionCreator;
 import io.lumeer.core.template.DocumentCreator;
 import io.lumeer.core.template.FavoriteItemsCreator;
@@ -37,17 +41,24 @@ import io.lumeer.core.template.TemplateMetadata;
 import io.lumeer.core.template.TemplateParser;
 import io.lumeer.core.template.ViewCreator;
 import io.lumeer.engine.api.event.TemplateCreated;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 
 @RequestScoped
 public class TemplateFacade extends AbstractFacade {
+
+   @Inject
+   private OrganizationDao organizationDao;
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -68,6 +79,9 @@ public class TemplateFacade extends AbstractFacade {
    private SequenceFacade sequenceFacade;
 
    @Inject
+   private EventLogFacade eventLogFacade;
+
+   @Inject
    private SelectionListFacade selectionListFacade;
 
    @Inject
@@ -84,6 +98,12 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private PermissionsChecker permissionsChecker;
+
+   @Inject
+   private DataStorageProvider dataStorageProvider;
+
+   @Inject
+   private DaoContextSnapshotFactory daoContextSnapshotFactory;
 
    public String getTemplateOrganizationId(final Language language) {
       switch (language) {
@@ -120,17 +140,34 @@ public class TemplateFacade extends AbstractFacade {
       return result;
    }
 
-   public void installTemplate(final Project project, final String organizationId, final String templateType, final Language language) {
+   public void installTemplate(final Organization organization, final Project project, final String templateType, final Language language) {
+      checkProjectContribute(project);
+
       final TemplateParser templateParser = new TemplateParser(templateType, language);
 
-      installTemplate(organizationId, project, templateParser, createTemplateMetadata(new Date()), true);
+      installTemplate(organization.getId(), project, templateParser, createTemplateMetadata(new Date()), true);
    }
 
-   public void installTemplate(final Project project, final String organizationId, final ProjectContent projectContent, final Date relativeDate) {
-      final TemplateParser templateParser = new TemplateParser(projectContent);
-      final boolean originalLumeerTemplate = getAllTemplateOrganizationIds().contains(organizationId);
+   public void installTemplate(final Organization organization, final Project project, final String originalOrganizationId, final TemplateData templateData) {
+      checkProjectContribute(project);
 
-      installTemplate(organizationId, project, templateParser, createTemplateMetadata(relativeDate), originalLumeerTemplate);
+      final TemplateParser templateParser = new TemplateParser(templateData.getProjectContent());
+      final boolean originalLumeerTemplate = getAllTemplateOrganizationIds().contains(originalOrganizationId);
+
+      var relativeDateMillis = templateData.getTemplateMetadata() != null ? templateData.getTemplateMetadata().getRelativeDate() : null;
+      var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
+
+      installTemplate(organization.getId(), project, templateParser, createTemplateMetadata(relativeDate), originalLumeerTemplate);
+   }
+
+   public void installProjectContent(final Organization organization, final Project project, final ProjectContent projectContent) {
+      checkProjectContribute(project);
+
+      final TemplateParser templateParser = new TemplateParser(projectContent);
+
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), "Imported to project: " + organization.getCode() + " / " + project.getCode());
+
+      installTemplate(organization.getId(), project, templateParser, createTemplateMetadata(new Date()), false);
    }
 
    private TemplateMetadata createTemplateMetadata(final Date relativeDate) {
@@ -158,5 +195,42 @@ public class TemplateFacade extends AbstractFacade {
       if (templateCreatedEvent != null) {
          templateCreatedEvent.fire(templateParser.getReport(project));
       }
+   }
+
+   public TemplateData getTemplateData(String organizationId, String projectId) {
+      return getTemplateData(organizationId, dao -> dao.getProjectById(projectId));
+   }
+
+   public TemplateData getTemplateDataByCode(String organizationId, String projectCode) {
+      return getTemplateData(organizationId, dao -> dao.getProjectByCode(projectCode));
+   }
+
+   public TemplateData getTemplateData(String organizationId,  java.util.function.Function<ProjectDao, Project> projectFunction) {
+      final StringBuilder sb = new StringBuilder();
+      var fromOrganization = organizationDao.getOrganizationById(organizationId);
+      workspaceKeeper.push();
+      workspaceKeeper.setOrganization(fromOrganization);
+
+      var storage = dataStorageProvider.getUserStorage();
+      var contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+      var fromProject = projectFunction.apply(contextSnapshot.getProjectDao());
+      workspaceKeeper.setWorkspace(fromOrganization, fromProject);
+      sb.append("Copied project from ").append(fromOrganization.getCode()).append("/").append(fromProject.getCode());
+
+      storage = dataStorageProvider.getUserStorage();
+      contextSnapshot = daoContextSnapshotFactory.getInstance(storage, workspaceKeeper);
+      var facade = new ProjectFacade();
+      facade.init(authenticatedUser, contextSnapshot, workspaceKeeper);
+      var content = facade.getRawProjectContent(fromProject.getId());
+
+      workspaceKeeper.pop();
+
+      eventLogFacade.logEvent(authenticatedUser.getCurrentUser(), sb.toString());
+
+      return new TemplateData(fromProject.getTemplateMetadata(), content);
+   }
+
+   private void checkProjectContribute(Project project) {
+      permissionsChecker.checkAllRoles(project, Set.of(RoleType.Read, RoleType.LinkContribute, RoleType.ViewContribute, RoleType.CollectionContribute));
    }
 }

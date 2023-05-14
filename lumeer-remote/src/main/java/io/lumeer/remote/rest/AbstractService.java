@@ -20,14 +20,15 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.remote.rest.init.StartupFacade;
 
-import java.net.URI;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 abstract class AbstractService {
 
@@ -42,6 +43,17 @@ abstract class AbstractService {
 
    @Inject
    private StartupFacade startupFacade;
+
+   @Inject
+   private DefaultConfigurationProducer defaultConfigurationProducer;
+
+   protected boolean isProduction() {
+      return defaultConfigurationProducer.getEnvironment() == DefaultConfigurationProducer.DeployEnvironment.PRODUCTION;
+   }
+
+   protected String getConfiguration(final String key) {
+      return defaultConfigurationProducer.get(key);
+   }
 
    protected URI getParentUri(String... urlEnd) {
       String fullPath = request.getRequestURL().toString();

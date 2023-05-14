@@ -30,6 +30,7 @@ import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.exception.TemplateNotAvailableException;
 import io.lumeer.core.facade.ViewFacade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.Utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
@@ -52,7 +53,7 @@ public class ViewCreator extends WithIdCreator {
       this.viewFacade = viewFacade;
       this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
 
-      this.mapper = createObjectMapper();
+      this.mapper = Utils.createObjectMapper();
    }
 
    public static void createViews(final TemplateParser templateParser, final ViewFacade viewFacade, final DefaultConfigurationProducer defaultConfigurationProducer) {

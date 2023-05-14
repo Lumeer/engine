@@ -97,6 +97,6 @@ public class Organization extends Resource implements Updatable<Organization> {
    public void checkHealth() throws InsaneObjectException {
       super.checkHealth();
 
-      checkStringLength("code", code, 5);
+      checkStringLength("code", code, 6);
    }
 }

@@ -22,6 +22,7 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.core.facade.LinkTypeFacade;
+import io.lumeer.core.util.Utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.simple.JSONArray;
@@ -40,7 +41,7 @@ public class LinkTypeCreator extends WithIdCreator {
    private LinkTypeCreator(final TemplateParser templateParser, final LinkTypeFacade linkTypeFacade, final boolean skipLimits) {
       super(templateParser);
       this.linkTypeFacade = linkTypeFacade;
-      this.mapper = createObjectMapper();
+      this.mapper = Utils.createObjectMapper();
       this.skipLimits = skipLimits;
    }
 
