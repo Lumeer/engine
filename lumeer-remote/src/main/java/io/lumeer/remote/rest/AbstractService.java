@@ -23,19 +23,12 @@ import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.remote.rest.init.StartupFacade;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.UriBuilder;
+import java.net.URI;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 abstract class AbstractService {
 
@@ -58,25 +51,14 @@ abstract class AbstractService {
       return defaultConfigurationProducer.getEnvironment() == DefaultConfigurationProducer.DeployEnvironment.PRODUCTION;
    }
 
+   protected String getConfiguration(final String key) {
+      return defaultConfigurationProducer.get(key);
+   }
+
    protected URI getParentUri(String... urlEnd) {
       String fullPath = request.getRequestURL().toString();
       String regex = "\\/" + Arrays.stream(urlEnd).collect(Collectors.joining("\\/")) + "\\/?$";
       String parentPath = fullPath.replaceFirst(regex, "");
       return UriBuilder.fromUri(parentPath).build();
-   }
-
-   protected <T> T callProductionApi(String apiPath, TypeReference<T> responseType) throws IOException, InterruptedException {
-      String apiUrl = "https://get.lumeer.io/lumeer-engine/rest/" + apiPath;
-      HttpClient client = HttpClient.newHttpClient();
-      HttpRequest request = HttpRequest.newBuilder()
-                                       .uri(URI.create(apiUrl))
-                                       .GET()
-                                       .build();
-
-      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-      String responseBody = response.body();
-
-      ObjectMapper objectMapper = new ObjectMapper();
-      return objectMapper.readValue(responseBody, responseType);
    }
 }

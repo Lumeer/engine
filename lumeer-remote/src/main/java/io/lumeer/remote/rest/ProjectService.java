@@ -33,10 +33,18 @@ import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
+import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
+import io.lumeer.core.util.Utils;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.PostConstruct;
@@ -325,4 +333,19 @@ public class ProjectService extends AbstractService {
       throw new InternalServerErrorException(e);
     }
   }
+
+   private <T> T callProductionApi(String apiPath, TypeReference<T> responseType) throws IOException, InterruptedException {
+      final String apiUrl = getConfiguration(DefaultConfigurationProducer.PRODUCTION_REST_URL) + apiPath;
+      final HttpClient client = HttpClient.newHttpClient();
+      final HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(apiUrl))
+            .GET()
+            .build();
+
+      final HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      final String responseBody = response.body();
+
+      final ObjectMapper objectMapper = Utils.createObjectMapper();
+      return objectMapper.readValue(responseBody, responseType);
+   }
 }

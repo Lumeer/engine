@@ -47,7 +47,7 @@ public class CollectionCreator extends WithIdCreator {
       super(templateParser);
       this.collectionFacade = collectionFacade;
       this.constraintManager = ConstraintManager.getInstance(defaultConfigurationProducer);
-      this.mapper = createObjectMapper();
+      this.mapper = Utils.createObjectMapper();
       this.skipLimits = skipLimits;
    }
 

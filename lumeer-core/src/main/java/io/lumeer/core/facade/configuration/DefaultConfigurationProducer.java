@@ -97,6 +97,8 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String WHITELIST_USER_EMAILS = "whitelist_user_emails";
    public static final String WHITELIST_USER_DOMAINS = "whitelist_user_domains";
 
+   public static final String PRODUCTION_REST_URL = "production_rest_url";
+
    public DefaultConfigurationProducer() {
       synchronized (this) {
          if (defaultConfiguration == null) {
