@@ -60,7 +60,7 @@ public class TemplateService extends AbstractService {
 
    @GET
    public List<Project> getTemplates() {
-      Language language = requestDataKeeper.getUserLanguage();
+      final Language language = requestDataKeeper.getUserLanguage();
       final String organizationId = templateFacade.getTemplateOrganizationId(language);
 
       if (StringUtils.isEmpty(organizationId)) {
@@ -69,6 +69,7 @@ public class TemplateService extends AbstractService {
 
       var organization = organizationDao.getOrganizationById(organizationId);
       workspaceKeeper.setOrganization(organization);
+      projectFacade.switchOrganization();
       return projectFacade.getPublicProjects().stream()
                           .peek(project -> setProjectOrganizationId(project, organizationId))
                           .collect(Collectors.toList());
