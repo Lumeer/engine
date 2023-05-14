@@ -25,6 +25,7 @@ import io.lumeer.api.model.ProjectContent;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.TemplateData;
 import io.lumeer.core.auth.PermissionsChecker;
+import io.lumeer.core.auth.RequestDataKeeper;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.provider.DataStorageProvider;
 import io.lumeer.core.template.CollectionCreator;
@@ -45,20 +46,27 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
+import org.apache.commons.lang3.StringUtils;
+
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.event.Event;
+import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import java.util.stream.Collectors;
 
 @RequestScoped
 public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private ProjectFacade projectFacade;
 
    @Inject
    private CollectionFacade collectionFacade;
@@ -104,6 +112,46 @@ public class TemplateFacade extends AbstractFacade {
 
    @Inject
    private DaoContextSnapshotFactory daoContextSnapshotFactory;
+
+   @Inject
+   private RequestDataKeeper requestDataKeeper;
+
+   public List<Project> getTemplates() {
+      final Language language = requestDataKeeper.getUserLanguage();
+      final String organizationId = getTemplateOrganizationId(language);
+
+      if (StringUtils.isEmpty(organizationId)) {
+         return List.of();
+      }
+
+      var organization = organizationDao.getOrganizationById(organizationId);
+      workspaceKeeper.setOrganization(organization);
+      projectFacade.switchOrganization();
+      return projectFacade.getPublicProjects().stream()
+            .peek(project -> setProjectOrganizationId(project, organizationId))
+            .collect(Collectors.toList());
+   }
+
+   public Project getTemplate(final Language language, final String templateCode) {
+      final String organizationId = getTemplateOrganizationId(language);
+
+      if (StringUtils.isEmpty(organizationId)) {
+         throw new BadRequestException("Could not find template organization");
+      }
+
+      var organization = organizationDao.getOrganizationById(organizationId);
+      workspaceKeeper.setOrganization(organization);
+      var project = projectFacade.getPublicProject(templateCode);
+      setProjectOrganizationId(project, organizationId);
+      return project;
+   }
+
+   private void setProjectOrganizationId(Project project, String organizationId) {
+      if (project.getTemplateMetadata() == null) {
+         project.setTemplateMetadata(new io.lumeer.api.model.TemplateMetadata());
+      }
+      project.getTemplateMetadata().setOrganizationId(organizationId);
+   }
 
    public String getTemplateOrganizationId(final Language language) {
       switch (language) {

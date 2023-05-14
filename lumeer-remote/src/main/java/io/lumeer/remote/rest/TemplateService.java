@@ -20,26 +20,18 @@ package io.lumeer.remote.rest;
 
 import io.lumeer.api.model.Language;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.TemplateMetadata;
-import io.lumeer.core.auth.RequestDataKeeper;
-import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.core.facade.TemplateFacade;
-import io.lumeer.storage.api.dao.OrganizationDao;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
+import java.util.Objects;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -47,55 +39,18 @@ import javax.ws.rs.core.MediaType;
 public class TemplateService extends AbstractService {
 
    @Inject
-   private OrganizationDao organizationDao;
-
-   @Inject
-   private ProjectFacade projectFacade;
-
-   @Inject
    private TemplateFacade templateFacade;
-
-   @Inject
-   private RequestDataKeeper requestDataKeeper;
 
    @GET
    public List<Project> getTemplates() {
-      final Language language = requestDataKeeper.getUserLanguage();
-      final String organizationId = templateFacade.getTemplateOrganizationId(language);
-
-      if (StringUtils.isEmpty(organizationId)) {
-         return List.of();
-      }
-
-      var organization = organizationDao.getOrganizationById(organizationId);
-      workspaceKeeper.setOrganization(organization);
-      projectFacade.switchOrganization();
-      return projectFacade.getPublicProjects().stream()
-                          .peek(project -> setProjectOrganizationId(project, organizationId))
-                          .collect(Collectors.toList());
+      return templateFacade.getTemplates();
    }
 
    @GET
    @Path("code/{templateCode:[a-zA-Z0-9_]{2,6}}")
    public Project getTemplate(@QueryParam("l") Language language, @PathParam("templateCode") String templateCode) {
       var nonNullLanguage = Objects.requireNonNullElse(language, Language.EN);
-      final String organizationId = templateFacade.getTemplateOrganizationId(nonNullLanguage);
 
-      if (StringUtils.isEmpty(organizationId)) {
-         throw new BadRequestException("Could not find template organization");
-      }
-
-      var organization = organizationDao.getOrganizationById(organizationId);
-      workspaceKeeper.setOrganization(organization);
-      var project = projectFacade.getPublicProject(templateCode);
-      setProjectOrganizationId(project, organizationId);
-      return project;
-   }
-
-   private void setProjectOrganizationId(Project project, String organizationId) {
-      if (project.getTemplateMetadata() == null) {
-         project.setTemplateMetadata(new TemplateMetadata());
-      }
-      project.getTemplateMetadata().setOrganizationId(organizationId);
+      return templateFacade.getTemplate(nonNullLanguage, templateCode);
    }
 }
