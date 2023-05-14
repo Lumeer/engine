@@ -6,6 +6,7 @@
       <module name="org.jboss.resteasy.resteasy-jaxb-provider" />
       <module name="org.jboss.resteasy.resteasy-multipart-provider" />
       <module name="org.codehaus.jackson.jackson-jaxrs" />
+      <module name="java.net.http" />
     </dependencies>
     <exclusions>
       <module name="org.jboss.resteasy.resteasy-json-binding-provider"/>
