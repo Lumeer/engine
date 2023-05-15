@@ -18,25 +18,25 @@
  */
 package io.lumeer.api.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TemplateData {
-   @JsonProperty("metadata")
-   private TemplateMetadata templateMetadata;
 
-   @JsonProperty("content")
-   private ProjectContent projectContent;
+   private TemplateMetadata metadata;
+   private ProjectContent content;
 
-   public TemplateData(final TemplateMetadata templateMetadata, final ProjectContent projectContent) {
-      this.templateMetadata = templateMetadata;
-      this.projectContent = projectContent;
+   @JsonCreator
+   public TemplateData(@JsonProperty("metadata") final TemplateMetadata metadata, @JsonProperty("content") final ProjectContent content) {
+      this.metadata = metadata;
+      this.content = content;
    }
 
-   public ProjectContent getProjectContent() {
-      return projectContent;
+   public ProjectContent getContent() {
+      return content;
    }
 
-   public TemplateMetadata getTemplateMetadata() {
-      return templateMetadata;
+   public TemplateMetadata getMetadata() {
+      return metadata;
    }
 }

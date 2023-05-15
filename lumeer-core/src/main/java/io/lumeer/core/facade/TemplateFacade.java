@@ -199,10 +199,10 @@ public class TemplateFacade extends AbstractFacade {
    public void installTemplate(final Organization organization, final Project project, final String originalOrganizationId, final TemplateData templateData) {
       checkProjectContribute(project);
 
-      final TemplateParser templateParser = new TemplateParser(templateData.getProjectContent());
+      final TemplateParser templateParser = new TemplateParser(templateData.getContent());
       final boolean originalLumeerTemplate = getAllTemplateOrganizationIds().contains(originalOrganizationId);
 
-      var relativeDateMillis = templateData.getTemplateMetadata() != null ? templateData.getTemplateMetadata().getRelativeDate() : null;
+      var relativeDateMillis = templateData.getMetadata() != null ? templateData.getMetadata().getRelativeDate() : null;
       var relativeDate = relativeDateMillis != null ? new Date(relativeDateMillis) : null;
 
       installTemplate(organization.getId(), project, templateParser, createTemplateMetadata(relativeDate), originalLumeerTemplate);
