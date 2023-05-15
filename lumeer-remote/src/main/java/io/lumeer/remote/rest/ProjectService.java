@@ -318,17 +318,17 @@ public class ProjectService extends AbstractService {
       return auditFacade.getAuditRecordsForProject();
    }
 
-   private TemplateData getTemplateDataFromProduction(String organizationId, String projectId) {
+   private TemplateData getTemplateDataFromProduction(final String organizationId, final String projectId) {
      try {
-       return callProductionApi("organizations/" + organizationId + "projects/" + projectId + "template", new TypeReference<TemplateData>() {});
+       return callProductionApi("templates/data/" + organizationId + "/" + projectId, new TypeReference<TemplateData>() {});
      } catch (Exception e) {
        throw new InternalServerErrorException(e);
      }
   }
 
-  private TemplateData getTemplateDataByCodeFromProduction(String organizationId, String projectCode) {
+  private TemplateData getTemplateDataByCodeFromProduction(final String organizationId, final String projectCode) {
     try {
-      return callProductionApi("organizations/" + organizationId + "projects/code/" + projectCode + "template", new TypeReference<TemplateData>() {});
+      return callProductionApi("templates/data/code/" + organizationId + "/" + projectCode, new TypeReference<TemplateData>() {});
     } catch (Exception e) {
       throw new InternalServerErrorException(e);
     }
