@@ -151,8 +151,14 @@ public class CronRule extends BlocklyRule {
    }
 
    public ZonedDateTime getLastRun() {
-      final Date lastRun = rule.getConfiguration().getDate(CRON_LAST_RUN);
-      return lastRun == null ? null : ZonedDateTime.ofInstant(lastRun.toInstant(), ZoneOffset.UTC);
+      final var raw = rule.getConfiguration().getObject(CRON_LAST_RUN);
+      if (raw instanceof Date) {
+         return ZonedDateTime.ofInstant(((Date) raw).toInstant(), ZoneOffset.UTC);
+      } else if (raw instanceof Long) {
+         return ZonedDateTime.ofInstant(Instant.ofEpochMilli((Long) raw), ZoneOffset.UTC);
+      }
+
+      return null;
    }
 
    public void setLastRun(final ZonedDateTime lastRun) {
