@@ -69,6 +69,9 @@ public class TemplateFacade extends AbstractFacade {
    private ProjectFacade projectFacade;
 
    @Inject
+   private ProjectDao projectDao;
+
+   @Inject
    private CollectionFacade collectionFacade;
 
    @Inject
@@ -126,7 +129,7 @@ public class TemplateFacade extends AbstractFacade {
 
       var organization = organizationDao.getOrganizationById(organizationId);
       workspaceKeeper.setOrganization(organization);
-      projectFacade.switchOrganization();
+      projectDao.switchOrganization();
       return projectFacade.getPublicProjects().stream()
             .peek(project -> setProjectOrganizationId(project, organizationId))
             .collect(Collectors.toList());
