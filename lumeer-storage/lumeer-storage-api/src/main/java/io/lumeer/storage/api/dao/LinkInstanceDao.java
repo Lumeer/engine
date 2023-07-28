@@ -25,6 +25,7 @@ import io.lumeer.api.model.Project;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,7 +54,7 @@ public interface LinkInstanceDao extends ProjectScopedDao {
 
    LinkInstance getLinkInstance(String id);
 
-   List<LinkInstance> getLinkInstances(Set<String> ids);
+   List<LinkInstance> getLinkInstances(Collection<String> ids);
 
    List<LinkInstance> getLinkInstancesByCreator(String linkTypeId, String userId, Pagination pagination);
 

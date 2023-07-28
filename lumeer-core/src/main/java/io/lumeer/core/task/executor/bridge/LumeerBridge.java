@@ -61,6 +61,7 @@ import io.lumeer.core.task.executor.operation.DocumentRemovalOperation;
 import io.lumeer.core.task.executor.operation.DummySequenceOperation;
 import io.lumeer.core.task.executor.operation.LinkCreationOperation;
 import io.lumeer.core.task.executor.operation.LinkOperation;
+import io.lumeer.core.task.executor.operation.LinkRemovalOperation;
 import io.lumeer.core.task.executor.operation.NavigationOperation;
 import io.lumeer.core.task.executor.operation.Operation;
 import io.lumeer.core.task.executor.operation.PrintAttributeOperation;
@@ -721,6 +722,18 @@ public class LumeerBridge {
    }
 
    @SuppressWarnings("unused")
+   public void removeLink(final LinkBridge l) {
+      if (task.getDaoContextSnapshot().increaseDeletionCounter() <= getMaxCreatedRecords()) {
+         try {
+            operations.add(new LinkRemovalOperation(l.getLink()));
+         } catch (Exception e) {
+            cause = e;
+            throw e;
+         }
+      }
+   }
+
+   @SuppressWarnings("unused")
    public void removeDocumentsInView(final String viewId) {
       try {
          final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
@@ -1216,6 +1229,14 @@ public class LumeerBridge {
             final LinkOperation linkChange = (LinkOperation) operation;
             final LinkType linkType = linkTypes.computeIfAbsent(linkChange.getEntity().getLinkTypeId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
             appendOperation(sb, linkType.getName(), linkType.getAttributes(), linkChange);
+         } else if (operation instanceof DocumentRemovalOperation) {
+            final DocumentRemovalOperation docRemoval = (DocumentRemovalOperation) operation;
+            final Collection collection = collections.computeIfAbsent(docRemoval.getEntity().getCollectionId(), id -> task.getDaoContextSnapshot().getCollectionDao().getCollectionById(id));
+            sb.append("removeDocument(").append(collection.getName()).append(", ").append(StringUtils.right(docRemoval.getEntity().getId(), 4)).append(")\n");
+         } else if (operation instanceof LinkRemovalOperation) {
+            final LinkRemovalOperation linkRemoval = (LinkRemovalOperation) operation;
+            final LinkType linkType = linkTypes.computeIfAbsent(linkRemoval.getEntity().getLinkTypeId(), id -> task.getDaoContextSnapshot().getLinkTypeDao().getLinkType(id));
+            sb.append("removeLink(").append(linkType.getName()).append(", ").append(StringUtils.right(linkRemoval.getEntity().getId(), 4)).append(")\n");
          } else if (operation instanceof UserMessageOperation || operation instanceof  PrintAttributeOperation || operation instanceof NavigationOperation || operation instanceof SendEmailOperation) {
             sb.append(operation.toString());
          } else if (operation instanceof LinkCreationOperation) {

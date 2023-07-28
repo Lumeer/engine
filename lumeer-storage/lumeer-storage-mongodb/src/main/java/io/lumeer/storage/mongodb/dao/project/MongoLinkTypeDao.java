@@ -50,6 +50,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -153,7 +154,7 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
    }
 
    @Override
-   public List<LinkType> getLinkTypesByIds(final Set<String> ids) {
+   public List<LinkType> getLinkTypesByIds(final Collection<String> ids) {
       Bson filter = MongoFilters.idsFilter(ids);
       if (filter == null) {
          return Collections.emptyList();

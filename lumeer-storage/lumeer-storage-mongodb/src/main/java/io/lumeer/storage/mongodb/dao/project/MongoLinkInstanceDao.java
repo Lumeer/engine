@@ -51,6 +51,7 @@ import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -174,7 +175,7 @@ public class MongoLinkInstanceDao extends MongoProjectScopedDao implements LinkI
    }
 
    @Override
-   public List<LinkInstance> getLinkInstances(final Set<String> ids) {
+   public List<LinkInstance> getLinkInstances(final Collection<String> ids) {
       Bson filter = MongoFilters.idsFilter(ids);
       if (filter == null) {
          return Collections.emptyList();
