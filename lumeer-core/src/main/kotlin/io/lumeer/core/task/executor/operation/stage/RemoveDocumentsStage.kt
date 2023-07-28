@@ -82,8 +82,6 @@ class RemoveDocumentsStage(executor: OperationExecutor) : Stage(executor) {
         changesTracker.linkTypes.addAll(savedLinkTypes)
     }
 
-    // groupBy, associateBy
-
     private fun removeLinks(removedLinks: List<LinkInstance>, documents: List<Document>, linkTypes: Map<String, LinkType>) {
         changesTracker.addRemovedLinkInstances(removedLinks)
 
