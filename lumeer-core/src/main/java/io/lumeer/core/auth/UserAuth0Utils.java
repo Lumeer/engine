@@ -18,6 +18,12 @@
  */
 package io.lumeer.core.auth;
 
+import org.apache.commons.lang3.StringUtils;
+
+import javax.enterprise.context.SessionScoped;
+import javax.inject.Inject;
+import java.io.Serializable;
+
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.Auth0Exception;
@@ -28,12 +34,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
 
 @SessionScoped
 public class UserAuth0Utils implements Serializable {
@@ -86,6 +86,9 @@ public class UserAuth0Utils implements Serializable {
    }
 
    public void setEmailVerified(final io.lumeer.api.model.User lumeerUser) throws Auth0Exception {
+      if (!initialized) {
+         init();
+      }
       final String authId = lumeerUser.getAuthIds().iterator().next();
       refreshManagementApiToken();
       final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
@@ -95,6 +98,9 @@ public class UserAuth0Utils implements Serializable {
    }
 
    public void deleteUser(final io.lumeer.api.model.User lumeerUser) throws Auth0Exception {
+      if (!initialized) {
+         init();
+      }
       final String authId = lumeerUser.getAuthIds().iterator().next();
       refreshManagementApiToken();
       final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
