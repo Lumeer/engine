@@ -23,9 +23,9 @@ import io.lumeer.core.adapter.InformationStoreAdapter;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.storage.api.dao.InformationStoreDao;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class InformationStoreFacade extends AbstractFacade {

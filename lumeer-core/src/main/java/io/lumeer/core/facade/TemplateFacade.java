@@ -48,10 +48,10 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

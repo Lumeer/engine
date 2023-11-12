@@ -20,8 +20,8 @@ package io.lumeer.core.auth;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
 import java.io.Serializable;
 
 import com.auth0.client.auth.AuthAPI;

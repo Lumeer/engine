@@ -165,11 +165,11 @@ data class DataFilterJsonTask(val documents: List<Document>,
                 }
             }
 
-            val localDateTimeSerializer: JsonSerializer<LocalDateTime> = JsonSerializer<LocalDateTime> { dt, srcType, _ ->
+            val localDateTimeSerializer: JsonSerializer<LocalDateTime> = JsonSerializer<LocalDateTime> { dt, _, _ ->
                 JsonPrimitive(dt.toInstant(ZoneOffset.UTC).epochSecond)
             }
 
-            val zonedDateTimeSerializer2: JsonSerializer<ZonedDateTime> = JsonSerializer<ZonedDateTime> { dt, srcType, _ ->
+            val zonedDateTimeSerializer2: JsonSerializer<ZonedDateTime> = JsonSerializer<ZonedDateTime> { dt, _, _ ->
                 JsonPrimitive(dt.toInstant().epochSecond)
             }
 

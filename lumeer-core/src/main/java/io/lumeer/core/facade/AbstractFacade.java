@@ -29,7 +29,7 @@ import io.lumeer.core.auth.PermissionsChecker;
 import io.lumeer.core.cache.UserCache;
 
 import java.time.ZonedDateTime;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 abstract class AbstractFacade {
 

@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class ConfigurationManipulatorIT extends IntegrationTestBase {

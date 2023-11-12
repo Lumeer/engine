@@ -19,11 +19,11 @@ package io.lumeer.core.auth;/*
 
 import java.io.IOException;
 import java.io.Serializable;
-import javax.enterprise.context.SessionScoped;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @SessionScoped
 public class PublicViewFilter implements AuthFilter, Serializable {

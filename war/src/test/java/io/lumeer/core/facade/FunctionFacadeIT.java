@@ -63,7 +63,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class FunctionFacadeIT extends IntegrationTestBase {

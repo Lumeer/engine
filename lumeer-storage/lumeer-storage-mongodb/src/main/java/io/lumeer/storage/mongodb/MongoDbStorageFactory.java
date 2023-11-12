@@ -26,7 +26,7 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.mongodb.dao.context.MongoDaoContextSnapshotFactory;
 
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MongoDbStorageFactory implements DataStorageFactory {

@@ -36,7 +36,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Before;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public abstract class IntegrationTestBase {
 
@@ -98,7 +98,8 @@ public abstract class IntegrationTestBase {
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
                                                   "org.graalvm.truffle:truffle-api",
-                                                  "org.graalvm.js:js")
+                                                  "org.graalvm.js:js",
+                                                  "org.graalvm.js:js-scriptengine")
                                             .withTransitivity()
                                             .asFile()
                        );

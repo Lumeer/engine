@@ -48,7 +48,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
         members.addAll(fields.filter { !it.name.isUpperCase() }.map { it.name })
         members.addAll(methods.filter { methodAllowed(it) && it.name.startsWith("get") }
                 .map { it.name }
-                .map { it.substring(3, 4).toLowerCase() + it.substring(4) }
+                .map { it.substring(3, 4).lowercase() + it.substring(4) }
                 .filter { it.isNotEmpty() }
         )
         membersCheck.addAll(members)
@@ -69,7 +69,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
                         return enc
                     }
 
-                    val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
+                    val keyMethod = key.substring(0, 1).uppercase() + key.substring(1)
                     val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
                     if (method != null) {
                         val obj = encodeObject(method.invoke(proxyObject), locale)

@@ -67,7 +67,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class DocumentFacadeIT extends IntegrationTestBase {

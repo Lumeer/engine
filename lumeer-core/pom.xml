@@ -14,11 +14,11 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>11</maven.compiler.source>
-      <maven.compiler.target>11</maven.compiler.target>
-      <kotlin.version>1.6.21</kotlin.version>
+      <maven.compiler.source>20</maven.compiler.source>
+      <maven.compiler.target>20</maven.compiler.target>
+      <kotlin.version>1.9.20</kotlin.version>
       <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
-      <kotlin.compiler.jvmTarget>11</kotlin.compiler.jvmTarget>
+      <kotlin.compiler.jvmTarget>20</kotlin.compiler.jvmTarget>
    </properties>
 
    <dependencies>
@@ -33,47 +33,58 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.enterprise</groupId>
-         <artifactId>cdi-api</artifactId>
+         <groupId>jakarta.enterprise</groupId>
+         <artifactId>jakarta.enterprise.cdi-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>javax.annotation</groupId>
-         <artifactId>javax.annotation-api</artifactId>
+         <groupId>jakarta.annotation</groupId>
+         <artifactId>jakarta.annotation-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>javax.ejb</groupId>
-         <artifactId>javax.ejb-api</artifactId>
+         <groupId>jakarta.ejb</groupId>
+         <artifactId>jakarta.ejb-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>com.fasterxml.jackson.module</groupId>
          <artifactId>jackson-module-jaxb-annotations</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>jakarta.ws.rs</groupId>
+         <artifactId>jakarta.ws.rs-api</artifactId>
          <scope>provided</scope>
       </dependency>
 
       <dependency>
-         <groupId>org.jboss.spec.javax.servlet</groupId>
-         <artifactId>jboss-servlet-api_4.0_spec</artifactId>
+         <groupId>jakarta.servlet</groupId>
+         <artifactId>jakarta.servlet-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.enterprise.concurrent</groupId>
-         <artifactId>jboss-concurrency-api_1.0_spec</artifactId>
+         <groupId>jakarta.enterprise.concurrent</groupId>
+         <artifactId>jakarta.enterprise.concurrent-api</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.ejb</groupId>
-         <artifactId>jboss-ejb-api_3.2_spec</artifactId>
+         <groupId>jakarta.ejb</groupId>
+         <artifactId>jakarta.ejb-api</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>javax.mail</groupId>
-         <artifactId>mail</artifactId>
+         <groupId>jakarta.mail</groupId>
+         <artifactId>jakarta.mail-api</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
          <groupId>org.mongodb</groupId>
-         <artifactId>mongo-java-driver</artifactId>
+         <artifactId>mongodb-driver-sync</artifactId>
       </dependency>
 
       <dependency>
@@ -81,12 +92,12 @@
          <artifactId>s3</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpclient</artifactId>
+         <groupId>org.apache.httpcomponents.client5</groupId>
+         <artifactId>httpclient5</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpcore</artifactId>
+         <groupId>org.apache.httpcomponents.core5</groupId>
+         <artifactId>httpcore5</artifactId>
       </dependency>
 
       <dependency>
@@ -197,6 +208,10 @@
       <dependency>
          <groupId>org.graalvm.js</groupId>
          <artifactId>js</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.js</groupId>
+         <artifactId>js-scriptengine</artifactId>
       </dependency>
 
       <dependency>

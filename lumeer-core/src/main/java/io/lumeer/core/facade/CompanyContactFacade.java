@@ -25,8 +25,8 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.storage.api.dao.CompanyContactDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class CompanyContactFacade extends AbstractFacade {

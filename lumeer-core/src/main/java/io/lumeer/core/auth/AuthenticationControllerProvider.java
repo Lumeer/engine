@@ -41,7 +41,7 @@ import java.security.GeneralSecurityException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPublicKey;
-import javax.servlet.ServletConfig;
+import jakarta.servlet.ServletConfig;
 
 public abstract class AuthenticationControllerProvider {
 

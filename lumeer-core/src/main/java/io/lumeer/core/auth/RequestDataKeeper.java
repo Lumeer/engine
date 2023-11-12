@@ -22,7 +22,7 @@ package io.lumeer.core.auth;
 import io.lumeer.api.model.AppId;
 import io.lumeer.api.model.Language;
 
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 @RequestScoped
 public class RequestDataKeeper {

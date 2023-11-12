@@ -24,8 +24,8 @@ import io.lumeer.storage.mongodb.dao.MongoDao;
 
 import com.mongodb.client.MongoDatabase;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 
 public abstract class MongoSystemScopedDao extends MongoDao {
 

@@ -53,7 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class TemplateFacadeIT extends IntegrationTestBase {

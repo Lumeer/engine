@@ -48,7 +48,7 @@ import org.junit.runner.RunWith;
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class SequenceFacadeIT extends IntegrationTestBase {

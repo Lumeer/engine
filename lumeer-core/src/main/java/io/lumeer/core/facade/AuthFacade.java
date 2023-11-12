@@ -24,8 +24,8 @@ import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
 
 import com.auth0.exception.Auth0Exception;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class AuthFacade extends AbstractFacade {

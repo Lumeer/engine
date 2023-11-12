@@ -19,9 +19,10 @@
 
 package io.lumeer.api.model;
 
+import javax.annotation.concurrent.Immutable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import net.jcip.annotations.Immutable;
 
 import java.util.Objects;
 

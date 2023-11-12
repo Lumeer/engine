@@ -26,9 +26,9 @@ import io.lumeer.storage.api.dao.ProjectDao;
 
 import java.io.Serializable;
 import java.util.logging.Logger;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class StartupFacade implements Serializable {

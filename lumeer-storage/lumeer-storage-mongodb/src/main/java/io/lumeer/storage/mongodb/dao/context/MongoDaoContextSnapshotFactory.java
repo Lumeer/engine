@@ -25,8 +25,8 @@ import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class MongoDaoContextSnapshotFactory implements DaoContextSnapshotFactory {

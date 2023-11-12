@@ -29,10 +29,10 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import javax.ejb.Schedule;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.inject.Inject;
+import jakarta.ejb.Schedule;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
+import jakarta.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;

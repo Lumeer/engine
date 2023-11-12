@@ -26,7 +26,7 @@ data class Assignee(val email: String, val viaTeam: Boolean) {
 
    companion object {
       fun fromUser(user: User, viaTeam: Boolean): Assignee {
-         val a = Assignee(user.email.toLowerCase(), viaTeam)
+         val a = Assignee(user.email.lowercase(), viaTeam)
          a.timeZone = user.timeZone
 
          return a

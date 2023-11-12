@@ -52,7 +52,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Collections;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class ProjectFacadeIT extends IntegrationTestBase {

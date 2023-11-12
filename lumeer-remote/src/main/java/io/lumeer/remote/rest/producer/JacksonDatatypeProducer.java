@@ -16,18 +16,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package io.lumeer.remote.rest.annotation;
+package io.lumeer.remote.rest.producer;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import jakarta.interceptor.InterceptorBinding;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
 
-@Inherited
-@InterceptorBinding
-@Target( { ElementType.TYPE, ElementType.METHOD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface DocumentCommentsProcessor {
+@Provider
+@Produces(MediaType.APPLICATION_JSON)
+public class JacksonDatatypeProducer implements ContextResolver<ObjectMapper> {
+
+   private final ObjectMapper json;
+
+   public JacksonDatatypeProducer() throws Exception {
+      this.json = JsonMapper.builder()
+            .findAndAddModules()
+            .build();
+   }
+
+   @Override
+   public ObjectMapper getContext(Class<?> objectType) {
+      return json;
+   }
 }

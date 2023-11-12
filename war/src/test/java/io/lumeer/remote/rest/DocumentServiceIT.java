@@ -46,10 +46,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.ZonedDateTime;
-import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
 @RunWith(Arquillian.class)
 public class DocumentServiceIT extends ServiceIntegrationTestBase {

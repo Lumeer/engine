@@ -22,9 +22,9 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.core.util.PusherClient;
 
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class LumeerS3ClientHelperFacade {

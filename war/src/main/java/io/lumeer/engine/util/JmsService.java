@@ -19,13 +19,13 @@
 package io.lumeer.engine.util;
 
 import java.util.logging.Logger;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 /**
  * TODO JMS is disabled at the moment
  */
-@RequestScoped
+//@RequestScoped
 public class JmsService {
 
    //@Resource(mappedName = "java:/jms/queue/TaskQueue")
@@ -34,8 +34,8 @@ public class JmsService {
    //@Inject
    //private JMSContext context;
 
-   @Inject
-   private Logger log;
+   //@Inject
+   //private Logger log;
 
    /*public void enqueueTask(final Task task) {
       context.createProducer().send(taskQueue, task);

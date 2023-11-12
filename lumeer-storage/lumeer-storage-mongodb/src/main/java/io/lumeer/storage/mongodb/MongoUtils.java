@@ -20,7 +20,7 @@ package io.lumeer.storage.mongodb;
 
 import io.lumeer.engine.api.data.DataDocument;
 
-import com.mongodb.MongoClient;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import org.bson.BsonDocument;
@@ -59,7 +59,7 @@ public class MongoUtils {
    }
 
    public static String convertBsonToJson(Bson object) {
-      return object.toBsonDocument(BsonDocument.class, MongoClient.getDefaultCodecRegistry()).toJson();
+      return object.toBsonDocument(BsonDocument.class, MongoClientSettings.getDefaultCodecRegistry()).toJson();
    }
 
    public static void convertNestedAndListDocuments(DataDocument dataDocument) {

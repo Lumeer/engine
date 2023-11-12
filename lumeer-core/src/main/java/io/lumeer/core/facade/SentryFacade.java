@@ -22,14 +22,14 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
 import io.sentry.Sentry;
-import io.sentry.event.UserBuilder;
+import io.sentry.protocol.User;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class SentryFacade {
@@ -56,10 +56,12 @@ public class SentryFacade {
          final String userEmail = authenticatedUser.getUserEmail();
 
          if (StringUtils.isNotEmpty(userEmail)) {
-            Sentry.getContext().setUser(new UserBuilder().setEmail(userEmail).build());
+            final User u = new User();
+            u.setEmail(userEmail);
+            Sentry.setUser(u);
          }
 
-         Sentry.capture(e);
+         Sentry.captureException(e);
       }
    }
 

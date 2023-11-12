@@ -62,7 +62,7 @@ class JvmMapProxy(val values: MutableMap<String, Any?>, val locale: Locale = Loc
 
             val v = values[key]
             if (v != null) {
-                val enc = JvmObjectProxy.encodeObject(v!!, locale)
+                val enc = JvmObjectProxy.encodeObject(v, locale)
                 objects[key] = enc
                 return enc
             }

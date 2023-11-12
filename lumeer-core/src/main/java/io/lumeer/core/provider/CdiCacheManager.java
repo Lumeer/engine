@@ -27,8 +27,8 @@ import io.lumeer.engine.api.cache.CacheProvider;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class CdiCacheManager implements CacheManager, Serializable {

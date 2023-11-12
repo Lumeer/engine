@@ -47,9 +47,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
-import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 
 @RunWith(Arquillian.class)
 @Ignore("Cannot run without API keys and dependencies. Uncomment the dependency in IntegrationTestBase.")

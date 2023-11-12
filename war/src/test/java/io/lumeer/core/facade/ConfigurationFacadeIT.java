@@ -42,7 +42,7 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Optional;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 @RunWith(Arquillian.class)
 public class ConfigurationFacadeIT extends IntegrationTestBase {

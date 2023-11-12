@@ -23,8 +23,8 @@ import io.lumeer.api.model.Project;
 import io.lumeer.storage.mongodb.dao.organization.MongoOrganizationScopedDao;
 
 import java.util.Optional;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 
 public abstract class MongoProjectScopedDao extends MongoOrganizationScopedDao {
 

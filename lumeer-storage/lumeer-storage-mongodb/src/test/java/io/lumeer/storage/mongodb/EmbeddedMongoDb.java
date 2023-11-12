@@ -19,15 +19,19 @@
 package io.lumeer.storage.mongodb;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.util.concurrent.Semaphore;
 
-import de.flapdoodle.embed.mongo.MongodExecutable;
-import de.flapdoodle.embed.mongo.MongodProcess;
-import de.flapdoodle.embed.mongo.MongodStarter;
-import de.flapdoodle.embed.mongo.config.IMongodConfig;
-import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
+import de.flapdoodle.embed.mongo.commands.MongodArguments;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
+import de.flapdoodle.embed.mongo.transitions.ImmutableMongod;
+import de.flapdoodle.embed.mongo.transitions.Mongod;
+import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
 import de.flapdoodle.embed.process.runtime.Network;
+import de.flapdoodle.reverse.TransitionWalker;
+import de.flapdoodle.reverse.Transitions;
+import de.flapdoodle.reverse.transitions.Start;
 
 public class EmbeddedMongoDb {
 
@@ -40,48 +44,42 @@ public class EmbeddedMongoDb {
 
    public static final Boolean SKIP = Boolean.getBoolean("lumeer.db.embed.skip");
 
-   private static MongodStarter mongodStarter = MongodStarter.getDefaultInstance();
-   private static IMongodConfig mongodConfig = createMongoConfig();
+   private static ImmutableMongod mongod = createMongod();
 
-   private MongodExecutable mongodExecutable;
-   private MongodProcess mongodProcess;
+   private TransitionWalker.ReachedState<RunningMongodProcess> running = null;
 
    public EmbeddedMongoDb() {
       if (!"localhost".equals(HOST) && !"127.0.0.1".equals(HOST)) {
          // do not start embedded MongoDB when remote database is used
          return;
       }
-
-      mongodExecutable = mongodStarter.prepare(mongodConfig);
    }
 
-   private static IMongodConfig createMongoConfig() {
+   private static ImmutableMongod createMongod() {
+      var builder = Mongod.builder();
+
+      boolean isIpv6 = false;
       try {
-         final MongodConfigBuilder builder = new MongodConfigBuilder();
-         builder.version(Version.Main.V4_0).net(new Net(HOST, PORT, Network.localhostIsIPv6()));
-
-         if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
-            builder.withLaunchArgument("--storageEngine", "mmapv1");
-         }
-
-         return builder.build();
-      } catch (IOException ex) {
-         throw new RuntimeException(ex);
+         isIpv6 = de.flapdoodle.net.Net.localhostIsIPv6();
+      } catch (UnknownHostException e) {
       }
+
+      builder.net(Start.to(Net.class).initializedWith(Net.of(HOST, PORT, isIpv6)));
+
+      if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
+         builder.mongodArguments(Start.to(MongodArguments.class).initializedWith(MongodArguments.builder().putArgs("--storageEngine", "mmapv1").build()));
+      }
+
+      return builder.build();
    }
 
    public void start() {
-      try {
-         mongodProcess = mongodExecutable.start();
-      } catch (IOException ex) {
-         throw new RuntimeException(ex);
-      }
+      running = mongod.start(Version.V4_2_23);
    }
 
    public void stop() {
-      if (mongodExecutable != null && mongodProcess != null && mongodProcess.isProcessRunning()) {
-         mongodProcess.stop();
-         mongodExecutable.stop();
+      if (running != null && running.current() != null) {
+         running.current().stop();
       }
    }
 

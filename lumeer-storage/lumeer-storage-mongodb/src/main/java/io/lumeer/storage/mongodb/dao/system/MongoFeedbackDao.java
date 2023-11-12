@@ -29,8 +29,8 @@ import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 
 import java.util.ArrayList;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MongoFeedbackDao extends MongoSystemScopedDao implements FeedbackDao {
