@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module name="io.lumeer.graalvm" xmlns="urn:jboss:module:1.9">
+
+    <properties>
+        <property name="jboss.api" value="public"/>
+    </properties>
+
+    <resources>
+        <resource-root path="graal-sdk-21.3.8.jar"/>
+        <resource-root path="js-21.3.8.jar"/>
+        <resource-root path="polyglot-tck-21.3.8.jar"/>
+        <resource-root path="truffle-api-21.3.8.jar"/>
+        <resource-root path="icu4j-71.1.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="java.desktop"/>
+        <module name="java.logging"/>
+        <module name="sun.jdk"/>
+    </dependencies>
+
+</module>

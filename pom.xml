@@ -104,6 +104,7 @@
    <modules>
       <module>bom</module>
       <module>api</module>
+      <module>lumeer-graalvm</module>
       <module>war</module>
       <module>simple-cache</module>
       <module>utils</module>
@@ -241,6 +242,13 @@
                               <overWrite>false</overWrite>
                               <outputDirectory>${project.build.directory}</outputDirectory>
                            </artifactItem>
+                           <!--artifactItem>
+                              <groupId>io.lumeer</groupId>
+                              <artifactId>lumeer-graalvm</artifactId>
+                              <version>${version}</version>
+                              <type>zip</type>
+                              <outputDirectory>${project.build.directory}/wildfly-30.0.0.Final/modules/system/layers/base</outputDirectory>
+                           </artifactItem-->
                         </artifactItems>
                      </configuration>
                   </execution>
