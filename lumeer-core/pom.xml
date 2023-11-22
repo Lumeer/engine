@@ -72,11 +72,6 @@
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>jakarta.ejb</groupId>
-         <artifactId>jakarta.ejb-api</artifactId>
-         <scope>provided</scope>
-      </dependency>
-      <dependency>
          <groupId>jakarta.mail</groupId>
          <artifactId>jakarta.mail-api</artifactId>
          <scope>provided</scope>
@@ -196,22 +191,22 @@
       <dependency>
          <groupId>org.graalvm.sdk</groupId>
          <artifactId>graal-sdk</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.graalvm.sdk</groupId>
          <artifactId>polyglot-tck</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.graalvm.truffle</groupId>
          <artifactId>truffle-api</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.graalvm.js</groupId>
          <artifactId>js</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.graalvm.js</groupId>
-         <artifactId>js-scriptengine</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>

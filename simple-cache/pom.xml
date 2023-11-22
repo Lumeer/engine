@@ -224,7 +224,7 @@
             </executions>
             <configuration>
                <configLocation>${project.basedir}/src/site/lumeer-check.xml</configLocation>
-               <encoding>UTF-8</encoding>
+               <inputEncoding>UTF-8</inputEncoding>
                <consoleOutput>true</consoleOutput>
                <failsOnError>false</failsOnError>
                <linkXRef>false</linkXRef>
@@ -306,7 +306,7 @@
             <artifactId>maven-project-info-reports-plugin</artifactId>
             <version>${maven.project.info.reports.plugin.version}</version>
             <configuration>
-               <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+               <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
             </configuration>
          </plugin>
          <plugin>
@@ -327,7 +327,7 @@
             </reportSets>
             <configuration>
                <configLocation>src/site/lumeer-check.xml</configLocation>
-               <encoding>UTF-8</encoding>
+               <inputEncoding>UTF-8</inputEncoding>
                <consoleOutput>true</consoleOutput>
                <failsOnError>false</failsOnError>
                <linkXRef>false</linkXRef>

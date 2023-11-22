@@ -108,8 +108,7 @@
       <version.maven.plugin.api>3.9.5</version.maven.plugin.api>
       <version.maven.core>3.9.5</version.maven.core>
       <version.maven.plugin.annotations>3.10.2</version.maven.plugin.annotations>
-      <version.graalvm>23.1.1</version.graalvm>
-      <version.graalvm.js>23.0.2</version.graalvm.js>
+      <version.graalvm>21.3.8</version.graalvm>
       <version.jmte>7.0.2</version.jmte>
 
       <!-- Tools -->
@@ -338,12 +337,7 @@
          <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
-            <version>${version.graalvm.js}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.js</groupId>
-            <artifactId>js-scriptengine</artifactId>
-            <version>${version.graalvm.js}</version>
+            <version>${version.graalvm}</version>
          </dependency>
 
          <dependency>
