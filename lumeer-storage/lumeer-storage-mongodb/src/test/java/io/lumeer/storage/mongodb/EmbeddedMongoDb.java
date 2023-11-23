@@ -66,10 +66,6 @@ public class EmbeddedMongoDb {
 
       builder.net(Start.to(Net.class).initializedWith(Net.of(HOST, PORT, isIpv6)));
 
-      if (System.getProperty("os.name").toLowerCase().startsWith("mac")) {
-         builder.mongodArguments(Start.to(MongodArguments.class).initializedWith(MongodArguments.builder().putArgs("--storageEngine", "mmapv1").build()));
-      }
-
       return builder.build();
    }
 

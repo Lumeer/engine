@@ -98,8 +98,7 @@ public abstract class IntegrationTestBase {
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
                                                   "org.graalvm.truffle:truffle-api",
-                                                  "org.graalvm.js:js",
-                                                  "org.graalvm.js:js-scriptengine")
+                                                  "org.graalvm.js:js")
                                             .withTransitivity()
                                             .asFile()
                        );
