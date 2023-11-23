@@ -52,12 +52,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,8 +68,9 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class TemplatesIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
@@ -128,7 +129,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    @Inject
    private ResourceVariableDao resourceVariableDao;
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       User user = new User(USER);
       this.user = userDao.createUser(user);
@@ -186,7 +187,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   @Ignore // TODO uncomment once new PR code will be merged
+   @Disabled // TODO uncomment once new PR code will be merged
    public void testTemplatesImportByCopyProject() throws InterruptedException {
       var p1 = createProject(CODE1);
       var p2 = createProject(CODE2);
@@ -216,7 +217,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       ) {
          templateContent = input.readAllBytes();
       } catch (IOException | NullPointerException e) {
-         Assert.fail("Could not read test template.");
+         Assertions.fail("Could not read test template.");
       }
 
       Entity entity = Entity.json(templateContent);

@@ -38,16 +38,17 @@ import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class GroupFacadeIT extends IntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
@@ -81,7 +82,7 @@ public class GroupFacadeIT extends IntegrationTestBase {
    @Inject
    private PermissionsChecker permissionsChecker;
 
-   @Before
+   @BeforeEach
    public void configure() {
       User user = new User(USER);
       this.user = userDao.createUser(user);

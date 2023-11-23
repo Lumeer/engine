@@ -24,8 +24,8 @@ import io.lumeer.api.model.DefaultViewConfig;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.ZonedDateTime;
@@ -42,7 +42,7 @@ public class MongoDefaultViewConfigDaoTest extends MongoDbTestBase {
 
    private MongoDefaultViewConfigDao defaultViewConfigDao;
 
-   @Before
+   @BeforeEach
    public void initSequenceDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);

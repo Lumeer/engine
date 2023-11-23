@@ -13,10 +13,10 @@ import io.lumeer.storage.api.dao.GroupDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +26,7 @@ import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class GroupServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
@@ -46,7 +46,7 @@ public class GroupServiceIT extends ServiceIntegrationTestBase {
    @Inject
    private UserDao userDao;
 
-   @Before
+   @BeforeEach
    public void configure() {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);

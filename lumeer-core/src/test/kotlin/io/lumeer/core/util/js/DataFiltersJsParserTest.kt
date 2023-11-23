@@ -23,7 +23,7 @@ import io.lumeer.api.model.Collection
 import io.lumeer.engine.api.data.DataDocument
 import org.assertj.core.api.Assertions
 
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit

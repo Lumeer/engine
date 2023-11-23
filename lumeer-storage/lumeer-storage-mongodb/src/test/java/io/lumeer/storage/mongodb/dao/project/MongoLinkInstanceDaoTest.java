@@ -29,8 +29,8 @@ import io.lumeer.storage.api.query.SearchQueryStem;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class MongoLinkInstanceDaoTest extends MongoDbTestBase {
 
    private Project project;
 
-   @Before
+   @BeforeEach
    public void initLinkInstanceDao() {
       project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);

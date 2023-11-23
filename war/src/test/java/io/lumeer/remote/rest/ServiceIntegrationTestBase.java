@@ -23,8 +23,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
 import io.lumeer.engine.IntegrationTestBase;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -35,12 +35,12 @@ public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
 
    protected Client client;
 
-   @Before
+   @BeforeEach
    public void createClient() {
       client = ClientBuilder.newBuilder().build();
    }
 
-   @After
+   @AfterEach
    public void closeClient() {
       if (client != null) {
          client.close();

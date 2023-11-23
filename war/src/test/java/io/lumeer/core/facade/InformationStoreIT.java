@@ -34,11 +34,11 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import jakarta.inject.Inject;
 import java.time.ZonedDateTime;
@@ -46,7 +46,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class InformationStoreIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
@@ -77,7 +77,7 @@ public class InformationStoreIT extends IntegrationTestBase {
    @Inject
    private InformationStoreDao informationStoreDao;
 
-   @Before
+   @BeforeEach
    public void configureOrganization() {
       user = userDao.createUser(new User(USER));
 
@@ -106,15 +106,16 @@ public class InformationStoreIT extends IntegrationTestBase {
 
       var id = rec.getId();
 
-      Assert.assertNotNull(rec.getId());
-      Assert.assertNotNull(rec.getDate());
-      Assert.assertEquals(rec.getUserId(), user.getId());
+
+      Assertions.assertNotNull(rec.getId());
+      Assertions.assertNotNull(rec.getDate());
+      Assertions.assertEquals(rec.getUserId(), user.getId());
 
       rec = informationStoreFacade.getInformation(rec.getId());
 
-      Assert.assertEquals(id, rec.getId());
-      Assert.assertEquals(user.getId(), rec.getUserId());
-      Assert.assertEquals("Hello world!", rec.getData());
+      Assertions.assertEquals(id, rec.getId());
+      Assertions.assertEquals(user.getId(), rec.getUserId());
+      Assertions.assertEquals("Hello world!", rec.getData());
    }
 
    @Test
@@ -126,19 +127,19 @@ public class InformationStoreIT extends IntegrationTestBase {
 
       var freshRec = informationStoreDao.addInformation(new InformationRecord(null, user.getId(), ZonedDateTime.now(), "", "", "I am here"));
 
-      Assert.assertNotNull(staleRec.getId());
+      Assertions.assertNotNull(staleRec.getId());
 
       staleRec = informationStoreDao.findInformation(staleRec.getId(), user.getId());
-      Assert.assertEquals("Hello world!", staleRec.getData());
-      Assert.assertEquals(staleDate.toEpochSecond(), staleRec.getDate().toEpochSecond());
+      Assertions.assertEquals("Hello world!", staleRec.getData());
+      Assertions.assertEquals(staleDate.toEpochSecond(), staleRec.getDate().toEpochSecond());
 
       // storing something else via facade should delete the stale record
       informationStoreFacade.addInformation(new InformationRecord(null, null, null, "", "", "Something else"));
 
-      Assert.assertThrows(StorageException.class, () -> informationStoreDao.findInformation(staleRecId, user.getId()));
+      Assertions.assertThrows(StorageException.class, () -> informationStoreDao.findInformation(staleRecId, user.getId()));
 
       // while fresh data should be preserved
       freshRec = informationStoreDao.findInformation(freshRec.getId(), user.getId());
-      Assert.assertEquals("I am here", freshRec.getData());
+      Assertions.assertEquals("I am here", freshRec.getData());
    }
 }

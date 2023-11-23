@@ -35,16 +35,16 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Optional;
 import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class ConfigurationFacadeIT extends IntegrationTestBase {
 
    private final String DBHOST_KEY = "db_host_test";
@@ -73,7 +73,7 @@ public class ConfigurationFacadeIT extends IntegrationTestBase {
    @Inject
    private WorkspaceKeeper workspaceKeeper;
 
-   @Before
+   @BeforeEach
    public void setUp() {
       User user = new User(USER);
       final User createdUser = userDao.createUser(user);

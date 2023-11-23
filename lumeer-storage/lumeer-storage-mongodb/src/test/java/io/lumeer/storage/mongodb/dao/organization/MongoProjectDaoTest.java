@@ -36,8 +36,8 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -74,7 +74,7 @@ public class MongoProjectDaoTest extends MongoDbTestBase {
 
    private MongoProjectDao projectDao;
 
-   @Before
+   @BeforeEach
    public void initProjectDao() {
       Organization organization = Mockito.mock(Organization.class);
       Mockito.when(organization.getId()).thenReturn(ORGANIZATION_ID);

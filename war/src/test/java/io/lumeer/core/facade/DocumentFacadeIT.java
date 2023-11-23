@@ -53,10 +53,10 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class DocumentFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
@@ -134,7 +134,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    private Collection collection;
    private Collection taskCollection;
 
-   @Before
+   @BeforeEach
    public void configureCollection() {
       User user = new User(USER);
       this.user = userDao.createUser(user);

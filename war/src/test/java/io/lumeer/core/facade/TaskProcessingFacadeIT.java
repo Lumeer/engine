@@ -49,10 +49,10 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,7 +61,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class TaskProcessingFacadeIT extends IntegrationTestBase {
 
    @Inject
@@ -126,7 +126,7 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
    private static final String ORGANIZATION_CODE = "TORG";
    private static final String PROJECT_CODE = "TPROJ";
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       this.user = userDao.createUser(new User(USER));
       this.stranger = userDao.createUser(new User(STRANGER_USER));

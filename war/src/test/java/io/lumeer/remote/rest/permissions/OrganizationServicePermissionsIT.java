@@ -34,10 +34,10 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.test.util.LumeerAssertions;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,7 +49,7 @@ import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Inject
@@ -65,7 +65,7 @@ public class OrganizationServicePermissionsIT extends ServiceIntegrationTestBase
 
    private String organizationsUrl;
 
-   @Before
+   @BeforeEach
    public void prepare() {
       User user = new User(AuthenticatedUser.DEFAULT_EMAIL);
       userId = userDao.createUser(user).getId();

@@ -29,8 +29,8 @@ import io.lumeer.engine.api.data.Query;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.client.model.Filters;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -81,7 +81,7 @@ public class MongoDbStorageTest extends MongoDbTestBase {
 
    private MongoDbStorageDialect mongoDbStorageDialect;
 
-   @Before
+   @BeforeEach
    public void setUp() throws Exception {
       mongoDbStorageDialect = new MongoDbStorageDialect();
 

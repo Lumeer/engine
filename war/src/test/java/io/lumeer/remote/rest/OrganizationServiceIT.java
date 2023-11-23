@@ -42,10 +42,10 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -63,7 +63,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class OrganizationServiceIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
@@ -104,7 +104,7 @@ public class OrganizationServiceIT extends ServiceIntegrationTestBase {
    @Inject
    private GroupDao groupDao;
 
-   @Before
+   @BeforeEach
    public void prepare() {
       User user = new User(USER);
       this.user = userDao.createUser(user);

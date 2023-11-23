@@ -4,7 +4,7 @@ import io.lumeer.api.model.Rule
 import io.lumeer.api.model.rule.CronRule
 import io.lumeer.engine.api.data.DataDocument
 import org.assertj.core.api.Assertions
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoField

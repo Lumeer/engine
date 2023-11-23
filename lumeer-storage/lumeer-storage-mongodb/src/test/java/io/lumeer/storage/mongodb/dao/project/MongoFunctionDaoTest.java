@@ -25,8 +25,8 @@ import io.lumeer.api.model.function.FunctionResourceType;
 import io.lumeer.api.model.function.FunctionRow;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class MongoFunctionDaoTest extends MongoDbTestBase {
 
    private MongoFunctionDao functionDao;
 
-   @Before
+   @BeforeEach
    public void initCollectionDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);

@@ -42,17 +42,17 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class OrganizationFacadeIT extends IntegrationTestBase {
 
    @Inject
@@ -97,7 +97,7 @@ public class OrganizationFacadeIT extends IntegrationTestBase {
    private User strangerUser;
    private Group group;
 
-   @Before
+   @BeforeEach
    public void configure() {
       this.user = userDao.createUser(new User(USER));
       this.strangerUser = userDao.createUser(new User(STRANGER_USER));

@@ -19,21 +19,21 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.engine.IntegrationTestBase;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class EmailFacadeIT extends IntegrationTestBase {
 
    @Inject
    private EmailFacade emailFacade;
 
    @Test
-   @Ignore
+   @Disabled
    public void testSendInvitation() {
       emailFacade.sendInvitation("marvenec@gmail.com");
    }

@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.function.FunctionParameter;
 import io.lumeer.api.model.function.FunctionResourceType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Deque;
 import java.util.HashMap;

@@ -54,10 +54,10 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.exception.StorageException;
 
 import org.bson.types.ObjectId;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class LinkInstanceFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
@@ -147,7 +147,7 @@ public class LinkInstanceFacadeIT extends IntegrationTestBase {
    @Inject
    private PermissionsChecker permissionsChecker;
 
-   @Before
+   @BeforeEach
    public void configureLinkInstances() {
       user = userDao.createUser(new User(USER));
 

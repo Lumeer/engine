@@ -40,10 +40,10 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.ZonedDateTime;
 import jakarta.inject.Inject;
@@ -51,7 +51,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
@@ -93,7 +93,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
    private Collection collection;
 
-   @Before
+   @BeforeEach
    public void configureCollection() {
       User user = new User(USER);
       this.user = userDao.createUser(user);

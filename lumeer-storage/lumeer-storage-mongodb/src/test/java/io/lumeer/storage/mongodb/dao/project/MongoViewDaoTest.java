@@ -37,9 +37,9 @@ import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -88,7 +88,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
 
    private Project project;
 
-   @Before
+   @BeforeEach
    public void initViewDao() {
       project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);
@@ -215,7 +215,7 @@ public class MongoViewDaoTest extends MongoDbTestBase {
    }
 
    @Test
-   @Ignore("Stored anyway with the current implementation")
+   @Disabled("Stored anyway with the current implementation")
    public void testUpdateViewNotExisting() {
 
    }

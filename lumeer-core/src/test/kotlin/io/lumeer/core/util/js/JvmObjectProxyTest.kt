@@ -29,7 +29,7 @@ import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class JvmObjectProxyTest {
     private lateinit var context: Context

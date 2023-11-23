@@ -34,7 +34,7 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 import jakarta.inject.Inject;
 
@@ -62,7 +62,7 @@ public abstract class IntegrationTestBase {
                              "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson", "org.graalvm",
                              "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text",
                              "org.apache.commons.io", "com.floreysoft.jmte", "kotlin", "com.google.gson", "org.apache.commons.collections4")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+                       .addAsWebInfResource("WEB-INF/beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties")
@@ -121,12 +121,12 @@ public abstract class IntegrationTestBase {
       }
    }
 
-   @Before
+   @BeforeEach
    public void cleanDatabase() {
       ((MongoDatabase) systemDataStorage.getDatabase()).drop();
    }
 
-   @Before
+   @BeforeEach
    public void clearCaches() {
       userCache.clear();
       workspaceCache.clear();

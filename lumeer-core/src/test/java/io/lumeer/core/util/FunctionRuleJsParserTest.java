@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.ResourceType;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
