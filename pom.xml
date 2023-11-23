@@ -97,6 +97,7 @@
       <maven.wildfly.plugin.version>4.2.0.Final</maven.wildfly.plugin.version>
       <maven.failsafe.plugin.version>3.2.2</maven.failsafe.plugin.version>
       <maven.cargo.plugin.version>1.10.10</maven.cargo.plugin.version>
+      <maven.antrun.plugin.version>3.1.0</maven.antrun.plugin.version>
 
       <version.wildfly>30.0.0.Final</version.wildfly>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
@@ -242,14 +243,26 @@
                               <overWrite>false</overWrite>
                               <outputDirectory>${project.build.directory}</outputDirectory>
                            </artifactItem>
-                           <!--artifactItem>
-                              <groupId>io.lumeer</groupId>
-                              <artifactId>lumeer-graalvm</artifactId>
-                              <version>${version}</version>
-                              <type>zip</type>
-                              <outputDirectory>${project.build.directory}/wildfly-30.0.0.Final/modules/system/layers/base</outputDirectory>
-                           </artifactItem-->
                         </artifactItems>
+                     </configuration>
+                  </execution>
+               </executions>
+            </plugin>
+            <plugin>
+               <artifactId>maven-antrun-plugin</artifactId>
+               <version>3.1.0</version>
+               <executions>
+                  <execution>
+                     <id>unpack</id>
+                     <phase>pre-integration-test</phase>
+                     <goals>
+                        <goal>run</goal>
+                     </goals>
+                     <configuration>
+                        <target>
+                           <echo message="Installing WildFly GraalVM module"/>
+                           <unzip src="../lumeer-graalvm/target/lumeer-graalvm-${project.version}-module.zip" dest="${wildfly.dir}/modules/system/layers/base/"/>
+                        </target>
                      </configuration>
                   </execution>
                </executions>

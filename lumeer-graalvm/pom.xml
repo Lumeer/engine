@@ -27,7 +27,7 @@
             <artifactId>maven-assembly-plugin</artifactId>
             <version>3.6.0</version>
             <configuration>
-               <finalName>graalvm-module-${project.version}</finalName>
+               <!--finalName>graalvm-module-${project.version}</finalName-->
                <descriptors>
                   <descriptor>src/assembly/graalvm-module.xml</descriptor>
                </descriptors>
