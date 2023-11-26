@@ -20,7 +20,6 @@ package io.lumeer.api.model.common;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
-import io.lumeer.api.adapter.ZonedDateTimeSerializer;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.HealthChecking;
 import io.lumeer.api.model.Permissions;
@@ -28,7 +27,6 @@ import io.lumeer.api.model.ResourceType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -56,12 +54,10 @@ public abstract class Resource implements WithId, HealthChecking {
    protected Permissions permissions;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
-   @JsonSerialize(using = ZonedDateTimeSerializer.class)
    @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    protected ZonedDateTime creationDate;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
-   @JsonSerialize(using = ZonedDateTimeSerializer.class)
    @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    protected ZonedDateTime updateDate;
 

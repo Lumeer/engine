@@ -83,7 +83,6 @@ public class DelayedAction {
     * Timestamp when the action could be executed at soonest.
     */
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
-   @JsonSerialize(using = ZonedDateTimeSerializer.class)
    @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime checkAfter;
 
@@ -104,7 +103,6 @@ public class DelayedAction {
     * Timestamp of action completion.
     */
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
-   @JsonSerialize(using = ZonedDateTimeSerializer.class)
    @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime completed;
 
