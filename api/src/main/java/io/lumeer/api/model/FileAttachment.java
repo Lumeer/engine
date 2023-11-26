@@ -19,11 +19,15 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
+import io.lumeer.api.adapter.ZonedDateTimeSerializer;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -63,6 +67,8 @@ public class FileAttachment implements WithId, HealthChecking {
 
    private String createdBy;
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonSerialize(using = ZonedDateTimeSerializer.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime creationDate;
 
    @JsonProperty(SIZE)

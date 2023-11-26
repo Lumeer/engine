@@ -168,6 +168,7 @@ public abstract class Utils {
 
    public static ObjectMapper createJacksonObjectMapper() {
       final ObjectMapper mapper = new ObjectMapper();
+      mapper.findAndRegisterModules();
       mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
       mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 

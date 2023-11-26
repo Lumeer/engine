@@ -20,6 +20,8 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
+import io.lumeer.api.adapter.ZonedDateTimeSerializer;
 import io.lumeer.api.model.common.WithId;
 import io.lumeer.engine.api.data.DataDocument;
 
@@ -27,6 +29,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -45,9 +49,13 @@ public class LinkInstance implements WithId {
    private String linkTypeId;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonSerialize(using = ZonedDateTimeSerializer.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime creationDate;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonSerialize(using = ZonedDateTimeSerializer.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime updateDate;
 
    private String createdBy;

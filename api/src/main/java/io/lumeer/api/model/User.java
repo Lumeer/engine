@@ -19,6 +19,8 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
+import io.lumeer.api.adapter.ZonedDateTimeSerializer;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.view.UserViews;
 import io.lumeer.engine.api.data.DataDocument;
@@ -28,6 +30,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -80,6 +84,8 @@ public class User implements HealthChecking {
 
    @JsonView(UserViews.FullView.class)
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonSerialize(using = ZonedDateTimeSerializer.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime agreementDate;
 
    @JsonView(UserViews.FullView.class)
@@ -111,6 +117,8 @@ public class User implements HealthChecking {
 
    @JsonView(UserViews.DefaultView.class)
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonSerialize(using = ZonedDateTimeSerializer.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime lastLoggedIn;
 
    @JsonView(UserViews.DefaultView.class)

@@ -5,6 +5,8 @@
       <module name="org.jboss.resteasy.resteasy-jackson-provider" />
       <module name="org.jboss.resteasy.resteasy-jaxb-provider" />
       <module name="org.jboss.resteasy.resteasy-multipart-provider" />
+      <module name="com.fasterxml.jackson.datatype.jackson-datatype-jdk8"/>
+      <module name="com.fasterxml.jackson.datatype.jackson-datatype-jsr310"/>
       <module name="org.codehaus.jackson.jackson-jaxrs" />
       <module name="java.net.http" />
       <module name="io.lumeer.graalvm" export="true"/>
