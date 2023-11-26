@@ -1,10 +1,16 @@
 <jboss-deployment-structure>
   <deployment>
     <dependencies>
+      <module name="org.jboss.resteasy.resteasy-jaxrs" />
+      <module name="org.jboss.resteasy.resteasy-jackson-provider" />
+      <module name="org.jboss.resteasy.resteasy-jaxb-provider" />
+      <module name="org.jboss.resteasy.resteasy-multipart-provider" />
+      <module name="org.codehaus.jackson.jackson-jaxrs" />
       <module name="java.net.http" />
       <module name="io.lumeer.graalvm" export="true"/>
     </dependencies>
     <exclusions>
+      <module name="org.jboss.resteasy.resteasy-json-binding-provider"/>
     </exclusions>
   </deployment>
 </jboss-deployment-structure>

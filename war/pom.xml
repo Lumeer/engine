@@ -136,6 +136,11 @@
          <artifactId>jakarta.servlet-api</artifactId>
          <scope>provided</scope>
       </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.jakarta.rs</groupId>
+         <artifactId>jackson-jakarta-rs-json-provider</artifactId>
+         <scope>test</scope>
+      </dependency>
 
       <dependency>
          <groupId>org.marvec</groupId>
@@ -191,6 +196,11 @@
       <dependency>
          <groupId>de.flapdoodle.embed</groupId>
          <artifactId>de.flapdoodle.embed.mongo</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.conscrypt</groupId>
+         <artifactId>conscrypt-openjdk-uber</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>

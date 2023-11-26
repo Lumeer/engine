@@ -18,11 +18,11 @@
  */
 package io.lumeer.api.model;
 
+import javax.annotation.concurrent.Immutable;
+import java.util.Set;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Set;
-import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class Permission {

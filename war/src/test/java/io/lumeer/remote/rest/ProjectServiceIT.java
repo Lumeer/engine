@@ -46,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.GenericType;
@@ -252,8 +253,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       final Project project = createProject(CODE1);
 
       Response response = client.target(projectUrl).path(project.getId()).path("permissions")
-                                .request(MediaType.APPLICATION_JSON)
-                                .buildGet().invoke();
+            .request(MediaType.APPLICATION_JSON).get();
       assertThat(response).isNotNull();
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
 

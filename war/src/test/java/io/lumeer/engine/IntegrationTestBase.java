@@ -26,16 +26,15 @@ import io.lumeer.storage.mongodb.EmbeddedMongoDb;
 import io.lumeer.test.arquillian.annotation.AfterUnDeploy;
 import io.lumeer.test.arquillian.annotation.BeforeDeploy;
 
-import com.mongodb.client.MongoDatabase;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.jupiter.api.BeforeEach;
 
+import com.mongodb.client.MongoDatabase;
 import jakarta.inject.Inject;
 
 public abstract class IntegrationTestBase {
@@ -59,7 +58,7 @@ public abstract class IntegrationTestBase {
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb",
-                             "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson", "org.graalvm",
+                             "de.flapdoodle", "com.univocity", "cz.gopay", "org.codehaus.jackson", "org.graalvm",
                              "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text",
                              "org.apache.commons.io", "com.floreysoft.jmte", "kotlin", "com.google.gson", "org.apache.commons.collections4")
                        .addAsWebInfResource("WEB-INF/beans.xml")
@@ -92,8 +91,12 @@ public abstract class IntegrationTestBase {
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
+                                                  "javax.xml.bind:jaxb-api", "org.conscrypt:conscrypt-openjdk-uber",
                                                   "org.mockito:mockito-core", "com.univocity:univocity-parsers",
-                                                  "org.apache.logging.log4j:log4j-core",
+                                                  "org.apache.logging.log4j:log4j-core", "jakarta.json.bind:jakarta.json.bind-api",
+                                                  "com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider",
+                                                  "com.fasterxml.jackson.module:jackson-module-jaxb-annotations",
+                                                  "com.fasterxml.jackson.core:jackson-annotations",
                                                   "software.amazon.awssdk:s3",
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",

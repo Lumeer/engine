@@ -165,4 +165,12 @@ public abstract class Utils {
 
       return mapper;
    }
+
+   public static ObjectMapper createJacksonObjectMapper() {
+      final ObjectMapper mapper = new ObjectMapper();
+      mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+      return mapper;
+   }
 }

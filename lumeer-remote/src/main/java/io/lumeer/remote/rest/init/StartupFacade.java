@@ -31,7 +31,6 @@ import jakarta.ejb.Startup;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-@Startup
 @Singleton
 public class StartupFacade implements Serializable {
 
