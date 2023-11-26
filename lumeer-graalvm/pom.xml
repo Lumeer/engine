@@ -67,6 +67,11 @@
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
+         <groupId>org.graalvm.regex</groupId>
+         <artifactId>regex</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
          <groupId>com.ibm.icu</groupId>
          <artifactId>icu4j</artifactId>
          <version>${version.icu4j}</version>

@@ -342,6 +342,11 @@
             <artifactId>js</artifactId>
             <version>${version.graalvm}</version>
          </dependency>
+         <dependency>
+            <groupId>org.graalvm.regex</groupId>
+            <artifactId>regex</artifactId>
+            <version>${version.graalvm}</version>
+         </dependency>
 
          <dependency>
             <groupId>com.floreysoft</groupId>
