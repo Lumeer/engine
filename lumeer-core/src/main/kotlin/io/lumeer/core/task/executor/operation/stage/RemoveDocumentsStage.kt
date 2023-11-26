@@ -18,7 +18,11 @@
  */
 package io.lumeer.core.task.executor.operation.stage
 
-import io.lumeer.api.model.*
+import io.lumeer.api.model.CollectionPurposeType
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.ResourceType
 import io.lumeer.core.adapter.CollectionAdapter
 import io.lumeer.core.adapter.DocumentAdapter
 import io.lumeer.core.adapter.LinkInstanceAdapter

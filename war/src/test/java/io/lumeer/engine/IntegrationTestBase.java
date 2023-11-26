@@ -26,6 +26,7 @@ import io.lumeer.storage.mongodb.EmbeddedMongoDb;
 import io.lumeer.test.arquillian.annotation.AfterUnDeploy;
 import io.lumeer.test.arquillian.annotation.BeforeDeploy;
 
+import com.mongodb.client.MongoDatabase;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.shrinkwrap.api.Archive;
@@ -34,7 +35,6 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.jupiter.api.BeforeEach;
 
-import com.mongodb.client.MongoDatabase;
 import jakarta.inject.Inject;
 
 public abstract class IntegrationTestBase {

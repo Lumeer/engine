@@ -27,17 +27,16 @@ import io.lumeer.storage.api.dao.InformationStoreDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 
-import org.bson.Document;
-import org.bson.conversions.Bson;
-
-import java.util.Date;
-
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.result.DeleteResult;
+import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import java.util.Date;
 
 public class MongoInformationStoreDao extends MongoOrganizationScopedDao implements InformationStoreDao {
 

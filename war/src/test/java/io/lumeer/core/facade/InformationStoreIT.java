@@ -40,11 +40,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import jakarta.inject.Inject;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Set;
+import jakarta.inject.Inject;
 
 @ExtendWith(ArquillianExtension.class)
 public class InformationStoreIT extends IntegrationTestBase {

@@ -20,7 +20,6 @@ package io.lumeer.core.facade;
 
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.LumeerS3Client;
-import io.lumeer.core.util.PusherClient;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;

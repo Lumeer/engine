@@ -20,7 +20,7 @@ package io.lumeer.core.util.js
 
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
-import java.util.*
+import java.util.Locale
 
 class JvmListProxy(val values: MutableList<Any?>, val locale: Locale = Locale.getDefault()) : ProxyArray {
 

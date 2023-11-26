@@ -20,6 +20,7 @@ package io.lumeer.storage.mongodb.codecs.providers;
 
 import io.lumeer.api.model.InformationRecord;
 import io.lumeer.storage.mongodb.codecs.InformationRecordCodec;
+
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;

@@ -22,7 +22,6 @@ import io.lumeer.api.adapter.ZonedDateTimeAdapter;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.AttributesResource;
 import io.lumeer.api.model.common.Resource;
-import io.lumeer.api.util.AttributeUtil;
 import io.lumeer.api.util.RoleUtils;
 import io.lumeer.engine.api.data.DataDocument;
 

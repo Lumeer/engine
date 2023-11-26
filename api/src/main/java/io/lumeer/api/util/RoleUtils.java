@@ -4,10 +4,10 @@ import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.InvitationType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.View;
 import io.lumeer.api.model.common.Resource;
 

@@ -19,7 +19,6 @@
 package io.lumeer.storage.api.dao;
 
 import io.lumeer.api.model.Group;
-import io.lumeer.api.model.Organization;
 
 import java.util.List;
 import java.util.Set;

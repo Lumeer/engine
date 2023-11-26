@@ -21,11 +21,11 @@ package io.lumeer.api.model;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 
-import java.time.ZonedDateTime;
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
 public class InformationRecord implements WithId, HealthChecking {
 

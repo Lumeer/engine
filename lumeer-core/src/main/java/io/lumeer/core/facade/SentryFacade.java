@@ -23,7 +23,6 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 
 import io.sentry.Sentry;
 import io.sentry.protocol.User;
-
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;

@@ -4,13 +4,17 @@ import io.lumeer.core.task.executor.request.SmtpConfiguration
 import org.apache.commons.collections4.map.LRUMap
 import org.apache.commons.lang3.StringUtils
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Properties
 import java.util.logging.Logger
 import jakarta.mail.Authenticator
 import jakarta.mail.Message
 import jakarta.mail.PasswordAuthentication
 import jakarta.mail.Session
-import jakarta.mail.internet.*
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeBodyPart
+import jakarta.mail.internet.MimeMessage
+import jakarta.mail.internet.MimeMultipart
+import jakarta.mail.internet.MimeUtility
 
 /*
  * Lumeer: Modern Data Definition and Processing Platform

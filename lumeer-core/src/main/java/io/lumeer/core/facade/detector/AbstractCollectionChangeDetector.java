@@ -21,7 +21,6 @@ package io.lumeer.core.facade.detector;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.engine.api.event.DocumentEvent;
 import io.lumeer.engine.api.event.ResourceEvent;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DelayedActionDao;

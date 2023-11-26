@@ -23,7 +23,6 @@ import io.lumeer.core.util.DataUtils
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.Proxy
 import org.graalvm.polyglot.proxy.ProxyObject
-import java.lang.Exception
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.math.BigDecimal
@@ -32,8 +31,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Date
+import java.util.Locale
 
 class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale = Locale.getDefault()) : ProxyObject {
     private val fields: List<Field> = listOf(*clazz.fields)

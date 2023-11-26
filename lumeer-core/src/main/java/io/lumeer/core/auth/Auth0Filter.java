@@ -21,7 +21,6 @@ package io.lumeer.core.auth;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.SentryFacade;
 
-import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.UserInfo;
@@ -29,7 +28,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.Request;
-
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;

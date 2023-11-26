@@ -18,9 +18,11 @@
  */
 package io.lumeer.storage.mongodb.dao.project;
 
-import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Projections.*;
-import static io.lumeer.storage.mongodb.util.MongoFilters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.regex;
+import static com.mongodb.client.model.Projections.include;
+import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;

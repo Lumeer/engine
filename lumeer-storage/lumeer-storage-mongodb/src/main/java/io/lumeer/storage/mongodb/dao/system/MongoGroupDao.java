@@ -42,7 +42,6 @@ import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.DeleteResult;
-
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;

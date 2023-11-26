@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 
 public class MongoFeedbackDaoTest extends MongoDbTestBase {
 

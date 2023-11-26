@@ -26,7 +26,6 @@ import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;

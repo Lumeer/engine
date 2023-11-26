@@ -18,7 +18,6 @@
  */
 package io.lumeer.core.task.executor.operation;
 
-import io.lumeer.core.task.executor.request.PrintRequest;
 import io.lumeer.core.task.executor.request.TextPrintRequest;
 
 public class PrintTextOperation extends Operation<TextPrintRequest> {

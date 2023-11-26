@@ -23,6 +23,8 @@ import io.lumeer.api.model.Project;
 import io.lumeer.api.model.TemplateData;
 import io.lumeer.core.facade.TemplateFacade;
 
+import java.util.List;
+import java.util.Objects;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -31,8 +33,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import java.util.List;
-import java.util.Objects;
 
 @RequestScoped
 @Produces(MediaType.APPLICATION_JSON)

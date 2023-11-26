@@ -19,7 +19,6 @@
 package io.lumeer.core.facade;
 
 import static io.lumeer.core.facade.ConfigurationFacade.*;
-import static io.lumeer.core.facade.ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION;
 
 import io.lumeer.api.model.Config;
 import io.lumeer.core.facade.configuration.ConfigurationManipulator;

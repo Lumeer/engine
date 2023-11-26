@@ -18,19 +18,14 @@
  */
 package io.lumeer.storage.mongodb;
 
-import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.concurrent.Semaphore;
 
-import de.flapdoodle.embed.mongo.commands.MongodArguments;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.mongo.transitions.ImmutableMongod;
 import de.flapdoodle.embed.mongo.transitions.Mongod;
 import de.flapdoodle.embed.mongo.transitions.RunningMongodProcess;
-import de.flapdoodle.embed.process.runtime.Network;
 import de.flapdoodle.reverse.TransitionWalker;
-import de.flapdoodle.reverse.Transitions;
 import de.flapdoodle.reverse.transitions.Start;
 
 public class EmbeddedMongoDb {

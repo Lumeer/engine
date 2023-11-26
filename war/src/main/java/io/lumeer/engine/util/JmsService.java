@@ -18,10 +18,6 @@
  */
 package io.lumeer.engine.util;
 
-import java.util.logging.Logger;
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.inject.Inject;
-
 /**
  * TODO JMS is disabled at the moment
  */

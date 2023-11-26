@@ -19,6 +19,7 @@
 package io.lumeer.core.facade;
 
 import io.lumeer.engine.IntegrationTestBase;
+
 import org.jboss.arquillian.junit5.ArquillianExtension;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

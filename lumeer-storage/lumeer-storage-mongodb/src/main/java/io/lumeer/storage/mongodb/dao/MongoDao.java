@@ -24,7 +24,6 @@ import io.lumeer.storage.api.query.DatabaseQuery;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
-
 import org.bson.conversions.Bson;
 
 import java.util.List;

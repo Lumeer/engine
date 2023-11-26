@@ -86,6 +86,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.query.SearchQuery;
 import io.lumeer.storage.api.query.SearchQueryStem;
 
+import com.floreysoft.jmte.Engine;
 import org.apache.commons.lang3.StringUtils;
 import org.graalvm.polyglot.Value;
 
@@ -107,8 +108,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
-
-import com.floreysoft.jmte.Engine;
 
 public class LumeerBridge {
    private static final String CREATE_PREFIX = "CREATE_";

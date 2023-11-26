@@ -31,7 +31,6 @@ import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.engine.api.data.DataStorage;
 import io.lumeer.storage.api.dao.FileAttachmentDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.PaymentDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
 import java.time.ZonedDateTime;

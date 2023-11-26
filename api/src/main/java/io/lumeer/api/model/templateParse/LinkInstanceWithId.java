@@ -19,7 +19,6 @@
 package io.lumeer.api.model.templateParse;
 
 import io.lumeer.api.model.LinkInstance;
-import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

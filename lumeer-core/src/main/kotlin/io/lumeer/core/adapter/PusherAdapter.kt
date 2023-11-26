@@ -18,8 +18,16 @@
  */
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.*
+import io.lumeer.api.model.AppId
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Project
+import io.lumeer.api.model.ResourceComment
+import io.lumeer.api.model.User
+import io.lumeer.api.model.View
 import io.lumeer.api.model.common.Resource
 import io.lumeer.core.facade.PusherFacade
 import io.lumeer.core.facade.PusherFacade.ObjectWithParent

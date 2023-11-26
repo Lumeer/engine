@@ -48,16 +48,16 @@ import io.lumeer.storage.api.dao.context.DaoContextSnapshotFactory;
 
 import org.apache.commons.lang3.StringUtils;
 
-import jakarta.enterprise.context.RequestScoped;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.BadRequestException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 
 @RequestScoped
 public class TemplateFacade extends AbstractFacade {

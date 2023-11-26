@@ -68,7 +68,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 
 @ExtendWith(ArquillianExtension.class)
 public class TemplatesIT extends ServiceIntegrationTestBase {

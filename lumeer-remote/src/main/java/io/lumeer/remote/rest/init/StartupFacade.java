@@ -27,7 +27,6 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import java.io.Serializable;
 import java.util.logging.Logger;
 import jakarta.annotation.PostConstruct;
-import jakarta.ejb.Startup;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 

@@ -60,7 +60,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.TokenHolder;
-
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 

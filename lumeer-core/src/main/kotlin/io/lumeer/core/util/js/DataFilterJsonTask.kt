@@ -18,24 +18,37 @@
  */
 package io.lumeer.core.util.js
 
-import com.google.gson.*
-import io.lumeer.api.model.*
+import io.lumeer.api.model.AllowedPermissions
+import io.lumeer.api.model.Attribute
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.ConditionType
+import io.lumeer.api.model.ConstraintData
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.Language
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Query
+import io.lumeer.api.model.User
 import io.lumeer.api.model.common.Resource
 import io.lumeer.core.js.JsEngineFactory
 import io.lumeer.core.util.Tuple
+import com.google.gson.ExclusionStrategy
+import com.google.gson.FieldAttributes
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonPrimitive
+import com.google.gson.JsonSerializer
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Value
 import java.io.IOException
-import java.nio.charset.StandardCharsets
-import java.util.concurrent.Callable
-import java.util.logging.Level
-import java.util.logging.Logger
 import java.lang.Double
 import java.lang.Float
+import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.util.concurrent.Callable
+import java.util.logging.Level
+import java.util.logging.Logger
 
 
 data class DataFilterJsonTask(val documents: List<Document>,

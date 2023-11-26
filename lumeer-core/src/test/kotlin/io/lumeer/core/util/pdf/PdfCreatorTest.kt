@@ -20,8 +20,8 @@ package io.lumeer.core.util.pdf
 
 import io.lumeer.core.pdf.PdfCreator
 import org.junit.jupiter.api.Test
-import software.amazon.awssdk.utils.StringInputStream
 import java.io.FileOutputStream
+import software.amazon.awssdk.utils.StringInputStream
 
 class PdfCreatorTest {
 

@@ -18,7 +18,12 @@
  */
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.*
+import io.lumeer.api.model.AuditRecord
+import io.lumeer.api.model.AuditType
+import io.lumeer.api.model.Payment
+import io.lumeer.api.model.ResourceType
+import io.lumeer.api.model.ServiceLimits
+import io.lumeer.api.model.User
 import io.lumeer.engine.api.data.DataDocument
 import io.lumeer.storage.api.dao.AuditDao
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot

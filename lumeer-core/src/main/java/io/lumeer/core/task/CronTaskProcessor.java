@@ -18,7 +18,14 @@
  */
 package io.lumeer.core.task;
 
-import io.lumeer.api.model.*;
+import io.lumeer.api.model.AllowedPermissions;
+import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.Document;
+import io.lumeer.api.model.Organization;
+import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.User;
+import io.lumeer.api.model.View;
 import io.lumeer.api.model.rule.CronRule;
 import io.lumeer.core.WorkspaceContext;
 import io.lumeer.core.auth.AuthenticatedUser;
@@ -29,10 +36,6 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import jakarta.ejb.Schedule;
-import jakarta.ejb.Singleton;
-import jakarta.ejb.Startup;
-import jakarta.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +43,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import jakarta.ejb.Schedule;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.Startup;
+import jakarta.inject.Inject;
 
 @Singleton
 @Startup

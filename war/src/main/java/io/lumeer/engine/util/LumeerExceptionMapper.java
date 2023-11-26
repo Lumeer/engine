@@ -30,6 +30,7 @@ import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.core.exception.NoSystemPermissionException;
 import io.lumeer.core.exception.PaymentGatewayException;
 import io.lumeer.core.exception.ServiceLimitsExceededException;
+import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.core.facade.SentryFacade;
 import io.lumeer.engine.api.exception.AttributeAlreadyExistsException;
 import io.lumeer.engine.api.exception.AttributeNotFoundException;
@@ -44,7 +45,6 @@ import io.lumeer.engine.api.exception.InvalidValueException;
 import io.lumeer.engine.api.exception.LinkAlreadyExistsException;
 import io.lumeer.engine.api.exception.NullParameterException;
 import io.lumeer.engine.api.exception.UnsuccessfulOperationException;
-import io.lumeer.core.exception.UnsupportedOperationException;
 import io.lumeer.engine.api.exception.UserCollectionAlreadyExistsException;
 import io.lumeer.engine.api.exception.VersionUpdateConflictException;
 import io.lumeer.engine.api.exception.ViewAlreadyExistsException;
@@ -53,7 +53,6 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;

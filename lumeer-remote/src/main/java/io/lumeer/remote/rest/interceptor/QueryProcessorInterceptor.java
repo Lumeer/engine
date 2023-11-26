@@ -18,7 +18,7 @@
  */
 package io.lumeer.remote.rest.interceptor;
 
-import static io.lumeer.api.model.ConditionValueType.*;
+import static io.lumeer.api.model.ConditionValueType.fromString;
 
 import io.lumeer.api.model.AttributeFilter;
 import io.lumeer.api.model.CollectionAttributeFilter;

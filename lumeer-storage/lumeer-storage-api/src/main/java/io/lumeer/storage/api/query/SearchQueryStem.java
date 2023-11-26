@@ -19,7 +19,6 @@
 package io.lumeer.storage.api.query;
 
 import io.lumeer.api.model.CollectionAttributeFilter;
-import io.lumeer.api.model.ConditionType;
 import io.lumeer.api.model.LinkAttributeFilter;
 import io.lumeer.api.model.QueryStem;
 import io.lumeer.storage.api.filter.CollectionSearchAttributeFilter;

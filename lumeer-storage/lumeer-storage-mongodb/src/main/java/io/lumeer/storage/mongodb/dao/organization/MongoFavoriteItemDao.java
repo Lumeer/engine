@@ -18,7 +18,8 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;

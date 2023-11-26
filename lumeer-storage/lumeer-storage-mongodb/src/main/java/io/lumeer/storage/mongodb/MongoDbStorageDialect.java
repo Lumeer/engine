@@ -18,7 +18,8 @@
  */
 package io.lumeer.storage.mongodb;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataSort;
