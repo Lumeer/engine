@@ -271,14 +271,14 @@ public class ImportFacadeIT extends IntegrationTestBase {
       importFacade.importDocuments(collectionId, ImportFacade.FORMAT_CSV, createImportObject(csv3));
 
       List<DataDocument> data = dataDao.getData(collectionId);
-      assertThat(data).extracting("a1").containsOnly("a", null);
-      assertThat(data).extracting("a2").containsOnly("b", null);
-      assertThat(data).extracting("a3").containsOnly("c", "x", null);
-      assertThat(data).extracting("a4").containsOnly("y", null);
-      assertThat(data).extracting("a5").containsOnly("z", null);
-      assertThat(data).extracting("a6").containsOnly("g", null);
-      assertThat(data).extracting("a7").containsOnly("h", null);
-      assertThat(data).extracting("a8").containsOnly("j", null);
+      assertThat(data).filteredOn(d -> d.containsKey("a1")).extracting("a1").containsOnly("a");
+      assertThat(data).filteredOn(d -> d.containsKey("a2")).extracting("a2").containsOnly("b");
+      assertThat(data).filteredOn(d -> d.containsKey("a3")).extracting("a3").containsOnly("c", "x");
+      assertThat(data).filteredOn(d -> d.containsKey("a4")).extracting("a4").containsOnly("y");
+      assertThat(data).filteredOn(d -> d.containsKey("a5")).extracting("a5").containsOnly("z");
+      assertThat(data).filteredOn(d -> d.containsKey("a6")).extracting("a6").containsOnly("g");
+      assertThat(data).filteredOn(d -> d.containsKey("a7")).extracting("a7").containsOnly("h");
+      assertThat(data).filteredOn(d -> d.containsKey("a8")).extracting("a8").containsOnly("j");
    }
 
    @Test

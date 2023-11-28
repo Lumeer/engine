@@ -315,7 +315,9 @@ public class TaskProcessingFacadeIT extends IntegrationTestBase {
       updatedRule = new BlocklyRule(updatedCollection.getRules().get(ruleName));
 
       final String error = updatedRule.getError();
-      assertThat(error.contains("Execution got cancelled") || error.contains("Thread was interrupted")).isTrue();
+      assertThat(error.contains("Execution got cancelled") ||
+            error.contains("Thread was interrupted") ||
+            error.contains("Context execution was cancelled.")).isTrue();
 
       // it should have been interrupted after 3000ms
       assertThat(System.currentTimeMillis() - updatedRule.getResultTimestamp()).isLessThan(5000);
