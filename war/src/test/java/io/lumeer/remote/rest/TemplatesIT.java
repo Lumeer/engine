@@ -323,6 +323,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
       AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
       AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
+      mapper.findAndRegisterModules();
       mapper.setAnnotationIntrospector(pair);
       mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
       try {
