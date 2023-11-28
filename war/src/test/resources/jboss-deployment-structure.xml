@@ -1,7 +1,6 @@
 <jboss-deployment-structure>
   <deployment>
     <dependencies>
-      <module name="com.fasterxml.jackson.datatype.jackson-datatype-jdk8"/>
       <module name="com.fasterxml.jackson.datatype.jackson-datatype-jsr310"/>
       <module name="io.lumeer.graalvm" export="true"/>
     </dependencies>
