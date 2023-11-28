@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -37,6 +38,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -61,9 +63,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
@@ -118,6 +122,9 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
 
    @Inject
    private LinkTypeDao linkTypeDao;
+
+   @Inject
+   private LinkInstanceDao linkInstanceDao;
 
    @Inject
    private SequenceDao sequenceDao;
@@ -186,7 +193,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   @Disabled // TODO uncomment once new PR code will be merged
+   @Disabled // TODO copy real template from production and validate its content
    public void testTemplatesImportByCopyProject() throws InterruptedException {
       var p1 = createProject(CODE1);
       var p2 = createProject(CODE2);
@@ -237,6 +244,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       workspaceKeeper.setProject(project);
       collectionDao.setProject(project);
       linkTypeDao.setProject(project);
+      linkInstanceDao.setProject(project);
       sequenceDao.setProject(project);
       viewDao.setProject(project);
       selectionListDao.setOrganization(organization);
@@ -284,6 +292,10 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       assertThat(function).isNotNull();
       assertThat(function.getJs().length()).isGreaterThan(100);
       assertThat(function.getXml().length()).isGreaterThan(100);
+
+      var linkInstances = linkInstanceDao.getLinkInstancesByLinkTypes(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()));
+      assertThat(linkInstances.size()).isEqualTo(content.getLinkInstances().size());
+      assertThat(linkInstances.get(0).getCreationDate()).isEqualTo(content.getLinkInstances().get(0).getCreationDate());
 
       var sequences = sequenceDao.getAllSequences();
       assertThat(sequences.size()).isEqualTo(1);

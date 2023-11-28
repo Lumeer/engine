@@ -97,6 +97,7 @@ public abstract class IntegrationTestBase {
                                                   "com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider",
                                                   "com.fasterxml.jackson.module:jackson-module-jaxb-annotations",
                                                   "com.fasterxml.jackson.core:jackson-annotations",
+                                                  "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
                                                   "software.amazon.awssdk:s3",
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
