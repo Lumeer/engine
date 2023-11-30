@@ -18,8 +18,8 @@
  */
 package io.lumeer.remote.rest;
 
-import javax.ws.rs.ApplicationPath;
-import javax.ws.rs.core.Application;
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
 
 /**
  * A class extending {@link Application} and annotated with @ApplicationPath is the Java EE 6

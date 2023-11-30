@@ -1,4 +1,4 @@
-package io.lumeer.core.auth;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,18 +16,19 @@ package io.lumeer.core.auth;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.auth;
 
 import io.lumeer.core.facade.ConfigurationFacade;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Objects;
-import javax.enterprise.context.SessionScoped;
-import javax.inject.Inject;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.enterprise.context.SessionScoped;
+import jakarta.inject.Inject;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @SessionScoped
 public class HeadersFilter implements AuthFilter, Serializable {

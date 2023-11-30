@@ -19,7 +19,6 @@
 package io.lumeer.core.template;
 
 import io.lumeer.api.model.Document;
-import io.lumeer.api.model.ServiceLimits;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.facade.DocumentFacade;
 import io.lumeer.engine.api.data.DataDocument;
@@ -32,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class DocumentCreator extends WithIdCreator {
 

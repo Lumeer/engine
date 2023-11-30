@@ -33,7 +33,18 @@ import io.lumeer.core.cache.WorkspaceCache;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.core.util.CodeGenerator;
 import io.lumeer.core.util.Utils;
-import io.lumeer.storage.api.dao.*;
+import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.InformationStoreDao;
+import io.lumeer.storage.api.dao.InitialUserDataDao;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.PaymentDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserLoginDao;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -45,8 +56,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class OrganizationFacade extends AbstractFacade {

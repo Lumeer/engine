@@ -19,7 +19,6 @@
 package io.lumeer.storage.mongodb.dao.project;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
-import static io.lumeer.storage.mongodb.util.MongoFilters.idsFilter;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceComment;
@@ -54,9 +53,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class MongoResourceCommentDao extends MongoProjectScopedDao implements ResourceCommentDao {

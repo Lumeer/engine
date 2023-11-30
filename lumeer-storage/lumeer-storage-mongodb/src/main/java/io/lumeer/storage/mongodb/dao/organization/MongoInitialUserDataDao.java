@@ -39,7 +39,7 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.enterprise.context.RequestScoped;
+import jakarta.enterprise.context.RequestScoped;
 
 @RequestScoped
 public class MongoInitialUserDataDao extends MongoOrganizationScopedDao implements InitialUserDataDao {

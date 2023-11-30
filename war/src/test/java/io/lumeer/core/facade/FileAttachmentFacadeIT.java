@@ -40,19 +40,19 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
-import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
 
-@RunWith(Arquillian.class)
-@Ignore("Cannot run without API keys and dependencies. Uncomment the dependency in IntegrationTestBase.")
+@ExtendWith(ArquillianExtension.class)
+@Disabled("Cannot run without API keys and dependencies. Uncomment the dependency in IntegrationTestBase.")
 public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
@@ -96,7 +96,7 @@ public class FileAttachmentFacadeIT extends ServiceIntegrationTestBase {
    private FileAttachment fileAttachment1;
    private FileAttachment fileAttachment2;
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       User user = new User(USER);
       this.user = userDao.createUser(user);

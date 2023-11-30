@@ -18,7 +18,8 @@
  */
 package io.lumeer.storage.mongodb;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import io.lumeer.engine.api.data.DataFilter;
 import io.lumeer.engine.api.data.DataSort;
@@ -34,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MongoDbStorageDialect implements DataStorageDialect {

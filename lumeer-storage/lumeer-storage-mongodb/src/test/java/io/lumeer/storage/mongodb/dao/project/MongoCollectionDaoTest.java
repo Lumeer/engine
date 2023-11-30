@@ -27,14 +27,14 @@ import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.function.Function;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Role;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.function.Function;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -44,8 +44,8 @@ import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.ZonedDateTime;
@@ -122,7 +122,7 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
 
    private MongoCollectionDao collectionDao;
 
-   @Before
+   @BeforeEach
    public void initCollectionDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);

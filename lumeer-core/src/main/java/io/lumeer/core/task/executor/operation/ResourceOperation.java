@@ -19,7 +19,6 @@
 package io.lumeer.core.task.executor.operation;
 
 import io.lumeer.api.model.common.WithId;
-import io.lumeer.core.task.executor.operation.Operation;
 
 import org.apache.commons.lang3.StringUtils;
 

@@ -31,12 +31,11 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public abstract class IntegrationTestBase {
 
@@ -59,10 +58,10 @@ public abstract class IntegrationTestBase {
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb",
-                             "de.flapdoodle", "com.univocity", "cz.gopay", "com.fasterxml", "org.codehaus.jackson", "org.graalvm",
+                             "de.flapdoodle", "com.univocity", "cz.gopay", "org.codehaus.jackson", "org.graalvm",
                              "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text",
                              "org.apache.commons.io", "com.floreysoft.jmte", "kotlin", "com.google.gson", "org.apache.commons.collections4")
-                       .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+                       .addAsWebInfResource("WEB-INF/beans.xml")
                        .addAsWebInfResource("jboss-deployment-structure.xml")
                        .addAsResource("defaults-ci.properties")
                        .addAsResource("defaults-dev.properties")
@@ -92,13 +91,19 @@ public abstract class IntegrationTestBase {
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")
                                             .resolve("org.assertj:assertj-core", "de.flapdoodle.embed:de.flapdoodle.embed.mongo",
+                                                  "javax.xml.bind:jaxb-api", "org.conscrypt:conscrypt-openjdk-uber",
                                                   "org.mockito:mockito-core", "com.univocity:univocity-parsers",
-                                                  "org.apache.logging.log4j:log4j-core",
+                                                  "org.apache.logging.log4j:log4j-core", "jakarta.json.bind:jakarta.json.bind-api",
+                                                  "com.fasterxml.jackson.jakarta.rs:jackson-jakarta-rs-json-provider",
+                                                  "com.fasterxml.jackson.module:jackson-module-jaxb-annotations",
+                                                  "com.fasterxml.jackson.core:jackson-annotations",
+                                                  "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
                                                   "software.amazon.awssdk:s3",
                                                   "org.graalvm.sdk:graal-sdk",
                                                   "org.graalvm.sdk:polyglot-tck",
                                                   "org.graalvm.truffle:truffle-api",
-                                                  "org.graalvm.js:js")
+                                                  "org.graalvm.js:js",
+                                                  "org.graalvm.regex:regex")
                                             .withTransitivity()
                                             .asFile()
                        );
@@ -121,12 +126,12 @@ public abstract class IntegrationTestBase {
       }
    }
 
-   @Before
+   @BeforeEach
    public void cleanDatabase() {
       ((MongoDatabase) systemDataStorage.getDatabase()).drop();
    }
 
-   @Before
+   @BeforeEach
    public void clearCaches() {
       userCache.clear();
       workspaceCache.clear();

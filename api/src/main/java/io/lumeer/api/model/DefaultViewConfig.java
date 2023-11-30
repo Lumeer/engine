@@ -19,9 +19,11 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.time.ZonedDateTime;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -34,6 +36,7 @@ public class DefaultViewConfig {
    private Object config;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime updatedAt;
 
    public DefaultViewConfig() {

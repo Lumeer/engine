@@ -23,8 +23,8 @@ import io.lumeer.api.model.Sequence;
 import io.lumeer.storage.api.dao.SequenceDao;
 
 import java.util.List;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class SequenceFacade extends AbstractFacade {

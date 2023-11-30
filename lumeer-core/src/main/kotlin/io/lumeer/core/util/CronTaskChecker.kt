@@ -7,7 +7,7 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
-import java.util.*
+import java.util.Date
 import kotlin.math.min
 
 class CronTaskChecker {

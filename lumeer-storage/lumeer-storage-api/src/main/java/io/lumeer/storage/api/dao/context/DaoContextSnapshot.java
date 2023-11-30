@@ -21,7 +21,32 @@ package io.lumeer.storage.api.dao.context;
 import io.lumeer.api.SelectedWorkspace;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
-import io.lumeer.storage.api.dao.*;
+import io.lumeer.storage.api.dao.AuditDao;
+import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.CompanyContactDao;
+import io.lumeer.storage.api.dao.DataDao;
+import io.lumeer.storage.api.dao.DelayedActionDao;
+import io.lumeer.storage.api.dao.DocumentDao;
+import io.lumeer.storage.api.dao.FavoriteItemDao;
+import io.lumeer.storage.api.dao.FeedbackDao;
+import io.lumeer.storage.api.dao.FileAttachmentDao;
+import io.lumeer.storage.api.dao.FunctionDao;
+import io.lumeer.storage.api.dao.GroupDao;
+import io.lumeer.storage.api.dao.InformationStoreDao;
+import io.lumeer.storage.api.dao.LinkDataDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
+import io.lumeer.storage.api.dao.LinkTypeDao;
+import io.lumeer.storage.api.dao.OrganizationDao;
+import io.lumeer.storage.api.dao.PaymentDao;
+import io.lumeer.storage.api.dao.ProjectDao;
+import io.lumeer.storage.api.dao.ResourceCommentDao;
+import io.lumeer.storage.api.dao.ResourceVariableDao;
+import io.lumeer.storage.api.dao.SelectionListDao;
+import io.lumeer.storage.api.dao.SequenceDao;
+import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.UserLoginDao;
+import io.lumeer.storage.api.dao.UserNotificationDao;
+import io.lumeer.storage.api.dao.ViewDao;
 
 /**
  * Holds contextual information necessary to create any Dao object in the application.

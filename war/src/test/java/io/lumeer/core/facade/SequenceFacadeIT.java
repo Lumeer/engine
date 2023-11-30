@@ -40,17 +40,17 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class SequenceFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "TORG";
@@ -85,7 +85,7 @@ public class SequenceFacadeIT extends IntegrationTestBase {
    @Inject
    private ProjectFacade projectFacade;
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       user = userDao.createUser(new User(USER));
 

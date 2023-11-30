@@ -34,8 +34,8 @@ import io.lumeer.storage.mongodb.MongoDbTestBase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public class MongoDataDaoTest extends MongoDbTestBase {
    private MongoDataDao dataDao;
    private CollectionDao collectionDao;
 
-   @Before
+   @BeforeEach
    public void initDataDao() {
       Collection col = new Collection("", "", "", "", new Permissions());
       col.setId(COLLECTION_ID);

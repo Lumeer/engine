@@ -74,6 +74,7 @@ public class TemplateParser {
    public TemplateParser(final ProjectContent projectContent) {
       final JSONParser parser = new JSONParser();
       final ObjectMapper mapper = new ObjectMapper();
+      mapper.findAndRegisterModules();
       final Object o;
       try {
          final String json = mapper.writeValueAsString(projectContent);

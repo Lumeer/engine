@@ -20,9 +20,9 @@ package io.lumeer.core.task;
 
 import io.lumeer.core.task.executor.ChangesTracker;
 
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.concurrent.ManagedExecutorService;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * Executes tasks in background.

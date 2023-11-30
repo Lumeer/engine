@@ -19,9 +19,7 @@
 
 package io.lumeer.storage.mongodb.codecs.providers;
 
-import io.lumeer.api.model.LinkInstance;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.storage.mongodb.codecs.LinkInstanceCodec;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
 
 import org.bson.codecs.Codec;

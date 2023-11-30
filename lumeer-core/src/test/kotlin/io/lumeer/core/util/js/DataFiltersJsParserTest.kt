@@ -18,12 +18,23 @@
  */
 package io.lumeer.core.util.js
 
-import io.lumeer.api.model.*
+import io.lumeer.api.model.AllowedPermissions
+import io.lumeer.api.model.Attribute
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.CollectionAttributeFilter
+import io.lumeer.api.model.ConditionType
+import io.lumeer.api.model.ConstraintData
+import io.lumeer.api.model.CurrencyData
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkPermissionsType
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Permissions
+import io.lumeer.api.model.Query
+import io.lumeer.api.model.QueryStem
 import io.lumeer.engine.api.data.DataDocument
 import org.assertj.core.api.Assertions
-
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit

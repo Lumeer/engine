@@ -7,8 +7,8 @@ import io.lumeer.api.model.Organization;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
@@ -32,7 +32,7 @@ public class MongoFavoriteItemDaoTest extends MongoDbTestBase {
 
    private MongoFavoriteItemDao dao;
 
-   @Before
+   @BeforeEach
    public void initProjectDao() {
       Organization organization = Mockito.mock(Organization.class);
       Mockito.when(organization.getId()).thenReturn(ORGANIZATION_ID);

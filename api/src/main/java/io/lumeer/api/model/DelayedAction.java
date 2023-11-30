@@ -19,7 +19,12 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
+import io.lumeer.api.adapter.ZonedDateTimeSerializer;
 import io.lumeer.engine.api.data.DataDocument;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -78,12 +83,15 @@ public class DelayedAction {
     * Timestamp when the action could be executed at soonest.
     */
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime checkAfter;
 
    /**
     * Timestamp of start of processing.
     */
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonSerialize(using = ZonedDateTimeSerializer.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime startedProcessing;
 
    /**
@@ -95,6 +103,7 @@ public class DelayedAction {
     * Timestamp of action completion.
     */
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime completed;
 
    /**

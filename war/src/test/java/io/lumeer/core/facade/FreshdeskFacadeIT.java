@@ -3,21 +3,21 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.User;
 import io.lumeer.engine.IntegrationTestBase;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class FreshdeskFacadeIT extends IntegrationTestBase {
 
    @Inject
    private FreshdeskFacade freshdeskFacade;
 
    @Test
-   @Ignore
+   @Disabled
    public void testFreshdeskTicket() {
       final User u = new User("123", "Alan Turing", "aturing@lumeer.io", null, null, false, null, true, false, null, null, null);
       freshdeskFacade.logTicket(u, "Tady je uživatel", "Který zalogoval ticket přímo z aplikace \" ' !@#$%^&*() \n abc : \"s");

@@ -36,7 +36,6 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.MongoException;
-import com.mongodb.QueryOperators;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Field;
@@ -53,11 +52,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeDao {
@@ -203,7 +201,7 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
       intersectionList.add(new ArrayList<>(query.getPriorityCollectionIds()));
 
       Document intersection = new Document("$setIntersection", intersectionList);
-      Document size = new Document(QueryOperators.SIZE, intersection);
+      Document size = new Document("$size", intersection);
 
       aggregates.add(Aggregates.addFields(new Field<>("_linkPriority", size)));
       aggregates.add(Aggregates.sort(Sorts.descending("_linkPriority")));

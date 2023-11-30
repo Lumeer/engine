@@ -18,8 +18,15 @@
  */
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.LinkPermissionsType
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Project
+import io.lumeer.api.model.RoleType
+import io.lumeer.api.model.User
+import io.lumeer.api.model.View
 import io.lumeer.core.util.DocumentUtils
 import io.lumeer.core.util.QueryUtils
 import io.lumeer.storage.api.dao.CollectionDao

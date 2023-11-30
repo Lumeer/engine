@@ -26,12 +26,11 @@ import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 
 public class MongoFeedbackDaoTest extends MongoDbTestBase {
 
@@ -41,7 +40,7 @@ public class MongoFeedbackDaoTest extends MongoDbTestBase {
 
    private MongoFeedbackDao mongoFeedbackDao;
 
-   @Before
+   @BeforeEach
    public void initUserDao() {
       mongoFeedbackDao = new MongoFeedbackDao();
       mongoFeedbackDao.setDatabase(database);

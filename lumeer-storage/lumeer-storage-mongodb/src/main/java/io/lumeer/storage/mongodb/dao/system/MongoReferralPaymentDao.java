@@ -1,4 +1,4 @@
-package io.lumeer.storage.mongodb.dao.system;/*
+/*
  * Lumeer: Modern Data Definition and Processing Platform
  *
  * Copyright (C) since 2017 Lumeer.io, s.r.o. and/or its affiliates.
@@ -16,6 +16,7 @@ package io.lumeer.storage.mongodb.dao.system;/*
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.storage.mongodb.dao.system;
 
 import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
@@ -36,8 +37,8 @@ import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class MongoReferralPaymentDao extends MongoSystemScopedDao implements ReferralPaymentDao {

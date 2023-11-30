@@ -135,6 +135,7 @@ public class JsFunctionsParser implements AutoCloseable {
                   .newBuilder("js")
                   .engine(engine)
                   .allowAllAccess(true)
+                  .allowIO(false)
                   .build();
             context.initialize("js");
 

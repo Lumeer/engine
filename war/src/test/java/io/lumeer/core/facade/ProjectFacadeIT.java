@@ -45,16 +45,16 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Collections;
 import java.util.Set;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class ProjectFacadeIT extends IntegrationTestBase {
 
    @Inject
@@ -134,7 +134,7 @@ public class ProjectFacadeIT extends IntegrationTestBase {
       return projectDao.createProject(project);
    }
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       this.user = userDao.createUser(new User(USER));
       this.stranger = userDao.createUser(new User(STRANGER_USER));

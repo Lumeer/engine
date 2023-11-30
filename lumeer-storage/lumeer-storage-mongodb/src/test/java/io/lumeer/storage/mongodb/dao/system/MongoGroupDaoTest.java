@@ -28,12 +28,11 @@ import io.lumeer.storage.mongodb.MongoDbTestBase;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.List;
-import java.util.Set;
 
 public class MongoGroupDaoTest extends MongoDbTestBase {
 
@@ -47,7 +46,7 @@ public class MongoGroupDaoTest extends MongoDbTestBase {
 
    private Organization organization;
 
-   @Before
+   @BeforeEach
    public void initGroupDao() {
       organization = Mockito.mock(Organization.class);
       Mockito.when(organization.getId()).thenReturn(ORGANIZATION_ID);

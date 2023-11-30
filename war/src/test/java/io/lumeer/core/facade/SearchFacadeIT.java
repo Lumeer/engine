@@ -60,10 +60,10 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
 import org.assertj.core.api.SoftAssertions;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -74,9 +74,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class SearchFacadeIT extends IntegrationTestBase {
 
    private static final String ORGANIZATION_CODE = "LMR";
@@ -136,7 +136,7 @@ public class SearchFacadeIT extends IntegrationTestBase {
 
    private ConstraintManager constraintManager;
 
-   @Before
+   @BeforeEach
    public void configureCollections() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
 

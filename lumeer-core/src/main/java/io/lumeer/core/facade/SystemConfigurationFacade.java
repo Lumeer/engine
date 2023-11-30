@@ -18,13 +18,12 @@
  */
 package io.lumeer.core.facade;
 
-import io.lumeer.core.facade.configuration.ConfigurationManipulator;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class SystemConfigurationFacade {

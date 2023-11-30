@@ -41,19 +41,19 @@ import io.lumeer.storage.api.dao.ReferralPaymentDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.util.Lists;
 
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class PaymentFacade extends AbstractFacade {
@@ -242,7 +242,7 @@ public class PaymentFacade extends AbstractFacade {
          return paymentDao.getReferralPayments(referenceNo);
       }
 
-      return new PaymentStats(0L, Lists.emptyList(), Lists.emptyList());
+      return new PaymentStats(0L, Collections.emptyList(), Collections.emptyList());
    }
 
    private void checkManagePermissions(final Organization organization) {

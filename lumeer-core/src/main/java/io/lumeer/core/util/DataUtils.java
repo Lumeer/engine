@@ -25,11 +25,6 @@ import com.mongodb.client.model.geojson.Point;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.time.DateTimeException;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 

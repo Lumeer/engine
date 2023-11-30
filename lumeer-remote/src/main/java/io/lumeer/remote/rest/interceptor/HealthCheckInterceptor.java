@@ -22,9 +22,9 @@ import io.lumeer.api.model.HealthChecking;
 import io.lumeer.remote.rest.annotation.HealthCheck;
 
 import java.util.Collection;
-import javax.interceptor.AroundInvoke;
-import javax.interceptor.Interceptor;
-import javax.interceptor.InvocationContext;
+import jakarta.interceptor.AroundInvoke;
+import jakarta.interceptor.Interceptor;
+import jakarta.interceptor.InvocationContext;
 
 @Interceptor
 @HealthCheck

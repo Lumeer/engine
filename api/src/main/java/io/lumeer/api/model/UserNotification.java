@@ -19,10 +19,12 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
 import io.lumeer.engine.api.data.DataDocument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -42,11 +44,13 @@ public class UserNotification {
    private String userId;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime createdAt;
 
    private boolean read = false;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime firstReadAt;
 
    private NotificationType type;

@@ -20,6 +20,13 @@ package io.lumeer.core.util;
 
 import io.lumeer.core.exception.BadFormatException;
 
+import com.fasterxml.jackson.databind.AnnotationIntrospector;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
+
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -33,13 +40,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
-
-import com.fasterxml.jackson.databind.AnnotationIntrospector;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 
 public abstract class Utils {
 
@@ -161,6 +161,15 @@ public abstract class Utils {
       final AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
       final AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
       mapper.setAnnotationIntrospector(pair);
+      mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+      return mapper;
+   }
+
+   public static ObjectMapper createJacksonObjectMapper() {
+      final ObjectMapper mapper = new ObjectMapper();
+      mapper.findAndRegisterModules();
+      mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
       mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
       return mapper;

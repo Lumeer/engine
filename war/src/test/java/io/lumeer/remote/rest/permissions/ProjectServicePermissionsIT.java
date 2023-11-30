@@ -38,22 +38,22 @@ import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.GenericType;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    @Inject
@@ -78,7 +78,7 @@ public class  ProjectServicePermissionsIT extends ServiceIntegrationTestBase {
 
    private String projectsUrl;
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       User user = new User(AuthenticatedUser.DEFAULT_EMAIL);
       this.user = userDao.createUser(user);

@@ -23,7 +23,6 @@ import io.lumeer.core.util.DataUtils
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.Proxy
 import org.graalvm.polyglot.proxy.ProxyObject
-import java.lang.Exception
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.math.BigDecimal
@@ -32,8 +31,8 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
-import kotlin.collections.ArrayList
+import java.util.Date
+import java.util.Locale
 
 class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale = Locale.getDefault()) : ProxyObject {
     private val fields: List<Field> = listOf(*clazz.fields)
@@ -48,7 +47,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
         members.addAll(fields.filter { !it.name.isUpperCase() }.map { it.name })
         members.addAll(methods.filter { methodAllowed(it) && it.name.startsWith("get") }
                 .map { it.name }
-                .map { it.substring(3, 4).toLowerCase() + it.substring(4) }
+                .map { it.substring(3, 4).lowercase() + it.substring(4) }
                 .filter { it.isNotEmpty() }
         )
         membersCheck.addAll(members)
@@ -69,7 +68,7 @@ class JvmObjectProxy<T>(val proxyObject: T, clazz: Class<T>, val locale: Locale 
                         return enc
                     }
 
-                    val keyMethod = key.substring(0, 1).toUpperCase() + key.substring(1)
+                    val keyMethod = key.substring(0, 1).uppercase() + key.substring(1)
                     val method = methods.firstOrNull { methodAllowed(it) && it.name == "get$keyMethod" }
                     if (method != null) {
                         val obj = encodeObject(method.invoke(proxyObject), locale)

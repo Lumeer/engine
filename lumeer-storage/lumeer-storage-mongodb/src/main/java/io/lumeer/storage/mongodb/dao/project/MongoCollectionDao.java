@@ -41,7 +41,6 @@ import io.lumeer.storage.mongodb.codecs.CollectionPurposeCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
-import com.mongodb.QueryOperators;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -66,9 +65,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class MongoCollectionDao extends MongoProjectScopedDao implements CollectionDao {
@@ -263,7 +262,7 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
          List<ObjectId> ids = query.getPriorityCollectionIds().stream().map(ObjectId::new).collect(Collectors.toList());
          Document condition = new Document("$cond",
                new Document("if",
-                     new Document(QueryOperators.IN, Arrays.asList("$" + CollectionCodec.ID, ids))
+                     new Document("$in", Arrays.asList("$" + CollectionCodec.ID, ids))
                ).append("then", 0)
                 .append("else", 1));
 

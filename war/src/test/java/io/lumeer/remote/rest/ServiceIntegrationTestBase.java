@@ -21,13 +21,15 @@ package io.lumeer.remote.rest;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Project;
+import io.lumeer.core.util.Utils;
 import io.lumeer.engine.IntegrationTestBase;
 
-import org.junit.After;
-import org.junit.Before;
+import com.fasterxml.jackson.jakarta.rs.json.JacksonJsonProvider;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 
 public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
 
@@ -35,12 +37,12 @@ public abstract class ServiceIntegrationTestBase extends IntegrationTestBase {
 
    protected Client client;
 
-   @Before
+   @BeforeEach
    public void createClient() {
-      client = ClientBuilder.newBuilder().build();
+      client = ClientBuilder.newBuilder().register(new JacksonJsonProvider(Utils.createJacksonObjectMapper(), JacksonJsonProvider.BASIC_ANNOTATIONS)).build();
    }
 
-   @After
+   @AfterEach
    public void closeClient() {
       if (client != null) {
          client.close();

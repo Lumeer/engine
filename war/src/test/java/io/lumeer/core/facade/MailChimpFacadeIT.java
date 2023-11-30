@@ -21,14 +21,14 @@ package io.lumeer.core.facade;
 import io.lumeer.api.model.User;
 import io.lumeer.engine.IntegrationTestBase;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class MailChimpFacadeIT extends IntegrationTestBase {
 
    @Inject
@@ -36,7 +36,7 @@ public class MailChimpFacadeIT extends IntegrationTestBase {
    private MailerService mailerService;
 
    @Test
-   @Ignore("It does not make sense to communicate with MailChimp API once it was verified")
+   @Disabled("It does not make sense to communicate with MailChimp API once it was verified")
    public void testMailChimp() {
       final User u = new User("123", "Pepin", "aturing@lumeer.io", null, null, false, null, true, false, null, null, null);
       mailerService.setUserSubscription(u, true);

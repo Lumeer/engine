@@ -19,8 +19,21 @@
 
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.Group
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkPermissionsType
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Permissions
+import io.lumeer.api.model.Perspective
+import io.lumeer.api.model.Project
+import io.lumeer.api.model.ResourceType
+import io.lumeer.api.model.RoleType
+import io.lumeer.api.model.RolesDifference
+import io.lumeer.api.model.User
+import io.lumeer.api.model.View
 import io.lumeer.api.model.common.Resource
 import io.lumeer.api.model.viewConfig.FormConfig
 import io.lumeer.api.util.PermissionUtils
@@ -32,7 +45,11 @@ import io.lumeer.core.util.DocumentUtils
 import io.lumeer.core.util.FunctionRuleJsParser
 import io.lumeer.core.util.LinkInstanceUtils
 import io.lumeer.core.util.QueryUtils
-import io.lumeer.storage.api.dao.*
+import io.lumeer.storage.api.dao.CollectionDao
+import io.lumeer.storage.api.dao.GroupDao
+import io.lumeer.storage.api.dao.LinkTypeDao
+import io.lumeer.storage.api.dao.UserDao
+import io.lumeer.storage.api.dao.ViewDao
 
 class PermissionAdapter(
    private val userDao: UserDao,

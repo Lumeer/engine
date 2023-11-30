@@ -18,7 +18,8 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
@@ -38,9 +39,9 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements FavoriteItemDao {

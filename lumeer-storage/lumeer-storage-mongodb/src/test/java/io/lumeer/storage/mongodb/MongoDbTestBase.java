@@ -23,10 +23,10 @@ import static io.lumeer.storage.mongodb.EmbeddedMongoDb.*;
 import io.lumeer.engine.api.data.StorageConnection;
 
 import com.mongodb.client.MongoDatabase;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 
 public abstract class MongoDbTestBase {
 
@@ -36,7 +36,7 @@ public abstract class MongoDbTestBase {
 
    protected MongoDatabase database;
 
-   @BeforeClass
+   @BeforeAll
    public static void startEmbeddedMongoDb() {
       if (!SKIP) {
          embeddedMongoDb = new EmbeddedMongoDb();
@@ -44,14 +44,14 @@ public abstract class MongoDbTestBase {
       }
    }
 
-   @AfterClass
+   @AfterAll
    public static void stopEmbeddedMongoDb() {
       if (embeddedMongoDb != null) {
          embeddedMongoDb.stop();
       }
    }
 
-   @Before
+   @BeforeEach
    public void connectMongoDbStorage() {
       mongoDbStorage = new MongoDbStorage();
       mongoDbStorage.connect(new StorageConnection(HOST, PORT, USER, PASSWORD), NAME, SSL);
@@ -59,7 +59,7 @@ public abstract class MongoDbTestBase {
       database.drop();
    }
 
-   @After
+   @AfterEach
    public void disconnectMongoDbStorage() {
       if (mongoDbStorage != null) {
          mongoDbStorage.disconnect();

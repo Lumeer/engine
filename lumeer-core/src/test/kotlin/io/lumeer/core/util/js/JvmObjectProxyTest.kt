@@ -18,18 +18,17 @@
  */
 package io.lumeer.core.util.js
 
-import kotlin.Throws
-import com.fasterxml.jackson.core.JsonProcessingException
 import io.lumeer.api.model.Document
 import io.lumeer.engine.api.data.DataDocument
-import java.time.ZonedDateTime
+import com.fasterxml.jackson.core.JsonProcessingException
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import java.time.ZonedDateTime
 
 class JvmObjectProxyTest {
     private lateinit var context: Context

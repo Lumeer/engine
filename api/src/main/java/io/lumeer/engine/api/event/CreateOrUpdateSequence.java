@@ -18,8 +18,6 @@
  */
 package io.lumeer.engine.api.event;
 
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Project;
 import io.lumeer.api.model.Sequence;
 
 public class CreateOrUpdateSequence extends SequenceEvent {

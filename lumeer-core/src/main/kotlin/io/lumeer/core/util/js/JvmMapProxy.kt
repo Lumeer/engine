@@ -21,7 +21,7 @@ package io.lumeer.core.util.js
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyArray
 import org.graalvm.polyglot.proxy.ProxyObject
-import java.util.*
+import java.util.Locale
 
 class JvmMapProxy(val values: MutableMap<String, Any?>, val locale: Locale = Locale.getDefault()) : ProxyObject {
 
@@ -62,7 +62,7 @@ class JvmMapProxy(val values: MutableMap<String, Any?>, val locale: Locale = Loc
 
             val v = values[key]
             if (v != null) {
-                val enc = JvmObjectProxy.encodeObject(v!!, locale)
+                val enc = JvmObjectProxy.encodeObject(v, locale)
                 objects[key] = enc
                 return enc
             }

@@ -35,8 +35,8 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
@@ -72,7 +72,7 @@ public class MongoOrganizationDaoTest extends MongoDbTestBase {
 
    private MongoOrganizationDao organizationDao;
 
-   @Before
+   @BeforeEach
    public void initOrganizationDao() {
       organizationDao = new MongoOrganizationDao();
       organizationDao.setDatabase(database);

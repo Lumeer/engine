@@ -23,8 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.lumeer.api.model.Project;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class MongoSequenceDaoTest extends MongoDbTestBase {
@@ -33,7 +33,7 @@ public class MongoSequenceDaoTest extends MongoDbTestBase {
 
    private MongoSequenceDao sequenceDao;
 
-   @Before
+   @BeforeEach
    public void initSequenceDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);

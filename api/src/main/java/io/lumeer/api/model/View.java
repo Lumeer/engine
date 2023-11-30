@@ -19,12 +19,14 @@
 package io.lumeer.api.model;
 
 import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -57,6 +59,7 @@ public class View extends Resource implements Updatable<View> {
    private List<String> folders;
 
    @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime lastTimeUsed;
 
    private boolean favorite;

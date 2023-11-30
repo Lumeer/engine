@@ -24,7 +24,7 @@ import io.lumeer.api.model.Payment
 import io.lumeer.api.model.ServiceLimits
 import io.lumeer.engine.api.cache.Cache
 import io.lumeer.storage.api.dao.PaymentDao
-import java.util.*
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class PaymentAdapter(private val paymentDao: PaymentDao, private val paymentCache: Cache<Payment>? = null) {

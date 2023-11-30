@@ -43,12 +43,12 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <version.velocity>1.7</version.velocity>
-      <version.puppycrawl>8.32</version.puppycrawl>
+      <version.velocity>2.3</version.velocity>
+      <version.puppycrawl>10.12.4</version.puppycrawl>
 
-      <java.level>12</java.level>
-      <maven.compiler.source>11</maven.compiler.source>
-      <maven.compiler.target>11</maven.compiler.target>
+      <java.level>20</java.level>
+      <maven.compiler.source>20</maven.compiler.source>
+      <maven.compiler.target>20</maven.compiler.target>
    </properties>
 
    <dependencies>
@@ -76,7 +76,7 @@
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-log4j12</artifactId>
+         <artifactId>slf4j-reload4j</artifactId>
       </dependency>
       <dependency>
          <groupId>org.slf4j</groupId>
@@ -85,25 +85,30 @@
 
       <!-- Findbugs -->
       <dependency>
-         <groupId>com.google.code.findbugs</groupId>
-         <artifactId>annotations</artifactId>
+         <groupId>com.github.spotbugs</groupId>
+         <artifactId>spotbugs-annotations</artifactId>
          <scope>provided</scope>
       </dependency>
 
       <!-- Testing -->
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter</artifactId>
+         <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.assertj</groupId>
          <artifactId>assertj-core</artifactId>
+         <scope>test</scope>
       </dependency>
 
-      <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
       <dependency>
          <groupId>com.fasterxml.jackson.core</groupId>
          <artifactId>jackson-annotations</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.core</groupId>
+         <artifactId>jackson-databind</artifactId>
       </dependency>
       <dependency>
          <groupId>com.googlecode.json-simple</groupId>
@@ -158,7 +163,7 @@
                <!-- Reflow skin requires Velocity >= 1.7  -->
                <dependency>
                   <groupId>org.apache.velocity</groupId>
-                  <artifactId>velocity</artifactId>
+                  <artifactId>velocity-engine-core</artifactId>
                   <version>${version.velocity}</version>
                </dependency>
             </dependencies>
@@ -209,7 +214,7 @@
             </executions>
             <configuration>
                <configLocation>${project.basedir}/src/site/lumeer-check.xml</configLocation>
-               <encoding>UTF-8</encoding>
+               <inputEncoding>UTF-8</inputEncoding>
                <consoleOutput>true</consoleOutput>
                <failsOnError>false</failsOnError>
                <linkXRef>false</linkXRef>
@@ -303,9 +308,9 @@
             </configuration>
          </plugin>
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>findbugs-maven-plugin</artifactId>
-            <version>${maven.findbugs.plugin.version}</version>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>${maven.spotbugs.plugin.version}</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -320,7 +325,7 @@
             </reportSets>
             <configuration>
                <configLocation>src/site/lumeer-check.xml</configLocation>
-               <encoding>UTF-8</encoding>
+               <inputEncoding>UTF-8</inputEncoding>
                <consoleOutput>true</consoleOutput>
                <failsOnError>false</failsOnError>
                <linkXRef>false</linkXRef>

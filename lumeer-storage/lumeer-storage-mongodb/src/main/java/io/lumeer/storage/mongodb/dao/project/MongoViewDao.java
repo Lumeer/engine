@@ -18,9 +18,11 @@
  */
 package io.lumeer.storage.mongodb.dao.project;
 
-import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Projections.*;
-import static io.lumeer.storage.mongodb.util.MongoFilters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.regex;
+import static com.mongodb.client.model.Projections.include;
+import static io.lumeer.storage.mongodb.util.MongoFilters.codeFilter;
+import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
@@ -53,9 +55,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class MongoViewDao extends MongoProjectScopedDao implements ViewDao {

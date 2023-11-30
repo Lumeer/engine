@@ -22,8 +22,8 @@ import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Constraint;
 import io.lumeer.api.model.ConstraintType;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
@@ -31,15 +31,15 @@ public class AttributeUtilTest {
 
    @Test
    public void testInUTC() {
-      Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", null)));
-      Assert.assertTrue(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", true)));
-      Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", false)));
-      Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY", null)));
-      Assert.assertTrue(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", true)));
-      Assert.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", false)));
-      Assert.assertFalse(AttributeUtil.isUTC(getAttribute(null, null)));
-      Assert.assertTrue(AttributeUtil.isUTC(getAttribute(null, true)));
-      Assert.assertFalse(AttributeUtil.isUTC(getAttribute(null, false)));
+      Assertions.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", null)));
+      Assertions.assertTrue(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", true)));
+      Assertions.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", false)));
+      Assertions.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY", null)));
+      Assertions.assertTrue(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", true)));
+      Assertions.assertFalse(AttributeUtil.isUTC(getAttribute("DD.MM.YYYY HH:mm", false)));
+      Assertions.assertFalse(AttributeUtil.isUTC(getAttribute(null, null)));
+      Assertions.assertTrue(AttributeUtil.isUTC(getAttribute(null, true)));
+      Assertions.assertFalse(AttributeUtil.isUTC(getAttribute(null, false)));
    }
 
    private Attribute getAttribute(final String format, final Boolean asUtc) {

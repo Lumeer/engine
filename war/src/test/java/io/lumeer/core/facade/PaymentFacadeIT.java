@@ -27,19 +27,19 @@ import io.lumeer.core.adapter.PaymentAdapter;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.storage.api.dao.PaymentDao;
 
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class PaymentFacadeIT extends IntegrationTestBase {
 
    private static final String CODE = "ORG1";
@@ -64,7 +64,7 @@ public class PaymentFacadeIT extends IntegrationTestBase {
 
    private PaymentAdapter paymentAdapter;
 
-   @Before
+   @BeforeEach
    public void beforeMethod() { // @BeforeClass requires static method, this does not work with injections
       paymentGatewayFacade.setDryRun(true);
       organization = createOrganization();

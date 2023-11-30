@@ -18,8 +18,14 @@
  */
 package io.lumeer.core.util.js
 
-import io.lumeer.api.model.*
+import io.lumeer.api.model.AllowedPermissions
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.ConstraintData
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.Language
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Query
 import io.lumeer.core.constraint.ConstraintManager
 import io.lumeer.core.util.Tuple
 import java.util.concurrent.Callable

@@ -20,7 +20,6 @@ package io.lumeer.core.task.executor;
 
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.LinkType;
-import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.core.task.RuleTask;
 import io.lumeer.core.task.TaskExecutor;

@@ -26,8 +26,8 @@ import io.lumeer.storage.mongodb.MongoDbTestBase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import org.bson.Document;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,7 +42,7 @@ public class MongoLinkDataDaoTest extends MongoDbTestBase {
 
    private MongoLinkDataDao dataDao;
 
-   @Before
+   @BeforeEach
    public void initDataDao() {
       dataDao = new MongoLinkDataDao();
       dataDao.setDatabase(database);

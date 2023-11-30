@@ -21,6 +21,7 @@ package io.lumeer.remote.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
@@ -37,6 +38,7 @@ import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
 import io.lumeer.core.facade.ProjectFacade;
 import io.lumeer.storage.api.dao.CollectionDao;
+import io.lumeer.storage.api.dao.LinkInstanceDao;
 import io.lumeer.storage.api.dao.LinkTypeDao;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
@@ -52,24 +54,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
-import org.jboss.arquillian.junit.Arquillian;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
+import java.util.stream.Collectors;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 
-@RunWith(Arquillian.class)
+@ExtendWith(ArquillianExtension.class)
 public class TemplatesIT extends ServiceIntegrationTestBase {
 
    private static final String USER = AuthenticatedUser.DEFAULT_EMAIL;
@@ -120,6 +124,9 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    private LinkTypeDao linkTypeDao;
 
    @Inject
+   private LinkInstanceDao linkInstanceDao;
+
+   @Inject
    private SequenceDao sequenceDao;
 
    @Inject
@@ -128,7 +135,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    @Inject
    private ResourceVariableDao resourceVariableDao;
 
-   @Before
+   @BeforeEach
    public void configureProject() {
       User user = new User(USER);
       this.user = userDao.createUser(user);
@@ -186,7 +193,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
    }
 
    @Test
-   @Ignore // TODO uncomment once new PR code will be merged
+   @Disabled // TODO copy real template from production and validate its content
    public void testTemplatesImportByCopyProject() throws InterruptedException {
       var p1 = createProject(CODE1);
       var p2 = createProject(CODE2);
@@ -216,7 +223,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       ) {
          templateContent = input.readAllBytes();
       } catch (IOException | NullPointerException e) {
-         Assert.fail("Could not read test template.");
+         Assertions.fail("Could not read test template.");
       }
 
       Entity entity = Entity.json(templateContent);
@@ -237,6 +244,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       workspaceKeeper.setProject(project);
       collectionDao.setProject(project);
       linkTypeDao.setProject(project);
+      linkInstanceDao.setProject(project);
       sequenceDao.setProject(project);
       viewDao.setProject(project);
       selectionListDao.setOrganization(organization);
@@ -285,6 +293,10 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       assertThat(function.getJs().length()).isGreaterThan(100);
       assertThat(function.getXml().length()).isGreaterThan(100);
 
+      var linkInstances = linkInstanceDao.getLinkInstancesByLinkTypes(linkTypes.stream().map(LinkType::getId).collect(Collectors.toSet()));
+      assertThat(linkInstances.size()).isEqualTo(content.getLinkInstances().size());
+      assertThat(linkInstances.get(0).getCreationDate()).isEqualTo(content.getLinkInstances().get(0).getCreationDate());
+
       var sequences = sequenceDao.getAllSequences();
       assertThat(sequences.size()).isEqualTo(1);
       assertThat(sequences.get(0).getSeq()).isEqualTo(1);
@@ -311,6 +323,7 @@ public class TemplatesIT extends ServiceIntegrationTestBase {
       AnnotationIntrospector primary = new JacksonAnnotationIntrospector();
       AnnotationIntrospector secondary = new JaxbAnnotationIntrospector(TypeFactory.defaultInstance());
       AnnotationIntrospector pair = AnnotationIntrospector.pair(primary, secondary);
+      mapper.findAndRegisterModules();
       mapper.setAnnotationIntrospector(pair);
       mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
       try {

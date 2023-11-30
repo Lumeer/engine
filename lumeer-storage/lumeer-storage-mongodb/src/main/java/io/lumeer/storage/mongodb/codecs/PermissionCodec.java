@@ -20,10 +20,10 @@
 package io.lumeer.storage.mongodb.codecs;
 
 import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.Role;
 import io.lumeer.api.model.RoleOld;
+import io.lumeer.api.model.RoleType;
 import io.lumeer.api.util.RoleUtils;
 
 import org.bson.BsonReader;

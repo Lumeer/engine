@@ -21,7 +21,6 @@ package io.lumeer.core.auth;
 import io.lumeer.api.model.User;
 import io.lumeer.core.facade.SentryFacade;
 
-import com.auth0.SessionUtils;
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.UserInfo;
@@ -29,7 +28,6 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.Request;
-
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -48,16 +46,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.inject.Inject;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.annotation.WebFilter;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.inject.Inject;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @WebFilter(urlPatterns = "/*")
 public class Auth0Filter implements Filter {
@@ -317,7 +315,9 @@ public class Auth0Filter implements Filter {
       final String bearer = request.getHeader("Authorization");
       if (bearer != null) {
          final String accessToken = bearer.substring(bearer.indexOf("Bearer") + 7).trim();
-         SessionUtils.set(request, "accessToken", accessToken);
+         // workaround, until Auth0 adds Jakarta support
+         // SessionUtils.set((javax.servlet.http.HttpServletRequest) request, "accessToken", accessToken);
+         request.getSession(true).setAttribute("accessToken", accessToken);
          return accessToken;
       }
 

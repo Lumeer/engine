@@ -32,8 +32,8 @@ import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import org.assertj.core.api.SoftAssertions;
 import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.time.ZonedDateTime;
@@ -63,7 +63,7 @@ public class MongoDocumentDaoTest extends MongoDbTestBase {
 
    private MongoDocumentDao documentDao;
 
-   @Before
+   @BeforeEach
    public void initDocumentDao() {
       Project project = Mockito.mock(Project.class);
       Mockito.when(project.getId()).thenReturn(PROJECT_ID);

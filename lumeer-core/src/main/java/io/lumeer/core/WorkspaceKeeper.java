@@ -26,8 +26,8 @@ import io.lumeer.core.cache.WorkspaceCache;
 
 import java.util.Optional;
 import java.util.Stack;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class WorkspaceKeeper implements SelectedWorkspace {

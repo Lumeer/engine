@@ -46,19 +46,19 @@
 
       <maven.embedmongo.plugin.version>0.4.2</maven.embedmongo.plugin.version>
 
-      <version.velocity>1.7</version.velocity>
-      <version.puppycrawl>8.32</version.puppycrawl>
-      <version.mongo.driver>3.12.7</version.mongo.driver>
+      <version.velocity>2.3</version.velocity>
+      <version.puppycrawl>10.12.4</version.puppycrawl>
+      <version.mongo.driver>4.11.1</version.mongo.driver>
       <version.commons.io>2.8.0</version.commons.io>
-      <version.embedded.mongodb>2.1.1</version.embedded.mongodb>
-      <version.arquillian>1.6.0.Final</version.arquillian>
-      <version.arquillian-container>3.0.1.Final</version.arquillian-container>
+      <version.embedded.mongodb>4.10.1</version.embedded.mongodb>
+      <version.arquillian>1.7.2.Final</version.arquillian>
+      <version.arquillian-container>5.0.1.Final</version.arquillian-container>
 
-      <java.level>12</java.level>
-      <maven.compiler.source>11</maven.compiler.source>
-      <maven.compiler.target>11</maven.compiler.target>
+      <java.level>20</java.level>
+      <maven.compiler.source>20</maven.compiler.source>
+      <maven.compiler.target>20</maven.compiler.target>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
-      <wildfly.version>17.0.1.Final</wildfly.version>
+      <wildfly.version>30.0.0.Final</wildfly.version>
    </properties>
 
    <dependencyManagement>
@@ -97,43 +97,49 @@
       </dependency>
 
       <dependency>
-         <groupId>javax.enterprise</groupId>
-         <artifactId>cdi-api</artifactId>
+         <groupId>jakarta.enterprise</groupId>
+         <artifactId>jakarta.enterprise.cdi-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.annotation</groupId>
-         <artifactId>jboss-annotations-api_1.3_spec</artifactId>
+         <groupId>jakarta.annotation</groupId>
+         <artifactId>jakarta.annotation-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.resteasy</groupId>
-         <artifactId>resteasy-jaxrs</artifactId>
+         <groupId>jakarta.ws.rs</groupId>
+         <artifactId>jakarta.ws.rs-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.ejb</groupId>
-         <artifactId>jboss-ejb-api_3.2_spec</artifactId>
+         <groupId>jakarta.ejb</groupId>
+         <artifactId>jakarta.ejb-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.jms</groupId>
-         <artifactId>jboss-jms-api_2.0_spec</artifactId>
+         <groupId>jakarta.jms</groupId>
+         <artifactId>jakarta.jms-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.websocket</groupId>
-         <artifactId>jboss-websocket-api_1.1_spec</artifactId>
+         <groupId>jakarta.websocket</groupId>
+         <artifactId>jakarta.websocket-api</artifactId>
          <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.enterprise.concurrent</groupId>
-         <artifactId>jboss-concurrency-api_1.0_spec</artifactId>
+         <groupId>jakarta.enterprise.concurrent</groupId>
+         <artifactId>jakarta.enterprise.concurrent-api</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec.javax.servlet</groupId>
-         <artifactId>jboss-servlet-api_4.0_spec</artifactId>
+         <groupId>jakarta.servlet</groupId>
+         <artifactId>jakarta.servlet-api</artifactId>
          <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>com.fasterxml.jackson.jakarta.rs</groupId>
+         <artifactId>jackson-jakarta-rs-json-provider</artifactId>
+         <scope>test</scope>
       </dependency>
 
       <dependency>
@@ -158,22 +164,27 @@
          <artifactId>js</artifactId>
       </dependency>
       <dependency>
+         <groupId>org.graalvm.regex</groupId>
+         <artifactId>regex</artifactId>
+      </dependency>
+
+      <dependency>
          <groupId>software.amazon.awssdk</groupId>
          <artifactId>s3</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpclient</artifactId>
+         <groupId>org.apache.httpcomponents.client5</groupId>
+         <artifactId>httpclient5</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.apache.httpcomponents</groupId>
-         <artifactId>httpcore</artifactId>
+         <groupId>org.apache.httpcomponents.core5</groupId>
+         <artifactId>httpcore5</artifactId>
       </dependency>
 
       <!-- Testing -->
       <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
+         <groupId>org.junit.jupiter</groupId>
+         <artifactId>junit-jupiter</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -192,6 +203,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>org.conscrypt</groupId>
+         <artifactId>conscrypt-openjdk-uber</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>io.lumeer</groupId>
          <artifactId>lumeer-storage-mongodb</artifactId>
          <type>test-jar</type>
@@ -199,8 +215,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss.arquillian.junit</groupId>
-         <artifactId>arquillian-junit-container</artifactId>
+         <groupId>org.jboss.arquillian.junit5</groupId>
+         <artifactId>arquillian-junit5-container</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -215,7 +231,7 @@
       </dependency>
       <dependency>
          <groupId>org.jboss.arquillian.protocol</groupId>
-         <artifactId>arquillian-protocol-servlet</artifactId>
+         <artifactId>arquillian-protocol-servlet-jakarta</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -227,11 +243,14 @@
       <dependency>
          <groupId>com.fasterxml.jackson.module</groupId>
          <artifactId>jackson-module-jaxb-annotations</artifactId>
-         <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>javax.mail</groupId>
-         <artifactId>mail</artifactId>
+         <groupId>javax.xml.bind</groupId>
+         <artifactId>jaxb-api</artifactId>
+      </dependency>
+      <dependency>
+         <groupId>jakarta.mail</groupId>
+         <artifactId>jakarta.mail-api</artifactId>
          <scope>test</scope>
       </dependency>
    </dependencies>
@@ -284,9 +303,9 @@
             </configuration>
          </plugin>
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>findbugs-maven-plugin</artifactId>
-            <version>${maven.findbugs.plugin.version}</version>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-maven-plugin</artifactId>
+            <version>${maven.spotbugs.plugin.version}</version>
          </plugin>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -301,7 +320,7 @@
                <!-- Reflow skin requires Velocity >= 1.7  -->
                <dependency>
                   <groupId>org.apache.velocity</groupId>
-                  <artifactId>velocity</artifactId>
+                  <artifactId>velocity-engine-core</artifactId>
                   <version>${version.velocity}</version>
                </dependency>
             </dependencies>
@@ -339,7 +358,7 @@
             </executions>
             <configuration>
                <configLocation>${project.basedir}/src/site/lumeer-check.xml</configLocation>
-               <encoding>UTF-8</encoding>
+               <inputEncoding>UTF-8</inputEncoding>
                <consoleOutput>true</consoleOutput>
                <failsOnError>false</failsOnError>
                <linkXRef>false</linkXRef>
@@ -391,8 +410,12 @@
             <artifactId>maven-dependency-plugin</artifactId>
          </plugin>
          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+         </plugin>
+         <plugin>
             <groupId>org.codehaus.cargo</groupId>
-            <artifactId>cargo-maven2-plugin</artifactId>
+            <artifactId>cargo-maven3-plugin</artifactId>
          </plugin>
       </plugins>
       <pluginManagement>
@@ -466,7 +489,7 @@
                </plugin>
                <plugin>
                   <groupId>org.codehaus.cargo</groupId>
-                  <artifactId>cargo-maven2-plugin</artifactId>
+                  <artifactId>cargo-maven3-plugin</artifactId>
                   <configuration>
                      <skip>true</skip>
                   </configuration>
@@ -581,7 +604,7 @@
                   <dependencies>
                      <dependency>
                         <groupId>org.mongodb</groupId>
-                        <artifactId>mongo-java-driver</artifactId>
+                        <artifactId>mongodb-driver-sync</artifactId>
                         <version>${version.mongo.driver}</version>
                      </dependency>
                      <dependency>

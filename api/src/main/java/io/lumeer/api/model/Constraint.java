@@ -21,9 +21,9 @@ package io.lumeer.api.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import net.jcip.annotations.Immutable;
 
 import java.util.Objects;
+import javax.annotation.concurrent.Immutable;
 
 @Immutable
 public class Constraint {

@@ -19,7 +19,6 @@
 package io.lumeer.core.facade;
 
 import static io.lumeer.core.facade.ConfigurationFacade.*;
-import static io.lumeer.core.facade.ConfigurationFacade.ORGANIZATION_CONFIG_COLLECTION;
 
 import io.lumeer.api.model.Config;
 import io.lumeer.core.facade.configuration.ConfigurationManipulator;
@@ -28,8 +27,8 @@ import io.lumeer.engine.api.data.StorageConnection;
 
 import java.util.List;
 import java.util.Optional;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 @ApplicationScoped
 public class SystemDatabaseConfigurationFacade {

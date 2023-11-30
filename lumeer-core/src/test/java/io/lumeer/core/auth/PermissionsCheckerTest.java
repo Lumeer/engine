@@ -42,8 +42,8 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
 import org.assertj.core.util.Sets;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.util.Collections;
@@ -57,7 +57,7 @@ public class PermissionsCheckerTest {
 
    private PermissionsChecker permissionsChecker;
 
-   @Before
+   @BeforeEach
    public void preparePermissionsChecker() {
       User user = Mockito.mock(User.class);
       Mockito.when(user.getId()).thenReturn(USER);

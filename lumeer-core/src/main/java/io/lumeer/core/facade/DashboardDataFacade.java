@@ -27,8 +27,8 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import java.util.List;
 import java.util.Set;
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Inject;
 
 @RequestScoped
 public class DashboardDataFacade extends AbstractFacade {

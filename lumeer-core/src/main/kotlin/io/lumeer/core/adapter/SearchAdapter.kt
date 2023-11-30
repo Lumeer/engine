@@ -18,8 +18,16 @@
  */
 package io.lumeer.core.adapter
 
-import io.lumeer.api.model.*
 import io.lumeer.api.model.Collection
+import io.lumeer.api.model.CollectionPurposeType
+import io.lumeer.api.model.ConditionType
+import io.lumeer.api.model.Document
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkType
+import io.lumeer.api.model.Organization
+import io.lumeer.api.model.Pagination
+import io.lumeer.api.model.Project
+import io.lumeer.api.model.RoleType
 import io.lumeer.api.util.ResourceUtils
 import io.lumeer.core.constraint.ConstraintManager
 import io.lumeer.engine.api.data.DataDocument

@@ -1,7 +1,3 @@
-package io.lumeer.core.js
-
-import org.graalvm.polyglot.Engine
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
@@ -20,6 +16,10 @@ import org.graalvm.polyglot.Engine
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package io.lumeer.core.js
+
+import org.graalvm.polyglot.Engine
+
 class JsEngineFactory {
 
     companion object {
@@ -28,6 +28,7 @@ class JsEngineFactory {
             .allowExperimentalOptions(true)
             .option("js.experimental-foreign-object-prototype", "true")
             .option("js.foreign-object-prototype", "true")
+            .option("engine.WarnInterpreterOnly","false")
             .build()
 
         @JvmStatic

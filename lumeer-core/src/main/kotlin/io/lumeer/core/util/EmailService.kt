@@ -4,14 +4,17 @@ import io.lumeer.core.task.executor.request.SmtpConfiguration
 import org.apache.commons.collections4.map.LRUMap
 import org.apache.commons.lang3.StringUtils
 import java.nio.charset.StandardCharsets
-import java.util.*
-import java.util.logging.Level
+import java.util.Properties
 import java.util.logging.Logger
-import javax.mail.Authenticator
-import javax.mail.Message
-import javax.mail.PasswordAuthentication
-import javax.mail.Session
-import javax.mail.internet.*
+import jakarta.mail.Authenticator
+import jakarta.mail.Message
+import jakarta.mail.PasswordAuthentication
+import jakarta.mail.Session
+import jakarta.mail.internet.InternetAddress
+import jakarta.mail.internet.MimeBodyPart
+import jakarta.mail.internet.MimeMessage
+import jakarta.mail.internet.MimeMultipart
+import jakarta.mail.internet.MimeUtility
 
 /*
  * Lumeer: Modern Data Definition and Processing Platform
@@ -115,7 +118,7 @@ class EmailService(val server: String, val port: Int, val user: String, val pass
       private val cache = LRUMap<Int, EmailService>(10)
 
       fun fromSmtpConfiguration(config: SmtpConfiguration): EmailService =
-         cache.computeIfAbsent(config.hashCode()) { hash ->
+         cache.computeIfAbsent(config.hashCode()) { _ ->
             EmailService(config.host, config.port, config.user, config.password, config.from, config.emailSecurityType)
          }
 
