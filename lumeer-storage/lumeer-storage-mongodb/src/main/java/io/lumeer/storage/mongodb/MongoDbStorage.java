@@ -79,12 +79,12 @@ import io.lumeer.storage.mongodb.codecs.providers.UserNotificationCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ViewCodecProvider;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.ConnectionString;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteException;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
@@ -142,8 +142,9 @@ public class MongoDbStorage implements DataStorage {
       this.mongoClient = clientCache.computeIfAbsent(cacheKey, cacheKey -> {
          final MongoClientSettings.Builder settingsBuilder = MongoClientSettings.builder();
 
-         final String connectionString = "mongodb://" + connections.stream().map(c -> c.getHost() + ":" + c.getPort()).collect(Collectors.joining(","));
-         settingsBuilder.applyToServerSettings(b -> b.applyConnectionString(new ConnectionString(connectionString)));
+         settingsBuilder.applyToClusterSettings(c ->
+               c.hosts(connections.stream().map(conn -> new ServerAddress(conn.getHost(), conn.getPort())).collect(Collectors.toList()))
+         );
 
          MongoCredential credential = null;
          if (connections.size() > 0 && connections.get(0).getUserName() != null && !connections.get(0).getUserName().isEmpty()) {
