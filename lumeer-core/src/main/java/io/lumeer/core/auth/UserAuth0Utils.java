@@ -88,7 +88,7 @@ public class UserAuth0Utils implements Serializable {
       if (!initialized) {
          init();
       }
-      final String authId = authenticatedUser.getAuthUserInfo().user.getAuthIds().iterator().next();
+      final String authId = lumeerUser.getAuthIds().iterator().next();
       refreshManagementApiToken();
       final ManagementAPI mApi = new ManagementAPI(domain, managementApiToken);
       final User user = new User();
