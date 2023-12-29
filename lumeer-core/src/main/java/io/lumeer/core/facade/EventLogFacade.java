@@ -51,12 +51,14 @@ public class EventLogFacade {
    private Client client;
 
    private static String EVENT_LOG_URL;
+   private static String PRIORITY_EVENT_LOG_URL;
 
    @PostConstruct
    public void init() {
       EVENT_LOG_URL = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.EVENT_LOG_URL)).orElse("");
+      PRIORITY_EVENT_LOG_URL = Optional.ofNullable(defaultConfigurationProducer.get(DefaultConfigurationProducer.PRIORITY_EVENT_LOG_URL)).orElse("");
 
-      if (StringUtils.isNotEmpty(EVENT_LOG_URL)) {
+      if (StringUtils.isNotEmpty(EVENT_LOG_URL) || StringUtils.isNotEmpty(PRIORITY_EVENT_LOG_URL)) {
          client = ClientBuilder.newBuilder().build();
       }
    }
@@ -70,12 +72,18 @@ public class EventLogFacade {
 
    public void logEvent(final User user, final String message) {
       if (StringUtils.isNotEmpty(EVENT_LOG_URL)) {
-         sendMessage(String.format("[%s] %s: %s", defaultConfigurationProducer.getEnvironment().toString(), formatUser(user), message));
+         sendMessage(String.format("[%s] %s: %s", defaultConfigurationProducer.getEnvironment().toString(), formatUser(user), message), false);
       }
    }
 
-   private void sendMessage(final String message) {
-      final Future<Response> response = client.target(EVENT_LOG_URL)
+   public void logPriorityEvent(final User user, final String message) {
+      if (StringUtils.isNotEmpty(PRIORITY_EVENT_LOG_URL)) {
+         sendMessage(String.format("[%s] %s: %s", defaultConfigurationProducer.getEnvironment().toString(), formatUser(user), message), true);
+      }
+   }
+
+   private void sendMessage(final String message, final boolean priority) {
+      final Future<Response> response = client.target(priority ? PRIORITY_EVENT_LOG_URL : EVENT_LOG_URL)
                                               .request(MediaType.APPLICATION_JSON)
                                               .buildPost(Entity.json(new EventLogMessage(message)))
                                               .submit();
@@ -100,16 +108,10 @@ public class EventLogFacade {
       return String.format("%s (%s)", user.getName(), user.getEmail());
    }
 
-   public static class EventLogMessage {
-      private final String text;
-
-      @JsonCreator
-      public EventLogMessage(@JsonProperty("text") final String text) {
-         this.text = text;
+   public record EventLogMessage(String text) {
+         @JsonCreator
+         public EventLogMessage(@JsonProperty("text") final String text) {
+            this.text = text;
+         }
       }
-
-      public String getText() {
-         return text;
-      }
-   }
 }

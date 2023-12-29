@@ -218,7 +218,7 @@ public class AuthenticatedUser implements Serializable {
 
       ((WorkspaceKeeper) selectedWorkspace).setOrganizationId(organization.getId());
 
-      eventLogFacade.logEvent(user, "A new user " + user.getEmail() + " logged for the first time in the system. " +
+      eventLogFacade.logPriorityEvent(user, "A new user " + user.getEmail() + " logged for the first time in the system. " +
             "Organization " + organization.getCode() + " was created for them.");
    }
 

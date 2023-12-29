@@ -25,6 +25,8 @@ import io.lumeer.core.facade.configuration.ConfigurationManipulator;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.StorageConnection;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 import java.util.Optional;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -45,11 +47,16 @@ public class SystemDatabaseConfigurationFacade {
     * @return Pre-configured data storage.
     */
    public List<StorageConnection> getDataStorage(final String organizationId) {
+      final String connectionString = getSystemConfigurationString(DB_CONNECTION_STRING_PROPERTY, organizationId).orElse("");
       final String hosts = getSystemConfigurationString(DB_HOSTS_PROPERTY, organizationId).orElse("localhost:27017");
       final String db = getSystemConfigurationString(DB_USER_PROPERTY, organizationId).orElse("pepa");
       final String pwd = getSystemConfigurationString(DB_PASSWORD_PROPERTY, organizationId).orElse("");
 
-      return ConfigurationFacade.getStorageConnections(hosts, db, pwd);
+      if (StringUtils.isNotEmpty(connectionString)) {
+         return ConfigurationFacade.getStorageConnections(connectionString);
+      } else {
+         return ConfigurationFacade.getStorageConnections(hosts, db, pwd);
+      }
    }
 
    /**

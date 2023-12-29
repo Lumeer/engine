@@ -175,7 +175,8 @@ public class DelayedActionIT extends IntegrationTestBase {
                   .append(CollectionPurpose.META_DUE_DATE_ATTRIBUTE_ID, "a2")
                   .append(CollectionPurpose.META_STATE_ATTRIBUTE_ID, "a3")
                   .append(CollectionPurpose.META_FINAL_STATES_LIST, List.of("Done", "Won't fix"))
-                  .append(CollectionPurpose.META_OBSERVERS_ATTRIBUTE_ID, "a4"))
+                  .append(CollectionPurpose.META_OBSERVERS_ATTRIBUTE_ID, "a4")
+                  .append(CollectionPurpose.META_REPEAT_DUE_NOTIFICATIONS, true))
       );
       collection = collectionDao.createCollection(jsonCollection);
    }

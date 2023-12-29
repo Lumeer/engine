@@ -20,6 +20,7 @@ package io.lumeer.engine.api.data;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Credentials and URL to get a database connection.
@@ -28,10 +29,11 @@ public class StorageConnection implements Serializable {
 
    private static final long serialVersionUID = -5170090833580954480L;
 
-   private final String host;
-   private final int port;
-   private final String userName;
-   private final char[] password;
+   private String connectionString;
+   private String host;
+   private int port;
+   private String userName;
+   private char[] password;
 
    /**
     * Defines a new connection information using the given hostname, port, user name and password.
@@ -52,6 +54,18 @@ public class StorageConnection implements Serializable {
       this.password = password.toCharArray();
    }
 
+   /**
+    * Defines a new connection information based on a connection string.
+    * @param connectionString The connection string per DB specification.
+    */
+   public StorageConnection(final String connectionString) {
+      this.connectionString = connectionString;
+   }
+
+   public String getConnectionString() {
+      return connectionString;
+   }
+
    public String getHost() {
       return host;
    }
@@ -70,42 +84,26 @@ public class StorageConnection implements Serializable {
 
    @Override
    public String toString() {
-      return "StorageConnection{"
-            + "host='" + host + '\''
-            + ", port=" + port
-            + ", userName='" + userName + '\''
-            + ", password=" + new String(password)
-            + '}';
+      return "StorageConnection{" +
+            "connectionString='" + connectionString + '\'' +
+            ", host='" + host + '\'' +
+            ", port=" + port +
+            ", userName='" + userName + '\'' +
+            ", password=" + Arrays.toString(password) +
+            '}';
    }
 
    @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-         return false;
-      }
-
-      final StorageConnection that = (StorageConnection) o;
-
-      if (port != that.port) {
-         return false;
-      }
-      if (!host.equals(that.host)) {
-         return false;
-      }
-      if (userName != null ? !userName.equals(that.userName) : that.userName != null) {
-         return false;
-      }
-      return Arrays.equals(password, that.password);
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      StorageConnection that = (StorageConnection) o;
+      return port == that.port && Objects.equals(connectionString, that.connectionString) && Objects.equals(host, that.host) && Objects.equals(userName, that.userName) && Arrays.equals(password, that.password);
    }
 
    @Override
    public int hashCode() {
-      int result = host.hashCode();
-      result = 31 * result + port;
-      result = 31 * result + (userName != null ? userName.hashCode() : 0);
+      int result = Objects.hash(connectionString, host, port, userName);
       result = 31 * result + Arrays.hashCode(password);
       return result;
    }

@@ -221,7 +221,7 @@ public class UserService extends AbstractService {
    @POST
    @Path("current/log")
    public Response logEvent(final LogEvent logEvent) {
-      userFacade.logEvent(logEvent.getEvent());
+      userFacade.logEvent(logEvent.getEvent(), logEvent.getPriority());
 
       return Response.ok().build();
    }

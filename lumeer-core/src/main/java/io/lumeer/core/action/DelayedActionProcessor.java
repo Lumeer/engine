@@ -19,6 +19,7 @@
 package io.lumeer.core.action;
 
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.CollectionPurpose;
 import io.lumeer.api.model.DelayedAction;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Language;
@@ -231,8 +232,12 @@ public class DelayedActionProcessor extends WorkspaceContext {
                }
             }
 
-            // reschedule past due actions
-            if (!rescheduleDueDateAction(actions, action, receiverUser, context.getRight())) {
+            // reschedule past due actions - only when explicitely configured in the collection
+            if (context.getRight().getPurpose() != null && context.getRight().getPurpose().createIfAbsentMetaData().getBoolean(CollectionPurpose.META_REPEAT_DUE_NOTIFICATIONS, false)) {
+               if (!rescheduleDueDateAction(actions, action, receiverUser, context.getRight())) {
+                  markActionAsCompleted(actions, action);
+               }
+            } else {
                markActionAsCompleted(actions, action);
             }
          } else {
