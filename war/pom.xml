@@ -602,11 +602,11 @@
                   <artifactId>embedmongo-maven-plugin</artifactId>
                   <version>${maven.embedmongo.plugin.version}</version>
                   <dependencies>
-                     <dependency>
+                     <!--dependency>
                         <groupId>org.mongodb</groupId>
                         <artifactId>mongodb-driver-sync</artifactId>
                         <version>${version.mongo.driver}</version>
-                     </dependency>
+                     </dependency-->
                      <dependency>
                         <groupId>commons-io</groupId>
                         <artifactId>commons-io</artifactId>
@@ -615,7 +615,17 @@
                      <dependency>
                         <groupId>de.flapdoodle.embed</groupId>
                         <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                        <version>${version.embedded.mongodb}</version>
+                        <version>2.1.1</version>
+                     </dependency>
+                     <dependency>
+                        <groupId>de.flapdoodle.embed</groupId>
+                        <artifactId>de.flapdoodle.embed.process</artifactId>
+                        <version>2.0.5</version>
+                     </dependency>
+                     <dependency>
+                        <groupId>org.mongodb</groupId>
+                        <artifactId>mongo-java-driver</artifactId>
+                        <version>3.7.0</version>
                      </dependency>
                   </dependencies>
                   <executions>
@@ -630,7 +640,7 @@
                   <configuration>
                      <port>27017</port>
                      <databaseDirectory>${project.build.directory}/embedmongo</databaseDirectory>
-                     <version>3.4.0</version>
+                     <version>4.0.28</version>
                   </configuration>
                </plugin>
                <plugin>
