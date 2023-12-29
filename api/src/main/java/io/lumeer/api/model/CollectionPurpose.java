@@ -36,6 +36,7 @@ public class CollectionPurpose {
    public static final String META_STATE_ATTRIBUTE_ID = "stateAttributeId";
    public static final String META_OBSERVERS_ATTRIBUTE_ID = "observersAttributeId";
    public static final String META_FINAL_STATES_LIST = "finalStatesList";
+   public static final String META_REPEAT_DUE_NOTIFICATIONS = "repeatDueNotifications";
 
    private CollectionPurposeType type;
    private DataDocument metaData;

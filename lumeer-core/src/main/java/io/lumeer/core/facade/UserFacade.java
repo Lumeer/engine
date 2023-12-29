@@ -356,9 +356,13 @@ public class UserFacade extends AbstractFacade {
       return updatedUser.getHints();
    }
 
-   public void logEvent(final String message) {
+   public void logEvent(final String message, final boolean priority) {
       if (message != null && !message.trim().isEmpty()) {
-         eventLogFacade.logEvent(getCurrentUser(), message);
+         if (priority) {
+            eventLogFacade.logPriorityEvent(getCurrentUser(), message);
+         } else {
+            eventLogFacade.logEvent(getCurrentUser(), message);
+         }
       }
    }
 

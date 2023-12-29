@@ -9,6 +9,7 @@
       <module name="com.fasterxml.jackson.jaxrs.jackson-jaxrs-json-provider" />
       <module name="java.net.http" />
       <module name="io.lumeer.graalvm" export="true"/>
+      <module name="sun.jdk" />
     </dependencies>
     <exclusions>
       <module name="org.jboss.resteasy.resteasy-json-binding-provider"/>

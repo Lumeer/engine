@@ -24,13 +24,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class LogEvent {
 
    private final String event;
+   private final boolean priority;
 
    @JsonCreator
-   public LogEvent(@JsonProperty("event") final String event) {
+   public LogEvent(@JsonProperty("event") final String event, @JsonProperty("priority") final Boolean priority) {
       this.event = event;
+      this.priority = priority == null ? false : priority;
    }
 
    public String getEvent() {
       return event;
+   }
+
+   public boolean getPriority() {
+      return priority;
    }
 }

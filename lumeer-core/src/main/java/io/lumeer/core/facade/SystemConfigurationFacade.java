@@ -21,13 +21,18 @@ package io.lumeer.core.facade;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
 import io.lumeer.engine.api.data.StorageConnection;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
+
 @ApplicationScoped
 public class SystemConfigurationFacade {
 
+   private static final String SYSTEM_DB_CONNECTION_STRING_PROPERTY = "sys_db_connection_string";
    private static final String SYSTEM_DB_HOSTS_PROPERTY = "sys_db_hosts";
    private static final String SYSTEM_DB_NAME_PROPERTY = "sys_db_name";
    private static final String SYSTEM_DB_USER_PROPERTY = "sys_db_user";
@@ -43,11 +48,16 @@ public class SystemConfigurationFacade {
     * @return Pre-configured system data storage.
     */
    public List<StorageConnection> getSystemDataStorage() {
+      final String connectionString = defaultConfigurationProducer.get(SYSTEM_DB_CONNECTION_STRING_PROPERTY);
       final String hosts = defaultConfigurationProducer.get(SYSTEM_DB_HOSTS_PROPERTY);
       final String db = defaultConfigurationProducer.get(SYSTEM_DB_USER_PROPERTY);
       final String pwd = defaultConfigurationProducer.get(SYSTEM_DB_PASSWORD_PROPERTY);
 
-      return ConfigurationFacade.getStorageConnections(hosts, db, pwd);
+      if (StringUtils.isNotEmpty(connectionString)) {
+         return ConfigurationFacade.getStorageConnections(connectionString);
+      } else {
+         return ConfigurationFacade.getStorageConnections(hosts, db, pwd);
+      }
    }
 
    public String getSystemDataStorageDatabase() {

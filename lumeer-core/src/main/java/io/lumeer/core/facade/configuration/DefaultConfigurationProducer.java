@@ -92,6 +92,7 @@ public class DefaultConfigurationProducer implements Serializable {
    public static final String SAMPLE_DATA_ORG_CS = "sample_data_org_cs";
 
    public static final String EVENT_LOG_URL = "event_log_url";
+   public static final String PRIORITY_EVENT_LOG_URL = "priority_event_log_url";
 
    public static final String ADMIN_USER_EMAILS = "admin_user_emails";
    public static final String WHITELIST_USER_EMAILS = "whitelist_user_emails";

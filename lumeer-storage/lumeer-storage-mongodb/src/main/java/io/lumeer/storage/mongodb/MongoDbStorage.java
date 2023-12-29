@@ -79,6 +79,7 @@ import io.lumeer.storage.mongodb.codecs.providers.UserNotificationCodecProvider;
 import io.lumeer.storage.mongodb.codecs.providers.ViewCodecProvider;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.ConnectionString;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
@@ -98,6 +99,7 @@ import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateOptions;
+import org.apache.commons.lang3.StringUtils;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -142,9 +144,7 @@ public class MongoDbStorage implements DataStorage {
       this.mongoClient = clientCache.computeIfAbsent(cacheKey, cacheKey -> {
          final MongoClientSettings.Builder settingsBuilder = MongoClientSettings.builder();
 
-         settingsBuilder.applyToClusterSettings(c ->
-               c.hosts(connections.stream().map(conn -> new ServerAddress(conn.getHost(), conn.getPort())).collect(Collectors.toList()))
-         );
+         applyConnections(settingsBuilder, connections);
 
          MongoCredential credential = null;
          if (connections.size() > 0 && connections.get(0).getUserName() != null && !connections.get(0).getUserName().isEmpty()) {
@@ -610,4 +610,20 @@ public class MongoDbStorage implements DataStorage {
       return database;
    }
 
+   private void applyConnections(final MongoClientSettings.Builder settingsBuilder, final List<StorageConnection> connections) {
+      if (connections.size() > 0) {
+         if (StringUtils.isNotEmpty(connections.get(0).getConnectionString())) {
+            if (connections.size() > 1) {
+               log.log(Level.SEVERE, "Multiple connection strings specified.");
+            } else {
+               log.info("Connecting to database using connection string.");
+               settingsBuilder.applyConnectionString(new ConnectionString(connections.get(0).getConnectionString()));
+            }
+         } else {
+            settingsBuilder.applyToClusterSettings(c -> {
+               c.hosts(connections.stream().map(conn -> new ServerAddress(conn.getHost(), conn.getPort())).collect(Collectors.toList()));
+            });
+         }
+      }
+   }
 }

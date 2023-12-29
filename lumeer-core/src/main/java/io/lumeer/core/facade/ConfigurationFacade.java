@@ -43,6 +43,7 @@ import jakarta.inject.Inject;
 @SessionScoped
 public class ConfigurationFacade implements Serializable {
 
+   protected static final String DB_CONNECTION_STRING_PROPERTY = "db_connection_string";
    protected static final String DB_HOSTS_PROPERTY = "db_hosts";
    protected static final String DB_NAME_PROPERTY = "db_name";
    protected static final String DB_USER_PROPERTY = "db_user";
@@ -115,6 +116,10 @@ public class ConfigurationFacade implements Serializable {
       });
 
       return result;
+   }
+
+   static List<StorageConnection> getStorageConnections(final String connectionString) {
+      return List.of(new StorageConnection(connectionString));
    }
 
    /**
