@@ -59,6 +59,7 @@
       <maven.compiler.target>20</maven.compiler.target>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
       <wildfly.version>30.0.0.Final</wildfly.version>
+      <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
    </properties>
 
    <dependencyManagement>
@@ -641,6 +642,9 @@
                <plugin>
                   <groupId>org.wildfly.plugins</groupId>
                   <artifactId>wildfly-maven-plugin</artifactId>
+                  <configuration>
+                     <jbossHome>${wildfly.dir}</jbossHome>
+                  </configuration>
                </plugin>
             </plugins>
          </build>
