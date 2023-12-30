@@ -602,11 +602,6 @@
                   <artifactId>embedmongo-maven-plugin</artifactId>
                   <version>${maven.embedmongo.plugin.version}</version>
                   <dependencies>
-                     <!--dependency>
-                        <groupId>org.mongodb</groupId>
-                        <artifactId>mongodb-driver-sync</artifactId>
-                        <version>${version.mongo.driver}</version>
-                     </dependency-->
                      <dependency>
                         <groupId>commons-io</groupId>
                         <artifactId>commons-io</artifactId>
@@ -640,7 +635,7 @@
                   <configuration>
                      <port>27017</port>
                      <databaseDirectory>${project.build.directory}/embedmongo</databaseDirectory>
-                     <version>4.0.28</version>
+                     <version>3.4.0</version>
                   </configuration>
                </plugin>
                <plugin>
