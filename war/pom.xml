@@ -44,13 +44,14 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <maven.embedmongo.plugin.version>0.4.2</maven.embedmongo.plugin.version>
+      <maven.embedmongo.plugin.version>1.0.1</maven.embedmongo.plugin.version>
 
       <version.velocity>2.3</version.velocity>
       <version.puppycrawl>10.12.4</version.puppycrawl>
       <version.mongo.driver>4.11.1</version.mongo.driver>
       <version.commons.io>2.8.0</version.commons.io>
-      <version.embedded.mongodb>4.10.1</version.embedded.mongodb>
+      <version.embedded.mongodb>4.11.1</version.embedded.mongodb>
+      <version.embedded.process>4.10.1</version.embedded.process>
       <version.arquillian>1.7.2.Final</version.arquillian>
       <version.arquillian-container>5.0.1.Final</version.arquillian-container>
 
@@ -599,7 +600,7 @@
          <build>
             <plugins>
                <plugin>
-                  <groupId>com.github.joelittlejohn.embedmongo</groupId>
+                  <groupId>io.lumeer.embedmongo</groupId>
                   <artifactId>embedmongo-maven-plugin</artifactId>
                   <version>${maven.embedmongo.plugin.version}</version>
                   <dependencies>
@@ -611,17 +612,17 @@
                      <dependency>
                         <groupId>de.flapdoodle.embed</groupId>
                         <artifactId>de.flapdoodle.embed.mongo</artifactId>
-                        <version>2.2.0</version>
+                        <version>${version.embedded.mongodb}</version>
                      </dependency>
                      <dependency>
                         <groupId>de.flapdoodle.embed</groupId>
                         <artifactId>de.flapdoodle.embed.process</artifactId>
-                        <version>2.1.2</version>
+                        <version>${version.embedded.process}</version>
                      </dependency>
                      <dependency>
                         <groupId>org.mongodb</groupId>
-                        <artifactId>mongo-java-driver</artifactId>
-                        <version>3.12.14</version>
+                        <artifactId>mongodb-driver-sync</artifactId>
+                        <version>${version.mongo.driver}</version>
                      </dependency>
                   </dependencies>
                   <executions>
@@ -636,7 +637,7 @@
                   <configuration>
                      <port>27017</port>
                      <databaseDirectory>${project.build.directory}/embedmongo</databaseDirectory>
-                     <version>4.0.28</version>
+                     <version>4.2.23</version>
                   </configuration>
                </plugin>
                <plugin>

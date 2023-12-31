@@ -1,4 +1,3 @@
-
 /*
  * Lumeer: Modern Data Definition and Processing Platform
  *
