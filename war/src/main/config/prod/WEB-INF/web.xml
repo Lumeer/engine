@@ -5,15 +5,15 @@
 
 	<context-param>
 		<param-name>com.auth0.clientId</param-name>
-		<param-value>Hjee0La2DjlYjIH5ClCx3Xnfaj02n2On</param-value>
+		<param-value>sGSx8FFsjhV7m9PcNSpMlOxlPlT1nAdI</param-value>
 	</context-param>
 	<context-param>
 		<param-name>com.auth0.clientSecret</param-name>
-		<param-value>ZcyJKbH5994vtemZYSo_ZrwRYrwleCsns2vOvM5IOsSyzrJqo9k-SCeBSs5asyzS</param-value>
+		<param-value>mh_LbQLJ1_TpYmdi_I25X70tb2JfwqvR4e-6JjToyAhLzXkHO7vWSbGnYRQAeSop</param-value>
 	</context-param>
 	<context-param>
 		<param-name>com.auth0.domain</param-name>
-		<param-value>lumeer.eu.auth0.com</param-value>
+		<param-value>lumeer-local.eu.auth0.com</param-value>
 	</context-param>
 
 </web-app>
