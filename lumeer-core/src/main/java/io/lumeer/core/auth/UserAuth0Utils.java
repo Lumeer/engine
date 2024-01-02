@@ -46,6 +46,7 @@ public class UserAuth0Utils implements Serializable {
    private String clientSecret;
    private String backendClientId;
    private String backendClientSecret;
+   private String audience;
 
    private JWTVerifier verifier = null;
    private String managementApiToken;
@@ -108,7 +109,7 @@ public class UserAuth0Utils implements Serializable {
 
    public TokenHolder userLogin(final String user, final String password, final String audience) throws Auth0Exception {
       final AuthAPI auth0 = new AuthAPI(domain, backendClientId, backendClientSecret);
-      return auth0.login(user, password).setScope("openid email profile").setAudience("https://get.lumeer.io/lumeer-engine").execute();
+      return auth0.login(user, password).setScope("openid email profile").setAudience(audience).execute();
    }
 
    public TokenHolder refreshToken(final String refreshToken) throws Auth0Exception {
@@ -172,6 +173,10 @@ public class UserAuth0Utils implements Serializable {
 
    public void setBackendClientSecret(final String backendClientSecret) {
       this.backendClientSecret = backendClientSecret;
+   }
+
+   public void setAudience(String audience) {
+      this.audience = audience;
    }
 
    public void setRedirectUri(final String redirectUri) { this.redirectUri = redirectUri; }
