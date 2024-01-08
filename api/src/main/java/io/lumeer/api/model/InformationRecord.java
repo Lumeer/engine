@@ -18,14 +18,18 @@
  */
 package io.lumeer.api.model;
 
+import io.lumeer.api.adapter.ZonedDateTimeAdapter;
+import io.lumeer.api.adapter.ZonedDateTimeDeserializer;
 import io.lumeer.api.exception.InsaneObjectException;
 import io.lumeer.api.model.common.WithId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 public class InformationRecord implements WithId, HealthChecking {
 
@@ -38,6 +42,8 @@ public class InformationRecord implements WithId, HealthChecking {
 
    private String id;
    private String userId;
+   @XmlJavaTypeAdapter(ZonedDateTimeAdapter.class)
+   @JsonDeserialize(using = ZonedDateTimeDeserializer.class)
    private ZonedDateTime date;
    private String source;
    private String target;
