@@ -41,7 +41,7 @@ import jakarta.ws.rs.core.Response;
 public class MapQuestClient implements OpenSearchClient {
 
    private static final String GEOCODING_URL = "https://www.mapquestapi.com/geocoding/v1/";
-   private static final String OPEN_SEARCH_URL = "https://open.mapquestapi.com/nominatim/v1/";
+   private static final String NOMINATIM_URL = "https://nominatim.openstreetmap.org/";
 
    @Inject
    private DefaultConfigurationProducer configurationProducer;
@@ -75,16 +75,17 @@ public class MapQuestClient implements OpenSearchClient {
    @Override
    public List<OpenSearchResult> search(final String query, final int limit, final String language) {
       final Client client = ClientBuilder.newBuilder().build();
-      final Response response = client.target(OPEN_SEARCH_URL).path("search.php")
+      final Response response = client.target(NOMINATIM_URL).path("search")
                                       .queryParam("addressdetails", "1")
-                                      .queryParam("format", "json")
-                                      .queryParam("key", mapQuestKey)
+                                      .queryParam("format", "jsonv2")
+                                      //.queryParam("key", mapQuestKey)
                                       .queryParam("limit", limit)
                                       .queryParam("osm_type", "N")
                                       .queryParam("q", query)
                                       .request(MediaType.APPLICATION_JSON)
                                       .header("Accept-Language", language)
                                       .header("Content-Type", MediaType.APPLICATION_JSON)
+                                      .header("User-Agent", "Lumeer.io/2.0 (An open-source project management tool)")
                                       .buildGet()
                                       .invoke();
       return decodeResponse(client, response, new GenericType<List<OpenSearchResult>>() {});
@@ -93,16 +94,17 @@ public class MapQuestClient implements OpenSearchClient {
    @Override
    public OpenSearchResult reverse(final Coordinates coordinates, final String language) {
       final Client client = ClientBuilder.newBuilder().build();
-      final Response response = client.target(OPEN_SEARCH_URL).path("reverse.php")
+      final Response response = client.target(NOMINATIM_URL).path("reverse")
                                       .queryParam("addressdetails", "1")
                                       .queryParam("format", "json")
-                                      .queryParam("key", mapQuestKey)
+                                      //.queryParam("key", mapQuestKey)
                                       .queryParam("lat", coordinates.getLatitude())
                                       .queryParam("lon", coordinates.getLongitude())
                                       .queryParam("osm_type", "N")
                                       .request(MediaType.APPLICATION_JSON)
                                       .header("Accept-Language", language)
                                       .header("Content-Type", MediaType.APPLICATION_JSON)
+                                      .header("User-Agent", "Lumeer.io/2.0 (An open-source project management tool)")
                                       .buildGet()
                                       .invoke();
       return decodeResponse(client, response, new GenericType<OpenSearchResult>() {});
