@@ -568,6 +568,7 @@ public class DocumentFacade extends AbstractFacade {
 
       fileAttachmentFacade.duplicateFileAttachments(collection.getId(), keyMap, FileAttachment.AttachmentType.DOCUMENT);
 
+      // need to take the snapshot of encoded data now because later, the data are encoded again (in CollectionAdapter)
       final List<Document> documentsSnapshot = documentsDirectory.values().stream().map(d -> new Document(d)).collect(Collectors.toList());
 
       if (this.createChainEvent != null) {
