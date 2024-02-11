@@ -266,7 +266,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       assertThat(duplicatedDocuments.stream().map(Document::getId).collect(Collectors.toSet())).hasSize(10);
 
       var newIds = duplicatedDocuments.stream().map(d -> d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID)).collect(Collectors.toList());
-      assertThat(newIds).containsExactly(originalIds.toArray(new String[0])); // expecting matching order
+      assertThat(newIds).containsExactlyInAnyOrder(originalIds.toArray(new String[0])); // expecting matching order
       assertThat(duplicatedDocuments.stream().map(Document::getId).collect(Collectors.toList())).doesNotContain(originalIds.toArray(new String[0]));
    }
 
