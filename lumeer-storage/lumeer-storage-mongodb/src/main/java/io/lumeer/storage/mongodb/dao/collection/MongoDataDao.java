@@ -265,6 +265,7 @@ public class MongoDataDao extends MongoCollectionScopedDao implements DataDao {
    public List<DataDocument> duplicateData(final String collectionId, final java.util.Collection<DataDocument> dataList, final Map<String, String> documentIds) {
       final List<DataDocument> newData = new ArrayList<>();
 
+      // remap original data ids to ids of newly created documents
       dataList.forEach(data -> {
          final DataDocument dataCopy = new DataDocument(data);
          if (documentIds.containsKey(dataCopy.getId())) {
