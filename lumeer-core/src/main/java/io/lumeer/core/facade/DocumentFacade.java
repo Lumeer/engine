@@ -549,8 +549,8 @@ public class DocumentFacade extends AbstractFacade {
       }
 
       final List<Document> documents = documentDao.duplicateDocuments(originalDocuments);
-      final Map<String, Document> documentsDirectory = new HashMap<>();
-      final Map<String, String> keyMap = new HashMap<>();
+      final Map<String, Document> documentsDirectory = new HashMap<>(); // new document id -> inserted document
+      final Map<String, String> keyMap = new HashMap<>(); // original document id -> new document id
       documents.forEach(d -> {
          documentsDirectory.put(d.getId(), d);
          keyMap.put(d.getMetaData().getString(Document.META_ORIGINAL_DOCUMENT_ID), d.getId());
@@ -568,13 +568,16 @@ public class DocumentFacade extends AbstractFacade {
 
       fileAttachmentFacade.duplicateFileAttachments(collection.getId(), keyMap, FileAttachment.AttachmentType.DOCUMENT);
 
+      // need to take the snapshot of encoded data now because later, the data are encoded again (in CollectionAdapter)
+      final List<Document> documentsSnapshot = documentsDirectory.values().stream().map(d -> new Document(d)).collect(Collectors.toList());
+
       if (this.createChainEvent != null) {
          this.createChainEvent.fire(new CreateDocumentsAndLinks(documents, Collections.emptyList()));
       }
 
       collectionAdapter.updateCollectionMetadata(collection, usages);
 
-      return documents;
+      return documentsSnapshot;
    }
 
    public Document getDocument(String collectionId, String documentId) {
