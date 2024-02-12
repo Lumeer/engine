@@ -271,6 +271,7 @@ public class ProjectFacade extends AbstractFacade {
       return getAllProjects().stream()
                              .filter(project -> permissionsChecker.hasRole(project, RoleType.Read))
                              .map(this::mapResource)
+                             .peek(project -> project.setCollectionsCount(getCollectionsCount(project)))
                              .collect(Collectors.toList());
    }
 
