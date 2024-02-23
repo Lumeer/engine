@@ -399,7 +399,7 @@ public class LumeerBridge {
    public List<DocumentBridge> readView(final String viewId) {
       try {
          final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
-         final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
+         final Query query = view.getQuery().getFirstStem(0, getMaxViewReadRecords());
          final Language language = Language.fromString(task.getCurrentLocale());
 
          final Set<RoleType> roles = PermissionUtils.getUserRolesInResource(task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(), view, task.getInitiator(), task.getGroups());
@@ -736,7 +736,7 @@ public class LumeerBridge {
    public void removeDocumentsInView(final String viewId) {
       try {
          final View view = task.getDaoContextSnapshot().getViewDao().getViewById(viewId);
-         final Query query = view.getQuery().getFirstStem(0, Task.MAX_VIEW_DOCUMENTS);
+         final Query query = view.getQuery().getFirstStem(0, getMaxViewReadRecords());
          final Language language = Language.fromString(task.getCurrentLocale());
 
          final Set<RoleType> roles = PermissionUtils.getUserRolesInResource(task.getDaoContextSnapshot().getOrganization(), task.getDaoContextSnapshot().getProject(), view, task.getInitiator(), task.getGroups());
@@ -1313,6 +1313,14 @@ public class LumeerBridge {
 
    private int getMaxCreatedRecords() {
       return serviceLimits.getMaxCreatedRecords();
+   }
+
+   private int getMaxViewReadRecords() {
+      return serviceLimits.getMaxViewReadRecords();
+   }
+
+   public int getAutomationTimeout() {
+      return serviceLimits.getAutomationTimeout();
    }
 
    private int getMaxFileAttachmentSizeMb() {

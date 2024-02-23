@@ -38,12 +38,14 @@ public class ServiceLimits {
    public static final String FILE_SIZE_MB = "fileSizeMb";
    public static final String AUDIT_DAYS = "auditDays";
    public static final String MAX_CREATED_RECORDS = "maxCreatedRecords";
+   public static final String MAX_VIEW_READ_RECORDS = "maxViewReadRecords";
+   public static final String AUTOMATION_TIMEOUT = "automattionTimeout";
    public static final String VALID_UNTIL = "validUntil";
    public static final String RULES_PER_COLLECTION = "rulesPerCollection";
    public static final String FUNCTIONS_PER_COLLECTION = "functionsPerCollection";
 
-   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false, 10, 14, 50);
-   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14, 250);
+   public static final ServiceLimits FREE_LIMITS = new ServiceLimits(Payment.ServiceLevel.FREE, 3, 3, 10, 2000, -1, null, 1, 1, false, 10, 14, 50, 1000, 3000);
+   public static final ServiceLimits BASIC_LIMITS = new ServiceLimits(Payment.ServiceLevel.BASIC, 99, 99, -1, -1, -1, new Date(0), -1, -1, true, 10, 14, 250, 5000, 5000);
 
    private Payment.ServiceLevel serviceLevel;
    private int users;
@@ -58,6 +60,8 @@ public class ServiceLimits {
    private int fileSizeMb;
    private int auditDays;
    private int maxCreatedRecords;
+   private int maxViewReadRecords;
+   private int automationTimeout;
 
    static {
       final Calendar c = Calendar.getInstance();
@@ -74,7 +78,9 @@ public class ServiceLimits {
          @JsonProperty(FUNCTIONS_PER_COLLECTION) final int functionsPerCollection,
          @JsonProperty(GROUPS) final boolean groups,
          @JsonProperty(FILE_SIZE_MB) final int fileSizeMb, @JsonProperty(AUDIT_DAYS) final int auditDays,
-         @JsonProperty(MAX_CREATED_RECORDS) final int maxCreatedRecords) {
+         @JsonProperty(MAX_CREATED_RECORDS) final int maxCreatedRecords,
+         @JsonProperty(MAX_VIEW_READ_RECORDS) final int maxViewReadRecords,
+         @JsonProperty(AUTOMATION_TIMEOUT) final int automationTimeout) {
       this.serviceLevel = serviceLevel;
       this.users = users;
       this.projects = projects;
@@ -88,6 +94,8 @@ public class ServiceLimits {
       this.fileSizeMb = fileSizeMb;
       this.auditDays = auditDays;
       this.maxCreatedRecords = maxCreatedRecords;
+      this.maxViewReadRecords = maxViewReadRecords;
+      this.automationTimeout = automationTimeout;
    }
 
    public Payment.ServiceLevel getServiceLevel() {
@@ -142,25 +150,46 @@ public class ServiceLimits {
       return maxCreatedRecords;
    }
 
+   public int getMaxViewReadRecords() {
+      return maxViewReadRecords;
+   }
+
+   public int getAutomationTimeout() {
+      return automationTimeout;
+   }
+
    @Override
-   public boolean equals(final Object o) {
-      if (this == o) {
-         return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-         return false;
-      }
-      final ServiceLimits that = (ServiceLimits) o;
-      return users == that.users &&
-            projects == that.projects &&
-            files == that.files &&
-            documents == that.documents &&
-            dbSizeMb == that.dbSizeMb &&
-            groups == that.groups &&
-            rulesPerCollection == that.rulesPerCollection &&
-            functionsPerCollection == that.functionsPerCollection &&
-            serviceLevel == that.serviceLevel &&
-            Objects.equals(validUntil, that.validUntil);
+   public String toString() {
+      return "ServiceLimits{" +
+            "serviceLevel=" + serviceLevel +
+            ", users=" + users +
+            ", projects=" + projects +
+            ", files=" + files +
+            ", documents=" + documents +
+            ", dbSizeMb=" + dbSizeMb +
+            ", validUntil=" + validUntil +
+            ", rulesPerCollection=" + rulesPerCollection +
+            ", functionsPerCollection=" + functionsPerCollection +
+            ", groups=" + groups +
+            ", fileSizeMb=" + fileSizeMb +
+            ", auditDays=" + auditDays +
+            ", maxCreatedRecords=" + maxCreatedRecords +
+            ", maxViewReadRecords=" + maxViewReadRecords +
+            ", automationTimeout=" + automationTimeout +
+            '}';
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ServiceLimits that = (ServiceLimits) o;
+      return users == that.users && projects == that.projects && files == that.files && documents == that.documents && dbSizeMb == that.dbSizeMb && rulesPerCollection == that.rulesPerCollection && functionsPerCollection == that.functionsPerCollection && groups == that.groups && fileSizeMb == that.fileSizeMb && auditDays == that.auditDays && maxCreatedRecords == that.maxCreatedRecords && maxViewReadRecords == that.maxViewReadRecords && automationTimeout == that.automationTimeout && serviceLevel == that.serviceLevel && Objects.equals(validUntil, that.validUntil);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(serviceLevel, users, projects, files, documents, dbSizeMb, validUntil, rulesPerCollection, functionsPerCollection, groups, fileSizeMb, auditDays, maxCreatedRecords, maxViewReadRecords, automationTimeout);
    }
 
    @JsonIgnore
@@ -171,24 +200,4 @@ public class ServiceLimits {
             (rulesPerCollection < 0 || projectDescription.getMaxRulesPerResource() <= rulesPerCollection);
    }
 
-   @Override
-   public int hashCode() {
-      return Objects.hash(serviceLevel, users, projects, files, groups, documents, dbSizeMb, validUntil, rulesPerCollection, functionsPerCollection);
-   }
-
-   @Override
-   public String toString() {
-      return "ServiceLimits{" +
-            "serviceLevel=" + serviceLevel +
-            ", users=" + users +
-            ", projects=" + projects +
-            ", files=" + files +
-            ", groups=" + groups +
-            ", documents=" + documents +
-            ", dbSizeMb=" + dbSizeMb +
-            ", validUntil=" + validUntil +
-            ", rulesPerCollection=" + rulesPerCollection +
-            ", functionsPerCollection=" + functionsPerCollection +
-            '}';
-   }
 }

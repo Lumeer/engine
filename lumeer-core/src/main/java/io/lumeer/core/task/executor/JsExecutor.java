@@ -77,7 +77,7 @@ public class JsExecutor {
          public void run() {
             context.close(true);
          }
-      }, 3000);
+      }, lumeerBridge.getAutomationTimeout());
 
       final String jsCode = getJsLib() +
             (js.contains(HE_JS_SIGNATURE) ? heJsCode : "") +
