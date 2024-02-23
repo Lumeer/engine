@@ -279,6 +279,8 @@ public class Payment {
    public enum PaymentParam {
       FILE_SIZE_MB("fileSizeMb"),
       MAX_CREATED_RECORDS("maxCreatedRecords"),
+      MAX_VIEW_READ_RECORDS("maxViewReadRecords"),
+      AUTOMATION_TIMEOUT("automationTimeout"),
       AUDIT_DAYS("auditDays");
 
       private final String value;

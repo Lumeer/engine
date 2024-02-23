@@ -88,11 +88,14 @@ class PaymentAdapter(private val paymentDao: PaymentDao, private val paymentCach
       val fileSizeDb = payment.getParamInt(Payment.PaymentParam.MAX_CREATED_RECORDS, ServiceLimits.BASIC_LIMITS.fileSizeMb)
       val auditDays = payment.getParamInt(Payment.PaymentParam.AUDIT_DAYS, ServiceLimits.BASIC_LIMITS.auditDays)
       val maxCreatedRecords = payment.getParamInt(Payment.PaymentParam.MAX_CREATED_RECORDS, ServiceLimits.BASIC_LIMITS.maxCreatedRecords)
+      val maxViewReadRecords = payment.getParamInt(Payment.PaymentParam.MAX_VIEW_READ_RECORDS, ServiceLimits.BASIC_LIMITS.maxViewReadRecords)
+      val automationTimeout = payment.getParamInt(Payment.PaymentParam.AUTOMATION_TIMEOUT, ServiceLimits.BASIC_LIMITS.automationTimeout)
       return ServiceLimits(
          Payment.ServiceLevel.BASIC, ServiceLimits.BASIC_LIMITS.users.coerceAtMost(payment.users),
          ServiceLimits.BASIC_LIMITS.projects, ServiceLimits.BASIC_LIMITS.files, ServiceLimits.BASIC_LIMITS.documents,
          ServiceLimits.BASIC_LIMITS.dbSizeMb, validUntil, ServiceLimits.BASIC_LIMITS.rulesPerCollection,
-         ServiceLimits.BASIC_LIMITS.functionsPerCollection, ServiceLimits.BASIC_LIMITS.isGroups, fileSizeDb, auditDays, maxCreatedRecords
+         ServiceLimits.BASIC_LIMITS.functionsPerCollection, ServiceLimits.BASIC_LIMITS.isGroups, fileSizeDb, auditDays, maxCreatedRecords,
+         maxViewReadRecords, automationTimeout
       )
    }
 
