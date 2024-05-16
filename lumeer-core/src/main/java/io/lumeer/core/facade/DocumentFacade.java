@@ -485,6 +485,50 @@ public class DocumentFacade extends AbstractFacade {
       deleteDocumentBasedData(collectionId, documentId);
    }
 
+   public void deleteDocuments(final Set<String> documentIds) {
+      if (documentIds != null && !documentIds.isEmpty()) {
+
+         // check rights on multiple documents in multiple collections efficiently
+         documentIds.forEach(id -> checkDeleteDocument(id));
+         var documents = getDocuments(documentIds);
+         final Set<String> collectionIds = documents.stream().map(Document::getCollectionId).collect(Collectors.toSet());
+         var collections = collectionDao.getCollectionsByIds(collectionIds);
+         final Map<String, Collection> collectionsMap = collections.stream().collect(Collectors.toMap(Collection::getId, Function.identity()));
+
+         documents.forEach(doc -> permissionsChecker.checkDeleteDocument(collectionsMap.get(doc.getCollectionId()), doc));
+
+         final Map<String, List<Document>> documentsByCollection = Utils.categorize(documents.stream(), Document::getCollectionId);
+         final Map<String, Document> documentsById = documents.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
+         final Map<String, Integer> attributesToDec = new HashMap<>();
+         documentsByCollection.forEach((collectionId, docs) -> {
+            dataDao.getData(collectionId, docs.stream().map(Document::getId).collect(Collectors.toSet())).forEach(data -> {
+               data.keySet().forEach(key -> {
+                  if (attributesToDec.containsKey(key)) {
+                     attributesToDec.put(key, attributesToDec.get(key) - 1);
+                  } else {
+                     attributesToDec.put(key, -1);
+                  }
+               });
+
+               if (documentsById.containsKey(data.getId())) {
+                  documentsById.get(data.getId()).setData(data);
+               }
+            });
+
+            collectionAdapter.updateCollectionMetadata(collectionsMap.get(collectionId), attributesToDec);
+
+            dataDao.deleteData(collectionId, docs.stream().map(Document::getId).collect(Collectors.toSet()));
+         });
+
+         documentDao.deleteDocuments(documentIds);
+
+         resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentIds);
+         linkInstanceDao.deleteLinkInstancesByDocumentsIds(documentIds);
+         favoriteItemDao.removeFavoriteDocumentsByIdsFromUsers(documentIds);
+         fileAttachmentFacade.removeFileAttachments(documentIds, FileAttachment.AttachmentType.DOCUMENT);
+      }
+   }
+
    protected void deleteAllDocuments(Collection collection) {
       permissionsChecker.checkRoleInCollectionWithView(collection, RoleType.DataDelete);
 

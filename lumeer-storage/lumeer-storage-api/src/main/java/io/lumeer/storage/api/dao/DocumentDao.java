@@ -39,6 +39,8 @@ public interface DocumentDao extends ProjectScopedDao {
 
    void deleteDocuments(String collectionId);
 
+   void deleteDocuments(final Set<String> documentIds);
+
    Document getDocumentById(String id);
 
    Long getDocumentsCountByCollection(String collectionId);

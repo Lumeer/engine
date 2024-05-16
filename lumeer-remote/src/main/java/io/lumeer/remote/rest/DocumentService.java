@@ -27,6 +27,7 @@ import io.lumeer.remote.rest.annotation.HealthCheck;
 import io.lumeer.remote.rest.annotation.PATCH;
 
 import java.util.List;
+import java.util.Set;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -116,6 +117,14 @@ public class DocumentService extends AbstractService {
       documentFacade.deleteDocument(collectionId, documentId);
 
       return Response.ok().link(getParentUri(documentId), "parent").build();
+   }
+
+   @POST
+   @Path("delete")
+   public Response deleteDocuments(final Set<String> documentIds) {
+      documentFacade.deleteDocuments(documentIds);
+
+      return Response.ok().build();
    }
 
    @GET
