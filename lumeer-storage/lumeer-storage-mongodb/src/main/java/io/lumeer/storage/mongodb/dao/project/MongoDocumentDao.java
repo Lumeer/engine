@@ -145,6 +145,13 @@ public class MongoDocumentDao extends MongoProjectScopedDao implements DocumentD
    }
 
    @Override
+   public void deleteDocuments(final Set<String> documentIds) {
+      final Bson filter = Filters.in(DocumentCodec.ID, documentIds);
+
+      databaseCollection().deleteMany(filter);
+   }
+
+   @Override
    public Document getDocumentById(final String id) {
       Bson filter = idFilter(id);
       Document document = databaseCollection().find(filter).first();

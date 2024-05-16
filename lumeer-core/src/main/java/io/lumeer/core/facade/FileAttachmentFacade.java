@@ -18,7 +18,9 @@
  */
 package io.lumeer.core.facade;
 
+import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.Collection;
+import io.lumeer.api.model.ConstraintType;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.FileAttachment;
 import io.lumeer.api.model.LinkInstance;
@@ -272,6 +274,14 @@ public class FileAttachmentFacade extends AbstractFacade {
       final List<FileAttachment> fileAttachments = fileAttachmentDao.findFileAttachments(fileAttachmentIds);
 
       checkFileAttachmentsCanEdit(fileAttachments);
+
+      adapter.removeFileAttachments(fileAttachments);
+   }
+
+   public void removeFileAttachments(final Set<String> documentIds, final FileAttachment.AttachmentType type) {
+      var fileAttachments = fileAttachmentDao.findAllFileAttachments(getOrganization(), getProject(), documentIds, type);
+
+      // user rights are already checked in the caller
 
       adapter.removeFileAttachments(fileAttachments);
    }

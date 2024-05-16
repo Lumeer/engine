@@ -18,8 +18,7 @@
  */
 package io.lumeer.storage.mongodb.dao.organization;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.ResourceType;
@@ -248,6 +247,12 @@ public class MongoFavoriteItemDao extends MongoOrganizationScopedDao implements 
    @Override
    public void removeFavoriteDocumentsByCollectionFromUsers(final String projectId, final String collectionId) {
       Bson filter = and(eq(PROJECT_ID, projectId), eq(COLLECTION_ID, collectionId));
+      favoriteDocumentsDBCollection().deleteMany(filter);
+   }
+
+   @Override
+   public void removeFavoriteDocumentsByIdsFromUsers(final Set<String> documentIds) {
+      Bson filter = in(DOCUMENT_ID, documentIds);
       favoriteDocumentsDBCollection().deleteMany(filter);
    }
 

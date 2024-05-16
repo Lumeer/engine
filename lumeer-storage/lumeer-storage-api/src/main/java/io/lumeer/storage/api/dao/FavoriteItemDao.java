@@ -38,5 +38,7 @@ public interface FavoriteItemDao extends OrganizationScopedDao {
 
    void removeFavoriteDocumentsByCollectionFromUsers(String projectId, String collectionId);
 
+   void removeFavoriteDocumentsByIdsFromUsers(final Set<String> documentIds);
+
    Set<String> getFavoriteDocumentIds(String userId, String projectId);
 }
