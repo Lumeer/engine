@@ -83,8 +83,8 @@ public class MongoUtils {
                   convertNestedAndListDocuments(d);
                }
             }
-         } else if (value instanceof Decimal128) {
-            dataDocument.replace(key, ((Decimal128) value).bigDecimalValue());
+         } else if (value instanceof Decimal128 d) {
+            dataDocument.replace(key, d.bigDecimalValue());
          }
       }
    }
@@ -110,8 +110,7 @@ public class MongoUtils {
       Object docId = document.get(DOCUMENT_ID);
       if (docId instanceof ObjectId) { // classic document
          document.replace(DOCUMENT_ID, docId.toString());
-      } else if (docId instanceof Document) { // shadow document
-         Document d = (Document) docId;
+      } else if (docId instanceof Document d) { // shadow document
          if (d.containsKey(DOCUMENT_ID)) {
             d.replace(DOCUMENT_ID, d.getObjectId(DOCUMENT_ID).toString());
          }

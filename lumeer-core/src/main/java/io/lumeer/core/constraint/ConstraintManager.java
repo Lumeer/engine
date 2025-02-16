@@ -168,10 +168,10 @@ public class ConstraintManager {
     * @return The value converted to a number data type or null when the conversion was not possible.
     */
    private Number encodeNumber(final NumberFormat numberFormat, final NumberFormat bigNumberFormat, Object value) {
-      if (value instanceof Number) {
-         return (Number) value;
-      } else if (value instanceof String) {
-         final String trimmed = ((String) value).trim();
+      if (value instanceof Number n) {
+         return n;
+      } else if (value instanceof String s) {
+         final String trimmed = s.trim();
 
          if (trimmed.matches("^0[^\\.].*")) { // we need to keep leading and trailing zeros, so no conversion to number
             return null;
@@ -187,11 +187,11 @@ public class ConstraintManager {
 
             final Number n1 = bigNumberFormat.parse(((String) value).trim());
 
-            if (n1 instanceof BigDecimal) {
+            if (n1 instanceof BigDecimal bd) {
                try {
-                  new Decimal128((BigDecimal) n1); // are we able to fit into Decimal128?
+                  new Decimal128(bd); // are we able to fit into Decimal128?
                } catch (NumberFormatException nfe) {
-                  if (n2 instanceof Double && Double.isInfinite((Double) n2)) {
+                  if (n2 instanceof Double d && Double.isInfinite(d)) {
                      return null;
                   }
                   return n2;
@@ -218,8 +218,8 @@ public class ConstraintManager {
          throw new IllegalStateException("No locale was set in ConstraintManager. Please use function setLocale() so it can encode correctly.");
       }
 
-      if (value instanceof String && numberMatch.matcher((String) value).matches()) {
-         final Number n = encodeNumber(locale, ((String) value).replaceFirst(",", ".").replace("e", "E"));
+      if (value instanceof String s && numberMatch.matcher(s).matches()) {
+         final Number n = encodeNumber(locale, s.replaceFirst(",", ".").replace("e", "E"));
          return n == null ? value : n;
       }
 

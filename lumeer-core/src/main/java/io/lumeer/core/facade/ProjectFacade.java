@@ -495,8 +495,8 @@ public class ProjectFacade extends AbstractFacade {
          var v = doc.get(k);
          if (v instanceof Date) {
             doc.put(k, sdf.format(v));
-         } else if (v instanceof DataDocument) {
-            translateDataDocument((DataDocument) v);
+         } else if (v instanceof DataDocument dd) {
+            translateDataDocument(dd);
          }
       });
 

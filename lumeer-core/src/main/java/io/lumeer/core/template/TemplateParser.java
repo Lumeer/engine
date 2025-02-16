@@ -101,23 +101,23 @@ public class TemplateParser {
    }
 
    public Object translateConfig(final Object config, final ConstraintManager constraintManager) {
-      if (config instanceof String) {
-         return translateString((String) config, constraintManager);
-      } else if (config instanceof List) {
+      if (config instanceof String s) {
+         return translateString(s, constraintManager);
+      } else if (config instanceof List l) {
          var newList = new ArrayList();
-         ((List) config).forEach(value -> {
+         l.forEach(value -> {
             newList.add(translateConfig(value, constraintManager));
          });
          return newList;
-      } else if (config instanceof Set) {
+      } else if (config instanceof Set s) {
          var newSet = new HashSet();
-         ((Set) config).forEach(value -> {
+         s.forEach(value -> {
             newSet.add(translateConfig(value, constraintManager));
          });
          return newSet;
-      } else if (config instanceof Map) {
+      } else if (config instanceof Map m) {
          var newMap = new HashMap<>();
-         ((Map) config).forEach((k, v) -> {
+         m.forEach((k, v) -> {
             newMap.put(translateConfig(k, constraintManager), translateConfig(v, constraintManager));
          });
          return newMap;

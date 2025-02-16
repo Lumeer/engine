@@ -74,7 +74,7 @@
    </distributionManagement>
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <java.level>20</java.level>
+      <java.level>21</java.level>
 
       <maven.assembly.plugin.version>3.6.0</maven.assembly.plugin.version>
       <maven.clean.plugin.version>3.3.2</maven.clean.plugin.version>

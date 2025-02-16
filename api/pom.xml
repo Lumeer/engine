@@ -46,9 +46,9 @@
       <version.velocity>2.3</version.velocity>
       <version.puppycrawl>10.12.4</version.puppycrawl>
 
-      <java.level>20</java.level>
-      <maven.compiler.source>20</maven.compiler.source>
-      <maven.compiler.target>20</maven.compiler.target>
+      <java.level>21</java.level>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
    </properties>
 
    <dependencies>
@@ -232,6 +232,14 @@
             <artifactId>maven-project-info-reports-plugin</artifactId>
             <version>${maven.project.info.reports.plugin.version}</version>
          </plugin>
+          <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <configuration>
+                  <source>21</source>
+                  <target>21</target>
+              </configuration>
+          </plugin>
       </plugins>
       <pluginManagement>
          <plugins>

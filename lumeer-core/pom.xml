@@ -14,11 +14,11 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>20</maven.compiler.source>
-      <maven.compiler.target>20</maven.compiler.target>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
       <kotlin.version>1.9.20</kotlin.version>
       <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
-      <kotlin.compiler.jvmTarget>20</kotlin.compiler.jvmTarget>
+      <kotlin.compiler.jvmTarget>21</kotlin.compiler.jvmTarget>
    </properties>
 
    <dependencies>
@@ -141,12 +141,12 @@
       <dependency>
          <groupId>cz.gopay</groupId>
          <artifactId>gp-java-api-v3-common</artifactId>
-         <version>3.4.8</version>
+         <version>3.8.1</version>
       </dependency>
       <dependency>
          <groupId>cz.gopay</groupId>
-         <artifactId>gp-java-api-v3-resteasy</artifactId>
-         <version>3.4.8</version>
+         <artifactId>gp-java-api-v3-apache-http-client</artifactId>
+         <version>3.8.1</version>
          <exclusions>
             <exclusion>
                <groupId>org.jboss.resteasy</groupId>

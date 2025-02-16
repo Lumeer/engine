@@ -35,7 +35,7 @@ import jakarta.inject.Inject;
 
 import cz.gopay.api.v3.GPClientException;
 import cz.gopay.api.v3.IGPConnector;
-import cz.gopay.api.v3.impl.resteasy.ResteasyGPConnector;
+import cz.gopay.api.v3.impl.apacheclient.HttpClientGPConnector;
 import cz.gopay.api.v3.model.access.AccessToken;
 import cz.gopay.api.v3.model.access.OAuth;
 import cz.gopay.api.v3.model.common.Currency;
@@ -181,7 +181,7 @@ public class PaymentGatewayFacade {
       }
 
       if ((allType && !tokenAllType) || token == null || expiration < System.currentTimeMillis()) {
-         connector = ResteasyGPConnector.build(GOPAY_API);
+         connector = HttpClientGPConnector.build(GOPAY_API);
          try {
             connector.getAppToken(CLIENT_ID, CLIENT_CREDENTIALS, allType ? OAuth.SCOPE_PAYMENT_ALL : OAuth.SCOPE_PAYMENT_CREATE);
             token = connector.getAccessToken();

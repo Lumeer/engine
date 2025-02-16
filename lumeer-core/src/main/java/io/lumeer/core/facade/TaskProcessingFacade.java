@@ -97,8 +97,8 @@ public class TaskProcessingFacade {
          Optional<RuleTask> task = createRuleTask(collection, ruleName, null, document);
          Task t = task.orElse(null);
          while (t != null) {
-            if (t instanceof RuleTask) {
-               ((RuleTask) t).setActionName(actionName);
+            if (t instanceof RuleTask rt) {
+               rt.setActionName(actionName);
             }
             t = t.getParent();
          }
@@ -112,8 +112,8 @@ public class TaskProcessingFacade {
          Optional<RuleTask> task = createRuleTask(linkType, ruleName, null, linkInstance);
          Task t = task.orElse(null);
          while (t != null) {
-            if (t instanceof RuleTask) {
-               ((RuleTask) t).setActionName(actionName);
+            if (t instanceof RuleTask rt) {
+               rt.setActionName(actionName);
             }
             t = t.getParent();
          }
