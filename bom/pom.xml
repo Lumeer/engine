@@ -324,27 +324,12 @@
 
          <dependency>
             <groupId>org.graalvm.sdk</groupId>
-            <artifactId>graal-sdk</artifactId>
-            <version>${version.graalvm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.sdk</groupId>
             <artifactId>polyglot-tck</artifactId>
-            <version>${version.graalvm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.truffle</groupId>
-            <artifactId>truffle-api</artifactId>
             <version>${version.graalvm}</version>
          </dependency>
          <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
-            <version>${version.graalvm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.regex</groupId>
-            <artifactId>regex</artifactId>
             <version>${version.graalvm}</version>
          </dependency>
 

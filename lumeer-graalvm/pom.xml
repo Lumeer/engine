@@ -62,8 +62,18 @@
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
+         <groupId>org.graalvm.truffle</groupId>
+         <artifactId>truffle-api</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
          <groupId>org.graalvm.js</groupId>
          <artifactId>js</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.js</groupId>
+         <artifactId>js-scriptengine</artifactId>
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
