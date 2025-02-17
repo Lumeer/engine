@@ -109,21 +109,22 @@
       <version.maven.plugin.api>3.9.5</version.maven.plugin.api>
       <version.maven.core>3.9.5</version.maven.core>
       <version.maven.plugin.annotations>3.10.2</version.maven.plugin.annotations>
-      <version.graalvm>21.3.8</version.graalvm>
+      <version.graalvm>22.3.5</version.graalvm>
       <version.jmte>7.0.2</version.jmte>
 
       <!-- Tools -->
       <version.findbugs>4.8.1</version.findbugs>
 
       <!-- Test dependencies  -->
-      <version.arquillian>1.7.2.Final</version.arquillian>
+      <version.arquillian>1.9.3.Final</version.arquillian>
       <version.arquillian-container>5.0.1.Final</version.arquillian-container>
-      <version.shrinkwrap>3.2.1</version.shrinkwrap>
+      <version.arquillian-protocol>10.0.0.Final</version.arquillian-protocol>
+      <version.shrinkwrap>3.3.3</version.shrinkwrap>
       <version.javassist>3.29.2-GA</version.javassist>
-      <version.wildfly>30.0.0.Final</version.wildfly>
+      <version.wildfly>35.0.1.Final</version.wildfly>
       <version.mockito>5.7.0</version.mockito>
       <version.bytebuddy>1.14.9</version.bytebuddy>
-      <version.junit>5.10.1</version.junit>
+      <version.junit>5.11.4</version.junit>
       <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
       <version.awssdk>2.21.19</version.awssdk>
       <version.conscrypt>2.5.2</version.conscrypt>
@@ -570,7 +571,7 @@
          <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet-jakarta</artifactId>
-            <version>${version.arquillian}</version>
+            <version>${version.arquillian-protocol}</version>
             <scope>test</scope>
          </dependency>
          <dependency>
