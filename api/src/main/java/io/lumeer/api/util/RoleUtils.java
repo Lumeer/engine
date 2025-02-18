@@ -52,16 +52,13 @@ public class RoleUtils {
    }
 
    public static Set<Role> getAllResourceRoles(final Resource resource) {
-      if (resource instanceof Organization) {
-         return organizationResourceRoles();
-      } else if (resource instanceof Project) {
-         return projectResourceRoles();
-      } else if (resource instanceof Collection) {
-         return collectionResourceRoles();
-      } else if (resource instanceof View) {
-         return viewResourceRoles();
-      }
-      return Collections.emptySet();
+      return switch (resource) {
+         case Organization o -> organizationResourceRoles();
+         case Project p -> projectResourceRoles();
+         case Collection c -> collectionResourceRoles();
+         case View v -> viewResourceRoles();
+         default -> Collections.emptySet();
+      };
    }
 
    public static Set<Role> resourceRoles(RoleOld role, ResourceType resourceType) {

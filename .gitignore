@@ -28,5 +28,6 @@ build.out
 .factorypath
 .project
 .settings/
+.vscode/
 
 lumeer-core/src/main/resources/defaults-dev-*.properties

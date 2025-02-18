@@ -1055,8 +1055,8 @@ public class LumeerBridge {
    }
 
    private Value filterValue(final Object o) {
-      if (o instanceof BigDecimal) {
-         return Value.asValue(((BigDecimal) o).doubleValue());
+      if (o instanceof BigDecimal bd) {
+         return Value.asValue(bd.doubleValue());
       }
 
       return Value.asValue(o);

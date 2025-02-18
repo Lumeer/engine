@@ -74,7 +74,7 @@
       <version.slf4j>2.0.9</version.slf4j>
       <version.log4j>2.21.1</version.log4j>
       <version.commons.math3>3.6.1</version.commons.math3>
-      <version.commons.io>2.8.0</version.commons.io>
+      <version.commons.io>2.18.0</version.commons.io>
       <version.commons.beanutils>1.9.4</version.commons.beanutils>
       <version.commons.collections>4.4</version.commons.collections>
       <version.commons.lang>3.13.0</version.commons.lang>
@@ -82,7 +82,7 @@
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.cli>1.6.0</version.commons.cli>
       <version.jackson>2.15.3</version.jackson>
-      <version.mongo.driver>4.11.1</version.mongo.driver>
+      <version.mongo.driver>5.3.1</version.mongo.driver>
       <version.jcommander>1.82</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
       <version.resteasy>3.15.6.Final</version.resteasy>
@@ -109,28 +109,29 @@
       <version.maven.plugin.api>3.9.5</version.maven.plugin.api>
       <version.maven.core>3.9.5</version.maven.core>
       <version.maven.plugin.annotations>3.10.2</version.maven.plugin.annotations>
-      <version.graalvm>21.3.8</version.graalvm>
+      <version.graalvm>21.3.13</version.graalvm>
       <version.jmte>7.0.2</version.jmte>
 
       <!-- Tools -->
       <version.findbugs>4.8.1</version.findbugs>
 
       <!-- Test dependencies  -->
-      <version.arquillian>1.7.2.Final</version.arquillian>
+      <version.arquillian>1.9.3.Final</version.arquillian>
       <version.arquillian-container>5.0.1.Final</version.arquillian-container>
-      <version.shrinkwrap>3.2.1</version.shrinkwrap>
+      <version.arquillian-protocol>10.0.0.Final</version.arquillian-protocol>
+      <version.shrinkwrap>3.3.3</version.shrinkwrap>
       <version.javassist>3.29.2-GA</version.javassist>
-      <version.wildfly>30.0.0.Final</version.wildfly>
+      <version.wildfly>35.0.1.Final</version.wildfly>
       <version.mockito>5.7.0</version.mockito>
       <version.bytebuddy>1.14.9</version.bytebuddy>
-      <version.junit>5.10.1</version.junit>
-      <version.embedded.mongodb>4.10.1</version.embedded.mongodb>
+      <version.junit>5.11.4</version.junit>
+      <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
       <version.awssdk>2.21.19</version.awssdk>
       <version.conscrypt>2.5.2</version.conscrypt>
 
-      <java.level>20</java.level>
-      <maven.compiler.source>20</maven.compiler.source>
-      <maven.compiler.target>20</maven.compiler.target>
+      <java.level>21</java.level>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
       <kotlin.version>1.9.20</kotlin.version>
    </properties>
    <dependencyManagement>
@@ -324,27 +325,12 @@
 
          <dependency>
             <groupId>org.graalvm.sdk</groupId>
-            <artifactId>graal-sdk</artifactId>
-            <version>${version.graalvm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.sdk</groupId>
             <artifactId>polyglot-tck</artifactId>
-            <version>${version.graalvm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.truffle</groupId>
-            <artifactId>truffle-api</artifactId>
             <version>${version.graalvm}</version>
          </dependency>
          <dependency>
             <groupId>org.graalvm.js</groupId>
             <artifactId>js</artifactId>
-            <version>${version.graalvm}</version>
-         </dependency>
-         <dependency>
-            <groupId>org.graalvm.regex</groupId>
-            <artifactId>regex</artifactId>
             <version>${version.graalvm}</version>
          </dependency>
 
@@ -585,7 +571,7 @@
          <dependency>
             <groupId>org.jboss.arquillian.protocol</groupId>
             <artifactId>arquillian-protocol-servlet-jakarta</artifactId>
-            <version>${version.arquillian}</version>
+            <version>${version.arquillian-protocol}</version>
             <scope>test</scope>
          </dependency>
          <dependency>

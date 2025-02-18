@@ -26,7 +26,6 @@ class JsEngineFactory {
         private val engine = Engine
             .newBuilder()
             .allowExperimentalOptions(true)
-            .option("js.experimental-foreign-object-prototype", "true")
             .option("js.foreign-object-prototype", "true")
             .option("engine.WarnInterpreterOnly","false")
             .build()

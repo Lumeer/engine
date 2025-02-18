@@ -81,8 +81,8 @@ public class CronRule extends BlocklyRule {
       }
       try {
          Object object = parsedConfiguration.get(param);
-         if (object instanceof String) {
-            Integer integer = Integer.parseInt(object.toString());
+         if (object instanceof String s) {
+            Integer integer = Integer.parseInt(s);
             parsedConfiguration.put(param, integer);
          }
       } catch (NumberFormatException ignored) {
@@ -152,10 +152,10 @@ public class CronRule extends BlocklyRule {
 
    public ZonedDateTime getLastRun() {
       final var raw = rule.getConfiguration().getObject(CRON_LAST_RUN);
-      if (raw instanceof Date) {
-         return ZonedDateTime.ofInstant(((Date) raw).toInstant(), ZoneOffset.UTC);
-      } else if (raw instanceof Long) {
-         return ZonedDateTime.ofInstant(Instant.ofEpochMilli((Long) raw), ZoneOffset.UTC);
+      if (raw instanceof Date d) {
+         return ZonedDateTime.ofInstant(d.toInstant(), ZoneOffset.UTC);
+      } else if (raw instanceof Long l) {
+         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(l), ZoneOffset.UTC);
       }
 
       return null;

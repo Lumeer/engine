@@ -48,18 +48,20 @@
 
       <version.velocity>2.3</version.velocity>
       <version.puppycrawl>10.12.4</version.puppycrawl>
-      <version.mongo.driver>4.11.1</version.mongo.driver>
+      <version.mongo.driver>5.3.1</version.mongo.driver>
       <version.commons.io>2.8.0</version.commons.io>
-      <version.embedded.mongodb>4.11.1</version.embedded.mongodb>
-      <version.embedded.process>4.10.1</version.embedded.process>
-      <version.arquillian>1.7.2.Final</version.arquillian>
+      <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
+      <version.embedded.process>4.15.1</version.embedded.process>
+      <version.arquillian>1.9.3.Final</version.arquillian>
       <version.arquillian-container>5.0.1.Final</version.arquillian-container>
+      <version.shrinkwrap>3.3.3</version.shrinkwrap>
+      <version.graalvm>24.1.2</version.graalvm>
 
-      <java.level>20</java.level>
-      <maven.compiler.source>20</maven.compiler.source>
-      <maven.compiler.target>20</maven.compiler.target>
+      <java.level>21</java.level>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
-      <wildfly.version>30.0.0.Final</wildfly.version>
+      <wildfly.version>35.0.1.Final</wildfly.version>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
    </properties>
 
@@ -151,23 +153,13 @@
 
       <dependency>
          <groupId>org.graalvm.sdk</groupId>
-         <artifactId>graal-sdk</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.graalvm.sdk</groupId>
          <artifactId>polyglot-tck</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.graalvm.truffle</groupId>
-         <artifactId>truffle-api</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.graalvm.js</groupId>
          <artifactId>js</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.graalvm.regex</groupId>
-         <artifactId>regex</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
@@ -224,11 +216,13 @@
       <dependency>
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+         <version>${version.shrinkwrap}</version>
          <scope>test</scope>
       </dependency>
       <dependency>
          <groupId>org.jboss.shrinkwrap.resolver</groupId>
          <artifactId>shrinkwrap-resolver-spi</artifactId>
+         <version>${version.shrinkwrap}</version>
          <scope>test</scope>
       </dependency>
       <dependency>

@@ -46,9 +46,9 @@
       <version.velocity>2.3</version.velocity>
       <version.puppycrawl>10.12.4</version.puppycrawl>
 
-      <java.level>20</java.level>
-      <maven.compiler.source>20</maven.compiler.source>
-      <maven.compiler.target>20</maven.compiler.target>
+      <java.level>21</java.level>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
    </properties>
    <dependencies>
       <dependency>

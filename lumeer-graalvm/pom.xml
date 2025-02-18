@@ -15,9 +15,9 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>20</maven.compiler.source>
-      <maven.compiler.target>20</maven.compiler.target>
-      <version.graalvm>21.3.8</version.graalvm>
+      <maven.compiler.source>21</maven.compiler.source>
+      <maven.compiler.target>21</maven.compiler.target>
+      <version.graalvm>21.3.13</version.graalvm>
       <version.icu4j>71.1</version.icu4j>
    </properties>
 
@@ -64,6 +64,11 @@
       <dependency>
          <groupId>org.graalvm.js</groupId>
          <artifactId>js</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.js</groupId>
+         <artifactId>js-scriptengine</artifactId>
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>

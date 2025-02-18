@@ -357,9 +357,7 @@ public class DataDocument extends LinkedHashMap<String, Object> {
          return false;
       }
 
-      if (compared instanceof DataDocument) {
-         DataDocument comparedDoc = (DataDocument) compared;
-
+      if (compared instanceof DataDocument comparedDoc) {
          if (this.getId() == null && comparedDoc.getId() == null) {
             return true;
          }
