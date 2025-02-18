@@ -17,7 +17,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <maven.compiler.source>21</maven.compiler.source>
       <maven.compiler.target>21</maven.compiler.target>
-      <version.graalvm>22.3.5</version.graalvm>
+      <version.graalvm>21.3.13</version.graalvm>
       <version.icu4j>71.1</version.icu4j>
    </properties>
 

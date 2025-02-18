@@ -6,12 +6,12 @@
     </properties>
 
     <resources>
-        <resource-root path="graal-sdk-22.3.5.jar"/>
-        <resource-root path="js-22.3.5.jar"/>
-        <resource-root path="js-scriptengine-22.3.5.jar"/>
-        <resource-root path="polyglot-tck-22.3.5.jar"/>
-        <resource-root path="truffle-api-22.3.5.jar"/>
-        <resource-root path="regex-22.3.5.jar"/>
+        <resource-root path="graal-sdk-21.3.13.jar"/>
+        <resource-root path="js-21.3.13.jar"/>
+        <resource-root path="js-scriptengine-21.3.13.jar"/>
+        <resource-root path="polyglot-tck-21.3.13.jar"/>
+        <resource-root path="truffle-api-21.3.13.jar"/>
+        <resource-root path="regex-21.3.13.jar"/>
         <resource-root path="icu4j-71.1.jar"/>
     </resources>
 
