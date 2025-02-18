@@ -109,7 +109,7 @@
       <version.maven.plugin.api>3.9.5</version.maven.plugin.api>
       <version.maven.core>3.9.5</version.maven.core>
       <version.maven.plugin.annotations>3.10.2</version.maven.plugin.annotations>
-      <version.graalvm>21.3.13</version.graalvm>
+      <version.graalvm>22.3.0</version.graalvm>
       <version.jmte>7.0.2</version.jmte>
 
       <!-- Tools -->
