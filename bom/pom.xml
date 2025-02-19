@@ -122,8 +122,8 @@
       <version.shrinkwrap>3.3.3</version.shrinkwrap>
       <version.javassist>3.29.2-GA</version.javassist>
       <version.wildfly>35.0.1.Final</version.wildfly>
-      <version.mockito>5.7.0</version.mockito>
-      <version.bytebuddy>1.14.9</version.bytebuddy>
+      <version.mockito>5.15.2</version.mockito>
+      <version.bytebuddy>1.17.1</version.bytebuddy>
       <version.junit>5.11.4</version.junit>
       <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
       <version.awssdk>2.21.19</version.awssdk>
