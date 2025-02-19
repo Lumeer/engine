@@ -99,8 +99,8 @@ public abstract class IntegrationTestBase {
                                                   "com.fasterxml.jackson.core:jackson-annotations",
                                                   "com.fasterxml.jackson.datatype:jackson-datatype-jsr310",
                                                   "software.amazon.awssdk:s3",
-                                                  "org.graalvm.sdk:polyglot-tck",
-                                                  "org.graalvm.js:js")
+                                                  "org.graalvm.polyglot:polyglot",
+                                                  "org.graalvm.js:js-language")
                                             .withTransitivity()
                                             .asFile()
                        );

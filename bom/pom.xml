@@ -109,7 +109,7 @@
       <version.maven.plugin.api>3.9.5</version.maven.plugin.api>
       <version.maven.core>3.9.5</version.maven.core>
       <version.maven.plugin.annotations>3.10.2</version.maven.plugin.annotations>
-      <version.graalvm>21.3.13</version.graalvm>
+      <version.graalvm>24.1.2</version.graalvm>
       <version.jmte>7.0.2</version.jmte>
 
       <!-- Tools -->
@@ -122,8 +122,8 @@
       <version.shrinkwrap>3.3.3</version.shrinkwrap>
       <version.javassist>3.29.2-GA</version.javassist>
       <version.wildfly>35.0.1.Final</version.wildfly>
-      <version.mockito>5.7.0</version.mockito>
-      <version.bytebuddy>1.14.9</version.bytebuddy>
+      <version.mockito>5.15.2</version.mockito>
+      <version.bytebuddy>1.17.1</version.bytebuddy>
       <version.junit>5.11.4</version.junit>
       <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
       <version.awssdk>2.21.19</version.awssdk>
@@ -324,14 +324,20 @@
          </dependency>
 
          <dependency>
-            <groupId>org.graalvm.sdk</groupId>
-            <artifactId>polyglot-tck</artifactId>
+            <groupId>org.graalvm.polyglot</groupId>
+            <artifactId>polyglot</artifactId>
             <version>${version.graalvm}</version>
          </dependency>
          <dependency>
             <groupId>org.graalvm.js</groupId>
+            <artifactId>js-language</artifactId>
+            <version>${version.graalvm}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.graalvm.polyglot</groupId>
             <artifactId>js</artifactId>
             <version>${version.graalvm}</version>
+            <type>pom</type>
          </dependency>
 
          <dependency>

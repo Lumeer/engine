@@ -17,7 +17,7 @@
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
       <maven.compiler.source>21</maven.compiler.source>
       <maven.compiler.target>21</maven.compiler.target>
-      <version.graalvm>21.3.13</version.graalvm>
+      <version.graalvm>24.1.2</version.graalvm>
       <version.icu4j>71.1</version.icu4j>
    </properties>
 
@@ -25,7 +25,7 @@
       <plugins>
          <plugin>
             <artifactId>maven-assembly-plugin</artifactId>
-            <version>3.6.0</version>
+            <version>3.7.1</version>
             <configuration>
                <!--finalName>graalvm-module-${project.version}</finalName-->
                <descriptors>
@@ -52,9 +52,15 @@
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
-         <groupId>org.graalvm.sdk</groupId>
-         <artifactId>polyglot-tck</artifactId>
+         <groupId>org.graalvm.polyglot</groupId>
+         <artifactId>polyglot</artifactId>
          <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.polyglot</groupId>
+         <artifactId>js</artifactId>
+         <version>${version.graalvm}</version>
+         <type>pom</type>
       </dependency>
       <dependency>
          <groupId>org.graalvm.truffle</groupId>
@@ -62,8 +68,23 @@
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
+         <groupId>org.graalvm.truffle</groupId>
+         <artifactId>truffle-runtime</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.truffle</groupId>
+         <artifactId>truffle-compiler</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.truffle</groupId>
+         <artifactId>truffle-enterprise</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
          <groupId>org.graalvm.js</groupId>
-         <artifactId>js</artifactId>
+         <artifactId>js-language</artifactId>
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
@@ -77,9 +98,39 @@
          <version>${version.graalvm}</version>
       </dependency>
       <dependency>
-         <groupId>com.ibm.icu</groupId>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>nativeimage</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>collections</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>word</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>jniutils</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>nativebridge</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.sdk</groupId>
+         <artifactId>launcher-common</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.shadowed</groupId>
          <artifactId>icu4j</artifactId>
-         <version>${version.icu4j}</version>
+         <version>${version.graalvm}</version>
       </dependency>
    </dependencies>
 
