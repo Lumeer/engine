@@ -58,7 +58,7 @@ public abstract class IntegrationTestBase {
    public static Archive<?> createTestArchive() {
       return ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME)
                        .addPackages(true, "io.lumeer", "org.bson", "com.mongodb", "org.mongodb",
-                             "de.flapdoodle", "com.univocity", "cz.gopay", "org.codehaus.jackson", "org.graalvm",
+                             "de.flapdoodle", "com.univocity", "cz.gopay", "org.codehaus.jackson", "org.graalvm", "javax.ws.rs",
                              "com.auth0", "okhttp3", "okio", "org.marvec.pusher", "io.sentry", "org.json.simple", "org.apache.commons.text",
                              "org.apache.commons.io", "com.floreysoft.jmte", "kotlin", "com.google.gson", "org.apache.commons.collections4")
                        .addAsWebInfResource("WEB-INF/beans.xml")

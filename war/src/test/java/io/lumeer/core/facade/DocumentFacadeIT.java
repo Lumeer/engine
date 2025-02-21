@@ -18,24 +18,7 @@
  */
 package io.lumeer.core.facade;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import io.lumeer.api.model.Attribute;
-import io.lumeer.api.model.Collection;
-import io.lumeer.api.model.CollectionPurpose;
-import io.lumeer.api.model.CollectionPurposeType;
-import io.lumeer.api.model.Document;
-import io.lumeer.api.model.Group;
-import io.lumeer.api.model.Organization;
-import io.lumeer.api.model.Permission;
-import io.lumeer.api.model.Permissions;
-import io.lumeer.api.model.Project;
-import io.lumeer.api.model.ResourceComment;
-import io.lumeer.api.model.ResourceType;
-import io.lumeer.api.model.Role;
-import io.lumeer.api.model.RoleType;
-import io.lumeer.api.model.User;
+import io.lumeer.api.model.*;
 import io.lumeer.core.WorkspaceKeeper;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionsChecker;
@@ -44,13 +27,7 @@ import io.lumeer.core.exception.NoResourcePermissionException;
 import io.lumeer.engine.IntegrationTestBase;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.RemoveDocument;
-import io.lumeer.storage.api.dao.CollectionDao;
-import io.lumeer.storage.api.dao.DataDao;
-import io.lumeer.storage.api.dao.DocumentDao;
-import io.lumeer.storage.api.dao.GroupDao;
-import io.lumeer.storage.api.dao.OrganizationDao;
-import io.lumeer.storage.api.dao.ProjectDao;
-import io.lumeer.storage.api.dao.UserDao;
+import io.lumeer.storage.api.dao.*;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
 import org.assertj.core.api.SoftAssertions;
@@ -69,6 +46,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import jakarta.inject.Inject;
+
+import static org.assertj.core.api.Assertions.*;
 
 @ExtendWith(ArquillianExtension.class)
 public class DocumentFacadeIT extends IntegrationTestBase {
@@ -101,6 +80,12 @@ public class DocumentFacadeIT extends IntegrationTestBase {
 
    @Inject
    private CollectionFacade collectionFacade;
+
+   @Inject
+   private FileAttachmentFacade fileAttachmentFacade;
+
+   @Inject
+   private FavoriteItemDao favoriteItemDao;
 
    @Inject
    private DataDao dataDao;
@@ -145,6 +130,8 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       organization.setPermissions(new Permissions());
       Organization storedOrganization = organizationDao.createOrganization(organization);
 
+      workspaceKeeper.setOrganization(storedOrganization);
+
       projectDao.setOrganization(storedOrganization);
       groupDao.setOrganization(storedOrganization);
       group = groupDao.createGroup(new Group(GROUP, Collections.singletonList(user.getId())));
@@ -155,7 +142,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       Permission userPermission = Permission.buildWithRoles(this.user.getId(), Collections.singleton(new Role(RoleType.Read)));
       organizationPermissions.updateUserPermissions(userPermission);
       storedOrganization.setPermissions(organizationPermissions);
-      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization);
+      organizationDao.updateOrganization(storedOrganization.getId(), storedOrganization, storedOrganization);
 
       Project project = new Project();
       project.setCode(PROJECT_CODE);
@@ -165,7 +152,7 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       project.setPermissions(projectPermissions);
       Project storedProject = projectDao.createProject(project);
 
-      workspaceKeeper.setWorkspaceIds(storedOrganization.getId(), storedProject.getId());
+      workspaceKeeper.setProject(storedProject);
 
       collectionDao.setProject(storedProject);
       collectionDao.createRepository(storedProject);
@@ -185,6 +172,27 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       this.taskCollection = collectionDao.createCollection(taskCollection);
 
       permissionsChecker.getPermissionAdapter().invalidateUserCache();
+   }
+
+   private Collection createCollection(final String name) {
+      Permissions collectionPermissions = new Permissions();
+      collectionPermissions.updateUserPermissions(new Permission(this.user.getId(),
+         Set.of(
+            Role.of(RoleType.Read), Role.of(RoleType.DataWrite), Role.of(RoleType.DataContribute), Role.of(RoleType.DataRead),
+            Role.of(RoleType.Manage), Role.of(RoleType.DataDelete), Role.of(RoleType.CommentContribute)
+         ))
+      );
+      Collection collection = new Collection(String.valueOf(name.hashCode()), name, COLLECTION_ICON, COLLECTION_COLOR, collectionPermissions);
+      var a1 = new Attribute("a1");
+      a1.setName("Col1");
+      collection.setAttributes(Set.of(a1));
+      collection.setLastAttributeNum(1);
+
+      return collectionDao.createCollection(collection);
+   }
+
+   private Document createDocument(final Collection collection, final Document document) {
+      return documentFacade.createDocument(collection.getId(), document);
    }
 
    private Document prepareDocument() {
@@ -245,6 +253,47 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       storedCollection = collectionFacade.getCollection(collection.getId());
 
       assertThat(storedCollection.getDocumentsCount()).isEqualTo(1);
+   }
+
+   @Test
+   public void testDeleteDocumentsById() {
+      final var c1 = createCollection("c1");
+      final var c2 = createCollection("c2");
+
+      final var d11 = createDocument(c1, new Document(new DataDocument("a1", "v11")));
+      final var d12 = createDocument(c1, new Document(new DataDocument("a1", "v12")));
+      final var d21 = createDocument(c2, new Document(new DataDocument("a1", "v21")));
+      final var d22 = createDocument(c2, new Document(new DataDocument("a1", "v22")));
+
+      // make sure data were written too
+      assertThat(dataDao.getData(c1.getId(), d11.getId()).getString("a1")).isEqualTo("v11");
+
+      // add comment on d11
+      final var comment = new ResourceComment("comment1", null);
+      comment.setResourceType(ResourceType.DOCUMENT);
+      comment.setResourceId(d11.getId());
+      resourceCommentFacade.createResourceComment(comment);
+
+      // add d11 as favorite document
+      favoriteItemDao.addFavoriteDocument(user.getId(), workspaceKeeper.getProjectId(), c1.getId(), d11.getId());
+
+      final var fileAttachment = new FileAttachment(workspaceKeeper.getOrganizationId(), workspaceKeeper.getProjectId(), c1.getId(), d11.getId(), "a1", "file1.txt", "file1.txtsfadfadsf", FileAttachment.AttachmentType.DOCUMENT);
+      fileAttachmentFacade.createFileAttachment(fileAttachment);
+
+      documentFacade.deleteDocuments(Set.of(d11.getId(), d22.getId()));
+
+      // make sure the documents were deleted
+      assertThat(documentDao.getDocumentsByCollection(c1.getId()).stream().map(Document::getId)).containsExactlyInAnyOrder(d12.getId());
+      assertThat(documentDao.getDocumentsByCollection(c2.getId()).stream().map(Document::getId)).containsExactlyInAnyOrder(d21.getId());
+
+      // make sure comments were deleted as well
+      assertThat(resourceCommentFacade.getCommentsCountByParent(ResourceType.DOCUMENT, c1.getId())).isEmpty();
+
+      // make sure favorite document was removed
+      assertThat(favoriteItemDao.getFavoriteDocumentIds(user.getId(), workspaceKeeper.getProjectId())).isEmpty();
+
+      // make sure file attachment was removed
+      assertThat(fileAttachmentFacade.getAllFileAttachments(c1.getId(), FileAttachment.AttachmentType.DOCUMENT)).isEmpty();
    }
 
    @Test
