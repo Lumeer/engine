@@ -207,6 +207,12 @@ public class FileAttachmentFacade extends AbstractFacade {
                               .collect(Collectors.toList());
    }
 
+   /**
+    * Lists the file attachments present in our database.
+    * @param resourceId Either collection or link type ID.
+    * @param type The type of file attachment.
+    * @return Files present in our database for the specified collection or link type.
+    */
    public List<FileAttachment> getAllFileAttachments(final String resourceId, final FileAttachment.AttachmentType type) {
       List<FileAttachment> attachments = fileAttachmentDao.findAllFileAttachments(getOrganization(), getProject(), resourceId, type)
                                                           .stream()

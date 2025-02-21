@@ -25,6 +25,14 @@ public class Role {
       this.transitive = false;
    }
 
+   public static Role of(final RoleType type) {
+      return new Role(type);
+   }
+
+   public static Role of(final RoleType type, final boolean transitive) {
+      return new Role(type, transitive);
+   }
+
    public RoleType getType() {
       return type;
    }
