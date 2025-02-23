@@ -44,14 +44,14 @@
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-      <maven.embedmongo.plugin.version>1.0.1</maven.embedmongo.plugin.version>
+      <maven.embedmongo.plugin.version>1.0.2</maven.embedmongo.plugin.version>
 
       <version.velocity>2.3</version.velocity>
       <version.puppycrawl>10.12.4</version.puppycrawl>
       <version.mongo.driver>5.3.1</version.mongo.driver>
       <version.commons.io>2.8.0</version.commons.io>
-      <version.embedded.mongodb>4.11.1</version.embedded.mongodb>
-      <version.embedded.process>4.10.1</version.embedded.process>
+      <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
+      <version.embedded.process>4.15.1</version.embedded.process>
       <version.arquillian>1.9.3.Final</version.arquillian>
       <version.arquillian-container>5.0.1.Final</version.arquillian-container>
       <version.shrinkwrap>3.3.3</version.shrinkwrap>
