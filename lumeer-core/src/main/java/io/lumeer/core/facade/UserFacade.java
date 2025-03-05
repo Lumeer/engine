@@ -39,6 +39,7 @@ import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.RoleUtils;
 import io.lumeer.api.util.UserUtil;
 import io.lumeer.core.auth.UserAuth0Utils;
+import io.lumeer.core.exception.AccessForbiddenException;
 import io.lumeer.core.exception.BadFormatException;
 import io.lumeer.core.util.Utils;
 import io.lumeer.engine.api.data.DataDocument;
@@ -332,6 +333,8 @@ public class UserFacade extends AbstractFacade {
    public User getUser(String organizationId, String userId) {
       checkOrganizationPermissions(organizationId, RoleType.Read);
 
+      final User user = checkUserInOrganization(organizationId, userId);
+
       return keepOnlyCurrentOrganization(userDao.getUserById(userId), organizationId);
    }
 
@@ -339,8 +342,9 @@ public class UserFacade extends AbstractFacade {
       checkOrganizationInUser(organizationId, user);
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
-      User storedUser = userDao.getUserById(userId);
-      User updatedUser = updateExistingUser(organizationId, storedUser, user);
+      final User storedUser = checkUserInOrganization(organizationId, userId);
+
+      final User updatedUser = updateExistingUser(organizationId, storedUser, user);
       logUserVerified(storedUser, updatedUser);
 
       return keepOnlyCurrentOrganization(updatedUser, organizationId);
@@ -428,6 +432,7 @@ public class UserFacade extends AbstractFacade {
    public void setUserGroups(String organizationId, String userId, Set<String> groups) {
       permissionsChecker.checkGroupsHandle();
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
+      checkUserInOrganization(organizationId, userId);
 
       groupDao.deleteUserFromGroups(userId);
       groupDao.addUserToGroups(userId, groups);
@@ -441,9 +446,9 @@ public class UserFacade extends AbstractFacade {
    public void deleteUser(String organizationId, String userId) {
       checkOrganizationPermissions(organizationId, RoleType.UserConfig);
 
+      User storedUser = checkUserInOrganization(organizationId, userId);
       groupDao.setOrganization(getOrganization());
       groupDao.deleteUserFromGroups(userId);
-      User storedUser = userDao.getUserById(userId);
 
       var organizations = new HashSet<>(storedUser.getOrganizations());
       organizations.remove(organizationId);
@@ -678,6 +683,16 @@ public class UserFacade extends AbstractFacade {
       permissionsChecker.checkRole(project, role);
 
       return project;
+   }
+
+   private User checkUserInOrganization(final String organizationId, final String userId) {
+      final User user = userDao.getUserById(userId);
+
+      if (!user.getOrganizations().contains(organizationId)) {
+         throw new AccessForbiddenException("User not found.");
+      }
+
+      return user;
    }
 
    private boolean checkOrganizationInUser(String organizationId, User user) {
