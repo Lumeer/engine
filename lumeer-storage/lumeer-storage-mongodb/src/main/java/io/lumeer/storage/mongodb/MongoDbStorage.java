@@ -578,12 +578,12 @@ public class MongoDbStorage implements DataStorage {
       final DataStorageStats dss = new DataStorageStats();
 
       dss.setDatabaseName(dbStats.getString("db"));
-      dss.setCollections(dbStats.getInteger("collections"));
-      dss.setDocuments(dbStats.getInteger("objects"));
-      dss.setDataSize(dbStats.getDouble("dataSize").longValue());
-      dss.setStorageSize(dbStats.getDouble("storageSize").longValue());
-      dss.setIndexes(dbStats.getInteger("indexes"));
-      dss.setIndexSize(dbStats.getDouble("indexSize").longValue());
+      dss.setCollections(getLong(dbStats, "collections"));
+      dss.setDocuments(getLong(dbStats, "objects"));
+      dss.setDataSize(getLong(dbStats, "dataSize"));
+      dss.setStorageSize(getLong(dbStats, "storageSize"));
+      dss.setIndexes(getLong(dbStats, "indexes"));
+      dss.setIndexSize(getLong(dbStats, "indexSize"));
 
       return dss;
    }
@@ -597,13 +597,18 @@ public class MongoDbStorage implements DataStorage {
 
       dss.setDatabaseName(ns.substring(0, ns.indexOf(".")));
       dss.setCollectionName(ns.substring(ns.indexOf(".") + 1));
-      dss.setDocuments(collStats.getInteger("count"));
-      dss.setDataSize(collStats.getInteger("size"));
-      dss.setStorageSize(collStats.getInteger("storageSize"));
-      dss.setIndexes(collStats.getInteger("nindexes"));
-      dss.setIndexSize(collStats.getInteger("totalIndexSize"));
+      dss.setDocuments(getLong(collStats, "count"));
+      dss.setDataSize(getLong(collStats, "size"));
+      dss.setStorageSize(getLong(collStats, "storageSize"));
+      dss.setIndexes(getLong(collStats, "nindexes"));
+      dss.setIndexSize(getLong(collStats, "totalIndexSize"));
 
       return dss;
+   }
+
+   private static long getLong(final Document document, final String key) {
+      // numeric types of stats fields differ between MongoDB versions (int, long, double)
+      return ((Number) document.get(key)).longValue();
    }
 
    public MongoDatabase getDatabase() {

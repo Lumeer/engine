@@ -101,7 +101,7 @@ public abstract class AuthenticationControllerProvider {
 
          final RSAPublicKey pubKey = AuthenticationControllerProvider.getPublicKeyFromCertificate(pemN);
          final Verification verification = JWT.require(Algorithm.RSA256(pubKey, null));
-         final JWTVerifier verifier = verification.acceptExpiresAt(60).build();
+         final JWTVerifier verifier = verification.acceptLeeway(60).build(); // tolerate clock skew with Auth0 for exp, iat and nbf
          return verifier;
       } catch (Exception e) {
          e.printStackTrace();
