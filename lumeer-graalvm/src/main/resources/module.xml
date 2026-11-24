@@ -6,22 +6,23 @@
     </properties>
 
     <resources>
-        <resource-root path="graal-sdk-24.1.2.jar"/>
-        <resource-root path="polyglot-24.1.2.jar"/>
-        <resource-root path="js-language-24.1.2.jar"/>
-        <resource-root path="js-scriptengine-24.1.2.jar"/>
-        <resource-root path="jniutils-24.1.2.jar"/>
-        <resource-root path="truffle-api-24.1.2.jar"/>
-        <resource-root path="truffle-runtime-24.1.2.jar"/>
-        <resource-root path="truffle-compiler-24.1.2.jar"/>
-        <resource-root path="truffle-enterprise-24.1.2.jar"/>
-        <resource-root path="launcher-common-24.1.2.jar"/>
-        <resource-root path="nativeimage-24.1.2.jar"/>
-        <resource-root path="nativebridge-24.1.2.jar"/>
-        <resource-root path="collections-24.1.2.jar"/>
-        <resource-root path="word-24.1.2.jar"/>
-        <resource-root path="regex-24.1.2.jar"/>
-        <resource-root path="icu4j-24.1.2.jar"/>
+        <resource-root path="graal-sdk-25.0.5.1.jar"/>
+        <resource-root path="polyglot-25.0.5.1.jar"/>
+        <resource-root path="js-language-25.0.5.1.jar"/>
+        <resource-root path="js-scriptengine-25.0.5.1.jar"/>
+        <resource-root path="jniutils-25.0.5.1.jar"/>
+        <resource-root path="truffle-api-25.0.5.1.jar"/>
+        <resource-root path="truffle-runtime-25.0.5.1.jar"/>
+        <resource-root path="truffle-compiler-25.0.5.1.jar"/>
+        <resource-root path="truffle-enterprise-25.0.5.1.jar"/>
+        <resource-root path="launcher-common-25.0.5.1.jar"/>
+        <resource-root path="nativeimage-25.0.5.1.jar"/>
+        <resource-root path="nativebridge-25.0.5.1.jar"/>
+        <resource-root path="collections-25.0.5.1.jar"/>
+        <resource-root path="word-25.0.5.1.jar"/>
+        <resource-root path="regex-25.0.5.1.jar"/>
+        <resource-root path="icu4j-25.0.5.1.jar"/>
+        <resource-root path="xz-25.0.5.1.jar"/>
     </resources>
 
     <dependencies>
