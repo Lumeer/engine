@@ -86,7 +86,6 @@ public abstract class IntegrationTestBase {
                        .addAsResource("he.min.js")
                        .addAsResource("numbro.min.js")
                        .addAsResource("numbro-languages.min.js")
-                       .addAsResource("lumeer-data-filters.min.js")
                        .addAsResource("test.json")
                        .addAsLibraries(Maven.resolver()
                                             .loadPomFromFile("pom.xml")

@@ -106,6 +106,7 @@
       <module>bom</module>
       <module>api</module>
       <module>lumeer-graalvm</module>
+      <module>data-filters</module>
       <module>war</module>
       <module>simple-cache</module>
       <module>utils</module>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Builds the Kotlin Multiplatform data-filters library with its Gradle wrapper and attaches the JVM jar,
+  so the engine modules can depend on io.lumeer:data-filters-jvm like on any other module.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   <parent>
+      <artifactId>engine-parent</artifactId>
+      <groupId>io.lumeer</groupId>
+      <version>1.0-SNAPSHOT</version>
+   </parent>
+   <modelVersion>4.0.0</modelVersion>
+
+   <artifactId>data-filters-jvm</artifactId>
+   <packaging>pom</packaging>
+   <name>Lumeer Data Filters</name>
+
+   <properties>
+      <gradle.executable>${project.basedir}/gradlew</gradle.executable>
+      <data.filters.jar>${project.basedir}/build/libs/data-filters-jvm-${project.version}.jar</data.filters.jar>
+      <skipTests>false</skipTests>
+   </properties>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.5.0</version>
+            <executions>
+               <execution>
+                  <id>gradle-test</id>
+                  <phase>test</phase>
+                  <goals>
+                     <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <executable>${gradle.executable}</executable>
+                     <workingDirectory>${project.basedir}</workingDirectory>
+                     <arguments>
+                        <argument>--no-daemon</argument>
+                        <argument>--console=plain</argument>
+                        <argument>-Pversion=${project.version}</argument>
+                        <argument>jvmTest</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>gradle-jar</id>
+                  <phase>compile</phase>
+                  <goals>
+                     <goal>exec</goal>
+                  </goals>
+                  <configuration>
+                     <executable>${gradle.executable}</executable>
+                     <workingDirectory>${project.basedir}</workingDirectory>
+                     <arguments>
+                        <argument>--no-daemon</argument>
+                        <argument>--console=plain</argument>
+                        <argument>-Pversion=${project.version}</argument>
+                        <argument>jvmJar</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <version>3.6.0</version>
+            <executions>
+               <execution>
+                  <id>attach-jar</id>
+                  <phase>compile</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <artifacts>
+                        <artifact>
+                           <file>${data.filters.jar}</file>
+                           <type>jar</type>
+                        </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+</project>
