@@ -51,6 +51,9 @@ class ActionDataValue(private val title: Any?) : DataValue {
 class AddressDataValue(val value: Any?, private val fields: List<String>) : DataValue {
 
     override fun format(): String {
+        // JS isObject(): arrays are objects too and have none of the address fields
+        // JS isObject(): arrays are objects too and have none of the address fields
+        if (value is List<*>) return ""
         @Suppress("UNCHECKED_CAST")
         val address = value as? Map<String, Any?> ?: return jsStringOrEmpty(value)
         val nonEmptyFields = fields.filter { jsTruthy(address[it]) }
