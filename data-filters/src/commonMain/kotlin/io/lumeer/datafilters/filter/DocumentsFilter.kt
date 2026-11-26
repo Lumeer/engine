@@ -102,8 +102,8 @@ fun <D : DocumentModel, L : LinkInstanceModel> filterDocumentsAndLinksByQuery(
     }
     val context = FilterContext(constraintData)
 
-    val uniqueDocuments = LinkedHashMap<String, DocumentModel>()
-    val uniqueLinkInstances = LinkedHashMap<String, LinkInstanceModel>()
+    var uniqueDocuments: List<DocumentModel> = emptyList()
+    var uniqueLinkInstances: List<LinkInstanceModel> = emptyList()
 
     val stems = query.stems.ifEmpty { collections.map { QueryStem(collectionId = it.id) } }
     val documentsByCollections = documents.groupBy { it.collectionId }
@@ -115,12 +115,22 @@ fun <D : DocumentModel, L : LinkInstanceModel> filterDocumentsAndLinksByQuery(
             collections, documentsByCollections, linkTypes, linkInstancesByLinkTypes,
             context, stem, escapedFulltexts, includeChildren, includeNonLinkedDocuments,
         )
-        filtered.allDocuments.forEach { if (!uniqueDocuments.containsKey(it.id)) uniqueDocuments[it.id] = it }
-        filtered.allLinkInstances.forEach { if (!uniqueLinkInstances.containsKey(it.id)) uniqueLinkInstances[it.id] = it }
+        uniqueDocuments = mergeById(uniqueDocuments, filtered.allDocuments)
+        uniqueLinkInstances = mergeById(uniqueLinkInstances, filtered.allLinkInstances)
     }
 
     @Suppress("UNCHECKED_CAST")
-    return FilterResult(paginate(uniqueDocuments.values.toList() as List<D>, query), uniqueLinkInstances.values.toList() as List<L>)
+    return FilterResult(paginate(uniqueDocuments as List<D>, query), uniqueLinkInstances as List<L>)
+}
+
+/**
+ * Appends the items of the next stem whose id is not in the result yet. Like the original, duplicates within one stem
+ * stay (a link instance reached from several documents is listed once per document).
+ */
+private fun <T : DataResource> mergeById(result: List<T>, next: List<T>): List<T> {
+    if (result.isEmpty() || next.isEmpty()) return result.ifEmpty { next }
+    val ids = result.mapTo(HashSet()) { it.id }
+    return result + next.filter { it.id !in ids }
 }
 
 private fun filterDocumentsAndLinksByStem(

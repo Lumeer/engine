@@ -40,6 +40,8 @@ The port reproduces the old bundle exactly, including its quirks:
   the constraint data and uses the server's time zone. ISO values and "now" use the configured timezone.
 - **numbro keeps a global language.** Every Number value switches it (to its currency or en-US), and later formatting
   (also of Duration values) uses whatever was set last. `NumbroState` reproduces this per filter run.
+- **Link instances can repeat.** Within one stem, a link instance reached from several documents is returned once per
+  document; only items already returned by earlier stems are dropped. The engine maps the ids back to objects the same way.
 - JavaScript coercion rules (`String(x)`, `Number(x)`, truthiness, `trim`, `toFixed`) are reproduced in `util/JsSemantics.kt`.
 
 One intended difference: the engine now passes attribute locks to the filter, so the Action button
@@ -47,8 +49,10 @@ enabled/disabled conditions work. The old Gson serialization dropped locks, so "
 
 ## Parity tests
 
-`src/jvmTest/resources/parity-vectors.json.gz` holds 12,000 random cases (all constraint types, timezones, languages,
-currencies, relative dates) with the results of the old bundle. `ParityVectorsTest` replays them here and
+`src/jvmTest/resources/parity-vectors.json.gz` holds 12,000 random single-collection cases (all constraint types, timezones,
+languages, currencies, relative dates), 5 fixed Address cases and 1,500 cases with link chains (link types, link
+instances, link filters, document ids, children, non-linked documents, pagination, several stems), with the results of
+the old bundle (documents, and link instances for the link cases). `ParityVectorsTest` replays them here and
 `DataFilterParityTest` in lumeer-core replays them through the engine models.
 
 The expected results were produced by the old bundle as of commit `797255de`

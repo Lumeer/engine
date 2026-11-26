@@ -34,6 +34,9 @@ import io.lumeer.api.model.CurrencyData
 import io.lumeer.api.model.Document
 import io.lumeer.api.model.Group
 import io.lumeer.api.model.Language
+import io.lumeer.api.model.LinkAttributeFilter
+import io.lumeer.api.model.LinkInstance
+import io.lumeer.api.model.LinkType
 import io.lumeer.api.model.Permissions
 import io.lumeer.api.model.Query
 import io.lumeer.api.model.QueryStem
@@ -105,7 +108,8 @@ class DataFilterParityTest {
         )
     }
 
-    private fun run(case: Map<String, Any?>): List<String> {
+    /** Ids of the filtered documents and link instances */
+    private fun run(case: Map<String, Any?>): Pair<List<String>, List<String>> {
         val input = case["input"].asMap()
         val collections = input["collections"].asList().map {
             val c = it.asMap()
@@ -117,6 +121,19 @@ class DataFilterParityTest {
             Document(DataDocument(d["data"].asMap())).apply {
                 id = d["id"] as String
                 collectionId = d["collectionId"] as String
+                (d["metaData"]?.asMap()?.get("parentId") as String?)?.let { metaData = DataDocument(Document.META_PARENT_ID, it) }
+            }
+        }
+        val linkTypes = input["linkTypes"].asList().map {
+            val l = it.asMap()
+            val id = l["id"] as String
+            LinkType(id, l["collectionIds"].asList().map { c -> c as String }, l["attributes"].asList().map { a -> attribute(a) }, mapOf(), Permissions(), null).apply { this.id = id }
+        }
+        val linkInstances = input["linkInstances"].asList().map {
+            val l = it.asMap()
+            LinkInstance(l["linkTypeId"] as String, l["documentIds"].asList().map { c -> c as String }).apply {
+                id = l["id"] as String
+                data = DataDocument(l["data"].asMap())
             }
         }
         val query = input["query"].asMap()
@@ -126,14 +143,18 @@ class DataFilterParityTest {
                 val filter = f.asMap()
                 CollectionAttributeFilter(filter["collectionId"] as String, filter["attributeId"] as String, ConditionType.fromString(filter["condition"] as String?), conditionValues(filter["conditionValues"]))
             }
-            QueryStem(null, s["collectionId"] as String, listOf(), setOf(), filters, listOf())
+            val linkFilters = s["linkFilters"].asList().map { f ->
+                val filter = f.asMap()
+                LinkAttributeFilter(filter["linkTypeId"] as String, filter["attributeId"] as String, ConditionType.fromString(filter["condition"] as String?), conditionValues(filter["conditionValues"]))
+            }
+            QueryStem(null, s["collectionId"] as String, s["linkTypeIds"].asList().map { id -> id as String }, s["documentIds"].asList().map { id -> id as String }.toSet(), filters, linkFilters)
         }
-        val engineQuery = Query(stems, LinkedHashSet(query["fulltexts"].asList().map { it as String }), null, null)
+        val engineQuery = Query(stems, LinkedHashSet(query["fulltexts"].asList().map { it as String }), (query["page"] as Number?)?.toInt(), (query["pageSize"] as Number?)?.toInt())
         val now = (case["now"] as Number).toLong()
         DataFilterAdapter.clock = { now }
-        val result = DataFilter.filterDocumentsAndLinksByQueryFromJson(documents, collections, listOf(), listOf(), engineQuery, mapOf(), mapOf(),
-            constraintData(input["constraintData"].asMap()), false, false, Language.EN)
-        return result.first.map { it.id }
+        val result = DataFilter.filterDocumentsAndLinksByQueryFromJson(documents, collections, linkTypes, linkInstances, engineQuery, mapOf(), mapOf(),
+            constraintData(input["constraintData"].asMap()), input["includeChildren"] == true, input["includeNonLinkedDocuments"] == true, Language.EN)
+        return result.first.map { it.id } to result.second.map { it.id }
     }
 
     @Test
@@ -150,13 +171,15 @@ class DataFilterParityTest {
             for (case in root["cases"].asList().map { it.asMap() }) {
                 val expected = case["expected"] as? List<*> ?: continue
                 // the engine does not model every constraint type of the library (e.g. Team)
-                val types = case["input"].asMap()["collections"].asList().flatMap { it.asMap()["attributes"].asList() }
+                val types = (case["input"].asMap()["collections"].asList() + case["input"].asMap()["linkTypes"].asList()).flatMap { it.asMap()["attributes"].asList() }
                     .mapNotNull { it.asMap()["constraint"]?.asMap()?.get("type") as String? }
                 if (!engineTypes.containsAll(types)) continue
                 total++
-                val actual = run(case)
-                if (actual != expected) {
-                    failures.add("case ${case["index"]} (${case["type"]}): expected=$expected actual=$actual")
+                // link instances are compared for the cases generated with them
+                val expectedLinks = case["expectedLinks"] as? List<*>
+                val (actualDocuments, actualLinks) = run(case)
+                if (actualDocuments != expected || (expectedLinks != null && actualLinks != expectedLinks)) {
+                    failures.add("case ${case["index"]} (${case["type"]}): expected=$expected ${expectedLinks ?: ""} actual=$actualDocuments $actualLinks")
                 }
             }
             println("Engine parity: $total cases, ${failures.size} failures")
