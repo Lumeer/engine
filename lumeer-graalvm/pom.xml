@@ -15,9 +15,9 @@
 
    <properties>
       <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>21</maven.compiler.source>
-      <maven.compiler.target>21</maven.compiler.target>
-      <version.graalvm>24.1.2</version.graalvm>
+      <maven.compiler.source>25</maven.compiler.source>
+      <maven.compiler.target>25</maven.compiler.target>
+      <version.graalvm>25.0.5.1</version.graalvm>
       <version.icu4j>71.1</version.icu4j>
    </properties>
 
@@ -130,6 +130,11 @@
       <dependency>
          <groupId>org.graalvm.shadowed</groupId>
          <artifactId>icu4j</artifactId>
+         <version>${version.graalvm}</version>
+      </dependency>
+      <dependency>
+         <groupId>org.graalvm.shadowed</groupId>
+         <artifactId>xz</artifactId>
          <version>${version.graalvm}</version>
       </dependency>
    </dependencies>

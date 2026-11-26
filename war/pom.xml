@@ -53,15 +53,15 @@
       <version.embedded.mongodb>4.18.1</version.embedded.mongodb>
       <version.embedded.process>4.15.1</version.embedded.process>
       <version.arquillian>1.9.3.Final</version.arquillian>
-      <version.arquillian-container>5.0.1.Final</version.arquillian-container>
+      <version.arquillian-container>5.1.0.Final</version.arquillian-container>
       <version.shrinkwrap>3.3.3</version.shrinkwrap>
-      <version.graalvm>24.1.2</version.graalvm>
+      <version.graalvm>25.0.5.1</version.graalvm>
 
-      <java.level>21</java.level>
-      <maven.compiler.source>21</maven.compiler.source>
-      <maven.compiler.target>21</maven.compiler.target>
+      <java.level>25</java.level>
+      <maven.compiler.source>25</maven.compiler.source>
+      <maven.compiler.target>25</maven.compiler.target>
       <lumeer.defaults>defaults-dev.properties</lumeer.defaults>
-      <wildfly.version>35.0.1.Final</wildfly.version>
+      <wildfly.version>42.0.0.Final</wildfly.version>
       <wildfly.dir>${project.build.directory}/wildfly-${version.wildfly}</wildfly.dir>
    </properties>
 

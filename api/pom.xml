@@ -46,9 +46,9 @@
       <version.velocity>2.3</version.velocity>
       <version.puppycrawl>10.12.4</version.puppycrawl>
 
-      <java.level>21</java.level>
-      <maven.compiler.source>21</maven.compiler.source>
-      <maven.compiler.target>21</maven.compiler.target>
+      <java.level>25</java.level>
+      <maven.compiler.source>25</maven.compiler.source>
+      <maven.compiler.target>25</maven.compiler.target>
    </properties>
 
    <dependencies>
@@ -236,8 +236,8 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-compiler-plugin</artifactId>
               <configuration>
-                  <source>21</source>
-                  <target>21</target>
+                  <source>25</source>
+                  <target>25</target>
               </configuration>
           </plugin>
       </plugins>
