@@ -75,21 +75,21 @@
       <version.log4j>2.25.5</version.log4j>
       <version.commons.math3>3.6.1</version.commons.math3>
       <version.commons.io>2.18.0</version.commons.io>
-      <version.commons.beanutils>1.9.4</version.commons.beanutils>
+      <version.commons.beanutils>1.11.0</version.commons.beanutils>
       <version.commons.collections>4.4</version.commons.collections>
-      <version.commons.lang>3.13.0</version.commons.lang>
+      <version.commons.lang>3.20.0</version.commons.lang>
       <version.commons.text>1.11.0</version.commons.text>
       <version.commons.logging>1.2</version.commons.logging>
       <version.commons.cli>1.6.0</version.commons.cli>
-      <version.jackson>2.15.3</version.jackson>
+      <version.jackson>2.21.7</version.jackson>
       <version.mongo.driver>5.3.1</version.mongo.driver>
       <version.jcommander>1.82</version.jcommander>
       <version.json.simple>1.1.1</version.json.simple>
       <version.resteasy>3.15.6.Final</version.resteasy>
       <version.restesy.client>6.2.5.Final</version.restesy.client>
       <version.jaxrs>3.0.12.Final</version.jaxrs>
-      <version.apache.httpclient>5.2.1</version.apache.httpclient>
-      <version.apache.httpcore>5.2.3</version.apache.httpcore>
+      <version.apache.httpclient>5.6.5</version.apache.httpclient>
+      <version.apache.httpcore>5.4.4</version.apache.httpcore>
       <version.univocity>2.9.1</version.univocity>
       <version.mvc-auth>1.10.0</version.mvc-auth>
       <version.jwt>4.4.0</version.jwt>
@@ -136,6 +136,16 @@
    </properties>
    <dependencyManagement>
       <dependencies>
+
+         <!-- Jackson BOM first so it wins over other imported BOMs; keeps all Jackson modules
+              (incl. jackson-core and the patch-less jackson-annotations) on one release -->
+         <dependency>
+            <groupId>com.fasterxml.jackson</groupId>
+            <artifactId>jackson-bom</artifactId>
+            <version>${version.jackson}</version>
+            <type>pom</type>
+            <scope>import</scope>
+         </dependency>
 
          <dependency>
             <groupId>io.lumeer</groupId>
@@ -244,6 +254,11 @@
          <dependency>
             <groupId>org.apache.httpcomponents.core5</groupId>
             <artifactId>httpcore5</artifactId>
+            <version>${version.apache.httpcore}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5-h2</artifactId>
             <version>${version.apache.httpcore}</version>
          </dependency>
 
@@ -510,33 +525,6 @@
             <artifactId>univocity-parsers</artifactId>
             <version>${version.univocity}</version>
             <type>jar</type>
-         </dependency>
-
-         <!-- Fix for a bug in jackson dependencies -->
-         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.fasterxml.jackson.jakarta.rs</groupId>
-            <artifactId>jackson-jakarta-rs-json-provider</artifactId>
-            <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.fasterxml.jackson.module</groupId>
-            <artifactId>jackson-module-jaxb-annotations</artifactId>
-            <version>${version.jackson}</version>
-         </dependency>
-         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${version.jackson}</version>
          </dependency>
 
          <dependency>
