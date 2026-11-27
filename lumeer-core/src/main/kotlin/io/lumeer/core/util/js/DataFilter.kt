@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package io.lumeer.core.util.js
 
 import io.lumeer.api.model.AllowedPermissions
@@ -27,8 +26,13 @@ import io.lumeer.api.model.Language
 import io.lumeer.api.model.LinkInstance
 import io.lumeer.api.model.LinkType
 import io.lumeer.api.model.Query
+import io.lumeer.core.constraint.ConstraintManager
 import io.lumeer.core.util.Tuple
 
+/**
+ * Filters documents and links by a query with the Kotlin data-filters library (port of @lumeer/data-filters).
+ * Permissions are accepted for compatibility, the filter itself does not use them.
+ */
 class DataFilter {
 
     companion object {
@@ -37,27 +41,45 @@ class DataFilter {
         fun filterDocumentsAndLinksByQuery(documents: List<Document>,
                                            collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                            query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
-                                           constraintData: ConstraintData, includeChildren: Boolean, includeNonLinkedDocuments: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, includeNonLinkedDocuments, language)
-            return task.call()
-        }
+                                           constraintData: ConstraintData, includeChildren: Boolean, includeNonLinkedDocuments: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> =
+            DataFilterAdapter.filter(documents, collections, linkTypes, linkInstances, query, constraintData, includeChildren, includeNonLinkedDocuments)
 
         @JvmStatic
         fun filterDocumentsAndLinksByQueryFromJson(documents: List<Document>,
                                                    collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
                                                    query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
-                                                   constraintData: ConstraintData, includeChildren: Boolean, includeNonLinkedDocuments: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, includeNonLinkedDocuments, language)
-            return task.call()
-        }
+                                                   constraintData: ConstraintData, includeChildren: Boolean, includeNonLinkedDocuments: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> =
+            filterDocumentsAndLinksByQuery(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, includeNonLinkedDocuments, language)
 
+        /** Decodes stored data types (dates, decimals, points) before filtering, as the automations need. */
         @JvmStatic
         fun filterDocumentsAndLinksByQueryDecodingFromJson(documents: List<Document>,
-                                                   collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
-                                                   query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
-                                                   constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
-            val task = DataFilterDecodingJsonTask(documents, collections, linkTypes, linkInstances, query, collectionsPermissions, linkTypesPermissions, constraintData, includeChildren, false, language)
-            return task.call()
+                                                           collections: List<Collection>, linkTypes: List<LinkType>, linkInstances: List<LinkInstance>,
+                                                           query: Query, collectionsPermissions: Map<String, AllowedPermissions>, linkTypesPermissions: Map<String, AllowedPermissions>,
+                                                           constraintData: ConstraintData, includeChildren: Boolean, language: Language = Language.EN): Tuple<List<Document>, List<LinkInstance>> {
+            val constraintManager = ConstraintManager()
+            constraintManager.locale = language.toLocale()
+
+            val collectionsById = collections.associateBy { it.id }
+            val decodedDocuments = documents.mapNotNull { document ->
+                collectionsById[document.collectionId]?.let { collection ->
+                    Document(document).apply { data = constraintManager.decodeDataTypes(collection, document.data) }
+                }
+            }
+            val linkTypesById = linkTypes.associateBy { it.id }
+            val decodedLinks = linkInstances.mapNotNull { link ->
+                linkTypesById[link.linkTypeId]?.let { linkType ->
+                    LinkInstance(link).apply { data = constraintManager.decodeDataTypes(linkType, link.data) }
+                }
+            }
+
+            val result = DataFilterAdapter.filter(decodedDocuments, collections, linkTypes, decodedLinks, query, constraintData, includeChildren, false)
+
+            // return the original (not decoded) objects
+            return Tuple(
+                DataFilterAdapter.restoreById(result.first, documents) { it.id },
+                DataFilterAdapter.restoreById(result.second, linkInstances) { it.id },
+            )
         }
     }
 }

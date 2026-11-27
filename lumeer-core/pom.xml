@@ -116,6 +116,12 @@
          <groupId>org.jetbrains.kotlin</groupId>
          <artifactId>kotlin-stdlib</artifactId>
       </dependency>
+      <!-- Kotlin port of @lumeer/data-filters, built from ../data-filters by its Gradle wrapper -->
+      <dependency>
+         <groupId>io.lumeer</groupId>
+         <artifactId>data-filters-jvm</artifactId>
+         <version>${project.version}</version>
+      </dependency>
 
       <!-- Testing -->
       <dependency>
