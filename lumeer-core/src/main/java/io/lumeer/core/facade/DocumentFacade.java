@@ -41,6 +41,7 @@ import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.engine.api.event.CreateDocument;
 import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.ImportCollectionContent;
+import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.UpdateDocument;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
@@ -110,6 +111,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private Event<CreateDocumentsAndLinks> createChainEvent;
+
+   @Inject
+   private Event<ReloadResourceContent> reloadResourceContentEvent;
 
    @Inject
    private FileAttachmentFacade fileAttachmentFacade;
@@ -499,8 +503,9 @@ public class DocumentFacade extends AbstractFacade {
 
          final Map<String, List<Document>> documentsByCollection = Utils.categorize(documents.stream(), Document::getCollectionId);
          final Map<String, Document> documentsById = documents.stream().collect(Collectors.toMap(Document::getId, Function.identity()));
-         final Map<String, Integer> attributesToDec = new HashMap<>();
          documentsByCollection.forEach((collectionId, docs) -> {
+            // attribute usage counts are per collection
+            final Map<String, Integer> attributesToDec = new HashMap<>();
             dataDao.getData(collectionId, docs.stream().map(Document::getId).collect(Collectors.toSet())).forEach(data -> {
                data.keySet().forEach(key -> {
                   if (attributesToDec.containsKey(key)) {
@@ -526,6 +531,9 @@ public class DocumentFacade extends AbstractFacade {
          linkInstanceDao.deleteLinkInstancesByDocumentsIds(documentIds);
          favoriteItemDao.removeFavoriteDocumentsByIdsFromUsers(documentIds);
          fileAttachmentFacade.removeFileAttachments(documentIds, FileAttachment.AttachmentType.DOCUMENT);
+
+         // one reload notification per collection instead of a remove event for every document
+         collectionsMap.values().forEach(collection -> reloadResourceContentEvent.fire(new ReloadResourceContent(collection)));
       }
    }
 
