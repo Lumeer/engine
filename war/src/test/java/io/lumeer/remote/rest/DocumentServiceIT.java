@@ -22,15 +22,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AuditRecord;
+import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -51,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
@@ -77,6 +82,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    private String collectionsUrl;
 
    private User user;
+
+   @Inject
+   private AuditDao auditDao;
 
    @Inject
    private CollectionDao collectionDao;
@@ -133,6 +141,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       collection = collectionDao.createCollection(jsonCollection);
 
       documentDao.setProject(storedProject);
+      auditDao.setProject(storedProject);
 
       this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
    }
@@ -325,6 +334,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
 
       // documents from both collections, sent to the endpoint of one of them
       final Set<String> toDelete = Set.of(d11.getId(), d12.getId(), d21.getId());
+      final ZonedDateTime beforeDelete = ZonedDateTime.now().minusSeconds(1);
 
       Response response = client.target(collectionsUrl).path(c1.getId()).path("documents").path("delete")
                                 .request(MediaType.APPLICATION_JSON)
@@ -344,6 +354,17 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       // attribute usage is decreased by the documents deleted in each collection separately
       assertThat(getAttributesUsage(c1.getId())).containsExactlyInAnyOrderEntriesOf(Map.of(KEY1, 1, KEY2, 1));
       assertThat(getAttributesUsage(c2.getId())).containsExactlyInAnyOrderEntriesOf(Map.of(KEY1, 1, KEY2, 1));
+
+      // each deletion is audited with the document's data, like a single deletion, so it can be reverted
+      final List<AuditRecord> deleteRecords = Stream.of(c1, c2)
+                                                    .flatMap(c -> auditDao.findAuditRecords(c.getId(), ResourceType.DOCUMENT, beforeDelete).stream())
+                                                    .filter(auditRecord -> auditRecord.getType() == AuditType.Deleted)
+                                                    .toList();
+      assertThat(deleteRecords).extracting(AuditRecord::getResourceId).containsExactlyInAnyOrderElementsOf(toDelete);
+      assertThat(deleteRecords).allSatisfy(auditRecord -> {
+         assertThat(auditRecord.getUser()).isEqualTo(user.getId());
+         assertThat(auditRecord.getOldState()).containsEntry(KEY1, VALUE1).containsEntry(KEY2, VALUE2);
+      });
    }
 
    @Test

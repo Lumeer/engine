@@ -30,6 +30,7 @@ import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.util.ResourceUtils;
+import io.lumeer.core.adapter.AuditAdapter;
 import io.lumeer.core.adapter.CollectionAdapter;
 import io.lumeer.core.adapter.DocumentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
@@ -43,6 +44,7 @@ import io.lumeer.engine.api.event.CreateDocumentsAndLinks;
 import io.lumeer.engine.api.event.ImportCollectionContent;
 import io.lumeer.engine.api.event.ReloadResourceContent;
 import io.lumeer.engine.api.event.UpdateDocument;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -81,6 +83,9 @@ public class DocumentFacade extends AbstractFacade {
 
    @Inject
    private DocumentDao documentDao;
+
+   @Inject
+   private AuditDao auditDao;
 
    @Inject
    private FavoriteItemDao favoriteItemDao;
@@ -125,12 +130,14 @@ public class DocumentFacade extends AbstractFacade {
 
    private DocumentAdapter adapter;
    private CollectionAdapter collectionAdapter;
+   private AuditAdapter auditAdapter;
 
    @PostConstruct
    public void init() {
       constraintManager = ConstraintManager.getInstance(configurationProducer);
       adapter = new DocumentAdapter(resourceCommentDao, favoriteItemDao);
       collectionAdapter = new CollectionAdapter(collectionDao, favoriteItemDao, documentDao);
+      auditAdapter = new AuditAdapter(auditDao);
    }
 
    public DocumentAdapter getAdapter() {
@@ -527,10 +534,13 @@ public class DocumentFacade extends AbstractFacade {
 
          documentDao.deleteDocuments(documentIds);
 
+         // the documents carry their data now; the audit records allow reverting the deletion like for a single document
+         auditAdapter.registerDocumentsDelete(documents, authenticatedUser.getCurrentUser(), getCurrentViewId());
+
          resourceCommentDao.deleteComments(ResourceType.DOCUMENT, documentIds);
          linkInstanceDao.deleteLinkInstancesByDocumentsIds(documentIds);
          favoriteItemDao.removeFavoriteDocumentsByIdsFromUsers(documentIds);
-         fileAttachmentFacade.removeFileAttachments(documentIds, FileAttachment.AttachmentType.DOCUMENT);
+         // file attachments are kept for a revert, DailyTaskProcessor removes them with the expired audit records
 
          // one reload notification per collection instead of a remove event for every document
          collectionsMap.values().forEach(collection -> reloadResourceContentEvent.fire(new ReloadResourceContent(collection)));
