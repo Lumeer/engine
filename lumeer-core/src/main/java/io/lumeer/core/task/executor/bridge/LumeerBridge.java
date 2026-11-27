@@ -45,6 +45,7 @@ import io.lumeer.api.model.common.WithId;
 import io.lumeer.api.util.CollectionUtil;
 import io.lumeer.api.util.LinkTypeUtil;
 import io.lumeer.api.util.PermissionUtils;
+import io.lumeer.core.js.AutomationFunctions;
 import io.lumeer.core.adapter.PaymentAdapter;
 import io.lumeer.core.constraint.ConstraintManager;
 import io.lumeer.core.facade.configuration.DefaultConfigurationProducer;
@@ -167,6 +168,94 @@ public class LumeerBridge {
       }
 
       return 0;
+   }
+
+   /** Block "date change", replaces moment in the generated code: new Date(lumeer.changeDate(date, 'add', count, 'months')) */
+   @SuppressWarnings("unused")
+   public double changeDate(final Value date, final String operation, final Value count, final String unit) {
+      try {
+         return AutomationFunctions.changeDate(date, operation, count, unit);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** Block "format date": lumeer.formatDate(time, format, locale) */
+   @SuppressWarnings("unused")
+   public String formatDate(final Value time, final Value format, final Value locale) {
+      try {
+         return AutomationFunctions.formatDate(time, format, locale);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** Block "parse date": lumeer.parseDate(date, format, locale) */
+   @SuppressWarnings("unused")
+   public double parseDate(final Value date, final Value format, final Value locale) {
+      try {
+         return AutomationFunctions.parseDate(date, format, locale);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** Block "format currency": lumeer.formatCurrency('cs-CZ', 2, value) */
+   @SuppressWarnings("unused")
+   public String formatCurrency(final String locale, final double decimals, final Value value) {
+      try {
+         return AutomationFunctions.formatCurrency(locale, decimals, value);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** moment calls of code generated before, see LegacyScriptShim */
+   @SuppressWarnings("unused")
+   public double dateChain(final Value date, final Value operations) {
+      try {
+         return AutomationFunctions.dateChain(date, operations);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** Block "escape HTML": lumeer.escapeHtml(value) */
+   @SuppressWarnings("unused")
+   public String escapeHtml(final Value value) {
+      try {
+         return AutomationFunctions.escapeHtml(value);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** Block "unescape HTML": lumeer.unescapeHtml(value) */
+   @SuppressWarnings("unused")
+   public String unescapeHtml(final Value value) {
+      try {
+         return AutomationFunctions.unescapeHtml(value);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
+   }
+
+   /** Block "shift date": new Date(lumeer.shiftDate(date, 'startOf', 'month')) */
+   @SuppressWarnings("unused")
+   public double shiftDate(final Value date, final String operation, final String unit) {
+      try {
+         return AutomationFunctions.shiftDate(date, operation, unit);
+      } catch (Exception e) {
+         cause = e;
+         throw e;
+      }
    }
 
    public String getCurrentUser() {

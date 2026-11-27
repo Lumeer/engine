@@ -24,7 +24,7 @@ import kotlin.math.abs
 import kotlin.math.floor
 
 /** Port of moment.js string parsing (non-strict mode, "en" locale). */
-internal object MomentParse {
+internal object DateParser {
 
     private const val YEAR = 0
     private const val MONTH = 1
@@ -56,34 +56,14 @@ internal object MomentParse {
     private val matchSigned = Regex("[+-]?\\d+")
     private val matchShortOffset = Regex("Z|[+-]\\d\\d(?::?\\d\\d)?", RegexOption.IGNORE_CASE)
     private val matchTimestamp = Regex("[+-]?\\d+(\\.\\d{1,3})?")
-    private val meridiemParse = Regex("[ap]\\.?m?\\.?", RegexOption.IGNORE_CASE)
-    // moment's global locale in the original bundle is "fr" (the last imported locale), parsing uses it
-    private val ordinalLenient = Regex("\\d{1,2}(er|)|\\d{1,2}")
-    private val frMonthsRegex = Regex("(janv\\.?|févr\\.?|mars|avr\\.?|mai|juin|juil\\.?|août|sept\\.?|oct\\.?|nov\\.?|déc\\.?|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)", RegexOption.IGNORE_CASE)
-    private val frMonthsParse = listOf("^janv", "^févr", "^mars", "^avr", "^mai", "^juin", "^juil", "^août", "^sept", "^oct", "^nov", "^déc").map { Regex(it, RegexOption.IGNORE_CASE) }
-    private val frWeekdays = listOf("dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi")
-    private val frWeekdaysShort = listOf("dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam.")
-    private val frWeekdaysMin = listOf("di", "lu", "ma", "me", "je", "ve", "sa")
-    private val frWeekdaysRegex: Regex = run {
-        val pieces = (0 until 7).flatMap { listOf(frWeekdaysMin[it], frWeekdaysShort[it], frWeekdays[it]) }.map { regexEscape(it) }
-        Regex("^(" + pieces.sortedByDescending { it.length }.joinToString("|") + ")", RegexOption.IGNORE_CASE)
-    }
-    private val frLongDateFormats = mapOf("LT" to "HH:mm", "LTS" to "HH:mm:ss", "L" to "DD/MM/YYYY", "LL" to "D MMMM YYYY", "LLL" to "D MMMM YYYY HH:mm", "LLLL" to "dddd D MMMM YYYY HH:mm")
     private val localFormattingTokens = Regex("(\\[[^\\[]*\\])|(\\\\)?(LTS|LT|LL?L?L?|l{1,4})")
 
-    /** expandFormat with the fr long date formats */
-    private fun expandFormatFr(format: String): String {
+    /** expandFormat with the long date formats of the locale */
+    private fun expandFormat(format: String, locale: DateLocale): String {
         var result = format
         var i = 5
         while (i >= 0 && localFormattingTokens.containsMatchIn(result)) {
-            result = result.replace(localFormattingTokens) { match ->
-                val key = match.value
-                frLongDateFormats[key] ?: frLongDateFormats[key.uppercase()]?.let { upper ->
-                    MomentFormat.FORMATTING_TOKENS.findAll(upper).joinToString("") { t ->
-                        if (t.value == "MMMM" || t.value == "MM" || t.value == "DD" || t.value == "dddd") t.value.substring(1) else t.value
-                    }
-                } ?: key
-            }
+            result = result.replace(localFormattingTokens) { match -> locale.longDateFormat(match.value) ?: match.value }
             i -= 1
         }
         return result
@@ -91,20 +71,37 @@ internal object MomentParse {
     private val eraAbbr = Regex("^(AD|BC)", RegexOption.IGNORE_CASE)
     private val eraName = Regex("^(Anno Domini|Before Christ)", RegexOption.IGNORE_CASE)
 
-    private fun regexForToken(token: String): Regex? = when (token) {
+    /** moment 2.31: era names in any form (not strict) */
+    private val eraMixed = Regex("^(Anno Domini|AD|AD|Before Christ|BC|BC)", RegexOption.IGNORE_CASE)
+
+    private fun regexForToken(token: String, config: Config): Regex? = if (config.latest) {
+        when (token) {
+            "yo" -> matchUnsigned
+            "eHHmm" -> match5to6
+            "N", "NN", "NNN", "NNNN", "NNNNN" -> eraMixed
+            else -> regexForToken(token, config.locale)
+        }
+    } else {
+        regexForToken(token, config.locale)
+    }
+
+    private fun regexForToken(token: String, locale: DateLocale): Regex? = when (token) {
         "Y", "x", "G", "g" -> matchSigned
         "YY", "M", "MM", "D", "DD", "d", "e", "E", "w", "ww", "W", "WW", "GG", "gg", "H", "h", "k", "HH", "hh", "kk", "m", "mm", "s", "ss" -> match1to2
         "YYYY", "GGGG", "gggg" -> match1to4
         "YYYYY", "YYYYYY", "GGGGG", "ggggg" -> match1to6
-        "MMM", "MMMM" -> frMonthsRegex
-        "dd", "ddd", "dddd" -> frWeekdaysRegex
-        "Do" -> ordinalLenient
+        "MMM" -> locale.monthsShortRegex
+        "MMMM" -> locale.monthsRegex
+        "dd" -> locale.weekdaysMinRegex
+        "ddd" -> locale.weekdaysShortRegex
+        "dddd" -> locale.weekdaysRegex
+        "Do" -> locale.dayOfMonthOrdinalParseLenient
         "DDD", "S", "SS", "SSS" -> match1to3
         "DDDD" -> match3
         "Q" -> match1
         "hmm", "Hmm" -> match3to4
         "hmmss", "Hmmss" -> match5to6
-        "a", "A" -> meridiemParse
+        "a", "A" -> locale.meridiemParse
         "X" -> matchTimestamp
         "Z", "ZZ" -> matchShortOffset
         "y", "yy", "yyy", "yyyy" -> matchUnsigned
@@ -122,6 +119,7 @@ internal object MomentParse {
         var invalidWeekday = false
         var weekdayMismatch = false
         var invalidEra = false
+        var invalidOffset = false
         var meridiem: String? = null
         var parsedDateParts = false
         var overflowDayOfYear = false
@@ -130,7 +128,8 @@ internal object MomentParse {
         var era: String? = null
     }
 
-    private class Config(val input: String, val format: String, val isUtc: Boolean, val ctx: TimeContext) {
+    /** [latest]: moment 2.31 (automations) instead of the moment version of the original filters bundle */
+    private class Config(val input: String, val format: String, val isUtc: Boolean, val ctx: TimeContext, val locale: DateLocale, val latest: Boolean = false) {
         val a = arrayOfNulls<Double>(7)
         var w: MutableMap<String, Double>? = null
         var dayOfYear: Double? = null
@@ -172,34 +171,15 @@ internal object MomentParse {
         return match.groupValues[1].toDouble()
     }
 
-    private fun monthsParse(input: String): Int? {
-        for (i in 0 until 12) {
-            if (frMonthsParse[i].containsMatchIn(input)) return i
-        }
-        return null
-    }
 
-    /** weekdaysParseExact handleStrictParse, non-strict */
-    private fun weekdaysParse(input: String, token: String): Int? {
-        val llc = input.lowercase()
-        val order = when (token) {
-            "dddd" -> listOf(frWeekdays, frWeekdaysShort, frWeekdaysMin)
-            "ddd" -> listOf(frWeekdaysShort, frWeekdays, frWeekdaysMin)
-            else -> listOf(frWeekdaysMin, frWeekdays, frWeekdaysShort)
-        }
-        for (list in order) {
-            val index = list.indexOf(llc)
-            if (index != -1) return index
-        }
-        return null
-    }
-
-    private fun offsetFromString(input: String): Double? {
+    private fun offsetFromString(input: String, latest: Boolean = false): Double? {
         val matches = matchShortOffset.findAll(input).map { it.value }.toList()
         if (matches.isEmpty()) return null
         val chunk = matches.last()
         val parts = offsetChunks.findAll(chunk).map { it.value }.toList().ifEmpty { listOf("-", "0", "0") }
         val minutes = stringToJsNumber(parts.getOrElse(1) { "0" }) * 60 + toInt(parts.getOrNull(2))
+        // moment 2.31 rejects offsets out of range
+        if (latest && (toInt(parts.getOrNull(2)) > 59 || (if (parts[0] == "+") minutes > 14 * 60 else minutes > 12 * 60))) return null
         return if (minutes == 0.0) 0.0 else if (parts[0] == "+") minutes else -minutes
     }
 
@@ -226,7 +206,7 @@ internal object MomentParse {
             "Y" -> a[YEAR] = parseIntJs(input)
             "M", "MM" -> a[MONTH] = toInt(input) - 1
             "MMM", "MMMM" -> {
-                val month = monthsParse(input)
+                val month = config.locale.monthsParse(input, token)
                 if (month != null) a[MONTH] = month.toDouble() else config.flags.invalidMonth = true
             }
             "Q" -> a[MONTH] = (toInt(input) - 1) * 3
@@ -234,10 +214,16 @@ internal object MomentParse {
             "Do" -> a[DATE] = toInt(match1to2.find(input)!!.value)
             "DDD", "DDDD" -> config.dayOfYear = toInt(input)
             "dd", "ddd", "dddd" -> {
-                val weekday = weekdaysParse(input, token)
+                val weekday = config.locale.weekdaysParse(input, token)
                 if (weekday != null) week("d", weekday.toDouble()) else config.flags.invalidWeekday = true
             }
             "d", "e", "E" -> week(token, toInt(input))
+            "eHHmm" -> {
+                val weekdayEnd = input.length - 4
+                week("e", toInt(input.substring(0, weekdayEnd)))
+                a[HOUR] = toInt(input.substring(weekdayEnd, weekdayEnd + 2))
+                a[MINUTE] = toInt(input.substring(weekdayEnd + 2))
+            }
             "w", "ww", "W", "WW" -> week(token.substring(0, 1), toInt(input))
             "gggg", "ggggg", "GGGG", "GGGGG" -> week(token.substring(0, 2), toInt(input))
             "gg", "GG" -> week(token, parseTwoDigitYear(input))
@@ -263,7 +249,8 @@ internal object MomentParse {
             "x" -> config.directDate = toInt(input)
             "Z", "ZZ" -> {
                 config.useUTC = true
-                config.tzm = offsetFromString(input)
+                config.tzm = offsetFromString(input, config.latest)
+                if (config.latest && config.tzm == null) config.flags.invalidOffset = true
             }
             "y", "yy", "yyy", "yyyy" -> a[YEAR] = toInt(input)
             "yo" -> a[YEAR] = parseIntJs(input)
@@ -293,16 +280,16 @@ internal object MomentParse {
         val stringLength = string.length
         var totalParsedInputLength = 0
 
-        val tokens = MomentFormat.FORMATTING_TOKENS.findAll(expandFormatFr(format)).map { it.value }.toList()
+        val tokens = DateFormatter.formattingTokens(config.latest).findAll(expandFormat(format, config.locale)).map { it.value }.toList()
         for (token in tokens) {
-            val regex = regexForToken(token) ?: Regex(unescapeFormat(token))
+            val regex = regexForToken(token, config) ?: Regex(unescapeFormat(token))
             val parsedInput = regex.find(string)?.value
             if (parsedInput != null && parsedInput.isNotEmpty()) {
                 val index = string.indexOf(parsedInput)
                 string = string.substring(index + parsedInput.length)
                 totalParsedInputLength += parsedInput.length
             }
-            if (token in MomentFormat.FORMAT_TOKENS) {
+            if (token in DateFormatter.FORMAT_TOKENS) {
                 if (!parsedInput.isNullOrEmpty()) {
                     config.flags.empty = false
                 } else {
@@ -322,7 +309,7 @@ internal object MomentParse {
         val meridiem = config.meridiem
         val hour = config.a[HOUR]
         if (meridiem != null && hour != null) {
-            val isPm = meridiem.lowercase().startsWith("p")
+            val isPm = config.locale.isPM(meridiem)
             if (isPm && hour < 12) config.a[HOUR] = hour + 12
             if (!isPm && hour == 12.0) config.a[HOUR] = 0.0
         }
@@ -363,6 +350,8 @@ internal object MomentParse {
             config.a[DATE] = f.date.toDouble()
         }
 
+        // moment 2.31 does not check the weekday when a part of the date is defaulted
+        val dateIsDefaulted = config.a[YEAR] == null || config.a[MONTH] == null || config.a[DATE] == null
         var i = 0
         while (i < 3 && config.a[i] == null) {
             config.a[i] = currentDate[i]
@@ -384,7 +373,8 @@ internal object MomentParse {
             return
         }
         val wall = Civil.fieldsToMillis(values[0].toLong(), values[1].toLong(), values[2].toLong(), values[3].toLong(), values[4].toLong(), values[5].toLong(), values[6].toLong())
-        val expectedWeekday = Fields(wall).dayOfWeek
+        // moment 2.31 creates the date from parts that still have hour 24, so the weekday is the next day's
+        val expectedWeekday = Fields(wall).dayOfWeek.let { if (config.latest && config.nextDay) (it + 1) % 7 else it }
         config.dateMillis = wall.toDouble()
         if (config.nextDay) {
             config.a[HOUR] = 24.0
@@ -392,7 +382,7 @@ internal object MomentParse {
 
         val w = config.w
         val d = w?.get("d")
-        if (w != null && d != null && d != expectedWeekday.toDouble()) {
+        if (w != null && d != null && !(config.latest && dateIsDefaulted) && d != expectedWeekday.toDouble()) {
             config.flags.weekdayMismatch = true
         }
     }
@@ -408,14 +398,14 @@ internal object MomentParse {
         if (w["GG"] != null || w["W"] != null || w["E"] != null) {
             dow = 1
             doy = 4
-            weekYear = w["GG"] ?: config.a[YEAR] ?: Moment.weekOfYear(Moment.now(config.ctx, false), 1, 4).second.toDouble()
+            weekYear = w["GG"] ?: config.a[YEAR] ?: DateInstant.weekOfYear(DateInstant.now(config.ctx, false), 1, 4).second.toDouble()
             week = w["W"] ?: 1.0
             weekday = w["E"] ?: 1.0
             if (weekday < 1 || weekday > 7) weekdayOverflow = true
         } else {
-            dow = Moment.LOCALE_DOW
-            doy = Moment.LOCALE_DOY
-            val curWeek = Moment.weekOfYear(Moment.now(config.ctx, false), dow, doy)
+            dow = config.locale.dow
+            doy = config.locale.doy
+            val curWeek = DateInstant.weekOfYear(DateInstant.now(config.ctx, false), dow, doy)
             weekYear = w["gg"] ?: config.a[YEAR] ?: curWeek.second.toDouble()
             week = w["w"] ?: curWeek.first.toDouble()
             val d = w["d"]
@@ -430,18 +420,44 @@ internal object MomentParse {
                 weekday = dow.toDouble()
             }
         }
-        if (week < 1 || week > Moment.weeksInYear(weekYear.toLong(), dow, doy)) {
+        if (week < 1 || week > DateInstant.weeksInYear(weekYear.toLong(), dow, doy)) {
             config.flags.overflowWeeks = true
         } else if (weekdayOverflow) {
             config.flags.overflowWeekday = true
         } else {
-            val (year, dayOfYear) = Moment.dayOfYearFromWeeks(weekYear.toLong(), week.toInt(), weekday.toInt(), dow, doy)
+            val (year, dayOfYear) = DateInstant.dayOfYearFromWeeks(weekYear.toLong(), week.toInt(), weekday.toInt(), dow, doy)
             config.a[YEAR] = year.toDouble()
             config.dayOfYear = dayOfYear.toDouble()
         }
     }
 
+    /** moment 2.31 checkOverflow: only the parsed parts, compared as JS does (undefined never matches) */
+    private fun checkOverflowLatest(config: Config) {
+        val a = config.a
+        if (config.flags.overflow != -2) return
+        fun lt(v: Double?, limit: Double) = v != null && v < limit
+        fun gt(v: Double?, limit: Double) = v != null && v > limit
+        val year = a[YEAR]
+        val month = a[MONTH]
+        val daysInMonth = if (year == null || month == null || year.isNaN() || month.isNaN()) Double.NaN else Civil.daysInMonth(year.toLong(), month.toLong()).toDouble()
+        val hour = a[HOUR]
+        var overflow = when {
+            lt(month, 0.0) || gt(month, 11.0) -> MONTH
+            lt(a[DATE], 1.0) || (a[DATE] != null && !daysInMonth.isNaN() && a[DATE]!! > daysInMonth) -> DATE
+            lt(hour, 0.0) || gt(hour, 24.0) || (hour == 24.0 && (a[MINUTE] != 0.0 || a[SECOND] != 0.0 || a[MILLISECOND] != 0.0)) -> HOUR
+            lt(a[MINUTE], 0.0) || gt(a[MINUTE], 59.0) -> MINUTE
+            lt(a[SECOND], 0.0) || gt(a[SECOND], 59.0) -> SECOND
+            lt(a[MILLISECOND], 0.0) || gt(a[MILLISECOND], 999.0) -> MILLISECOND
+            else -> -1
+        }
+        if (config.flags.overflowDayOfYear && (overflow < YEAR || overflow > DATE)) overflow = DATE
+        if (config.flags.overflowWeeks && overflow == -1) overflow = WEEK
+        if (config.flags.overflowWeekday && overflow == -1) overflow = WEEKDAY
+        config.flags.overflow = overflow
+    }
+
     private fun checkOverflow(config: Config) {
+        if (config.latest) return checkOverflowLatest(config)
         val a = config.a
         if (config.flags.overflow == -2 && a.all { it != null }) {
             val v = a.map { it!! }
@@ -469,6 +485,7 @@ internal object MomentParse {
             f.overflow < 0 &&
             !f.empty &&
             !f.invalidEra &&
+            !f.invalidOffset &&
             !f.invalidMonth &&
             !f.invalidWeekday &&
             !f.weekdayMismatch &&
@@ -555,10 +572,10 @@ internal object MomentParse {
         val m = rfc2822.find(prepared) ?: return null
         val yearRaw = m.groupValues[4].toInt()
         val year = if (yearRaw <= 49) 2000 + yearRaw else if (yearRaw <= 999) 1900 + yearRaw else yearRaw
-        val month = MomentFormat.MONTHS_SHORT.indexOf(m.groupValues[3])
+        val month = DateFormatter.MONTHS_SHORT.indexOf(m.groupValues[3])
         val day = m.groupValues[2].toInt()
         val wall = Civil.fieldsToMillis(year.toLong(), month.toLong(), day.toLong(), m.groupValues[5].toLong(), m.groupValues[6].toLong(), m.groupValues[7].ifEmpty { "0" }.toLong())
-        if (m.groupValues[1].isNotEmpty() && MomentFormat.WEEKDAYS_SHORT.indexOf(m.groupValues[1]) != Fields(wall).dayOfWeek) {
+        if (m.groupValues[1].isNotEmpty() && DateFormatter.WEEKDAYS_SHORT.indexOf(m.groupValues[1]) != Fields(wall).dayOfWeek) {
             return Double.NaN
         }
         val offset = when {
@@ -593,19 +610,19 @@ internal object MomentParse {
 
     // ---- moment creation
 
-    private fun createMoment(config: Config): Moment {
+    private fun createMoment(config: Config): DateInstant {
         if (!isValid(config)) {
-            return Moment.invalid(config.ctx, config.isUtc)
+            return DateInstant.invalid(config.ctx, config.isUtc)
         }
-        config.fromIsoOrRfcInstant?.let { return checkRange(config, it) { Moment.fromInstant(config.ctx, config.isUtc, it.toLong()) } }
+        config.fromIsoOrRfcInstant?.let { return checkRange(config, it) { DateInstant.fromInstant(config.ctx, config.isUtc, it.toLong()) } }
         val date = config.dateMillis!!
         val mom = when {
-            config.directDate != null -> checkRange(config, date) { Moment.fromInstant(config.ctx, config.isUtc, date.toLong()) }
+            config.directDate != null -> checkRange(config, date) { DateInstant.fromInstant(config.ctx, config.isUtc, date.toLong()) }
             config.tzm != null || config.useUTC -> {
                 val instant = date - (config.tzm ?: 0.0) * 60_000.0
-                checkRange(config, instant) { Moment.fromInstant(config.ctx, config.isUtc, instant.toLong()) }
+                checkRange(config, instant) { DateInstant.fromInstant(config.ctx, config.isUtc, instant.toLong()) }
             }
-            else -> checkRange(config, date) { Moment.fromWall(config.ctx, config.isUtc, date.toLong()) }
+            else -> checkRange(config, date) { DateInstant.fromWall(config.ctx, config.isUtc, date.toLong()) }
         }
         if (config.nextDay && mom.isValid) {
             mom.addDays(1)
@@ -613,40 +630,41 @@ internal object MomentParse {
         return mom
     }
 
-    private inline fun checkRange(config: Config, millis: Double, create: () -> Moment): Moment =
-        if (millis.isNaN() || abs(millis) > 8.64e15) Moment.invalid(config.ctx, config.isUtc) else create()
+    private inline fun checkRange(config: Config, millis: Double, create: () -> DateInstant): DateInstant =
+        if (millis.isNaN() || abs(millis) > 8.64e15) DateInstant.invalid(config.ctx, config.isUtc) else create()
 
     /** moment(value) / moment.utc(value) for a string without format */
-    fun parse(input: String, utc: Boolean, ctx: TimeContext): Moment {
+    fun parse(input: String, utc: Boolean, ctx: TimeContext, jsDateParse: ((String) -> Double)? = null, locale: DateLocale = DateLocale.Fr, latest: Boolean = false): DateInstant {
         val aspNet = aspNetJsonRegex.find(input)
         if (aspNet != null) {
-            return Moment.fromInstant(ctx, utc, aspNet.groupValues[1].toLong())
+            return DateInstant.fromInstant(ctx, utc, aspNet.groupValues[1].toLong())
         }
-        val config = Config(input, ISO_8601, utc, ctx)
+        val config = Config(input, ISO_8601, utc, ctx, locale, latest)
         configFromISO(config)
         if (config.isValidOverride != false) {
             return createMoment(config)
         }
         val rfc = parseRfc2822(input)
         if (rfc != null) {
-            return if (rfc.isNaN()) Moment.invalid(ctx, utc) else Moment.fromInstant(ctx, utc, rfc.toLong())
+            return if (rfc.isNaN()) DateInstant.invalid(ctx, utc) else DateInstant.fromInstant(ctx, utc, rfc.toLong())
         }
-        val jsDate = parseJsDate(input, ctx)
-        return if (jsDate.isNaN()) Moment.invalid(ctx, utc) else Moment.fromInstant(ctx, utc, jsDate.toLong())
+        // createFromInputFallback: new Date(input + (utc ? ' UTC' : ''))
+        val jsDate = jsDateParse?.invoke(if (utc) "$input UTC" else input) ?: parseJsDate(input, ctx)
+        return if (jsDate.isNaN()) DateInstant.invalid(ctx, utc) else DateInstant.fromInstant(ctx, utc, jsDate.toLong())
     }
 
     /** moment(value, [formats]) / moment.utc(value, [formats]) */
-    fun parse(value: Any?, formats: List<String>, utc: Boolean, ctx: TimeContext): Moment {
+    fun parse(value: Any?, formats: List<String>, utc: Boolean, ctx: TimeContext, locale: DateLocale = DateLocale.Fr, latest: Boolean = false): DateInstant {
         val input = if (value is List<*> && value.isEmpty() || value is Array<*> && value.isEmpty()) "undefined" else jsString(value)
         if (formats.isEmpty()) {
-            return Moment.invalid(ctx, utc)
+            return DateInstant.invalid(ctx, utc)
         }
         var bestConfig: Config? = null
         var lastConfig: Config? = null
         var scoreToBeat: Int? = null
         var bestFormatIsValid = false
         for (format in formats) {
-            val config = Config(input, format, utc, ctx)
+            val config = Config(input, format, utc, ctx, locale, latest)
             configFromStringAndFormat(config, format)
             lastConfig = config
             val validFormatFound = isValid(config)

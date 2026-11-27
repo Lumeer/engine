@@ -1,7 +1,8 @@
 # data-filters (Kotlin Multiplatform)
 
 Kotlin port of [@lumeer/data-filters](https://github.com/Lumeer/data-filters) used by the engine to filter documents and
-link instances by a query (`io.lumeer.core.util.js.DataFilter`). It replaced the GraalVM + `lumeer-data-filters.min.js`
+link instances by a query (`io.lumeer.core.util.js.DataFilter`), and of the libraries the automation (Blockly) blocks
+used (`automation/`, see below). It replaced the GraalVM + `lumeer-data-filters.min.js`
 bundle. moment, moment-timezone, numbro, big.js and coordinate-parser are not used; the parts the filters need are
 reimplemented (`date/`, `number/`).
 
@@ -57,3 +58,37 @@ the old bundle (documents, and link instances for the link cases). `ParityVector
 
 The expected results were produced by the old bundle as of commit `797255de`
 (`lumeer-core/src/main/resources/lumeer-data-filters.min.js`), run in Node with `TZ=Europe/Prague`.
+
+## Automation functions
+
+`automation/` replaces the JavaScript libraries the automation blocks used (moment, moment-business, numbro, he); the
+engine does not ship them any more. The behaviour follows the newest versions: moment 2.31, numbro 2.5 (all its
+languages) and he 2.0. The engine exposes the functions to scripts through the lumeer bridge (`lumeer.changeDate`,
+`shiftDate`, `formatDate`, `parseDate`, `formatCurrency`, `escapeHtml`, `unescapeHtml`, see
+`io.lumeer.core.js.AutomationFunctions`), and the Java code formats and parses dates with them (`DateFormats`).
+
+- `AutomationDates`: blocks "date change" (with the business days of the plugin the engine bundled), "shift date",
+  "format date" and "parse date". Inputs are JS values (`JsUndefined`, `JsDate`, `JsObject`, numbers, strings...) as the
+  original code received them; results are the time values of the JS Dates the code returned, in the server zone.
+- `AutomationNumbers.formatCurrency`: numbro.setLanguage + formatCurrency; the language data is in `NumbroLanguages.kt`.
+- `AutomationHtml`: he.escape and he.unescape (`HtmlEntityData.kt` is generated from he's data.mjs).
+- Dates are formatted and parsed by `date/DateFormatter` and `date/DateParser` with a `DateLocale`. The filters use them in
+  the mode of the moment version their bundle had; automations with `latest = true` (moment 2.31).
+
+**Locales.** Format and parse date support en, cs, hu, sk, pl, de, de-at, de-ch, es, fr, it, pt, pt-br, nl, ru, uk and
+en-gb. The data of the locales other than en, cs and hu is generated from moment's locale definitions
+(`DateLocaleData.kt`). Other locale keys use their base language when it is supported (es-mx: es), otherwise en. This is
+the one intended change: before, moment formatted all its 140 locales; a block with for example "ja" now gives English.
+
+**Code generated before.** Rules saved before call moment, numbro and he directly. The engine adds a small script
+(`io.lumeer.core.js.LegacyScriptShim`) that provides `moment(date)` (it records the calls, and the bridge evaluates them
+with `AutomationDates.dateChain`), `formatMomentJsDate`, `parseMomentJsDate`, `lumeer_numbro` and `he`, so these rules
+keep working; web-ui generates the `lumeer.*` calls.
+
+"Subtract" with sticky months/quarters/years subtracts; the block generated an add for it before, and rules saved then
+keep adding (the shim runs their code as it was). Quirks of the original block code that are kept: a fractional count
+of business days fails (the plugin looped forever), `Math.pow` of the script engine (integer powers by squaring) is used
+for currency rounding.
+
+The parity vectors (`lumeer-core/src/test/resources/automation-parity-vectors.json.gz`, replayed by
+`AutomationParityTest`) hold the results of the original libraries run in GraalVM in several time zones.

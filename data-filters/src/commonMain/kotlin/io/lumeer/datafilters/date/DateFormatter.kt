@@ -22,25 +22,18 @@ import kotlin.math.abs
 import kotlin.math.floor
 
 /** moment.js formatting for the "en" locale. */
-internal object MomentFormat {
+internal object DateFormatter {
 
     val FORMATTING_TOKENS = Regex("(\\[[^\\[]*\\])|(\\\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|N{1,5}|YYYYYY|YYYYY|YYYY|YY|y{2,4}|yo?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)")
+    /** moment 2.31: an escaped e and the eHHmm token */
+    val FORMATTING_TOKENS_LATEST = Regex("(\\[[^\\[]*\\])|(\\\\e)|(\\\\)?(eHHmm|[Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|N{1,5}|YYYYYY|YYYYY|YYYY|YY|y{2,4}|yo?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)")
+
+    fun formattingTokens(latest: Boolean): Regex = if (latest) FORMATTING_TOKENS_LATEST else FORMATTING_TOKENS
+
     private val LOCAL_FORMATTING_TOKENS = Regex("(\\[[^\\[]*\\])|(\\\\)?(LTS|LT|LL?L?L?|l{1,4})")
 
-    val MONTHS = listOf("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
-    val MONTHS_SHORT = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-    val WEEKDAYS = listOf("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
-    val WEEKDAYS_SHORT = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
-    val WEEKDAYS_MIN = listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
-
-    private val LONG_DATE_FORMATS = mapOf(
-        "LTS" to "h:mm:ss A",
-        "LT" to "h:mm A",
-        "L" to "MM/DD/YYYY",
-        "LL" to "MMMM D, YYYY",
-        "LLL" to "MMMM D, YYYY h:mm A",
-        "LLLL" to "dddd, MMMM D, YYYY h:mm A",
-    )
+    val MONTHS_SHORT: List<String> = DateLocale.En.monthShortNames
+    val WEEKDAYS_SHORT: List<String> = DateLocale.En.weekdaysShort
 
     /** Tokens that have a formatting function (others are literals). */
     val FORMAT_TOKENS: Set<String> = buildSet {
@@ -52,35 +45,27 @@ internal object MomentFormat {
             add(s)
             s += "S"
         }
-        addAll(listOf("Z", "ZZ", "z", "zz", "X", "x", "N", "NN", "NNN", "NNNN", "NNNNN", "y", "yy", "yyy", "yyyy", "yo"))
+        addAll(listOf("Z", "ZZ", "z", "zz", "X", "x", "N", "NN", "NNN", "NNNN", "NNNNN", "y", "yy", "yyy", "yyyy", "yo", "eHHmm"))
     }
 
-    fun longDateFormat(key: String): String? {
-        LONG_DATE_FORMATS[key]?.let { return it }
-        val upper = LONG_DATE_FORMATS[key.uppercase()] ?: return null
-        return FORMATTING_TOKENS.findAll(upper).joinToString("") { match ->
-            val token = match.value
-            if (token == "MMMM" || token == "MM" || token == "DD" || token == "dddd") token.substring(1) else token
-        }
-    }
-
-    fun expandFormat(format: String): String {
+    fun expandFormat(format: String, locale: DateLocale = DateLocale.En): String {
         var result = format
         var i = 5
         while (i >= 0 && LOCAL_FORMATTING_TOKENS.containsMatchIn(result)) {
-            result = result.replace(LOCAL_FORMATTING_TOKENS) { longDateFormat(it.value) ?: it.value }
+            result = result.replace(LOCAL_FORMATTING_TOKENS) { locale.longDateFormat(it.value) ?: it.value }
             i -= 1
         }
         return result
     }
 
-    fun format(mom: Moment, format: String): String {
-        val expanded = expandFormat(format)
+    /** [latest]: moment 2.31 (automations) instead of the moment version of the original filters bundle */
+    fun format(mom: DateInstant, format: String, locale: DateLocale = DateLocale.En, latest: Boolean = false): String {
+        val expanded = expandFormat(format, locale)
         val output = StringBuilder()
-        for (match in FORMATTING_TOKENS.findAll(expanded)) {
+        for (match in formattingTokens(latest).findAll(expanded)) {
             val token = match.value
             if (token in FORMAT_TOKENS) {
-                output.append(formatToken(mom, token))
+                output.append(formatToken(mom, token, locale, expanded, latest))
             } else {
                 output.append(removeFormattingTokens(token))
             }
@@ -101,23 +86,12 @@ internal object MomentFormat {
         return sign + "0".repeat(maxOf(0, zerosToFill)) + absNumber
     }
 
-    fun ordinal(number: Long): String {
-        val b = number % 10
-        val suffix = if ((number % 100) / 10 == 1L) "th" else when (b) {
-            1L -> "st"
-            2L -> "nd"
-            3L -> "rd"
-            else -> "th"
-        }
-        return number.toString() + suffix
-    }
+    private fun eraYear(mom: DateInstant): Long = if (mom.year() >= 1) mom.year() else 1 - mom.year()
 
-    private fun eraYear(mom: Moment): Long = if (mom.year() >= 1) mom.year() else 1 - mom.year()
+    private fun hFormat(mom: DateInstant): Long = (mom.hours() % 12).let { if (it == 0) 12 else it }.toLong()
 
-    private fun hFormat(mom: Moment): Long = (mom.hours() % 12).let { if (it == 0) 12 else it }.toLong()
-
-    private fun offset(mom: Moment, separator: String): String {
-        var offset = mom.utcOffset
+    private fun offset(mom: DateInstant, separator: String, latest: Boolean): String {
+        var offset = if (latest) mom.utcOffsetRounded else mom.utcOffset
         var sign = "+"
         if (offset < 0) {
             offset = -offset
@@ -126,41 +100,48 @@ internal object MomentFormat {
         return sign + zeroFill((offset / 60).toLong(), 2) + separator + zeroFill((offset % 60).toLong(), 2)
     }
 
-    private fun formatToken(mom: Moment, token: String): String = when (token) {
+    private fun formatToken(mom: DateInstant, token: String, locale: DateLocale, format: String, latest: Boolean): String {
+        fun ordinal(number: Long, token: String) = locale.ordinal(number, token)
+        fun week() = DateInstant.weekOfYear(mom, locale.dow, locale.doy)
+        return formatToken(mom, token, locale, format, latest, ::ordinal, ::week)
+    }
+
+    private fun formatToken(mom: DateInstant, token: String, locale: DateLocale, format: String, latest: Boolean, ordinal: (Long, String) -> String, week: () -> Pair<Int, Long>): String = when (token) {
         "M" -> (mom.month() + 1).toString()
         "MM" -> zeroFill(mom.month() + 1L, 2)
-        "Mo" -> ordinal(mom.month() + 1L)
-        "MMM" -> MONTHS_SHORT[mom.month()]
-        "MMMM" -> MONTHS[mom.month()]
+        "Mo" -> ordinal(mom.month() + 1L, "M")
+        "MMM" -> locale.monthsShort(mom.month(), format)
+        "MMMM" -> locale.months(mom.month(), format)
         "Q" -> mom.quarter().toString()
-        "Qo" -> ordinal(mom.quarter().toLong())
+        "Qo" -> ordinal(mom.quarter().toLong(), "Q")
         "D" -> mom.date().toString()
         "DD" -> zeroFill(mom.date().toLong(), 2)
-        "Do" -> ordinal(mom.date().toLong())
+        "Do" -> ordinal(mom.date().toLong(), "D")
         "DDD" -> mom.dayOfYear().toString()
         "DDDD" -> zeroFill(mom.dayOfYear().toLong(), 3)
-        "DDDo" -> ordinal(mom.dayOfYear().toLong())
+        "DDDo" -> ordinal(mom.dayOfYear().toLong(), "DDD")
         "d" -> mom.day().toString()
-        "do" -> ordinal(mom.day().toLong())
-        "dd" -> WEEKDAYS_MIN[mom.day()]
-        "ddd" -> WEEKDAYS_SHORT[mom.day()]
-        "dddd" -> WEEKDAYS[mom.day()]
-        "e" -> mom.weekdayEn().toString()
+        "do" -> ordinal(mom.day().toLong(), "d")
+        "dd" -> locale.weekdaysMin[mom.day()]
+        "ddd" -> locale.weekdaysShort[mom.day()]
+        "dddd" -> locale.weekdays(mom.day(), format)
+        "e" -> ((mom.day() + 7 - locale.dow) % 7).toString()
         "E" -> mom.isoWeekday().toString()
-        "w" -> mom.weekEn().toString()
-        "ww" -> zeroFill(mom.weekEn().toLong(), 2)
-        "wo" -> ordinal(mom.weekEn().toLong())
+        "eHHmm" -> ((mom.day() + 7 - locale.dow) % 7).toString() + zeroFill(mom.hours().toLong(), 2) + zeroFill(mom.minutes().toLong(), 2)
+        "w" -> week().first.toString()
+        "ww" -> zeroFill(week().first.toLong(), 2)
+        "wo" -> ordinal(week().first.toLong(), "w")
         "W" -> mom.isoWeek().toString()
         "WW" -> zeroFill(mom.isoWeek().toLong(), 2)
-        "Wo" -> ordinal(mom.isoWeek().toLong())
+        "Wo" -> ordinal(mom.isoWeek().toLong(), "W")
         "Y" -> mom.year().let { if (it <= 9999) zeroFill(it, 4) else "+$it" }
         "YY" -> zeroFill(mom.year() % 100, 2)
         "YYYY" -> zeroFill(mom.year(), 4)
         "YYYYY" -> zeroFill(mom.year(), 5)
         "YYYYYY" -> zeroFill(mom.year(), 6, true)
-        "gg" -> zeroFill(mom.weekYearEn() % 100, 2)
-        "gggg" -> zeroFill(mom.weekYearEn(), 4)
-        "ggggg" -> zeroFill(mom.weekYearEn(), 5)
+        "gg" -> zeroFill(week().second % 100, 2)
+        "gggg" -> zeroFill(week().second, 4)
+        "ggggg" -> zeroFill(week().second, 5)
         "GG" -> zeroFill(mom.isoWeekYear() % 100, 2)
         "GGGG" -> zeroFill(mom.isoWeekYear(), 4)
         "GGGGG" -> zeroFill(mom.isoWeekYear(), 5)
@@ -174,8 +155,8 @@ internal object MomentFormat {
         "hmmss" -> hFormat(mom).toString() + zeroFill(mom.minutes().toLong(), 2) + zeroFill(mom.seconds().toLong(), 2)
         "Hmm" -> mom.hours().toString() + zeroFill(mom.minutes().toLong(), 2)
         "Hmmss" -> mom.hours().toString() + zeroFill(mom.minutes().toLong(), 2) + zeroFill(mom.seconds().toLong(), 2)
-        "a" -> if (mom.hours() > 11) "pm" else "am"
-        "A" -> if (mom.hours() > 11) "PM" else "AM"
+        "a" -> locale.meridiem(mom.hours(), true)
+        "A" -> locale.meridiem(mom.hours(), false)
         "m" -> mom.minutes().toString()
         "mm" -> zeroFill(mom.minutes().toLong(), 2)
         "s" -> mom.seconds().toString()
@@ -183,8 +164,8 @@ internal object MomentFormat {
         "S" -> (mom.milliseconds() / 100).toString()
         "SS" -> zeroFill((mom.milliseconds() / 10).toLong(), 2)
         "SSS" -> zeroFill(mom.milliseconds().toLong(), 3)
-        "Z" -> offset(mom, ":")
-        "ZZ" -> offset(mom, "")
+        "Z" -> offset(mom, ":", latest)
+        "ZZ" -> offset(mom, "", latest)
         "z", "zz" -> mom.zoneAbbr()
         "X" -> floor(mom.valueOf / 1000.0).toLong().toString()
         "x" -> mom.valueOf.toString()
@@ -194,7 +175,7 @@ internal object MomentFormat {
         "yy" -> zeroFill(eraYear(mom), 2)
         "yyy" -> zeroFill(eraYear(mom), 3)
         "yyyy" -> zeroFill(eraYear(mom), 4)
-        "yo" -> ordinal(eraYear(mom))
+        "yo" -> ordinal(eraYear(mom), "y")
         else -> {
             // SSSS .. SSSSSSSSS
             val multiplier = "1" + "0".repeat(token.length - 3)
