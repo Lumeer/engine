@@ -153,12 +153,12 @@
       <dependency>
          <groupId>cz.gopay</groupId>
          <artifactId>gp-java-api-v3-common</artifactId>
-         <version>3.8.1</version>
+         <version>3.10.0</version>
       </dependency>
       <dependency>
          <groupId>cz.gopay</groupId>
          <artifactId>gp-java-api-v3-apache-http-client</artifactId>
-         <version>3.8.1</version>
+         <version>3.10.0</version>
          <exclusions>
             <exclusion>
                <groupId>org.jboss.resteasy</groupId>
@@ -196,8 +196,8 @@
          <artifactId>json-simple</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.marvec</groupId>
-         <artifactId>pusher</artifactId>
+         <groupId>com.pusher</groupId>
+         <artifactId>pusher-http-java</artifactId>
       </dependency>
       <dependency>
          <groupId>io.sentry</groupId>

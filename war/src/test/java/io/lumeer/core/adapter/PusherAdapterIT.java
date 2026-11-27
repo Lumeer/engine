@@ -46,11 +46,11 @@ import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
+import com.pusher.rest.data.Event;
 import org.jboss.arquillian.junit5.ArquillianExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.marvec.pusher.data.Event;
 
 import java.util.Arrays;
 import java.util.Collections;

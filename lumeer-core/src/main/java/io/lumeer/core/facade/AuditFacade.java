@@ -80,7 +80,7 @@ import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
-import org.marvec.pusher.data.Event;
+import com.pusher.rest.data.Event;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
