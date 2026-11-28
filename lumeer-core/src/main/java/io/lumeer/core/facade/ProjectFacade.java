@@ -430,10 +430,21 @@ public class ProjectFacade extends AbstractFacade {
       return getRawProjectContent(storedProject);
    }
 
-   public ProjectContent getRawProjectContent(final Project project) {
+   /**
+    * Checks the permissions before handing out a download link, so that the user does not get a link that fails.
+    */
+   public void checkCanExportProjectContent(final String projectId) {
+      checkCanReadRawProjectContent(projectDao.getProjectById(projectId));
+   }
+
+   private void checkCanReadRawProjectContent(final Project project) {
       if (!project.isPublic() && !permissionsChecker.canReadAllInWorkspace()) {
          throw new NoResourcePermissionException(project);
       }
+   }
+
+   public ProjectContent getRawProjectContent(final Project project) {
+      checkCanReadRawProjectContent(project);
 
       final ProjectContent content = new ProjectContent();
 

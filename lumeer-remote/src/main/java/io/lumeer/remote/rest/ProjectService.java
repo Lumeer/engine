@@ -28,7 +28,9 @@ import io.lumeer.api.model.ProjectDescription;
 import io.lumeer.api.model.SampleDataType;
 import io.lumeer.api.model.TemplateData;
 import io.lumeer.core.WorkspaceKeeper;
+import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.RequestDataKeeper;
+import io.lumeer.core.auth.RequestSigner;
 import io.lumeer.core.facade.AuditFacade;
 import io.lumeer.core.facade.OrganizationFacade;
 import io.lumeer.core.facade.ProjectFacade;
@@ -45,11 +47,15 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -71,8 +77,23 @@ public class ProjectService extends AbstractService {
 
    public static final String DELETE_SAMPLE_DATA_CONFIRMATION = "PERMANENTLY DELETE";
 
+   private static final String RAW_LINK_PATH = "/raw/link";
+   private static final String RAW_DOWNLOAD_PATH = "/raw/download";
+
+   // the browser starts the download right away
+   private static final Duration RAW_LINK_VALIDITY = Duration.ofMinutes(1);
+
    @PathParam("organizationId")
    private String organizationId;
+
+   @Inject
+   private HttpServletRequest request;
+
+   @Inject
+   private AuthenticatedUser authenticatedUser;
+
+   @Inject
+   private RequestSigner requestSigner;
 
    @Inject
    private WorkspaceKeeper workspaceKeeper;
@@ -277,6 +298,37 @@ public class ProjectService extends AbstractService {
    public ProjectContent getRawProjectContent(@PathParam("projectId") String projectId) {
       workspaceKeeper.setWorkspaceIds(organizationId, projectId);
       return projectFacade.exportProjectContent(projectId);
+   }
+
+   /**
+    * Creates a short-term signed URL of {@link #downloadRawProjectContent(String)}. Unlike the REST call above,
+    * a browser can open it directly, so large projects are downloaded as ordinary files.
+    */
+   @POST
+   @Path("{projectId:[0-9a-fA-F]{24}}/raw/link")
+   public Map<String, String> createRawProjectContentLink(@PathParam("projectId") String projectId) {
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+      projectFacade.checkCanExportProjectContent(projectId);
+
+      final String linkUrl = request.getRequestURL().toString();
+      final String downloadUrl = linkUrl.substring(0, linkUrl.length() - RAW_LINK_PATH.length()) + RAW_DOWNLOAD_PATH;
+      final String downloadPath = request.getPathInfo().substring(0, request.getPathInfo().length() - RAW_LINK_PATH.length()) + RAW_DOWNLOAD_PATH;
+      final String query = requestSigner.sign(downloadPath, authenticatedUser.getCurrentUserId(), Instant.now().plus(RAW_LINK_VALIDITY));
+
+      return Map.of("url", downloadUrl + "?" + query);
+   }
+
+   /**
+    * Downloads the project content as a file. Authorized by the signed URL from {@link #createRawProjectContentLink(String)}.
+    */
+   @GET
+   @Path("{projectId:[0-9a-fA-F]{24}}/raw/download")
+   public Response downloadRawProjectContent(@PathParam("projectId") String projectId) {
+      workspaceKeeper.setWorkspaceIds(organizationId, projectId);
+      final ProjectContent content = projectFacade.exportProjectContent(projectId);
+      final String code = workspaceKeeper.getProject().map(Project::getCode).orElse("project").toLowerCase().replaceAll("[^a-z0-9_-]", "_");
+
+      return Response.ok(content).header("Content-Disposition", "attachment; filename=\"" + code + ".json\"").build();
    }
 
    @POST

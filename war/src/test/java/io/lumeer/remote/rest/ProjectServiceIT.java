@@ -31,6 +31,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.core.auth.PermissionCheckerUtil;
+import io.lumeer.core.auth.RequestSigner;
 import io.lumeer.storage.api.dao.OrganizationDao;
 import io.lumeer.storage.api.dao.ProjectDao;
 import io.lumeer.storage.api.dao.UserDao;
@@ -42,8 +43,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import jakarta.inject.Inject;
@@ -79,6 +82,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
    private User user;
 
    private String projectUrl;
+   private Organization organization;
 
    @Inject
    private ProjectDao projectDao;
@@ -88,6 +92,9 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
 
    @Inject
    private OrganizationDao organizationDao;
+
+   @Inject
+   private RequestSigner requestSigner;
 
    @BeforeEach
    public void configureProject() {
@@ -106,6 +113,7 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       projectDao.setOrganization(storedOrganization);
 
       projectUrl = organizationPath(storedOrganization) + "projects";
+      this.organization = storedOrganization;
 
       PermissionCheckerUtil.allowGroups();
    }
@@ -366,4 +374,33 @@ public class ProjectServiceIT extends ServiceIntegrationTestBase {
       assertThat(response.getStatusInfo()).isEqualTo(Response.Status.PAYMENT_REQUIRED);
    }
 
+
+   @Test
+   public void testDownloadRawContentBySignedLink() {
+      final Project project = createProject(CODE1);
+
+      final Response linkResponse = client.target(projectUrl).path(project.getId()).path("raw").path("link")
+                                          .request(MediaType.APPLICATION_JSON)
+                                          .buildPost(Entity.json("")).invoke();
+      assertThat(linkResponse.getStatusInfo()).isEqualTo(Response.Status.OK);
+      final String url = linkResponse.readEntity(new GenericType<Map<String, String>>() {}).get("url");
+      assertThat(url).contains("/projects/" + project.getId() + "/raw/download?")
+                     .contains(RequestSigner.SIGNATURE_PARAM + "=");
+
+      // opened by the browser: no authentication, just the signed URL
+      final Response download = client.target(url).request().buildGet().invoke();
+      assertThat(download.getStatusInfo()).isEqualTo(Response.Status.OK);
+      assertThat(download.getHeaderString("Content-Disposition")).isEqualTo("attachment; filename=\"" + CODE1.toLowerCase() + ".json\"");
+      assertThat(download.readEntity(String.class)).contains("\"collections\"");
+
+      // a changed URL is refused
+      final Response tampered = client.target(url.replace("/" + project.getId() + "/", "/" + createProject(CODE2).getId() + "/")).request().buildGet().invoke();
+      assertThat(tampered.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
+
+      // an expired URL is refused
+      final String path = "/organizations/" + organization.getId() + "/projects/" + project.getId() + "/raw/download";
+      final String expiredQuery = requestSigner.sign(path, user.getId(), Instant.now().minusSeconds(1));
+      final Response expired = client.target(projectUrl + "/" + project.getId() + "/raw/download?" + expiredQuery).request().buildGet().invoke();
+      assertThat(expired.getStatusInfo()).isEqualTo(Response.Status.FORBIDDEN);
+   }
 }
