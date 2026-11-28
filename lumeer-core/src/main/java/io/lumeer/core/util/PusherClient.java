@@ -34,12 +34,22 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+/**
+ * Sends events to Pusher in a background thread so that requests do not wait for the Pusher API.
+ * The events are sent one batch after another in the order they were triggered.
+ */
 public class PusherClient {
+
+   private static final Logger log = Logger.getLogger(PusherClient.class.getName());
 
    private static final Map<Integer, PusherClient> cache = new LRUMap<>(10);
 
@@ -52,8 +62,15 @@ public class PusherClient {
    // appended to the event name when the backup data are sent instead of the regular data
    private static final String BACKUP_EVENT_SUFFIX = ":ALT";
 
+   // batches waiting to be sent, the oldest ones are dropped when Pusher does not keep up
+   private static final int MAX_QUEUED_BATCHES = 1_000;
+
+   // the sender thread ends when idle so that it does not outlive a redeployment
+   private static final long SENDER_KEEP_ALIVE_SECONDS = 60;
+
    private Pusher pusher;
    private ObjectMapper mapper;
+   private final ThreadPoolExecutor sender;
 
    private String secret;
    private String key;
@@ -88,6 +105,18 @@ public class PusherClient {
       mapper.setAnnotationIntrospector(pair);
 
       pusher.setDataMarshaller(o -> o instanceof SerializedData serializedData ? serializedData.json() : serialize(o));
+
+      // a single thread keeps the events in order
+      sender = new ThreadPoolExecutor(1, 1, SENDER_KEEP_ALIVE_SECONDS, TimeUnit.SECONDS, new ArrayBlockingQueue<>(MAX_QUEUED_BATCHES), runnable -> {
+         final Thread thread = new Thread(runnable, "pusher-sender");
+         thread.setDaemon(true);
+         return thread;
+      }, (runnable, executor) -> {
+         log.warning("Pusher does not keep up, dropping the oldest queued events");
+         executor.getQueue().poll();
+         executor.execute(runnable);
+      });
+      sender.allowCoreThreadTimeOut(true);
    }
 
    private String serialize(final Object o) {
@@ -100,14 +129,25 @@ public class PusherClient {
       }
    }
 
-   public Result trigger(final String channel, final String eventName, final Object message) {
-      return pusher.trigger(channel, eventName, message);
-   }
-
-   public Collection<Result> trigger(final List<? extends Event> notifications) {
+   /**
+    * Queues the events for sending and returns immediately. The data are serialized right away,
+    * so the caller can change the objects afterwards.
+    */
+   public void trigger(final List<? extends Event> notifications) {
       final List<Event> events = notifications.stream().map(this::serializeEvent).toList();
 
-      return ListUtils.partition(events, MAX_BATCH_SIZE).stream().map(pusher::trigger).toList();
+      ListUtils.partition(events, MAX_BATCH_SIZE).forEach(batch -> sender.execute(() -> send(batch)));
+   }
+
+   private void send(final List<Event> batch) {
+      try {
+         final Result result = pusher.trigger(batch);
+         if (result.getStatus() != Result.Status.SUCCESS) {
+            log.warning("Unable to send push notifications (" + result.getStatus() + ", HTTP " + result.getHttpStatus() + "): " + result.getMessage());
+         }
+      } catch (RuntimeException e) {
+         log.log(Level.WARNING, "Unable to send push notifications: ", e);
+      }
    }
 
    /**
