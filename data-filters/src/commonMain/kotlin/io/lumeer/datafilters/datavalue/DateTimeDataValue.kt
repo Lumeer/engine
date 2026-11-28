@@ -19,8 +19,8 @@
 package io.lumeer.datafilters.datavalue
 
 import io.lumeer.datafilters.constraint.ConstraintConfig
-import io.lumeer.datafilters.date.Moment
-import io.lumeer.datafilters.date.MomentParse
+import io.lumeer.datafilters.date.DateInstant
+import io.lumeer.datafilters.date.DateParser
 import io.lumeer.datafilters.date.TimeContext
 import io.lumeer.datafilters.filter.FilterContext
 import io.lumeer.datafilters.model.ConditionType
@@ -38,13 +38,13 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
     private val format: String? = config.raw("format")?.takeIf { jsTruthy(it) }?.let { jsString(it) }
     private val isUtc: Boolean = config.truthy("asUtc")
     private val time: TimeContext = context.time
-    internal val momentDate: Moment?
+    internal val momentDate: DateInstant?
 
     init {
-        var parsed: Moment? = null
+        var parsed: DateInstant? = null
         if (jsTruthy(value)) {
             parsed = if (isIsoFormat(value)) {
-                MomentParse.parse(jsString(value), isUtc, time)
+                DateParser.parse(jsString(value), isUtc, time)
             } else {
                 parseMomentDate(value, format, isUtc, time.utilsContext)
             }
@@ -98,7 +98,7 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
         }
     }
 
-    private fun mapConditionValues(values: List<ConditionValue>): List<Pair<Moment?, String?>> {
+    private fun mapConditionValues(values: List<ConditionValue>): List<Pair<DateInstant?, String?>> {
         val mapped = values.map { value ->
             val type = value.type
             if (!type.isNullOrEmpty()) {
@@ -112,8 +112,8 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
 
     override fun meetFullTexts(fulltexts: List<String>): Boolean = valueMeetFulltexts(format(), fulltexts)
 
-    private fun conditionValueMoment(type: String): Moment? {
-        val base = Moment.now(time, isUtc)
+    private fun conditionValueMoment(type: String): DateInstant? {
+        val base = DateInstant.now(time, isUtc)
         return when (type) {
             "yesterday" -> base.startOf("day").addDays(-1)
             "tomorrow" -> base.startOf("day").addDays(1)
@@ -143,7 +143,7 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
         private fun isIsoFormat(value: Any?): Boolean = ISO_FORMAT.containsMatchIn(if (jsTruthy(value)) jsString(value) else "")
 
         /** JS Array.prototype.sort with the compareMoments comparator (NaN counts as 0); lists have at most two items */
-        private fun <T> sortMoments(items: List<T>, moment: (T) -> Moment?): List<T> {
+        private fun <T> sortMoments(items: List<T>, moment: (T) -> DateInstant?): List<T> {
             val result = items.toMutableList()
             for (i in 1 until result.size) {
                 var j = i
@@ -157,29 +157,29 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
             return result
         }
 
-        private fun compareMoments(a: Moment?, b: Moment?): Double {
+        private fun compareMoments(a: DateInstant?, b: DateInstant?): Double {
             if (a == null || b == null) return if (a != null) 1.0 else if (b != null) -1.0 else 0.0
             val diff = a.diff(b)
             return if (diff.isNaN()) 0.0 else diff
         }
 
         /** @lumeer/utils parseMomentDate */
-        internal fun parseMomentDate(value: Any?, expectedFormat: String?, utc: Boolean, time: TimeContext): Moment? {
+        internal fun parseMomentDate(value: Any?, expectedFormat: String?, utc: Boolean, time: TimeContext): DateInstant? {
             if (!jsTruthy(value)) return null
-            val formats = mutableListOf(MomentParse.ISO_8601)
+            val formats = mutableListOf(DateParser.ISO_8601)
             formats.addAll(DATE_FORMATS)
             if (expectedFormat != null) {
                 if (DAY_FORMAT.matches(expectedFormat.lowercase())) {
                     val modifiedValue = if (expectedFormat.length == 1) "0" else jsString(value).take(expectedFormat.length) + ".01.1970"
-                    return MomentParse.parse(modifiedValue, listOf("DD.MM.YYYY"), utc, time)
+                    return DateParser.parse(modifiedValue, listOf("DD.MM.YYYY"), utc, time)
                 }
-                val result = MomentParse.parse(value, listOf(expectedFormat), utc, time)
+                val result = DateParser.parse(value, listOf(expectedFormat), utc, time)
                 if (result.isValid) {
                     return result
                 }
                 formats.add(1, expectedFormat)
             }
-            return MomentParse.parse(value, formats, utc, time)
+            return DateParser.parse(value, formats, utc, time)
         }
 
         private class DateTimeOptions(format: String) {
@@ -197,10 +197,10 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
         }
 
         /** @lumeer/utils resetUnusedMomentPart (each step works on a clone) */
-        internal fun resetUnusedMomentPart(date: Moment?, format: String?): Moment? {
+        internal fun resetUnusedMomentPart(date: DateInstant?, format: String?): DateInstant? {
             if (date == null || format.isNullOrEmpty()) return date
             val options = DateTimeOptions(format)
-            var copy: Moment = date
+            var copy: DateInstant = date
             if (!options.year) copy = resetYear(copy, options.dayOfWeek)
             if (!options.month && !options.week && !options.quarter && !options.dayOfWeek) copy = copy.clone().setMonth(0)
             if (!options.day && !options.week && !options.dayOfWeek) copy = copy.clone().setDate(1)
@@ -214,7 +214,7 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
             return copy
         }
 
-        private fun resetYear(date: Moment, keepDayOfWeek: Boolean): Moment {
+        private fun resetYear(date: DateInstant, keepDayOfWeek: Boolean): DateInstant {
             if (keepDayOfWeek) {
                 val diffYears = date.year() - 1970
                 val cloned = date.clone().addDays(-diffYears * 52 * 7)
@@ -228,6 +228,6 @@ class DateTimeDataValue(val value: Any?, private val config: ConstraintConfig, p
         }
 
         /** @lumeer/utils resetWeek */
-        internal fun resetWeek(date: Moment): Moment = if (date.week() == 1) date.clone().setDay(5) else date.clone().setDay(1)
+        internal fun resetWeek(date: DateInstant): DateInstant = if (date.week() == 1) date.clone().setDay(5) else date.clone().setDay(1)
     }
 }

@@ -28,18 +28,18 @@ import kotlin.math.floor
 internal enum class LocalMode { ZONE, NATIVE }
 
 /** Time settings for one filter run. */
-internal class TimeContext(timezone: String?, now: Long?) {
+internal class TimeContext(timezone: String?, now: Long?, systemZone: String = TimeZones.systemZone()) {
 
     /**
      * The original bundle contains a second moment copy (inside @lumeer/utils) used by parseMomentDate.
      * moment-timezone is attached only to the first one, so dates parsed by format always use the system zone.
      */
-    val utilsContext: TimeContext by lazy { if (timezone == null) this else TimeContext(null, now) }
+    val utilsContext: TimeContext by lazy { if (timezone == null) this else TimeContext(null, now, systemZone) }
 
     val mode: LocalMode
     val zone: String
     val nowMillis: Long = now ?: TimeZones.currentTimeMillis()
-    val systemZone: String = TimeZones.systemZone()
+    val systemZone: String = systemZone
 
     init {
         if (timezone != null && timezone.isNotEmpty() && TimeZones.isValidZone(timezone)) {
@@ -56,7 +56,7 @@ internal class TimeContext(timezone: String?, now: Long?) {
  * Minimal port of the parts of moment.js that the filters use.
  * Stores the wall clock (as epoch millis of the same fields in UTC) and the offset in minutes east of UTC.
  */
-internal class Moment private constructor(
+internal class DateInstant private constructor(
     val ctx: TimeContext,
     val isUtc: Boolean,
     val isValid: Boolean,
@@ -69,13 +69,16 @@ internal class Moment private constructor(
     /** moment utcOffset() in minutes */
     val utcOffset: Int get() = (offset / 60_000L).toInt()
 
+    /** moment 2.31 utcOffset(): -Math.round(Date#getTimezoneOffset()) */
+    val utcOffsetRounded: Int get() = if (isUtc) 0 else floor(offset / 60_000.0 + 0.5).toInt()
+
     private var cachedFields: Fields? = null
 
     /** Wall clock fields, cached until the next setter */
     private val fields: Fields
         get() = cachedFields?.takeIf { it.wall == wall } ?: Fields(wall).also { cachedFields = it }
 
-    fun clone(): Moment = Moment(ctx, isUtc, isValid, wall, offset)
+    fun clone(): DateInstant = DateInstant(ctx, isUtc, isValid, wall, offset)
 
     // ---- getters
 
@@ -114,7 +117,7 @@ internal class Moment private constructor(
 
     // ---- setters (moment mutates and returns this)
 
-    private fun setWall(newWall: Long): Moment {
+    private fun setWall(newWall: Long): DateInstant {
         if (!isValid) return this
         when {
             isUtc -> {
@@ -139,55 +142,55 @@ internal class Moment private constructor(
         return this
     }
 
-    private fun withFields(year: Long, month0: Long, date: Long, hours: Long, minutes: Long, seconds: Long, millis: Long): Moment =
+    private fun withFields(year: Long, month0: Long, date: Long, hours: Long, minutes: Long, seconds: Long, millis: Long): DateInstant =
         setWall(Civil.fieldsToMillis(year, month0, date, hours, minutes, seconds, millis))
 
-    fun setYear(value: Long): Moment {
+    fun setYear(value: Long): DateInstant {
         val f = fields
         val date = if (Civil.isLeapYear(f.year) && f.month0 == 1 && f.date == 29) Civil.daysInMonth(value, 1).toLong() else f.date.toLong()
         return withFields(value, f.month0.toLong(), date, f.hours.toLong(), f.minutes.toLong(), f.seconds.toLong(), f.millis.toLong())
     }
 
-    fun setMonth(value: Long): Moment {
+    fun setMonth(value: Long): DateInstant {
         val f = fields
         val dayOfMonth = minOf(f.date, Civil.daysInMonth(f.year, value)).toLong()
         return withFields(f.year, value, dayOfMonth, f.hours.toLong(), f.minutes.toLong(), f.seconds.toLong(), f.millis.toLong())
     }
 
-    fun setDate(value: Long): Moment {
+    fun setDate(value: Long): DateInstant {
         val f = fields
         return withFields(f.year, f.month0.toLong(), value, f.hours.toLong(), f.minutes.toLong(), f.seconds.toLong(), f.millis.toLong())
     }
 
-    fun setHours(value: Long): Moment {
+    fun setHours(value: Long): DateInstant {
         val f = fields
         return withFields(f.year, f.month0.toLong(), f.date.toLong(), value, f.minutes.toLong(), f.seconds.toLong(), f.millis.toLong())
     }
 
-    fun setMinutes(value: Long): Moment {
+    fun setMinutes(value: Long): DateInstant {
         val f = fields
         return withFields(f.year, f.month0.toLong(), f.date.toLong(), f.hours.toLong(), value, f.seconds.toLong(), f.millis.toLong())
     }
 
-    fun setSeconds(value: Long): Moment {
+    fun setSeconds(value: Long): DateInstant {
         val f = fields
         return withFields(f.year, f.month0.toLong(), f.date.toLong(), f.hours.toLong(), f.minutes.toLong(), value, f.millis.toLong())
     }
 
-    fun setMilliseconds(value: Long): Moment {
+    fun setMilliseconds(value: Long): DateInstant {
         val f = fields
         return withFields(f.year, f.month0.toLong(), f.date.toLong(), f.hours.toLong(), f.minutes.toLong(), f.seconds.toLong(), value)
     }
 
-    fun addDays(days: Long): Moment = if (days == 0L) this else setDate(date() + days)
+    fun addDays(days: Long): DateInstant = if (days == 0L) this else setDate(date() + days)
 
-    fun addMonths(months: Long): Moment = if (months == 0L) this else setMonth(month() + months)
+    fun addMonths(months: Long): DateInstant = if (months == 0L) this else setMonth(month() + months)
 
-    fun setDay(value: Long): Moment = addDays(value - day())
+    fun setDay(value: Long): DateInstant = addDays(value - day())
 
-    fun setWeek(value: Long): Moment = addDays((value - week()) * 7)
+    fun setWeek(value: Long): DateInstant = addDays((value - week()) * 7)
 
-    fun startOf(unit: String): Moment {
+    fun startOf(unit: String): DateInstant {
         if (!isValid) return this
         val f = fields
         return when (unit) {
@@ -202,16 +205,16 @@ internal class Moment private constructor(
 
     // ---- comparison (moment returns false / NaN for invalid moments)
 
-    fun isSame(other: Moment?): Boolean = other != null && isValid && other.isValid && valueOf == other.valueOf
-    fun isAfter(other: Moment?): Boolean = other != null && isValid && other.isValid && valueOf > other.valueOf
-    fun isBefore(other: Moment?): Boolean = other != null && isValid && other.isValid && valueOf < other.valueOf
-    fun isSameOrAfter(other: Moment?): Boolean = isSame(other) || isAfter(other)
-    fun isSameOrBefore(other: Moment?): Boolean = isSame(other) || isBefore(other)
+    fun isSame(other: DateInstant?): Boolean = other != null && isValid && other.isValid && valueOf == other.valueOf
+    fun isAfter(other: DateInstant?): Boolean = other != null && isValid && other.isValid && valueOf > other.valueOf
+    fun isBefore(other: DateInstant?): Boolean = other != null && isValid && other.isValid && valueOf < other.valueOf
+    fun isSameOrAfter(other: DateInstant?): Boolean = isSame(other) || isAfter(other)
+    fun isSameOrBefore(other: DateInstant?): Boolean = isSame(other) || isBefore(other)
 
     /** a.diff(b) in milliseconds, NaN when invalid */
-    fun diff(other: Moment): Double = if (isValid && other.isValid) (valueOf - other.valueOf).toDouble() else Double.NaN
+    fun diff(other: DateInstant): Double = if (isValid && other.isValid) (valueOf - other.valueOf).toDouble() else Double.NaN
 
-    fun format(format: String): String = if (isValid) MomentFormat.format(this, format) else "Invalid date"
+    fun format(format: String): String = if (isValid) DateFormatter.format(this, format) else "Invalid date"
 
     // moment-timezone: zone abbreviation only for moments in the default zone
     fun zoneAbbr(): String = when {
@@ -228,19 +231,19 @@ internal class Moment private constructor(
         const val LOCALE_DOW = 1
         const val LOCALE_DOY = 4
 
-        fun invalid(ctx: TimeContext, utc: Boolean): Moment = Moment(ctx, utc, false, 0, 0L)
+        fun invalid(ctx: TimeContext, utc: Boolean): DateInstant = DateInstant(ctx, utc, false, 0, 0L)
 
         /** moment() / moment.utc() */
-        fun now(ctx: TimeContext, utc: Boolean): Moment = fromInstant(ctx, utc, ctx.nowMillis)
+        fun now(ctx: TimeContext, utc: Boolean): DateInstant = fromInstant(ctx, utc, ctx.nowMillis)
 
-        fun fromInstant(ctx: TimeContext, utc: Boolean, epochMillis: Long): Moment {
+        fun fromInstant(ctx: TimeContext, utc: Boolean, epochMillis: Long): DateInstant {
             val offset = if (utc) 0L else TimeZones.offsetMillis(ctx.zone, epochMillis)
-            return Moment(ctx, utc, true, epochMillis + offset, offset)
+            return DateInstant(ctx, utc, true, epochMillis + offset, offset)
         }
 
-        /** Moment from local wall clock fields (no explicit offset in the input). */
-        fun fromWall(ctx: TimeContext, utc: Boolean, wall: Long): Moment {
-            if (utc) return Moment(ctx, true, true, wall, 0L)
+        /** DateInstant from local wall clock fields (no explicit offset in the input). */
+        fun fromWall(ctx: TimeContext, utc: Boolean, wall: Long): DateInstant {
+            if (utc) return DateInstant(ctx, true, true, wall, 0L)
             val instant = TimeZones.wallToEpochMillis(ctx.zone, wall)
             return fromInstant(ctx, false, instant)
         }
@@ -260,7 +263,7 @@ internal class Moment private constructor(
         }
 
         /** (week, weekYear) */
-        fun weekOfYear(mom: Moment, dow: Int, doy: Int): Pair<Int, Long> {
+        fun weekOfYear(mom: DateInstant, dow: Int, doy: Int): Pair<Int, Long> {
             val year = mom.year()
             val weekOffset = firstWeekOffset(year, dow, doy)
             val week = floor((mom.dayOfYear() - weekOffset - 1) / 7.0).toInt() + 1
