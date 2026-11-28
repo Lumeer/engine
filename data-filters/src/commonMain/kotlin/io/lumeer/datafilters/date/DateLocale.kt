@@ -349,14 +349,18 @@ internal abstract class DateLocale(val abbr: String) {
 
         private val PORTED: Map<String, DateLocale> by lazy { mapOf("en" to En, "cs" to Cs, "hu" to Hu) + DateLocaleData.LOCALES }
 
+        /** Language codes users write that moment does not know, mapped to the moment ones ("cz" is the country code of "cs"). */
+        private val LANGUAGE_ALIASES: Map<String, String> = mapOf("cz" to "cs")
+
         /**
          * The locale name moment getLocale resolves a string key to (normalized, tried from the longest prefix),
-         * "en" (the global locale) when none matches.
+         * "en" (the global locale) when none matches. Unlike moment, a language in [LANGUAGE_ALIASES] resolves as
+         * its alias ("cz" and "cz-CZ" as "cs").
          */
         fun resolveName(key: String): String {
             if (key.isEmpty()) return "en"
             if (key in MOMENT_LOCALES) return key
-            val normalized = key.lowercase().replaceFirst("_", "-")
+            val normalized = withLanguageAlias(key.lowercase().replaceFirst("_", "-"))
             if (normalized in MOMENT_LOCALES) return normalized
             val split = normalized.split("-")
             for (j in split.size downTo 1) {
@@ -364,6 +368,13 @@ internal abstract class DateLocale(val abbr: String) {
                 if (name in MOMENT_LOCALES) return name
             }
             return "en"
+        }
+
+        /** [key] (normalized, "cz-cz") with its language replaced by the alias ("cs-cz") */
+        private fun withLanguageAlias(key: String): String {
+            val language = key.substringBefore("-")
+            val alias = LANGUAGE_ALIASES[language] ?: return key
+            return alias + key.substring(language.length)
         }
 
         /**
