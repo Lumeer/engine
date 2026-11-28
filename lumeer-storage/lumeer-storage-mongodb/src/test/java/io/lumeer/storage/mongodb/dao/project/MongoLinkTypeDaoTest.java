@@ -24,6 +24,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.lumeer.api.model.Attribute;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.Rule;
+import io.lumeer.api.model.function.Function;
+import io.lumeer.api.model.rule.BlocklyRule;
+import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoDbTestBase;
@@ -36,8 +40,10 @@ import org.mockito.Mockito;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 public class MongoLinkTypeDaoTest extends MongoDbTestBase {
 
@@ -301,5 +307,29 @@ public class MongoLinkTypeDaoTest extends MongoDbTestBase {
 
    private LinkType prepareLinkType() {
       return new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), ATTRIBUTES, null, null, null);
+   }
+
+   @Test
+   public void testUpdateRuleAndFunctionJs() {
+      Attribute attribute = new Attribute("a1", "attribute", null, null, null, null, new Function("js", "xml", null, 0L, false), 0, null);
+      DataDocument configuration = new DataDocument(BlocklyRule.BLOCKLY_JS, "old").append(BlocklyRule.BLOCKLY_XML, "<xml/>");
+      Map<String, Rule> rules = new HashMap<>(Map.of("r1", new Rule("rule", Rule.RuleType.BLOCKLY, Rule.RuleTiming.CREATE, configuration)));
+      LinkType linkType = new LinkType(NAME, Arrays.asList(COLLECTION_ID1, COLLECTION_ID2), new ArrayList<>(List.of(attribute)), rules, null, null);
+      String id = linkTypeDao.createLinkType(linkType).getId();
+      long version = linkTypeDao.getLinkType(id).getVersion();
+
+      assertThat(linkTypeDao.updateRuleJs(id, "r1", "other", "new")).isFalse();
+      assertThat(linkTypeDao.updateRuleJs(id, "r1", "old", "new")).isTrue();
+      assertThat(linkTypeDao.updateFunctionJs(id, "a1", "other", "new js")).isFalse();
+      assertThat(linkTypeDao.updateFunctionJs(id, "a1", "js", "new js")).isTrue();
+
+      LinkType stored = linkTypeDao.getLinkType(id);
+      BlocklyRule rule = new BlocklyRule(stored.getRules().get("r1"));
+      assertThat(rule.getJs()).isEqualTo("new");
+      assertThat(rule.getXml()).isEqualTo("<xml/>");
+      assertThat(stored.getAttributes().get(0).getFunction().getJs()).isEqualTo("new js");
+      assertThat(stored.getAttributes().get(0).getFunction().getXml()).isEqualTo("xml");
+      assertThat(stored.getName()).isEqualTo(NAME);
+      assertThat(stored.getVersion()).isEqualTo(version + 2);
    }
 }

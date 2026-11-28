@@ -35,6 +35,7 @@ import io.lumeer.api.model.RoleType;
 import io.lumeer.api.model.Rule;
 import io.lumeer.api.model.common.Resource;
 import io.lumeer.api.model.function.Function;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.engine.api.data.DataDocument;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
@@ -406,4 +407,35 @@ public class MongoCollectionDaoTest extends MongoDbTestBase {
       assertThat(collectionDao.getAllCollectionNames()).contains(NAME, NAME2, NAME3);
    }
 
+
+   @Test
+   public void testUpdateRuleAndFunctionJs() {
+      Collection collection = prepareCollection(CODE, NAME);
+      DataDocument configuration = new DataDocument(BlocklyRule.BLOCKLY_JS, "old").append(BlocklyRule.BLOCKLY_XML, "<xml/>");
+      collection.setRules(new HashMap<>(Map.of("r1", new Rule("rule", Rule.RuleType.BLOCKLY, Rule.RuleTiming.CREATE, configuration))));
+      String id = collectionDao.createCollection(collection).getId();
+      long version = collectionDao.getCollectionById(id).getVersion();
+
+      // only when the code still is the original one
+      assertThat(collectionDao.updateRuleJs(id, "r1", "other", "new")).isFalse();
+      assertThat(collectionDao.updateRuleJs(id, "r2", "old", "new")).isFalse();
+      assertThat(collectionDao.updateRuleJs(id, "r1", "old", "new")).isTrue();
+      assertThat(collectionDao.updateRuleJs(id, "r1", "old", "newer")).isFalse();
+
+      assertThat(collectionDao.updateFunctionJs(id, "a1", "other", "new js")).isFalse();
+      assertThat(collectionDao.updateFunctionJs(id, "a2", "js", "new js")).isFalse();
+      assertThat(collectionDao.updateFunctionJs(id, "a1", "js", "new js")).isTrue();
+
+      Collection stored = collectionDao.getCollectionById(id);
+      BlocklyRule rule = new BlocklyRule(stored.getRules().get("r1"));
+      assertThat(rule.getJs()).isEqualTo("new");
+      assertThat(rule.getXml()).isEqualTo("<xml/>");
+      assertThat(rule.getRule().getName()).isEqualTo("rule");
+      Attribute attribute = stored.getAttributes().iterator().next();
+      assertThat(attribute.getFunction().getJs()).isEqualTo("new js");
+      assertThat(attribute.getFunction().getXml()).isEqualTo("xml");
+      assertThat(attribute.getName()).isEqualTo(ATTRIBUTE1_NAME);
+      assertThat(stored.getName()).isEqualTo(NAME);
+      assertThat(stored.getVersion()).isEqualTo(version + 2);
+   }
 }

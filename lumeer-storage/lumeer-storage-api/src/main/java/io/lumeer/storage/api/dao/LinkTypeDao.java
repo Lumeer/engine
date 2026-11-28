@@ -33,6 +33,16 @@ public interface LinkTypeDao extends ProjectScopedDao {
 
    LinkType updateLinkType(final String id, final LinkType linkType, final LinkType originalLinkType, final boolean sendPushNotification);
 
+   /**
+    * Sets the code of a rule, only when it still is [originalJs] (an automation code migration); returns whether it was set.
+    */
+   boolean updateRuleJs(String id, String ruleId, String originalJs, String js);
+
+   /**
+    * Sets the code of an attribute function, only when it still is [originalJs] (an automation code migration); returns whether it was set.
+    */
+   boolean updateFunctionJs(String id, String attributeId, String originalJs, String js);
+
    void deleteLinkType(String id);
 
    void deleteLinkTypesByCollectionId(String collectionId);

@@ -23,6 +23,7 @@ import static io.lumeer.storage.mongodb.util.MongoFilters.idFilter;
 import io.lumeer.api.model.LinkType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.engine.api.event.CreateLinkType;
 import io.lumeer.engine.api.event.RemoveLinkType;
 import io.lumeer.engine.api.event.UpdateLinkType;
@@ -31,7 +32,10 @@ import io.lumeer.storage.api.exception.ResourceNotFoundException;
 import io.lumeer.storage.api.exception.StorageException;
 import io.lumeer.storage.api.query.SearchSuggestionQuery;
 import io.lumeer.storage.mongodb.MongoUtils;
+import io.lumeer.storage.mongodb.codecs.AttributeCodec;
+import io.lumeer.storage.mongodb.codecs.FunctionCodec;
 import io.lumeer.storage.mongodb.codecs.LinkTypeCodec;
+import io.lumeer.storage.mongodb.codecs.RuleCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.BasicDBList;
@@ -45,6 +49,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -118,6 +123,30 @@ public class MongoLinkTypeDao extends MongoProjectScopedDao implements LinkTypeD
          return updatedLinkType;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update link type: " + linkType, ex);
+      }
+   }
+
+   @Override
+   public boolean updateRuleJs(final String id, final String ruleId, final String originalJs, final String js) {
+      final String path = LinkTypeCodec.RULES + "." + ruleId + "." + RuleCodec.CONFIGURATION + "." + BlocklyRule.BLOCKLY_JS;
+      try {
+         final Bson filter = Filters.and(idFilter(id), Filters.eq(path, originalJs));
+         final Bson update = Updates.combine(Updates.set(path, js), Updates.inc(LinkTypeCodec.VERSION, 1L));
+         return databaseCollection().updateOne(filter, update).getModifiedCount() == 1;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update rule '" + ruleId + "' of link type '" + id + "'.", ex);
+      }
+   }
+
+   @Override
+   public boolean updateFunctionJs(final String id, final String attributeId, final String originalJs, final String js) {
+      final String functionJs = AttributeCodec.FUNCTION + "." + FunctionCodec.JS;
+      try {
+         final Bson filter = Filters.and(idFilter(id), Filters.elemMatch(LinkTypeCodec.ATTRIBUTES, Filters.and(Filters.eq(AttributeCodec.ID, attributeId), Filters.eq(functionJs, originalJs))));
+         final Bson update = Updates.combine(Updates.set(LinkTypeCodec.ATTRIBUTES + ".$." + functionJs, js), Updates.inc(LinkTypeCodec.VERSION, 1L));
+         return databaseCollection().updateOne(filter, update).getModifiedCount() == 1;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update function of attribute '" + attributeId + "' of link type '" + id + "'.", ex);
       }
    }
 
