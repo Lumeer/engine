@@ -100,6 +100,9 @@ public class DefaultConfigurationProducer implements Serializable {
 
    public static final String PRODUCTION_REST_URL = "production_rest_url";
 
+   // HMAC key for short-term signed URLs, must be the same on all nodes
+   public static final String SIGNING_SECRET = "signing_secret";
+
    public DefaultConfigurationProducer() {
       synchronized (this) {
          if (defaultConfiguration == null) {

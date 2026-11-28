@@ -88,6 +88,9 @@ public class Auth0Filter implements Filter {
    private PublicViewFilter publicViewFilter;
 
    @Inject
+   private RequestSigner requestSigner;
+
+   @Inject
    private UserAuth0Utils userAuth0Utils;
 
    private FilterConfig filterConfig;
@@ -191,6 +194,11 @@ public class Auth0Filter implements Filter {
          return;
       }
 
+      if (requestSigner.isSigned(req)) {
+         serveSignedRequest(req, res, filterChain);
+         return;
+      }
+
       if (System.getenv("SKIP_SECURITY") != null) {
          fakeUserLogin(req); // try to consume test user from request header
          filterChain.doFilter(servletRequest, servletResponse);
@@ -291,6 +299,35 @@ public class Auth0Filter implements Filter {
          log.log(Level.SEVERE, "Unable to serve request: ", e);
          sentryFacade.reportError(e);
          res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+      }
+   }
+
+   /**
+    * Serves a request authorized by a short-term signed URL (e.g. a download link opened directly by the browser)
+    * as the user it was signed for. The session's own user is restored afterwards, the link might have been
+    * opened in a browser where somebody else is logged in.
+    */
+   private void serveSignedRequest(final HttpServletRequest req, final HttpServletResponse res, final FilterChain filterChain) throws IOException, ServletException {
+      final User user = requestSigner.verify(req);
+      if (user == null) {
+         res.sendError(HttpServletResponse.SC_FORBIDDEN);
+         return;
+      }
+
+      final AuthenticatedUser.AuthUserInfo sessionAuthUserInfo = authenticatedUser.getAuthUserInfo();
+      final AuthenticatedUser.AuthUserInfo signedAuthUserInfo = new AuthenticatedUser.AuthUserInfo();
+      signedAuthUserInfo.user = user;
+      signedAuthUserInfo.lastUpdated = System.currentTimeMillis();
+      authenticatedUser.setAuthUserInfo(signedAuthUserInfo);
+
+      try {
+         filterChain.doFilter(req, res);
+      } catch (RuntimeException e) {
+         log.log(Level.SEVERE, "Unable to serve request: ", e);
+         sentryFacade.reportError(e);
+         res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getLocalizedMessage());
+      } finally {
+         authenticatedUser.setAuthUserInfo(sessionAuthUserInfo);
       }
    }
 
