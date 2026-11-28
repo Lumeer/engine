@@ -159,6 +159,46 @@ class AutomationParityTest {
         assertThat(failures).describedAs(failures.take(20).joinToString("\n")).isEmpty()
     }
 
+    /**
+     * LegacyCodeMigration rewrites every shape the old blocks generated, and the rewritten code (run without the shim)
+     * gives what the old code gives through the shim.
+     */
+    @Test
+    fun migratedCodeMatchesLegacy() {
+        val sample = cases.filter { it.kind != "formatUtc" && it.kind != "parseUtc" && it.args.none { a -> a.js == "undefined" || a.js == "[]" || a.js == "({})" } }
+            .filterIndexed { i, _ -> i % 3 == 1 }
+        val failures = mutableListOf<String>()
+        val wrap = { code: String -> "var lumeer = Polyglot.import('lumeer');\n(function (a) { var lumeer_date_tmp; var r = $code; return r instanceof Date ? r.getTime() : r; })" }
+        val run = { context: Context, script: String, args: List<Any?> ->
+            try {
+                val result = context.eval("js", script).execute(*args.toTypedArray())
+                if (result.isNumber) AutomationParityVectors.format(result.asDouble()) else result.asString()
+            } catch (e: Exception) {
+                "ERROR"
+            }
+        }
+        var tested = 0
+        shimContext().use { legacyContext ->
+            Context.newBuilder("js").engine(JsEngineFactory.getEngine()).allowAllAccess(true).build().use { context ->
+                context.polyglotBindings.putMember("lumeer", bridge())
+                for (case in sample) {
+                    val legacy = wrap(legacyCode(case) ?: continue)
+                    val migration = LegacyCodeMigration.migrate(legacy)
+                    if (migration.replacements.size != 1 || migration.legacyCallsLeft.isNotEmpty()) {
+                        failures.add("$case not migrated: $legacy")
+                        continue
+                    }
+                    tested++
+                    val expected = run(legacyContext, legacy, listOf(case.args.map { it.create(legacyContext) }))
+                    val actual = run(context, migration.js, listOf(case.args.map { it.create(context) }))
+                    if (actual != expected) failures.add("$case legacy=[$expected] migrated=[$actual] code=[${migration.replacements[0].after}]")
+                }
+            }
+        }
+        println("Automation code migration: $tested cases, ${failures.size} failures")
+        assertThat(failures).describedAs(failures.take(20).joinToString("\n")).isEmpty()
+    }
+
     /** Stored sticky "subtract" code keeps adding (as it did), the code generated now subtracts. */
     @Test
     fun legacyStickySubtractKeepsAdding() {

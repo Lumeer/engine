@@ -26,6 +26,7 @@ import io.lumeer.api.model.CollectionPurposeType;
 import io.lumeer.api.model.Project;
 import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.common.Resource;
+import io.lumeer.api.model.rule.BlocklyRule;
 import io.lumeer.engine.api.event.CreateResource;
 import io.lumeer.engine.api.event.RemoveResource;
 import io.lumeer.engine.api.event.UpdateResource;
@@ -38,6 +39,8 @@ import io.lumeer.storage.mongodb.MongoUtils;
 import io.lumeer.storage.mongodb.codecs.AttributeCodec;
 import io.lumeer.storage.mongodb.codecs.CollectionCodec;
 import io.lumeer.storage.mongodb.codecs.CollectionPurposeCodec;
+import io.lumeer.storage.mongodb.codecs.FunctionCodec;
+import io.lumeer.storage.mongodb.codecs.RuleCodec;
 import io.lumeer.storage.mongodb.util.MongoFilters;
 
 import com.mongodb.MongoException;
@@ -53,6 +56,7 @@ import com.mongodb.client.model.Indexes;
 import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.Sorts;
+import com.mongodb.client.model.Updates;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -188,6 +192,30 @@ public class MongoCollectionDao extends MongoProjectScopedDao implements Collect
          return originalCollection;
       } catch (MongoException ex) {
          throw new StorageException("Cannot update collection: " + collection, ex);
+      }
+   }
+
+   @Override
+   public boolean updateRuleJs(final String id, final String ruleId, final String originalJs, final String js) {
+      final String path = CollectionCodec.RULES + "." + ruleId + "." + RuleCodec.CONFIGURATION + "." + BlocklyRule.BLOCKLY_JS;
+      try {
+         final Bson filter = Filters.and(idFilter(id), Filters.eq(path, originalJs));
+         final Bson update = Updates.combine(Updates.set(path, js), Updates.inc(CollectionCodec.VERSION, 1L));
+         return databaseCollection().updateOne(filter, update).getModifiedCount() == 1;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update rule '" + ruleId + "' of collection '" + id + "'.", ex);
+      }
+   }
+
+   @Override
+   public boolean updateFunctionJs(final String id, final String attributeId, final String originalJs, final String js) {
+      final String functionJs = AttributeCodec.FUNCTION + "." + FunctionCodec.JS;
+      try {
+         final Bson filter = Filters.and(idFilter(id), Filters.elemMatch(CollectionCodec.ATTRIBUTES, Filters.and(Filters.eq(AttributeCodec.ID, attributeId), Filters.eq(functionJs, originalJs))));
+         final Bson update = Updates.combine(Updates.set(CollectionCodec.ATTRIBUTES + ".$." + functionJs, js), Updates.inc(CollectionCodec.VERSION, 1L));
+         return databaseCollection().updateOne(filter, update).getModifiedCount() == 1;
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot update function of attribute '" + attributeId + "' of collection '" + id + "'.", ex);
       }
    }
 

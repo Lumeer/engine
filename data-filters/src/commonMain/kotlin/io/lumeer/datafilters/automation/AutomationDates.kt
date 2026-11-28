@@ -36,7 +36,7 @@ import io.lumeer.datafilters.util.jsTruthy
  * @param jsDateParse `new Date(string).getTime()` of the script engine, used where moment falls back to it
  *
  * Format and parse date support en, cs, hu, sk, pl, de, de-at, de-ch, es, fr, it, pt, pt-br, nl, ru, uk and en-gb (moment 2.31
- * locale data); other locales use their base language when supported, otherwise en.
+ * locale data); "cz" is taken as cs; other locales use their base language when supported, otherwise en.
  */
 class AutomationDates(
     zone: String? = null,
