@@ -32,11 +32,11 @@ import io.lumeer.api.model.common.Resource
 import io.lumeer.core.facade.PusherFacade
 import io.lumeer.core.facade.PusherFacade.ObjectWithParent
 import io.lumeer.core.facade.PusherFacade.ResourceId
+import io.lumeer.core.util.BackupDataEvent
 import io.lumeer.storage.api.dao.CollectionDao
 import io.lumeer.storage.api.dao.LinkTypeDao
 import io.lumeer.storage.api.dao.ViewDao
-import org.marvec.pusher.data.BackupDataEvent
-import org.marvec.pusher.data.Event
+import com.pusher.rest.data.Event
 
 class PusherAdapter(
    private val appId: AppId?,

@@ -117,7 +117,7 @@ import io.lumeer.storage.api.dao.ResourceCommentDao;
 import io.lumeer.storage.api.dao.UserDao;
 import io.lumeer.storage.api.dao.ViewDao;
 
-import org.marvec.pusher.data.Event;
+import com.pusher.rest.data.Event;
 
 import java.util.Collections;
 import java.util.HashSet;

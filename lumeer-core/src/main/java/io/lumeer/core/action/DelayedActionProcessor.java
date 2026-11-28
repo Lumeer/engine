@@ -51,9 +51,9 @@ import io.lumeer.storage.api.dao.UserNotificationDao;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 import io.lumeer.storage.api.exception.ResourceNotFoundException;
 
+import com.pusher.rest.data.Event;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Triple;
-import org.marvec.pusher.data.Event;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

@@ -21,15 +21,20 @@ package io.lumeer.remote.rest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.lumeer.api.model.Attribute;
+import io.lumeer.api.model.AuditRecord;
+import io.lumeer.api.model.AuditType;
 import io.lumeer.api.model.Collection;
 import io.lumeer.api.model.Document;
 import io.lumeer.api.model.Organization;
 import io.lumeer.api.model.Permission;
 import io.lumeer.api.model.Permissions;
 import io.lumeer.api.model.Project;
+import io.lumeer.api.model.ResourceType;
 import io.lumeer.api.model.User;
 import io.lumeer.core.auth.AuthenticatedUser;
 import io.lumeer.engine.api.data.DataDocument;
+import io.lumeer.storage.api.dao.AuditDao;
 import io.lumeer.storage.api.dao.CollectionDao;
 import io.lumeer.storage.api.dao.DataDao;
 import io.lumeer.storage.api.dao.DocumentDao;
@@ -46,6 +51,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
@@ -72,6 +82,9 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    private String collectionsUrl;
 
    private User user;
+
+   @Inject
+   private AuditDao auditDao;
 
    @Inject
    private CollectionDao collectionDao;
@@ -128,6 +141,7 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       collection = collectionDao.createCollection(jsonCollection);
 
       documentDao.setProject(storedProject);
+      auditDao.setProject(storedProject);
 
       this.collectionsUrl = projectPath(storedOrganization, storedProject) + "collections";
    }
@@ -141,6 +155,10 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
    }
 
    private Document createDocument() {
+      return createDocument(collection);
+   }
+
+   private Document createDocument(final Collection collection) {
       Document document = prepareDocument();
       document.setCollectionId(collection.getId());
       document.setCreatedBy(user.getId());
@@ -278,6 +296,75 @@ public class DocumentServiceIT extends ServiceIntegrationTestBase {
       assertThatThrownBy(() -> documentDao.getDocumentById(id))
             .isInstanceOf(ResourceNotFoundException.class);
       assertThat(dataDao.getData(collection.getId(), id)).isEqualTo(new DataDocument());
+   }
+
+   private Collection createCollectionWithAttributes(final String code, final int usageCount) {
+      Permissions permissions = new Permissions();
+      permissions.updateUserPermissions(Permission.buildWithRoles(this.user.getId(), Project.ROLES));
+      Collection newCollection = new Collection(code, code, COLLECTION_ICON, COLLECTION_COLOR, permissions);
+
+      Attribute attribute1 = new Attribute(KEY1);
+      attribute1.setUsageCount(usageCount);
+      Attribute attribute2 = new Attribute(KEY2);
+      attribute2.setUsageCount(usageCount);
+      newCollection.setAttributes(List.of(attribute1, attribute2));
+
+      return collectionDao.createCollection(newCollection);
+   }
+
+   private Map<String, Integer> getAttributesUsage(final String collectionId) {
+      return collectionDao.getCollectionById(collectionId).getAttributes().stream()
+                          .collect(Collectors.toMap(Attribute::getId, Attribute::getUsageCount));
+   }
+
+   private Set<String> getDocumentIds(final String collectionId) {
+      return documentDao.getDocumentsByCollection(collectionId).stream().map(Document::getId).collect(Collectors.toSet());
+   }
+
+   @Test
+   public void testDeleteDocumentsInMultipleCollections() {
+      final Collection c1 = createCollectionWithAttributes("TCOLL1", 3);
+      final Collection c2 = createCollectionWithAttributes("TCOLL2", 2);
+
+      final Document d11 = createDocument(c1);
+      final Document d12 = createDocument(c1);
+      final Document d13 = createDocument(c1);
+      final Document d21 = createDocument(c2);
+      final Document d22 = createDocument(c2);
+
+      // documents from both collections, sent to the endpoint of one of them
+      final Set<String> toDelete = Set.of(d11.getId(), d12.getId(), d21.getId());
+      final ZonedDateTime beforeDelete = ZonedDateTime.now().minusSeconds(1);
+
+      Response response = client.target(collectionsUrl).path(c1.getId()).path("documents").path("delete")
+                                .request(MediaType.APPLICATION_JSON)
+                                .buildPost(Entity.json(toDelete)).invoke();
+      assertThat(response).isNotNull();
+      assertThat(response.getStatusInfo()).isEqualTo(Response.Status.OK);
+
+      // only the requested documents are gone, including their data
+      assertThat(getDocumentIds(c1.getId())).containsExactly(d13.getId());
+      assertThat(getDocumentIds(c2.getId())).containsExactly(d22.getId());
+      toDelete.forEach(id -> assertThatThrownBy(() -> documentDao.getDocumentById(id)).isInstanceOf(ResourceNotFoundException.class));
+      assertThat(dataDao.getData(c1.getId(), d11.getId())).isEqualTo(new DataDocument());
+      assertThat(dataDao.getData(c2.getId(), d21.getId())).isEqualTo(new DataDocument());
+      assertThat(dataDao.getData(c1.getId(), d13.getId())).containsEntry(KEY1, VALUE1);
+      assertThat(dataDao.getData(c2.getId(), d22.getId())).containsEntry(KEY1, VALUE1);
+
+      // attribute usage is decreased by the documents deleted in each collection separately
+      assertThat(getAttributesUsage(c1.getId())).containsExactlyInAnyOrderEntriesOf(Map.of(KEY1, 1, KEY2, 1));
+      assertThat(getAttributesUsage(c2.getId())).containsExactlyInAnyOrderEntriesOf(Map.of(KEY1, 1, KEY2, 1));
+
+      // each deletion is audited with the document's data, like a single deletion, so it can be reverted
+      final List<AuditRecord> deleteRecords = Stream.of(c1, c2)
+                                                    .flatMap(c -> auditDao.findAuditRecords(c.getId(), ResourceType.DOCUMENT, beforeDelete).stream())
+                                                    .filter(auditRecord -> auditRecord.getType() == AuditType.Deleted)
+                                                    .toList();
+      assertThat(deleteRecords).extracting(AuditRecord::getResourceId).containsExactlyInAnyOrderElementsOf(toDelete);
+      assertThat(deleteRecords).allSatisfy(auditRecord -> {
+         assertThat(auditRecord.getUser()).isEqualTo(user.getId());
+         assertThat(auditRecord.getOldState()).containsEntry(KEY1, VALUE1).containsEntry(KEY2, VALUE2);
+      });
    }
 
    @Test

@@ -117,6 +117,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
    @Inject
    private PermissionsChecker permissionsChecker;
 
+   @Inject
+   private FileAttachmentDao fileAttachmentDao;
+
    private Collection collection;
    private Collection taskCollection;
 
@@ -292,8 +295,9 @@ public class DocumentFacadeIT extends IntegrationTestBase {
       // make sure favorite document was removed
       assertThat(favoriteItemDao.getFavoriteDocumentIds(user.getId(), workspaceKeeper.getProjectId())).isEmpty();
 
-      // make sure file attachment was removed
-      assertThat(fileAttachmentFacade.getAllFileAttachments(c1.getId(), FileAttachment.AttachmentType.DOCUMENT)).isEmpty();
+      // file attachment is kept for a revert of the deletion (removed later together with the expired audit records)
+      // (the facade hides attachments of deleted documents, so check the storage)
+      assertThat(fileAttachmentDao.findAllFileAttachments(workspaceKeeper.getOrganization().get(), workspaceKeeper.getProject().get(), c1.getId(), d11.getId(), FileAttachment.AttachmentType.DOCUMENT)).hasSize(1);
    }
 
    @Test

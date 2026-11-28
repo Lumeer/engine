@@ -54,14 +54,14 @@ import io.lumeer.core.task.executor.request.GenericPrintRequest;
 import io.lumeer.core.task.executor.request.NavigationRequest;
 import io.lumeer.core.task.executor.request.SendEmailRequest;
 import io.lumeer.core.task.executor.request.UserMessageRequest;
+import io.lumeer.core.util.BackupDataEvent;
 import io.lumeer.core.util.LumeerS3Client;
 import io.lumeer.core.util.PusherClient;
 import io.lumeer.core.util.Utils;
 import io.lumeer.storage.api.dao.context.DaoContextSnapshot;
 
+import com.pusher.rest.data.Event;
 import org.apache.commons.lang3.StringUtils;
-import org.marvec.pusher.data.BackupDataEvent;
-import org.marvec.pusher.data.Event;
 
 import java.util.ArrayList;
 import java.util.HashSet;

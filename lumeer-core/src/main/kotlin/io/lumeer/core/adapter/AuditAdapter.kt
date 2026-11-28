@@ -20,6 +20,7 @@ package io.lumeer.core.adapter
 
 import io.lumeer.api.model.AuditRecord
 import io.lumeer.api.model.AuditType
+import io.lumeer.api.model.Document
 import io.lumeer.api.model.Payment
 import io.lumeer.api.model.ResourceType
 import io.lumeer.api.model.ServiceLimits
@@ -67,10 +68,21 @@ class AuditAdapter(private val auditDao: AuditDao) {
    }
 
    fun registerDelete(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument): AuditRecord {
+      return auditDao.createAuditRecord(deleteRecord(parentId, resourceType, resourceId, user, automation, viewId, oldState))
+   }
+
+   /**
+    * Registers the deletion of multiple documents in one database call. The documents must carry their data.
+    */
+   fun registerDocumentsDelete(documents: List<Document>, user: User?, viewId: String?) {
+      auditDao.createAuditRecords(documents.map { deleteRecord(it.collectionId, ResourceType.DOCUMENT, it.id, user, null, viewId, it.data ?: DataDocument()) })
+   }
+
+   private fun deleteRecord(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, oldState: DataDocument): AuditRecord {
       val partialOldState = DataDocument(oldState.filterKeys { it != DataDocument.ID })
       val auditRecord = AuditRecord(parentId, resourceType, resourceId, ZonedDateTime.now(), user?.id, user?.name, user?.email, viewId, automation, partialOldState, DataDocument())
       auditRecord.type = AuditType.Deleted
-      return auditDao.createAuditRecord(auditRecord)
+      return auditRecord
    }
 
    fun registerCreate(parentId: String, resourceType: ResourceType, resourceId: String, user: User?, automation: String?, viewId: String?, newState: DataDocument): AuditRecord {

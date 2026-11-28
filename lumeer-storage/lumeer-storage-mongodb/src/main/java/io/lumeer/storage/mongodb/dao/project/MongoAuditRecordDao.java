@@ -182,6 +182,19 @@ public class MongoAuditRecordDao extends MongoProjectScopedDao implements AuditD
    }
 
    @Override
+   public void createAuditRecords(final List<AuditRecord> records) {
+      if (records.isEmpty()) {
+         return;
+      }
+
+      try {
+         databaseCollection().insertMany(records);
+      } catch (MongoException ex) {
+         throw new StorageException("Cannot create " + records.size() + " audit log records", ex);
+      }
+   }
+
+   @Override
    public AuditRecord updateAuditRecord(final AuditRecord record) {
       FindOneAndUpdateOptions options = new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER);
 

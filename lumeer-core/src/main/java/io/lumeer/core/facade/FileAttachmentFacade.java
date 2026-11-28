@@ -284,14 +284,6 @@ public class FileAttachmentFacade extends AbstractFacade {
       adapter.removeFileAttachments(fileAttachments);
    }
 
-   public void removeFileAttachments(final Set<String> documentIds, final FileAttachment.AttachmentType type) {
-      var fileAttachments = fileAttachmentDao.findAllFileAttachments(getOrganization(), getProject(), documentIds, type);
-
-      // user rights are already checked in the caller
-
-      adapter.removeFileAttachments(fileAttachments);
-   }
-
    public void removeFileAttachment(final String fileAttachmentId) {
       final FileAttachment fileAttachment = fileAttachmentDao.findFileAttachment(fileAttachmentId);
 

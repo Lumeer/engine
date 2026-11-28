@@ -49,6 +49,8 @@ public interface AuditDao extends ProjectScopedDao, Serializable {
 
 
    AuditRecord createAuditRecord(final AuditRecord record);
+
+   void createAuditRecords(final List<AuditRecord> records);
    AuditRecord updateAuditRecord(final AuditRecord record);
 
    AuditRecord getAuditRecord(final String id);
