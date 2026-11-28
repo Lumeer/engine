@@ -94,7 +94,7 @@
       <maven.surefire.plugin.version>3.2.2</maven.surefire.plugin.version>
       <maven.dependency.plugin.version>3.6.1</maven.dependency.plugin.version>
       <maven.war.plugin.version>3.4.0</maven.war.plugin.version>
-      <maven.wildfly.plugin.version>4.2.0.Final</maven.wildfly.plugin.version>
+      <maven.wildfly.plugin.version>5.1.5.Final</maven.wildfly.plugin.version>
       <maven.failsafe.plugin.version>3.2.2</maven.failsafe.plugin.version>
       <maven.cargo.plugin.version>1.10.30</maven.cargo.plugin.version>
       <maven.antrun.plugin.version>3.1.0</maven.antrun.plugin.version>
